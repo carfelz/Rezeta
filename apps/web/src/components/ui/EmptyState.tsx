@@ -9,7 +9,7 @@ export interface EmptyStateProps {
   className?: string
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, className }: EmptyStateProps): JSX.Element {
   return (
     <div
       className={clsx(

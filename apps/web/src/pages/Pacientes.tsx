@@ -50,7 +50,7 @@ function PatientRow({ patient }: { patient: Patient }) {
   )
 }
 
-export function Pacientes() {
+export function Pacientes(): JSX.Element {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const timerRef = useRef<number | undefined>(undefined)

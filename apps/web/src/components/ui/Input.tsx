@@ -68,7 +68,7 @@ export interface InputGroupProps {
   className?: string
 }
 
-export function InputGroup({ children, error, className }: InputGroupProps) {
+export function InputGroup({ children, error, className }: InputGroupProps): JSX.Element {
   return (
     <div
       className={clsx(
@@ -97,7 +97,7 @@ export interface InputAdornProps {
   className?: string
 }
 
-export function InputAdorn({ children, side = 'left', plain, className }: InputAdornProps) {
+export function InputAdorn({ children, side = 'left', plain, className }: InputAdornProps): JSX.Element {
   return (
     <span
       className={clsx(
@@ -123,7 +123,7 @@ export interface InputIconProps {
   className?: string
 }
 
-export function InputIcon({ children, side = 'left', action, onClick, className }: InputIconProps) {
+export function InputIcon({ children, side: _side, action, onClick, className }: InputIconProps): JSX.Element {
   return (
     <span
       role={action ? 'button' : undefined}
@@ -151,7 +151,7 @@ export interface FieldProps {
   className?: string
 }
 
-export function Field({ label, required, helper, error, children, className }: FieldProps) {
+export function Field({ label, required, helper, error, children, className }: FieldProps): JSX.Element {
   return (
     <div className={clsx('flex flex-col gap-[6px]', className)}>
       {label && (

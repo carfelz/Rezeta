@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Archive, Trash, Warning, CheckCircle } from '@phosphor-icons/react'
+import { Archive, Trash, CheckCircle } from '@phosphor-icons/react'
 import { Modal, ModalTrigger, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalClose } from './Modal'
 import { Button } from './Button'
 import { Field } from './Input'

@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '@/lib/firebase'
 
-export function Login() {
+export function Login(): JSX.Element {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,7 +17,7 @@ export function Login() {
     try {
       if (!auth) throw new Error('Firebase not configured')
       await signInWithEmailAndPassword(auth, email, password)
-      navigate('/dashboard')
+      void navigate('/dashboard')
     } catch {
       setError('Correo o contraseña incorrectos.')
     } finally {
@@ -61,7 +61,7 @@ export function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <form onSubmit={(e) => { void handleSubmit(e) }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div className="field">
             <label className="field__label">Correo electrónico</label>
             <input

@@ -27,7 +27,7 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
   className?: string
 }
 
-export function Badge({ variant, children, showDot = true, className }: BadgeProps) {
+export function Badge({ variant, children, showDot = true, className }: BadgeProps): JSX.Element {
   return (
     <span className={clsx(badgeVariants({ variant }), className)}>
       {showDot && (

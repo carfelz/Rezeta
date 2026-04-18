@@ -22,7 +22,7 @@ export interface AvatarProps extends VariantProps<typeof avatarVariants> {
   className?: string
 }
 
-export function Avatar({ initials, size, className }: AvatarProps) {
+export function Avatar({ initials, size, className }: AvatarProps): JSX.Element {
   return (
     <span className={clsx(avatarVariants({ size }), className)}>
       {initials.slice(0, 2)}

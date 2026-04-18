@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
-export function AppLayout() {
+export function AppLayout(): JSX.Element {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {

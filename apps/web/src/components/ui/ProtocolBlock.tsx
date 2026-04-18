@@ -13,7 +13,7 @@ export interface ProtocolContainerProps {
   className?: string
 }
 
-export function ProtocolContainer({ kicker, title, meta, badge, children, className }: ProtocolContainerProps) {
+export function ProtocolContainer({ kicker, title, meta, badge, children, className }: ProtocolContainerProps): JSX.Element {
   return (
     <div className={clsx('bg-n-0 border border-n-200 rounded px-8 py-7', className)}>
       <div className="flex items-start justify-between gap-4 mb-6">
@@ -50,7 +50,7 @@ export interface ProtocolBlockProps {
   className?: string
 }
 
-export function ProtocolBlock({ type, title, required, nested, children, onEdit, onDelete, className }: ProtocolBlockProps) {
+export function ProtocolBlock({ type, title, required, nested, children, onEdit, onDelete, className }: ProtocolBlockProps): JSX.Element {
   return (
     <div
       className={clsx(
@@ -117,7 +117,7 @@ export interface ProtocolChecklistProps {
   onToggle?: (id: string) => void
 }
 
-export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps) {
+export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): JSX.Element {
   return (
     <ul className="divide-y divide-n-100">
       {items.map((item) => (
@@ -161,7 +161,7 @@ export interface ProtocolStepsProps {
   steps: Step[]
 }
 
-export function ProtocolSteps({ steps }: ProtocolStepsProps) {
+export function ProtocolSteps({ steps }: ProtocolStepsProps): JSX.Element {
   return (
     <ol className="flex flex-col gap-3">
       {steps.map((step) => (
@@ -194,7 +194,7 @@ export interface ProtocolDecisionProps {
   branches: Branch[]
 }
 
-export function ProtocolDecision({ condition, branches }: ProtocolDecisionProps) {
+export function ProtocolDecision({ condition, branches }: ProtocolDecisionProps): JSX.Element {
   return (
     <div>
       <div className="text-[13px] font-sans font-semibold text-n-800 mb-3 pb-3 border-b border-n-100">
@@ -230,7 +230,7 @@ export interface ProtocolDosageTableProps {
   rows: DosageRow[]
 }
 
-export function ProtocolDosageTable({ title, rows }: ProtocolDosageTableProps) {
+export function ProtocolDosageTable({ title, rows }: ProtocolDosageTableProps): JSX.Element {
   const cols = ['Medicamento', 'Dosis', 'Vía', 'Frecuencia', 'Notas']
   return (
     <div className="overflow-x-auto">
@@ -276,7 +276,7 @@ const alertStyles = {
   success: 'bg-success-bg border-success-border text-success-text',
 }
 
-export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps) {
+export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps): JSX.Element {
   return (
     <div className={clsx('px-4 py-3 rounded border text-[13px] font-sans leading-[1.45]', alertStyles[severity])}>
       {title && <div className="font-semibold mb-0.5">{title}</div>}
@@ -287,7 +287,7 @@ export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps) 
 
 // Add block button
 
-export function AddBlockButton({ onClick, label = 'Añadir bloque' }: { onClick?: () => void; label?: string }) {
+export function AddBlockButton({ onClick, label = 'Añadir bloque' }: { onClick?: () => void; label?: string }): JSX.Element {
   return (
     <button
       onClick={onClick}

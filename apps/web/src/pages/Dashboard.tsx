@@ -1,4 +1,4 @@
-export function Dashboard() {
+export function Dashboard(): JSX.Element {
   return (
     <div>
       <h1 className="text-h1" style={{ marginBottom: 'var(--space-6)' }}>

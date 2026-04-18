@@ -34,7 +34,7 @@ function initials(name: string): string {
     .toUpperCase()
 }
 
-export function Sidebar() {
+export function Sidebar(): JSX.Element {
   const { user } = useAuth()
 
   return (

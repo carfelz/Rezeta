@@ -9,7 +9,7 @@ export interface CardProps {
   className?: string
 }
 
-export function Card({ children, selected, className }: CardProps) {
+export function Card({ children, selected, className }: CardProps): JSX.Element {
   return (
     <div
       className={clsx(
@@ -25,7 +25,7 @@ export function Card({ children, selected, className }: CardProps) {
   )
 }
 
-export function CardTitle({ children, className }: { children: ReactNode; className?: string }) {
+export function CardTitle({ children, className }: { children: ReactNode; className?: string }): JSX.Element {
   return (
     <div className={clsx('text-[14px] font-sans font-semibold text-n-800 leading-tight', className)}>
       {children}
@@ -33,7 +33,7 @@ export function CardTitle({ children, className }: { children: ReactNode; classN
   )
 }
 
-export function CardSubtitle({ children, className }: { children: ReactNode; className?: string }) {
+export function CardSubtitle({ children, className }: { children: ReactNode; className?: string }): JSX.Element {
   return (
     <div className={clsx('text-[12.5px] font-sans text-n-500 mt-0.5', className)}>
       {children}
@@ -52,7 +52,7 @@ export interface CardItemProps {
   className?: string
 }
 
-export function CardItem({ leading, name, meta, trailing, onClick, className }: CardItemProps) {
+export function CardItem({ leading, name, meta, trailing, onClick, className }: CardItemProps): JSX.Element {
   return (
     <div
       role={onClick ? 'button' : undefined}

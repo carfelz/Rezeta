@@ -38,10 +38,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: unknown) =>
+  get: <T>(path: string): Promise<T> => request<T>(path),
+  post: <T>(path: string, body: unknown): Promise<T> =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) =>
+  patch: <T>(path: string, body: unknown): Promise<T> =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
-  delete: (path: string) => request<void>(path, { method: 'DELETE' }),
+  delete: (path: string): Promise<void> => request<void>(path, { method: 'DELETE' }),
 }

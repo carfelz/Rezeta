@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
 
-export function PacienteDetalle() {
+export function PacienteDetalle(): JSX.Element {
   const { patientId } = useParams<{ patientId: string }>()
   const { data: patient, isLoading, isError } = usePatient(patientId ?? '')
 
@@ -71,28 +71,28 @@ export function PacienteDetalle() {
         <div className="card">
           <div className="card__title">Historia clínica</div>
           <div style={{ marginTop: 'var(--space-4)' }}>
-            {(patient.allergies as string[]).length > 0 && (
+            {(patient.allergies).length > 0 && (
               <div style={{ marginBottom: 'var(--space-3)' }}>
                 <span className="text-overline">Alergias</span>
                 <div className="row" style={{ flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 4 }}>
-                  {(patient.allergies as string[]).map((a) => (
+                  {(patient.allergies).map((a) => (
                     <span key={a} className="badge badge--overdue">{a}</span>
                   ))}
                 </div>
               </div>
             )}
-            {(patient.chronicConditions as string[]).length > 0 && (
+            {(patient.chronicConditions).length > 0 && (
               <div>
                 <span className="text-overline">Condiciones crónicas</span>
                 <div className="row" style={{ flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 4 }}>
-                  {(patient.chronicConditions as string[]).map((c) => (
+                  {(patient.chronicConditions).map((c) => (
                     <span key={c} className="badge badge--review">{c}</span>
                   ))}
                 </div>
               </div>
             )}
-            {(patient.allergies as string[]).length === 0 &&
-              (patient.chronicConditions as string[]).length === 0 && (
+            {(patient.allergies).length === 0 &&
+              (patient.chronicConditions).length === 0 && (
               <p className="text-body-sm" style={{ color: 'var(--color-n-400)' }}>
                 Sin antecedentes registrados.
               </p>

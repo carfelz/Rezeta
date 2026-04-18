@@ -29,6 +29,6 @@ const router = createBrowserRouter([
   },
 ])
 
-export function App() {
+export function App(): JSX.Element {
   return <RouterProvider router={router} />
 }

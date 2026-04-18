@@ -11,7 +11,7 @@ function initials(name: string): string {
     .toUpperCase()
 }
 
-export function Topbar() {
+export function Topbar(): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const { user } = useAuth()
 

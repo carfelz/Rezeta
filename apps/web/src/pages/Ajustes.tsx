@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 
-export function Ajustes() {
+export function Ajustes(): JSX.Element {
   const { user } = useAuth()
 
   async function handleSignOut() {
@@ -41,7 +41,7 @@ export function Ajustes() {
         </div>
       )}
 
-      <button className="btn btn--danger" onClick={handleSignOut}>
+      <button className="btn btn--danger" onClick={() => { void handleSignOut() }}>
         <i className="ph ph-sign-out" />
         Cerrar sesión
       </button>

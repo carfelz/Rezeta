@@ -15,7 +15,7 @@ const STUB_USER: AuthUser = {
   licenseNumber: 'CMP-12345',
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const { setUser, setLoading } = useAuthStore()
 
   useEffect(() => {
@@ -39,21 +39,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (!firebaseUser) {
-          setUser(null)
-          setLoading(false)
-          return
-        }
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        void (async () => {
+          if (!firebaseUser) {
+            setUser(null)
+            setLoading(false)
+            return
+          }
 
-        try {
-          const user = await apiClient.get<AuthUser>('/v1/me')
-          setUser(user)
-        } catch {
-          setUser(null)
-        } finally {
-          setLoading(false)
-        }
+          try {
+            const user = await apiClient.get<AuthUser>('/v1/me')
+            setUser(user)
+          } catch {
+            setUser(null)
+          } finally {
+            setLoading(false)
+          }
+        })()
       })
     }
 

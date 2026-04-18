@@ -1,4 +1,4 @@
-export function Protocolos() {
+export function Protocolos(): JSX.Element {
   return (
     <div>
       <div className="row" style={{ marginBottom: 'var(--space-6)', gap: 'var(--space-4)' }}>

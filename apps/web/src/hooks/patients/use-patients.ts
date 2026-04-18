@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import type { Patient } from '@rezeta/shared'
 import type { CreatePatientDto, UpdatePatientDto } from '@rezeta/shared'
@@ -16,7 +17,7 @@ interface PatientListParams {
 
 const PATIENTS_KEY = 'patients'
 
-export function usePatients(params?: PatientListParams) {
+export function usePatients(params?: PatientListParams): UseQueryResult<PatientListResponse, Error> {
   const searchParams = new URLSearchParams()
   if (params?.search) searchParams.set('search', params.search)
   if (params?.cursor) searchParams.set('cursor', params.cursor)
@@ -28,7 +29,7 @@ export function usePatients(params?: PatientListParams) {
   })
 }
 
-export function usePatient(id: string) {
+export function usePatient(id: string): UseQueryResult<Patient, Error> {
   return useQuery({
     queryKey: [PATIENTS_KEY, id],
     queryFn: () => apiClient.get<Patient>(`/v1/patients/${id}`),
@@ -36,7 +37,7 @@ export function usePatient(id: string) {
   })
 }
 
-export function useCreatePatient() {
+export function useCreatePatient(): UseMutationResult<Patient, Error, CreatePatientDto> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: CreatePatientDto) => apiClient.post<Patient>('/v1/patients', dto),
@@ -44,7 +45,7 @@ export function useCreatePatient() {
   })
 }
 
-export function useUpdatePatient(id: string) {
+export function useUpdatePatient(id: string): UseMutationResult<Patient, Error, UpdatePatientDto> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: UpdatePatientDto) => apiClient.patch<Patient>(`/v1/patients/${id}`, dto),
@@ -52,7 +53,7 @@ export function useUpdatePatient(id: string) {
   })
 }
 
-export function useDeletePatient() {
+export function useDeletePatient(): UseMutationResult<void, Error, string> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/v1/patients/${id}`),

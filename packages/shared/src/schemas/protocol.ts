@@ -39,7 +39,7 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       title: z.string().min(1),
       description: z.string().optional(),
       collapsed_by_default: z.boolean().optional(),
-      blocks: z.array(ProtocolBlockSchema as z.ZodType<unknown>),
+      blocks: z.array(ProtocolBlockSchema),
     }),
     BaseBlockSchema.extend({ type: z.literal('text'), content: z.string() }),
     BaseBlockSchema.extend({
@@ -75,7 +75,7 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
 export const ProtocolContentSchema = z.object({
   version: z.string(),
   template_version: z.string().optional(),
-  blocks: z.array(ProtocolBlockSchema as z.ZodType<unknown>),
+  blocks: z.array(ProtocolBlockSchema),
 })
 
 export const CreateProtocolSchema = z.object({

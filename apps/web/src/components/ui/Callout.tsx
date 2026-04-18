@@ -26,7 +26,7 @@ export interface CalloutProps extends VariantProps<typeof calloutVariants> {
   className?: string
 }
 
-export function Callout({ variant, icon, title, children, className }: CalloutProps) {
+export function Callout({ variant, icon, title, children, className }: CalloutProps): JSX.Element {
   return (
     <div className={clsx(calloutVariants({ variant }), className)}>
       {icon && (
