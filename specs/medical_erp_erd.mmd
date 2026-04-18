@@ -1,0 +1,282 @@
+erDiagram
+  TENANT ||--o{ USER : has
+  TENANT ||--o{ LOCATION : has
+  TENANT ||--o{ PATIENT : has
+  TENANT ||--o{ PROTOCOL_TEMPLATE : owns
+  TENANT ||--o{ PROTOCOL : owns
+
+  USER ||--o{ DOCTOR_LOCATION : works_at
+  LOCATION ||--o{ DOCTOR_LOCATION : hosts
+  USER ||--o{ SCHEDULE_BLOCK : defines
+  LOCATION ||--o{ SCHEDULE_BLOCK : at
+  USER ||--o{ SCHEDULE_EXCEPTION : has
+  LOCATION ||--o{ SCHEDULE_EXCEPTION : at
+
+  USER ||--o{ PATIENT : owns
+  PATIENT ||--o{ APPOINTMENT : books
+  USER ||--o{ APPOINTMENT : attends
+  LOCATION ||--o{ APPOINTMENT : at
+  APPOINTMENT ||--o| CONSULTATION : becomes
+  PATIENT ||--o{ CONSULTATION : has
+  USER ||--o{ CONSULTATION : signs
+  LOCATION ||--o{ CONSULTATION : at
+  CONSULTATION ||--o{ CONSULTATION_AMENDMENT : corrected_by
+  CONSULTATION ||--o{ PRESCRIPTION : issues
+  CONSULTATION ||--o| INVOICE : generates
+  PATIENT ||--o{ INVOICE : billed_to
+  LOCATION ||--o{ INVOICE : at
+  INVOICE ||--o{ INVOICE_ITEM : contains
+
+  PROTOCOL_TEMPLATE ||--o{ PROTOCOL : instance_of
+  PROTOCOL ||--o{ PROTOCOL_VERSION : versioned_by
+  PROTOCOL ||--o{ PROTOCOL : forked_from
+  PROTOCOL ||--o{ PROTOCOL_USAGE : tracked_by
+  PROTOCOL_VERSION ||--o{ PROTOCOL_USAGE : applied_as
+  USER ||--o{ PROTOCOL_USAGE : applied_by
+  PATIENT ||--o{ PROTOCOL_USAGE : applied_to
+  CONSULTATION ||--o{ PROTOCOL_USAGE : during
+
+  TENANT {
+    uuid id PK
+    string name
+    string type
+    string plan
+    string country
+    string language
+    string timezone
+    timestamp created_at
+  }
+
+  USER {
+    uuid id PK
+    uuid tenant_id FK
+    string email
+    string password_hash
+    string full_name
+    string role
+    string specialty
+    string license_number
+    boolean is_active
+    timestamp created_at
+  }
+
+  LOCATION {
+    uuid id PK
+    uuid tenant_id FK
+    string name
+    string address
+    string city
+    string phone
+    boolean is_owned
+    text notes
+  }
+
+  DOCTOR_LOCATION {
+    uuid id PK
+    uuid user_id FK
+    uuid location_id FK
+    decimal consultation_fee
+    decimal commission_pct
+    string room_or_office
+  }
+
+  SCHEDULE_BLOCK {
+    uuid id PK
+    uuid user_id FK
+    uuid location_id FK
+    int day_of_week
+    time start_time
+    time end_time
+    int slot_duration_min
+  }
+
+  SCHEDULE_EXCEPTION {
+    uuid id PK
+    uuid user_id FK
+    uuid location_id FK
+    date date
+    time start_time
+    time end_time
+    string type
+    string reason
+  }
+
+  PATIENT {
+    uuid id PK
+    uuid tenant_id FK
+    uuid owner_user_id FK
+    string document_type
+    string document_number
+    string first_name
+    string last_name
+    date date_of_birth
+    string sex
+    string phone
+    string email
+    string address
+    string blood_type
+    jsonb allergies
+    jsonb chronic_conditions
+    text notes
+  }
+
+  APPOINTMENT {
+    uuid id PK
+    uuid tenant_id FK
+    uuid patient_id FK
+    uuid user_id FK
+    uuid location_id FK
+    timestamp starts_at
+    timestamp ends_at
+    string status
+    string reason
+    text notes
+  }
+
+  CONSULTATION {
+    uuid id PK
+    uuid tenant_id FK
+    uuid appointment_id FK
+    uuid patient_id FK
+    uuid user_id FK
+    uuid location_id FK
+    string status
+    timestamp signed_at
+    uuid signed_by FK
+    string content_hash
+    text chief_complaint
+    text subjective
+    text objective
+    text assessment
+    text plan
+    jsonb vitals
+    jsonb diagnoses
+    timestamp consulted_at
+  }
+
+  CONSULTATION_AMENDMENT {
+    uuid id PK
+    uuid consultation_id FK
+    int amendment_number
+    string reason
+    jsonb content
+    uuid amended_by FK
+    timestamp amended_at
+    timestamp signed_at
+  }
+
+  PRESCRIPTION {
+    uuid id PK
+    uuid consultation_id FK
+    uuid patient_id FK
+    uuid user_id FK
+    jsonb items
+    string status
+    timestamp signed_at
+    string pdf_url
+  }
+
+  INVOICE {
+    uuid id PK
+    uuid tenant_id FK
+    uuid patient_id FK
+    uuid consultation_id FK
+    uuid location_id FK
+    uuid user_id FK
+    string invoice_number
+    timestamp issued_at
+    date due_date
+    decimal subtotal
+    decimal tax
+    decimal total
+    decimal commission_amount
+    decimal net_to_doctor
+    string status
+    string payment_method
+  }
+
+  INVOICE_ITEM {
+    uuid id PK
+    uuid invoice_id FK
+    string description
+    int quantity
+    decimal unit_price
+    decimal total
+  }
+
+  PROTOCOL_TEMPLATE {
+    uuid id PK
+    uuid tenant_id FK
+    string name
+    string description
+    string specialty
+    string category
+    string icon
+    string color
+    jsonb schema
+    boolean is_system
+    uuid created_by FK
+  }
+
+  PROTOCOL {
+    uuid id PK
+    uuid tenant_id FK
+    uuid template_id FK
+    uuid original_protocol_id FK
+    string title
+    string specialty
+    jsonb tags
+    string visibility
+    string status
+    uuid current_version_id FK
+    uuid created_by FK
+  }
+
+  PROTOCOL_VERSION {
+    uuid id PK
+    uuid protocol_id FK
+    int version_number
+    jsonb content
+    string change_summary
+    uuid approved_by FK
+    timestamp approved_at
+    uuid created_by FK
+  }
+
+  PROTOCOL_USAGE {
+    uuid id PK
+    uuid tenant_id FK
+    uuid protocol_id FK
+    uuid protocol_version_id FK
+    uuid user_id FK
+    uuid patient_id FK
+    uuid consultation_id FK
+    timestamp applied_at
+    text notes
+  }
+
+  AUDIT_LOG {
+    uuid id PK
+    uuid tenant_id FK
+    uuid user_id FK
+    string entity_type
+    uuid entity_id
+    string action
+    jsonb changes
+    string ip_address
+    string user_agent
+    timestamp created_at
+  }
+
+  ATTACHMENT {
+    uuid id PK
+    uuid tenant_id FK
+    string entity_type
+    uuid entity_id
+    string file_url
+    string file_name
+    string mime_type
+    int size_bytes
+    uuid uploaded_by FK
+    timestamp created_at
+  }

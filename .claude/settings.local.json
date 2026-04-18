@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/**)",
+      "Bash(mkdir -p medical_design)",
+      "Bash(gunzip)",
+      "Bash(tar -x -C /tmp/medical_design)",
+      "Read(//tmp/medical_design/medical-app/**)",
+      "Read(//tmp/medical_design/medical-app/project/**)",
+      "mcp__plugin_figma_figma__create_new_file",
+      "Bash(npx --yes pageres --version)",
+      "Bash(node -e \"require\\('puppeteer'\\)\")",
+      "Bash(node *)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --no-sandbox --disable-gpu --screenshot=/tmp/design-system-reference.png --window-size=1440,900 --force-device-scale-factor=2 http://localhost:8080/reference.html)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --no-sandbox --disable-gpu --screenshot=/tmp/design-system-ref-tall.png --window-size=1440,12000 http://localhost:8080/reference.html)",
+      "mcp__plugin_figma_figma__generate_figma_design",
+      "Bash(open *)",
+      "mcp__plugin_figma_figma__get_screenshot",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(gunzip -c \"/Users/carlosfeliz/.claude/projects/-Users-carlosfeliz-code-medical-app/3a9e7e08-97bd-48f2-a13c-5ae98019aca5/tool-results/webfetch-1776527987754-k8m0wg.bin\")",
+      "Bash(tar -x -O \"medical-app/chats/chat2.md\")",
+      "Bash(tar -t)",
+      "Bash(tar -x -O \"medical-app/project/Medical ERP App.html\" wc -l /tmp/medical_erp_app.html)",
+      "Bash(pnpm --version)",
+      "Bash(pnpm install *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

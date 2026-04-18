@@ -1,0 +1,2030 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+<title>Medical ERP — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  :root {
+    /* ============ NEUTRALS (cool, true grey with a hair of warmth at the light end) ============ */
+    --n-0:   #FFFFFF;
+    --n-25:  #FAFAF7;   /* paper — app background */
+    --n-50:  #F4F4F0;   /* subtle rows */
+    --n-100: #EBEBE6;   /* borders-soft */
+    --n-200: #D8D8D2;   /* borders */
+    --n-300: #B9B9B3;   /* dividers-strong */
+    --n-400: #8E8E88;   /* muted text */
+    --n-500: #6B6B66;   /* secondary text */
+    --n-600: #4A4A46;   /* body */
+    --n-700: #2E2E2B;   /* heading */
+    --n-800: #1C1C1A;   /* strong heading */
+    --n-900: #0E0E0D;   /* max contrast */
+
+    /* ============ PRIMARY — deep teal-slate. Trustworthy, not tech-SaaS blue, not clinical green. ============ */
+    --p-50:  #EAF0F1;
+    --p-100: #C9D7DA;
+    --p-300: #6A8B91;
+    --p-500: #2D5760;   /* brand anchor */
+    --p-700: #1B3A41;
+    --p-900: #0E2429;
+
+    /* ============ SEMANTIC — muted, serious ============ */
+    --ok-bg:   #EDF3EC; --ok-border:  #B8CFB2; --ok-text:  #2F5C28;
+    --warn-bg: #F7F1E3; --warn-border:#DCC89A; --warn-text:#6E5319;
+    --err-bg:  #F6EAE8; --err-border: #D9B4AE; --err-text: #7A2B22;
+    --info-bg: #ECF0F3; --info-border:#B8C6D0; --info-text:#2B435A;
+
+    /* ============ RADIUS — restrained ============ */
+    --r-sm: 3px;
+    --r-md: 5px;
+    --r-lg: 8px;
+
+    /* ============ TYPE ============ */
+    --serif: "Source Serif 4", ui-serif, Georgia, serif;
+    --sans:  "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono:  "IBM Plex Mono", ui-monospace, monospace;
+
+    /* ============ SHADOWS — used sparingly; borders do most of the work ============ */
+    --e-flat: none;
+    --e-raised: 0 1px 0 rgba(14,14,13,0.04), 0 1px 2px rgba(14,14,13,0.04);
+    --e-floating: 0 1px 0 rgba(14,14,13,0.04), 0 8px 24px -8px rgba(14,14,13,0.12), 0 2px 6px rgba(14,14,13,0.06);
+
+    /* spacing base = 4px */
+    --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+    --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--n-700);
+    background: var(--n-25);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* page frame */
+  .page { max-width: 1440px; margin: 0 auto; padding: 56px 48px 96px; }
+
+  /* anchor rule — the signature element */
+  .anchor-rule { position: relative; padding-left: 16px; }
+  .anchor-rule::before {
+    content: "";
+    position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 2px; background: var(--p-500);
+  }
+
+  /* section header */
+  .section { margin-top: 88px; }
+  .section:first-of-type { margin-top: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--n-200); margin-bottom: 32px;}
+  .section-kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--n-400);
+  }
+  .section-title {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 34px; line-height: 1.15; letter-spacing: -0.01em;
+    color: var(--n-800); margin: 0;
+  }
+
+  .subsection { margin-top: 40px; }
+  .subsection-title {
+    font-family: var(--sans); font-weight: 600; font-size: 13px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--n-700); margin: 0 0 16px;
+  }
+  .subsection-note {
+    font-family: var(--sans); font-size: 13px; color: var(--n-500);
+    max-width: 640px; margin: 0 0 20px;
+  }
+
+  code.tk { font-family: var(--mono); font-size: 11.5px; color: var(--n-500); }
+  .hex { font-family: var(--mono); font-size: 11.5px; color: var(--n-600); }
+
+  /* ============ HERO / QUICK REFERENCE ============ */
+  .hero {
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: 0;
+    border: 1px solid var(--n-200); background: var(--n-0);
+  }
+  .hero-left { padding: 44px 48px; border-right: 1px solid var(--n-200); }
+  .hero-tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--p-500); margin-bottom: 20px;
+  }
+  .hero-title {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 54px; line-height: 1.05; letter-spacing: -0.02em;
+    color: var(--n-900); margin: 0 0 20px;
+  }
+  .hero-title em { font-style: italic; color: var(--p-500); font-weight: 400; }
+  .hero-sub {
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    color: var(--n-600); max-width: 48ch; margin: 0;
+  }
+  .hero-right { padding: 36px 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 32px; align-content: start; }
+  .qr-item { border-top: 1px solid var(--n-200); padding-top: 10px; }
+  .qr-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--n-400); margin-bottom: 4px;}
+  .qr-value { font-family: var(--sans); font-size: 13px; color: var(--n-800); font-weight: 500;}
+  .qr-value .swatch-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 6px; transform: translateY(-1px);}
+
+  /* ============ COLOR ============ */
+  .ramp { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+  .ramp.primary { grid-template-columns: repeat(5, 1fr); max-width: 720px; }
+  .swatch {
+    aspect-ratio: 1/1.2; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;
+    font-family: var(--mono); font-size: 10.5px;
+  }
+  .swatch .t { font-weight: 500; }
+  .swatch .b { display: flex; flex-direction: column; gap: 2px; line-height: 1.35;}
+  .swatch .b span { display: block; }
+  .swatch .ratio { color: inherit; opacity: 0.75; }
+
+  /* semantic callouts */
+  .semantic-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .callout {
+    display: flex; gap: 12px; padding: 14px 16px;
+    border: 1px solid; border-radius: var(--r-md);
+  }
+  .callout i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { font-size: 13px; line-height: 1.45; }
+  .callout-title { font-weight: 600; margin-bottom: 2px; font-size: 13px; }
+  .c-ok   { background: var(--ok-bg);   border-color: var(--ok-border);   color: var(--ok-text); }
+  .c-warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  .c-err  { background: var(--err-bg);  border-color: var(--err-border);  color: var(--err-text); }
+  .c-info { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+
+  .semantic-tokens {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px;
+  }
+  .sem-card { border: 1px solid var(--n-200); background: var(--n-0); padding: 14px 16px; }
+  .sem-card h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; color: var(--n-700);}
+  .sem-row { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--n-600); padding: 3px 0;}
+  .sem-row .sq { width: 14px; height: 14px; border: 1px solid var(--n-200); border-radius: 2px; flex-shrink: 0;}
+
+  /* ============ TYPE ============ */
+  .type-row {
+    display: grid; grid-template-columns: 140px 1fr 180px;
+    align-items: baseline; gap: 24px;
+    padding: 20px 0; border-bottom: 1px dashed var(--n-100);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta { font-family: var(--mono); font-size: 11px; color: var(--n-400); line-height: 1.5;}
+  .type-meta strong { display: block; color: var(--n-700); font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px;}
+  .type-specs { font-family: var(--mono); font-size: 11px; color: var(--n-400); text-align: right; line-height: 1.6;}
+
+  .t-display { font-family: var(--serif); font-weight: 500; font-size: 56px; line-height: 1.05; letter-spacing: -0.02em; color: var(--n-900);}
+  .t-h1 { font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 1.1; letter-spacing: -0.015em; color: var(--n-900);}
+  .t-h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 1.2; letter-spacing: -0.01em; color: var(--n-800);}
+  .t-h3 { font-family: var(--sans);  font-weight: 600; font-size: 18px; line-height: 1.35; letter-spacing: -0.005em; color: var(--n-800);}
+  .t-bodylg { font-family: var(--sans); font-weight: 400; font-size: 16px; line-height: 1.55; color: var(--n-700);}
+  .t-body { font-family: var(--sans); font-weight: 400; font-size: 14px; line-height: 1.55; color: var(--n-700);}
+  .t-bodysm { font-family: var(--sans); font-weight: 400; font-size: 13px; line-height: 1.5; color: var(--n-600);}
+  .t-caption { font-family: var(--sans); font-weight: 500; font-size: 12px; line-height: 1.4; color: var(--n-500);}
+  .t-overline { font-family: var(--mono); font-weight: 500; font-size: 11px; line-height: 1.4; letter-spacing: 0.1em; text-transform: uppercase; color: var(--n-500);}
+
+  .specimen-font {
+    border: 1px solid var(--n-200); background: var(--n-0); padding: 32px 36px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  }
+  .specimen-font .glyph-serif { font-family: var(--serif); font-weight: 500; font-size: 96px; line-height: 1; color: var(--n-900); letter-spacing: -0.03em;}
+  .specimen-font .glyph-sans  { font-family: var(--sans);  font-weight: 500; font-size: 96px; line-height: 1; color: var(--n-900); letter-spacing: -0.02em;}
+  .glyph-label { font-family: var(--mono); font-size: 11px; color: var(--n-500); margin-top: 18px;}
+  .glyph-label b { color: var(--n-800); font-family: var(--sans); font-weight: 600; font-size: 12px; display: block; margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase;}
+
+  /* ============ SPACING ============ */
+  .spacing-grid { display: grid; grid-template-columns: 120px 1fr 100px; gap: 0 20px; }
+  .spacing-row { display: contents; }
+  .spacing-row > * { padding: 10px 0; border-bottom: 1px solid var(--n-100);}
+  .sp-bar { height: 12px; background: var(--p-500); display: block; }
+
+  .radius-row { display: flex; gap: 24px; }
+  .radius-item { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .radius-box { width: 80px; height: 80px; background: var(--p-50); border: 1px solid var(--p-100); }
+  .radius-meta { font-family: var(--mono); font-size: 11px; color: var(--n-500);}
+  .radius-meta b { display: block; color: var(--n-800); font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px;}
+
+  .borders-row { display: flex; gap: 20px; align-items: flex-end; }
+  .border-item { display: flex; flex-direction: column; gap: 8px; }
+  .border-box { width: 120px; height: 80px; background: var(--n-0); border-style: solid; border-color: var(--n-800); }
+  .border-meta { font-family: var(--mono); font-size: 11px; color: var(--n-500); }
+  .border-meta b { display: block; color: var(--n-800); font-family: var(--sans); font-size: 12px; font-weight: 600; margin-bottom: 2px;}
+
+  /* ============ ELEVATION ============ */
+  .elevation-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .elev-card { padding: 24px; background: var(--n-0); border-radius: var(--r-md);}
+  .elev-flat { border: 1px solid var(--n-200); box-shadow: var(--e-flat); }
+  .elev-raised { border: 1px solid var(--n-200); box-shadow: var(--e-raised); }
+  .elev-floating { border: 1px solid var(--n-200); box-shadow: var(--e-floating); }
+  .elev-title { font-family: var(--sans); font-weight: 600; font-size: 14px; color: var(--n-800); margin-bottom: 4px;}
+  .elev-desc { font-family: var(--sans); font-size: 12.5px; color: var(--n-500); line-height: 1.5;}
+  .elev-meta { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--n-100); font-family: var(--mono); font-size: 10.5px; color: var(--n-400); line-height: 1.5;}
+
+  /* ============ ICONS ============ */
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px;
+    background: var(--n-200); border: 1px solid var(--n-200);
+  }
+  .icon-cell { background: var(--n-0); padding: 20px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px;}
+  .icon-cell i { font-size: 22px; color: var(--n-700);}
+  .icon-cell span { font-family: var(--mono); font-size: 10.5px; color: var(--n-500);}
+
+  /* ============ COMPONENTS: BUTTONS ============ */
+  .btn {
+    font-family: var(--sans); font-weight: 500; font-size: 13px; line-height: 1;
+    border-radius: var(--r-sm); cursor: pointer; transition: background .1s ease, border-color .1s ease, color .1s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid transparent; padding: 0 14px; height: 32px;
+    white-space: nowrap;
+  }
+  .btn i { font-size: 15px; }
+  .btn.sz-sm { height: 28px; font-size: 12.5px; padding: 0 10px; }
+  .btn.sz-lg { height: 40px; font-size: 14px; padding: 0 18px; }
+  .btn.icon-only { padding: 0; width: 32px; }
+  .btn.icon-only.sz-sm { width: 28px; }
+  .btn.icon-only.sz-lg { width: 40px; }
+
+  .btn-primary { background: var(--p-500); color: #fff; border-color: var(--p-500);}
+  .btn-primary.hover { background: var(--p-700); border-color: var(--p-700);}
+  .btn-primary.active { background: var(--p-900); border-color: var(--p-900);}
+  .btn-primary.focus { box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-300);}
+  .btn-primary.disabled { background: var(--n-200); border-color: var(--n-200); color: var(--n-400); cursor: not-allowed;}
+
+  .btn-secondary { background: var(--n-0); color: var(--n-800); border-color: var(--n-300);}
+  .btn-secondary.hover { background: var(--n-50); border-color: var(--n-400);}
+  .btn-secondary.active { background: var(--n-100);}
+  .btn-secondary.focus { box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-300);}
+  .btn-secondary.disabled { background: var(--n-25); color: var(--n-400); border-color: var(--n-200); cursor: not-allowed;}
+
+  .btn-ghost { background: transparent; color: var(--n-700); border-color: transparent;}
+  .btn-ghost.hover { background: var(--n-100);}
+  .btn-ghost.active { background: var(--n-200);}
+  .btn-ghost.focus { box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--p-300);}
+  .btn-ghost.disabled { color: var(--n-300); cursor: not-allowed;}
+
+  .btn-danger { background: #8C2A20; color: #fff; border-color: #8C2A20;}
+  .btn-danger.hover { background: #6E2018;}
+  .btn-danger.active { background: #52170F;}
+  .btn-danger.focus { box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px #D9B4AE;}
+
+  .btn-grid { display: grid; grid-template-columns: 140px repeat(5, 1fr); gap: 16px; align-items: center;}
+  .btn-grid .row-label { font-family: var(--mono); font-size: 11px; color: var(--n-500); text-transform: uppercase; letter-spacing: 0.08em;}
+  .btn-grid .col-label { font-family: var(--mono); font-size: 10.5px; color: var(--n-400); text-align: center; letter-spacing: 0.08em; text-transform: uppercase; padding-bottom: 4px;}
+  .btn-cell { display: flex; justify-content: center; }
+
+  /* ============ FORMS ============ */
+  .input {
+    font-family: var(--sans); font-size: 13px; color: var(--n-800);
+    height: 34px; padding: 0 12px;
+    background: var(--n-0);
+    border: 1px solid var(--n-300); border-radius: var(--r-sm);
+    width: 100%;
+  }
+  .input::placeholder { color: var(--n-400); }
+  .input:focus { outline: none; border-color: var(--p-500); box-shadow: 0 0 0 3px rgba(45,87,96,0.12);}
+  .input.err { border-color: #8C2A20; }
+  .input:disabled, .input.disabled {
+    background: var(--n-50); color: var(--n-400); border-color: var(--n-200);
+    cursor: not-allowed;
+  }
+  .input.readonly {
+    background: var(--n-25); color: var(--n-700); border-color: var(--n-200);
+    cursor: default;
+  }
+  textarea.input { height: auto; padding: 10px 12px; resize: vertical; }
+
+  /* ============ INPUT GROUPS · adornments + icons ============ */
+  .input-group {
+    position: relative; display: flex; align-items: stretch;
+    border: 1px solid var(--n-300); border-radius: var(--r-sm);
+    background: var(--n-0); transition: border-color .1s, box-shadow .1s;
+  }
+  .input-group:focus-within { border-color: var(--p-500); box-shadow: 0 0 0 3px rgba(45,87,96,0.12);}
+  .input-group.err { border-color: #8C2A20; }
+  .input-group.disabled { background: var(--n-50); border-color: var(--n-200);}
+  .input-group .input {
+    border: none; background: transparent; box-shadow: none !important;
+    flex: 1; min-width: 0; padding: 0 10px;
+  }
+  .input-group .input:focus { border: none; box-shadow: none;}
+  .input-group .adorn {
+    display: inline-flex; align-items: center; padding: 0 10px;
+    font-family: var(--mono); font-size: 12px; color: var(--n-500);
+    background: var(--n-50); border-left: 1px solid var(--n-200);
+    user-select: none;
+  }
+  .input-group .adorn.leading {
+    border-left: none; border-right: 1px solid var(--n-200);
+  }
+  .input-group .adorn.plain {
+    background: transparent; border: none; color: var(--n-400);
+  }
+  .input-group .icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; color: var(--n-400); font-size: 16px; flex-shrink: 0;
+  }
+  .input-group .icon.trailing { margin-right: 2px; }
+  .input-group .icon.leading  { margin-left: 2px; }
+  .input-group .icon.btn-action {
+    color: var(--n-500); cursor: pointer; border-radius: 3px;
+  }
+  .input-group .icon.btn-action:hover { color: var(--n-800); background: var(--n-50);}
+  .input-group.disabled .icon, .input-group.disabled .adorn { color: var(--n-400); background: var(--n-50);}
+  select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--n-500) 50%), linear-gradient(135deg, var(--n-500) 50%, transparent 50%); background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-family: var(--sans); font-weight: 500; font-size: 12.5px; color: var(--n-700); }
+  .field .helper { font-family: var(--sans); font-size: 11.5px; color: var(--n-500); }
+  .field .error { font-family: var(--sans); font-size: 11.5px; color: #8C2A20; display: flex; align-items: center; gap: 4px;}
+  .field .required { color: #8C2A20; margin-left: 2px;}
+
+  .check { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); font-size: 13px; color: var(--n-700); cursor: pointer; user-select: none;}
+  .check .box {
+    width: 16px; height: 16px; border: 1px solid var(--n-400); border-radius: 3px; background: var(--n-0);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .check.checked .box { background: var(--p-500); border-color: var(--p-500);}
+  .check.checked .box::after { content: ""; width: 8px; height: 4px; border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: rotate(-45deg) translate(1px, -1px);}
+  .check.indeterminate .box { background: var(--p-500); border-color: var(--p-500);}
+  .check.indeterminate .box::after { content: ""; width: 8px; height: 2px; background: #fff;}
+
+  .radio { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); font-size: 13px; color: var(--n-700); cursor: pointer; user-select: none;}
+  .radio .dot { width: 16px; height: 16px; border: 1px solid var(--n-400); border-radius: 50%; background: var(--n-0); display: inline-flex; align-items: center; justify-content: center;}
+  .radio.checked .dot { border-color: var(--p-500);}
+  .radio.checked .dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--p-500);}
+
+  .toggle { display: inline-flex; align-items: center; gap: 10px; font-family: var(--sans); font-size: 13px; color: var(--n-700); cursor: pointer;}
+  .toggle .track { width: 30px; height: 18px; background: var(--n-300); border-radius: 999px; position: relative; transition: background .1s;}
+  .toggle .track::after { content: ""; width: 14px; height: 14px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left .1s;}
+  .toggle.on .track { background: var(--p-500); }
+  .toggle.on .track::after { left: 14px;}
+
+  /* ============ CARDS ============ */
+  .card {
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    padding: 20px;
+  }
+  .card-title { font-family: var(--sans); font-weight: 600; font-size: 14px; color: var(--n-800); margin: 0 0 4px;}
+  .card-sub { font-family: var(--sans); font-size: 12.5px; color: var(--n-500); margin: 0;}
+
+  .card-list-item {
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-sm);
+    padding: 14px 16px 14px 18px; position: relative;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--p-50); color: var(--p-700);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-weight: 600; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .li-main { flex: 1; min-width: 0;}
+  .li-name { font-family: var(--sans); font-weight: 600; font-size: 13.5px; color: var(--n-800);}
+  .li-meta { font-family: var(--sans); font-size: 12px; color: var(--n-500); margin-top: 2px;}
+
+  .card-selected {
+    background: var(--n-0); border: 1px solid var(--p-500); border-radius: var(--r-md);
+    padding: 20px; position: relative;
+  }
+  .card-selected::before { content: ""; position: absolute; left: -1px; top: 12px; bottom: 12px; width: 3px; background: var(--p-500); border-radius: 2px;}
+
+  /* ============ TABLE ============ */
+  .tbl {
+    width: 100%; border-collapse: collapse;
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .tbl th, .tbl td { padding: 12px 16px; text-align: left; font-size: 13px;}
+  .tbl thead th {
+    background: var(--n-50); border-bottom: 1px solid var(--n-200);
+    font-family: var(--sans); font-weight: 600; font-size: 11.5px; color: var(--n-600);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .tbl tbody tr { border-bottom: 1px solid var(--n-100);}
+  .tbl tbody tr:last-child { border-bottom: none;}
+  .tbl tbody tr:hover { background: var(--n-25);}
+  .tbl td.name { font-weight: 600; color: var(--n-800);}
+  .tbl td.mono { font-family: var(--mono); font-size: 12px; color: var(--n-600);}
+
+  /* ============ BADGES ============ */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--sans); font-weight: 500; font-size: 11.5px; line-height: 1;
+    padding: 4px 8px; border-radius: 3px; border: 1px solid;
+    letter-spacing: 0.02em;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%;}
+  .b-draft   { background: var(--n-50);  border-color: var(--n-200); color: var(--n-600);}
+  .b-draft .dot { background: var(--n-400);}
+  .b-active  { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text);}
+  .b-active .dot { background: var(--ok-text);}
+  .b-signed  { background: var(--p-50); border-color: var(--p-100); color: var(--p-700);}
+  .b-signed .dot { background: var(--p-500);}
+  .b-review  { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text);}
+  .b-review .dot { background: var(--warn-text);}
+  .b-archive { background: var(--n-50); border-color: var(--n-200); color: var(--n-500);}
+  .b-archive .dot { background: var(--n-400);}
+  .b-paid    { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text);}
+  .b-paid .dot { background: var(--ok-text);}
+  .b-overdue { background: var(--err-bg); border-color: var(--err-border); color: var(--err-text);}
+  .b-overdue .dot { background: var(--err-text);}
+
+  /* ============ TABS ============ */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--n-200);}
+  .tab {
+    font-family: var(--sans); font-weight: 500; font-size: 13px; color: var(--n-500);
+    padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--n-800);}
+  .tab.active { color: var(--n-900); border-bottom-color: var(--p-500);}
+  .tab .count { font-family: var(--mono); font-size: 11px; color: var(--n-400); margin-left: 6px;}
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: 240px; background: var(--n-25); border: 1px solid var(--n-200);
+    padding: 20px 0 16px; display: flex; flex-direction: column; gap: 4px;
+    min-height: 560px;
+  }
+  .sb-brand { padding: 0 20px 22px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--n-100); margin-bottom: 14px;}
+  .sb-logo {
+    width: 28px; height: 28px; background: var(--p-500); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-weight: 500; color: #fff; font-size: 16px;
+  }
+  .sb-brand-name { font-family: var(--serif); font-weight: 500; font-size: 18px; color: var(--n-900); letter-spacing: -0.01em;}
+  .sb-section-label { padding: 14px 20px 6px; font-family: var(--mono); font-size: 10px; color: var(--n-400); letter-spacing: 0.12em; text-transform: uppercase;}
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 20px; font-family: var(--sans); font-size: 13px; color: var(--n-600);
+    cursor: pointer; position: relative;
+  }
+  .sb-item i { font-size: 16px; color: var(--n-500);}
+  .sb-item:hover { background: var(--n-50); color: var(--n-800);}
+  .sb-item.active { color: var(--n-900); background: var(--n-0); font-weight: 500;}
+  .sb-item.active::before {
+    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px;
+    width: 2px; background: var(--p-500);
+  }
+  .sb-item.active i { color: var(--p-500);}
+  .sb-item .count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--n-400);}
+
+  .sb-footer { margin-top: auto; padding: 12px 14px 0; border-top: 1px solid var(--n-100);}
+  .sb-user { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 4px; cursor: pointer;}
+  .sb-user:hover { background: var(--n-50);}
+  .sb-user-info { flex: 1; min-width: 0;}
+  .sb-user-name { font-family: var(--sans); font-weight: 600; font-size: 12.5px; color: var(--n-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+  .sb-user-role { font-family: var(--sans); font-size: 11px; color: var(--n-500);}
+
+  /* ============ TOPBAR ============ */
+  .topbar {
+    background: var(--n-0); border: 1px solid var(--n-200);
+    height: 56px; display: flex; align-items: center; padding: 0 20px; gap: 16px;
+  }
+  .loc-switcher { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--n-200); border-radius: var(--r-sm); cursor: pointer; background: var(--n-0);}
+  .loc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--p-500);}
+  .loc-text { font-family: var(--sans); font-size: 13px; color: var(--n-800); font-weight: 500;}
+  .loc-sub { font-family: var(--sans); font-size: 12px; color: var(--n-500); margin-left: 4px;}
+  .tb-search {
+    flex: 1; max-width: 480px; position: relative;
+  }
+  .tb-search .input { padding-left: 34px;}
+  .tb-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--n-400); font-size: 16px;}
+  .tb-search kbd { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 10px; color: var(--n-500); border: 1px solid var(--n-200); padding: 2px 5px; border-radius: 3px; background: var(--n-25);}
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 14px;}
+  .tb-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm); color: var(--n-600); cursor: pointer; position: relative;}
+  .tb-icon:hover { background: var(--n-50); color: var(--n-800);}
+  .tb-icon .badge-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: #8C2A20; border-radius: 50%; border: 1.5px solid var(--n-0);}
+  .tb-doctor { display: flex; align-items: center; gap: 10px; padding-left: 14px; border-left: 1px solid var(--n-200); cursor: pointer;}
+  .tb-doctor-name { font-family: var(--sans); font-weight: 600; font-size: 12.5px; color: var(--n-800);}
+  .tb-doctor-role { font-family: var(--sans); font-size: 11.5px; color: var(--n-500);}
+
+  /* ============ MODAL ============ */
+  .modal-wrap {
+    background: rgba(14,14,13,0.35); padding: 40px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: var(--r-md);
+  }
+  .modal {
+    width: 440px; background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    box-shadow: var(--e-floating);
+  }
+  .modal.large { width: 560px;}
+  .modal-head { padding: 20px 24px 14px; border-bottom: 1px solid var(--n-100); display: flex; align-items: flex-start; gap: 14px;}
+  .modal-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--err-bg); color: var(--err-text); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;}
+  .modal-title { font-family: var(--serif); font-weight: 500; font-size: 19px; color: var(--n-900); margin: 0 0 2px; letter-spacing: -0.005em;}
+  .modal-sub { font-family: var(--sans); font-size: 13px; color: var(--n-600); margin: 0;}
+  .modal-body { padding: 20px 24px;}
+  .modal-foot { padding: 14px 20px; background: var(--n-25); border-top: 1px solid var(--n-100); display: flex; justify-content: flex-end; gap: 10px; border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);}
+
+  /* ============ TOASTS ============ */
+  .toast {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; border-radius: var(--r-md);
+    background: var(--n-0); border: 1px solid var(--n-200); box-shadow: var(--e-floating);
+    width: 380px;
+  }
+  .toast i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .toast-body { flex: 1; }
+  .toast-title { font-family: var(--sans); font-weight: 600; font-size: 13px; color: var(--n-800); margin-bottom: 1px;}
+  .toast-desc { font-family: var(--sans); font-size: 12.5px; color: var(--n-500); line-height: 1.45;}
+  .toast.ok i   { color: var(--ok-text);}
+  .toast.warn i { color: var(--warn-text);}
+  .toast.err i  { color: var(--err-text);}
+  .toast.info i { color: var(--info-text);}
+  .toast-close { color: var(--n-400); cursor: pointer; font-size: 16px;}
+
+  /* ============ EMPTY STATES ============ */
+  .empty {
+    background: var(--n-0); border: 1px dashed var(--n-200); border-radius: var(--r-md);
+    padding: 48px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+  }
+  .empty-glyph {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--n-50);
+    display: flex; align-items: center; justify-content: center; color: var(--n-500);
+    font-size: 24px; margin-bottom: 12px;
+  }
+  .empty-title { font-family: var(--serif); font-weight: 500; font-size: 20px; color: var(--n-800); margin: 0;}
+  .empty-desc { font-family: var(--sans); font-size: 13px; color: var(--n-500); max-width: 42ch; margin: 0 0 14px;}
+
+  /* ============ PROTOCOL BLOCK ============ */
+  .protocol-wrap { background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md); padding: 28px 32px; }
+  .protocol-head { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;}
+  .protocol-kicker { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--n-400); text-transform: uppercase; margin-bottom: 6px;}
+  .protocol-title { font-family: var(--serif); font-weight: 500; font-size: 26px; color: var(--n-900); margin: 0 0 4px; letter-spacing: -0.005em;}
+  .protocol-meta { font-family: var(--sans); font-size: 12.5px; color: var(--n-500);}
+
+  .pblock {
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    position: relative; margin-bottom: 12px;
+  }
+  .pblock-header {
+    padding: 12px 16px 12px 18px; border-bottom: 1px solid var(--n-100);
+    display: flex; align-items: center; gap: 10px; position: relative;
+    background: var(--n-25); border-top-left-radius: var(--r-md); border-top-right-radius: var(--r-md);
+  }
+  .pblock-header::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--p-500);}
+  .pblock-handle { color: var(--n-300); font-size: 16px; cursor: grab;}
+  .pblock-type {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--p-700); background: var(--p-50); border: 1px solid var(--p-100);
+    padding: 3px 6px; border-radius: 3px;
+  }
+  .pblock-title-input {
+    flex: 1; border: none; background: transparent; outline: none;
+    font-family: var(--serif); font-weight: 500; font-size: 17px; color: var(--n-900); padding: 2px 0;
+  }
+  .pblock-actions { display: flex; gap: 2px; margin-left: auto;}
+  .pblock-body { padding: 16px 18px; }
+
+  .plist { display: flex; flex-direction: column; gap: 6px; }
+  .plist-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 8px; border-radius: 3px;}
+  .plist-item:hover { background: var(--n-25);}
+  .plist-item .check .box { margin-top: 1px;}
+  .plist-text { font-family: var(--sans); font-size: 13.5px; color: var(--n-700); line-height: 1.5;}
+  .plist-item.done .plist-text { color: var(--n-400); text-decoration: line-through; text-decoration-thickness: 1px;}
+  .plist-item .critical { color: #8C2A20; font-weight: 500; font-size: 11.5px; margin-left: 6px; letter-spacing: 0.04em; text-transform: uppercase;}
+
+  .pnested {
+    margin-top: 12px; margin-left: 28px;
+    border-left: 1px solid var(--n-200); padding: 0 0 0 0;
+  }
+  .pnested .pblock { margin-bottom: 8px; }
+  .pnested .pblock-header { background: var(--n-0); }
+
+  .pblock-add {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; font-family: var(--sans); font-size: 12.5px; color: var(--n-500);
+    border: 1px dashed var(--n-200); border-radius: var(--r-sm); cursor: pointer;
+    margin-top: 6px; background: transparent;
+  }
+  .pblock-add:hover { border-color: var(--n-400); color: var(--n-800);}
+
+  /* ============ UTILITIES ============ */
+  .stack { display: flex; flex-direction: column;}
+  .row { display: flex; align-items: center;}
+  .gap-2 { gap: 8px;} .gap-3 { gap: 12px;} .gap-4 { gap: 16px;} .gap-6 { gap: 24px;} .gap-8 { gap: 32px;}
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px;}
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;}
+
+  .specimen {
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    padding: 28px 32px;
+  }
+  .specimen + .specimen { margin-top: 20px; }
+
+  .cpt-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--n-400); margin-bottom: 12px;
+  }
+
+  /* ============ GRID RULER ============ */
+  .ruler { background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md); padding: 20px; margin-top: 12px;}
+  .ruler-title { font-family: var(--mono); font-size: 11px; color: var(--n-500); margin-bottom: 12px; letter-spacing: 0.08em; text-transform: uppercase;}
+  .ruler-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px;}
+  .ruler-bar { height: 48px; background: var(--p-50); border: 1px solid var(--p-100);}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ================= QUICK REFERENCE / HERO ================= -->
+  <section class="section" data-screen-label="01 Quick Reference">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="hero-tag">Design System · v0.1 · Abril 2026</div>
+        <h1 class="hero-title">Software serio para<br/>médicos que trabajan <em>horas</em>.</h1>
+        <p class="hero-sub">Un sistema visual construido para densidad, precisión y longevidad. No es clínico ni estéril; no es lúdico. Es la confianza de una herramienta profesional diseñada para el ejercicio diario de la medicina.</p>
+      </div>
+      <div class="hero-right">
+        <div class="qr-item"><div class="qr-label">Serif</div><div class="qr-value">Source Serif 4</div></div>
+        <div class="qr-item"><div class="qr-label">Sans</div><div class="qr-value">IBM Plex Sans</div></div>
+        <div class="qr-item"><div class="qr-label">Mono</div><div class="qr-value">IBM Plex Mono</div></div>
+        <div class="qr-item"><div class="qr-label">Pesos</div><div class="qr-value">400 · 500 · 600</div></div>
+        <div class="qr-item"><div class="qr-label">Primario</div><div class="qr-value"><span class="swatch-dot" style="background:#2D5760"></span>#2D5760</div></div>
+        <div class="qr-item"><div class="qr-label">Papel</div><div class="qr-value"><span class="swatch-dot" style="background:#FAFAF7;border:1px solid #D8D8D2"></span>#FAFAF7</div></div>
+        <div class="qr-item"><div class="qr-label">Base de espaciado</div><div class="qr-value">4 px</div></div>
+        <div class="qr-item"><div class="qr-label">Radios</div><div class="qr-value">3 · 5 · 8 px</div></div>
+        <div class="qr-item"><div class="qr-label">Iconos</div><div class="qr-value">Phosphor · regular</div></div>
+        <div class="qr-item"><div class="qr-label">Modo</div><div class="qr-value">Light only — MVP</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BRAND FOUNDATION ================= -->
+  <section class="section" data-screen-label="02 Brand Foundation">
+    <div class="section-head">
+      <span class="section-kicker">A · 01 Brand</span>
+      <h2 class="section-title">Fundamento de marca</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="specimen">
+        <div class="cpt-label">Personalidad visual</div>
+        <p style="font-family: var(--serif); font-weight: 500; font-size: 22px; line-height: 1.35; color: var(--n-800); margin: 0 0 16px; letter-spacing: -0.005em;">
+          Preciso, editorial, sin adornos. La interfaz se comporta como un cuaderno clínico bien tipografiado: la tipografía lleva la jerarquía, el borde hace la estructura, el color solo aparece cuando significa algo.
+        </p>
+        <p style="font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--n-600); margin: 0;">
+          La paleta es silenciosa — un teal profundo como única voz de marca, neutros cálidos-fríos para todo lo demás. El color semántico se reserva exclusivamente para estados del paciente o del protocolo. No gradientes, no sombras como decoración, no iconografía médica explícita.
+        </p>
+      </div>
+      <div class="specimen anchor-rule">
+        <div class="cpt-label">Decisión ancla</div>
+        <h3 style="font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 1.2; color: var(--n-900); margin: 0 0 12px; letter-spacing: -0.01em;">
+          El filete vertical de 2 px.
+        </h3>
+        <p style="font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--n-600); margin: 0 0 20px;">
+          Una regla de 2 píxeles en teal indica estado activo, bloque de protocolo, inicio de sección y seleccionado. Reemplaza sombras y fondos coloreados como dispositivo principal de jerarquía. Es económico, legible a cualquier escala, y se convierte en la firma del producto.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="anchor-rule" style="font-family: var(--sans); font-size: 13px; color: var(--n-700); padding: 6px 0 6px 16px;">Activo en la navegación lateral</div>
+          <div class="anchor-rule" style="font-family: var(--sans); font-size: 13px; color: var(--n-700); padding: 6px 0 6px 16px;">Bloque de protocolo seleccionado</div>
+          <div class="anchor-rule" style="font-family: var(--sans); font-size: 13px; color: var(--n-700); padding: 6px 0 6px 16px;">Encabezado de sección en formulario</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COLOR ================= -->
+  <section class="section" data-screen-label="03 Color">
+    <div class="section-head">
+      <span class="section-kicker">A · 02 Color</span>
+      <h2 class="section-title">Paleta de color</h2>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Neutrales · 10 pasos</h3>
+      <p class="subsection-note">Neutros verdaderos con un matiz cálido casi imperceptible en los claros. Pensados para lecturas prolongadas sin fatiga visual. Todas las combinaciones texto/fondo cumplen WCAG AA.</p>
+      <div class="ramp" id="neutralRamp"></div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Primario · Teal profundo</h3>
+      <p class="subsection-note">Un solo color de marca, de saturación contenida. Evita el azul SaaS genérico y el verde médico obvio. Se usa con moderación: acciones primarias, filete activo, enlaces.</p>
+      <div class="ramp primary" id="primaryRamp"></div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Semánticos · Ejemplos renderizados</h3>
+      <p class="subsection-note">Los colores semánticos aparecen solo para indicar estado clínico o administrativo. Saturación apagada y contraste alto — nunca decorativo.</p>
+      <div class="semantic-grid">
+        <div class="callout c-ok">
+          <i class="ph ph-check-circle"></i>
+          <div class="callout-body"><div class="callout-title">Pago recibido</div>RD$ 3,450.00 acreditados a la cuenta de <strong>Ana María Reyes</strong>. Factura F-2026-01142 marcada como pagada.</div>
+        </div>
+        <div class="callout c-warn">
+          <i class="ph ph-warning-circle"></i>
+          <div class="callout-body"><div class="callout-title">Revisión pendiente</div>El protocolo <strong>Dolor torácico agudo</strong> tiene 3 bloques sin revisar desde la última actualización de guías ACC/AHA.</div>
+        </div>
+        <div class="callout c-err">
+          <i class="ph ph-x-circle"></i>
+          <div class="callout-body"><div class="callout-title">Contraindicación absoluta</div>Amoxicilina registrada como alergia previa (anafilaxia, 2024). No prescribir sin evaluación especializada.</div>
+        </div>
+        <div class="callout c-info">
+          <i class="ph ph-info"></i>
+          <div class="callout-body"><div class="callout-title">Nueva versión del protocolo</div>Se publicó la v2.3 de <strong>Manejo de anafilaxia en adultos</strong>. Tus copias de trabajo no se verán afectadas.</div>
+        </div>
+      </div>
+
+      <div class="semantic-tokens">
+        <div class="sem-card">
+          <h4>Success</h4>
+          <div class="sem-row"><span class="sq" style="background:var(--ok-bg)"></span>bg · #EDF3EC</div>
+          <div class="sem-row"><span class="sq" style="background:var(--ok-border)"></span>border · #B8CFB2</div>
+          <div class="sem-row"><span class="sq" style="background:var(--ok-text)"></span>text · #2F5C28</div>
+        </div>
+        <div class="sem-card">
+          <h4>Warning</h4>
+          <div class="sem-row"><span class="sq" style="background:var(--warn-bg)"></span>bg · #F7F1E3</div>
+          <div class="sem-row"><span class="sq" style="background:var(--warn-border)"></span>border · #DCC89A</div>
+          <div class="sem-row"><span class="sq" style="background:var(--warn-text)"></span>text · #6E5319</div>
+        </div>
+        <div class="sem-card">
+          <h4>Danger</h4>
+          <div class="sem-row"><span class="sq" style="background:var(--err-bg)"></span>bg · #F6EAE8</div>
+          <div class="sem-row"><span class="sq" style="background:var(--err-border)"></span>border · #D9B4AE</div>
+          <div class="sem-row"><span class="sq" style="background:var(--err-text)"></span>text · #7A2B22</div>
+        </div>
+        <div class="sem-card">
+          <h4>Info</h4>
+          <div class="sem-row"><span class="sq" style="background:var(--info-bg)"></span>bg · #ECF0F3</div>
+          <div class="sem-row"><span class="sq" style="background:var(--info-border)"></span>border · #B8C6D0</div>
+          <div class="sem-row"><span class="sq" style="background:var(--info-text)"></span>text · #2B435A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Acentos adicionales</h3>
+      <p class="subsection-note"><strong style="color: var(--n-800)">Ninguno.</strong> El sistema se compromete a un solo color de marca más los semánticos. Añadir un segundo acento diluye la legibilidad clínica y desestabiliza la jerarquía.</p>
+    </div>
+  </section>
+
+  <!-- ================= TYPE ================= -->
+  <section class="section" data-screen-label="04 Typography">
+    <div class="section-head">
+      <span class="section-kicker">A · 03 Type</span>
+      <h2 class="section-title">Tipografía</h2>
+    </div>
+
+    <div class="specimen-font">
+      <div>
+        <div class="glyph-serif">Aa Rg</div>
+        <div class="glyph-label"><b>Source Serif 4 · 500</b>
+          Serif de lectura prolongada con herencia en composición científica. Óptico, preciso, con terminales refinados. Úsese para títulos, nombres de paciente, nombres de protocolo.
+        </div>
+      </div>
+      <div>
+        <div class="glyph-sans">Aa Rg</div>
+        <div class="glyph-label"><b>IBM Plex Sans · 500</b>
+          Sans humanista, técnica pero cálida. Excelente en tamaños pequeños, muy legible para listados densos. Úsese para UI, cuerpo, datos, tablas, formularios.
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Escala · muestras con redacción médica real</h3>
+      <div style="background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md); padding: 8px 32px;">
+        <div class="type-row">
+          <div class="type-meta"><strong>Display</strong>Source Serif 4<br/>500 · -0.02em</div>
+          <div class="t-display">Protocolo</div>
+          <div class="type-specs">56 / 1.05<br/>desktop · hero</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>H1</strong>Source Serif 4<br/>500 · -0.015em</div>
+          <div class="t-h1">Protocolo de anafilaxia en adultos</div>
+          <div class="type-specs">40 / 1.10<br/>page title</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>H2</strong>Source Serif 4<br/>500 · -0.01em</div>
+          <div class="t-h2">Contraindicaciones absolutas y relativas</div>
+          <div class="type-specs">28 / 1.20<br/>section</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>H3</strong>IBM Plex Sans<br/>600</div>
+          <div class="t-h3">Dosificación por peso corporal</div>
+          <div class="type-specs">18 / 1.35<br/>block header</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>Body · LG</strong>IBM Plex Sans<br/>400</div>
+          <div class="t-bodylg">Administrar adrenalina intramuscular 0.01 mg/kg (máx. 0.5 mg) en la cara anterolateral del muslo. Repetir cada 5 a 15 minutos según respuesta clínica.</div>
+          <div class="type-specs">16 / 1.55<br/>reading</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>Body</strong>IBM Plex Sans<br/>400</div>
+          <div class="t-body">La paciente refiere disnea súbita de 20 minutos de evolución, acompañada de urticaria generalizada posterior a ingesta de mariscos en almuerzo familiar. Niega antecedentes previos documentados.</div>
+          <div class="type-specs">14 / 1.55<br/>default UI</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>Body · SM</strong>IBM Plex Sans<br/>400</div>
+          <div class="t-bodysm">Consultas del día: 14 de 18 programadas · Próxima cita en 22 minutos · 3 prescripciones pendientes de firma</div>
+          <div class="type-specs">13 / 1.50<br/>dense rows</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>Caption</strong>IBM Plex Sans<br/>500</div>
+          <div class="t-caption">Última actualización · 14 de abril de 2026, 09:42</div>
+          <div class="type-specs">12 / 1.40<br/>meta</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><strong>Overline</strong>IBM Plex Mono<br/>500 · tracking 0.1em</div>
+          <div class="t-overline">Sección · Signos vitales</div>
+          <div class="type-specs">11 / 1.40<br/>labels</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SPACING, RADIUS, BORDERS ================= -->
+  <section class="section" data-screen-label="05 Spacing and Layout">
+    <div class="section-head">
+      <span class="section-kicker">A · 04 Spacing &amp; Layout</span>
+      <h2 class="section-title">Espaciado y retícula</h2>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Escala de espaciado · base 4 px</h3>
+      <div class="specimen" style="padding: 24px 32px;">
+        <div class="spacing-grid" id="spacingGrid"></div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Retícula · 1440 y 1024</h3>
+      <div class="ruler">
+        <div class="ruler-title">1440 px · 12 columnas · gutter 24 · margin 48</div>
+        <div class="ruler-bars">
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+        </div>
+      </div>
+      <div class="ruler" style="max-width: 1024px;">
+        <div class="ruler-title">1024 px · 8 columnas · gutter 20 · margin 32</div>
+        <div class="ruler-bars" style="grid-template-columns: repeat(8, 1fr); gap: 20px;">
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+          <div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div><div class="ruler-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Radios · restringidos</h3>
+      <p class="subsection-note">Solo tres valores. Los componentes primarios (botones, inputs) usan <code class="tk">--r-sm</code>; las tarjetas y modales usan <code class="tk">--r-md</code>; superficies grandes usan <code class="tk">--r-lg</code>. Nunca redondear más.</p>
+      <div class="radius-row">
+        <div class="radius-item"><div class="radius-box" style="border-radius: var(--r-sm);"></div>
+          <div class="radius-meta"><b>sm · 3 px</b>botones, inputs, chips</div></div>
+        <div class="radius-item"><div class="radius-box" style="border-radius: var(--r-md);"></div>
+          <div class="radius-meta"><b>md · 5 px</b>tarjetas, modales</div></div>
+        <div class="radius-item"><div class="radius-box" style="border-radius: var(--r-lg);"></div>
+          <div class="radius-meta"><b>lg · 8 px</b>contenedores grandes</div></div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3 class="subsection-title">Grosor de bordes</h3>
+      <p class="subsection-note">El borde es el dispositivo principal de separación visual — no la sombra. Tres grosores.</p>
+      <div class="borders-row">
+        <div class="border-item">
+          <div class="border-box" style="border-width: 1px; border-color: var(--n-200);"></div>
+          <div class="border-meta"><b>1 px · default</b>tarjetas, inputs, separadores</div>
+        </div>
+        <div class="border-item">
+          <div class="border-box" style="border-width: 2px; border-color: var(--p-500); width: 122px; height: 82px;"></div>
+          <div class="border-meta"><b>2 px · accent</b>filete activo, seleccionado</div>
+        </div>
+        <div class="border-item">
+          <div class="border-box" style="border-width: 1px; border-style: dashed; border-color: var(--n-200);"></div>
+          <div class="border-meta"><b>1 px · dashed</b>zonas vacías, drop targets</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ELEVATION ================= -->
+  <section class="section" data-screen-label="06 Elevation">
+    <div class="section-head">
+      <span class="section-kicker">A · 05 Elevation</span>
+      <h2 class="section-title">Elevación y profundidad</h2>
+    </div>
+    <p class="subsection-note" style="margin-top: -12px;">Tres niveles, sin más. El peso tipográfico y el borde distinguen jerarquía antes que la sombra.</p>
+
+    <div class="elevation-row">
+      <div class="elev-card elev-flat">
+        <div class="elev-title">Flat · 0</div>
+        <div class="elev-desc">Superficie por defecto. Sin sombra, solo borde. La mayoría de tarjetas, filas y contenedores viven aquí.</div>
+        <div class="elev-meta">box-shadow: none<br/>border: 1px solid n-200</div>
+      </div>
+      <div class="elev-card elev-raised">
+        <div class="elev-title">Raised · 1</div>
+        <div class="elev-desc">Elementos interactivos flotantes: popovers, tooltips anclados, barras de acción pegajosas.</div>
+        <div class="elev-meta">0 1px 2px rgba(0,0,0,.04)<br/>+ border n-200</div>
+      </div>
+      <div class="elev-card elev-floating">
+        <div class="elev-title">Floating · 2</div>
+        <div class="elev-desc">Modales, menús desplegables, toasts. Sombra suave y larga sin desenfoque excesivo — nunca dramática.</div>
+        <div class="elev-meta">0 8px 24px -8px rgba(0,0,0,.12)<br/>+ 0 2px 6px rgba(0,0,0,.06)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ICONS ================= -->
+  <section class="section" data-screen-label="07 Iconography">
+    <div class="section-head">
+      <span class="section-kicker">A · 06 Icons</span>
+      <h2 class="section-title">Iconografía</h2>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3 class="subsection-title">Estilo</h3>
+        <p class="subsection-note">Trazo uniforme de ~1.5 px, terminales redondeados, construcción geométrica sobre retícula de 16/24 px. Variante <em>Regular</em> por defecto; <em>Fill</em> reservado para el estado activo de navegación primaria.</p>
+        <h3 class="subsection-title" style="margin-top: 28px;">Librería · Phosphor</h3>
+        <p class="subsection-note">Elegimos <strong style="color: var(--n-800)">Phosphor (regular)</strong> sobre Lucide y Heroicons: cobertura más amplia en dominio médico (pill, test-tube, syringe, first-aid), trazo más refinado y menos familiar visualmente. Evita la sobreexposición que Lucide ha tenido en SaaS genérico.</p>
+      </div>
+      <div>
+        <h3 class="subsection-title">Cobertura del dominio</h3>
+        <div class="icon-grid">
+          <div class="icon-cell"><i class="ph ph-user"></i><span>patient</span></div>
+          <div class="icon-cell"><i class="ph ph-calendar-blank"></i><span>appointment</span></div>
+          <div class="icon-cell"><i class="ph ph-prescription"></i><span>prescription</span></div>
+          <div class="icon-cell"><i class="ph ph-stack"></i><span>protocol</span></div>
+          <div class="icon-cell"><i class="ph ph-map-pin"></i><span>location</span></div>
+          <div class="icon-cell"><i class="ph ph-notepad"></i><span>consultation</span></div>
+          <div class="icon-cell"><i class="ph ph-receipt"></i><span>billing</span></div>
+          <div class="icon-cell"><i class="ph ph-magnifying-glass"></i><span>search</span></div>
+          <div class="icon-cell"><i class="ph ph-funnel"></i><span>filter</span></div>
+          <div class="icon-cell"><i class="ph ph-plus"></i><span>plus</span></div>
+          <div class="icon-cell"><i class="ph ph-pencil-simple"></i><span>edit</span></div>
+          <div class="icon-cell"><i class="ph ph-archive"></i><span>archive</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PART B: COMPONENTS ================= -->
+  <section class="section" data-screen-label="08 Components Divider">
+    <div class="section-head">
+      <span class="section-kicker">B · Components</span>
+      <h2 class="section-title">Componentes renderizados</h2>
+    </div>
+    <p class="subsection-note" style="margin-top: -12px;">Instancias reales, no descripciones. Cada componente muestra estados donde aplique (default, hover, active, focus, disabled) y se presenta aislado para captura individual.</p>
+  </section>
+
+  <!-- BUTTONS -->
+  <section class="section" data-screen-label="09 Buttons">
+    <div class="section-head">
+      <span class="section-kicker">B · 01 Buttons</span>
+      <h2 class="section-title">Botones</h2>
+    </div>
+
+    <div class="specimen">
+      <div class="cpt-label">Primary · Secondary · Ghost · Destructive · Icon-only</div>
+      <div class="btn-grid" style="grid-template-columns: 140px repeat(5, 1fr);">
+        <div></div>
+        <div class="col-label">Default</div>
+        <div class="col-label">Hover</div>
+        <div class="col-label">Active</div>
+        <div class="col-label">Focus</div>
+        <div class="col-label">Disabled</div>
+
+        <div class="row-label">Primary · MD</div>
+        <div class="btn-cell"><button class="btn btn-primary"><i class="ph ph-plus"></i>Nueva consulta</button></div>
+        <div class="btn-cell"><button class="btn btn-primary hover"><i class="ph ph-plus"></i>Nueva consulta</button></div>
+        <div class="btn-cell"><button class="btn btn-primary active"><i class="ph ph-plus"></i>Nueva consulta</button></div>
+        <div class="btn-cell"><button class="btn btn-primary focus"><i class="ph ph-plus"></i>Nueva consulta</button></div>
+        <div class="btn-cell"><button class="btn btn-primary disabled"><i class="ph ph-plus"></i>Nueva consulta</button></div>
+
+        <div class="row-label">Secondary · MD</div>
+        <div class="btn-cell"><button class="btn btn-secondary">Guardar borrador</button></div>
+        <div class="btn-cell"><button class="btn btn-secondary hover">Guardar borrador</button></div>
+        <div class="btn-cell"><button class="btn btn-secondary active">Guardar borrador</button></div>
+        <div class="btn-cell"><button class="btn btn-secondary focus">Guardar borrador</button></div>
+        <div class="btn-cell"><button class="btn btn-secondary disabled">Guardar borrador</button></div>
+
+        <div class="row-label">Ghost · MD</div>
+        <div class="btn-cell"><button class="btn btn-ghost">Cancelar</button></div>
+        <div class="btn-cell"><button class="btn btn-ghost hover">Cancelar</button></div>
+        <div class="btn-cell"><button class="btn btn-ghost active">Cancelar</button></div>
+        <div class="btn-cell"><button class="btn btn-ghost focus">Cancelar</button></div>
+        <div class="btn-cell"><button class="btn btn-ghost disabled">Cancelar</button></div>
+
+        <div class="row-label">Destructive · MD</div>
+        <div class="btn-cell"><button class="btn btn-danger"><i class="ph ph-trash"></i>Archivar paciente</button></div>
+        <div class="btn-cell"><button class="btn btn-danger hover"><i class="ph ph-trash"></i>Archivar paciente</button></div>
+        <div class="btn-cell"><button class="btn btn-danger active"><i class="ph ph-trash"></i>Archivar paciente</button></div>
+        <div class="btn-cell"><button class="btn btn-danger focus"><i class="ph ph-trash"></i>Archivar paciente</button></div>
+        <div class="btn-cell"><button class="btn btn-danger disabled"><i class="ph ph-trash"></i>Archivar paciente</button></div>
+      </div>
+    </div>
+
+    <div class="specimen" style="margin-top: 20px;">
+      <div class="cpt-label">Tamaños · SM 28 · MD 32 · LG 40</div>
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <button class="btn btn-primary sz-sm"><i class="ph ph-plus"></i>SM · Agregar</button>
+        <button class="btn btn-primary"><i class="ph ph-plus"></i>MD · Agregar</button>
+        <button class="btn btn-primary sz-lg"><i class="ph ph-plus"></i>LG · Agregar</button>
+        <span style="width: 20px"></span>
+        <button class="btn btn-secondary sz-sm">SM · Secundario</button>
+        <button class="btn btn-secondary">MD · Secundario</button>
+        <button class="btn btn-secondary sz-lg">LG · Secundario</button>
+      </div>
+    </div>
+
+    <div class="specimen" style="margin-top: 20px;">
+      <div class="cpt-label">Icon-only · 3 tamaños · 3 variantes</div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <button class="btn btn-secondary icon-only sz-sm"><i class="ph ph-pencil-simple"></i></button>
+        <button class="btn btn-secondary icon-only"><i class="ph ph-pencil-simple"></i></button>
+        <button class="btn btn-secondary icon-only sz-lg"><i class="ph ph-pencil-simple"></i></button>
+        <span style="width: 20px"></span>
+        <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-dots-three"></i></button>
+        <button class="btn btn-ghost icon-only"><i class="ph ph-dots-three"></i></button>
+        <button class="btn btn-ghost icon-only sz-lg"><i class="ph ph-dots-three"></i></button>
+        <span style="width: 20px"></span>
+        <button class="btn btn-primary icon-only sz-sm"><i class="ph ph-plus"></i></button>
+        <button class="btn btn-primary icon-only"><i class="ph ph-plus"></i></button>
+        <button class="btn btn-primary icon-only sz-lg"><i class="ph ph-plus"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMS -->
+  <section class="section" data-screen-label="10 Forms">
+    <div class="section-head">
+      <span class="section-kicker">B · 02 Forms</span>
+      <h2 class="section-title">Formularios</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="specimen">
+        <div class="cpt-label">Campos de texto</div>
+        <div class="stack gap-4">
+          <div class="field">
+            <label>Nombre del paciente</label>
+            <input class="input" placeholder="Ej. Ana María Reyes" />
+          </div>
+          <div class="field">
+            <label>Documento de identidad <span class="required">*</span></label>
+            <input class="input" value="001-1234567-8" style="border-color: var(--p-500); box-shadow: 0 0 0 3px rgba(45,87,96,0.12);" />
+            <div class="helper">Focus · cédula dominicana, formato con guiones</div>
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <input class="input err" value="ana.reyes@correo" />
+            <div class="error"><i class="ph ph-warning-circle"></i>El correo no tiene un formato válido.</div>
+          </div>
+          <div class="field">
+            <label>Observaciones</label>
+            <textarea class="input" rows="3" placeholder="Anamnesis, antecedentes relevantes, medicación actual…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="specimen">
+        <div class="cpt-label">Selects, checkboxes, radios, toggles</div>
+        <div class="stack gap-4">
+          <div class="field">
+            <label>Centro de atención</label>
+            <select class="input">
+              <option>HOMS · Sala 3</option>
+              <option>Centro Médico Bournigal</option>
+              <option>Consultorio privado · Santiago</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Alergias conocidas</label>
+            <div class="stack gap-2" style="margin-top: 2px;">
+              <span class="check checked"><span class="box"></span> Penicilina</span>
+              <span class="check checked"><span class="box"></span> AINES</span>
+              <span class="check"><span class="box"></span> Látex</span>
+              <span class="check indeterminate"><span class="box"></span> Otros (parcial)</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Sexo biológico</label>
+            <div class="row gap-6" style="margin-top: 4px;">
+              <span class="radio checked"><span class="dot"></span> Femenino</span>
+              <span class="radio"><span class="dot"></span> Masculino</span>
+              <span class="radio"><span class="dot"></span> Prefiere no decir</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Recordatorio de seguimiento</label>
+            <div class="row gap-6" style="margin-top: 4px;">
+              <span class="toggle on"><span class="track"></span>Activo</span>
+              <span class="toggle"><span class="track"></span>Inactivo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="specimen">
+        <div class="cpt-label">Read-only · disabled</div>
+        <div class="stack gap-4">
+          <div class="field">
+            <label>Número de expediente</label>
+            <input class="input readonly" value="EXP-2026-004182" readonly />
+            <div class="helper">Generado automáticamente. No editable.</div>
+          </div>
+          <div class="field">
+            <label>Médico tratante</label>
+            <input class="input readonly" value="Dr. Rafael Núñez · Medicina Interna" readonly />
+          </div>
+          <div class="field">
+            <label>Edad del paciente</label>
+            <input class="input disabled" value="34 años" disabled />
+            <div class="helper">Calculada a partir de la fecha de nacimiento.</div>
+          </div>
+          <div class="field">
+            <label>Firmar prescripción</label>
+            <input class="input disabled" value="Firmar y emitir" disabled />
+            <div class="helper">Requiere completar el campo de dosificación.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="cpt-label">Adornos · unidades médicas</div>
+        <div class="stack gap-4">
+          <div class="field">
+            <label>Peso corporal <span class="required">*</span></label>
+            <div class="input-group">
+              <input class="input" value="72.5" />
+              <span class="adorn">kg</span>
+            </div>
+            <div class="helper">Usado para dosificación por kilogramo.</div>
+          </div>
+          <div class="field">
+            <label>Presión arterial</label>
+            <div class="row gap-2">
+              <div class="input-group" style="max-width: 150px;">
+                <input class="input" value="120" />
+                <span class="adorn">/ 80</span>
+                <span class="adorn">mmHg</span>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Dosis prescrita</label>
+            <div class="input-group">
+              <input class="input" value="10" />
+              <span class="adorn">mg/kg</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Monto a facturar</label>
+            <div class="input-group">
+              <span class="adorn leading">RD$</span>
+              <input class="input" value="3,450.00" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Temperatura</label>
+            <div class="input-group err">
+              <input class="input" value="39.8" />
+              <span class="adorn">°C</span>
+            </div>
+            <div class="error"><i class="ph ph-warning-circle"></i>Fiebre alta. Considera evaluación urgente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="specimen">
+        <div class="cpt-label">Inputs con icono</div>
+        <div class="stack gap-4">
+          <div class="field">
+            <label>Buscar paciente</label>
+            <div class="input-group">
+              <span class="icon leading"><i class="ph ph-magnifying-glass"></i></span>
+              <input class="input" placeholder="Nombre, cédula o expediente…" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Fecha de consulta</label>
+            <div class="input-group">
+              <span class="icon leading"><i class="ph ph-calendar-blank"></i></span>
+              <input class="input" value="14 / 04 / 2026" />
+              <span class="icon trailing btn-action"><i class="ph ph-caret-down"></i></span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <div class="input-group">
+              <span class="icon leading"><i class="ph ph-envelope-simple"></i></span>
+              <input class="input" value="ana.reyes@correo.do" />
+              <span class="icon trailing" style="color: var(--ok-text);"><i class="ph ph-check-circle"></i></span>
+            </div>
+            <div class="helper" style="color: var(--ok-text);">Correo verificado.</div>
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <div class="input-group">
+              <span class="adorn leading">+1</span>
+              <span class="icon leading" style="margin-left: 0;"><i class="ph ph-phone"></i></span>
+              <input class="input" value="809 555 0142" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <div class="input-group">
+              <span class="icon leading"><i class="ph ph-lock-simple"></i></span>
+              <input class="input" type="text" value="••••••••••••" />
+              <span class="icon trailing btn-action"><i class="ph ph-eye"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="cpt-label">Patrón de campo · label + input + helper + error</div>
+        <div class="field" style="margin-bottom: 20px;">
+          <label>Peso corporal <span class="required">*</span></label>
+          <div class="input-group">
+            <input class="input" value="72.5" />
+            <span class="adorn">kg</span>
+          </div>
+          <div class="helper">Usado para dosificación por kilogramo.</div>
+        </div>
+        <div class="field" style="margin-bottom: 20px;">
+          <label>Dosis prescrita</label>
+          <div class="input-group err">
+            <input class="input" value="12" />
+            <span class="adorn">mg/kg</span>
+          </div>
+          <div class="error"><i class="ph ph-warning-circle"></i>Supera la dosis máxima recomendada (10 mg/kg para adultos).</div>
+        </div>
+        <div class="field">
+          <label>Número de expediente</label>
+          <input class="input readonly" value="EXP-2026-004182" readonly />
+          <div class="helper">Generado automáticamente. No editable.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARDS -->
+  <section class="section" data-screen-label="11 Cards">
+    <div class="section-head">
+      <span class="section-kicker">B · 03 Cards</span>
+      <h2 class="section-title">Tarjetas</h2>
+    </div>
+
+    <div class="grid-3">
+      <div class="specimen" style="padding: 20px;">
+        <div class="cpt-label">Default · surface</div>
+        <div class="card">
+          <h3 class="card-title">Consultas hoy</h3>
+          <p class="card-sub">Lunes 14 de abril · HOMS · Sala 3</p>
+          <div style="font-family: var(--serif); font-weight: 500; font-size: 42px; color: var(--n-900); line-height: 1; margin: 18px 0 2px; letter-spacing: -0.02em;">14 <span style="font-family: var(--sans); font-weight: 500; font-size: 14px; color: var(--n-400);">de 18</span></div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--n-500); letter-spacing: 0.06em; text-transform: uppercase;">78% completadas</div>
+        </div>
+      </div>
+
+      <div class="specimen" style="padding: 20px;">
+        <div class="cpt-label">List item</div>
+        <div class="stack gap-2">
+          <div class="card-list-item">
+            <div class="avatar">AR</div>
+            <div class="li-main">
+              <div class="li-name">Ana María Reyes</div>
+              <div class="li-meta">001-1234567-8 · 34 años · Última visita 02 abr</div>
+            </div>
+            <span class="badge b-active"><span class="dot"></span>En consulta</span>
+          </div>
+          <div class="card-list-item">
+            <div class="avatar">JP</div>
+            <div class="li-main">
+              <div class="li-name">Juan Pablo Castillo</div>
+              <div class="li-meta">402-0987654-1 · 58 años · Última visita hoy</div>
+            </div>
+            <span class="badge b-paid"><span class="dot"></span>Pagado</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="specimen" style="padding: 20px;">
+        <div class="cpt-label">Selected · highlighted</div>
+        <div class="card-selected">
+          <h3 class="card-title">Protocolo de anafilaxia</h3>
+          <p class="card-sub" style="margin-bottom: 12px;">Versión 2.3 · firmada · 12 bloques · 3 checklists anidados</p>
+          <div class="row gap-2">
+            <span class="badge b-signed"><span class="dot"></span>Firmado</span>
+            <span class="badge b-active"><span class="dot"></span>Activo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLE -->
+  <section class="section" data-screen-label="12 Table Rows">
+    <div class="section-head">
+      <span class="section-kicker">B · 04 Table</span>
+      <h2 class="section-title">Filas de tabla</h2>
+    </div>
+
+    <div class="specimen">
+      <div class="cpt-label">Tabla de pacientes · 5 columnas · 3 filas</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Paciente</th>
+            <th>Documento</th>
+            <th>Última visita</th>
+            <th>Centro</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">Ana María Reyes</td>
+            <td class="mono">001-1234567-8</td>
+            <td>02 abr 2026</td>
+            <td>HOMS · Sala 3</td>
+            <td><span class="badge b-active"><span class="dot"></span>En consulta</span></td>
+          </tr>
+          <tr>
+            <td class="name">Juan Pablo Castillo</td>
+            <td class="mono">402-0987654-1</td>
+            <td>14 abr 2026</td>
+            <td>Bournigal</td>
+            <td><span class="badge b-paid"><span class="dot"></span>Pagado</span></td>
+          </tr>
+          <tr>
+            <td class="name">Rosa Esperanza Jiménez</td>
+            <td class="mono">223-5544331-7</td>
+            <td>28 mar 2026</td>
+            <td>Consultorio privado</td>
+            <td><span class="badge b-overdue"><span class="dot"></span>Factura vencida</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section class="section" data-screen-label="13 Tabs">
+    <div class="section-head">
+      <span class="section-kicker">B · 05 Tabs</span>
+      <h2 class="section-title">Pestañas</h2>
+    </div>
+    <div class="specimen">
+      <div class="cpt-label">Ficha del paciente</div>
+      <div class="tabs">
+        <div class="tab active">Resumen</div>
+        <div class="tab">Consultas <span class="count">24</span></div>
+        <div class="tab">Prescripciones <span class="count">7</span></div>
+        <div class="tab">Protocolos aplicados <span class="count">3</span></div>
+        <div class="tab">Facturación</div>
+        <div class="tab">Archivos</div>
+      </div>
+      <div style="padding: 20px 0 4px; font-family: var(--sans); font-size: 13px; color: var(--n-500);">
+        Contenido de la pestaña activa · "Resumen"
+      </div>
+    </div>
+  </section>
+
+  <!-- SIDEBAR -->
+  <section class="section" data-screen-label="14 Sidebar Nav">
+    <div class="section-head">
+      <span class="section-kicker">B · 06 Navigation</span>
+      <h2 class="section-title">Barra lateral</h2>
+    </div>
+    <div class="specimen" style="padding: 32px;">
+      <div class="cpt-label">Chrome primario del producto · 240 px</div>
+      <div class="sidebar">
+        <div class="sb-brand">
+          <div class="sb-logo">R</div>
+          <div class="sb-brand-name">Rezeta</div>
+        </div>
+        <div class="sb-section-label">Hoy</div>
+        <div class="sb-item"><i class="ph ph-calendar-blank"></i>Agenda<span class="count">14</span></div>
+        <div class="sb-section-label">Trabajo clínico</div>
+        <div class="sb-item"><i class="ph ph-user"></i>Pacientes<span class="count">1,247</span></div>
+        <div class="sb-item"><i class="ph ph-notepad"></i>Consultas</div>
+        <div class="sb-item active"><i class="ph ph-stack"></i>Protocolos<span class="count">32</span></div>
+        <div class="sb-section-label">Administración</div>
+        <div class="sb-item"><i class="ph ph-receipt"></i>Facturación</div>
+        <div class="sb-item"><i class="ph ph-gear"></i>Ajustes</div>
+        <div class="sb-footer">
+          <div class="sb-user">
+            <div class="avatar" style="width: 32px; height: 32px; font-size: 12px;">DR</div>
+            <div class="sb-user-info">
+              <div class="sb-user-name">Dr. Rafael Núñez</div>
+              <div class="sb-user-role">Medicina interna</div>
+            </div>
+            <i class="ph ph-caret-up-down" style="color: var(--n-400);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPBAR -->
+  <section class="section" data-screen-label="15 Top Bar">
+    <div class="section-head">
+      <span class="section-kicker">B · 07 Top Bar</span>
+      <h2 class="section-title">Barra superior</h2>
+    </div>
+    <div class="specimen">
+      <div class="cpt-label">Topbar con switcher de centro, búsqueda y acciones</div>
+      <div class="topbar">
+        <div class="loc-switcher">
+          <span class="loc-dot"></span>
+          <span class="loc-text">HOMS</span>
+          <span class="loc-sub">· Sala 3</span>
+          <i class="ph ph-caret-down" style="color: var(--n-500); font-size: 12px; margin-left: 4px;"></i>
+        </div>
+        <div class="tb-search">
+          <i class="ph ph-magnifying-glass"></i>
+          <input class="input" placeholder="Buscar paciente, protocolo o consulta…" />
+          <kbd>⌘K</kbd>
+        </div>
+        <div class="tb-right">
+          <div class="tb-icon"><i class="ph ph-question"></i></div>
+          <div class="tb-icon"><i class="ph ph-bell"></i><span class="badge-dot"></span></div>
+          <div class="tb-doctor">
+            <div class="avatar" style="width: 30px; height: 30px; font-size: 11px;">DR</div>
+            <div>
+              <div class="tb-doctor-name">Dr. Rafael Núñez</div>
+              <div class="tb-doctor-role">Medicina interna</div>
+            </div>
+            <i class="ph ph-caret-down" style="color: var(--n-400); margin-left: 4px; font-size: 12px;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODALS -->
+  <section class="section" data-screen-label="16 Modals">
+    <div class="section-head">
+      <span class="section-kicker">B · 08 Modals</span>
+      <h2 class="section-title">Modales</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="specimen" style="padding: 0; background: transparent; border: none;">
+        <div class="cpt-label" style="padding: 0 4px 8px;">Confirmación</div>
+        <div class="modal-wrap">
+          <div class="modal">
+            <div class="modal-head">
+              <div class="modal-icon"><i class="ph ph-warning"></i></div>
+              <div>
+                <h3 class="modal-title">Archivar a Ana María Reyes</h3>
+                <p class="modal-sub">Esta paciente quedará oculta del listado activo. Su historial clínico se conserva intacto y puede restaurarse en cualquier momento.</p>
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-ghost">Cancelar</button>
+              <button class="btn btn-danger">Archivar paciente</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="specimen" style="padding: 0; background: transparent; border: none;">
+        <div class="cpt-label" style="padding: 0 4px 8px;">Formulario</div>
+        <div class="modal-wrap">
+          <div class="modal large">
+            <div class="modal-head" style="padding-bottom: 18px;">
+              <div>
+                <h3 class="modal-title">Nueva prescripción</h3>
+                <p class="modal-sub">Para Ana María Reyes · consulta del 14 de abril</p>
+              </div>
+            </div>
+            <div class="modal-body">
+              <div class="stack gap-3">
+                <div class="field">
+                  <label>Medicamento</label>
+                  <input class="input" value="Loratadina 10 mg" />
+                </div>
+                <div class="grid-2">
+                  <div class="field"><label>Posología</label><input class="input" value="1 tab c/24h" /></div>
+                  <div class="field"><label>Duración</label><input class="input" value="7 días" /></div>
+                </div>
+                <div class="field">
+                  <label>Indicaciones</label>
+                  <textarea class="input" rows="2">Tomar con el desayuno. Suspender si aparece somnolencia excesiva.</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-ghost">Cancelar</button>
+              <button class="btn btn-secondary">Guardar borrador</button>
+              <button class="btn btn-primary">Firmar y emitir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOASTS -->
+  <section class="section" data-screen-label="17 Toasts">
+    <div class="section-head">
+      <span class="section-kicker">B · 09 Toasts</span>
+      <h2 class="section-title">Notificaciones</h2>
+    </div>
+    <div class="specimen">
+      <div class="cpt-label">Una por severidad</div>
+      <div class="stack gap-3" style="align-items: flex-start;">
+        <div class="toast ok">
+          <i class="ph ph-check-circle"></i>
+          <div class="toast-body">
+            <div class="toast-title">Prescripción firmada</div>
+            <div class="toast-desc">Loratadina 10 mg · 7 días · enviada al correo de Ana María Reyes.</div>
+          </div>
+          <i class="ph ph-x toast-close"></i>
+        </div>
+        <div class="toast warn">
+          <i class="ph ph-warning-circle"></i>
+          <div class="toast-body">
+            <div class="toast-title">3 bloques sin revisar</div>
+            <div class="toast-desc">El protocolo "Dolor torácico agudo" requiere atención antes de publicarse.</div>
+          </div>
+          <i class="ph ph-x toast-close"></i>
+        </div>
+        <div class="toast err">
+          <i class="ph ph-x-circle"></i>
+          <div class="toast-body">
+            <div class="toast-title">Contraindicación detectada</div>
+            <div class="toast-desc">Amoxicilina figura como alergia previa del paciente. Revisa antes de firmar.</div>
+          </div>
+          <i class="ph ph-x toast-close"></i>
+        </div>
+        <div class="toast info">
+          <i class="ph ph-info"></i>
+          <div class="toast-body">
+            <div class="toast-title">Nueva versión disponible</div>
+            <div class="toast-desc">El protocolo de anafilaxia v2.3 se publicó hace 2 minutos.</div>
+          </div>
+          <i class="ph ph-x toast-close"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMPTY STATES -->
+  <section class="section" data-screen-label="18 Empty States">
+    <div class="section-head">
+      <span class="section-kicker">B · 10 Empty</span>
+      <h2 class="section-title">Estados vacíos</h2>
+    </div>
+    <div class="grid-2">
+      <div class="specimen">
+        <div class="cpt-label">Sin pacientes</div>
+        <div class="empty">
+          <div class="empty-glyph"><i class="ph ph-user"></i></div>
+          <h3 class="empty-title">Aún no tienes pacientes</h3>
+          <p class="empty-desc">Registra tu primer paciente manualmente o importa un listado desde otro sistema.</p>
+          <div class="row gap-2">
+            <button class="btn btn-secondary">Importar CSV</button>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Nuevo paciente</button>
+          </div>
+        </div>
+      </div>
+      <div class="specimen">
+        <div class="cpt-label">Sin resultados</div>
+        <div class="empty">
+          <div class="empty-glyph"><i class="ph ph-magnifying-glass"></i></div>
+          <h3 class="empty-title">Ningún protocolo coincide</h3>
+          <p class="empty-desc">No encontramos protocolos para "dermatitis neonatal". Prueba con otros términos o crea uno nuevo.</p>
+          <div class="row gap-2">
+            <button class="btn btn-ghost">Limpiar búsqueda</button>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Crear protocolo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BADGES -->
+  <section class="section" data-screen-label="19 Badges">
+    <div class="section-head">
+      <span class="section-kicker">B · 11 Badges</span>
+      <h2 class="section-title">Badges y chips de estado</h2>
+    </div>
+    <div class="specimen">
+      <div class="cpt-label">Estados documentales y administrativos</div>
+      <div class="row gap-3" style="flex-wrap: wrap;">
+        <span class="badge b-draft"><span class="dot"></span>Borrador</span>
+        <span class="badge b-active"><span class="dot"></span>Activo</span>
+        <span class="badge b-signed"><span class="dot"></span>Firmado</span>
+        <span class="badge b-review"><span class="dot"></span>En revisión</span>
+        <span class="badge b-archive"><span class="dot"></span>Archivado</span>
+        <span class="badge b-paid"><span class="dot"></span>Pagado</span>
+        <span class="badge b-overdue"><span class="dot"></span>Vencido</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROTOCOL BLOCK -->
+  <section class="section" data-screen-label="20 Protocol Block">
+    <div class="section-head">
+      <span class="section-kicker">B · 12 Signature Component</span>
+      <h2 class="section-title">Bloque de protocolo</h2>
+    </div>
+    <p class="subsection-note" style="margin-top: -12px;">El componente distintivo del editor de protocolos. Es un contenedor de sección que puede contener bloques anidados — checklists, tablas de dosis, árboles de decisión. Esta es la firma del producto.</p>
+
+    <div class="protocol-wrap">
+      <div class="protocol-head">
+        <div>
+          <div class="protocol-kicker">Protocolo · v2.3 · firmado</div>
+          <h2 class="protocol-title">Manejo de anafilaxia en adultos</h2>
+          <p class="protocol-meta">Actualizado 14 abr 2026 · Dr. Rafael Núñez · 12 bloques · 3 checklists anidados</p>
+        </div>
+        <div class="row gap-2">
+          <span class="badge b-signed"><span class="dot"></span>Firmado</span>
+          <button class="btn btn-secondary sz-sm"><i class="ph ph-pencil-simple"></i>Editar</button>
+        </div>
+      </div>
+
+      <!-- Parent section block -->
+      <div class="pblock">
+        <div class="pblock-header">
+          <i class="ph ph-dots-six-vertical pblock-handle"></i>
+          <span class="pblock-type">Sección</span>
+          <span class="pblock-title-input">Reconocimiento inicial y criterios diagnósticos</span>
+          <div class="pblock-actions">
+            <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-plus"></i></button>
+            <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-dots-three"></i></button>
+          </div>
+        </div>
+        <div class="pblock-body">
+          <p style="font-family: var(--sans); font-size: 13.5px; color: var(--n-600); margin: 0 0 4px; line-height: 1.55;">
+            La anafilaxia es una reacción alérgica grave de inicio súbito que puede causar la muerte. El diagnóstico clínico se establece cuando se cumple cualquiera de los tres criterios siguientes.
+          </p>
+
+          <!-- Nested checklist block -->
+          <div class="pnested">
+            <div class="pblock">
+              <div class="pblock-header">
+                <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                <span class="pblock-type">Checklist</span>
+                <span class="pblock-title-input">Criterios diagnósticos (cualquiera de 3)</span>
+                <div class="pblock-actions">
+                  <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-plus"></i></button>
+                  <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-dots-three"></i></button>
+                </div>
+              </div>
+              <div class="pblock-body">
+                <div class="plist">
+                  <div class="plist-item done">
+                    <span class="check checked"><span class="box"></span></span>
+                    <div class="plist-text">Inicio agudo (minutos a horas) de compromiso de piel/mucosa + al menos uno de: compromiso respiratorio <em>o</em> hipotensión.</div>
+                  </div>
+                  <div class="plist-item">
+                    <span class="check"><span class="box"></span></span>
+                    <div class="plist-text">Dos o más de los siguientes tras exposición a un alergeno probable: piel/mucosa, respiratorio, hipotensión, síntomas GI persistentes.<span class="critical">Crítico</span></div>
+                  </div>
+                  <div class="plist-item">
+                    <span class="check"><span class="box"></span></span>
+                    <div class="plist-text">Hipotensión tras exposición a un alergeno conocido para ese paciente (minutos a horas).</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pblock">
+              <div class="pblock-header">
+                <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                <span class="pblock-type">Tabla de dosis</span>
+                <span class="pblock-title-input">Adrenalina IM · dosificación por peso</span>
+                <div class="pblock-actions">
+                  <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-plus"></i></button>
+                  <button class="btn btn-ghost icon-only sz-sm"><i class="ph ph-dots-three"></i></button>
+                </div>
+              </div>
+              <div class="pblock-body" style="padding: 0;">
+                <table class="tbl" style="border: none; border-radius: 0;">
+                  <thead>
+                    <tr><th>Peso corporal</th><th>Dosis IM</th><th>Volumen (1 mg/mL)</th><th>Repetir si</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="name">10–25 kg</td><td class="mono">0.15 mg</td><td class="mono">0.15 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                    <tr><td class="name">25–50 kg</td><td class="mono">0.30 mg</td><td class="mono">0.30 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                    <tr><td class="name">&gt; 50 kg</td><td class="mono">0.50 mg</td><td class="mono">0.50 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <button class="pblock-add"><i class="ph ph-plus"></i>Añadir bloque dentro de esta sección</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="pblock-add"><i class="ph ph-plus"></i>Añadir sección al protocolo</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ===== Render neutral ramp =====
+  const neutrals = [
+    ['n-0',   '#FFFFFF', 'White'],
+    ['n-25',  '#FAFAF7', 'Paper'],
+    ['n-50',  '#F4F4F0', 'Row alt'],
+    ['n-100', '#EBEBE6', 'Border soft'],
+    ['n-200', '#D8D8D2', 'Border'],
+    ['n-300', '#B9B9B3', 'Divider +'],
+    ['n-400', '#8E8E88', 'Muted text'],
+    ['n-500', '#6B6B66', 'Text 2°'],
+    ['n-600', '#4A4A46', 'Body'],
+    ['n-700', '#2E2E2B', 'Heading'],
+  ];
+  // actually want 10 — include 800
+  const neutrals10 = [...neutrals, ['n-800', '#1C1C1A', 'Strong']].slice(0,10);
+
+  function luminance(hex) {
+    const c = hex.replace('#','');
+    const r = parseInt(c.substr(0,2),16)/255;
+    const g = parseInt(c.substr(2,2),16)/255;
+    const b = parseInt(c.substr(4,2),16)/255;
+    const a = [r,g,b].map(v => v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4));
+    return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+  }
+  function contrast(a, b) {
+    const l1 = luminance(a), l2 = luminance(b);
+    const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+    return ((hi + 0.05) / (lo + 0.05)).toFixed(2);
+  }
+  function textOn(hex) {
+    return luminance(hex) > 0.5 ? '#2E2E2B' : '#FFFFFF';
+  }
+
+  const neutralRamp = document.getElementById('neutralRamp');
+  neutrals10.forEach(([tk, hex, label]) => {
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.style.background = hex;
+    el.style.color = textOn(hex);
+    el.innerHTML = `
+      <div class="t">${tk}</div>
+      <div class="b">
+        <span>${hex}</span>
+        <span class="ratio">vs #FFF · ${contrast(hex,'#FFFFFF')}</span>
+        <span class="ratio">vs #0E0E0D · ${contrast(hex,'#0E0E0D')}</span>
+      </div>`;
+    neutralRamp.appendChild(el);
+  });
+
+  // ===== Primary ramp =====
+  const primary = [
+    ['p-50',  '#EAF0F1'],
+    ['p-100', '#C9D7DA'],
+    ['p-300', '#6A8B91'],
+    ['p-500', '#2D5760'],
+    ['p-700', '#1B3A41'],
+  ];
+  const primaryRamp = document.getElementById('primaryRamp');
+  primary.forEach(([tk, hex]) => {
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.style.background = hex;
+    el.style.color = textOn(hex);
+    el.innerHTML = `
+      <div class="t">${tk}</div>
+      <div class="b">
+        <span>${hex}</span>
+        <span class="ratio">vs #FFF · ${contrast(hex,'#FFFFFF')}</span>
+        <span class="ratio">vs #0E0E0D · ${contrast(hex,'#0E0E0D')}</span>
+      </div>`;
+    primaryRamp.appendChild(el);
+  });
+
+  // ===== Spacing scale =====
+  const spacing = [
+    ['s-1',  '4 px',  4],
+    ['s-2',  '8 px',  8],
+    ['s-3',  '12 px', 12],
+    ['s-4',  '16 px', 16],
+    ['s-5',  '20 px', 20],
+    ['s-6',  '24 px', 24],
+    ['s-8',  '32 px', 32],
+    ['s-10', '40 px', 40],
+    ['s-12', '48 px', 48],
+    ['s-16', '64 px', 64],
+  ];
+  const spGrid = document.getElementById('spacingGrid');
+  spacing.forEach(([tk, label, px]) => {
+    spGrid.insertAdjacentHTML('beforeend', `
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--n-800);">--${tk}</div>
+      <div><span class="sp-bar" style="width: ${px}px"></span></div>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--n-500); text-align: right;">${label}</div>
+    `);
+  });
+</script>
+
+<!-- ============ TWEAKS PANEL ============ -->
+<style>
+  #tweaks-panel {
+    position: fixed; right: 20px; bottom: 20px; width: 280px;
+    background: var(--n-0); border: 1px solid var(--n-200); border-radius: var(--r-md);
+    box-shadow: var(--e-floating); z-index: 9999;
+    font-family: var(--sans); font-size: 13px; color: var(--n-800);
+    display: none;
+  }
+  #tweaks-panel.on { display: block; }
+  #tweaks-panel .tp-head {
+    padding: 12px 16px; border-bottom: 1px solid var(--n-100);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #tweaks-panel .tp-title { font-family: var(--serif); font-weight: 500; font-size: 16px; color: var(--n-900);}
+  #tweaks-panel .tp-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px;}
+  #tweaks-panel .tp-row { display: flex; flex-direction: column; gap: 6px;}
+  #tweaks-panel .tp-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--n-400);}
+  #tweaks-panel .tp-swatches { display: flex; gap: 6px;}
+  #tweaks-panel .tp-sw {
+    width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--n-200); cursor: pointer;
+    position: relative;
+  }
+  #tweaks-panel .tp-sw.sel { box-shadow: 0 0 0 2px var(--n-0), 0 0 0 4px var(--n-800);}
+  #tweaks-panel select, #tweaks-panel .tp-seg {
+    font-family: var(--sans); font-size: 12.5px; color: var(--n-800);
+    border: 1px solid var(--n-200); border-radius: var(--r-sm); background: var(--n-0);
+    height: 30px; padding: 0 8px;
+  }
+  #tweaks-panel .tp-seg { display: inline-flex; padding: 0; overflow: hidden; }
+  #tweaks-panel .tp-seg button {
+    flex: 1; border: none; background: transparent; padding: 0 10px;
+    font-family: var(--sans); font-size: 12px; color: var(--n-600); cursor: pointer;
+    border-right: 1px solid var(--n-200);
+  }
+  #tweaks-panel .tp-seg button:last-child { border-right: none; }
+  #tweaks-panel .tp-seg button.on { background: var(--p-500); color: #fff;}
+</style>
+<div id="tweaks-panel">
+  <div class="tp-head">
+    <span class="tp-title">Tweaks</span>
+    <span style="font-family: var(--mono); font-size: 10.5px; color: var(--n-400); letter-spacing: 0.08em; text-transform: uppercase;">v0.1</span>
+  </div>
+  <div class="tp-body">
+    <div class="tp-row">
+      <span class="tp-label">Color primario</span>
+      <div class="tp-swatches" id="tw-primary"></div>
+    </div>
+    <div class="tp-row">
+      <span class="tp-label">Radio base</span>
+      <div class="tp-seg" id="tw-radius">
+        <button data-v="sharp">2 px</button>
+        <button data-v="default" class="on">3 px</button>
+        <button data-v="soft">6 px</button>
+      </div>
+    </div>
+    <div class="tp-row">
+      <span class="tp-label">Densidad de inputs</span>
+      <div class="tp-seg" id="tw-density">
+        <button data-v="compact">Compacto</button>
+        <button data-v="default" class="on">Normal</button>
+        <button data-v="comfy">Cómodo</button>
+      </div>
+    </div>
+    <div class="tp-row">
+      <span class="tp-label">Estilo de adornos</span>
+      <div class="tp-seg" id="tw-adorn">
+        <button data-v="filled" class="on">Filled</button>
+        <button data-v="plain">Plain</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "primary": "#2D5760",
+    "radius": "default",
+    "density": "default",
+    "adorn": "filled"
+  }/*EDITMODE-END*/;
+
+  const PRIMARIES = [
+    { hex: '#2D5760', name: 'Teal-slate' },
+    { hex: '#1E3A5F', name: 'Ink blue' },
+    { hex: '#3B5B3E', name: 'Forest' },
+    { hex: '#6B4A2E', name: 'Bronze' },
+    { hex: '#4A3B6B', name: 'Iris' },
+    { hex: '#1C1C1A', name: 'Graphite' },
+  ];
+
+  function shade(hex, amt) {
+    // simple lighten/darken by mixing with white/black in RGB
+    const c = hex.replace('#','');
+    const r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+    const mix = amt < 0
+      ? [r + (0-r)*(-amt), g + (0-g)*(-amt), b + (0-b)*(-amt)]
+      : [r + (255-r)*amt, g + (255-g)*amt, b + (255-b)*amt];
+    return '#' + mix.map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
+  }
+
+  const state = { ...TWEAK_DEFAULTS };
+
+  function applyPrimary(hex) {
+    const root = document.documentElement;
+    root.style.setProperty('--p-500', hex);
+    root.style.setProperty('--p-700', shade(hex, -0.25));
+    root.style.setProperty('--p-900', shade(hex, -0.55));
+    root.style.setProperty('--p-300', shade(hex, 0.30));
+    root.style.setProperty('--p-100', shade(hex, 0.70));
+    root.style.setProperty('--p-50',  shade(hex, 0.88));
+  }
+  function applyRadius(v) {
+    const root = document.documentElement;
+    const map = { sharp: ['2px','3px','5px'], default: ['3px','5px','8px'], soft: ['6px','10px','14px'] };
+    const [sm, md, lg] = map[v] || map.default;
+    root.style.setProperty('--r-sm', sm);
+    root.style.setProperty('--r-md', md);
+    root.style.setProperty('--r-lg', lg);
+  }
+  function applyDensity(v) {
+    const map = { compact: 30, default: 34, comfy: 40 };
+    const h = map[v] || 34;
+    // inject a dynamic rule
+    let s = document.getElementById('tw-density-style');
+    if (!s) { s = document.createElement('style'); s.id = 'tw-density-style'; document.head.appendChild(s); }
+    s.textContent = `.input { height: ${h}px; } .input-group { min-height: ${h}px; } .input-group .input { height: ${h-2}px; }`;
+  }
+  function applyAdorn(v) {
+    let s = document.getElementById('tw-adorn-style');
+    if (!s) { s = document.createElement('style'); s.id = 'tw-adorn-style'; document.head.appendChild(s); }
+    if (v === 'plain') {
+      s.textContent = `.input-group .adorn { background: transparent; border-left-color: transparent; color: var(--n-400); } .input-group .adorn.leading { border-right-color: transparent; }`;
+    } else {
+      s.textContent = '';
+    }
+  }
+
+  function applyAll() {
+    applyPrimary(state.primary);
+    applyRadius(state.radius);
+    applyDensity(state.density);
+    applyAdorn(state.adorn);
+  }
+
+  function persist() {
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: state }, '*');
+  }
+
+  function renderSwatches() {
+    const host = document.getElementById('tw-primary');
+    host.innerHTML = '';
+    PRIMARIES.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'tp-sw' + (p.hex.toLowerCase() === state.primary.toLowerCase() ? ' sel' : '');
+      el.style.background = p.hex;
+      el.title = p.name + ' · ' + p.hex;
+      el.addEventListener('click', () => {
+        state.primary = p.hex;
+        applyPrimary(p.hex);
+        renderSwatches();
+        persist();
+      });
+      host.appendChild(el);
+    });
+  }
+
+  function wireSeg(id, key, cb) {
+    const root = document.getElementById(id);
+    root.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.v === state[key]);
+      btn.addEventListener('click', () => {
+        state[key] = btn.dataset.v;
+        root.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === state[key]));
+        cb(state[key]);
+        persist();
+      });
+    });
+  }
+
+  renderSwatches();
+  wireSeg('tw-radius', 'radius', applyRadius);
+  wireSeg('tw-density', 'density', applyDensity);
+  wireSeg('tw-adorn', 'adorn', applyAdorn);
+  applyAll();
+
+  // Edit-mode protocol: listener FIRST, then announce
+  const panel = document.getElementById('tweaks-panel');
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (d.type === '__activate_edit_mode')   panel.classList.add('on');
+    if (d.type === '__deactivate_edit_mode') panel.classList.remove('on');
+  });
+  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+</script>
+</body>
+</html>
