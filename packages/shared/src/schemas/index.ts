@@ -1,0 +1,7 @@
+export * from './appointment.js'
+export * from './consultation.js'
+export * from './invoice.js'
+export * from './location.js'
+export * from './patient.js'
+export * from './prescription.js'
+export * from './protocol.js'

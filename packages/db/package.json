@@ -1,0 +1,32 @@
+{
+  "name": "@rezeta/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./generated/index.js",
+      "types": "./generated/index.d.ts"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate --schema=prisma/schema.prisma",
+    "migrate:dev": "prisma migrate dev --schema=prisma/schema.prisma",
+    "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "migrate:reset": "prisma migrate reset --schema=prisma/schema.prisma",
+    "studio": "prisma studio --schema=prisma/schema.prisma",
+    "seed": "tsx src/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "^6.6.0",
+    "tsx": "^4.19.0"
+  }
+}

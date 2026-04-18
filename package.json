@@ -16,10 +16,18 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "db:migrate": "pnpm --filter @rezeta/db migrate:dev",
+    "db:seed": "pnpm --filter @rezeta/db seed",
+    "db:reset": "pnpm --filter @rezeta/db migrate:reset",
+    "db:studio": "pnpm --filter @rezeta/db studio",
+    "demo:data": "tsx tools/create-demo-data.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
+    "tsx": "^4.19.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
@@ -30,8 +38,16 @@
     "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "@nestjs/core", "esbuild", "protobufjs"]
+  },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,css,md,yaml,yml}": ["prettier --write"]
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yaml,yml}": [
+      "prettier --write"
+    ]
   }
 }
