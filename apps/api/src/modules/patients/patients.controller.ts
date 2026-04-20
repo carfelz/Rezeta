@@ -11,6 +11,7 @@ import {
   HttpStatus,
   UsePipes,
   ParseUUIDPipe,
+  Inject,
 } from '@nestjs/common'
 import type { Patient } from '@rezeta/db'
 import {
@@ -27,7 +28,7 @@ import { PatientsService } from './patients.service.js'
 
 @Controller('v1/patients')
 export class PatientsController {
-  constructor(private service: PatientsService) {}
+  constructor(@Inject(PatientsService) private service: PatientsService) {}
 
   @Get()
   list(

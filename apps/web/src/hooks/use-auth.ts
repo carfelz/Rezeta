@@ -3,6 +3,6 @@ import type { AuthUser } from '@rezeta/shared'
 
 export function useAuth(): { user: AuthUser | null; isLoading: boolean; isAuthenticated: boolean } {
   const user = useAuthStore((s) => s.user)
-  const isLoading = useAuthStore((s) => s.isLoading)
-  return { user, isLoading, isAuthenticated: user !== null }
+  const status = useAuthStore((s) => s.status)
+  return { user, isLoading: status === 'loading', isAuthenticated: status === 'authenticated' }
 }

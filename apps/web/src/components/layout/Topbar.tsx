@@ -2,7 +2,8 @@ import { Bell, CaretDown, MagnifyingGlass } from '@phosphor-icons/react'
 import { useUiStore } from '@/store/ui.store'
 import { useAuth } from '@/hooks/use-auth'
 
-function initials(name: string): string {
+function initials(name: string | null): string {
+  if (!name) return '?'
   return name
     .split(' ')
     .slice(0, 2)
@@ -17,40 +18,34 @@ export function Topbar(): JSX.Element {
 
   return (
     <header className="topbar">
+      {/* Location switcher */}
       <button className="topbar__location-switcher" type="button">
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: 'var(--color-p-500)',
-            display: 'inline-block',
-            marginRight: 8,
-          }}
-        />
-        <div>
-          <div className="topbar__location-name">
-            {activeLocationId ? 'Consultorio' : 'Seleccionar ubicación'}
-          </div>
-          <div className="topbar__location-sub">Centro Médico</div>
-        </div>
-        <CaretDown size={16} style={{ marginLeft: 6, color: 'var(--color-n-400)' }} />
+        <span className="topbar__location-dot" />
+        <span className="topbar__location-name">
+          {activeLocationId ? 'Consultorio' : 'Seleccionar ubicación'}
+        </span>
+        <span className="topbar__location-sub">· Centro Médico</span>
+        <CaretDown size={12} style={{ marginLeft: 4, color: 'var(--color-n-400)' }} />
       </button>
 
+      {/* Search */}
       <div className="topbar__search">
-        <span className="input-icon input-icon--leading">
+        <span
+          className="topbar__search-icon"
+          style={{ display: 'flex', alignItems: 'center' }}
+        >
           <MagnifyingGlass size={16} />
         </span>
         <input
           className="input"
           type="search"
           placeholder="Buscar pacientes, citas..."
-          style={{ border: 'none', background: 'transparent', flex: 1 }}
         />
         <span className="topbar__search-kbd">⌘K</span>
       </div>
 
-      <div className="row gap-1" style={{ marginLeft: 'auto' }}>
+      {/* Right side */}
+      <div className="topbar__right">
         <button className="topbar__icon-btn" type="button" aria-label="Notificaciones">
           <Bell size={16} />
         </button>
@@ -59,12 +54,8 @@ export function Topbar(): JSX.Element {
           <div className="topbar__doctor">
             <div className="avatar">{initials(user.fullName)}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-n-800)' }}>
-                {user.fullName}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
-                {user.specialty ?? 'Médico'}
-              </div>
+              <div className="topbar__doctor-name">{user.fullName}</div>
+              <div className="topbar__doctor-role">{user.specialty ?? 'Médico'}</div>
             </div>
           </div>
         )}

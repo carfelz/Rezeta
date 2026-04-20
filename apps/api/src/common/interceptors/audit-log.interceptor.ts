@@ -1,4 +1,4 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common'
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Inject } from '@nestjs/common'
 import type { Request } from 'express'
 import { Observable } from 'rxjs'
 import { tap } from 'rxjs/operators'
@@ -24,7 +24,7 @@ interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   intercept(ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()

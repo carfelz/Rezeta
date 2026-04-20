@@ -1,12 +1,16 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { useAuthStore } from '@/store/auth.store'
+import { strings } from '@/lib/strings'
 
 export function Ajustes(): JSX.Element {
   const { user } = useAuth()
+  const { signOut } = useAuthStore()
+  const navigate = useNavigate()
 
   async function handleSignOut() {
-    if (auth) await signOut(auth)
+    await signOut()
+    void navigate('/login', { replace: true })
   }
 
   return (
@@ -41,9 +45,12 @@ export function Ajustes(): JSX.Element {
         </div>
       )}
 
-      <button className="btn btn--danger" onClick={() => { void handleSignOut() }}>
-        <i className="ph ph-sign-out" />
-        Cerrar sesión
+      <button
+        className="btn btn--secondary"
+        onClick={() => { void handleSignOut() }}
+      >
+        <i className="ph ph-sign-out" style={{ marginRight: 6 }} />
+        {strings.AUTH_SIGN_OUT}
       </button>
     </div>
   )

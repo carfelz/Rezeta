@@ -30,6 +30,15 @@ export const DosageRowSchema = z.object({
   notes: z.string(),
 })
 
+const FixedDosageColumnsSchema = z.tuple([
+  z.literal('drug'),
+  z.literal('dose'),
+  z.literal('route'),
+  z.literal('frequency'),
+  z.literal('notes'),
+])
+
+// -- Protocol Instance Schema (Strict Content) --
 const BaseBlockSchema = z.object({ id: z.string() })
 
 export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
@@ -60,7 +69,7 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
     BaseBlockSchema.extend({
       type: z.literal('dosage_table'),
       title: z.string().optional(),
-      columns: z.array(z.string()),
+      columns: FixedDosageColumnsSchema,
       rows: z.array(DosageRowSchema).min(1),
     }),
     BaseBlockSchema.extend({
@@ -71,6 +80,62 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
     }),
   ]),
 )
+
+// -- Template Schema (Authoring Context) --
+const BaseTemplateBlockSchema = BaseBlockSchema.extend({
+  required: z.boolean().optional(),
+  placeholder: z.string().optional(),
+})
+
+export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.discriminatedUnion('type', [
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('section'),
+      title: z.string().min(1),
+      description: z.string().optional(),
+      collapsed_by_default: z.boolean().optional(),
+      blocks: z.array(TemplateBlockSchema).optional(),
+      placeholder_blocks: z.array(TemplateBlockSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({ type: z.literal('text'), content: z.string().optional() }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('checklist'),
+      title: z.string().optional(),
+      items: z.array(ChecklistItemSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('steps'),
+      title: z.string().optional(),
+      steps: z.array(StepSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('decision'),
+      condition: z.string().optional(),
+      branches: z.array(DecisionBranchSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('dosage_table'),
+      title: z.string().optional(),
+      columns: FixedDosageColumnsSchema.optional(),
+      rows: z.array(DosageRowSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('alert'),
+      severity: AlertSeveritySchema.optional(),
+      title: z.string().optional(),
+      content: z.string().optional(),
+    }),
+  ]),
+)
+
+export const ProtocolTemplateSchema = z.object({
+  version: z.string(),
+  metadata: z.object({
+    suggested_specialty: z.string().optional(),
+    intended_use: z.string().optional(),
+  }),
+  blocks: z.array(TemplateBlockSchema),
+})
 
 export const ProtocolContentSchema = z.object({
   version: z.string(),
@@ -83,7 +148,7 @@ export const CreateProtocolSchema = z.object({
   title: z.string().min(2).max(300),
   specialty: z.string().max(100).nullable().optional(),
   tags: z.array(z.string()).default([]),
-  content: ProtocolContentSchema,
+  content: ProtocolContentSchema.optional(),
 })
 
 export const UpdateProtocolSchema = z.object({
@@ -99,6 +164,20 @@ export const SaveProtocolVersionSchema = z.object({
   publish: z.boolean().default(false),
 })
 
+export const ProtocolTemplateDtoSchema = z.object({
+  id: z.string().uuid(),
+  templateKey: z.string(),
+  locale: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  suggestedSpecialty: z.string().nullable(),
+  category: z.string().nullable(),
+  icon: z.string().nullable(),
+  schema: z.any(),
+  isSystem: z.boolean(),
+})
+
 export type CreateProtocolDto = z.infer<typeof CreateProtocolSchema>
 export type UpdateProtocolDto = z.infer<typeof UpdateProtocolSchema>
 export type SaveProtocolVersionDto = z.infer<typeof SaveProtocolVersionSchema>
+export type ProtocolTemplateDto = z.infer<typeof ProtocolTemplateDtoSchema>

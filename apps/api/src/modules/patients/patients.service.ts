@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, Inject } from '@nestjs/common'
 import type { Patient } from '@rezeta/db'
 import { ErrorCode, type CreatePatientDto, type UpdatePatientDto } from '@rezeta/shared'
 import { PatientsRepository, type PatientListParams } from './patients.repository.js'
 
 @Injectable()
 export class PatientsService {
-  constructor(private repo: PatientsRepository) {}
+  constructor(@Inject(PatientsRepository) private repo: PatientsRepository) {}
 
   async list(params: PatientListParams): Promise<{ items: Patient[]; hasMore: boolean; nextCursor?: string }> {
     const limit = params.limit ?? 50

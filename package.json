@@ -20,10 +20,13 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "db:migrate": "pnpm --filter @rezeta/db migrate:dev",
-    "db:seed": "pnpm --filter @rezeta/db seed",
+    "db:seed": "pnpm --filter @rezeta/db seed && tsx --env-file=.env tools/seed-dev-users.ts",
+    "seed:dev-users": "tsx --env-file=.env tools/seed-dev-users.ts",
     "db:reset": "pnpm --filter @rezeta/db migrate:reset",
     "db:studio": "pnpm --filter @rezeta/db studio",
-    "demo:data": "tsx tools/create-demo-data.ts"
+    "demo:data": "tsx tools/create-demo-data.ts",
+    "seed:templates": "tsx tools/seed-protocol-templates.ts",
+    "emulator": "firebase emulators:start --only auth --project rezeta-dev"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",

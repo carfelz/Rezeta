@@ -17,21 +17,60 @@ interface NavItem {
   count?: number
 }
 
-const NAV_ITEMS: NavItem[] = [
+const NAV_HOY: NavItem[] = [
   { to: '/dashboard', Icon: SquaresFour, label: 'Dashboard' },
-  { to: '/agenda',    Icon: CalendarBlank, label: 'Agenda' },
-  { to: '/pacientes', Icon: User,          label: 'Pacientes' },
-  { to: '/protocolos',Icon: Stack,         label: 'Protocolos' },
-  { to: '/facturacion',Icon: Receipt,      label: 'Facturación' },
+  { to: '/agenda', Icon: CalendarBlank, label: 'Agenda' },
 ]
 
-function initials(name: string): string {
+const NAV_CLINICO: NavItem[] = [
+  { to: '/pacientes', Icon: User, label: 'Pacientes' },
+  { to: '/protocolos', Icon: Stack, label: 'Protocolos' },
+]
+
+const NAV_ADMIN: NavItem[] = [
+  { to: '/facturacion', Icon: Receipt, label: 'Facturación' },
+  { to: '/ajustes', Icon: Gear, label: 'Ajustes' },
+]
+
+function initials(name: string | null): string {
+  if (!name) return '?'
   return name
     .split(' ')
     .slice(0, 2)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
+}
+
+function NavGroup({ items }: { items: NavItem[] }): JSX.Element {
+  return (
+    <>
+      {items.map(({ to, Icon, label, count }) => (
+        <NavLink
+          key={to}
+          to={to}
+          className={({ isActive }) =>
+            `sidebar__item${isActive ? ' sidebar__item--active' : ''}`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Icon
+                size={16}
+                weight={isActive ? 'fill' : 'regular'}
+                color={isActive ? 'var(--color-p-500)' : 'var(--color-n-500)'}
+                style={{ flexShrink: 0 }}
+              />
+              {label}
+              {count !== undefined && (
+                <span className="sidebar__item__count">{count}</span>
+              )}
+            </>
+          )}
+        </NavLink>
+      ))}
+    </>
+  )
 }
 
 export function Sidebar(): JSX.Element {
@@ -44,44 +83,16 @@ export function Sidebar(): JSX.Element {
         <span className="sidebar__brand-name">Rezeta</span>
       </div>
 
-      <span className="sidebar__section-label">Clínico</span>
+      <span className="sidebar__section-label">Hoy</span>
+      <NavGroup items={NAV_HOY} />
 
-      {NAV_ITEMS.map(({ to, Icon, label, count }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) =>
-            `sidebar__item${isActive ? ' sidebar__item--active' : ''}`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <Icon size={16} weight={isActive ? 'fill' : 'regular'} />
-              {label}
-              {count !== undefined && (
-                <span className="sidebar__item__count">{count}</span>
-              )}
-            </>
-          )}
-        </NavLink>
-      ))}
+      <span className="sidebar__section-label">Trabajo Clínico</span>
+      <NavGroup items={NAV_CLINICO} />
 
-      <span className="sidebar__section-label" style={{ marginTop: 'auto' }}>
-        Configuración
+      <span className="sidebar__section-label">
+        Administración
       </span>
-      <NavLink
-        to="/ajustes"
-        className={({ isActive }) =>
-          `sidebar__item${isActive ? ' sidebar__item--active' : ''}`
-        }
-      >
-        {({ isActive }) => (
-          <>
-            <Gear size={16} weight={isActive ? 'fill' : 'regular'} />
-            Ajustes
-          </>
-        )}
-      </NavLink>
+      <NavGroup items={NAV_ADMIN} />
 
       {user && (
         <div className="sidebar__footer">

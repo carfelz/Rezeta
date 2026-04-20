@@ -36,7 +36,14 @@
       "Bash(npx tsx *)",
       "Bash(npx tsc *)",
       "Bash(timeout 12 npx vite build --mode development)",
-      "Bash(curl -s http://localhost:6006)"
+      "Bash(curl -s http://localhost:6006)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__new_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__select_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_console_messages",
+      "Bash(awk '{print $2}')"
     ]
   }
 }

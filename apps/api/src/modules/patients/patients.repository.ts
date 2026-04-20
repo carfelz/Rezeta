@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import type { Patient } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 import type { CreatePatientDto, UpdatePatientDto } from '@rezeta/shared'
@@ -13,7 +13,7 @@ export interface PatientListParams {
 
 @Injectable()
 export class PatientsRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async findMany({ tenantId, ownerId, search, cursor, limit = 50 }: PatientListParams): Promise<Patient[]> {
     return this.prisma.patient.findMany({

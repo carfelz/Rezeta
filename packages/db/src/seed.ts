@@ -237,6 +237,38 @@ const TEMPLATES = [
   },
 ]
 
+const DEV_TENANT_ID = '00000000-0000-0000-0000-000000000001'
+const DEV_USER_ID = '00000000-0000-0000-0000-000000000002'
+
+async function seedDevAccount() {
+  const tenant = await prisma.tenant.upsert({
+    where: { id: DEV_TENANT_ID },
+    update: {},
+    create: {
+      id: DEV_TENANT_ID,
+      name: 'Development Clinic',
+      type: 'solo',
+      plan: 'free',
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { id: DEV_USER_ID },
+    update: {},
+    create: {
+      id: DEV_USER_ID,
+      tenantId: DEV_TENANT_ID,
+      firebaseUid: 'dev-firebase-uid',
+      email: 'dev@example.com',
+      fullName: 'Dev Doctor',
+      role: 'owner',
+      specialty: 'Cardiología',
+    },
+  })
+
+  console.log('✓ Seeded developer account')
+}
+
 async function seedSystemTemplates() {
   for (const t of TEMPLATES) {
     await prisma.protocolTemplate.upsert({
@@ -261,6 +293,7 @@ async function seedSystemTemplates() {
 
 async function main() {
   console.log('Seeding database…')
+  await seedDevAccount()
   await seedSystemTemplates()
   console.log('Done.')
 }

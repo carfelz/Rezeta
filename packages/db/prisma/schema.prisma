@@ -16,7 +16,7 @@ datasource db {
 
 model Tenant {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String   @db.VarChar(200)
+  name      String?  @db.VarChar(200)
   type      String   @default("solo") @db.VarChar(50) // solo | practice | clinic | enterprise
   plan      String   @default("free") @db.VarChar(50) // free | solo | practice | clinic
   country   String   @default("DO") @db.VarChar(10)
@@ -34,6 +34,7 @@ model Tenant {
   invoices          Invoice[]
   protocols         Protocol[]
   protocolTemplates ProtocolTemplate[]
+  protocolVersions  ProtocolVersion[]
   protocolUsages    ProtocolUsage[]
   auditLogs         AuditLog[]
   attachments       Attachment[]
@@ -46,8 +47,8 @@ model User {
   tenantId      String    @map("tenant_id") @db.Uuid
   firebaseUid   String    @unique @map("firebase_uid") @db.VarChar(128)
   email         String    @db.VarChar(320)
-  fullName      String    @map("full_name") @db.VarChar(200)
-  role          String    @default("doctor") @db.VarChar(50) // owner | doctor
+  fullName      String?   @map("full_name") @db.VarChar(200)
+  role          String    @default("owner") @db.VarChar(50) // owner | doctor
   specialty     String?   @db.VarChar(100)
   licenseNumber String?   @map("license_number") @db.VarChar(100)
   isActive      Boolean   @default(true) @map("is_active")
@@ -391,6 +392,7 @@ model ProtocolTemplate {
   createdBy         String?  @map("created_by") @db.Uuid
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
 
   tenant    Tenant?    @relation(fields: [tenantId], references: [id])
   creator   User?      @relation(fields: [createdBy], references: [id])
@@ -436,6 +438,7 @@ model Protocol {
 
 model ProtocolVersion {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
   protocolId    String    @map("protocol_id") @db.Uuid
   versionNumber Int       @map("version_number")
   content       Json
@@ -444,13 +447,18 @@ model ProtocolVersion {
   approvedBy    String?   @map("approved_by") @db.Uuid
   approvedAt    DateTime? @map("approved_at")
   createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
 
+  tenant   Tenant          @relation(fields: [tenantId], references: [id])
   protocol Protocol        @relation(fields: [protocolId], references: [id])
   author   User            @relation("VersionCreator", fields: [createdBy], references: [id])
   approver User?           @relation("VersionApprover", fields: [approvedBy], references: [id])
   usages   ProtocolUsage[]
 
   @@unique([protocolId, versionNumber])
+  @@index([tenantId])
+  @@index([tenantId, deletedAt])
   @@index([protocolId])
   @@map("protocol_versions")
 }
@@ -465,6 +473,9 @@ model ProtocolUsage {
   consultationId    String?  @map("consultation_id") @db.Uuid
   appliedAt         DateTime @default(now()) @map("applied_at")
   notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
 
   tenant          Tenant          @relation(fields: [tenantId], references: [id])
   protocol        Protocol        @relation(fields: [protocolId], references: [id])

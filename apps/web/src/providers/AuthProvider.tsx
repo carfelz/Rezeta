@@ -4,9 +4,10 @@ import type { AuthUser } from '@rezeta/shared'
 
 const STUB_AUTH = import.meta.env['VITE_STUB_AUTH'] === 'true'
 
+// Dev stub — used only when VITE_STUB_AUTH=true (no Firebase at all)
 const STUB_USER: AuthUser = {
-  id: 'dev-user-id',
-  tenantId: 'dev-tenant-id',
+  id: '00000000-0000-0000-0000-000000000002',
+  tenantId: '00000000-0000-0000-0000-000000000001',
   firebaseUid: 'dev-firebase-uid',
   email: 'demo@rezeta.app',
   fullName: 'Dr. Juan García',
@@ -15,45 +16,68 @@ const STUB_USER: AuthUser = {
   licenseNumber: 'CMP-12345',
 }
 
+/**
+ * AuthProvider — listens to Firebase onAuthStateChanged.
+ *
+ * When a Firebase user appears:
+ *   1. Call POST /v1/auth/provision to ensure the user exists in our DB.
+ *   2. Store the returned Postgres profile in Zustand (status: 'authenticated').
+ *
+ * When no Firebase user:
+ *   → Set status: 'unauthenticated', clear user.
+ *
+ * On provision failure:
+ *   → Sign out from Firebase, set status: 'unauthenticated'.
+ */
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
-  const { setUser, setLoading } = useAuthStore()
+  const { _setUser, _setFirebaseUser, _setStatus } = useAuthStore()
 
   useEffect(() => {
     if (STUB_AUTH) {
-      setUser(STUB_USER)
-      setLoading(false)
+      _setUser(STUB_USER)
+      _setFirebaseUser(null)
+      _setStatus('authenticated')
       return
     }
 
-    // Real Firebase auth — only runs when VITE_STUB_AUTH is not set
     let unsubscribe: (() => void) | undefined
 
     async function initFirebaseAuth() {
-      const { onAuthStateChanged } = await import('firebase/auth')
+      const { onAuthStateChanged, signOut: fbSignOut } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
       const { apiClient } = await import('@/lib/api-client')
 
       if (!auth) {
-        setUser(null)
-        setLoading(false)
+        _setUser(null)
+        _setFirebaseUser(null)
+        _setStatus('unauthenticated')
         return
       }
 
       unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         void (async () => {
           if (!firebaseUser) {
-            setUser(null)
-            setLoading(false)
+            _setUser(null)
+            _setFirebaseUser(null)
+            _setStatus('unauthenticated')
             return
           }
 
+          _setFirebaseUser(firebaseUser)
+          _setStatus('loading')
+
           try {
-            const user = await apiClient.get<AuthUser>('/v1/me')
-            setUser(user)
-          } catch {
-            setUser(null)
-          } finally {
-            setLoading(false)
+            // POST /v1/auth/provision is idempotent — safe to call on every login
+            const user = await apiClient.post<AuthUser>('/v1/auth/provision', {})
+            _setUser(user)
+            _setStatus('authenticated')
+          } catch (err) {
+            console.error('[AuthProvider] Provision failed:', err)
+            // Sign out to leave a clean state — no half-authenticated session
+            await fbSignOut(auth)
+            _setUser(null)
+            _setFirebaseUser(null)
+            _setStatus('unauthenticated')
           }
         })()
       })
@@ -61,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
 
     void initFirebaseAuth()
     return () => unsubscribe?.()
-  }, [setUser, setLoading])
+  }, [_setUser, _setFirebaseUser, _setStatus])
 
   return <>{children}</>
 }

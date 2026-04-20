@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { AuthGate } from '@/components/auth/AuthGate'
+import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
 import { Dashboard } from '@/pages/Dashboard'
 import { Agenda } from '@/pages/Agenda'
 import { Pacientes } from '@/pages/Pacientes'
@@ -8,16 +10,32 @@ import { Protocolos } from '@/pages/Protocolos'
 import { Facturacion } from '@/pages/Facturacion'
 import { Ajustes } from '@/pages/Ajustes'
 import { Login } from '@/pages/Login'
+import { Signup } from '@/pages/Signup'
 
 const router = createBrowserRouter([
+  // ── Public-only routes (redirect authenticated users away) ────────────────
   {
     path: '/login',
-    element: <Login />,
+    element: <PublicOnlyGate><Login /></PublicOnlyGate>,
   },
   {
-    element: <AppLayout />,
+    path: '/signup',
+    element: <PublicOnlyGate><Signup /></PublicOnlyGate>,
+  },
+
+  // ── Protected routes (wrapped in AuthGate) ─────────────────────────────────
+  {
+    element: (
+      <AuthGate>
+        <AppLayout />
+      </AuthGate>
+    ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      // Root redirect
+      {
+        index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'agenda', element: <Agenda /> },
       { path: 'pacientes', element: <Pacientes /> },

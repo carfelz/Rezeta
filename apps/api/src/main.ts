@@ -9,7 +9,10 @@ async function bootstrap() {
   })
 
   app.enableCors({
-    origin: process.env['ALLOWED_ORIGINS']?.split(',') ?? 'http://localhost:5173',
+    origin: process.env['ALLOWED_ORIGINS']?.split(',').map((o) => o.trim()) ?? [
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ],
     credentials: true,
   })
 
