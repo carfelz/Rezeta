@@ -31,11 +31,11 @@ The schema is shaped by four guiding principles:
 
 ### Template vs Protocol vs Version
 
-| Concept | Description | DB Entity |
-|---------|-------------|-----------|
+| Concept      | Description                                                                                        | DB Entity          |
+| ------------ | -------------------------------------------------------------------------------------------------- | ------------------ |
 | **Template** | A reusable structure (schema + metadata) that defines how a class of protocols should be organized | `ProtocolTemplate` |
-| **Protocol** | An instance of a template, representing a specific clinical procedure | `Protocol` |
-| **Version** | An immutable snapshot of protocol content at a point in time | `ProtocolVersion` |
+| **Protocol** | An instance of a template, representing a specific clinical procedure                              | `Protocol`         |
+| **Version**  | An immutable snapshot of protocol content at a point in time                                       | `ProtocolVersion`  |
 
 ### Block vs Section
 
@@ -47,14 +47,14 @@ The schema is shaped by four guiding principles:
 
 All elements use prefixed short IDs for readability and stability:
 
-| Prefix | Meaning | Example |
-|--------|---------|---------|
-| `sec_` | Section | `sec_assessment` |
-| `blk_` | Block (any non-section type) | `blk_checklist_01` |
-| `stp_` | Step inside a steps block | `stp_01` |
-| `itm_` | Item inside a checklist | `itm_03` |
-| `row_` | Row inside a dosage table | `row_02` |
-| `brn_` | Branch inside a decision block | `brn_yes` |
+| Prefix | Meaning                        | Example            |
+| ------ | ------------------------------ | ------------------ |
+| `sec_` | Section                        | `sec_assessment`   |
+| `blk_` | Block (any non-section type)   | `blk_checklist_01` |
+| `stp_` | Step inside a steps block      | `stp_01`           |
+| `itm_` | Item inside a checklist        | `itm_03`           |
+| `row_` | Row inside a dosage table      | `row_02`           |
+| `brn_` | Branch inside a decision block | `brn_yes`          |
 
 IDs must be unique within a protocol (not globally).
 
@@ -71,11 +71,14 @@ Groups related blocks under a heading. The only block type that contains other b
   "title": "Initial Assessment",
   "description": "First steps on patient arrival",
   "collapsed_by_default": false,
-  "blocks": [ /* child blocks, any type except section */ ]
+  "blocks": [
+    /* child blocks, any type except section */
+  ]
 }
 ```
 
 **Fields:**
+
 - `title` (required, string) — Display heading
 - `description` (optional, string) — Subtitle or short description
 - `collapsed_by_default` (optional, boolean, default `false`) — UX hint for rendering
@@ -94,6 +97,7 @@ Free-form prose with basic formatting. Content stored as Markdown.
 ```
 
 **Fields:**
+
 - `content` (required, string) — Markdown-formatted text
 
 **Supported Markdown:** bold, italic, unordered lists, ordered lists, links, inline code. No HTML, no images (use attachments instead), no headers (sections provide structure).
@@ -114,6 +118,7 @@ Free-form prose with basic formatting. Content stored as Markdown.
 ```
 
 **Fields:**
+
 - `title` (optional, string)
 - `items` (required, array, min 1) — List of items
   - `id` (required, string)
@@ -128,13 +133,24 @@ Free-form prose with basic formatting. Content stored as Markdown.
   "type": "steps",
   "title": "Airway management",
   "steps": [
-    { "id": "stp_01", "order": 1, "title": "Position patient", "detail": "Supine, head tilt-chin lift" },
-    { "id": "stp_02", "order": 2, "title": "Assess breathing", "detail": "Look, listen, feel for 10 seconds" }
+    {
+      "id": "stp_01",
+      "order": 1,
+      "title": "Position patient",
+      "detail": "Supine, head tilt-chin lift"
+    },
+    {
+      "id": "stp_02",
+      "order": 2,
+      "title": "Assess breathing",
+      "detail": "Look, listen, feel for 10 seconds"
+    }
   ]
 }
 ```
 
 **Fields:**
+
 - `title` (optional, string)
 - `steps` (required, array, min 1) — Ordered steps
   - `id` (required, string)
@@ -167,6 +183,7 @@ One condition with N branches. No nested decisions in MVP.
 ```
 
 **Fields:**
+
 - `condition` (required, string) — The question or criterion
 - `branches` (required, array, min 2) — Possible outcomes
   - `id` (required, string)
@@ -197,6 +214,7 @@ Fixed columns in MVP. Custom columns in v2.
 ```
 
 **Fields:**
+
 - `title` (optional, string)
 - `columns` (required, array, fixed in MVP) — Must be exactly `["drug", "dose", "route", "frequency", "notes"]`
 - `rows` (required, array, min 1)
@@ -216,6 +234,7 @@ Fixed columns in MVP. Custom columns in v2.
 ```
 
 **Fields:**
+
 - `severity` (required, enum) — One of `info`, `warning`, `danger`, `success`
 - `title` (optional, string)
 - `content` (required, string) — Plain text (no Markdown) to keep rendering consistent
@@ -233,7 +252,9 @@ The template schema is stored in `ProtocolTemplate.schema` as JSONB. It defines 
     "suggested_specialty": "emergency_medicine",
     "intended_use": "Time-sensitive acute interventions"
   },
-  "blocks": [ /* sections and/or blocks */ ]
+  "blocks": [
+    /* sections and/or blocks */
+  ]
 }
 ```
 
@@ -249,14 +270,14 @@ Templates use the same block catalog as protocol content, with these additional 
 
 When a template creator marks a block as `required: true`:
 
-| Action | Allowed on Required Block? | Allowed on Optional Block? |
-|--------|:--------------------------:|:--------------------------:|
-| Delete the block | ❌ | ✅ |
-| Rename the block (title) | ✅ | ✅ |
-| Reorder within parent | ✅ | ✅ |
-| Change block type | ❌ | ✅ |
-| Edit block content | ✅ | ✅ |
-| Add sibling blocks | ✅ | ✅ |
+| Action                   | Allowed on Required Block? | Allowed on Optional Block? |
+| ------------------------ | :------------------------: | :------------------------: |
+| Delete the block         |             ❌             |             ✅             |
+| Rename the block (title) |             ✅             |             ✅             |
+| Reorder within parent    |             ✅             |             ✅             |
+| Change block type        |             ❌             |             ✅             |
+| Edit block content       |             ✅             |             ✅             |
+| Add sibling blocks       |             ✅             |             ✅             |
 
 **Sections inherit their own `required` flag independent of children.** A required section with no required child blocks means: "this section must exist, but its contents are entirely up to the doctor."
 
@@ -290,13 +311,15 @@ The protocol content schema is stored in `ProtocolVersion.content` as JSONB. It 
 {
   "version": "1.0",
   "template_version": "1.0",
-  "blocks": [ /* actual filled-in blocks and sections */ ]
+  "blocks": [
+    /* actual filled-in blocks and sections */
+  ]
 }
 ```
 
 ### Differences from Template Schema
 
-- No `required` field — this only lives on the template. The protocol just *is* what it is at the moment.
+- No `required` field — this only lives on the template. The protocol just _is_ what it is at the moment.
 - No `placeholder` or `placeholder_blocks` — these are template-only authoring aids.
 - Every block contains actual content, not suggestions.
 
@@ -309,6 +332,7 @@ Every protocol references its template via `Protocol.template_id`. This allows:
 - Generating reports of "all protocols using template X"
 
 ### Creation from a Template
+
 When a protocol is instantiated from a template, the initial content contains the minimum structure required to be structurally valid and compliant with the template's required-block rules. Specifically:
 
 Required sections (template marks required: true) are copied by ID, title, and description.
@@ -353,9 +377,7 @@ This rule ensures every newly-created protocol is immediately valid per Section 
       "type": "section",
       "title": "Initial Assessment",
       "required": true,
-      "placeholder_blocks": [
-        { "type": "checklist", "placeholder": "Pre-intervention checklist" }
-      ]
+      "placeholder_blocks": [{ "type": "checklist", "placeholder": "Pre-intervention checklist" }]
     },
     {
       "id": "sec_intervention",
@@ -377,18 +399,14 @@ This rule ensures every newly-created protocol is immediately valid per Section 
       "type": "section",
       "title": "Post-intervention Monitoring",
       "required": false,
-      "placeholder_blocks": [
-        { "type": "text", "placeholder": "What to monitor, for how long" }
-      ]
+      "placeholder_blocks": [{ "type": "text", "placeholder": "What to monitor, for how long" }]
     },
     {
       "id": "sec_escalation",
       "type": "section",
       "title": "Escalation Criteria",
       "required": false,
-      "placeholder_blocks": [
-        { "type": "decision", "placeholder": "When to escalate care?" }
-      ]
+      "placeholder_blocks": [{ "type": "decision", "placeholder": "When to escalate care?" }]
     }
   ]
 }
@@ -398,7 +416,7 @@ Note how the template creator made deliberate choices:
 
 - **Required:** Indications, Initial Assessment, Intervention (section), and a Dosage Table inside it
 - **Optional:** Contraindications, Monitoring, Escalation
-- The author decided a dosage table *specifically* must exist for this template (e.g. because emergency protocols without meds don't make sense for this use case)
+- The author decided a dosage table _specifically_ must exist for this template (e.g. because emergency protocols without meds don't make sense for this use case)
 
 ### Example Protocol (Filled): Anaphylaxis
 
@@ -480,9 +498,24 @@ Derived from the template above. Note the required blocks remain; optional ones 
           "type": "steps",
           "title": "Supportive care",
           "steps": [
-            { "id": "stp_01", "order": 1, "title": "Establish IV access", "detail": "Large-bore preferred" },
-            { "id": "stp_02", "order": 2, "title": "High-flow oxygen", "detail": "15L non-rebreather" },
-            { "id": "stp_03", "order": 3, "title": "Monitor continuously", "detail": "Cardiac monitor, pulse ox, BP q5min" }
+            {
+              "id": "stp_01",
+              "order": 1,
+              "title": "Establish IV access",
+              "detail": "Large-bore preferred"
+            },
+            {
+              "id": "stp_02",
+              "order": 2,
+              "title": "High-flow oxygen",
+              "detail": "15L non-rebreather"
+            },
+            {
+              "id": "stp_03",
+              "order": 3,
+              "title": "Monitor continuously",
+              "detail": "Cardiac monitor, pulse ox, BP q5min"
+            }
           ]
         }
       ]
@@ -536,6 +569,7 @@ Every template and protocol JSON includes a top-level `version` field (e.g. `"1.
 - Run migrations lazily on read, or as a batch job
 
 Example scenarios requiring version bumps:
+
 - Adding a new block type
 - Changing a required-field structure
 - Changing allowed enum values
@@ -556,16 +590,16 @@ When a template is updated:
 
 ### MVP
 
-| Feature | In MVP? |
-|---------|---------|
-| 6 block types (text, checklist, steps, decision, dosage_table, alert) + section | ✅ |
-| Template creation by doctors and admins | ❌ — pre-built templates only |
-| Required/optional block flagging by template creator | ⚠️ — only used by pre-built templates in MVP |
-| Fixed dosage table columns | ✅ |
-| 2-level nesting cap | ✅ |
-| Protocol versioning | ✅ |
-| Template versioning | ✅ |
-| Cross-tenant template/protocol sharing | ❌ |
+| Feature                                                                         | In MVP?                                      |
+| ------------------------------------------------------------------------------- | -------------------------------------------- |
+| 6 block types (text, checklist, steps, decision, dosage_table, alert) + section | ✅                                           |
+| Template creation by doctors and admins                                         | ❌ — pre-built templates only                |
+| Required/optional block flagging by template creator                            | ⚠️ — only used by pre-built templates in MVP |
+| Fixed dosage table columns                                                      | ✅                                           |
+| 2-level nesting cap                                                             | ✅                                           |
+| Protocol versioning                                                             | ✅                                           |
+| Template versioning                                                             | ✅                                           |
+| Cross-tenant template/protocol sharing                                          | ❌                                           |
 
 ### v2
 
