@@ -14,7 +14,11 @@ function statusVariant(status: string): 'draft' | 'active' | 'archived' {
 
 function RelativeDate({ iso }: { iso: string }): JSX.Element {
   const date = new Date(iso)
-  const formatted = date.toLocaleDateString('es-DO', { day: 'numeric', month: 'short', year: 'numeric' })
+  const formatted = date.toLocaleDateString('es-DO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
   return <>{formatted}</>
 }
 
@@ -97,7 +101,11 @@ export function Protocolos(): JSX.Element {
           icon={<i className="ph ph-warning-circle text-danger-solid" />}
           title="Error al cargar protocolos"
           description={strings.PROTOCOLS_ERROR}
-          action={<Button variant="secondary" onClick={() => window.location.reload()}>Reintentar</Button>}
+          action={
+            <Button variant="secondary" onClick={() => window.location.reload()}>
+              Reintentar
+            </Button>
+          }
         />
       ) : protocols && protocols.length > 0 ? (
         <div className="bg-n-0 border border-n-200 rounded overflow-hidden">
@@ -105,7 +113,9 @@ export function Protocolos(): JSX.Element {
             <ProtocolRow
               key={p.id}
               protocol={p}
-              onClick={() => navigate(`/protocolos/${p.id}`)}
+              onClick={() => {
+                void navigate(`/protocolos/${p.id}`)
+              }}
             />
           ))}
         </div>

@@ -12,8 +12,10 @@
  */
 
 import 'reflect-metadata'
-import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication } from '@nestjs/common'
+import type { TestingModule } from '@nestjs/testing'
+import { Test } from '@nestjs/testing'
+import type { INestApplication } from '@nestjs/common'
+import type { Server } from 'http'
 import supertest from 'supertest'
 import * as admin from 'firebase-admin'
 import { AppModule } from '../src/app.module.js'
@@ -23,6 +25,8 @@ import { PrismaService } from '../src/lib/prisma.service.js'
 
 const EMULATOR_HOST = process.env['FIREBASE_AUTH_EMULATOR_HOST'] ?? 'localhost:9099'
 const PROJECT_ID = process.env['FIREBASE_PROJECT_ID'] ?? 'rezeta-dev'
+
+type SignUpResponse = { localId: string; idToken: string }
 
 /**
  * Create a real Firebase user in the emulator and return an ID token.
@@ -39,13 +43,18 @@ async function createTestUser(
       body: JSON.stringify({ email, password, returnSecureToken: true }),
     },
   )
-  const data = await res.json() as { localId: string; idToken: string }
+  const data = (await res.json()) as SignUpResponse
   return { uid: data.localId, idToken: data.idToken }
 }
 
-async function deleteTestUser(uid: string) {
+async function deleteTestUser(uid: string): Promise<void> {
   await admin.auth().deleteUser(uid)
 }
+
+// ─── Response shape helpers ───────────────────────────────────────────────────
+
+type ApiErr = { error: { code: string } }
+type ApiOk<T> = { data: T }
 
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
@@ -74,7 +83,7 @@ describe('Auth Integration', () => {
     await app.init()
 
     prisma = app.get(PrismaService)
-    request = supertest(app.getHttpServer())
+    request = supertest(app.getHttpServer() as Server)
 
     // Create two Firebase users in emulator
     userA = await createTestUser(USER_A_EMAIL, TEST_PASSWORD)
@@ -101,17 +110,17 @@ describe('Auth Integration', () => {
   // ── Test 1 ─────────────────────────────────────────────────────────────────
   it('returns 401 for unauthenticated request to protected endpoint', async () => {
     const res = await request.get('/v1/patients')
+    const body = res.body as ApiErr
     expect(res.status).toBe(401)
-    expect(res.body.error.code).toBe('UNAUTHORIZED')
+    expect(body.error.code).toBe('UNAUTHORIZED')
   })
 
   // ── Test 2 ─────────────────────────────────────────────────────────────────
   it('returns 401 for request with invalid token', async () => {
-    const res = await request
-      .get('/v1/patients')
-      .set('Authorization', 'Bearer not-a-valid-token')
+    const res = await request.get('/v1/patients').set('Authorization', 'Bearer not-a-valid-token')
+    const body = res.body as ApiErr
     expect(res.status).toBe(401)
-    expect(res.body.error.code).toBe('TOKEN_INVALID')
+    expect(body.error.code).toBe('TOKEN_INVALID')
   })
 
   // ── Test 3 ─────────────────────────────────────────────────────────────────
@@ -119,13 +128,19 @@ describe('Auth Integration', () => {
     const res = await request
       .post('/v1/auth/provision')
       .set('Authorization', `Bearer ${userA.idToken}`)
+    const body = res.body as ApiOk<{
+      email: string
+      role: string
+      fullName: string | null
+      tenantId: string
+    }>
     expect(res.status).toBe(200)
-    expect(res.body.data).toMatchObject({
+    expect(body.data).toMatchObject({
       email: USER_A_EMAIL,
       role: 'owner',
       fullName: null,
     })
-    expect(res.body.data.tenantId).toMatch(
+    expect(body.data.tenantId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     )
 
@@ -146,10 +161,12 @@ describe('Auth Integration', () => {
       .post('/v1/auth/provision')
       .set('Authorization', `Bearer ${userA.idToken}`)
 
+    const body1 = res1.body as ApiOk<{ id: string; tenantId: string }>
+    const body2 = res2.body as ApiOk<{ id: string; tenantId: string }>
     expect(res1.status).toBe(200)
     expect(res2.status).toBe(200)
-    expect(res1.body.data.id).toBe(res2.body.data.id)
-    expect(res1.body.data.tenantId).toBe(res2.body.data.tenantId)
+    expect(body1.data.id).toBe(body2.data.id)
+    expect(body1.data.tenantId).toBe(body2.data.tenantId)
 
     // Verify exactly ONE tenant and ONE user for this Firebase uid
     const users = await prisma.user.findMany({ where: { firebaseUid: userA.uid } })
@@ -158,30 +175,26 @@ describe('Auth Integration', () => {
 
   // ── Test 5 ─────────────────────────────────────────────────────────────────
   it('GET /v1/auth/me returns the correct authenticated user', async () => {
-    const res = await request
-      .get('/v1/auth/me')
-      .set('Authorization', `Bearer ${userA.idToken}`)
+    const res = await request.get('/v1/auth/me').set('Authorization', `Bearer ${userA.idToken}`)
+    const body = res.body as ApiOk<{ email: string; role: string }>
     expect(res.status).toBe(200)
-    expect(res.body.data.email).toBe(USER_A_EMAIL)
-    expect(res.body.data.role).toBe('owner')
+    expect(body.data.email).toBe(USER_A_EMAIL)
+    expect(body.data.role).toBe('owner')
   })
 
   // ── Test 6 ─────────────────────────────────────────────────────────────────
   it('GET /v1/auth/me returns 401 for a valid token with no provisioned user', async () => {
     // userB exists in Firebase but has NOT been provisioned yet
-    const res = await request
-      .get('/v1/auth/me')
-      .set('Authorization', `Bearer ${userB.idToken}`)
+    const res = await request.get('/v1/auth/me').set('Authorization', `Bearer ${userB.idToken}`)
+    const body = res.body as ApiErr
     expect(res.status).toBe(401)
-    expect(res.body.error.code).toBe('USER_NOT_PROVISIONED')
+    expect(body.error.code).toBe('USER_NOT_PROVISIONED')
   })
 
   // ── Test 7 ─────────────────────────────────────────────────────────────────
   it('cross-tenant isolation: userB cannot see userA patients', async () => {
     // Provision userB into a separate tenant
-    await request
-      .post('/v1/auth/provision')
-      .set('Authorization', `Bearer ${userB.idToken}`)
+    await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userB.idToken}`)
 
     // Create a patient under userA's account (direct DB insert for speed)
     const userADb = await prisma.user.findUnique({ where: { firebaseUid: userA.uid } })
@@ -195,10 +208,9 @@ describe('Auth Integration', () => {
     })
 
     // userB requests patients — should get empty list (their own tenant has none)
-    const res = await request
-      .get('/v1/patients')
-      .set('Authorization', `Bearer ${userB.idToken}`)
+    const res = await request.get('/v1/patients').set('Authorization', `Bearer ${userB.idToken}`)
+    const body = res.body as ApiOk<unknown[]>
     expect(res.status).toBe(200)
-    expect(res.body.data).toHaveLength(0)
+    expect(body.data).toHaveLength(0)
   })
 })

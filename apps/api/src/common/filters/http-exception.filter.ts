@@ -13,7 +13,7 @@ import { ErrorCode, type ApiError } from '@rezeta/shared'
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name)
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
 
@@ -28,26 +28,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = body as ApiError
       } else {
         error = {
-          code: this.statusToCode(status),
+          code: this.statusToCode(exception.getStatus() as HttpStatus),
           message: typeof body === 'string' ? body : exception.message,
         }
       }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR
       error = { code: ErrorCode.INTERNAL_ERROR, message: 'Internal server error' }
-      this.logger.error('Unhandled exception', exception instanceof Error ? exception.stack : exception)
+      this.logger.error(
+        'Unhandled exception',
+        exception instanceof Error ? exception.stack : exception,
+      )
     }
 
     response.status(status).json({ error })
   }
 
-  private statusToCode(status: number): ErrorCode {
+  private statusToCode(status: HttpStatus): ErrorCode {
     switch (status) {
-      case HttpStatus.UNAUTHORIZED: return ErrorCode.UNAUTHORIZED
-      case HttpStatus.FORBIDDEN: return ErrorCode.FORBIDDEN
-      case HttpStatus.NOT_FOUND: return ErrorCode.NOT_FOUND
-      case HttpStatus.UNPROCESSABLE_ENTITY: return ErrorCode.VALIDATION_ERROR
-      default: return ErrorCode.INTERNAL_ERROR
+      case HttpStatus.UNAUTHORIZED:
+        return ErrorCode.UNAUTHORIZED
+      case HttpStatus.FORBIDDEN:
+        return ErrorCode.FORBIDDEN
+      case HttpStatus.NOT_FOUND:
+        return ErrorCode.NOT_FOUND
+      case HttpStatus.UNPROCESSABLE_ENTITY:
+        return ErrorCode.VALIDATION_ERROR
+      default:
+        return ErrorCode.INTERNAL_ERROR
     }
   }
 }

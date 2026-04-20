@@ -13,8 +13,10 @@
  */
 
 import 'reflect-metadata'
-import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication } from '@nestjs/common'
+import type { TestingModule } from '@nestjs/testing'
+import { Test } from '@nestjs/testing'
+import type { INestApplication } from '@nestjs/common'
+import type { Server } from 'http'
 import supertest from 'supertest'
 import * as admin from 'firebase-admin'
 import { AppModule } from '../src/app.module.js'
@@ -41,8 +43,40 @@ async function createTestUser(
   return { uid: data.localId, idToken: data.idToken }
 }
 
-async function deleteTestUser(uid: string) {
+async function deleteTestUser(uid: string): Promise<void> {
   await admin.auth().deleteUser(uid)
+}
+
+// ─── Response shape helpers ───────────────────────────────────────────────────
+
+type ApiOk<T = unknown> = { data: T }
+type ApiErr = { error: { code: string } }
+
+type ProtocolData = {
+  id: string
+  title: string
+  status: string
+  templateId: string | null
+  templateName: string | null
+  currentVersion: {
+    versionNumber: number
+    content: { blocks: Array<{ id: string; type: string }> }
+  } | null
+}
+
+type VersionData = {
+  id: string
+  versionNumber: number
+  changeSummary: string | null
+}
+
+type ListItem = {
+  id: string
+  title: string
+  status: string
+  isFavorite: boolean
+  updatedAt: string
+  currentVersionNumber: number | null
 }
 
 // Minimum valid content for a blank protocol (no template)
@@ -77,7 +111,6 @@ describe('Protocols Integration', () => {
   let request: ReturnType<typeof supertest>
   let userA: { uid: string; idToken: string }
   let userB: { uid: string; idToken: string }
-  let userATenantId: string
   let pharmacologicalTemplateId: string
 
   const TS = Date.now()
@@ -98,7 +131,7 @@ describe('Protocols Integration', () => {
     await app.init()
 
     prisma = app.get(PrismaService)
-    request = supertest(app.getHttpServer())
+    request = supertest(app.getHttpServer() as Server)
 
     userA = await createTestUser(USER_A_EMAIL, TEST_PASSWORD)
     userB = await createTestUser(USER_B_EMAIL, TEST_PASSWORD)
@@ -106,9 +139,6 @@ describe('Protocols Integration', () => {
     // Provision both users (creates tenant rows)
     await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userA.idToken}`)
     await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userB.idToken}`)
-
-    const dbUserA = await prisma.user.findUniqueOrThrow({ where: { firebaseUid: userA.uid } })
-    userATenantId = dbUserA.tenantId
 
     // Resolve the pharmacological system template ID for use in tests
     const template = await prisma.protocolTemplate.findFirst({
@@ -143,11 +173,10 @@ describe('Protocols Integration', () => {
     })
 
     it('returns empty list when tenant has no protocols', async () => {
-      const res = await request
-        .get('/v1/protocols')
-        .set('Authorization', `Bearer ${userA.idToken}`)
+      const res = await request.get('/v1/protocols').set('Authorization', `Bearer ${userA.idToken}`)
+      const body = res.body as ApiOk<unknown[]>
       expect(res.status).toBe(200)
-      expect(res.body.data).toEqual([])
+      expect(body.data).toEqual([])
     })
   })
 
@@ -164,16 +193,17 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Mi primer protocolo' })
+      const body = res.body as ApiOk<ProtocolData>
       expect(res.status).toBe(201)
-      expect(res.body.data).toMatchObject({
+      expect(body.data).toMatchObject({
         title: 'Mi primer protocolo',
         status: 'draft',
         templateId: null,
         templateName: null,
       })
-      expect(res.body.data.id).toMatch(/^[0-9a-f-]{36}$/)
-      expect(res.body.data.currentVersion).not.toBeNull()
-      expect(res.body.data.currentVersion.versionNumber).toBe(1)
+      expect(body.data.id).toMatch(/^[0-9a-f-]{36}$/)
+      expect(body.data.currentVersion).not.toBeNull()
+      expect(body.data.currentVersion?.versionNumber).toBe(1)
     })
 
     it('creates a protocol from a system template, seeding required blocks', async () => {
@@ -181,16 +211,16 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ templateId: pharmacologicalTemplateId })
+      const body = res.body as ApiOk<ProtocolData>
       expect(res.status).toBe(201)
-      const protocol = res.body.data
-      expect(protocol.templateId).toBe(pharmacologicalTemplateId)
-      expect(protocol.templateName).not.toBeNull()
+      expect(body.data.templateId).toBe(pharmacologicalTemplateId)
+      expect(body.data.templateName).not.toBeNull()
 
       // Version 1 content should contain the required section + dosage_table
-      const blocks = protocol.currentVersion.content.blocks as Array<{ id: string; type: string }>
+      const blocks = body.data.currentVersion?.content.blocks ?? []
       const dosing = blocks.find((b) => b.id === 'sec_dosing')
       expect(dosing).toBeDefined()
-      expect(dosing!.type).toBe('section')
+      expect(dosing?.type).toBe('section')
     })
 
     it('defaults title when not provided (uses template name)', async () => {
@@ -198,8 +228,9 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ templateId: pharmacologicalTemplateId })
+      const body = res.body as ApiOk<{ title: string }>
       expect(res.status).toBe(201)
-      expect(res.body.data.title).toContain('nuevo')
+      expect(body.data.title).toContain('nuevo')
     })
 
     it('returns 404 with PROTOCOL_TEMPLATE_NOT_FOUND for unknown templateId', async () => {
@@ -207,8 +238,9 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ templateId: '00000000-0000-0000-0000-000000000000' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_TEMPLATE_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_TEMPLATE_NOT_FOUND')
     })
 
     it('returns 400 with VALIDATION_ERROR for a title that is too short', async () => {
@@ -216,8 +248,9 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'X' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
   })
 
@@ -231,7 +264,8 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Protocolo para lectura' })
-      protocolId = res.body.data.id
+      const body = res.body as ApiOk<{ id: string }>
+      protocolId = body.data.id
     })
 
     it('returns 401 without auth', async () => {
@@ -243,25 +277,28 @@ describe('Protocols Integration', () => {
       const res = await request
         .get(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userA.idToken}`)
+      const body = res.body as ApiOk<{ id: string; currentVersion: unknown }>
       expect(res.status).toBe(200)
-      expect(res.body.data.id).toBe(protocolId)
-      expect(res.body.data.currentVersion).not.toBeNull()
+      expect(body.data.id).toBe(protocolId)
+      expect(body.data.currentVersion).not.toBeNull()
     })
 
     it('returns 404 (not 403) when userB reads userA protocol — cross-tenant isolation', async () => {
       const res = await request
         .get(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userB.idToken}`)
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
 
     it('returns 404 for non-existent protocol', async () => {
       const res = await request
         .get('/v1/protocols/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${userA.idToken}`)
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
 
     it('returns 400 for an invalid UUID path param', async () => {
@@ -282,7 +319,8 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Protocolo original' })
-      protocolId = res.body.data.id
+      const body = res.body as ApiOk<{ id: string }>
+      protocolId = body.data.id
     })
 
     it('returns 401 without auth', async () => {
@@ -295,8 +333,9 @@ describe('Protocols Integration', () => {
         .patch(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Protocolo renombrado' })
+      const body = res.body as ApiOk<{ id: string; title: string }>
       expect(res.status).toBe(200)
-      expect(res.body.data).toMatchObject({ id: protocolId, title: 'Protocolo renombrado' })
+      expect(body.data).toMatchObject({ id: protocolId, title: 'Protocolo renombrado' })
     })
 
     it('returns 400 for title too short', async () => {
@@ -304,8 +343,9 @@ describe('Protocols Integration', () => {
         .patch(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'X' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
     it('returns 400 when extra fields are sent (.strict() schema)', async () => {
@@ -313,8 +353,9 @@ describe('Protocols Integration', () => {
         .patch(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Valid title', status: 'active' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
     it('returns 404 (not 403) when userB renames userA protocol — cross-tenant isolation', async () => {
@@ -322,8 +363,9 @@ describe('Protocols Integration', () => {
         .patch(`/v1/protocols/${protocolId}`)
         .set('Authorization', `Bearer ${userB.idToken}`)
         .send({ title: 'Intento de userB' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
 
     it('returns 404 for non-existent protocol', async () => {
@@ -331,8 +373,9 @@ describe('Protocols Integration', () => {
         .patch('/v1/protocols/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Nunca existió' })
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
   })
 
@@ -347,13 +390,15 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ title: 'Protocolo versiones' })
-      blankProtocolId = r1.body.data.id
+      const b1 = r1.body as ApiOk<{ id: string }>
+      blankProtocolId = b1.data.id
 
       const r2 = await request
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ templateId: pharmacologicalTemplateId })
-      templateProtocolId = r2.body.data.id
+      const b2 = r2.body as ApiOk<{ id: string }>
+      templateProtocolId = b2.data.id
     })
 
     it('returns 401 without auth', async () => {
@@ -368,10 +413,11 @@ describe('Protocols Integration', () => {
         .post(`/v1/protocols/${blankProtocolId}/versions`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ content: BLANK_CONTENT, changeSummary: 'Primer guardado' })
+      const body = res.body as ApiOk<VersionData>
       expect(res.status).toBe(201)
-      expect(res.body.data.versionNumber).toBe(2)
-      expect(res.body.data.changeSummary).toBe('Primer guardado')
-      expect(res.body.data.id).toMatch(/^[0-9a-f-]{36}$/)
+      expect(body.data.versionNumber).toBe(2)
+      expect(body.data.changeSummary).toBe('Primer guardado')
+      expect(body.data.id).toMatch(/^[0-9a-f-]{36}$/)
     })
 
     it('increments further on successive saves', async () => {
@@ -385,8 +431,9 @@ describe('Protocols Integration', () => {
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ content: BLANK_CONTENT })
 
+      const body = res.body as ApiOk<VersionData>
       expect(res.status).toBe(201)
-      expect(res.body.data.versionNumber).toBe(4)
+      expect(body.data.versionNumber).toBe(4)
     })
 
     it('accepts valid content for a template protocol', async () => {
@@ -413,8 +460,9 @@ describe('Protocols Integration', () => {
         .post(`/v1/protocols/${templateProtocolId}/versions`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ content: missingDosageContent })
+      const body = res.body as ApiErr
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('PROTOCOL_REQUIRED_BLOCK_MISSING')
+      expect(body.error.code).toBe('PROTOCOL_REQUIRED_BLOCK_MISSING')
     })
 
     it('returns 400 VALIDATION_ERROR for structurally invalid content', async () => {
@@ -422,8 +470,9 @@ describe('Protocols Integration', () => {
         .post(`/v1/protocols/${blankProtocolId}/versions`)
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ content: { version: '1.0', blocks: [{ type: 'unknown_type', id: 'b1' }] } })
+      const body = res.body as ApiErr
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
     it('returns 404 (not 403) when userB saves to userA protocol — cross-tenant isolation', async () => {
@@ -431,8 +480,9 @@ describe('Protocols Integration', () => {
         .post(`/v1/protocols/${blankProtocolId}/versions`)
         .set('Authorization', `Bearer ${userB.idToken}`)
         .send({ content: BLANK_CONTENT })
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
 
     it('returns 404 for non-existent protocol', async () => {
@@ -440,8 +490,9 @@ describe('Protocols Integration', () => {
         .post('/v1/protocols/00000000-0000-0000-0000-000000000000/versions')
         .set('Authorization', `Bearer ${userA.idToken}`)
         .send({ content: BLANK_CONTENT })
+      const body = res.body as ApiErr
       expect(res.status).toBe(404)
-      expect(res.body.error.code).toBe('PROTOCOL_NOT_FOUND')
+      expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
     })
   })
 
@@ -460,11 +511,11 @@ describe('Protocols Integration', () => {
       expect(resA.status).toBe(200)
       expect(resB.status).toBe(200)
 
-      const idsA = resA.body.data.map((p: { id: string }) => p.id)
-      const idsB = resB.body.data.map((p: { id: string }) => p.id)
+      const idsA = (resA.body as ApiOk<Array<{ id: string }>>).data.map((p) => p.id)
+      const idsB = (resB.body as ApiOk<Array<{ id: string }>>).data.map((p) => p.id)
 
       // No overlap between tenants
-      const intersection = idsA.filter((id: string) => idsB.includes(id))
+      const intersection = idsA.filter((id) => idsB.includes(id))
       expect(intersection).toHaveLength(0)
 
       // userA has protocols; userB has none (they never created any)
@@ -473,18 +524,16 @@ describe('Protocols Integration', () => {
     })
 
     it('each list item has the expected shape', async () => {
-      const res = await request
-        .get('/v1/protocols')
-        .set('Authorization', `Bearer ${userA.idToken}`)
-      const item = res.body.data[0]
-      expect(item).toMatchObject({
-        id: expect.stringMatching(/^[0-9a-f-]{36}$/),
-        title: expect.any(String),
-        status: expect.any(String),
-        isFavorite: expect.any(Boolean),
-        updatedAt: expect.any(String),
-      })
-      expect(typeof item.currentVersionNumber).toBe('number')
+      const res = await request.get('/v1/protocols').set('Authorization', `Bearer ${userA.idToken}`)
+      const body = res.body as ApiOk<ListItem[]>
+      const item = body.data[0]
+      expect(typeof item?.id).toBe('string')
+      expect(item?.id).toMatch(/^[0-9a-f-]{36}$/)
+      expect(typeof item?.title).toBe('string')
+      expect(typeof item?.status).toBe('string')
+      expect(typeof item?.isFavorite).toBe('boolean')
+      expect(typeof item?.updatedAt).toBe('string')
+      expect(typeof item?.currentVersionNumber).toBe('number')
     })
   })
 })

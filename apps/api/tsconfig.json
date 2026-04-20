@@ -5,8 +5,8 @@
     "outDir": "dist",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

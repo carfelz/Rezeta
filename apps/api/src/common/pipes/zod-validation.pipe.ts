@@ -6,7 +6,7 @@ import { ErrorCode } from '@rezeta/shared'
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown, metadata: ArgumentMetadata) {
+  transform(value: unknown, metadata: ArgumentMetadata): unknown {
     if (metadata.type !== 'body') return value
     const result = this.schema.safeParse(value)
     if (!result.success) {
@@ -16,6 +16,6 @@ export class ZodValidationPipe implements PipeTransform {
         details: result.error.flatten(),
       })
     }
-    return result.data
+    return result.data as unknown
   }
 }

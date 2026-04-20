@@ -7,7 +7,9 @@ import { PatientsRepository, type PatientListParams } from './patients.repositor
 export class PatientsService {
   constructor(@Inject(PatientsRepository) private repo: PatientsRepository) {}
 
-  async list(params: PatientListParams): Promise<{ items: Patient[]; hasMore: boolean; nextCursor?: string }> {
+  async list(
+    params: PatientListParams,
+  ): Promise<{ items: Patient[]; hasMore: boolean; nextCursor?: string }> {
     const limit = params.limit ?? 50
     const rows = await this.repo.findMany({ ...params, limit })
 
@@ -21,7 +23,10 @@ export class PatientsService {
   async getById(id: string, tenantId: string): Promise<Patient> {
     const patient = await this.repo.findById(id, tenantId)
     if (!patient) {
-      throw new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' })
+      throw new NotFoundException({
+        code: ErrorCode.PATIENT_NOT_FOUND,
+        message: 'Patient not found',
+      })
     }
     return patient
   }
@@ -35,7 +40,7 @@ export class PatientsService {
     return this.repo.update(id, tenantId, dto)
   }
 
-  async remove(id: string, tenantId: string) {
+  async remove(id: string, tenantId: string): Promise<void> {
     await this.getById(id, tenantId)
     await this.repo.softDelete(id, tenantId)
   }

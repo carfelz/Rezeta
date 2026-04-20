@@ -10,7 +10,7 @@ export class FirebaseService implements OnModuleInit {
 
   constructor(@Inject(ConfigService) private config: ConfigService<AppConfig, true>) {}
 
-  onModuleInit() {
+  onModuleInit(): void {
     const { projectId, clientEmail, privateKey } = this.config.get('firebase', { infer: true })
     const emulatorHost = process.env['FIREBASE_AUTH_EMULATOR_HOST']
 

@@ -1,4 +1,17 @@
-export const configuration = () => ({
+export interface AppConfig {
+  port: number
+  database: { url: string }
+  firebase: {
+    projectId: string
+    clientEmail: string
+    privateKey: string
+    emulatorHost: string
+  }
+  storage: { bucket: string }
+  nodeEnv: string
+}
+
+export const configuration = (): AppConfig => ({
   port: parseInt(process.env['PORT'] ?? '3000', 10),
   database: {
     url: process.env['DATABASE_URL'] ?? '',
@@ -14,5 +27,3 @@ export const configuration = () => ({
   },
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
 })
-
-export type AppConfig = ReturnType<typeof configuration>

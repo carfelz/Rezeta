@@ -37,20 +37,18 @@ export class AuditLogInterceptor implements NestInterceptor {
     if (!user || !tenantId) return next.handle()
 
     return next.handle().pipe(
-      tap(async () => {
+      tap(() => {
         const entityId = (request.params as Record<string, string>)['id']
         if (!entityId) return
 
         // Derive entity type from path: /v1/patients/:id → Patient
         const segments = request.path.split('/').filter(Boolean)
-        const resourceSegment = segments.find(
-          (s) => !s.startsWith('v') && s !== entityId,
-        )
+        const resourceSegment = segments.find((s) => !s.startsWith('v') && s !== entityId)
         const entityType = resourceSegment
           ? resourceSegment.charAt(0).toUpperCase() + resourceSegment.slice(1, -1)
           : 'Unknown'
 
-        await this.prisma.auditLog.create({
+        void this.prisma.auditLog.create({
           data: {
             tenantId,
             userId: user.id,

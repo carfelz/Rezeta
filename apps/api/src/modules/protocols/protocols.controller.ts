@@ -27,12 +27,10 @@ import { ProtocolsService } from './protocols.service.js'
 
 @Controller('v1/protocols')
 export class ProtocolsController {
-  constructor(
-    @Inject(ProtocolsService) private service: ProtocolsService,
-  ) {}
+  constructor(@Inject(ProtocolsService) private service: ProtocolsService) {}
 
   @Get()
-  list(@TenantId() tenantId: string) {
+  list(@TenantId() tenantId: string): Promise<ProtocolListItem[]> {
     return this.service.list(tenantId)
   }
 
@@ -40,7 +38,7 @@ export class ProtocolsController {
   getOne(
     @Param('id', ParseUUIDPipe) id: string,
     @TenantId() tenantId: string,
-  ) {
+  ): Promise<ProtocolResponse> {
     return this.service.getById(id, tenantId)
   }
 
@@ -51,7 +49,7 @@ export class ProtocolsController {
     @Body() dto: CreateProtocolDto,
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
-  ) {
+  ): Promise<ProtocolResponse> {
     return this.service.create(tenantId, user.id, dto)
   }
 
@@ -61,7 +59,7 @@ export class ProtocolsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProtocolTitleDto,
     @TenantId() tenantId: string,
-  ) {
+  ): Promise<{ id: string; title: string }> {
     return this.service.rename(id, tenantId, dto)
   }
 
@@ -73,7 +71,12 @@ export class ProtocolsController {
     @Body() dto: SaveVersionDto,
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
-  ) {
+  ): Promise<{
+    id: string
+    versionNumber: number
+    changeSummary: string | null
+    createdAt: string
+  }> {
     return this.service.saveVersion(id, tenantId, user.id, dto)
   }
 }

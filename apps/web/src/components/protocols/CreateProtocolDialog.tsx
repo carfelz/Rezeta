@@ -25,7 +25,7 @@ export function CreateProtocolDialog({
   isOpen,
   onClose,
   onSuccess,
-}: CreateProtocolDialogProps) {
+}: CreateProtocolDialogProps): JSX.Element | null {
   const [title, setTitle] = useState('')
   const { useCreateProtocol } = useProtocols()
   const { mutate, isPending } = useCreateProtocol()
@@ -46,7 +46,7 @@ export function CreateProtocolDialog({
           setTitle('')
           onSuccess(data.id)
         },
-      }
+      },
     )
   }
 
@@ -79,11 +79,7 @@ export function CreateProtocolDialog({
               Cancelar
             </Button>
           </ModalClose>
-          <Button
-            variant="primary"
-            onClick={handleCreate}
-            disabled={!title.trim() || isPending}
-          >
+          <Button variant="primary" onClick={handleCreate} disabled={!title.trim() || isPending}>
             {isPending ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-2" />

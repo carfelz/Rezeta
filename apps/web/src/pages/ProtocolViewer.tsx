@@ -13,7 +13,7 @@ export function ProtocolViewer(): JSX.Element {
   const { data: protocol, isLoading, error } = useGetProtocol(id ?? '')
 
   if (!id) {
-    navigate('/protocolos', { replace: true })
+    void navigate('/protocolos', { replace: true })
     return <></>
   }
 
@@ -59,7 +59,9 @@ export function ProtocolViewer(): JSX.Element {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => navigate(`/protocolos/${id}/edit`)}
+          onClick={() => {
+            void navigate(`/protocolos/${id}/edit`)
+          }}
         >
           <i className="ph ph-pencil-simple mr-1.5 text-[14px]" />
           {strings.VIEWER_EDIT_BUTTON}

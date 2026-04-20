@@ -44,7 +44,10 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__select_page",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_console_messages",
       "Bash(awk '{print $2}')",
-      "Bash(node_modules/.bin/vitest run *)"
+      "Bash(node_modules/.bin/vitest run *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -v \"^\\(node\\\\|To eliminate\\\\|Reparsing\\\\|Use \\\\`node\\\\|undefined\\)\")",
+      "Bash(grep -v \"Use \\\\`node\")"
     ]
   }
 }

@@ -1,5 +1,19 @@
 import { Injectable, Inject } from '@nestjs/common'
+import type { Protocol, ProtocolVersion, ProtocolTemplate } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
+
+type ProtocolCreateResult = {
+  protocol: Protocol & { template: ProtocolTemplate | null }
+  version: ProtocolVersion
+}
+type ProtocolFullResult = Protocol & {
+  template: ProtocolTemplate | null
+  currentVersion: ProtocolVersion | null
+}
+type ProtocolListEntry = Protocol & {
+  template: { name: string } | null
+  versions: { versionNumber: number }[]
+}
 
 @Injectable()
 export class ProtocolsRepository {
@@ -13,7 +27,7 @@ export class ProtocolsRepository {
     specialty?: string | null
     tags?: string[]
     content: unknown
-  }) {
+  }): Promise<ProtocolCreateResult> {
     return this.prisma.$transaction(async (tx) => {
       const protocol = await tx.protocol.create({
         data: {
@@ -48,7 +62,7 @@ export class ProtocolsRepository {
     })
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string): Promise<ProtocolFullResult | null> {
     const protocol = await this.prisma.protocol.findFirst({
       where: { id, tenantId, deletedAt: null },
       include: { template: true },
@@ -64,7 +78,7 @@ export class ProtocolsRepository {
     return { ...protocol, currentVersion }
   }
 
-  async list(tenantId: string) {
+  async list(tenantId: string): Promise<ProtocolListEntry[]> {
     return this.prisma.protocol.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { updatedAt: 'desc' },
@@ -80,7 +94,7 @@ export class ProtocolsRepository {
     })
   }
 
-  async rename(id: string, tenantId: string, title: string) {
+  async rename(id: string, tenantId: string, title: string): Promise<Protocol | null> {
     const existing = await this.prisma.protocol.findFirst({
       where: { id, tenantId, deletedAt: null },
     })
@@ -98,7 +112,7 @@ export class ProtocolsRepository {
     createdBy: string
     content: unknown
     changeSummary?: string | null
-  }) {
+  }): Promise<ProtocolVersion | null> {
     return this.prisma.$transaction(async (tx) => {
       // Verify protocol belongs to tenant before creating version
       const protocol = await tx.protocol.findFirst({

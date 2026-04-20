@@ -1,6 +1,14 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Badge, Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui'
+import {
+  Badge,
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui'
 import { ProtocolContainer } from '@/components/ui/ProtocolBlock'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
@@ -23,7 +31,7 @@ export function ProtocolEditor(): JSX.Element {
   const titleInputRef = useRef<HTMLInputElement>(null)
 
   if (!id) {
-    navigate('/protocolos', { replace: true })
+    void navigate('/protocolos', { replace: true })
     return <></>
   }
 
@@ -75,7 +83,7 @@ export function ProtocolEditor(): JSX.Element {
   const handleSaveConfirm = () => {
     if (!protocol.currentVersion) return
     saveVersion(
-      { content: protocol.currentVersion.content as any, changeSummary: changeSummary.trim() || null },
+      { content: protocol.currentVersion.content, changeSummary: changeSummary.trim() || null },
       {
         onSuccess: () => {
           setSaveModalOpen(false)
@@ -137,7 +145,10 @@ export function ProtocolEditor(): JSX.Element {
           className="shrink-0"
         >
           {isSaving ? (
-            <><i className="ph ph-spinner animate-spin mr-1.5" />{strings.EDITOR_SAVING}</>
+            <>
+              <i className="ph ph-spinner animate-spin mr-1.5" />
+              {strings.EDITOR_SAVING}
+            </>
           ) : (
             strings.EDITOR_SAVE_BUTTON
           )}
@@ -146,24 +157,23 @@ export function ProtocolEditor(): JSX.Element {
 
       {/* ── Three-panel layout ─────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-
         {/* Left — Palette (disabled) */}
         <aside className="w-[116px] shrink-0 bg-n-25 border-r border-n-200 flex flex-col items-center pt-5 gap-2">
           <span className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
             {strings.EDITOR_PALETTE_TITLE}
           </span>
-          {['section', 'text', 'checklist', 'steps', 'decision', 'dosage_table', 'alert'].map((type) => (
-            <div
-              key={type}
-              title={strings.EDITOR_PALETTE_COMING_SOON}
-              className="w-full px-2"
-            >
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-300 cursor-not-allowed select-none">
-                <PaletteIcon type={type} />
-                <span className="text-[11px] font-sans capitalize truncate">{type.replace('_', ' ')}</span>
+          {['section', 'text', 'checklist', 'steps', 'decision', 'dosage_table', 'alert'].map(
+            (type) => (
+              <div key={type} title={strings.EDITOR_PALETTE_COMING_SOON} className="w-full px-2">
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-300 cursor-not-allowed select-none">
+                  <PaletteIcon type={type} />
+                  <span className="text-[11px] font-sans capitalize truncate">
+                    {type.replace('_', ' ')}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </aside>
 
         {/* Center — Canvas (read-only blocks) */}
@@ -232,7 +242,10 @@ export function ProtocolEditor(): JSX.Element {
             </Button>
             <Button variant="primary" onClick={handleSaveConfirm} disabled={isSaving}>
               {isSaving ? (
-                <><i className="ph ph-spinner animate-spin mr-1.5" />{strings.EDITOR_SAVING}</>
+                <>
+                  <i className="ph ph-spinner animate-spin mr-1.5" />
+                  {strings.EDITOR_SAVING}
+                </>
               ) : (
                 strings.EDITOR_SAVE_MODAL_CONFIRM
               )}

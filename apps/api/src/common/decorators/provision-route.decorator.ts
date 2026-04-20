@@ -1,4 +1,4 @@
-import { SetMetadata } from '@nestjs/common'
+import { SetMetadata, type CustomDecorator } from '@nestjs/common'
 
 /**
  * Mark an endpoint as a provisioning route.
@@ -10,4 +10,4 @@ import { SetMetadata } from '@nestjs/common'
  * Used exclusively by POST /v1/auth/provision.
  */
 export const IS_PROVISION_ROUTE_KEY = 'isProvisionRoute'
-export const ProvisionRoute = () => SetMetadata(IS_PROVISION_ROUTE_KEY, true)
+export const ProvisionRoute = (): CustomDecorator => SetMetadata(IS_PROVISION_ROUTE_KEY, true)

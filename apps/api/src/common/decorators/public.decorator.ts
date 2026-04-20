@@ -1,4 +1,4 @@
-import { SetMetadata } from '@nestjs/common'
+import { SetMetadata, type CustomDecorator } from '@nestjs/common'
 
 /**
  * Mark an endpoint as fully public — skips Firebase token verification entirely.
@@ -10,4 +10,4 @@ import { SetMetadata } from '@nestjs/common'
  * health() { return { status: 'ok' } }
  */
 export const IS_PUBLIC_KEY = 'isPublic'
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true)
+export const Public = (): CustomDecorator => SetMetadata(IS_PUBLIC_KEY, true)

@@ -19,11 +19,13 @@ export class ProtocolsService {
     @Inject(ProtocolTemplatesRepository) private templatesRepository: ProtocolTemplatesRepository,
   ) {}
 
-  async create(tenantId: string, userId: string, dto: CreateProtocolDto): Promise<ProtocolResponse> {
+  async create(
+    tenantId: string,
+    userId: string,
+    dto: CreateProtocolDto,
+  ): Promise<ProtocolResponse> {
     let content: unknown
     let defaultTitle = 'Protocolo sin título'
-    let templateName: string | null = null
-    let templateSchema: unknown = null
 
     if (dto.templateId) {
       const template = await this.templatesRepository.findById(dto.templateId, tenantId)
@@ -34,9 +36,9 @@ export class ProtocolsService {
         })
       }
       defaultTitle = `${template.name} (nuevo)`
-      templateName = template.name
-      templateSchema = template.schema
-      content = buildInitialContentFromTemplate(template.schema as unknown as Parameters<typeof buildInitialContentFromTemplate>[0])
+      content = buildInitialContentFromTemplate(
+        template.schema as unknown as Parameters<typeof buildInitialContentFromTemplate>[0],
+      )
     } else {
       content = { version: '1.0', blocks: [] }
     }
@@ -52,7 +54,11 @@ export class ProtocolsService {
       content,
     })
 
-    return this.formatResponse({ ...protocol, currentVersion: version, template: protocol.template ?? null })
+    return this.formatResponse({
+      ...protocol,
+      currentVersion: version,
+      template: protocol.template ?? null,
+    })
   }
 
   async list(tenantId: string): Promise<ProtocolListItem[]> {
@@ -80,7 +86,11 @@ export class ProtocolsService {
     return this.formatResponse(protocol)
   }
 
-  async rename(id: string, tenantId: string, dto: UpdateProtocolTitleDto): Promise<{ id: string; title: string }> {
+  async rename(
+    id: string,
+    tenantId: string,
+    dto: UpdateProtocolTitleDto,
+  ): Promise<{ id: string; title: string }> {
     const updated = await this.repository.rename(id, tenantId, dto.title)
     if (!updated) {
       throw new NotFoundException({
@@ -96,7 +106,12 @@ export class ProtocolsService {
     tenantId: string,
     userId: string,
     dto: SaveVersionDto,
-  ) {
+  ): Promise<{
+    id: string
+    versionNumber: number
+    changeSummary: string | null
+    createdAt: string
+  }> {
     // Validate content passes schema
     const parseResult = ProtocolContentSchema.safeParse(dto.content)
     if (!parseResult.success) {
@@ -118,7 +133,14 @@ export class ProtocolsService {
 
     if (protocol.template) {
       this.validateRequiredBlocks(
-        protocol.template.schema as unknown as { blocks: Array<{ id?: string; required?: boolean; type: string; placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }> }> },
+        protocol.template.schema as unknown as {
+          blocks: Array<{
+            id?: string
+            required?: boolean
+            type: string
+            placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }>
+          }>
+        },
         dto.content.blocks as Array<{ id: string }>,
       )
     }
@@ -147,7 +169,14 @@ export class ProtocolsService {
   }
 
   private validateRequiredBlocks(
-    templateSchema: { blocks: Array<{ id?: string; required?: boolean; type: string; placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }> }> },
+    templateSchema: {
+      blocks: Array<{
+        id?: string
+        required?: boolean
+        type: string
+        placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }>
+      }>
+    },
     contentBlocks: Array<{ id: string }>,
   ): void {
     const contentIds = new Set(this.collectAllIds(contentBlocks))
@@ -218,7 +247,11 @@ export class ProtocolsService {
         ? {
             id: protocol.currentVersion.id,
             versionNumber: protocol.currentVersion.versionNumber,
-            content: protocol.currentVersion.content as ProtocolResponse['currentVersion'] extends { content: infer C } ? C : never,
+            content: protocol.currentVersion.content as ProtocolResponse['currentVersion'] extends {
+              content: infer C
+            }
+              ? C
+              : never,
             changeSummary: protocol.currentVersion.changeSummary,
             createdAt: protocol.currentVersion.createdAt.toISOString(),
           }

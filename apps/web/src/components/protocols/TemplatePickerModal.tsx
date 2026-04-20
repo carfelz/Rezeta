@@ -1,4 +1,12 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalClose, Button } from '@/components/ui'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalClose,
+  Button,
+} from '@/components/ui'
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { strings } from '@/lib/strings'
@@ -21,7 +29,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
       {
         onSuccess: (protocol) => {
           onClose()
-          navigate(`/protocolos/${protocol.id}/edit`)
+          void navigate(`/protocolos/${protocol.id}/edit`)
         },
       },
     )
@@ -60,9 +68,13 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                           <i className={`ph ph-${t.icon || 'stack'} text-[18px]`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[13.5px] font-sans font-semibold text-n-800 leading-snug">{t.name}</div>
+                          <div className="text-[13.5px] font-sans font-semibold text-n-800 leading-snug">
+                            {t.name}
+                          </div>
                           {t.description && (
-                            <div className="text-[12px] font-sans text-n-500 mt-0.5 leading-snug">{t.description}</div>
+                            <div className="text-[12px] font-sans text-n-500 mt-0.5 leading-snug">
+                              {t.description}
+                            </div>
                           )}
                         </div>
                         <i className="ph ph-arrow-right text-n-400 mt-1 shrink-0 group-hover:text-n-700 transition-colors duration-[100ms]" />
@@ -82,8 +94,12 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                   <i className="ph ph-file-text text-[18px]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-sans font-semibold text-n-700 leading-snug">{strings.TEMPLATE_PICKER_BLANK_LABEL}</div>
-                  <div className="text-[12px] font-sans text-n-500 mt-0.5 leading-snug">{strings.TEMPLATE_PICKER_BLANK_DESC}</div>
+                  <div className="text-[13.5px] font-sans font-semibold text-n-700 leading-snug">
+                    {strings.TEMPLATE_PICKER_BLANK_LABEL}
+                  </div>
+                  <div className="text-[12px] font-sans text-n-500 mt-0.5 leading-snug">
+                    {strings.TEMPLATE_PICKER_BLANK_DESC}
+                  </div>
                 </div>
                 <i className="ph ph-arrow-right text-n-400 mt-1 shrink-0 group-hover:text-n-700 transition-colors duration-[100ms]" />
               </button>

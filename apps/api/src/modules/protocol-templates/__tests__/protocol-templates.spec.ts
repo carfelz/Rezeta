@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication } from '@nestjs/common'
+import type { TestingModule } from '@nestjs/testing'
+import { Test } from '@nestjs/testing'
+import type { INestApplication } from '@nestjs/common'
+import type { Server } from 'http'
 import * as request from 'supertest'
+import type * as admin from 'firebase-admin'
 import { AppModule } from '../../../app.module.js'
 import { FirebaseService } from '../../../lib/firebase.service.js'
 import { PrismaService } from '../../../lib/prisma.service.js'
-import { FirebaseAuthGuard } from '../../../common/guards/firebase-auth.guard.js'
-import { APP_GUARD } from '@nestjs/core'
 
 describe('ProtocolTemplatesController (e2e)', () => {
   let app: INestApplication
@@ -19,8 +20,9 @@ describe('ProtocolTemplatesController (e2e)', () => {
 
   beforeAll(async () => {
     // Aggressively patch the FirebaseService to bypass nested DI module instantiation issues
-    FirebaseService.prototype.verifyIdToken = async () => ({ uid: mockFirebaseUid } as any)
-    FirebaseService.prototype.onModuleInit = () => {}
+    FirebaseService.prototype.verifyIdToken = () =>
+      Promise.resolve({ uid: mockFirebaseUid } as unknown as admin.auth.DecodedIdToken)
+    FirebaseService.prototype.onModuleInit = (): void => {}
 
     // Scaffold module
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,9 +44,9 @@ describe('ProtocolTemplatesController (e2e)', () => {
             firebaseUid: mockFirebaseUid,
             email: 'e2e@test.rezeta.app',
             fullName: 'E2E Tester',
-          }
-        }
-      }
+          },
+        },
+      },
     })
   })
 
@@ -56,24 +58,28 @@ describe('ProtocolTemplatesController (e2e)', () => {
   })
 
   it('/v1/protocol-templates (GET) - fails without token', () => {
-    return request.default(app.getHttpServer())
+    return request
+      .default(app.getHttpServer() as Server)
       .get('/v1/protocol-templates')
       .expect(401)
   })
 
   it('/v1/protocol-templates (GET) - retrieves system templates + filters tenant', async () => {
-    const res = await request.default(app.getHttpServer())
+    const res = await request
+      .default(app.getHttpServer() as Server)
       .get('/v1/protocol-templates')
       .set('Authorization', 'Bearer valid-token')
 
     console.log(res.body)
     expect(res.status).toBe(200)
 
-    expect(res.body.data).toBeInstanceOf(Array)
-    expect(res.body.data.length).toBeGreaterThanOrEqual(5) // At least the 5 seeded system templates
+    type TemplateItem = { isSystem: boolean; tenantId: string | null }
+    const body = res.body as { data: TemplateItem[] }
+    expect(body.data).toBeInstanceOf(Array)
+    expect(body.data.length).toBeGreaterThanOrEqual(5) // At least the 5 seeded system templates
     // Validate shape matches a typical system template
-    const systemTemplate = res.body.data.find((t: any) => t.isSystem === true)
+    const systemTemplate = body.data.find((t) => t.isSystem)
     expect(systemTemplate).toBeDefined()
-    expect(systemTemplate.tenantId).toBeNull()
+    expect(systemTemplate?.tenantId).toBeNull()
   })
 })
