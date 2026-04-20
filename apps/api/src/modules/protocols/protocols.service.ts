@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common'
+import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common'
 import { ProtocolsRepository } from './protocols.repository.js'
 import { ProtocolTemplatesRepository } from '../protocol-templates/protocol-templates.repository.js'
-import { CreateProtocolDto } from '@rezeta/shared'
+import {
+  type CreateProtocolDto,
+  type UpdateProtocolTitleDto,
+  type SaveVersionDto,
+  type ProtocolListItem,
+  type ProtocolResponse,
+  ProtocolContentSchema,
+  buildInitialContentFromTemplate,
+  ErrorCode,
+} from '@rezeta/shared'
 
 @Injectable()
 export class ProtocolsService {
@@ -10,68 +19,210 @@ export class ProtocolsService {
     @Inject(ProtocolTemplatesRepository) private templatesRepository: ProtocolTemplatesRepository,
   ) {}
 
-  async create(tenantId: string, userId: string, dto: CreateProtocolDto) {
-    let initialContent = dto.content
+  async create(tenantId: string, userId: string, dto: CreateProtocolDto): Promise<ProtocolResponse> {
+    let content: unknown
+    let defaultTitle = 'Protocolo sin título'
+    let templateName: string | null = null
+    let templateSchema: unknown = null
 
-    // If a template is provided, initialize content from it
     if (dto.templateId) {
-      const template = await this.templatesRepository.findById(dto.templateId)
+      const template = await this.templatesRepository.findById(dto.templateId, tenantId)
       if (!template) {
-        throw new NotFoundException('Template not found')
+        throw new NotFoundException({
+          code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND,
+          message: 'Protocol template not found or not accessible',
+        })
       }
-
-      // Transform template schema to protocol content
-      // 1. Snapshot the template version
-      // 2. Strip template-only authoring fields (required, placeholder, etc.)
-      const templateSchema = template.schema as any
-      initialContent = {
-        version: '1.0',
-        template_version: templateSchema.version || '1.0',
-        blocks: this.stripTemplateFields(templateSchema.blocks || []),
-      }
+      defaultTitle = `${template.name} (nuevo)`
+      templateName = template.name
+      templateSchema = template.schema
+      content = buildInitialContentFromTemplate(template.schema as unknown as Parameters<typeof buildInitialContentFromTemplate>[0])
+    } else {
+      content = { version: '1.0', blocks: [] }
     }
 
-    return this.repository.create({
+    const title = dto.title?.trim() || defaultTitle
+    const { protocol, version } = await this.repository.create({
       tenantId,
+      title,
       createdBy: userId,
-      title: dto.title,
-      templateId: dto.templateId,
-      specialty: dto.specialty,
-      tags: dto.tags,
-      content: initialContent,
+      templateId: dto.templateId ?? null,
+      specialty: dto.specialty ?? null,
+      tags: dto.tags ?? [],
+      content,
     })
+
+    return this.formatResponse({ ...protocol, currentVersion: version, template: protocol.template ?? null })
   }
 
-  async list(tenantId: string, userId?: string) {
-    return this.repository.list(tenantId, userId)
+  async list(tenantId: string): Promise<ProtocolListItem[]> {
+    const protocols = await this.repository.list(tenantId)
+    return protocols.map((p) => ({
+      id: p.id,
+      title: p.title,
+      templateId: p.templateId,
+      templateName: p.template?.name ?? null,
+      status: p.status,
+      isFavorite: p.isFavorite,
+      updatedAt: p.updatedAt.toISOString(),
+      currentVersionNumber: p.versions[0]?.versionNumber ?? null,
+    }))
   }
 
-  async getById(id: string, tenantId: string) {
+  async getById(id: string, tenantId: string): Promise<ProtocolResponse> {
     const protocol = await this.repository.findById(id, tenantId)
     if (!protocol) {
-      throw new NotFoundException('Protocol not found')
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
     }
-    return protocol
+    return this.formatResponse(protocol)
   }
 
-  /**
-   * Recursively strips template-only fields like 'required' and 'placeholder'
-   * to convert a ProtocolTemplate structure to a ProtocolContent structure.
-   */
-  private stripTemplateFields(blocks: any[]): any[] {
-    return blocks.map((block) => {
-      const { required, placeholder, placeholder_blocks, blocks: childBlocks, ...rest } = block
+  async rename(id: string, tenantId: string, dto: UpdateProtocolTitleDto): Promise<{ id: string; title: string }> {
+    const updated = await this.repository.rename(id, tenantId, dto.title)
+    if (!updated) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+    return { id: updated.id, title: updated.title }
+  }
 
-      const stripped: any = { ...rest }
+  async saveVersion(
+    protocolId: string,
+    tenantId: string,
+    userId: string,
+    dto: SaveVersionDto,
+  ) {
+    // Validate content passes schema
+    const parseResult = ProtocolContentSchema.safeParse(dto.content)
+    if (!parseResult.success) {
+      throw new BadRequestException({
+        code: ErrorCode.VALIDATION_ERROR,
+        message: 'Protocol content failed schema validation',
+        details: parseResult.error.flatten(),
+      })
+    }
 
-      // If it's a section, process its blocks
-      // In templates, 'placeholder_blocks' are used to seed the initial protocol 'blocks'
-      const sourceBlocks = childBlocks || placeholder_blocks
-      if (sourceBlocks) {
-        stripped.blocks = this.stripTemplateFields(sourceBlocks)
+    // Validate required blocks if protocol has a template
+    const protocol = await this.repository.findById(protocolId, tenantId)
+    if (!protocol) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+
+    if (protocol.template) {
+      this.validateRequiredBlocks(
+        protocol.template.schema as unknown as { blocks: Array<{ id?: string; required?: boolean; type: string; placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }> }> },
+        dto.content.blocks as Array<{ id: string }>,
+      )
+    }
+
+    const version = await this.repository.saveVersion({
+      protocolId,
+      tenantId,
+      createdBy: userId,
+      content: dto.content,
+      changeSummary: dto.changeSummary ?? null,
+    })
+
+    if (!version) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+
+    return {
+      id: version.id,
+      versionNumber: version.versionNumber,
+      changeSummary: version.changeSummary,
+      createdAt: version.createdAt.toISOString(),
+    }
+  }
+
+  private validateRequiredBlocks(
+    templateSchema: { blocks: Array<{ id?: string; required?: boolean; type: string; placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }> }> },
+    contentBlocks: Array<{ id: string }>,
+  ): void {
+    const contentIds = new Set(this.collectAllIds(contentBlocks))
+
+    for (const block of templateSchema.blocks) {
+      if (!block.required) continue
+
+      if (block.id && !contentIds.has(block.id)) {
+        throw new BadRequestException({
+          code: ErrorCode.PROTOCOL_REQUIRED_BLOCK_MISSING,
+          message: `Required block '${block.id}' is missing from protocol content`,
+        })
       }
 
-      return stripped
-    })
+      // Check required blocks inside placeholder_blocks of a required section
+      if (block.type === 'section' && block.placeholder_blocks) {
+        for (const child of block.placeholder_blocks) {
+          if (child.required && child.id && !contentIds.has(child.id)) {
+            throw new BadRequestException({
+              code: ErrorCode.PROTOCOL_REQUIRED_BLOCK_MISSING,
+              message: `Required block '${child.id}' is missing from protocol content`,
+            })
+          }
+        }
+      }
+    }
+  }
+
+  private collectAllIds(blocks: Array<{ id: string; blocks?: Array<{ id: string }> }>): string[] {
+    const ids: string[] = []
+    for (const block of blocks) {
+      ids.push(block.id)
+      if (block.blocks) {
+        ids.push(...this.collectAllIds(block.blocks))
+      }
+    }
+    return ids
+  }
+
+  private formatResponse(protocol: {
+    id: string
+    title: string
+    status: string
+    isFavorite: boolean
+    createdAt: Date
+    updatedAt: Date
+    templateId: string | null
+    template?: { name: string; schema: unknown } | null
+    currentVersion?: {
+      id: string
+      versionNumber: number
+      content: unknown
+      changeSummary: string | null
+      createdAt: Date
+    } | null
+  }): ProtocolResponse {
+    return {
+      id: protocol.id,
+      title: protocol.title,
+      status: protocol.status,
+      isFavorite: protocol.isFavorite,
+      createdAt: protocol.createdAt.toISOString(),
+      updatedAt: protocol.updatedAt.toISOString(),
+      templateId: protocol.templateId,
+      templateName: protocol.template?.name ?? null,
+      templateSchema: protocol.template?.schema ?? null,
+      currentVersion: protocol.currentVersion
+        ? {
+            id: protocol.currentVersion.id,
+            versionNumber: protocol.currentVersion.versionNumber,
+            content: protocol.currentVersion.content as ProtocolResponse['currentVersion'] extends { content: infer C } ? C : never,
+            changeSummary: protocol.currentVersion.changeSummary,
+            createdAt: protocol.currentVersion.createdAt.toISOString(),
+          }
+        : null,
+    }
   }
 }

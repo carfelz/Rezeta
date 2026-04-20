@@ -2,31 +2,35 @@ import { z } from 'zod'
 
 export const AlertSeveritySchema = z.enum(['info', 'warning', 'danger', 'success'])
 
+// Inner collection item schemas use z.string() (not .min(1)) so that
+// minimum-valid seeded content passes validation from creation.
+// Content quality is enforced at the editor/UI layer, not the schema layer.
+
 export const ChecklistItemSchema = z.object({
   id: z.string(),
-  text: z.string().min(1),
+  text: z.string(),
   critical: z.boolean().optional(),
 })
 
 export const StepSchema = z.object({
   id: z.string(),
   order: z.number().int().positive(),
-  title: z.string().min(1),
+  title: z.string(),
   detail: z.string().optional(),
 })
 
 export const DecisionBranchSchema = z.object({
   id: z.string(),
-  label: z.string().min(1),
-  action: z.string().min(1),
+  label: z.string(),
+  action: z.string(),
 })
 
 export const DosageRowSchema = z.object({
   id: z.string(),
-  drug: z.string().min(1),
-  dose: z.string().min(1),
-  route: z.string().min(1),
-  frequency: z.string().min(1),
+  drug: z.string(),
+  dose: z.string(),
+  route: z.string(),
+  frequency: z.string(),
   notes: z.string(),
 })
 
@@ -38,7 +42,8 @@ const FixedDosageColumnsSchema = z.tuple([
   z.literal('notes'),
 ])
 
-// -- Protocol Instance Schema (Strict Content) --
+// ─── Protocol Instance Schema (Strict Content) ─────────────────────────────
+
 const BaseBlockSchema = z.object({ id: z.string() })
 
 export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
@@ -63,7 +68,7 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
     }),
     BaseBlockSchema.extend({
       type: z.literal('decision'),
-      condition: z.string().min(1),
+      condition: z.string(),
       branches: z.array(DecisionBranchSchema).min(2),
     }),
     BaseBlockSchema.extend({
@@ -76,12 +81,13 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       type: z.literal('alert'),
       severity: AlertSeveritySchema,
       title: z.string().optional(),
-      content: z.string().min(1),
+      content: z.string(),
     }),
   ]),
 )
 
-// -- Template Schema (Authoring Context) --
+// ─── Template Schema (Authoring Context) ────────────────────────────────────
+
 const BaseTemplateBlockSchema = BaseBlockSchema.extend({
   required: z.boolean().optional(),
   placeholder: z.string().optional(),
@@ -143,14 +149,26 @@ export const ProtocolContentSchema = z.object({
   blocks: z.array(ProtocolBlockSchema),
 })
 
+// ─── Request Schemas ─────────────────────────────────────────────────────────
+
 export const CreateProtocolSchema = z.object({
   templateId: z.string().uuid().nullable().optional(),
-  title: z.string().min(2).max(300),
+  title: z.string().min(2).max(300).optional(),
   specialty: z.string().max(100).nullable().optional(),
   tags: z.array(z.string()).default([]),
-  content: ProtocolContentSchema.optional(),
 })
 
+// .strict() rejects any additional keys — PATCH only accepts title
+export const UpdateProtocolTitleSchema = z
+  .object({ title: z.string().min(2).max(300) })
+  .strict()
+
+export const SaveVersionSchema = z.object({
+  content: ProtocolContentSchema,
+  changeSummary: z.string().max(500).nullable().optional(),
+})
+
+// Kept for backwards compat with existing imports
 export const UpdateProtocolSchema = z.object({
   title: z.string().min(2).max(300).optional(),
   specialty: z.string().max(100).nullable().optional(),
@@ -158,11 +176,11 @@ export const UpdateProtocolSchema = z.object({
   isFavorite: z.boolean().optional(),
 })
 
-export const SaveProtocolVersionSchema = z.object({
-  content: ProtocolContentSchema,
-  changeSummary: z.string().max(500).nullable().optional(),
+export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
   publish: z.boolean().default(false),
 })
+
+// ─── Response Schemas ────────────────────────────────────────────────────────
 
 export const ProtocolTemplateDtoSchema = z.object({
   id: z.string().uuid(),
@@ -177,7 +195,46 @@ export const ProtocolTemplateDtoSchema = z.object({
   isSystem: z.boolean(),
 })
 
+export const ProtocolListItemSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  templateId: z.string().uuid().nullable(),
+  templateName: z.string().nullable(),
+  status: z.string(),
+  isFavorite: z.boolean(),
+  updatedAt: z.string().datetime(),
+  currentVersionNumber: z.number().int().nullable(),
+})
+
+export const ProtocolVersionSummarySchema = z.object({
+  id: z.string().uuid(),
+  versionNumber: z.number().int(),
+  content: ProtocolContentSchema,
+  changeSummary: z.string().nullable(),
+  createdAt: z.string().datetime(),
+})
+
+export const ProtocolResponseSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  status: z.string(),
+  isFavorite: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  templateId: z.string().uuid().nullable(),
+  templateName: z.string().nullable(),
+  templateSchema: z.any().nullable(),
+  currentVersion: ProtocolVersionSummarySchema.nullable(),
+})
+
+// ─── Inferred Types ──────────────────────────────────────────────────────────
+
 export type CreateProtocolDto = z.infer<typeof CreateProtocolSchema>
 export type UpdateProtocolDto = z.infer<typeof UpdateProtocolSchema>
+export type UpdateProtocolTitleDto = z.infer<typeof UpdateProtocolTitleSchema>
+export type SaveVersionDto = z.infer<typeof SaveVersionSchema>
 export type SaveProtocolVersionDto = z.infer<typeof SaveProtocolVersionSchema>
 export type ProtocolTemplateDto = z.infer<typeof ProtocolTemplateDtoSchema>
+export type ProtocolListItem = z.infer<typeof ProtocolListItemSchema>
+export type ProtocolVersionSummary = z.infer<typeof ProtocolVersionSummarySchema>
+export type ProtocolResponse = z.infer<typeof ProtocolResponseSchema>

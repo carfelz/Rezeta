@@ -308,13 +308,15 @@ Every protocol references its template via `Protocol.template_id`. This allows:
 - Detecting when a template has been updated and prompting review
 - Generating reports of "all protocols using template X"
 
-### Standalone Protocols (No Template)
+### Creation from a Template
+When a protocol is instantiated from a template, the initial content contains the minimum structure required to be structurally valid and compliant with the template's required-block rules. Specifically:
 
-A doctor may create a protocol without a template. In that case:
+Required sections (template marks required: true) are copied by ID, title, and description.
+Required blocks within required sections are instantiated with minimum valid content for their type (empty strings, one empty item for collections, two empty branches for decisions). The template-defined id is preserved.
+Optional sections and optional placeholder_blocks are NOT seeded. They become available as editor palette suggestions, not as initial content.
+Template hints (placeholder strings, suggested severities) are surfaced to the editor via the template metadata carried with the protocol response, never by embedding them into content.
 
-- `Protocol.template_id` is `null`
-- No blocks are locked as required
-- The doctor has full freedom
+This rule ensures every newly-created protocol is immediately valid per Section 7 (Validation Rules) while preserving the template's structural intent.
 
 ## 6. Worked Example
 

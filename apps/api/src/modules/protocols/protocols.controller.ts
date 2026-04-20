@@ -2,15 +2,22 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   UsePipes,
   ParseUUIDPipe,
   Inject,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common'
 import {
   CreateProtocolSchema,
+  UpdateProtocolTitleSchema,
+  SaveVersionSchema,
   type CreateProtocolDto,
+  type UpdateProtocolTitleDto,
+  type SaveVersionDto,
   type AuthUser,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
@@ -25,11 +32,8 @@ export class ProtocolsController {
   ) {}
 
   @Get()
-  list(
-    @TenantId() tenantId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.service.list(tenantId, user.id)
+  list(@TenantId() tenantId: string) {
+    return this.service.list(tenantId)
   }
 
   @Get(':id')
@@ -41,6 +45,7 @@ export class ProtocolsController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateProtocolSchema))
   create(
     @Body() dto: CreateProtocolDto,
@@ -48,5 +53,27 @@ export class ProtocolsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.service.create(tenantId, user.id, dto)
+  }
+
+  @Patch(':id')
+  @UsePipes(new ZodValidationPipe(UpdateProtocolTitleSchema))
+  rename(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProtocolTitleDto,
+    @TenantId() tenantId: string,
+  ) {
+    return this.service.rename(id, tenantId, dto)
+  }
+
+  @Post(':id/versions')
+  @HttpCode(HttpStatus.CREATED)
+  @UsePipes(new ZodValidationPipe(SaveVersionSchema))
+  saveVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveVersionDto,
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.saveVersion(id, tenantId, user.id, dto)
   }
 }

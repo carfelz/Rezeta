@@ -11,11 +11,25 @@ export class ProtocolTemplatesRepository {
       where: {
         deletedAt: null,
         OR: [
-          { tenantId: null }, // System templates
-          { tenantId } // Custom tenant templates
-        ]
+          { tenantId: null },
+          { tenantId },
+        ],
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+    })
+  }
+
+  /** Finds a template accessible to the given tenant (system template or tenant-owned). */
+  async findById(id: string, tenantId: string): Promise<ProtocolTemplate | null> {
+    return this.prisma.protocolTemplate.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        OR: [
+          { tenantId: null },
+          { tenantId },
+        ],
+      },
     })
   }
 }

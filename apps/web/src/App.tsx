@@ -7,6 +7,8 @@ import { Agenda } from '@/pages/Agenda'
 import { Pacientes } from '@/pages/Pacientes'
 import { PacienteDetalle } from '@/pages/PacienteDetalle'
 import { Protocolos } from '@/pages/Protocolos'
+import { ProtocolViewer } from '@/pages/ProtocolViewer'
+import { ProtocolEditor } from '@/pages/ProtocolEditor'
 import { Facturacion } from '@/pages/Facturacion'
 import { Ajustes } from '@/pages/Ajustes'
 import { Login } from '@/pages/Login'
@@ -41,6 +43,8 @@ const router = createBrowserRouter([
       { path: 'pacientes', element: <Pacientes /> },
       { path: 'pacientes/:patientId', element: <PacienteDetalle /> },
       { path: 'protocolos', element: <Protocolos /> },
+      { path: 'protocolos/:id', element: <ProtocolViewer /> },
+      { path: 'protocolos/:id/edit', element: <ProtocolEditor /> },
       { path: 'facturacion', element: <Facturacion /> },
       { path: 'ajustes', element: <Ajustes /> },
     ],

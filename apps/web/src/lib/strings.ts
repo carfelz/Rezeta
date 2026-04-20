@@ -71,6 +71,62 @@ export const strings = {
 
   // ── Auth Gate ──────────────────────────────────────────────────────────────
   AUTH_GATE_LOADING: 'Cargando...',
+
+  // ── Protocols — List ───────────────────────────────────────────────────────
+  PROTOCOLS_PAGE_TITLE: 'Protocolos',
+  PROTOCOLS_NEW_BUTTON: 'Nuevo protocolo',
+  PROTOCOLS_EMPTY_TITLE: 'Sin protocolos todavía',
+  PROTOCOLS_EMPTY_DESCRIPTION: 'Crea tu primer protocolo a partir de una plantilla o desde cero.',
+  PROTOCOLS_EMPTY_CTA: 'Nuevo protocolo',
+  PROTOCOLS_LIST_UPDATED: 'Actualizado',
+  PROTOCOLS_LIST_VERSION: (n: number) => `v${n}`,
+  PROTOCOLS_LOADING: 'Cargando protocolos...',
+  PROTOCOLS_ERROR: 'No se pudo cargar los protocolos.',
+
+  // ── Protocols — Template Picker ────────────────────────────────────────────
+  TEMPLATE_PICKER_TITLE: '¿Desde dónde empezamos?',
+  TEMPLATE_PICKER_SUBTITLE: 'Elige una plantilla o empieza desde cero.',
+  TEMPLATE_PICKER_BLANK_LABEL: 'Desde cero',
+  TEMPLATE_PICKER_BLANK_DESC: 'Protocolo en blanco sin estructura predefinida.',
+  TEMPLATE_PICKER_SYSTEM_LABEL: 'Plantillas del sistema',
+  TEMPLATE_PICKER_CANCEL: 'Cancelar',
+  TEMPLATE_PICKER_CREATING: 'Creando...',
+
+  // ── Protocols — Editor ─────────────────────────────────────────────────────
+  EDITOR_SAVE_BUTTON: 'Guardar versión',
+  EDITOR_UNSAVED: 'Cambios sin guardar',
+  EDITOR_SAVING: 'Guardando...',
+  EDITOR_PALETTE_TITLE: 'Bloques',
+  EDITOR_PALETTE_COMING_SOON: 'Disponible próximamente',
+  EDITOR_PREVIEW_TITLE: 'Vista previa',
+  EDITOR_SAVE_MODAL_TITLE: 'Guardar versión',
+  EDITOR_SAVE_MODAL_SUBTITLE: 'Añade un resumen del cambio (opcional).',
+  EDITOR_SAVE_MODAL_LABEL: 'Resumen del cambio',
+  EDITOR_SAVE_MODAL_PLACEHOLDER: 'Ej. Actualicé las dosis de primera línea',
+  EDITOR_SAVE_MODAL_CONFIRM: 'Guardar versión',
+  EDITOR_SAVE_MODAL_CANCEL: 'Cancelar',
+  EDITOR_BACK: 'Protocolos',
+  EDITOR_VERSION: (n: number) => `v${n}`,
+  EDITOR_STATUS_DRAFT: 'Borrador',
+
+  // ── Protocols — Block type labels (shown in type chip) ─────────────────────
+  BLOCK_TYPE_SECTION: 'Sección',
+  BLOCK_TYPE_TEXT: 'Texto',
+  BLOCK_TYPE_CHECKLIST: 'Lista',
+  BLOCK_TYPE_STEPS: 'Pasos',
+  BLOCK_TYPE_DECISION: 'Decisión',
+  BLOCK_TYPE_DOSAGE_TABLE: 'Dosificación',
+  BLOCK_TYPE_ALERT: 'Alerta',
+  BLOCK_TYPE_UNKNOWN: 'Bloque',
+
+  // ── Protocols — Viewer ─────────────────────────────────────────────────────
+  VIEWER_BACK: 'Protocolos',
+  VIEWER_EDIT_BUTTON: 'Editar',
+  VIEWER_VERSION: (n: number) => `v${n}`,
+  VIEWER_UPDATED: 'Actualizado',
+  VIEWER_NO_CONTENT: 'Este protocolo no tiene contenido todavía.',
+  VIEWER_LOADING: 'Cargando protocolo...',
+  VIEWER_NOT_FOUND: 'Protocolo no encontrado.',
 } as const
 
 /**

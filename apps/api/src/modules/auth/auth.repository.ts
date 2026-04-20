@@ -19,7 +19,6 @@ export class AuthRepository {
    * catching the unique constraint violation on firebaseUid and re-fetching.
    */
   async provisionUser(decoded: DecodedIdToken): Promise<User> {
-    console.log('decoded', decoded)
     const { uid, email } = decoded
 
     // Fast-path: user already exists (the common case after first provision)
