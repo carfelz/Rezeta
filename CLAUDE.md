@@ -20,15 +20,14 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/protocol-template-schema.md
 @./specs/starter-templates.md
 @./specs/protocol-editor-ux.md
+@./specs/template-editor-ux.md
+@./specs/onboarding-flow.md
+@./specs/protocol-engine-slices.md
 @./specs/design-system/tokens.md
 @./specs/design-system/components.md
 @./specs/design-system/principles.md
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
-@./specs/protocol-engine-slices.md
-@./specs/protocol-editor-ux.md
-@./specs/template-editor-ux.md
-@./specs/onboarding-flow.md
 
 The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).
 
@@ -100,9 +99,11 @@ If asked to add a feature, first check whether it's in MVP scope. The MVP includ
 - Consultations (SOAP notes)
 - Prescriptions
 - Basic billing/invoicing
-- Protocol engine (lite — browse, search, pre-built templates only)
+- Protocol engine (full — tenant-owned templates, types, onboarding, and protocol CRUD)
 
-Features explicitly out of MVP: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, custom protocol templates, protocol-to-consultation integration. If a feature request falls in the out-of-scope list, flag it and ask whether to defer.
+Features explicitly out of MVP: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing, protocol-to-consultation integration. If a feature request falls in the out-of-scope list, flag it and ask whether to defer.
+
+**For protocol engine work specifically**, the source of truth for what's been built and what's next is `specs/protocol-engine-slices.md`. Read it before starting any protocol engine slice — it encodes architectural decisions and slice boundaries that aren't repeated elsewhere.
 
 ## Code Conventions
 

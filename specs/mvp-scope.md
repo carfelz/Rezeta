@@ -7,14 +7,16 @@
 A medical ERP built the way Dominican Republic specialists actually work — across multiple health centers, on one unified system. Starting with solo specialists and scaling naturally to small practices and clinics.
 
 **Tagline candidates (Spanish):**
-- *Un solo sistema, todos tus centros.*
-- *Tus pacientes te siguen donde consultes.*
+
+- _Un solo sistema, todos tus centros._
+- _Tus pacientes te siguen donde consultes._
 
 ## 2. Target User (MVP)
 
 **Primary:** Solo specialist in the Dominican Republic who consults at 2–4 different health centers per week.
 
 **Pain points being solved:**
+
 - Juggling schedules across multiple centers
 - Keeping patient records scattered or on paper
 - Remembering protocols from memory
@@ -25,15 +27,15 @@ A medical ERP built the way Dominican Republic specialists actually work — acr
 
 ### 🟢 Must-Have (ships in v1)
 
-| # | Module | Purpose |
-|---|--------|---------|
-| 1 | Patient Management | Basic demographics, medical history, allergies, chronic conditions |
-| 2 | Multi-Location Management ⭐ | Core differentiator — unlimited locations even on free tier |
-| 3 | Appointments & Calendar | Location-aware scheduling, conflict detection across centers |
-| 4 | Consultations / SOAP Notes | Structured clinical notes with sign/amend workflow |
-| 5 | Prescriptions | Printable PDFs with doctor's credentials |
-| 6 | Basic Billing / Invoicing | Per-location fees and commission tracking |
-| 7 | Protocol Engine Lite | Pre-built templates, personal protocol library |
+| #   | Module                       | Purpose                                                                |
+| --- | ---------------------------- | ---------------------------------------------------------------------- |
+| 1   | Patient Management           | Basic demographics, medical history, allergies, chronic conditions     |
+| 2   | Multi-Location Management ⭐ | Core differentiator — unlimited locations even on free tier            |
+| 3   | Appointments & Calendar      | Location-aware scheduling, conflict detection across centers           |
+| 4   | Consultations / SOAP Notes   | Structured clinical notes with sign/amend workflow                     |
+| 5   | Prescriptions                | Printable PDFs with doctor's credentials                               |
+| 6   | Basic Billing / Invoicing    | Per-location fees and commission tracking                              |
+| 7   | Protocol Engine              | Tenant-owned templates, types, onboarding flow, and full protocol CRUD |
 
 ### 🔴 Explicitly Out of Scope for MVP
 
@@ -45,36 +47,45 @@ These are valuable features, but deferred to v2+ to keep MVP focused:
 - Advanced analytics & KPI dashboards
 - Multi-user support beyond owner (v2)
 - Protocol integration with consultations (v2)
-- Template creation from scratch (v2)
+- Template versioning (v2)
+- Cross-tenant template/protocol sharing (v3)
 - Telemedicine
 - Insurance claim processing
 - HL7/FHIR integrations
 
-## 4. Protocol Engine in MVP (Lite)
+## 4. Protocol Engine in MVP
 
-Deliberately scoped down. The full vision is v2+.
+The protocol engine ships end-to-end in MVP. It is the product's primary differentiator; a "lite" version without customization would undercut the positioning. The engine is built on a three-layer model — **templates** (structural blueprints), **types** (tenant categories pointing at templates), **protocols** (instances belonging to types). See `protocol-template-schema.md` for the authoritative spec.
 
 **In MVP:**
-- A handful of pre-built templates (checklist, step-by-step, decision tree, dosage table)
-- Create, edit, browse personal protocols
-- Full-text search by title, specialty, tags
-- Mark protocols as favorites
+
+- Tenant-owned templates (copied from 5 starter blueprints on signup; editable subject to lock rules)
+- `ProtocolType` as the user-facing category, sitting between templates and protocols
+- 5 default types auto-created on tenant provisioning
+- Onboarding flow (`/bienvenido`) with default-path and personalizar-path, gating protocol access until templates and types exist
+- Template editor at `/ajustes/plantillas` (flat block list, required toggles, placeholder hints)
+- Type CRUD at `/ajustes/tipos` (list, create, rename, delete)
+- Protocol CRUD: create via type picker, edit in three-panel editor, view in mobile-optimized viewer, save as immutable versions
+- Full-text search by title, filter by type, mark protocols as favorites
+- Lock rules: templates locked when any type references them; types locked when any protocol references them
 
 **Not in MVP:**
-- Creating custom templates from scratch
-- Cross-tenant protocol sharing / public library
-- Forking
-- Protocol-to-consultation integration
-- Version approval workflows
+
+- Template versioning (edits are in-place; total lock is the compensating safeguard — v2)
+- Type metadata beyond name + template (v2)
+- Cross-tenant protocol/template sharing or public library (v3)
+- Forking another tenant's content (v3)
+- Protocol-to-consultation integration (launch a protocol during a consult — v2)
+- Multi-signer approval workflows (v2)
 - Usage analytics
 
 ## 5. Platform Strategy
 
-| Platform | MVP Approach | Rationale |
-|----------|-------------|-----------|
-| Web | Responsive web app | Fastest to build, where admin-heavy tasks live |
-| Mobile | Progressive Web App (PWA) | Works on phones without native app overhead |
-| Native iOS/Android | Deferred to v2 | Build only after validating demand and revenue |
+| Platform           | MVP Approach              | Rationale                                      |
+| ------------------ | ------------------------- | ---------------------------------------------- |
+| Web                | Responsive web app        | Fastest to build, where admin-heavy tasks live |
+| Mobile             | Progressive Web App (PWA) | Works on phones without native app overhead    |
+| Native iOS/Android | Deferred to v2            | Build only after validating demand and revenue |
 
 ## 6. Localization & Compliance
 
@@ -98,7 +109,7 @@ Full ERD lives in `medical_erp_erd.mmd`. Key entities in MVP:
 
 **Billing:** Invoice, InvoiceItem
 
-**Protocols:** ProtocolTemplate, Protocol, ProtocolVersion
+**Protocols:** ProtocolTemplate, ProtocolType, Protocol, ProtocolVersion
 
 **Cross-cutting:** AuditLog, Attachment
 
@@ -134,25 +145,30 @@ Things to finalize before or during build:
 - [ ] Target specialty for first 10 customers (physiotherapy? pediatrics? cardiology?)
 - [ ] Exact pricing (target ~$29–39/mo for solo, ~$99/mo for practice)
 - [ ] Technical stack (backend framework, auth provider, hosting)
-- [ ] Protocol template schema (block types and JSON structure)
+- [x] Protocol template schema (block types and JSON structure) — resolved in `protocol-template-schema.md`
 - [ ] Roles & permissions matrix for v2 multi-user
 - [ ] Payment processor for DR market (Azul? CardNet? Stripe?)
 
 ## 11. Roadmap After MVP
 
 **v1.5 (3–6 months post-launch)**
+
 - Assistant/secretary role (multi-user for solo practice)
 - Basic analytics dashboard
 - Native iOS/Android apps
 - Protocol integration into consultations
 
 **v2 (6–12 months post-launch)**
+
 - Practice tier (2–10 providers)
-- Full protocol engine (template creation, sharing, forking)
+- Template versioning (non-destructive template edits, existing protocols pinned to their authored version)
+- Type metadata (tags, analytics, default location, specialty affinity)
+- Protocol-to-consultation integration (launch a protocol during a consult, track adherence)
 - Lab integrations
 - Patient portal
 
 **v3 (12+ months post-launch)**
+
 - Clinic tier
 - Multi-department governance
 - Advanced compliance tooling
