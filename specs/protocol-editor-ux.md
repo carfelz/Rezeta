@@ -2,7 +2,7 @@
 
 > Living document. Last updated: April 2026.
 >
-> This document specifies the user experience for the protocol editor and viewer surfaces.
+> This document specifies the user experience for the **protocol editor and viewer** surfaces — the surfaces a doctor uses to author and consult clinical protocols. The **template editor** is a separate surface with a different design rationale; it is specified in `template-editor-ux.md`.
 
 ## Table of Contents
 
@@ -13,7 +13,7 @@
 5. [Saving & Versioning Flow](#5-saving--versioning-flow)
 6. [Single-User Editing Lock](#6-single-user-editing-lock)
 7. [Mobile Viewer](#7-mobile-viewer)
-8. [Template vs Protocol Editor Differences](#8-template-vs-protocol-editor-differences)
+8. [Protocol vs Template Editor](#8-protocol-vs-template-editor)
 9. [Empty States & Onboarding](#9-empty-states--onboarding)
 10. [Keyboard & Accessibility](#10-keyboard--accessibility)
 
@@ -31,12 +31,12 @@ The editor optimizes for **deliberation over velocity**. Medical protocols are n
 
 ## 2. Platform Strategy
 
-| Platform | Editor | Viewer |
-|----------|--------|--------|
-| Desktop web | ✅ Full editor | ✅ Full viewer |
-| Tablet web (landscape) | ✅ Full editor (min 1024px width) | ✅ Full viewer |
-| Mobile web / PWA | ❌ No editor | ✅ Optimized viewer |
-| Native mobile (v2) | ❌ No editor | ✅ Optimized viewer |
+| Platform               | Editor                            | Viewer              |
+| ---------------------- | --------------------------------- | ------------------- |
+| Desktop web            | ✅ Full editor                    | ✅ Full viewer      |
+| Tablet web (landscape) | ✅ Full editor (min 1024px width) | ✅ Full viewer      |
+| Mobile web / PWA       | ❌ No editor                      | ✅ Optimized viewer |
+| Native mobile (v2)     | ❌ No editor                      | ✅ Optimized viewer |
 
 **Minimum desktop editor width: 1024px.** Below that, the three-panel layout collapses and the user is shown the mobile viewer with a banner: "To edit protocols, please use a device with a larger screen."
 
@@ -74,32 +74,35 @@ Contains, left to right:
 A fixed-width vertical list of available block types. Section appears first with a visual divider because it's structurally different (a container, not a leaf block).
 
 **Interactions:**
+
 - **Click to insert** at current cursor position (default)
 - **Drag to insert** at specific position in canvas (desktop)
 - Hover shows a tooltip with a short description
 
 **Palette items for MVP:**
 
-| Block | Icon | Color accent |
-|-------|------|--------------|
-| Section | § | Teal (container) |
-| Text | T | Neutral |
-| Checklist | ☐ | Neutral |
-| Steps | 1. | Neutral |
-| Decision | ◇ | Neutral |
-| Dosage | Rx | Neutral |
-| Alert | ! | Amber (semantic) |
+| Block     | Icon | Color accent     |
+| --------- | ---- | ---------------- |
+| Section   | §    | Teal (container) |
+| Text      | T    | Neutral          |
+| Checklist | ☐    | Neutral          |
+| Steps     | 1.   | Neutral          |
+| Decision  | ◇    | Neutral          |
+| Dosage    | Rx   | Neutral          |
+| Alert     | !    | Amber (semantic) |
 
 ### Middle Panel: Canvas
 
 The authoring surface. Protocols scroll vertically. Each section is a card with a colored left accent (teal) to distinguish it from leaf blocks.
 
 **Block states:**
+
 - **Unselected** — 0.5px neutral border
 - **Selected** — 2px blue border (the currently active block)
 - **Required (from template)** — small "REQUERIDA" label in the corner; delete button is disabled
 
 **Interactions at canvas level:**
+
 - Click a block to select it
 - Drag handle on each block to reorder within parent
 - "+ Add block" button at the bottom of each section
@@ -261,15 +264,15 @@ The editing user sees no lock indicator. Holding the lock is implicit in being i
 
 ### Block Rendering on Mobile
 
-| Block | Mobile treatment |
-|-------|-----------------|
-| Section | Collapsible card with caret indicator |
-| Text | Rendered Markdown, 14px body |
+| Block     | Mobile treatment                                                          |
+| --------- | ------------------------------------------------------------------------- |
+| Section   | Collapsible card with caret indicator                                     |
+| Text      | Rendered Markdown, 14px body                                              |
 | Checklist | Tappable checkboxes (session-scoped state) with critical items bolded red |
-| Steps | Numbered cards, title bold, detail muted |
-| Decision | Condition as header, branches as tappable chips that reveal action |
-| Dosage | Horizontal scroll table or stacked card layout at narrow widths |
-| Alert | Colored callout with icon, severity-specific background |
+| Steps     | Numbered cards, title bold, detail muted                                  |
+| Decision  | Condition as header, branches as tappable chips that reveal action        |
+| Dosage    | Horizontal scroll table or stacked card layout at narrow widths           |
+| Alert     | Colored callout with icon, severity-specific background                   |
 
 ### Session-Scoped Checkbox State
 
@@ -286,36 +289,61 @@ When a doctor taps a checkbox in the mobile viewer:
 - Search icon in top-right for full-text search across protocols
 - Long-press a protocol title to add to favorites (future)
 
-## 8. Template vs Protocol Editor Differences
+## 8. Protocol vs Template Editor
 
-The same three-panel editor is used for both templates and protocols, with these differences:
+The protocol editor (specified in this document) and the template editor (specified in `template-editor-ux.md`) are **two distinct surfaces**, not one editor with a mode toggle. They share a common block catalog and reuse the same block renderer component, but their layouts, workflows, and affordances are different because they serve different tasks.
 
-| Aspect | Template editor | Protocol editor |
-|--------|-----------------|-----------------|
-| What's being authored | The structure others will fill | Actual clinical content |
-| Required toggle | Visible on every block/section | Hidden (read from template) |
-| Placeholder fields | Editable (author sets hints) | Hidden (shown as placeholders in inputs) |
-| Delete locked blocks | Allowed (author decides structure) | Blocked for `required: true` blocks |
-| Default content | Typically empty + placeholders | Typically populated from template |
-| Version semantics | Template versions | Protocol versions |
+| Aspect                 | Protocol editor (this doc)                                       | Template editor (`template-editor-ux.md`)                                                   |
+| ---------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| What's being authored  | Actual clinical content                                          | Structural blueprint                                                                        |
+| Layout                 | Three-panel (palette · canvas · preview)                         | Single-column flat block list                                                               |
+| Preview                | Live mobile-style preview alongside canvas                       | None (no meaningful preview of placeholder-only content)                                    |
+| Required toggle        | Not shown (read-only, derived from the template behind the type) | Visible on every row                                                                        |
+| Placeholder hints      | Shown as muted italic guidance where content would go            | Authored — the editor's whole point                                                         |
+| Delete required blocks | Blocked                                                          | Allowed (author decides structure)                                                          |
+| Versioning             | Every save creates a new `ProtocolVersion`; history drawer       | No versioning in MVP (overwrite-in-place); total lock when any type references the template |
+| Lock rule              | No editor-level lock (single-user edit lock applies — Section 6) | Locked iff any `ProtocolType` references the template                                       |
 
-The editor's mode is passed in via URL (`/templates/:id/edit` vs `/protocols/:id/edit`) and the UI adapts.
+Which editor a user sees is determined by the URL. Protocol editing happens at `/protocolos/:id/edit`; template editing happens at `/ajustes/plantillas/:id/edit`. The type picker in the protocol creation flow (Section 9) is the only UI moment where templates are even implied — and even there, doctors see types, never templates.
 
 ## 9. Empty States & Onboarding
 
 ### First-time protocol creation
 
-When a user clicks "New Protocol" and has no protocols yet:
+When a user clicks "Nuevo protocolo":
 
-1. Modal opens: "¿Desde dónde empezamos?"
-2. Options:
-   - Grid of system templates (Emergency, Procedure, Pharmacological, Diagnostic, Physiotherapy)
-   - "Empezar desde cero" (blank)
-3. After selection, the editor opens with the template already applied and the protocol title field focused
+1. A **type picker** modal opens: _"¿Qué tipo de protocolo vas a crear?"_
+2. The modal shows the user's tenant's `ProtocolType`s as selectable cards. Each card displays the type's name (e.g., "Emergencia", "Procedimiento") and — optionally, as a muted subtitle — the suggested specialty from the template behind it.
+3. A single input below the cards: `Nombre del protocolo` (required).
+4. Primary CTA: **"Crear protocolo"** — disabled until both a type is selected and a name is entered.
+5. On submit, the server:
+   - Creates the `Protocol` with `type_id` set to the chosen type
+   - Resolves the type's `template_id` and copies the template's `placeholder_blocks` into the initial `ProtocolVersion` content
+   - Redirects the doctor to `/protocolos/:id/edit` with the first block auto-focused
+
+**Templates are invisible throughout this flow.** The doctor picks a type; the template behind it is infrastructure. The word "plantilla" does not appear on this screen.
+
+### No "Start from Scratch" Path
+
+There is no option to create a blank protocol bypassing the type picker. Every protocol belongs to a type; every type points at a template. A doctor who wants a minimal starting structure can either:
+
+- Pick an existing type whose template has minimal required blocks, or
+- Create a new minimal template and a corresponding type (via `/ajustes/plantillas` and `/ajustes/tipos`), then return to protocol creation
+
+This is by design — see `protocol-template-schema.md` Section 2 for the rationale.
+
+### Empty Type Picker
+
+A tenant that has somehow ended up with zero active types (e.g., the doctor deleted all of them after onboarding) cannot create a protocol. The type picker shows an empty state:
+
+> No tienes tipos de protocolo activos.
+> Crea al menos un tipo en Ajustes para empezar.
+
+Plus a primary link: **"Ir a Ajustes → Tipos"** that navigates to `/ajustes/tipos`.
 
 ### First-time editor visit
 
-The first time a user lands on the editor, a lightweight 3-step tooltip tour highlights:
+The first time a user lands on the protocol editor, a lightweight 3-step tooltip tour highlights:
 
 1. The palette ("Arrastra bloques aquí")
 2. The canvas ("Edita tu protocolo directamente")
@@ -323,28 +351,30 @@ The first time a user lands on the editor, a lightweight 3-step tooltip tour hig
 
 Dismissible. Not shown again after dismissal.
 
-### Empty canvas (blank protocol)
+### Initial Canvas State
 
-If the user chose "empezar desde cero," the canvas shows a centered prompt:
+Because every protocol is created from a type (and therefore from a template), the canvas is never truly blank on first load. It always opens with the template's `placeholder_blocks` rendered as editable blocks, with placeholder hints visible as muted italic guidance.
+
+If the template behind the type has no `placeholder_blocks` (a minimal template), the canvas shows a centered prompt:
 
 > Este protocolo está vacío.
 > Añade tu primera sección o bloque desde la paleta de la izquierda.
 
-Plus a large "+ Añadir sección" button as the primary action.
+Plus a large "+ Añadir sección" button as the primary action. This path is uncommon in practice — it only occurs when a doctor has authored a minimalist template deliberately.
 
 ## 10. Keyboard & Accessibility
 
 ### Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl/Cmd + S | Save version |
-| Ctrl/Cmd + Z / Shift+Z | Undo / Redo (within current session only) |
-| Ctrl/Cmd + / | Toggle preview panel |
-| Tab / Shift+Tab | Navigate between block fields |
-| Enter (in palette) | Insert selected block type at cursor |
-| Delete (on selected block) | Delete selected block (if not required) |
-| Ctrl/Cmd + D | Duplicate selected block |
+| Shortcut                   | Action                                    |
+| -------------------------- | ----------------------------------------- |
+| Ctrl/Cmd + S               | Save version                              |
+| Ctrl/Cmd + Z / Shift+Z     | Undo / Redo (within current session only) |
+| Ctrl/Cmd + /               | Toggle preview panel                      |
+| Tab / Shift+Tab            | Navigate between block fields             |
+| Enter (in palette)         | Insert selected block type at cursor      |
+| Delete (on selected block) | Delete selected block (if not required)   |
+| Ctrl/Cmd + D               | Duplicate selected block                  |
 
 ### Accessibility
 

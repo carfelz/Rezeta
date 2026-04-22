@@ -25,6 +25,10 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/design-system/principles.md
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
+@./specs/protocol-engine-slices.md
+@./specs/protocol-editor-ux.md
+@./specs/template-editor-ux.md
+@./specs/onboarding-flow.md
 
 The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).
 
@@ -60,6 +64,7 @@ The design system lives in `design-system/`. Import order: `tokens.css` → `com
 - When in doubt, reference `app-prototype.html` before making a judgment call.
 
 Key design decisions:
+
 - **Typefaces:** Source Serif 4 (headings/display) + IBM Plex Sans (UI/body) + IBM Plex Mono (labels/data)
 - **Brand color:** `#2D5760` (deep teal-slate) — not SaaS blue, not clinical green
 - **Signature element:** 2px vertical teal rule marks active nav, selected items, protocol block headers

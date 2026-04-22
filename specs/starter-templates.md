@@ -2,7 +2,7 @@
 
 > Living document. Last updated: April 2026.
 >
-> This document specifies the pre-built protocol templates that ship with MVP. These seed the `ProtocolTemplate` table with `is_system: true` on first launch and give doctors immediate value without needing to design templates from scratch.
+> This document specifies the pre-built protocol templates that ship with MVP. On tenant creation, these five templates are copied into the tenant's own `ProtocolTemplate` rows, and five matching `ProtocolType` rows are created pointing at them. This gives doctors immediate value without needing to design templates from scratch.
 
 ## Table of Contents
 
@@ -26,19 +26,19 @@ Five starter templates were chosen to balance three goals:
 2. **Span the main clinical archetypes** — emergency, procedure, pharmacology, diagnosis, rehabilitation
 3. **Match likely MVP specialties** — templates are specialty-agnostic but obviously useful to the specialties we expect to lead with (emergency medicine, pediatrics, physiotherapy, cardiology, general practice)
 
-Five is a deliberate choice: enough variety to feel like a real starting library, few enough that a new user can scan them in 30 seconds.
+Five is a deliberate choice: enough variety to feel like a real starting library, few enough that a new user can scan them in 30 seconds during onboarding.
 
 ## 2. Coverage Matrix
 
 Which block types each template showcases:
 
-| Template | text | checklist | steps | decision | dosage_table | alert |
-|----------|:----:|:---------:|:-----:|:--------:|:------------:|:-----:|
-| Emergency Intervention | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Clinical Procedure | ✅ | ✅ | ✅ | — | — | ✅ |
-| Pharmacological Reference | ✅ | — | — | ✅ | ✅ | ✅ |
-| Diagnostic Algorithm | ✅ | ✅ | — | ✅ | — | — |
-| Physiotherapy Session | ✅ | ✅ | ✅ | ✅ | — | — |
+| Template                  | text | checklist | steps | decision | dosage_table | alert |
+| ------------------------- | :--: | :-------: | :---: | :------: | :----------: | :---: |
+| Emergency Intervention    |  ✅  |    ✅     |  ✅   |    ✅    |      ✅      |  ✅   |
+| Clinical Procedure        |  ✅  |    ✅     |  ✅   |    —     |      —       |  ✅   |
+| Pharmacological Reference |  ✅  |     —     |   —   |    ✅    |      ✅      |  ✅   |
+| Diagnostic Algorithm      |  ✅  |    ✅     |   —   |    ✅    |      —       |   —   |
+| Physiotherapy Session     |  ✅  |    ✅     |  ✅   |    ✅    |      —       |   —   |
 
 Every block type appears in at least 2 templates. Every template uses at least 3 block types.
 
@@ -50,7 +50,8 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 
 **Why it's a starter:** This is the most comprehensive template and the one that best showcases the engine. Emergency protocols drive the "protocol as reference you can't remember by heart" value proposition most clearly.
 
-**Template creator's required-block decisions:**
+**Template author's required-block decisions:**
+
 - **Indications** (required) — you can't have an emergency protocol without criteria for activation
 - **Initial Assessment** (required) — safety-critical first step
 - **Intervention** (required) — the "what to do" section
@@ -74,7 +75,10 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "required": true,
       "description": "When to activate this protocol",
       "placeholder_blocks": [
-        { "type": "text", "placeholder": "Clinical criteria that trigger this protocol (signs, symptoms, thresholds)." }
+        {
+          "type": "text",
+          "placeholder": "Clinical criteria that trigger this protocol (signs, symptoms, thresholds)."
+        }
       ]
     },
     {
@@ -84,7 +88,11 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "required": false,
       "description": "When NOT to use this protocol",
       "placeholder_blocks": [
-        { "type": "alert", "severity": "danger", "placeholder": "Absolute or relative contraindications." }
+        {
+          "type": "alert",
+          "severity": "danger",
+          "placeholder": "Absolute or relative contraindications."
+        }
       ]
     },
     {
@@ -148,11 +156,16 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 ```
 
 ### Example protocols from this template
+
 - Anaphylaxis Management
 - Stroke Code Activation
 - Massive Hemorrhage Protocol
 - Status Epilepticus
 - Sepsis Bundle
+
+### Default type pointing at this template
+
+**Emergencia**
 
 ---
 
@@ -162,7 +175,8 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 
 **Why it's a starter:** Most specialists perform routine procedures weekly. This template captures pre-op / procedure / post-op flow without emergency-protocol overhead.
 
-**Template creator's required-block decisions:**
+**Template author's required-block decisions:**
+
 - **Procedure Steps** (required) — the point of the template
 - **Post-procedure Instructions** (required) — patient care after
 - Everything else optional
@@ -182,9 +196,7 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "type": "section",
       "title": "Indications",
       "required": false,
-      "placeholder_blocks": [
-        { "type": "text", "placeholder": "When this procedure is performed." }
-      ]
+      "placeholder_blocks": [{ "type": "text", "placeholder": "When this procedure is performed." }]
     },
     {
       "id": "sec_preparation",
@@ -194,7 +206,11 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "description": "Pre-procedure setup",
       "placeholder_blocks": [
         { "type": "checklist", "placeholder": "Materials, equipment, and patient prep." },
-        { "type": "alert", "severity": "info", "placeholder": "Consent, allergies, and anticoagulation status." }
+        {
+          "type": "alert",
+          "severity": "info",
+          "placeholder": "Consent, allergies, and anticoagulation status."
+        }
       ]
     },
     {
@@ -203,9 +219,7 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "title": "Procedure Steps",
       "required": true,
       "description": "Step-by-step technique",
-      "placeholder_blocks": [
-        { "type": "steps", "placeholder": "Numbered steps of the procedure." }
-      ]
+      "placeholder_blocks": [{ "type": "steps", "placeholder": "Numbered steps of the procedure." }]
     },
     {
       "id": "sec_complications",
@@ -214,7 +228,11 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "required": false,
       "placeholder_blocks": [
         { "type": "text", "placeholder": "Expected and rare adverse events." },
-        { "type": "alert", "severity": "warning", "placeholder": "Signs that require immediate attention." }
+        {
+          "type": "alert",
+          "severity": "warning",
+          "placeholder": "Signs that require immediate attention."
+        }
       ]
     },
     {
@@ -232,11 +250,16 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 ```
 
 ### Example protocols from this template
+
 - Joint Aspiration
 - Suturing a Laceration
 - Infiltration with Corticosteroid
 - IUD Insertion
 - Cryotherapy for Skin Lesion
+
+### Default type pointing at this template
+
+**Procedimiento**
 
 ---
 
@@ -246,7 +269,8 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 
 **Why it's a starter:** Many doctors keep medication references on scraps of paper or in their heads. This template gives them a clean, structured home for that knowledge.
 
-**Template creator's required-block decisions:**
+**Template author's required-block decisions:**
+
 - **Dosage table** (required) — the reason for this template
 - Everything else optional
 
@@ -276,7 +300,11 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "required": false,
       "placeholder_blocks": [
         { "type": "alert", "severity": "danger", "placeholder": "Absolute contraindications." },
-        { "type": "alert", "severity": "warning", "placeholder": "Relative contraindications and cautions." }
+        {
+          "type": "alert",
+          "severity": "warning",
+          "placeholder": "Relative contraindications and cautions."
+        }
       ]
     },
     {
@@ -327,11 +355,16 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 ```
 
 ### Example protocols from this template
+
 - Basal-Bolus Insulin Regimen
 - Community-Acquired Pneumonia Antibiotic Selection
 - Pediatric Analgesic Dosing
 - ICU Sedation Protocol
 - Warfarin Initiation & Titration
+
+### Default type pointing at this template
+
+**Medicación**
 
 ---
 
@@ -341,7 +374,8 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 
 **Why it's a starter:** Diagnostic reasoning is often taught as algorithms. This template makes them first-class and reusable.
 
-**Template creator's required-block decisions:**
+**Template author's required-block decisions:**
+
 - **Presenting Problem** (required) — the algorithm's entry point
 - **Decision Pathway** (required) — the algorithm itself
 - Everything else optional
@@ -418,11 +452,16 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 ```
 
 ### Example protocols from this template
+
 - Chest Pain Triage
 - Pediatric Fever Without Source
 - Syncope Workup
 - Headache Red Flag Evaluation
 - Acute Low Back Pain Differential
+
+### Default type pointing at this template
+
+**Diagnóstico**
 
 ---
 
@@ -432,7 +471,8 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 
 **Why it's a starter:** Physiotherapy was identified as a strong beachhead specialty for our go-to-market. Having a physiotherapy-native template at launch signals the product speaks their language.
 
-**Template creator's required-block decisions:**
+**Template author's required-block decisions:**
+
 - **Assessment** (required) — can't treat without assessing
 - **Treatment Plan** (required) — the session's content
 - Everything else optional
@@ -484,7 +524,10 @@ Every block type appears in at least 2 templates. Every template uses at least 3
       "required": true,
       "description": "Interventions for this phase",
       "placeholder_blocks": [
-        { "type": "steps", "placeholder": "Exercises, techniques, or modalities (with reps/sets/duration)." }
+        {
+          "type": "steps",
+          "placeholder": "Exercises, techniques, or modalities (with reps/sets/duration)."
+        }
       ]
     },
     {
@@ -510,53 +553,87 @@ Every block type appears in at least 2 templates. Every template uses at least 3
 ```
 
 ### Example protocols from this template
+
 - Post-ACL Reconstruction — Phase 1 (0–6 weeks)
 - Shoulder Impingement — Conservative Management
 - Chronic Low Back Pain — McKenzie Approach
 - Post–Total Knee Replacement — Phase 2
 - Post-Stroke Upper Limb Rehab
 
+### Default type pointing at this template
+
+**Fisioterapia**
+
 ---
 
 ## 8. Seeding Strategy
 
-### Database Seeding
+### The Seed Moment
 
-On first launch of a tenant:
+Starter templates are **not** system rows. They are **copied into each tenant** as tenant-owned `ProtocolTemplate` rows at tenant creation time. Every tenant owns its own five copies, and every tenant is free to edit or delete them (subject to the standard lock rules).
 
-1. A one-time migration inserts these 5 templates into `ProtocolTemplate` with:
-   - `tenant_id: null` (global/system templates)
-   - `is_system: true`
-   - `created_by: null` (or a dedicated "System" user)
-   - `schema`: the JSON from sections 3–7 above
-2. Templates are read-only to tenants — they appear in the template picker but cannot be edited directly
-3. A tenant can **fork** a system template to create a tenant-owned editable copy
+### What Happens on Tenant Signup
 
-### Upgrading System Templates
+The seeding is performed as a single transactional operation triggered the first time a new tenant is provisioned (part of the authentication / onboarding flow):
 
-When we improve a system template (e.g. new block types in v2):
+1. **Insert 5 `ProtocolTemplate` rows** into the tenant:
+   - `tenant_id`: the new tenant's ID
+   - `name`: the Spanish template name (e.g., "Intervención de emergencia")
+   - `schema`: the JSON from sections 3–7 above, in Spanish
+   - `is_seeded`: `true`
+   - `created_by`: the provisioning user (the tenant's owner)
+2. **Insert 5 `ProtocolType` rows** into the tenant, each pointing at one of the templates created in step 1:
 
-- The system template's `schema` is updated in place, with `version` incremented
-- Tenant-owned protocols using the old template version are flagged for review but not auto-migrated
-- Forked copies are unaffected (they're independent)
+   | Type name     | References template        |
+   | ------------- | -------------------------- |
+   | Emergencia    | Intervención de emergencia |
+   | Procedimiento | Procedimiento clínico      |
+   | Medicación    | Referencia farmacológica   |
+   | Diagnóstico   | Algoritmo diagnóstico      |
+   | Fisioterapia  | Sesión de fisioterapia     |
 
-### Template Picker UX
+   Each type has `is_seeded: true`.
 
-When a doctor creates a new protocol, the picker shows:
+3. **Mark the tenant as seeded** (e.g., `tenant.seeded_at = now()`) so the operation is idempotent — subsequent login attempts never re-seed.
 
-```
-Start from a template
-├── 🚨 Emergency Intervention      [System]
-├── 🩹 Clinical Procedure          [System]
-├── 💊 Pharmacological Reference   [System]
-├── 🩺 Diagnostic Algorithm        [System]
-├── 🏃 Physiotherapy Session       [System]
-├── ─── Your templates ───
-│   (empty in MVP — template creation is v2)
-└── Start from scratch (blank)
-```
+If any step in the transaction fails, the whole seed is rolled back. A tenant is either fully seeded or not seeded at all.
 
-Emojis here are illustrative — the actual UI will use consistent iconography.
+### Consequences of the Cascade Lock
+
+Because types and templates are created together, **the lock cascade takes effect immediately**:
+
+- On day 1, every seeded template is locked by its corresponding seeded type.
+- A doctor who wants to edit a seeded template must first delete the type pointing at it (which works because no protocols exist yet on day 1).
+- After editing, the doctor can recreate the type.
+
+This is explicit in the design: MVP templates are not freely editable unless no type references them, and we accept the small day-1 friction rather than introduce a "setup mode" where the rule is temporarily suspended.
+
+### The Onboarding UX
+
+The doctor does not interact with the raw seed operation. On first login, they land on `/bienvenido` with two paths:
+
+- **"Empezar con la configuración por defecto"** — primary CTA. Triggers the seed as described above and redirects to the dashboard.
+- **"Personalizar"** — secondary link. Takes the doctor through a two-step guided flow (review templates, review types) where they can edit, delete, or add before committing. Finishing the flow persists the final state.
+
+Details of the onboarding flow are specified in `onboarding-flow.md`.
+
+### Is There Ever a "System" Version?
+
+No. The starter schemas live in code (as constants / seed fixtures shipped with the application), not as runtime rows with `tenant_id: null`. They are blueprints for the seeder, not addressable entities.
+
+If we update a starter schema in a future release:
+
+- Existing tenants are **not** automatically migrated. Their seeded copies reflect the schema at their signup time.
+- New tenants get the new version.
+- If we ever need to push an update to existing tenants, it would be an opt-in "refresh to latest starter" action at the template level, not an automatic migration.
+
+### Template Picker UX — Gone
+
+In the previous design, doctors saw the five starter templates as a pickable system catalog. That is no longer the model. In the current design:
+
+- On tenant signup, templates are copied silently (default path) or reviewed during onboarding (custom path).
+- After signup, templates live under `/ajustes/plantillas` and are managed there.
+- In the protocol creation flow, doctors see their **types**, never their templates. The template is hidden behind the type.
 
 ## 9. Localization
 
@@ -568,24 +645,27 @@ Since the DR is our launch market:
 
 - Template titles, section titles, and placeholder text are authored first in Spanish
 - English is a translation
-- The database stores both; user's language preference determines which renders
+- The locale used at seed time matches the tenant's language preference, defaulting to Spanish
+- A tenant that changes its language preference later does not have its existing templates retranslated — templates are tenant-owned content, and rewriting them would violate the lock rule
 
 ### Implementation
 
-The `schema` JSON field stores a single language at a time. To support multiple languages, one of two patterns is used:
+Because starter schemas live in code and are materialized into tenant rows, localization is a concern of the **seeder**, not the database schema. The seeder ships with both Spanish and English versions of each template and picks one based on the tenant's locale at provisioning time.
 
-**Option A (recommended for MVP):** one `ProtocolTemplate` row per language, linked by a shared `template_key` field.
-
-```sql
-ALTER TABLE protocol_templates ADD COLUMN template_key TEXT;
-ALTER TABLE protocol_templates ADD COLUMN locale TEXT;
+```
+seed/
+  templates/
+    es/
+      emergency-intervention.json
+      clinical-procedure.json
+      pharmacological-reference.json
+      diagnostic-algorithm.json
+      physiotherapy-session.json
+    en/
+      ...
 ```
 
-Query pattern: `WHERE template_key = 'emergency-intervention' AND locale = 'es'`.
-
-**Option B (future):** nested locale objects inside the schema JSON.
-
-Option A is simpler to index, simpler to query, and makes the "same template, different language" relationship explicit.
+After seeding, the content is just regular tenant-owned JSONB — the fact that it started from a Spanish or English file is not recorded on the row and not meaningful post-seed.
 
 ### Translation Notes
 
