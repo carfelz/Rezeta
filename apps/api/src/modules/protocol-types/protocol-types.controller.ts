@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Inject, HttpCode } from '@nestjs/common'
-import type { ProtocolTypeDto } from '@rezeta/shared'
+import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
 import { CreateProtocolTypeSchema, UpdateProtocolTypeSchema } from '@rezeta/shared'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
@@ -15,10 +15,7 @@ export class ProtocolTypesController {
   }
 
   @Get(':id')
-  async getType(
-    @Param('id') id: string,
-    @TenantId() tenantId: string,
-  ): Promise<ProtocolTypeDto> {
+  async getType(@Param('id') id: string, @TenantId() tenantId: string): Promise<ProtocolTypeDto> {
     return this.service.findById(id, tenantId)
   }
 
@@ -27,7 +24,7 @@ export class ProtocolTypesController {
     @Body(new ZodValidationPipe(CreateProtocolTypeSchema)) body: unknown,
     @TenantId() tenantId: string,
   ): Promise<ProtocolTypeDto> {
-    const dto = body as import('@rezeta/shared').CreateProtocolTypeDto
+    const dto = body as CreateProtocolTypeDto
     return this.service.create(tenantId, dto)
   }
 
@@ -37,16 +34,13 @@ export class ProtocolTypesController {
     @Body(new ZodValidationPipe(UpdateProtocolTypeSchema)) body: unknown,
     @TenantId() tenantId: string,
   ): Promise<ProtocolTypeDto> {
-    const dto = body as import('@rezeta/shared').UpdateProtocolTypeDto
+    const dto = body as UpdateProtocolTypeDto
     return this.service.update(id, tenantId, dto)
   }
 
   @Delete(':id')
   @HttpCode(204)
-  async deleteType(
-    @Param('id') id: string,
-    @TenantId() tenantId: string,
-  ): Promise<void> {
+  async deleteType(@Param('id') id: string, @TenantId() tenantId: string): Promise<void> {
     return this.service.delete(id, tenantId)
   }
 }

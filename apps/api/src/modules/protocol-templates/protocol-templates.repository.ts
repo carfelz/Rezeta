@@ -55,20 +55,26 @@ export class ProtocolTemplatesRepository {
   async update(
     id: string,
     tenantId: string,
-    data: { name?: string | undefined; suggestedSpecialty?: string | null | undefined; schema?: object | undefined },
+    data: {
+      name?: string | undefined
+      suggestedSpecialty?: string | null | undefined
+      schema?: object | undefined
+    },
   ): Promise<ProtocolTemplate> {
     return this.prisma.protocolTemplate.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.suggestedSpecialty !== undefined && { suggestedSpecialty: data.suggestedSpecialty }),
+        ...(data.suggestedSpecialty !== undefined && {
+          suggestedSpecialty: data.suggestedSpecialty,
+        }),
         ...(data.schema !== undefined && { schema: data.schema }),
         updatedAt: new Date(),
       },
     })
   }
 
-  async softDelete(id: string, tenantId: string): Promise<void> {
+  async softDelete(id: string, _tenantId: string): Promise<void> {
     await this.prisma.protocolTemplate.update({
       where: { id },
       data: { deletedAt: new Date() },

@@ -61,7 +61,9 @@ export interface TemplateEditorState {
 
 export interface TemplateSchema {
   version: string
-  metadata?: { suggested_specialty?: string | undefined; intended_use?: string | undefined } | undefined
+  metadata?:
+    | { suggested_specialty?: string | undefined; intended_use?: string | undefined }
+    | undefined
   blocks: unknown[]
 }
 
@@ -92,7 +94,7 @@ export function buildSchema(state: TemplateEditorState): TemplateSchema {
 
 // ─── State from existing template ─────────────────────────────────────────────
 
- 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 function parseBlocks(raw: unknown[]): TemplateBlock[] {
   if (!Array.isArray(raw)) return []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,9 +108,11 @@ function parseBlocks(raw: unknown[]): TemplateBlock[] {
     if (typeof b.placeholder === 'string') block.placeholder = b.placeholder
     if (typeof b.required === 'boolean') block.required = b.required
     if (block.type === 'section') {
-      const children = Array.isArray(b.placeholder_blocks) ? b.placeholder_blocks
-        : Array.isArray(b.blocks) ? b.blocks
-        : []
+      const children = Array.isArray(b.placeholder_blocks)
+        ? b.placeholder_blocks
+        : Array.isArray(b.blocks)
+          ? b.blocks
+          : []
       block.blocks = parseBlocks(children)
       if (typeof b.collapsed_by_default === 'boolean') {
         block.collapsed_by_default = b.collapsed_by_default
@@ -117,10 +121,10 @@ function parseBlocks(raw: unknown[]): TemplateBlock[] {
     return block
   })
 }
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 
 export function stateFromTemplate(template: ProtocolTemplateDto): TemplateEditorState {
-   
-  const schema = template.schema
+  const schema = template.schema as { blocks?: unknown[] } | null
   return {
     name: template.name,
     suggestedSpecialty: template.suggestedSpecialty ?? '',
@@ -135,7 +139,7 @@ export function stateFromTemplate(template: ProtocolTemplateDto): TemplateEditor
 function rand() {
   return Math.random().toString(36).slice(2, 7)
 }
-export function genId(prefix: string) {
+export function genId(prefix: string): string {
   return `${prefix}_${rand()}${rand()}`
 }
 
@@ -145,8 +149,18 @@ type Action =
   | { type: 'SET_NAME'; value: string }
   | { type: 'SET_SPECIALTY'; value: string }
   | { type: 'TOGGLE_EXPAND'; id: string }
-  | { type: 'UPDATE_BLOCK'; id: string; patch: Partial<TemplateBlock>; parentId?: string | undefined }
-  | { type: 'ADD_BLOCK'; blockType: BlockType; parentId?: string | undefined; afterId?: string | undefined }
+  | {
+      type: 'UPDATE_BLOCK'
+      id: string
+      patch: Partial<TemplateBlock>
+      parentId?: string | undefined
+    }
+  | {
+      type: 'ADD_BLOCK'
+      blockType: BlockType
+      parentId?: string | undefined
+      afterId?: string | undefined
+    }
   | { type: 'DELETE_BLOCK'; id: string; parentId?: string | undefined }
   | { type: 'MOVE_BLOCK'; id: string; direction: 'up' | 'down'; parentId?: string | undefined }
   | { type: 'REORDER_BLOCKS'; activeId: string; overId: string; parentId?: string | undefined }
@@ -396,7 +410,13 @@ function BlockRow({
             {...dragListeners}
             {...dragAttributes}
             onClick={(e) => e.stopPropagation()}
-            style={{ cursor: 'grab', color: 'var(--color-n-300)', fontSize: 16, lineHeight: 1, flexShrink: 0 }}
+            style={{
+              cursor: 'grab',
+              color: 'var(--color-n-300)',
+              fontSize: 16,
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
           >
             <i className="ph ph-dots-six-vertical" />
           </span>
@@ -439,16 +459,33 @@ function BlockRow({
         {/* Required toggle */}
         {!isLocked && (
           <label
-            style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <input
               type="checkbox"
               checked={isRequired}
               onChange={(e) => onUpdate(block.id, { required: e.target.checked }, parentId)}
-              style={{ accentColor: 'var(--color-p-500)', width: 14, height: 14, cursor: 'pointer' }}
+              style={{
+                accentColor: 'var(--color-p-500)',
+                width: 14,
+                height: 14,
+                cursor: 'pointer',
+              }}
             />
-            <span style={{ fontSize: 11.5, color: 'var(--color-n-600)', fontFamily: 'var(--font-sans)' }}>
+            <span
+              style={{
+                fontSize: 11.5,
+                color: 'var(--color-n-600)',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
               {isSection
                 ? strings.TEMPLATE_EDITOR_REQUIRED_SECTION_LABEL
                 : strings.TEMPLATE_EDITOR_REQUIRED_LABEL}
@@ -458,7 +495,10 @@ function BlockRow({
 
         {/* Context menu */}
         {!isLocked && (
-          <div style={{ display: 'flex', gap: 2, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          <div
+            style={{ display: 'flex', gap: 2, flexShrink: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="btn btn--ghost btn--sm btn--icon-only"
               title={strings.TEMPLATE_EDITOR_MOVE_UP}
@@ -475,7 +515,11 @@ function BlockRow({
             </button>
             <button
               className="btn btn--ghost btn--sm btn--icon-only"
-              title={isRequired ? strings.TEMPLATE_EDITOR_REQUIRED_TOOLTIP : strings.TEMPLATE_EDITOR_DELETE}
+              title={
+                isRequired
+                  ? strings.TEMPLATE_EDITOR_REQUIRED_TOOLTIP
+                  : strings.TEMPLATE_EDITOR_DELETE
+              }
               disabled={isRequired}
               onClick={() => {
                 if (isRequired) return
@@ -496,7 +540,10 @@ function BlockRow({
             >
               <i
                 className="ph ph-trash"
-                style={{ fontSize: 14, color: isRequired ? 'var(--color-n-300)' : 'var(--color-danger-text)' }}
+                style={{
+                  fontSize: 14,
+                  color: isRequired ? 'var(--color-n-300)' : 'var(--color-danger-text)',
+                }}
               />
             </button>
           </div>
@@ -505,16 +552,27 @@ function BlockRow({
 
       {/* Expanded detail panel */}
       {isExpanded && (
-        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div
+          style={{
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-3)',
+          }}
+        >
           {isSection ? (
             <>
               <div className="field">
-                <label className="field__label">{strings.TEMPLATE_EDITOR_SECTION_TITLE_LABEL}</label>
+                <label className="field__label">
+                  {strings.TEMPLATE_EDITOR_SECTION_TITLE_LABEL}
+                </label>
                 <input
                   className="input"
                   value={block.title ?? ''}
                   disabled={isLocked}
-                  onChange={(e) => onUpdate(block.id, { title: e.target.value || undefined }, parentId)}
+                  onChange={(e) =>
+                    onUpdate(block.id, { title: e.target.value || undefined }, parentId)
+                  }
                   placeholder="Ej. Indicaciones"
                 />
               </div>
@@ -524,7 +582,9 @@ function BlockRow({
                   className="input"
                   value={block.description ?? ''}
                   disabled={isLocked}
-                  onChange={(e) => onUpdate(block.id, { description: e.target.value || undefined }, parentId)}
+                  onChange={(e) =>
+                    onUpdate(block.id, { description: e.target.value || undefined }, parentId)
+                  }
                   placeholder="Descripción corta (opcional)"
                 />
               </div>
@@ -537,7 +597,9 @@ function BlockRow({
                   className="input"
                   value={block.title ?? ''}
                   disabled={isLocked}
-                  onChange={(e) => onUpdate(block.id, { title: e.target.value || undefined }, parentId)}
+                  onChange={(e) =>
+                    onUpdate(block.id, { title: e.target.value || undefined }, parentId)
+                  }
                   placeholder={`Ej. ${TYPE_LABELS[block.type]}`}
                 />
               </div>
@@ -548,7 +610,9 @@ function BlockRow({
                   value={block.placeholder ?? ''}
                   disabled={isLocked}
                   rows={2}
-                  onChange={(e) => onUpdate(block.id, { placeholder: e.target.value || undefined }, parentId)}
+                  onChange={(e) =>
+                    onUpdate(block.id, { placeholder: e.target.value || undefined }, parentId)
+                  }
                   placeholder="Instrucción para el médico al rellenar este bloque"
                   style={{ resize: 'vertical' }}
                 />
@@ -593,8 +657,10 @@ function BlockRow({
 
 // ─── SortableBlockRow ─────────────────────────────────────────────────────────
 
-interface SortableBlockRowProps
-  extends Omit<BlockRowProps, 'isExpanded' | 'dragListeners' | 'dragAttributes' | 'style' | 'dragRef'> {
+interface SortableBlockRowProps extends Omit<
+  BlockRowProps,
+  'isExpanded' | 'dragListeners' | 'dragAttributes' | 'style' | 'dragRef'
+> {
   expandedBlockId: string | null
 }
 
@@ -694,7 +760,7 @@ export function TemplateEditor({
   isSaving,
   onSave,
   onCancel,
-}: TemplateEditorProps) {
+}: TemplateEditorProps): JSX.Element {
   const [state, dispatch] = useReducer(reducer, initialState)
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -745,10 +811,10 @@ export function TemplateEditor({
   const statusLabel = isLocked
     ? strings.TEMPLATE_EDITOR_STATUS_LOCKED
     : isNewTemplate
-    ? strings.TEMPLATE_EDITOR_STATUS_NEW
-    : state.isDirty
-    ? strings.TEMPLATE_EDITOR_STATUS_EDITED
-    : undefined
+      ? strings.TEMPLATE_EDITOR_STATUS_NEW
+      : state.isDirty
+        ? strings.TEMPLATE_EDITOR_STATUS_EDITED
+        : undefined
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
@@ -794,7 +860,11 @@ export function TemplateEditor({
 
       {/* Lock banner */}
       {isLocked && (
-        <div className="callout callout--warning" style={{ marginBottom: 'var(--space-6)' }} role="status">
+        <div
+          className="callout callout--warning"
+          style={{ marginBottom: 'var(--space-6)' }}
+          role="status"
+        >
           <i className="ph ph-lock" style={{ fontSize: 18 }} />
           <div className="callout__body">
             <div className="callout__title">{strings.TEMPLATE_EDITOR_STATUS_LOCKED}</div>
@@ -803,7 +873,11 @@ export function TemplateEditor({
               <div style={{ marginTop: 4, fontSize: 12, color: 'var(--color-warning-text)' }}>
                 {strings.TEMPLATE_EDITOR_LOCKED_TYPES_PREFIX}{' '}
                 {blockingTypeIds.map((id) => (
-                  <a key={id} href={`/ajustes/tipos/${id}`} style={{ color: 'inherit', textDecoration: 'underline', marginRight: 6 }}>
+                  <a
+                    key={id}
+                    href={`/ajustes/tipos/${id}`}
+                    style={{ color: 'inherit', textDecoration: 'underline', marginRight: 6 }}
+                  >
                     {id.slice(0, 8)}…
                   </a>
                 ))}
@@ -814,7 +888,14 @@ export function TemplateEditor({
       )}
 
       {/* Name + Specialty */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)',
+        }}
+      >
         <div className="field">
           <label className="field__label">
             {strings.TEMPLATE_EDITOR_FIELD_NAME}
@@ -842,8 +923,15 @@ export function TemplateEditor({
       </div>
 
       {/* Block list */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRootDragEnd}>
-        <SortableContext items={state.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleRootDragEnd}
+      >
+        <SortableContext
+          items={state.blocks.map((b) => b.id)}
+          strategy={verticalListSortingStrategy}
+        >
           {state.blocks.map((block) => (
             <SortableBlockRow
               key={block.id}
@@ -851,10 +939,16 @@ export function TemplateEditor({
               expandedBlockId={state.expandedBlockId}
               isLocked={isLocked}
               onToggle={(id) => dispatch({ type: 'TOGGLE_EXPAND', id })}
-              onUpdate={(id, patch, pid) => dispatch({ type: 'UPDATE_BLOCK', id, patch, parentId: pid })}
+              onUpdate={(id, patch, pid) =>
+                dispatch({ type: 'UPDATE_BLOCK', id, patch, parentId: pid })
+              }
               onDelete={(id, pid) => dispatch({ type: 'DELETE_BLOCK', id, parentId: pid })}
-              onMove={(id, direction, pid) => dispatch({ type: 'MOVE_BLOCK', id, direction, parentId: pid })}
-              onAddChild={(blockType, pid) => dispatch({ type: 'ADD_BLOCK', blockType, parentId: pid })}
+              onMove={(id, direction, pid) =>
+                dispatch({ type: 'MOVE_BLOCK', id, direction, parentId: pid })
+              }
+              onAddChild={(blockType, pid) =>
+                dispatch({ type: 'ADD_BLOCK', blockType, parentId: pid })
+              }
             />
           ))}
         </SortableContext>

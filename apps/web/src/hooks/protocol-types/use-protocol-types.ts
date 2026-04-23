@@ -1,11 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UseQueryResult } from '@tanstack/react-query'
+import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type {
-  ProtocolTypeDto,
-  CreateProtocolTypeDto,
-  UpdateProtocolTypeDto,
-} from '@rezeta/shared'
+import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
 
 const QK = 'protocol-types'
 
@@ -24,7 +20,11 @@ export function useProtocolType(id: string): UseQueryResult<ProtocolTypeDto, Err
   })
 }
 
-export function useCreateProtocolType() {
+export function useCreateProtocolType(): UseMutationResult<
+  ProtocolTypeDto,
+  Error,
+  CreateProtocolTypeDto
+> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: CreateProtocolTypeDto) =>
@@ -35,7 +35,9 @@ export function useCreateProtocolType() {
   })
 }
 
-export function useUpdateProtocolType(id: string) {
+export function useUpdateProtocolType(
+  id: string,
+): UseMutationResult<ProtocolTypeDto, Error, UpdateProtocolTypeDto> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: UpdateProtocolTypeDto) =>
@@ -47,7 +49,7 @@ export function useUpdateProtocolType(id: string) {
   })
 }
 
-export function useDeleteProtocolType() {
+export function useDeleteProtocolType(): UseMutationResult<void, Error, string> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/v1/protocol-types/${id}`),

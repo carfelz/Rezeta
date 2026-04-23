@@ -1,5 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import type { TestingModule } from '@nestjs/testing'
+
+type ApiOk<T> = { data: T }
+type ApiErr = { error: { code: string } }
+type TypeItem = {
+  id: string
+  name: string
+  templateId: string
+  isLocked: boolean
+  protocolCount: number
+  isSeeded: boolean
+  templateName: string
+}
 import { Test } from '@nestjs/testing'
 import type { INestApplication } from '@nestjs/common'
 import type { Server } from 'http'
@@ -59,13 +71,25 @@ describe('ProtocolTypesController (e2e)', () => {
 
     // Create a fixture template owned by the test tenant
     const tmpl = await prisma.protocolTemplate.create({
-      data: { tenantId: TENANT_ID, name: 'Fixture Template', schema: MINIMAL_SCHEMA, isSeeded: false, createdBy: USER_ID },
+      data: {
+        tenantId: TENANT_ID,
+        name: 'Fixture Template',
+        schema: MINIMAL_SCHEMA,
+        isSeeded: false,
+        createdBy: USER_ID,
+      },
     })
     templateId = tmpl.id
 
     // Create a template owned by the other tenant
     const otherTmpl = await prisma.protocolTemplate.create({
-      data: { tenantId: OTHER_TENANT_ID, name: 'Other Tenant Template', schema: MINIMAL_SCHEMA, isSeeded: false, createdBy: USER_ID },
+      data: {
+        tenantId: OTHER_TENANT_ID,
+        name: 'Other Tenant Template',
+        schema: MINIMAL_SCHEMA,
+        isSeeded: false,
+        createdBy: USER_ID,
+      },
     })
     otherTenantTemplateId = otherTmpl.id
   })
@@ -77,8 +101,12 @@ describe('ProtocolTypesController (e2e)', () => {
 
   afterAll(async () => {
     await prisma.protocol.deleteMany({ where: { tenantId: { in: [TENANT_ID, OTHER_TENANT_ID] } } })
-    await prisma.protocolType.deleteMany({ where: { tenantId: { in: [TENANT_ID, OTHER_TENANT_ID] } } })
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId: { in: [TENANT_ID, OTHER_TENANT_ID] } } })
+    await prisma.protocolType.deleteMany({
+      where: { tenantId: { in: [TENANT_ID, OTHER_TENANT_ID] } },
+    })
+    await prisma.protocolTemplate.deleteMany({
+      where: { tenantId: { in: [TENANT_ID, OTHER_TENANT_ID] } },
+    })
     await prisma.user.deleteMany({ where: { firebaseUid: FIREBASE_UID } })
     await prisma.tenant.deleteMany({ where: { id: { in: [TENANT_ID, OTHER_TENANT_ID] } } })
     await app.close()
@@ -103,13 +131,17 @@ describe('ProtocolTypesController (e2e)', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(200)
 
-    expect(res.body.data).toEqual([])
+    expect((res.body as ApiOk<unknown[]>).data).toEqual([])
   })
 
   it('GET /v1/protocol-types — returns only tenant types (cross-tenant isolation)', async () => {
     // Create a type in the other tenant
     await prisma.protocolType.create({
-      data: { tenantId: OTHER_TENANT_ID, name: 'Other Tenant Type', templateId: otherTenantTemplateId },
+      data: {
+        tenantId: OTHER_TENANT_ID,
+        name: 'Other Tenant Type',
+        templateId: otherTenantTemplateId,
+      },
     })
     // Create a type in our tenant
     await prisma.protocolType.create({
@@ -122,9 +154,10 @@ describe('ProtocolTypesController (e2e)', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(200)
 
-    expect(res.body.data).toHaveLength(1)
-    expect(res.body.data[0].name).toBe('Our Type')
-    expect(res.body.data[0].templateId).toBe(templateId)
+    const listBody = (res.body as ApiOk<TypeItem[]>).data
+    expect(listBody).toHaveLength(1)
+    expect(listBody[0]!.name).toBe('Our Type')
+    expect(listBody[0]!.templateId).toBe(templateId)
 
     // Cleanup other tenant type
     await prisma.protocolType.deleteMany({ where: { tenantId: OTHER_TENANT_ID } })
@@ -143,11 +176,12 @@ describe('ProtocolTypesController (e2e)', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(200)
 
-    expect(res.body.data.id).toBe(type.id)
-    expect(res.body.data.name).toBe('Get Me')
-    expect(res.body.data.templateName).toBe('Fixture Template')
-    expect(res.body.data.isLocked).toBe(false)
-    expect(res.body.data.protocolCount).toBe(0)
+    const getBody = (res.body as ApiOk<TypeItem>).data
+    expect(getBody.id).toBe(type.id)
+    expect(getBody.name).toBe('Get Me')
+    expect(getBody.templateName).toBe('Fixture Template')
+    expect(getBody.isLocked).toBe(false)
+    expect(getBody.protocolCount).toBe(0)
   })
 
   it('GET /v1/protocol-types/:id — 404 for cross-tenant type', async () => {
@@ -174,11 +208,12 @@ describe('ProtocolTypesController (e2e)', () => {
       .send({ name: 'New Type', templateId })
       .expect(201)
 
-    expect(res.body.data.name).toBe('New Type')
-    expect(res.body.data.templateId).toBe(templateId)
-    expect(res.body.data.isLocked).toBe(false)
-    expect(res.body.data.protocolCount).toBe(0)
-    expect(res.body.data.isSeeded).toBe(false)
+    const createBody = (res.body as ApiOk<TypeItem>).data
+    expect(createBody.name).toBe('New Type')
+    expect(createBody.templateId).toBe(templateId)
+    expect(createBody.isLocked).toBe(false)
+    expect(createBody.protocolCount).toBe(0)
+    expect(createBody.isSeeded).toBe(false)
   })
 
   it('POST /v1/protocol-types — 400 for cross-tenant templateId', async () => {
@@ -191,7 +226,9 @@ describe('ProtocolTypesController (e2e)', () => {
   })
 
   it('POST /v1/protocol-types — 409 for duplicate name within tenant', async () => {
-    await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Duplicate', templateId } })
+    await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'Duplicate', templateId },
+    })
 
     await request
       .default(app.getHttpServer() as Server)
@@ -224,13 +261,16 @@ describe('ProtocolTypesController (e2e)', () => {
       .send({ name: 'New Name' })
       .expect(200)
 
-    expect(res.body.data.name).toBe('New Name')
-    expect(res.body.data.templateId).toBe(templateId)
+    const renameBody = (res.body as ApiOk<TypeItem>).data
+    expect(renameBody.name).toBe('New Name')
+    expect(renameBody.templateId).toBe(templateId)
   })
 
   it('PATCH /v1/protocol-types/:id — 409 if name already taken', async () => {
     await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Taken', templateId } })
-    const type = await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Unique', templateId } })
+    const type = await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'Unique', templateId },
+    })
 
     await request
       .default(app.getHttpServer() as Server)
@@ -241,7 +281,9 @@ describe('ProtocolTypesController (e2e)', () => {
   })
 
   it('PATCH /v1/protocol-types/:id — 400 if templateId included (immutable)', async () => {
-    const type = await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Immutable Test', templateId } })
+    const type = await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'Immutable Test', templateId },
+    })
 
     await request
       .default(app.getHttpServer() as Server)
@@ -269,7 +311,9 @@ describe('ProtocolTypesController (e2e)', () => {
   // ── DELETE ──────────────────────────────────────────────────────────────────
 
   it('DELETE /v1/protocol-types/:id — soft-deletes the type', async () => {
-    const type = await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'To Delete', templateId } })
+    const type = await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'To Delete', templateId },
+    })
 
     await request
       .default(app.getHttpServer() as Server)
@@ -282,7 +326,9 @@ describe('ProtocolTypesController (e2e)', () => {
   })
 
   it('DELETE /v1/protocol-types/:id — 409 when protocols reference the type (TYPE_LOCKED)', async () => {
-    const type = await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Locked Type', templateId } })
+    const type = await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'Locked Type', templateId },
+    })
 
     // Create a protocol referencing the type
     const protocol = await prisma.protocol.create({
@@ -301,7 +347,7 @@ describe('ProtocolTypesController (e2e)', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(409)
 
-    expect(res.body.error.code).toBe('TYPE_LOCKED')
+    expect((res.body as ApiErr).error.code).toBe('TYPE_LOCKED')
 
     // Cleanup
     await prisma.protocol.delete({ where: { id: protocol.id } })
@@ -324,13 +370,27 @@ describe('ProtocolTypesController (e2e)', () => {
   // ── Lock state ──────────────────────────────────────────────────────────────
 
   it('GET /v1/protocol-types — isLocked and protocolCount reflect protocols', async () => {
-    const type = await prisma.protocolType.create({ data: { tenantId: TENANT_ID, name: 'Lock Check', templateId } })
+    const type = await prisma.protocolType.create({
+      data: { tenantId: TENANT_ID, name: 'Lock Check', templateId },
+    })
 
     await prisma.protocol.create({
-      data: { tenantId: TENANT_ID, typeId: type.id, title: 'P1', status: 'draft', createdBy: USER_ID },
+      data: {
+        tenantId: TENANT_ID,
+        typeId: type.id,
+        title: 'P1',
+        status: 'draft',
+        createdBy: USER_ID,
+      },
     })
     await prisma.protocol.create({
-      data: { tenantId: TENANT_ID, typeId: type.id, title: 'P2', status: 'draft', createdBy: USER_ID },
+      data: {
+        tenantId: TENANT_ID,
+        typeId: type.id,
+        title: 'P2',
+        status: 'draft',
+        createdBy: USER_ID,
+      },
     })
 
     const res = await request
@@ -339,8 +399,9 @@ describe('ProtocolTypesController (e2e)', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(200)
 
-    const found = res.body.data.find((t: { id: string }) => t.id === type.id)
-    expect(found.isLocked).toBe(true)
-    expect(found.protocolCount).toBe(2)
+    const lockBody = (res.body as ApiOk<TypeItem[]>).data
+    const found = lockBody.find((t) => t.id === type.id)
+    expect(found!.isLocked).toBe(true)
+    expect(found!.protocolCount).toBe(2)
   })
 })

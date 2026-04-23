@@ -57,17 +57,18 @@ export const strings = {
   // ── Dashboard ──────────────────────────────────────────────────────────────
   DASHBOARD_GREETING: (fullName: string | null) => {
     const hour = new Date().getHours()
-    const salutation =
-      hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'
+    const salutation = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'
     if (!fullName) return `${salutation}, Dr.`
     // Extract last name (last word), dropping leading "Dr." if present
-    const parts = fullName.replace(/^Dr\.\s*/i, '').trim().split(' ')
+    const parts = fullName
+      .replace(/^Dr\.\s*/i, '')
+      .trim()
+      .split(' ')
     const lastName = parts[parts.length - 1] ?? parts[0] ?? fullName
     return `${salutation}, Dr. ${lastName}.`
   },
   DASHBOARD_UNDER_CONSTRUCTION: 'Panel en construcción',
-  DASHBOARD_UNDER_CONSTRUCTION_DESCRIPTION:
-    'El resumen de actividad del día aparecerá aquí.',
+  DASHBOARD_UNDER_CONSTRUCTION_DESCRIPTION: 'El resumen de actividad del día aparecerá aquí.',
 
   // ── Auth Gate ──────────────────────────────────────────────────────────────
   AUTH_GATE_LOADING: 'Cargando...',
@@ -83,14 +84,16 @@ export const strings = {
   PROTOCOLS_LOADING: 'Cargando protocolos...',
   PROTOCOLS_ERROR: 'No se pudo cargar los protocolos.',
 
-  // ── Protocols — Template Picker ────────────────────────────────────────────
-  TEMPLATE_PICKER_TITLE: '¿Desde dónde empezamos?',
-  TEMPLATE_PICKER_SUBTITLE: 'Elige una plantilla o empieza desde cero.',
-  TEMPLATE_PICKER_BLANK_LABEL: 'Desde cero',
-  TEMPLATE_PICKER_BLANK_DESC: 'Protocolo en blanco sin estructura predefinida.',
-  TEMPLATE_PICKER_SYSTEM_LABEL: 'Plantillas del sistema',
-  TEMPLATE_PICKER_CANCEL: 'Cancelar',
-  TEMPLATE_PICKER_CREATING: 'Creando...',
+  // ── Protocols — Type Picker ───────────────────────────────────────────────
+  TYPE_PICKER_TITLE: 'Nuevo protocolo',
+  TYPE_PICKER_SUBTITLE: '¿Qué tipo de protocolo vas a crear?',
+  TYPE_PICKER_NAME_LABEL: 'Nombre del protocolo',
+  TYPE_PICKER_NAME_PLACEHOLDER: 'Ej. Manejo de anafilaxia',
+  TYPE_PICKER_SUBMIT: 'Crear protocolo',
+  TYPE_PICKER_CANCEL: 'Cancelar',
+  TYPE_PICKER_CREATING: 'Creando...',
+  TYPE_PICKER_NO_TYPES: 'No tienes tipos de protocolo activos.',
+  TYPE_PICKER_NO_TYPES_CTA: 'Ir a Ajustes → Tipos',
 
   // ── Protocols — Editor ─────────────────────────────────────────────────────
   EDITOR_SAVE_BUTTON: 'Guardar versión',
@@ -126,7 +129,8 @@ export const strings = {
   TEMPLATES_EMPTY_DESCRIPTION: 'Crea tu primera plantilla para empezar a diseñar protocolos.',
   TEMPLATES_LIST_SEEDED: 'Predeterminada',
   TEMPLATES_LIST_LOCKED: 'Bloqueada',
-  TEMPLATES_LIST_BLOCKED_BY: (count: number) => `Bloqueada por ${count} tipo${count === 1 ? '' : 's'}`,
+  TEMPLATES_LIST_BLOCKED_BY: (count: number) =>
+    `Bloqueada por ${count} tipo${count === 1 ? '' : 's'}`,
   TEMPLATES_LIST_EDIT: 'Editar',
   TEMPLATES_LIST_DELETE: 'Eliminar',
   TEMPLATES_LIST_DELETE_CONFIRM: (name: string) =>
@@ -150,7 +154,8 @@ export const strings = {
   TEMPLATE_EDITOR_STATUS_NEW: 'Nueva',
   TEMPLATE_EDITOR_STATUS_EDITED: 'Editada',
   TEMPLATE_EDITOR_STATUS_LOCKED: 'Bloqueada',
-  TEMPLATE_EDITOR_LOCKED_BANNER: 'Esta plantilla está bloqueada por uno o más tipos. Elimínalos primero para editarla.',
+  TEMPLATE_EDITOR_LOCKED_BANNER:
+    'Esta plantilla está bloqueada por uno o más tipos. Elimínalos primero para editarla.',
   TEMPLATE_EDITOR_LOCKED_TYPES_PREFIX: 'Bloqueada por:',
   TEMPLATE_EDITOR_ADD_SECTION: '+ Sección',
   TEMPLATE_EDITOR_ADD_TEXT: '+ Texto',

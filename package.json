@@ -2,6 +2,7 @@
   "name": "rezeta",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=20.0.0",
@@ -42,7 +43,14 @@
     "typescript": "^5.8.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "@nestjs/core", "esbuild", "protobufjs"]
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "@nestjs/core",
+      "esbuild",
+      "protobufjs"
+    ]
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

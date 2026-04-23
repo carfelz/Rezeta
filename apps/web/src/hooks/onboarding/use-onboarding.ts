@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UseQueryResult } from '@tanstack/react-query'
+import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { useAuthStore } from '@/store/auth.store'
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
@@ -19,7 +19,7 @@ export function useOnboardingStarters(): UseQueryResult<StarterCandidate[], Erro
   })
 }
 
-export function useOnboardingDefault() {
+export function useOnboardingDefault(): UseMutationResult<AuthUser, Error, void> {
   const qc = useQueryClient()
   const _setUser = useAuthStore((s) => s._setUser)
 
@@ -32,7 +32,7 @@ export function useOnboardingDefault() {
   })
 }
 
-export function useOnboardingCustom() {
+export function useOnboardingCustom(): UseMutationResult<AuthUser, Error, OnboardingCustomInput> {
   const qc = useQueryClient()
   const _setUser = useAuthStore((s) => s._setUser)
 

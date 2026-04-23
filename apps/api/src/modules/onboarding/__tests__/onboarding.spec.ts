@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import type { TestingModule } from '@nestjs/testing'
+
+type ApiOk<T> = { data: T }
+type ApiErr = { error: { code: string } }
 import { Test } from '@nestjs/testing'
 import type { INestApplication } from '@nestjs/common'
 import type { Server } from 'http'
@@ -30,11 +33,14 @@ const MINIMAL_SCHEMA = {
 
 const VALID_CUSTOM_BODY = {
   templates: [
-    { clientId: 'tpl-1', name: 'My Template', suggestedSpecialty: 'general', schema: MINIMAL_SCHEMA },
+    {
+      clientId: 'tpl-1',
+      name: 'My Template',
+      suggestedSpecialty: 'general',
+      schema: MINIMAL_SCHEMA,
+    },
   ],
-  types: [
-    { name: 'My Type', templateClientId: 'tpl-1' },
-  ],
+  types: [{ name: 'My Type', templateClientId: 'tpl-1' }],
 }
 
 describe('OnboardingController (e2e)', () => {
@@ -95,18 +101,20 @@ describe('OnboardingController (e2e)', () => {
 
   describe('POST /v1/onboarding/default', () => {
     it('401 without Authorization header', async () => {
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/default')
         .expect(401)
     })
 
     it('seeds 5 templates + 5 types and returns updated AuthUser', async () => {
-      const res = await request.default(app.getHttpServer() as Server)
+      const res = await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/default')
         .set('Authorization', 'Bearer fake-token')
         .expect(200)
 
-      const user = res.body.data as Record<string, unknown>
+      const user = (res.body as ApiOk<Record<string, unknown>>).data
       expect(user.tenantSeededAt).toBeTruthy()
       expect(typeof user.tenantSeededAt).toBe('string')
       expect(user.tenantId).toBe(TENANT_ID)
@@ -126,18 +134,20 @@ describe('OnboardingController (e2e)', () => {
 
     it('409 if tenant is already seeded', async () => {
       // Seed once
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/default')
         .set('Authorization', 'Bearer fake-token')
         .expect(200)
 
       // Second attempt should conflict
-      const res = await request.default(app.getHttpServer() as Server)
+      const res = await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/default')
         .set('Authorization', 'Bearer fake-token')
         .expect(409)
 
-      expect(res.body.error?.code).toBe('TENANT_ALREADY_SEEDED')
+      expect((res.body as ApiErr).error.code).toBe('TENANT_ALREADY_SEEDED')
     })
   })
 
@@ -145,21 +155,23 @@ describe('OnboardingController (e2e)', () => {
 
   describe('POST /v1/onboarding/custom', () => {
     it('401 without Authorization header', async () => {
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .send(VALID_CUSTOM_BODY)
         .expect(401)
     })
 
     it('seeds custom templates + types and returns updated AuthUser', async () => {
-      const res = await request.default(app.getHttpServer() as Server)
+      const res = await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
         .send(VALID_CUSTOM_BODY)
         .expect(200)
 
-      const user = res.body.data as Record<string, unknown>
+      const user = (res.body as ApiOk<Record<string, unknown>>).data
       expect(user.tenantSeededAt).toBeTruthy()
 
       const templates = await prisma.protocolTemplate.findMany({ where: { tenantId: TENANT_ID } })
@@ -171,7 +183,8 @@ describe('OnboardingController (e2e)', () => {
     })
 
     it('400 if templates array is empty', async () => {
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
@@ -180,7 +193,8 @@ describe('OnboardingController (e2e)', () => {
     })
 
     it('400 if types array is empty', async () => {
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
@@ -189,7 +203,8 @@ describe('OnboardingController (e2e)', () => {
     })
 
     it('400 if type references unknown templateClientId', async () => {
-      const res = await request.default(app.getHttpServer() as Server)
+      const res = await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
@@ -199,12 +214,13 @@ describe('OnboardingController (e2e)', () => {
         })
         .expect(400)
 
-      expect(res.body.error?.code).toBe('UNKNOWN_TEMPLATE_CLIENT_ID')
+      expect((res.body as ApiErr).error.code).toBe('UNKNOWN_TEMPLATE_CLIENT_ID')
     })
 
     it('409 if tenant is already seeded', async () => {
       // Seed first
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
@@ -212,14 +228,15 @@ describe('OnboardingController (e2e)', () => {
         .expect(200)
 
       // Second attempt should conflict
-      const res = await request.default(app.getHttpServer() as Server)
+      const res = await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')
         .send(VALID_CUSTOM_BODY)
         .expect(409)
 
-      expect(res.body.error?.code).toBe('TENANT_ALREADY_SEEDED')
+      expect((res.body as ApiErr).error.code).toBe('TENANT_ALREADY_SEEDED')
     })
 
     it('multiple templates + types are all created', async () => {
@@ -235,7 +252,8 @@ describe('OnboardingController (e2e)', () => {
         ],
       }
 
-      await request.default(app.getHttpServer() as Server)
+      await request
+        .default(app.getHttpServer() as Server)
         .post('/v1/onboarding/custom')
         .set('Authorization', 'Bearer fake-token')
         .set('Content-Type', 'application/json')

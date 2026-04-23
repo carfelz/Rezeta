@@ -6,9 +6,6 @@ export default defineConfig({
     globals: true,
     root: './',
   },
-  plugins: [
-    swc.vite({
-      module: { type: 'es6' },
-    }),
-  ],
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  plugins: [swc.vite({ module: { type: 'es6' } })],
 })

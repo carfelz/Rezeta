@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UseQueryResult } from '@tanstack/react-query'
+import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import type {
   ProtocolTemplateDto,
@@ -24,7 +24,11 @@ export function useProtocolTemplate(id: string): UseQueryResult<ProtocolTemplate
   })
 }
 
-export function useCreateProtocolTemplate() {
+export function useCreateProtocolTemplate(): UseMutationResult<
+  ProtocolTemplateDto,
+  Error,
+  CreateProtocolTemplateDto
+> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: CreateProtocolTemplateDto) =>
@@ -35,7 +39,9 @@ export function useCreateProtocolTemplate() {
   })
 }
 
-export function useUpdateProtocolTemplate(id: string) {
+export function useUpdateProtocolTemplate(
+  id: string,
+): UseMutationResult<ProtocolTemplateDto, Error, UpdateProtocolTemplateDto> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: UpdateProtocolTemplateDto) =>
@@ -47,7 +53,7 @@ export function useUpdateProtocolTemplate(id: string) {
   })
 }
 
-export function useDeleteProtocolTemplate() {
+export function useDeleteProtocolTemplate(): UseMutationResult<void, Error, string> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/v1/protocol-templates/${id}`),

@@ -12,6 +12,8 @@ export default [
       'packages/db/generated/**',
       'design-system/**',
       '**/*.js.map',
+      'tools/**',
+      '**/.storybook/**',
     ],
   },
 

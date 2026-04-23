@@ -115,12 +115,15 @@ Features explicitly out of MVP: telemedicine, lab integrations, inventory, patie
 
 ## Commands
 
-> To be filled in once tooling is set up.
+- Build: `pnpm build`
+- Test: `pnpm test`
+- Lint: `pnpm lint`
+- Lint (auto-fix): `pnpm lint:fix`
+- Dev server: `pnpm dev`
 
-- Build: `TBD`
-- Test: `TBD`
-- Lint: `TBD`
-- Dev server: `TBD`
+## Code Quality Rule
+
+**Always run `pnpm lint` before finishing any task.** Fix all lint errors before reporting the task as done. Zero lint errors is the bar. If a lint error cannot be fixed cleanly, note it explicitly.
 
 ## When in Doubt
 

@@ -118,22 +118,22 @@ Every block type, form pattern, and layout fragment used in these slices is alre
 
 ## 2. Slice Status Overview
 
-| #   | Slice                                                                                    | Status               | Size       | Notes                                                      |
-| --- | ---------------------------------------------------------------------------------------- | -------------------- | ---------- | ---------------------------------------------------------- |
-| 0   | Foundation (Prisma, Zod, seed)                                                           | ⚠️ Superseded by A   | 0.5 day    | Schema reflects old model; Slice A reworks it              |
-| 1   | Browse system templates                                                                  | ⚠️ Superseded by 2+3 | 1–2 days   | `/protocolos` page replaced in Slice 2+3                   |
-| —   | Auth slice                                                                               | ✅ Done              | 2–3 days   | Firebase Auth + tenant isolation + dev seed                |
-| A   | Schema rework (tenant-owned templates, ProtocolType, Protocol.type_id, Tenant.seeded_at) | ✅ Done              | 1–1.5 days | Destructive migration applied                              |
-| B   | Tenant seeding service                                                                   | ✅ Done              | 1 day      | Fixtures + TenantSeedingService + integration tests        |
-| C   | Template editor (`/ajustes/plantillas`)                                                  | ✅ Done              | 4–5 days   | Full editor + lock enforcement + backend CRUD              |
-| D   | Type CRUD (`/ajustes/tipos`)                                                             | ✅ Done              | 1–2 days   | List + create + rename + delete + integration tests        |
-| E   | Onboarding flow (`/bienvenido`)                                                          | ✅ Done              | 1–2 days   | Default + personalizar paths, route guards, backend + UI   |
-| 2+3 | Create & view protocols (via type picker)                                                | ⏳ Next              | 3–4 days   | Uses types from D + seeded state from E                    |
-| 4   | Edit simple blocks (text + alert)                                                        | ⏸ Pending            | 2–3 days   |                                                            |
-| 5   | Edit collection blocks                                                                   | ⏸ Pending            | 3–5 days   |                                                            |
-| 6   | Sections                                                                                 | ⏸ Pending            | 1–2 days   |                                                            |
-| 7   | Browse, search, favorites                                                                | ⏸ Pending            | 2–3 days   | Includes filter-by-type                                    |
-| 8   | Version history & restore                                                                | ⏸ Pending            | 1–2 days   | Ships MVP complete                                         |
+| #   | Slice                                                                                    | Status               | Size       | Notes                                                    |
+| --- | ---------------------------------------------------------------------------------------- | -------------------- | ---------- | -------------------------------------------------------- |
+| 0   | Foundation (Prisma, Zod, seed)                                                           | ⚠️ Superseded by A   | 0.5 day    | Schema reflects old model; Slice A reworks it            |
+| 1   | Browse system templates                                                                  | ⚠️ Superseded by 2+3 | 1–2 days   | `/protocolos` page replaced in Slice 2+3                 |
+| —   | Auth slice                                                                               | ✅ Done              | 2–3 days   | Firebase Auth + tenant isolation + dev seed              |
+| A   | Schema rework (tenant-owned templates, ProtocolType, Protocol.type_id, Tenant.seeded_at) | ✅ Done              | 1–1.5 days | Destructive migration applied                            |
+| B   | Tenant seeding service                                                                   | ✅ Done              | 1 day      | Fixtures + TenantSeedingService + integration tests      |
+| C   | Template editor (`/ajustes/plantillas`)                                                  | ✅ Done              | 4–5 days   | Full editor + lock enforcement + backend CRUD            |
+| D   | Type CRUD (`/ajustes/tipos`)                                                             | ✅ Done              | 1–2 days   | List + create + rename + delete + integration tests      |
+| E   | Onboarding flow (`/bienvenido`)                                                          | ✅ Done              | 1–2 days   | Default + personalizar paths, route guards, backend + UI |
+| 2+3 | Create & view protocols (via type picker)                                                | ✅ Done              | 3–4 days   | Uses types from D + seeded state from E                  |
+| 4   | Edit simple blocks (text + alert)                                                        | ⏳ Next              | 2–3 days   |                                                          |
+| 5   | Edit collection blocks                                                                   | ⏸ Pending            | 3–5 days   |                                                          |
+| 6   | Sections                                                                                 | ⏸ Pending            | 1–2 days   |                                                          |
+| 7   | Browse, search, favorites                                                                | ⏸ Pending            | 2–3 days   | Includes filter-by-type                                  |
+| 8   | Version history & restore                                                                | ⏸ Pending            | 1–2 days   | Ships MVP complete                                       |
 
 **Legend:** ✅ Done · ⚠️ Superseded · ⏳ In progress / up next · ⏸ Pending · ❌ Blocked
 
@@ -580,7 +580,7 @@ To support the personalizar path without duplicating UI, Slice C's template edit
 
 ## 11. Slice 2+3 — Create & View Protocols
 
-### Status: ⏳ Next up (after E)
+### Status: ✅ Done
 
 ### Why combined
 
@@ -693,7 +693,7 @@ A logged-in doctor with a seeded tenant can:
 
 ## 12. Slice 4 — Edit Simple Blocks
 
-### Status: ⏸ Pending
+### Status: ⏳ Next up (after 2+3)
 
 ### Goal
 
