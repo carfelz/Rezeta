@@ -112,6 +112,42 @@ export const strings = {
   EDITOR_VERSION: (n: number) => `v${n}`,
   EDITOR_STATUS_DRAFT: 'Borrador',
 
+  // ── Protocols — Editor block controls ─────────────────────────────────────
+  EDITOR_BLOCK_EDIT: 'Editar bloque',
+  EDITOR_BLOCK_DELETE: 'Eliminar bloque',
+  EDITOR_BLOCK_DELETE_REQUIRED_TOOLTIP: 'Este bloque es requerido y no puede eliminarse.',
+  EDITOR_BLOCK_DELETE_CONFIRM: '¿Eliminar este bloque? Esta acción no se puede deshacer.',
+  EDITOR_BLOCK_REQUIRED_LABEL: 'REQUERIDO',
+  EDITOR_BLOCK_APPLY: 'Aplicar',
+  EDITOR_BLOCK_CANCEL: 'Cancelar',
+  EDITOR_BLOCK_EMPTY_TEXT: '(texto vacío)',
+  EDITOR_SECTION_EMPTY: 'Sección sin bloques.',
+
+  // ── Protocols — Text block editor ─────────────────────────────────────────
+  EDITOR_TEXT_PLACEHOLDER: 'Escribe el contenido de este bloque de texto…',
+
+  // ── Protocols — Alert block editor ────────────────────────────────────────
+  EDITOR_ALERT_SEVERITY_LABEL: 'Severidad',
+  EDITOR_ALERT_SEVERITY_INFO: 'Información',
+  EDITOR_ALERT_SEVERITY_WARNING: 'Advertencia',
+  EDITOR_ALERT_SEVERITY_DANGER: 'Peligro',
+  EDITOR_ALERT_SEVERITY_SUCCESS: 'Éxito',
+  EDITOR_ALERT_TITLE_LABEL: 'Título (opcional)',
+  EDITOR_ALERT_TITLE_PLACEHOLDER: 'Ej. Contraindicaciones absolutas',
+  EDITOR_ALERT_CONTENT_LABEL: 'Contenido',
+  EDITOR_ALERT_CONTENT_PLACEHOLDER: 'Describe la advertencia o información importante…',
+
+  // ── Protocols — Editor palette ─────────────────────────────────────────────
+  EDITOR_PALETTE_ADD_TEXT: 'Añadir bloque de texto',
+  EDITOR_PALETTE_ADD_ALERT: 'Añadir bloque de alerta',
+  EDITOR_PALETTE_DISABLED_TOOLTIP: 'Disponible próximamente',
+
+  // ── Protocols — Autosave ──────────────────────────────────────────────────
+  EDITOR_DRAFT_RECOVERED: 'Se recuperó un borrador no guardado.',
+  EDITOR_DRAFT_USE: 'Usar borrador',
+  EDITOR_DRAFT_DISCARD: 'Descartar',
+  EDITOR_NAVIGATE_AWAY: 'Tienes cambios sin guardar. ¿Descartar y salir?',
+
   // ── Protocols — Block type labels (shown in type chip) ─────────────────────
   BLOCK_TYPE_SECTION: 'Sección',
   BLOCK_TYPE_TEXT: 'Texto',

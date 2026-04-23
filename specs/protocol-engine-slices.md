@@ -129,7 +129,7 @@ Every block type, form pattern, and layout fragment used in these slices is alre
 | D   | Type CRUD (`/ajustes/tipos`)                                                             | ✅ Done              | 1–2 days   | List + create + rename + delete + integration tests      |
 | E   | Onboarding flow (`/bienvenido`)                                                          | ✅ Done              | 1–2 days   | Default + personalizar paths, route guards, backend + UI |
 | 2+3 | Create & view protocols (via type picker)                                                | ✅ Done              | 3–4 days   | Uses types from D + seeded state from E                  |
-| 4   | Edit simple blocks (text + alert)                                                        | ⏳ Next              | 2–3 days   |                                                          |
+| 4   | Edit simple blocks (text + alert)                                                        | ✅ Done              | 2–3 days   |                                                          |
 | 5   | Edit collection blocks                                                                   | ⏸ Pending            | 3–5 days   |                                                          |
 | 6   | Sections                                                                                 | ⏸ Pending            | 1–2 days   |                                                          |
 | 7   | Browse, search, favorites                                                                | ⏸ Pending            | 2–3 days   | Includes filter-by-type                                  |

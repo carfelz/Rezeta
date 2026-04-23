@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
 import {
   Badge,
   Button,
@@ -11,29 +11,137 @@ import {
 } from '@/components/ui'
 import { ProtocolContainer } from '@/components/ui/ProtocolBlock'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
+import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { strings } from '@/lib/strings'
+import {
+  useEditorStore,
+  extractRequiredBlockIds,
+  saveLocalDraft,
+  loadLocalDraft,
+  clearLocalDraft,
+} from '@/store/editor.store'
+
+// ── Palette config ─────────────────────────────────────────────────────────────
+
+const PALETTE_ITEMS = [
+  { type: 'section', icon: 'ph-rows', label: 'Sección', active: false },
+  { type: 'text', icon: 'ph-text-t', label: 'Texto', active: true },
+  { type: 'checklist', icon: 'ph-check-square', label: 'Lista', active: false },
+  { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: false },
+  { type: 'decision', icon: 'ph-git-fork', label: 'Decisión', active: false },
+  { type: 'dosage_table', icon: 'ph-table', label: 'Dosificación', active: false },
+  { type: 'alert', icon: 'ph-warning', label: 'Alerta', active: true },
+] as const
+
+function makeTextBlock(): ProtocolBlock {
+  return { id: `blk_${crypto.randomUUID().slice(0, 8)}`, type: 'text', content: '' }
+}
+
+function makeAlertBlock(): ProtocolBlock {
+  return {
+    id: `blk_${crypto.randomUUID().slice(0, 8)}`,
+    type: 'alert',
+    severity: 'info',
+    content: '',
+  }
+}
+
+function makeBlock(type: string): ProtocolBlock | null {
+  if (type === 'text') return makeTextBlock()
+  if (type === 'alert') return makeAlertBlock()
+  return null
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export function ProtocolEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { useGetProtocol, useRenameProtocol, useSaveVersion } = useProtocols()
 
+  const { useGetProtocol, useRenameProtocol, useSaveVersion } = useProtocols()
   const { data: protocol, isLoading, error } = useGetProtocol(id ?? '')
   const { mutate: rename, isPending: isRenaming } = useRenameProtocol(id ?? '')
   const { mutate: saveVersion, isPending: isSaving } = useSaveVersion(id ?? '')
+
+  // Editor store
+  const { blocks, isDirty, selectedBlockId, initEditor, insertBlock, markSaved, resetEditor } =
+    useEditorStore()
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [changeSummary, setChangeSummary] = useState('')
+  const [draftBanner, setDraftBanner] = useState<{
+    blocks: ProtocolBlock[]
+    savedAt: number
+  } | null>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Initialize editor from server data ────────────────────────────────────
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (!protocol || initialized.current) return
+    initialized.current = true
+
+    const serverBlocks = (protocol.currentVersion?.content?.blocks ?? []) as ProtocolBlock[]
+    const requiredIds = extractRequiredBlockIds(protocol.templateSchema)
+
+    // Check for a local draft
+    const draft = id ? loadLocalDraft(id) : null
+    if (draft) {
+      setDraftBanner(draft)
+      initEditor(id!, serverBlocks, requiredIds)
+    } else {
+      initEditor(id!, serverBlocks, requiredIds)
+    }
+
+    return () => {
+      resetEditor()
+      initialized.current = false
+    }
+  }, [protocol?.id])
+
+  // ── Autosave to localStorage every 30s when dirty ─────────────────────────
+
+  const blocksRef = useRef(blocks)
+  blocksRef.current = blocks
+  const isDirtyRef = useRef(isDirty)
+  isDirtyRef.current = isDirty
+
+  useEffect(() => {
+    if (!id) return
+    const interval = setInterval(() => {
+      if (isDirtyRef.current) {
+        saveLocalDraft(id, blocksRef.current)
+      }
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [id])
+
+  // ── Navigation guard (unsaved changes) ────────────────────────────────────
+
+  const blocker = useBlocker(isDirty)
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      if (window.confirm(strings.EDITOR_NAVIGATE_AWAY)) {
+        blocker.proceed()
+      } else {
+        blocker.reset()
+      }
+    }
+  }, [blocker])
+
+  // ── Guard: missing id ─────────────────────────────────────────────────────
 
   if (!id) {
     void navigate('/protocolos', { replace: true })
     return <></>
   }
+
+  // ── Loading / error states ────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -54,7 +162,6 @@ export function ProtocolEditor(): JSX.Element {
     )
   }
 
-  const blocks = (protocol.currentVersion?.content?.blocks ?? []) as ProtocolBlock[]
   const versionNumber = protocol.currentVersion?.versionNumber ?? 1
 
   // ── Title editing ─────────────────────────────────────────────────────────
@@ -67,9 +174,7 @@ export function ProtocolEditor(): JSX.Element {
 
   const commitTitle = () => {
     const trimmed = titleDraft.trim()
-    if (trimmed.length >= 2 && trimmed !== protocol.title) {
-      rename({ title: trimmed })
-    }
+    if (trimmed.length >= 2 && trimmed !== protocol.title) rename({ title: trimmed })
     setEditingTitle(false)
   }
 
@@ -81,20 +186,62 @@ export function ProtocolEditor(): JSX.Element {
   // ── Save version ──────────────────────────────────────────────────────────
 
   const handleSaveConfirm = () => {
-    if (!protocol.currentVersion) return
+    const content = {
+      version: '1.0',
+      template_version: '1.0',
+      blocks,
+    }
     saveVersion(
-      { content: protocol.currentVersion.content, changeSummary: changeSummary.trim() || null },
+      { content, changeSummary: changeSummary.trim() || null },
       {
         onSuccess: () => {
           setSaveModalOpen(false)
           setChangeSummary('')
+          markSaved()
+          if (id) clearLocalDraft(id)
         },
       },
     )
   }
 
+  // ── Draft banner actions ──────────────────────────────────────────────────
+
+  const applyDraft = () => {
+    if (!draftBanner || !id) return
+    const requiredIds = extractRequiredBlockIds(protocol.templateSchema)
+    initEditor(id, draftBanner.blocks, requiredIds)
+    setDraftBanner(null)
+  }
+
+  const discardDraft = () => {
+    if (id) clearLocalDraft(id)
+    setDraftBanner(null)
+  }
+
+  // ── Palette click ─────────────────────────────────────────────────────────
+
+  const handlePaletteClick = (type: string) => {
+    const newBlock = makeBlock(type)
+    if (!newBlock) return
+    insertBlock(newBlock, selectedBlockId)
+  }
+
   return (
     <div className="flex flex-col h-full min-h-0" style={{ height: 'calc(100vh - 56px)' }}>
+      {/* ── Draft recovery banner ──────────────────────────────────────────── */}
+      {draftBanner && (
+        <div className="flex items-center gap-3 px-6 py-2 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text shrink-0">
+          <i className="ph ph-clock-counter-clockwise text-[14px]" />
+          <span className="flex-1">{strings.EDITOR_DRAFT_RECOVERED}</span>
+          <button onClick={applyDraft} className="font-medium hover:underline">
+            {strings.EDITOR_DRAFT_USE}
+          </button>
+          <button onClick={discardDraft} className="hover:underline">
+            {strings.EDITOR_DRAFT_DISCARD}
+          </button>
+        </div>
+      )}
+
       {/* ── Editor top bar ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-4 px-6 py-3 bg-n-0 border-b border-n-200 shrink-0">
         <Link
@@ -130,6 +277,13 @@ export function ProtocolEditor(): JSX.Element {
           )}
         </div>
 
+        {/* Dirty indicator */}
+        {isDirty && (
+          <span className="text-[12px] font-sans text-n-400 shrink-0 italic">
+            {strings.EDITOR_UNSAVED}
+          </span>
+        )}
+
         {/* Status + version */}
         <Badge variant="draft">{strings.EDITOR_STATUS_DRAFT}</Badge>
         <span className="text-[12px] font-mono text-n-400 shrink-0">
@@ -157,26 +311,40 @@ export function ProtocolEditor(): JSX.Element {
 
       {/* ── Three-panel layout ─────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Left — Palette (disabled) */}
-        <aside className="w-[116px] shrink-0 bg-n-25 border-r border-n-200 flex flex-col items-center pt-5 gap-2">
+        {/* Left — Palette */}
+        <aside className="w-[116px] shrink-0 bg-n-25 border-r border-n-200 flex flex-col items-center pt-5 gap-1.5">
           <span className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
             {strings.EDITOR_PALETTE_TITLE}
           </span>
-          {['section', 'text', 'checklist', 'steps', 'decision', 'dosage_table', 'alert'].map(
-            (type) => (
-              <div key={type} title={strings.EDITOR_PALETTE_COMING_SOON} className="w-full px-2">
+          {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
+            active ? (
+              <button
+                key={type}
+                onClick={() => handlePaletteClick(type)}
+                title={strings.EDITOR_PALETTE_ADD_TEXT}
+                className="w-full px-2"
+              >
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-700 hover:bg-n-100 hover:text-n-900 cursor-pointer transition-colors duration-[100ms] select-none">
+                  <i className={`ph ${icon} text-[14px]`} />
+                  <span className="text-[11px] font-sans capitalize truncate">{label}</span>
+                </div>
+              </button>
+            ) : (
+              <div
+                key={type}
+                title={strings.EDITOR_PALETTE_DISABLED_TOOLTIP}
+                className="w-full px-2"
+              >
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-300 cursor-not-allowed select-none">
-                  <PaletteIcon type={type} />
-                  <span className="text-[11px] font-sans capitalize truncate">
-                    {type.replace('_', ' ')}
-                  </span>
+                  <i className={`ph ${icon} text-[14px]`} />
+                  <span className="text-[11px] font-sans capitalize truncate">{label}</span>
                 </div>
               </div>
             ),
           )}
         </aside>
 
-        {/* Center — Canvas (read-only blocks) */}
+        {/* Center — Canvas (editable blocks) */}
         <main className="flex-1 overflow-y-auto bg-n-50 p-6">
           {blocks.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
@@ -186,9 +354,14 @@ export function ProtocolEditor(): JSX.Element {
               </p>
             </div>
           ) : (
-            <div className="max-w-[720px] mx-auto flex flex-col gap-3">
-              {blocks.map((block) => (
-                <BlockRenderer key={block.id} block={block} />
+            <div className="max-w-[720px] mx-auto flex flex-col gap-1">
+              {blocks.map((block, idx) => (
+                <EditorBlockRenderer
+                  key={block.id}
+                  block={block}
+                  isFirst={idx === 0}
+                  isLast={idx === blocks.length - 1}
+                />
               ))}
             </div>
           )}
@@ -255,17 +428,4 @@ export function ProtocolEditor(): JSX.Element {
       </Modal>
     </div>
   )
-}
-
-function PaletteIcon({ type }: { type: string }): JSX.Element {
-  const icons: Record<string, string> = {
-    section: 'ph-rows',
-    text: 'ph-text-t',
-    checklist: 'ph-check-square',
-    steps: 'ph-list-numbers',
-    decision: 'ph-git-fork',
-    dosage_table: 'ph-table',
-    alert: 'ph-warning',
-  }
-  return <i className={`ph ${icons[type] ?? 'ph-square'} text-[14px]`} />
 }
