@@ -201,7 +201,7 @@ export function ProtocolEditor(): JSX.Element {
           </div>
           <div className="transform scale-[0.62] origin-top-left w-[354px]">
             <ProtocolContainer
-              {...(protocol.templateName ? { kicker: protocol.templateName } : {})}
+              {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
               title={protocol.title}
               meta={strings.EDITOR_VERSION(versionNumber)}
             >

@@ -1,17 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { Protocol, ProtocolVersion, ProtocolTemplate } from '@rezeta/db'
+import type { Protocol, ProtocolVersion, ProtocolType, ProtocolTemplate } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 
 type ProtocolCreateResult = {
-  protocol: Protocol & { template: ProtocolTemplate | null }
+  protocol: Protocol & { type: ProtocolType & { template: ProtocolTemplate } }
   version: ProtocolVersion
 }
 type ProtocolFullResult = Protocol & {
-  template: ProtocolTemplate | null
+  type: ProtocolType & { template: ProtocolTemplate }
   currentVersion: ProtocolVersion | null
 }
 type ProtocolListEntry = Protocol & {
-  template: { name: string } | null
+  type: { id: string; name: string }
   versions: { versionNumber: number }[]
 }
 
@@ -23,8 +23,7 @@ export class ProtocolsRepository {
     tenantId: string
     title: string
     createdBy: string
-    templateId?: string | null
-    specialty?: string | null
+    typeId: string
     tags?: string[]
     content: unknown
   }): Promise<ProtocolCreateResult> {
@@ -34,11 +33,9 @@ export class ProtocolsRepository {
           tenantId: data.tenantId,
           title: data.title,
           createdBy: data.createdBy,
-          templateId: data.templateId ?? null,
-          specialty: data.specialty ?? null,
+          typeId: data.typeId,
           tags: data.tags ?? [],
           status: 'draft',
-          visibility: 'private',
         },
       })
 
@@ -55,17 +52,17 @@ export class ProtocolsRepository {
       const updated = await tx.protocol.update({
         where: { id: protocol.id },
         data: { currentVersionId: version.id },
-        include: { template: true },
+        include: { type: { include: { template: true } } },
       })
 
-      return { protocol: updated, version }
+      return { protocol: updated as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }, version }
     })
   }
 
   async findById(id: string, tenantId: string): Promise<ProtocolFullResult | null> {
     const protocol = await this.prisma.protocol.findFirst({
       where: { id, tenantId, deletedAt: null },
-      include: { template: true },
+      include: { type: { include: { template: true } } },
     })
     if (!protocol) return null
 
@@ -75,7 +72,7 @@ export class ProtocolsRepository {
         })
       : null
 
-    return { ...protocol, currentVersion }
+    return { ...(protocol as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }), currentVersion }
   }
 
   async list(tenantId: string): Promise<ProtocolListEntry[]> {
@@ -83,7 +80,7 @@ export class ProtocolsRepository {
       where: { tenantId, deletedAt: null },
       orderBy: { updatedAt: 'desc' },
       include: {
-        template: { select: { name: true } },
+        type: { select: { id: true, name: true } },
         versions: {
           where: { deletedAt: null },
           orderBy: { versionNumber: 'desc' },
@@ -91,7 +88,7 @@ export class ProtocolsRepository {
           select: { versionNumber: true },
         },
       },
-    })
+    }) as unknown as Promise<ProtocolListEntry[]>
   }
 
   async rename(id: string, tenantId: string, title: string): Promise<Protocol | null> {
@@ -114,7 +111,6 @@ export class ProtocolsRepository {
     changeSummary?: string | null
   }): Promise<ProtocolVersion | null> {
     return this.prisma.$transaction(async (tx) => {
-      // Verify protocol belongs to tenant before creating version
       const protocol = await tx.protocol.findFirst({
         where: { id: data.protocolId, tenantId: data.tenantId, deletedAt: null },
       })

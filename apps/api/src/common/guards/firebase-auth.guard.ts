@@ -46,17 +46,23 @@ export class FirebaseAuthGuard implements CanActivate {
     if (process.env['STUB_AUTH'] === 'true' && process.env['NODE_ENV'] !== 'production') {
       this.logger.warn('STUB_AUTH is active — using hardcoded dev user. Never use this in production.')
       const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
+      const stubTenantId = '00000000-0000-0000-0000-000000000001'
+      const stubTenant = await this.prisma.tenant.findUnique({
+        where: { id: stubTenantId },
+        select: { seededAt: true },
+      })
       request.user = {
         id: '00000000-0000-0000-0000-000000000002',
         firebaseUid: 'dev-firebase-uid',
-        tenantId: '00000000-0000-0000-0000-000000000001',
+        tenantId: stubTenantId,
         email: 'demo@rezeta.app',
         fullName: 'Dr. Juan García',
         role: 'owner',
         specialty: 'Cardiología',
         licenseNumber: 'CMP-12345',
+        tenantSeededAt: stubTenant?.seededAt?.toISOString() ?? null,
       }
-      request.tenantId = '00000000-0000-0000-0000-000000000001'
+      request.tenantId = stubTenantId
       return true
     }
 
@@ -93,9 +99,10 @@ export class FirebaseAuthGuard implements CanActivate {
       return true
     }
 
-    // 6. Normal route — require a DB User row
+    // 6. Normal route — require a DB User row (with tenant for seededAt)
     const user = await this.prisma.user.findUnique({
       where: { firebaseUid: decoded.uid, deletedAt: null },
+      include: { tenant: { select: { seededAt: true } } },
     })
 
     if (!user) {
@@ -121,6 +128,7 @@ export class FirebaseAuthGuard implements CanActivate {
       role: user.role as AuthUser['role'],
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
+      tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
     }
 
     return true

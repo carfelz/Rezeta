@@ -134,12 +134,12 @@ export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
   ]),
 )
 
-export const ProtocolTemplateSchema = z.object({
+export const ProtocolTemplateSchemaContent = z.object({
   version: z.string(),
   metadata: z.object({
     suggested_specialty: z.string().optional(),
     intended_use: z.string().optional(),
-  }),
+  }).optional(),
   blocks: z.array(TemplateBlockSchema),
 })
 
@@ -152,10 +152,8 @@ export const ProtocolContentSchema = z.object({
 // ─── Request Schemas ─────────────────────────────────────────────────────────
 
 export const CreateProtocolSchema = z.object({
-  templateId: z.string().uuid().nullable().optional(),
-  title: z.string().min(2).max(300).optional(),
-  specialty: z.string().max(100).nullable().optional(),
-  tags: z.array(z.string()).default([]),
+  typeId: z.string().uuid(),
+  title: z.string().min(2).max(300),
 })
 
 // .strict() rejects any additional keys — PATCH only accepts title
@@ -168,11 +166,8 @@ export const SaveVersionSchema = z.object({
   changeSummary: z.string().max(500).nullable().optional(),
 })
 
-// Kept for backwards compat with existing imports
 export const UpdateProtocolSchema = z.object({
   title: z.string().min(2).max(300).optional(),
-  specialty: z.string().max(100).nullable().optional(),
-  tags: z.array(z.string()).optional(),
   isFavorite: z.boolean().optional(),
 })
 
@@ -180,26 +175,65 @@ export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
   publish: z.boolean().default(false),
 })
 
+// ─── Protocol Template Request Schemas ───────────────────────────────────────
+
+export const CreateProtocolTemplateSchema = z.object({
+  name: z.string().min(1).max(300),
+  suggestedSpecialty: z.string().max(200).optional(),
+  schema: ProtocolTemplateSchemaContent,
+})
+
+export const UpdateProtocolTemplateSchema = z.object({
+  name: z.string().min(1).max(300).optional(),
+  suggestedSpecialty: z.string().max(200).nullable().optional(),
+  schema: ProtocolTemplateSchemaContent.optional(),
+})
+
+// ─── Protocol Type Request Schemas ───────────────────────────────────────────
+
+export const CreateProtocolTypeSchema = z.object({
+  name: z.string().min(1).max(200),
+  templateId: z.string().uuid(),
+})
+
+export const UpdateProtocolTypeSchema = z
+  .object({ name: z.string().min(1).max(200) })
+  .strict()
+
 // ─── Response Schemas ────────────────────────────────────────────────────────
 
 export const ProtocolTemplateDtoSchema = z.object({
   id: z.string().uuid(),
-  templateKey: z.string(),
-  locale: z.string(),
+  tenantId: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable(),
   suggestedSpecialty: z.string().nullable(),
-  category: z.string().nullable(),
-  icon: z.string().nullable(),
   schema: z.any(),
-  isSystem: z.boolean(),
+  isSeeded: z.boolean(),
+  isLocked: z.boolean(),
+  blockingTypeIds: z.array(z.string().uuid()).optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
+export const ProtocolTypeDtoSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  templateId: z.string().uuid(),
+  templateName: z.string(),
+  name: z.string(),
+  isSeeded: z.boolean(),
+  isLocked: z.boolean(),
+  protocolCount: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 })
 
 export const ProtocolListItemSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  templateId: z.string().uuid().nullable(),
-  templateName: z.string().nullable(),
+  typeId: z.string().uuid(),
+  typeName: z.string(),
   status: z.string(),
   isFavorite: z.boolean(),
   updatedAt: z.string().datetime(),
@@ -221,20 +255,25 @@ export const ProtocolResponseSchema = z.object({
   isFavorite: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-  templateId: z.string().uuid().nullable(),
-  templateName: z.string().nullable(),
+  typeId: z.string().uuid(),
+  typeName: z.string(),
   templateSchema: z.any().nullable(),
   currentVersion: ProtocolVersionSummarySchema.nullable(),
 })
 
 // ─── Inferred Types ──────────────────────────────────────────────────────────
 
+export type CreateProtocolTemplateDto = z.infer<typeof CreateProtocolTemplateSchema>
+export type UpdateProtocolTemplateDto = z.infer<typeof UpdateProtocolTemplateSchema>
 export type CreateProtocolDto = z.infer<typeof CreateProtocolSchema>
 export type UpdateProtocolDto = z.infer<typeof UpdateProtocolSchema>
 export type UpdateProtocolTitleDto = z.infer<typeof UpdateProtocolTitleSchema>
 export type SaveVersionDto = z.infer<typeof SaveVersionSchema>
 export type SaveProtocolVersionDto = z.infer<typeof SaveProtocolVersionSchema>
+export type CreateProtocolTypeDto = z.infer<typeof CreateProtocolTypeSchema>
+export type UpdateProtocolTypeDto = z.infer<typeof UpdateProtocolTypeSchema>
 export type ProtocolTemplateDto = z.infer<typeof ProtocolTemplateDtoSchema>
+export type ProtocolTypeDto = z.infer<typeof ProtocolTypeDtoSchema>
 export type ProtocolListItem = z.infer<typeof ProtocolListItemSchema>
 export type ProtocolVersionSummary = z.infer<typeof ProtocolVersionSummarySchema>
 export type ProtocolResponse = z.infer<typeof ProtocolResponseSchema>

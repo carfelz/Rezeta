@@ -19,6 +19,8 @@ import {
   type UpdateProtocolTitleDto,
   type SaveVersionDto,
   type AuthUser,
+  type ProtocolListItem,
+  type ProtocolResponse,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'

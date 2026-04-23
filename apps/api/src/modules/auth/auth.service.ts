@@ -1,8 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { User } from '@rezeta/db'
 import type { AuthUser } from '@rezeta/shared'
 import type { DecodedIdToken } from 'firebase-admin/auth'
-import { AuthRepository } from './auth.repository.js'
+import { AuthRepository, type UserWithTenant } from './auth.repository.js'
 
 @Injectable()
 export class AuthService {
@@ -10,16 +9,16 @@ export class AuthService {
 
   /**
    * Idempotent provision: called by POST /v1/auth/provision.
-   * Returns the User row (existing or newly created).
+   * Returns the User row (existing or newly created) with tenant data.
    */
-  async provision(decoded: DecodedIdToken): Promise<User> {
+  async provision(decoded: DecodedIdToken): Promise<UserWithTenant> {
     return this.repository.provisionUser(decoded)
   }
 
   /**
-   * Map a DB User to the AuthUser DTO returned by GET /v1/me.
+   * Map a DB User (with tenant) to the AuthUser DTO.
    */
-  toAuthUser(user: User): AuthUser {
+  toAuthUser(user: UserWithTenant): AuthUser {
     return {
       id: user.id,
       firebaseUid: user.firebaseUid,
@@ -29,6 +28,7 @@ export class AuthService {
       role: user.role as AuthUser['role'],
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
+      tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
     }
   }
 }

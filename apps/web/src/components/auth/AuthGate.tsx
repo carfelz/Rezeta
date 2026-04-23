@@ -10,12 +10,14 @@ interface AuthGateProps {
 /**
  * AuthGate — wraps protected routes.
  *
- * status === 'loading'         → show full-page spinner
- * status === 'unauthenticated' → redirect to /login
- * status === 'authenticated'   → render children
+ * status === 'loading'                       → show full-page spinner
+ * status === 'unauthenticated'               → redirect to /login
+ * authenticated + tenantSeededAt === null    → redirect to /bienvenido
+ * authenticated + tenantSeededAt set         → render children
  */
 export function AuthGate({ children }: AuthGateProps): JSX.Element {
   const status = useAuthStore((s) => s.status)
+  const user = useAuthStore((s) => s.user)
   const location = useLocation()
 
   if (status === 'loading') {
@@ -59,6 +61,11 @@ export function AuthGate({ children }: AuthGateProps): JSX.Element {
   if (status === 'unauthenticated') {
     const redirectTo = encodeURIComponent(location.pathname + location.search)
     return <Navigate to={`/login?redirectTo=${redirectTo}`} replace />
+  }
+
+  // Authenticated but onboarding not yet complete — gate all protected routes
+  if (user && user.tenantSeededAt === null && !location.pathname.startsWith('/bienvenido')) {
+    return <Navigate to="/bienvenido" replace />
   }
 
   return <>{children}</>

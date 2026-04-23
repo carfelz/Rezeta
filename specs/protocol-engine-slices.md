@@ -122,13 +122,13 @@ Every block type, form pattern, and layout fragment used in these slices is alre
 | --- | ---------------------------------------------------------------------------------------- | -------------------- | ---------- | ---------------------------------------------------------- |
 | 0   | Foundation (Prisma, Zod, seed)                                                           | ⚠️ Superseded by A   | 0.5 day    | Schema reflects old model; Slice A reworks it              |
 | 1   | Browse system templates                                                                  | ⚠️ Superseded by 2+3 | 1–2 days   | `/protocolos` page replaced in Slice 2+3                   |
-| —   | Auth slice                                                                               | ⏳ Next              | 2–3 days   | Prerequisite for real tenancy                              |
-| A   | Schema rework (tenant-owned templates, ProtocolType, Protocol.type_id, Tenant.seeded_at) | ⏸ Pending            | 1–1.5 days | Destructive migration; blocks everything after             |
-| B   | Tenant seeding service                                                                   | ⏸ Pending            | 1 day      | Fixtures + seeder function + tests (no HTTP yet)           |
-| C   | Template editor (`/ajustes/plantillas`)                                                  | ⏸ Pending            | 4–5 days   | Biggest slice; flat block list per `template-editor-ux.md` |
-| D   | Type CRUD (`/ajustes/tipos`)                                                             | ⏸ Pending            | 1–2 days   | List + create + rename + delete                            |
-| E   | Onboarding flow (`/bienvenido`)                                                          | ⏸ Pending            | 1–2 days   | Default + personalizar paths, route guards                 |
-| 2+3 | Create & view protocols (via type picker)                                                | ⏸ Pending            | 3–4 days   | Uses types from D + seeded state from E                    |
+| —   | Auth slice                                                                               | ✅ Done              | 2–3 days   | Firebase Auth + tenant isolation + dev seed                |
+| A   | Schema rework (tenant-owned templates, ProtocolType, Protocol.type_id, Tenant.seeded_at) | ✅ Done              | 1–1.5 days | Destructive migration applied                              |
+| B   | Tenant seeding service                                                                   | ✅ Done              | 1 day      | Fixtures + TenantSeedingService + integration tests        |
+| C   | Template editor (`/ajustes/plantillas`)                                                  | ✅ Done              | 4–5 days   | Full editor + lock enforcement + backend CRUD              |
+| D   | Type CRUD (`/ajustes/tipos`)                                                             | ✅ Done              | 1–2 days   | List + create + rename + delete + integration tests        |
+| E   | Onboarding flow (`/bienvenido`)                                                          | ✅ Done              | 1–2 days   | Default + personalizar paths, route guards, backend + UI   |
+| 2+3 | Create & view protocols (via type picker)                                                | ⏳ Next              | 3–4 days   | Uses types from D + seeded state from E                    |
 | 4   | Edit simple blocks (text + alert)                                                        | ⏸ Pending            | 2–3 days   |                                                            |
 | 5   | Edit collection blocks                                                                   | ⏸ Pending            | 3–5 days   |                                                            |
 | 6   | Sections                                                                                 | ⏸ Pending            | 1–2 days   |                                                            |
@@ -137,7 +137,7 @@ Every block type, form pattern, and layout fragment used in these slices is alre
 
 **Legend:** ✅ Done · ⚠️ Superseded · ⏳ In progress / up next · ⏸ Pending · ❌ Blocked
 
-**Total remaining MVP work:** ~22–34 days for Slices A through 8 (not counting Auth).
+**Total remaining MVP work:** ~15–24 days for Slices 2+3 through 8.
 
 ---
 
@@ -192,7 +192,7 @@ Template management UI lands in Slice C at `/ajustes/plantillas` — that's wher
 
 ## 5. Auth Slice
 
-### Status: ⏳ Next up
+### Status: ✅ Done
 
 ### Goal
 
@@ -232,7 +232,7 @@ The auth slice's `POST /v1/auth/provision` creates a `Tenant` row but does **not
 
 ## 6. Slice A — Schema Rework
 
-### Status: ⏸ Pending (after Auth)
+### Status: ✅ Done
 
 ### Goal
 
@@ -312,7 +312,7 @@ The service layer contracts needed here (even though many aren't exercised until
 
 ## 7. Slice B — Tenant Seeding Service
 
-### Status: ⏸ Pending (after A)
+### Status: ✅ Done
 
 ### Goal
 
@@ -372,7 +372,7 @@ A reusable service that seeds a tenant with 5 starter templates and 5 matching t
 
 ## 8. Slice C — Template Editor
 
-### Status: ⏸ Pending (after B)
+### Status: ✅ Done
 
 ### Goal
 
@@ -455,7 +455,7 @@ The template editor exercises the block-row UI pattern (type chip, title, requir
 
 ## 9. Slice D — Type CRUD
 
-### Status: ⏸ Pending (after C)
+### Status: ✅ Done
 
 ### Goal
 
@@ -517,7 +517,7 @@ A CRUD surface for `ProtocolType`s at `/ajustes/tipos` and `/ajustes/tipos/:id`.
 
 ## 10. Slice E — Onboarding Flow
 
-### Status: ⏸ Pending (after D)
+### Status: ✅ Done
 
 ### Goal
 
@@ -580,7 +580,7 @@ To support the personalizar path without duplicating UI, Slice C's template edit
 
 ## 11. Slice 2+3 — Create & View Protocols
 
-### Status: ⏸ Pending (after E)
+### Status: ⏳ Next up (after E)
 
 ### Why combined
 

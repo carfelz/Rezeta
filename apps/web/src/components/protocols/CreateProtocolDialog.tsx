@@ -1,3 +1,10 @@
+/**
+ * STUB — Slice A compile placeholder.
+ *
+ * This component will be rewritten in Slice 2+3 as the primary protocol
+ * creation dialog using the ProtocolType picker flow.
+ */
+
 import { useState } from 'react'
 import {
   Modal,
@@ -11,17 +18,17 @@ import {
   Input,
 } from '@/components/ui'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import type { ProtocolTemplateDto } from '@rezeta/shared'
+import type { ProtocolTypeDto } from '@rezeta/shared'
 
 interface CreateProtocolDialogProps {
-  template: ProtocolTemplateDto | null
+  type: ProtocolTypeDto | null
   isOpen: boolean
   onClose: () => void
   onSuccess: (id: string) => void
 }
 
 export function CreateProtocolDialog({
-  template,
+  type,
   isOpen,
   onClose,
   onSuccess,
@@ -31,15 +38,10 @@ export function CreateProtocolDialog({
   const { mutate, isPending } = useCreateProtocol()
 
   const handleCreate = () => {
-    if (!title.trim()) return
+    if (!title.trim() || !type) return
 
     mutate(
-      {
-        title,
-        tags: [],
-        templateId: template?.id,
-        specialty: template?.suggestedSpecialty,
-      },
+      { typeId: type.id, title: title.trim() },
       {
         onSuccess: (data) => {
           onClose()
@@ -50,16 +52,14 @@ export function CreateProtocolDialog({
     )
   }
 
-  if (!template && isOpen) return null
+  if (!type && isOpen) return null
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContent className="sm:max-w-[480px]">
         <ModalHeader
           title="Crear nuevo protocolo"
-          {...(template
-            ? { subtitle: `Personaliza el nombre de tu protocolo basado en ${template.name}.` }
-            : {})}
+          {...(type ? { subtitle: `Tipo: ${type.name}` } : {})}
         />
 
         <ModalBody className="py-6">

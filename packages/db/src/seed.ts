@@ -7,14 +7,13 @@ const prisma = new PrismaClient()
 // Source: specs/starter-templates.md
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TEMPLATES = [
+const STARTER_TEMPLATES = [
   {
-    templateKey: 'emergency-intervention',
-    locale: 'es',
+    key: 'emergency-intervention',
     name: 'Intervención de Emergencia',
     description: 'Para intervenciones agudas y urgentes (anafilaxia, ACV, paro cardíaco, etc.).',
     suggestedSpecialty: 'emergency_medicine',
-    category: 'emergency',
+    typeName: 'Emergencia',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'emergency_medicine', intended_use: 'Intervenciones agudas urgentes' },
@@ -61,12 +60,11 @@ const TEMPLATES = [
     },
   },
   {
-    templateKey: 'clinical-procedure',
-    locale: 'es',
+    key: 'clinical-procedure',
     name: 'Procedimiento Clínico',
     description: 'Para procedimientos de rutina con un flujo definido (cirugías menores, infiltraciones, biopsias, etc.).',
     suggestedSpecialty: 'general',
-    category: 'procedure',
+    typeName: 'Procedimiento',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'general', intended_use: 'Procedimientos clínicos de rutina con flujo definido' },
@@ -104,12 +102,11 @@ const TEMPLATES = [
     },
   },
   {
-    templateKey: 'pharmacological-reference',
-    locale: 'es',
+    key: 'pharmacological-reference',
     name: 'Referencia Farmacológica',
     description: 'Para protocolos centrados en dosificación de medicamentos (insulina, antibióticos, dosis pediátricas, etc.).',
     suggestedSpecialty: 'pharmacology',
-    category: 'pharmacology',
+    typeName: 'Medicación',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'pharmacology', intended_use: 'Referencias de dosificación de medicamentos' },
@@ -149,12 +146,11 @@ const TEMPLATES = [
     },
   },
   {
-    templateKey: 'diagnostic-algorithm',
-    locale: 'es',
+    key: 'diagnostic-algorithm',
     name: 'Algoritmo Diagnóstico',
     description: 'Para rutas de decisión diagnóstica (dolor torácico, síncope, fiebre pediátrica, etc.).',
     suggestedSpecialty: 'general',
-    category: 'diagnostic',
+    typeName: 'Diagnóstico',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'general', intended_use: 'Rutas de decisión diagnóstica' },
@@ -192,12 +188,11 @@ const TEMPLATES = [
     },
   },
   {
-    templateKey: 'physiotherapy-session',
-    locale: 'es',
+    key: 'physiotherapy-session',
     name: 'Sesión de Fisioterapia',
     description: 'Para protocolos de rehabilitación con evaluación, plan de tratamiento y reglas de progresión.',
     suggestedSpecialty: 'physiotherapy',
-    category: 'rehabilitation',
+    typeName: 'Fisioterapia',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'physiotherapy', intended_use: 'Estructura de sesión de rehabilitación con reglas de progresión' },
@@ -241,14 +236,15 @@ const DEV_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 const DEV_USER_ID = '00000000-0000-0000-0000-000000000002'
 
 async function seedDevAccount() {
-  const tenant = await prisma.tenant.upsert({
+  await prisma.tenant.upsert({
     where: { id: DEV_TENANT_ID },
-    update: {},
+    update: { seededAt: new Date() },
     create: {
       id: DEV_TENANT_ID,
       name: 'Development Clinic',
       type: 'solo',
       plan: 'free',
+      seededAt: new Date(),
     },
   })
 
@@ -269,32 +265,50 @@ async function seedDevAccount() {
   console.log('✓ Seeded developer account')
 }
 
-async function seedSystemTemplates() {
-  for (const t of TEMPLATES) {
-    await prisma.protocolTemplate.upsert({
-      where: { templateKey_locale: { templateKey: t.templateKey, locale: t.locale } },
-      update: { name: t.name, description: t.description, schema: t.schema },
-      create: {
-        templateKey: t.templateKey,
-        locale: t.locale,
+async function seedTenantTemplatesAndTypes(tenantId: string, createdBy: string | null) {
+  // Delete existing seeded templates and types for idempotency
+  const existingTypes = await prisma.protocolType.findMany({
+    where: { tenantId, isSeeded: true, deletedAt: null },
+  })
+  const existingTemplates = await prisma.protocolTemplate.findMany({
+    where: { tenantId, isSeeded: true, deletedAt: null },
+  })
+
+  if (existingTypes.length > 0 || existingTemplates.length > 0) {
+    await prisma.protocolType.deleteMany({ where: { tenantId, isSeeded: true } })
+    await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
+  }
+
+  for (const t of STARTER_TEMPLATES) {
+    const template = await prisma.protocolTemplate.create({
+      data: {
+        tenantId,
         name: t.name,
         description: t.description,
         suggestedSpecialty: t.suggestedSpecialty,
-        category: t.category,
         schema: t.schema,
-        isSystem: true,
-        tenantId: null,
-        createdBy: null,
+        isSeeded: true,
+        createdBy,
+      },
+    })
+
+    await prisma.protocolType.create({
+      data: {
+        tenantId,
+        templateId: template.id,
+        name: t.typeName,
+        isSeeded: true,
       },
     })
   }
-  console.log(`✓ Seeded ${TEMPLATES.length} system protocol templates`)
+
+  console.log(`✓ Seeded ${STARTER_TEMPLATES.length} templates + types for tenant ${tenantId}`)
 }
 
 async function main() {
   console.log('Seeding database…')
   await seedDevAccount()
-  await seedSystemTemplates()
+  await seedTenantTemplatesAndTypes(DEV_TENANT_ID, DEV_USER_ID)
   console.log('Done.')
 }
 

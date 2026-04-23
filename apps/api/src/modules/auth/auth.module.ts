@@ -8,6 +8,6 @@ import { UsersModule } from '../users/index.js'
   imports: [UsersModule],
   controllers: [AuthController],
   providers: [AuthService, AuthRepository],
-  exports: [AuthService],
+  exports: [AuthService, AuthRepository],
 })
 export class AuthModule {}

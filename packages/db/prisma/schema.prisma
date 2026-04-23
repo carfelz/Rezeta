@@ -15,15 +15,16 @@ datasource db {
 // ─────────────────────────────────────────────
 
 model Tenant {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String?  @db.VarChar(200)
-  type      String   @default("solo") @db.VarChar(50) // solo | practice | clinic | enterprise
-  plan      String   @default("free") @db.VarChar(50) // free | solo | practice | clinic
-  country   String   @default("DO") @db.VarChar(10)
-  language  String   @default("es") @db.VarChar(10)
-  timezone  String   @default("America/Santo_Domingo") @db.VarChar(60)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String?   @db.VarChar(200)
+  type      String    @default("solo") @db.VarChar(50) // solo | practice | clinic | enterprise
+  plan      String    @default("free") @db.VarChar(50) // free | solo | practice | clinic
+  country   String    @default("DO") @db.VarChar(10)
+  language  String    @default("es") @db.VarChar(10)
+  timezone  String    @default("America/Santo_Domingo") @db.VarChar(60)
+  seededAt  DateTime? @map("seeded_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   users             User[]
   locations         Location[]
@@ -34,6 +35,7 @@ model Tenant {
   invoices          Invoice[]
   protocols         Protocol[]
   protocolTemplates ProtocolTemplate[]
+  protocolTypes     ProtocolType[]
   protocolVersions  ProtocolVersion[]
   protocolUsages    ProtocolUsage[]
   auditLogs         AuditLog[]
@@ -378,41 +380,54 @@ model InvoiceItem {
 // ─────────────────────────────────────────────
 
 model ProtocolTemplate {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String?  @map("tenant_id") @db.Uuid // null = system/global
-  templateKey       String   @map("template_key") @db.VarChar(100)
-  locale            String   @default("es") @db.VarChar(10)
-  name              String   @db.VarChar(300)
-  description       String?  @db.Text
-  suggestedSpecialty String? @map("suggested_specialty") @db.VarChar(100)
-  category          String?  @db.VarChar(100)
-  icon              String?  @db.VarChar(100)
-  schema            Json
-  isSystem          Boolean  @default(false) @map("is_system")
-  createdBy         String?  @map("created_by") @db.Uuid
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  deletedAt         DateTime? @map("deleted_at")
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  name               String    @db.VarChar(300)
+  description        String?   @db.Text
+  suggestedSpecialty String?   @map("suggested_specialty") @db.VarChar(100)
+  schema             Json
+  isSeeded           Boolean   @default(false) @map("is_seeded")
+  createdBy          String?   @map("created_by") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
 
-  tenant    Tenant?    @relation(fields: [tenantId], references: [id])
-  creator   User?      @relation(fields: [createdBy], references: [id])
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  creator       User?          @relation(fields: [createdBy], references: [id])
+  protocolTypes ProtocolType[]
+
+  @@index([tenantId])
+  @@index([tenantId, deletedAt])
+  @@map("protocol_templates")
+}
+
+model ProtocolType {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  templateId String    @map("template_id") @db.Uuid
+  name       String    @db.VarChar(200)
+  isSeeded   Boolean   @default(false) @map("is_seeded")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  template  ProtocolTemplate @relation(fields: [templateId], references: [id])
   protocols Protocol[]
 
-  @@unique([templateKey, locale])
+  @@unique([tenantId, name])
   @@index([tenantId])
-  @@index([isSystem])
-  @@map("protocol_templates")
+  @@index([tenantId, templateId])
+  @@index([tenantId, deletedAt])
+  @@map("protocol_types")
 }
 
 model Protocol {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
-  templateId       String?   @map("template_id") @db.Uuid
-  originalProtocolId String? @map("original_protocol_id") @db.Uuid // for forks
+  typeId           String    @map("type_id") @db.Uuid
   title            String    @db.VarChar(300)
-  specialty        String?   @db.VarChar(100)
   tags             Json      @default("[]")
-  visibility       String    @default("private") @db.VarChar(20) // private | practice | public
   status           String    @default("draft") @db.VarChar(20) // draft | active | archived
   currentVersionId String?   @map("current_version_id") @db.Uuid
   isFavorite       Boolean   @default(false) @map("is_favorite")
@@ -421,15 +436,14 @@ model Protocol {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  tenant          Tenant            @relation(fields: [tenantId], references: [id])
-  template        ProtocolTemplate? @relation(fields: [templateId], references: [id])
-  originalProtocol Protocol?        @relation("ProtocolFork", fields: [originalProtocolId], references: [id])
-  forks           Protocol[]        @relation("ProtocolFork")
-  creator         User              @relation("ProtocolCreator", fields: [createdBy], references: [id])
-  versions        ProtocolVersion[]
-  usages          ProtocolUsage[]
+  tenant   Tenant          @relation(fields: [tenantId], references: [id])
+  type     ProtocolType    @relation(fields: [typeId], references: [id])
+  creator  User            @relation("ProtocolCreator", fields: [createdBy], references: [id])
+  versions ProtocolVersion[]
+  usages   ProtocolUsage[]
 
   @@index([tenantId])
+  @@index([tenantId, typeId])
   @@index([tenantId, createdBy])
   @@index([tenantId, status])
   @@index([tenantId, deletedAt])

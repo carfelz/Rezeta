@@ -9,6 +9,7 @@ export interface AuthUser {
   role: UserRole
   specialty: string | null
   licenseNumber: string | null
+  tenantSeededAt: string | null  // ISO string; null means onboarding not yet complete
 }
 
 export interface Tenant {

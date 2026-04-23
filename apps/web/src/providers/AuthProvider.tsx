@@ -14,6 +14,7 @@ const STUB_USER: AuthUser = {
   role: 'owner',
   specialty: 'Cardiología',
   licenseNumber: 'CMP-12345',
+  tenantSeededAt: new Date().toISOString(),
 }
 
 /**

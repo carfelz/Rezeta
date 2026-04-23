@@ -2,7 +2,6 @@ import { Global, Module, Controller, Get } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core'
 import { resolve } from 'path'
-import { fileURLToPath } from 'url'
 import { configuration } from './config/configuration.js'
 import { PrismaService } from './lib/prisma.service.js'
 import { FirebaseService } from './lib/firebase.service.js'
@@ -16,6 +15,9 @@ import { ProtocolTemplatesModule } from './modules/protocol-templates/index.js'
 import { ProtocolsModule } from './modules/protocols/index.js'
 import { AuthModule } from './modules/auth/index.js'
 import { UsersModule } from './modules/users/index.js'
+import { TenantSeedingModule } from './modules/tenant-seeding/index.js'
+import { ProtocolTypesModule } from './modules/protocol-types/index.js'
+import { OnboardingModule } from './modules/onboarding/index.js'
 import { Public } from './common/decorators/public.decorator.js'
 
 @Controller()
@@ -33,15 +35,17 @@ class AppController {
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      // Point at the monorepo root .env regardless of CWD at process start
-      // apps/api/src/app.module.ts → 4 levels up → repo root
-      envFilePath: resolve(fileURLToPath(import.meta.url), '../../../..', '.env'),
+      // Point at the monorepo root .env — process.cwd() is apps/api when pnpm runs scripts
+      envFilePath: resolve(process.cwd(), '../..', '.env'),
     }),
     AuthModule,
     UsersModule,
     PatientsModule,
     ProtocolTemplatesModule,
+    ProtocolTypesModule,
     ProtocolsModule,
+    TenantSeedingModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [

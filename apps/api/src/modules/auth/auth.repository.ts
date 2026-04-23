@@ -3,6 +3,10 @@ import { PrismaService } from '../../lib/prisma.service.js'
 import type { User } from '@rezeta/db'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 
+export type UserWithTenant = User & { tenant: { seededAt: Date | null } }
+
+const TENANT_SELECT = { tenant: { select: { seededAt: true } } } as const
+
 @Injectable()
 export class AuthRepository {
   private readonly logger = new Logger(AuthRepository.name)
@@ -18,12 +22,13 @@ export class AuthRepository {
    * A race condition between two simultaneous provision calls is handled by
    * catching the unique constraint violation on firebaseUid and re-fetching.
    */
-  async provisionUser(decoded: DecodedIdToken): Promise<User> {
+  async provisionUser(decoded: DecodedIdToken): Promise<UserWithTenant> {
     const { uid, email } = decoded
 
     // Fast-path: user already exists (the common case after first provision)
     const existing = await this.prisma.user.findUnique({
       where: { firebaseUid: uid },
+      include: TENANT_SELECT,
     })
     if (existing) {
       this.logger.debug(`Provision: user already exists for uid=${uid}`)
@@ -54,6 +59,7 @@ export class AuthRepository {
             // fullName is null until onboarding is complete
             role: 'owner',
           },
+          include: TENANT_SELECT,
         })
       })
 
@@ -68,11 +74,21 @@ export class AuthRepository {
 
       if (isUniqueViolation) {
         this.logger.warn(`Provision race condition for uid=${uid} — re-fetching existing user`)
-        const refetched = await this.prisma.user.findUnique({ where: { firebaseUid: uid } })
+        const refetched = await this.prisma.user.findUnique({
+          where: { firebaseUid: uid },
+          include: TENANT_SELECT,
+        })
         if (refetched) return refetched
       }
 
       throw err
     }
+  }
+
+  async findByFirebaseUid(uid: string): Promise<UserWithTenant | null> {
+    return this.prisma.user.findUnique({
+      where: { firebaseUid: uid, deletedAt: null },
+      include: TENANT_SELECT,
+    })
   }
 }

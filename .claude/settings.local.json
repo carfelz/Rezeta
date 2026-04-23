@@ -47,7 +47,17 @@
       "Bash(node_modules/.bin/vitest run *)",
       "Bash(grep -v \"^$\")",
       "Bash(grep -v \"^\\(node\\\\|To eliminate\\\\|Reparsing\\\\|Use \\\\`node\\\\|undefined\\)\")",
-      "Bash(grep -v \"Use \\\\`node\")"
+      "Bash(grep -v \"Use \\\\`node\")",
+      "Bash(docker compose *)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(pkill -f \"tsx watch src/main.ts\")",
+      "Bash(curl -s http://localhost:9099)",
+      "Bash(FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 PGPASSWORD=postgres psql -h localhost -U postgres -d rezeta_dev -c \"SELECT u.id, u.email, u.\\\\\"firebaseUid\\\\\", u.\\\\\"tenantId\\\\\" FROM \\\\\"User\\\\\" u LIMIT 5;\")",
+      "Bash(FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 npx tsx *)",
+      "Bash(kill 45419 45460 45473 45690 45703 45222 45235)",
+      "Bash(FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 pnpm --filter @rezeta/api dev:auth)",
+      "Bash(python3 -c ' *)",
+      "Bash(docker exec rezeta-postgres *)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common'
 import { ProtocolsRepository } from './protocols.repository.js'
-import { ProtocolTemplatesRepository } from '../protocol-templates/protocol-templates.repository.js'
+import { ProtocolTypesRepository } from '../protocol-types/protocol-types.repository.js'
 import {
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
@@ -16,7 +16,7 @@ import {
 export class ProtocolsService {
   constructor(
     @Inject(ProtocolsRepository) private repository: ProtocolsRepository,
-    @Inject(ProtocolTemplatesRepository) private templatesRepository: ProtocolTemplatesRepository,
+    @Inject(ProtocolTypesRepository) private typesRepository: ProtocolTypesRepository,
   ) {}
 
   async create(
@@ -24,40 +24,31 @@ export class ProtocolsService {
     userId: string,
     dto: CreateProtocolDto,
   ): Promise<ProtocolResponse> {
-    let content: unknown
-    let defaultTitle = 'Protocolo sin título'
-
-    if (dto.templateId) {
-      const template = await this.templatesRepository.findById(dto.templateId, tenantId)
-      if (!template) {
-        throw new NotFoundException({
-          code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND,
-          message: 'Protocol template not found or not accessible',
-        })
-      }
-      defaultTitle = `${template.name} (nuevo)`
-      content = buildInitialContentFromTemplate(
-        template.schema as unknown as Parameters<typeof buildInitialContentFromTemplate>[0],
-      )
-    } else {
-      content = { version: '1.0', blocks: [] }
+    const protocolType = await this.typesRepository.findByIdWithTemplate(dto.typeId, tenantId)
+    if (!protocolType) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_TYPE_NOT_FOUND,
+        message: 'Protocol type not found',
+      })
     }
 
-    const title = dto.title?.trim() || defaultTitle
+    const content = buildInitialContentFromTemplate(
+      protocolType.template.schema as Parameters<typeof buildInitialContentFromTemplate>[0],
+    )
+
     const { protocol, version } = await this.repository.create({
       tenantId,
-      title,
+      title: dto.title.trim(),
       createdBy: userId,
-      templateId: dto.templateId ?? null,
-      specialty: dto.specialty ?? null,
-      tags: dto.tags ?? [],
+      typeId: dto.typeId,
+      tags: [],
       content,
     })
 
     return this.formatResponse({
       ...protocol,
       currentVersion: version,
-      template: protocol.template ?? null,
+      type: protocol.type,
     })
   }
 
@@ -66,8 +57,8 @@ export class ProtocolsService {
     return protocols.map((p) => ({
       id: p.id,
       title: p.title,
-      templateId: p.templateId,
-      templateName: p.template?.name ?? null,
+      typeId: p.type.id,
+      typeName: p.type.name,
       status: p.status,
       isFavorite: p.isFavorite,
       updatedAt: p.updatedAt.toISOString(),
@@ -112,7 +103,6 @@ export class ProtocolsService {
     changeSummary: string | null
     createdAt: string
   }> {
-    // Validate content passes schema
     const parseResult = ProtocolContentSchema.safeParse(dto.content)
     if (!parseResult.success) {
       throw new BadRequestException({
@@ -122,7 +112,6 @@ export class ProtocolsService {
       })
     }
 
-    // Validate required blocks if protocol has a template
     const protocol = await this.repository.findById(protocolId, tenantId)
     if (!protocol) {
       throw new NotFoundException({
@@ -131,19 +120,16 @@ export class ProtocolsService {
       })
     }
 
-    if (protocol.template) {
-      this.validateRequiredBlocks(
-        protocol.template.schema as unknown as {
-          blocks: Array<{
-            id?: string
-            required?: boolean
-            type: string
-            placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }>
-          }>
-        },
-        dto.content.blocks as Array<{ id: string }>,
-      )
+    // Validate required blocks against the template (resolved through type)
+    const templateSchema = protocol.type.template.schema as {
+      blocks: Array<{
+        id?: string
+        required?: boolean
+        type: string
+        placeholder_blocks?: Array<{ id?: string; required?: boolean; type: string }>
+      }>
     }
+    this.validateRequiredBlocks(templateSchema, dto.content.blocks as Array<{ id: string }>)
 
     const version = await this.repository.saveVersion({
       protocolId,
@@ -191,7 +177,6 @@ export class ProtocolsService {
         })
       }
 
-      // Check required blocks inside placeholder_blocks of a required section
       if (block.type === 'section' && block.placeholder_blocks) {
         for (const child of block.placeholder_blocks) {
           if (child.required && child.id && !contentIds.has(child.id)) {
@@ -223,8 +208,8 @@ export class ProtocolsService {
     isFavorite: boolean
     createdAt: Date
     updatedAt: Date
-    templateId: string | null
-    template?: { name: string; schema: unknown } | null
+    typeId: string
+    type: { id: string; name: string; template: { schema: unknown } }
     currentVersion?: {
       id: string
       versionNumber: number
@@ -240,9 +225,9 @@ export class ProtocolsService {
       isFavorite: protocol.isFavorite,
       createdAt: protocol.createdAt.toISOString(),
       updatedAt: protocol.updatedAt.toISOString(),
-      templateId: protocol.templateId,
-      templateName: protocol.template?.name ?? null,
-      templateSchema: protocol.template?.schema ?? null,
+      typeId: protocol.typeId,
+      typeName: protocol.type.name,
+      templateSchema: protocol.type.template.schema ?? null,
       currentVersion: protocol.currentVersion
         ? {
             id: protocol.currentVersion.id,

@@ -15,6 +15,7 @@
 
 import * as admin from 'firebase-admin'
 import { PrismaClient } from '../packages/db/generated/index.js'
+import { getStarterFixtures } from '../apps/api/src/lib/starter-fixtures/index.js'
 
 // ── Guards ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ async function seedUser(dev: DevUser) {
       },
     })
     console.log(`  Postgres: updated existing user (id=${existingUser.id})`)
+    await seedTenant(existingUser.tenantId)
     return
   }
 
@@ -114,6 +116,37 @@ async function seedUser(dev: DevUser) {
   })
 
   console.log(`  Postgres: created tenant + user (userId=${user.id}, tenantId=${user.tenantId})`)
+  await seedTenant(user.tenantId)
+}
+
+async function seedTenant(tenantId: string): Promise<void> {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } })
+  if (tenant?.seededAt) {
+    console.log(`  Seeding: tenant already seeded, skipping`)
+    return
+  }
+
+  const fixtures = getStarterFixtures('es')
+
+  await prisma.$transaction(async (tx) => {
+    const createdTemplates = await Promise.all(
+      fixtures.map((f) =>
+        tx.protocolTemplate.create({
+          data: { tenantId, name: f.name, suggestedSpecialty: f.suggestedSpecialty, schema: f.schema, isSeeded: true },
+        }),
+      ),
+    )
+    await Promise.all(
+      fixtures.map((f, i) =>
+        tx.protocolType.create({
+          data: { tenantId, name: f.typeName, templateId: createdTemplates[i]!.id, isSeeded: true },
+        }),
+      ),
+    )
+    await tx.tenant.update({ where: { id: tenantId }, data: { seededAt: new Date() } })
+  })
+
+  console.log(`  Seeding: created 5 templates + 5 types for tenant ${tenantId}`)
 }
 
 // ── Dev user definitions ──────────────────────────────────────────────────────

@@ -44,9 +44,9 @@ function ProtocolRow({ protocol, onClick }: ProtocolRowProps): JSX.Element {
           <span className="text-[13.5px] font-sans font-semibold text-n-800 truncate">
             {protocol.title}
           </span>
-          {protocol.templateName && (
+          {protocol.typeName && (
             <span className="text-[11px] font-mono text-n-400 truncate hidden sm:block">
-              {protocol.templateName}
+              {protocol.typeName}
             </span>
           )}
         </div>

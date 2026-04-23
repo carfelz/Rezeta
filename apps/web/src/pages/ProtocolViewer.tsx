@@ -69,7 +69,7 @@ export function ProtocolViewer(): JSX.Element {
       </div>
 
       <ProtocolContainer
-        {...(protocol.templateName ? { kicker: protocol.templateName } : {})}
+        {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
         title={protocol.title}
         meta={`${strings.VIEWER_UPDATED} ${updatedDate} · ${strings.VIEWER_VERSION(versionNumber)}`}
         badge={<Badge variant="draft">{protocol.status}</Badge>}

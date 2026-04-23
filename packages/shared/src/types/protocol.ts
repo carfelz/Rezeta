@@ -48,14 +48,13 @@ export interface ProtocolContent {
 export interface Protocol {
   id: string
   tenantId: string
-  ownerUserId: string
-  templateId: string | null
+  typeId: string
   title: string
-  specialty: string | null
   tags: string[]
   status: ProtocolStatus
   currentVersionId: string | null
   isFavorite: boolean
+  createdBy: string
   createdAt: string
   updatedAt: string
   deletedAt: string | null
@@ -73,14 +72,24 @@ export interface ProtocolVersion {
 
 export interface ProtocolTemplate {
   id: string
-  tenantId: string | null
-  isSystem: boolean
+  tenantId: string
+  isSeeded: boolean
   name: string
   description: string | null
   suggestedSpecialty: string | null
   schema: ProtocolContent
-  locale: string
-  templateKey: string
   createdAt: string
   updatedAt: string
+  deletedAt: string | null
+}
+
+export interface ProtocolType {
+  id: string
+  tenantId: string
+  templateId: string
+  name: string
+  isSeeded: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
 }
