@@ -15,6 +15,9 @@ jobs:
   deploy-api:
     runs-on: ubuntu-latest
 
+    outputs:
+      url: ${{ steps.service-url.outputs.url }}
+
     permissions:
       contents: read
       id-token: write
@@ -73,7 +76,7 @@ jobs:
             --max-instances 10 \
             --timeout 60 \
             --set-env-vars NODE_ENV=production \
-            --set-secrets DATABASE_URL=database-url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
+            --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
 
       - name: Get Service URL
         id: service-url
@@ -92,8 +95,8 @@ jobs:
 
       - name: Run Database Migrations
         run: |
-          DATABASE_URL=$(gcloud secrets versions access latest --secret=database-url)
-          DIRECT_URL=$(gcloud secrets versions access latest --secret=direct-url)
+          DATABASE_URL=$(gcloud secrets versions access latest --secret=database_url)
+          DIRECT_URL=$(gcloud secrets versions access latest --secret=direct_url)
           export DATABASE_URL DIRECT_URL
           pnpm --filter @rezeta/db exec prisma migrate deploy
 
