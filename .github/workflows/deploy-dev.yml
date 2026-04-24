@@ -72,7 +72,7 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --timeout 60 \
-            --set-env-vars NODE_ENV=production,PORT=8080 \
+            --set-env-vars NODE_ENV=production \
             --set-secrets DATABASE_URL=database-url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
 
       - name: Get Service URL
