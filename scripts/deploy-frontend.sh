@@ -5,9 +5,9 @@ PROJECT_ID="medical-erp-dev"
 BUCKET="gs://medical-erp-dev-frontend"
 
 echo "🏗️  Building frontend..."
+pnpm install --frozen-lockfile
 cd apps/web
-npm ci
-npm run build
+pnpm build
 
 echo "☁️  Deploying to GCS..."
 gsutil -m rsync -r -d dist/ $BUCKET

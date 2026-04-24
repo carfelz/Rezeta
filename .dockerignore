@@ -1,0 +1,35 @@
+# Dependencies — Docker installs these itself
+node_modules
+**/node_modules
+
+# Build outputs — Docker builds these itself
+dist
+**/dist
+packages/db/generated
+
+# Frontend — not needed for API image
+apps/web
+
+# Dev/docs — not needed in image
+design-system
+specs
+tools
+scripts
+.husky
+.vscode
+*.md
+!apps/api/README.md
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# Git
+.git
+.gitignore
+
+# CI
+.github
