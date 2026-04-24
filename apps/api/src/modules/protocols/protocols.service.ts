@@ -6,7 +6,10 @@ import {
   type UpdateProtocolTitleDto,
   type SaveVersionDto,
   type ProtocolListItem,
+  type ProtocolListQuery,
   type ProtocolResponse,
+  type VersionListItem,
+  type VersionDetailResponse,
   ProtocolContentSchema,
   buildInitialContentFromTemplate,
   ErrorCode,
@@ -52,8 +55,17 @@ export class ProtocolsService {
     })
   }
 
-  async list(tenantId: string): Promise<ProtocolListItem[]> {
-    const protocols = await this.repository.list(tenantId)
+  async list(
+    tenantId: string,
+    query: ProtocolListQuery = { favoritesOnly: false },
+  ): Promise<ProtocolListItem[]> {
+    const protocols = await this.repository.list(tenantId, {
+      ...(query.search !== undefined ? { search: query.search } : {}),
+      ...(query.typeId !== undefined ? { typeId: query.typeId } : {}),
+      ...(query.status !== undefined ? { status: query.status } : {}),
+      ...(query.favoritesOnly ? { favoritesOnly: true } : {}),
+      ...(query.sort !== undefined ? { sort: query.sort } : {}),
+    })
     return protocols.map((p) => ({
       id: p.id,
       title: p.title,
@@ -64,6 +76,16 @@ export class ProtocolsService {
       updatedAt: p.updatedAt.toISOString(),
       currentVersionNumber: p.versions[0]?.versionNumber ?? null,
     }))
+  }
+
+  async setFavorite(id: string, tenantId: string, isFavorite: boolean): Promise<void> {
+    const found = await this.repository.setFavorite(id, tenantId, isFavorite)
+    if (!found) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
   }
 
   async getById(id: string, tenantId: string): Promise<ProtocolResponse> {
@@ -199,6 +221,87 @@ export class ProtocolsService {
       }
     }
     return ids
+  }
+
+  async listVersions(protocolId: string, tenantId: string): Promise<VersionListItem[]> {
+    const protocol = await this.repository.findById(protocolId, tenantId)
+    if (!protocol) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+    const versions = await this.repository.listVersions(protocolId, tenantId)
+    return versions.map((v) => ({
+      id: v.id,
+      versionNumber: v.versionNumber,
+      changeSummary: v.changeSummary,
+      createdAt: v.createdAt.toISOString(),
+      isCurrent: v.isCurrent,
+    }))
+  }
+
+  async getVersion(
+    protocolId: string,
+    versionId: string,
+    tenantId: string,
+  ): Promise<VersionDetailResponse> {
+    const version = await this.repository.getVersion(protocolId, versionId, tenantId)
+    if (!version) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Version not found',
+      })
+    }
+    return {
+      id: version.id,
+      versionNumber: version.versionNumber,
+      content: version.content as unknown as VersionDetailResponse['content'],
+      changeSummary: version.changeSummary,
+      createdAt: version.createdAt.toISOString(),
+    }
+  }
+
+  async restoreVersion(
+    protocolId: string,
+    versionId: string,
+    tenantId: string,
+    userId: string,
+  ): Promise<{
+    id: string
+    versionNumber: number
+    changeSummary: string | null
+    createdAt: string
+  }> {
+    const version = await this.repository.getVersion(protocolId, versionId, tenantId)
+    if (!version) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Version not found',
+      })
+    }
+
+    const restored = await this.repository.saveVersion({
+      protocolId,
+      tenantId,
+      createdBy: userId,
+      content: version.content,
+      changeSummary: `Restaurado desde v${version.versionNumber}`,
+    })
+
+    if (!restored) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+
+    return {
+      id: restored.id,
+      versionNumber: restored.versionNumber,
+      changeSummary: restored.changeSummary,
+      createdAt: restored.createdAt.toISOString(),
+    }
   }
 
   private formatResponse(protocol: {

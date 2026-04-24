@@ -136,10 +136,12 @@ export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
 
 export const ProtocolTemplateSchemaContent = z.object({
   version: z.string(),
-  metadata: z.object({
-    suggested_specialty: z.string().optional(),
-    intended_use: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      suggested_specialty: z.string().optional(),
+      intended_use: z.string().optional(),
+    })
+    .optional(),
   blocks: z.array(TemplateBlockSchema),
 })
 
@@ -157,9 +159,7 @@ export const CreateProtocolSchema = z.object({
 })
 
 // .strict() rejects any additional keys — PATCH only accepts title
-export const UpdateProtocolTitleSchema = z
-  .object({ title: z.string().min(2).max(300) })
-  .strict()
+export const UpdateProtocolTitleSchema = z.object({ title: z.string().min(2).max(300) }).strict()
 
 export const SaveVersionSchema = z.object({
   content: ProtocolContentSchema,
@@ -169,6 +169,17 @@ export const SaveVersionSchema = z.object({
 export const UpdateProtocolSchema = z.object({
   title: z.string().min(2).max(300).optional(),
   isFavorite: z.boolean().optional(),
+})
+
+export const ProtocolListQuerySchema = z.object({
+  search: z.string().max(300).optional(),
+  typeId: z.string().uuid().optional(),
+  status: z.enum(['draft', 'active', 'archived']).optional(),
+  favoritesOnly: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
+  sort: z.enum(['updatedAt_desc', 'updatedAt_asc', 'title_asc', 'title_desc']).optional(),
 })
 
 export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
@@ -196,9 +207,7 @@ export const CreateProtocolTypeSchema = z.object({
   templateId: z.string().uuid(),
 })
 
-export const UpdateProtocolTypeSchema = z
-  .object({ name: z.string().min(1).max(200) })
-  .strict()
+export const UpdateProtocolTypeSchema = z.object({ name: z.string().min(1).max(200) }).strict()
 
 // ─── Response Schemas ────────────────────────────────────────────────────────
 
@@ -263,6 +272,7 @@ export const ProtocolResponseSchema = z.object({
 
 // ─── Inferred Types ──────────────────────────────────────────────────────────
 
+export type ProtocolListQuery = z.infer<typeof ProtocolListQuerySchema>
 export type CreateProtocolTemplateDto = z.infer<typeof CreateProtocolTemplateSchema>
 export type UpdateProtocolTemplateDto = z.infer<typeof UpdateProtocolTemplateSchema>
 export type CreateProtocolDto = z.infer<typeof CreateProtocolSchema>

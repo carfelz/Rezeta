@@ -57,7 +57,9 @@
       "Bash(kill 45419 45460 45473 45690 45703 45222 45235)",
       "Bash(FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 pnpm --filter @rezeta/api dev:auth)",
       "Bash(python3 -c ' *)",
-      "Bash(docker exec rezeta-postgres *)"
+      "Bash(docker exec rezeta-postgres *)",
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

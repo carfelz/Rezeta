@@ -55,7 +55,10 @@ export class ProtocolsRepository {
         include: { type: { include: { template: true } } },
       })
 
-      return { protocol: updated as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }, version }
+      return {
+        protocol: updated as Protocol & { type: ProtocolType & { template: ProtocolTemplate } },
+        version,
+      }
     })
   }
 
@@ -72,13 +75,45 @@ export class ProtocolsRepository {
         })
       : null
 
-    return { ...(protocol as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }), currentVersion }
+    return {
+      ...(protocol as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }),
+      currentVersion,
+    }
   }
 
-  async list(tenantId: string): Promise<ProtocolListEntry[]> {
+  async list(
+    tenantId: string,
+    filters: {
+      search?: string
+      typeId?: string
+      status?: string
+      favoritesOnly?: boolean
+      sort?: string
+    } = {},
+  ): Promise<ProtocolListEntry[]> {
+    const orderBy = (() => {
+      switch (filters.sort) {
+        case 'updatedAt_asc':
+          return { updatedAt: 'asc' as const }
+        case 'title_asc':
+          return { title: 'asc' as const }
+        case 'title_desc':
+          return { title: 'desc' as const }
+        default:
+          return { updatedAt: 'desc' as const }
+      }
+    })()
+
     return this.prisma.protocol.findMany({
-      where: { tenantId, deletedAt: null },
-      orderBy: { updatedAt: 'desc' },
+      where: {
+        tenantId,
+        deletedAt: null,
+        ...(filters.typeId ? { typeId: filters.typeId } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.favoritesOnly ? { isFavorite: true } : {}),
+        ...(filters.search ? { title: { contains: filters.search, mode: 'insensitive' } } : {}),
+      },
+      orderBy,
       include: {
         type: { select: { id: true, name: true } },
         versions: {
@@ -91,6 +126,15 @@ export class ProtocolsRepository {
     }) as unknown as Promise<ProtocolListEntry[]>
   }
 
+  async setFavorite(id: string, tenantId: string, isFavorite: boolean): Promise<boolean> {
+    const existing = await this.prisma.protocol.findFirst({
+      where: { id, tenantId, deletedAt: null },
+    })
+    if (!existing) return false
+    await this.prisma.protocol.update({ where: { id }, data: { isFavorite } })
+    return true
+  }
+
   async rename(id: string, tenantId: string, title: string): Promise<Protocol | null> {
     const existing = await this.prisma.protocol.findFirst({
       where: { id, tenantId, deletedAt: null },
@@ -100,6 +144,43 @@ export class ProtocolsRepository {
     return this.prisma.protocol.update({
       where: { id },
       data: { title },
+    })
+  }
+
+  async listVersions(
+    protocolId: string,
+    tenantId: string,
+  ): Promise<
+    Array<{
+      id: string
+      versionNumber: number
+      changeSummary: string | null
+      createdAt: Date
+      isCurrent: boolean
+    }>
+  > {
+    const protocol = await this.prisma.protocol.findFirst({
+      where: { id: protocolId, tenantId, deletedAt: null },
+      select: { currentVersionId: true },
+    })
+    if (!protocol) return []
+
+    const versions = await this.prisma.protocolVersion.findMany({
+      where: { protocolId, tenantId, deletedAt: null },
+      orderBy: { versionNumber: 'desc' },
+      select: { id: true, versionNumber: true, changeSummary: true, createdAt: true },
+    })
+
+    return versions.map((v) => ({ ...v, isCurrent: v.id === protocol.currentVersionId }))
+  }
+
+  async getVersion(
+    protocolId: string,
+    versionId: string,
+    tenantId: string,
+  ): Promise<ProtocolVersion | null> {
+    return this.prisma.protocolVersion.findFirst({
+      where: { id: versionId, protocolId, tenantId, deletedAt: null },
     })
   }
 

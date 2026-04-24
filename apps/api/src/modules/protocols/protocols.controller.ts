@@ -3,8 +3,10 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
+  Query,
   UsePipes,
   ParseUUIDPipe,
   Inject,
@@ -15,12 +17,16 @@ import {
   CreateProtocolSchema,
   UpdateProtocolTitleSchema,
   SaveVersionSchema,
+  ProtocolListQuerySchema,
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
   type SaveVersionDto,
+  type ProtocolListQuery,
   type AuthUser,
   type ProtocolListItem,
   type ProtocolResponse,
+  type VersionListItem,
+  type VersionDetailResponse,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -32,8 +38,11 @@ export class ProtocolsController {
   constructor(@Inject(ProtocolsService) private service: ProtocolsService) {}
 
   @Get()
-  list(@TenantId() tenantId: string): Promise<ProtocolListItem[]> {
-    return this.service.list(tenantId)
+  list(
+    @TenantId() tenantId: string,
+    @Query(new ZodValidationPipe(ProtocolListQuerySchema)) query: ProtocolListQuery,
+  ): Promise<ProtocolListItem[]> {
+    return this.service.list(tenantId, query)
   }
 
   @Get(':id')
@@ -80,5 +89,53 @@ export class ProtocolsController {
     createdAt: string
   }> {
     return this.service.saveVersion(id, tenantId, user.id, dto)
+  }
+
+  @Get(':id/versions')
+  listVersions(
+    @Param('id', ParseUUIDPipe) id: string,
+    @TenantId() tenantId: string,
+  ): Promise<VersionListItem[]> {
+    return this.service.listVersions(id, tenantId)
+  }
+
+  @Get(':id/versions/:versionId')
+  getVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @TenantId() tenantId: string,
+  ): Promise<VersionDetailResponse> {
+    return this.service.getVersion(id, versionId, tenantId)
+  }
+
+  @Post(':id/versions/:versionId/restore')
+  @HttpCode(HttpStatus.CREATED)
+  restoreVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<{
+    id: string
+    versionNumber: number
+    changeSummary: string | null
+    createdAt: string
+  }> {
+    return this.service.restoreVersion(id, versionId, tenantId, user.id)
+  }
+
+  @Post(':id/favorite')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  addFavorite(@Param('id', ParseUUIDPipe) id: string, @TenantId() tenantId: string): Promise<void> {
+    return this.service.setFavorite(id, tenantId, true)
+  }
+
+  @Delete(':id/favorite')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeFavorite(
+    @Param('id', ParseUUIDPipe) id: string,
+    @TenantId() tenantId: string,
+  ): Promise<void> {
+    return this.service.setFavorite(id, tenantId, false)
   }
 }

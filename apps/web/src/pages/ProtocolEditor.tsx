@@ -107,7 +107,14 @@ export function ProtocolEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const { useGetProtocol, useRenameProtocol, useSaveVersion } = useProtocols()
+  const {
+    useGetProtocol,
+    useRenameProtocol,
+    useSaveVersion,
+    useGetVersionHistory,
+    useGetVersion,
+    useRestoreVersion,
+  } = useProtocols()
   const { data: protocol, isLoading, error } = useGetProtocol(id ?? '')
   const { mutate: rename, isPending: isRenaming } = useRenameProtocol(id ?? '')
   const { mutate: saveVersion, isPending: isSaving } = useSaveVersion(id ?? '')
@@ -115,6 +122,26 @@ export function ProtocolEditor(): JSX.Element {
   // Editor store
   const { blocks, isDirty, selectedBlockId, initEditor, insertBlock, markSaved, resetEditor } =
     useEditorStore()
+
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
+
+  const { data: versionHistory, isLoading: historyLoading } = useGetVersionHistory(id ?? '')
+  const { data: selectedVersion, isLoading: versionPreviewLoading } = useGetVersion(
+    id ?? '',
+    selectedVersionId,
+  )
+  const { mutate: restoreVersion, isPending: isRestoring } = useRestoreVersion(id ?? '')
+
+  const handleRestore = () => {
+    if (!selectedVersionId) return
+    restoreVersion(selectedVersionId, {
+      onSuccess: () => {
+        setHistoryOpen(false)
+        setSelectedVersionId(null)
+      },
+    })
+  }
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -364,6 +391,17 @@ export function ProtocolEditor(): JSX.Element {
           {strings.EDITOR_VERSION(versionNumber)}
         </span>
 
+        {/* History button */}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setHistoryOpen((o) => !o)}
+          className="shrink-0"
+        >
+          <i className="ph ph-clock-counter-clockwise mr-1.5" />
+          {strings.EDITOR_HISTORY_BUTTON}
+        </Button>
+
         {/* Save button */}
         <Button
           variant="primary"
@@ -384,7 +422,7 @@ export function ProtocolEditor(): JSX.Element {
       </div>
 
       {/* ── Three-panel layout ─────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Left — Palette */}
         <aside className="w-[116px] shrink-0 bg-n-25 border-r border-n-200 flex flex-col items-center pt-5 gap-1.5">
           <span className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
@@ -458,6 +496,115 @@ export function ProtocolEditor(): JSX.Element {
             </ProtocolContainer>
           </div>
         </aside>
+
+        {/* ── History drawer ────────────────────────────────────────────────── */}
+        {historyOpen && (
+          <div className="absolute right-0 top-0 bottom-0 w-[380px] bg-n-0 border-l border-n-200 flex flex-col z-10 shadow-[0_1px_0_rgba(14,14,13,.04),_-8px_0_24px_-8px_rgba(14,14,13,.10)]">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-n-200 shrink-0">
+              <span className="text-[13.5px] font-sans font-semibold text-n-800">
+                {strings.EDITOR_HISTORY_TITLE}
+              </span>
+              <button
+                onClick={() => setHistoryOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
+                aria-label="Cerrar historial"
+              >
+                <i className="ph ph-x text-[15px]" />
+              </button>
+            </div>
+
+            {/* Version list */}
+            <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">
+              {historyLoading ? (
+                <div className="flex justify-center py-6">
+                  <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+                </div>
+              ) : !versionHistory || versionHistory.length === 0 ? (
+                <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
+                  {strings.EDITOR_HISTORY_EMPTY}
+                </p>
+              ) : (
+                versionHistory.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
+                    className={`flex items-center gap-3 px-5 py-2.5 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
+                      selectedVersionId === v.id ? 'bg-p-50' : 'hover:bg-n-25'
+                    }`}
+                  >
+                    <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
+                      {strings.EDITOR_VERSION(v.versionNumber)}
+                    </span>
+                    {v.isCurrent && (
+                      <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-1.5 py-0.5 shrink-0">
+                        {strings.EDITOR_HISTORY_CURRENT}
+                      </span>
+                    )}
+                    <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
+                      {v.changeSummary ?? strings.EDITOR_HISTORY_NO_SUMMARY}
+                    </span>
+                    <span className="text-[11px] font-mono text-n-400 shrink-0">
+                      {new Date(v.createdAt).toLocaleDateString('es-DO', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Version content preview */}
+            <div className="flex-1 overflow-y-auto">
+              {!selectedVersionId ? (
+                <div className="flex items-center justify-center h-full p-6">
+                  <p className="text-[12.5px] font-sans text-n-400 text-center">
+                    {strings.EDITOR_HISTORY_SELECT_PROMPT}
+                  </p>
+                </div>
+              ) : versionPreviewLoading ? (
+                <div className="flex justify-center py-8">
+                  <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+                </div>
+              ) : (
+                <div className="p-4 flex flex-col gap-2">
+                  <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
+                    {strings.EDITOR_HISTORY_PREVIEW_TITLE}
+                  </div>
+                  {selectedVersion?.content.blocks.map((block) => (
+                    <BlockRenderer key={block.id} block={block} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Restore button */}
+            {selectedVersionId &&
+              versionHistory?.find((v) => v.id === selectedVersionId && !v.isCurrent) && (
+                <div className="px-5 py-3 border-t border-n-200 shrink-0">
+                  <Button
+                    variant="secondary"
+                    onClick={handleRestore}
+                    disabled={isRestoring}
+                    className="w-full justify-center"
+                  >
+                    {isRestoring ? (
+                      <>
+                        <i className="ph ph-spinner animate-spin mr-1.5" />
+                        {strings.EDITOR_HISTORY_RESTORING}
+                      </>
+                    ) : (
+                      <>
+                        <i className="ph ph-clock-counter-clockwise mr-1.5" />
+                        {strings.EDITOR_HISTORY_RESTORE}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+          </div>
+        )}
       </div>
 
       {/* ── Save version modal ─────────────────────────────────────────────── */}

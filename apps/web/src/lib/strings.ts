@@ -79,10 +79,20 @@ export const strings = {
   PROTOCOLS_EMPTY_TITLE: 'Sin protocolos todavía',
   PROTOCOLS_EMPTY_DESCRIPTION: 'Crea tu primer protocolo a partir de una plantilla o desde cero.',
   PROTOCOLS_EMPTY_CTA: 'Nuevo protocolo',
+  PROTOCOLS_EMPTY_SEARCH: 'No hay protocolos que coincidan con tu búsqueda.',
   PROTOCOLS_LIST_UPDATED: 'Actualizado',
   PROTOCOLS_LIST_VERSION: (n: number) => `v${n}`,
   PROTOCOLS_LOADING: 'Cargando protocolos...',
   PROTOCOLS_ERROR: 'No se pudo cargar los protocolos.',
+  PROTOCOLS_SEARCH_PLACEHOLDER: 'Buscar protocolos…',
+  PROTOCOLS_FILTER_ALL_TYPES: 'Todos los tipos',
+  PROTOCOLS_FILTER_FAVORITES: 'Favoritos',
+  PROTOCOLS_SORT_UPDATED_DESC: 'Más reciente',
+  PROTOCOLS_SORT_UPDATED_ASC: 'Más antiguo',
+  PROTOCOLS_SORT_TITLE_ASC: 'A → Z',
+  PROTOCOLS_SORT_TITLE_DESC: 'Z → A',
+  PROTOCOLS_FAVORITE_ADD: 'Añadir a favoritos',
+  PROTOCOLS_FAVORITE_REMOVE: 'Quitar de favoritos',
 
   // ── Protocols — Type Picker ───────────────────────────────────────────────
   TYPE_PICKER_TITLE: 'Nuevo protocolo',
@@ -134,6 +144,17 @@ export const strings = {
   EDITOR_SECTION_EXPAND: 'Expandir sección',
   EDITOR_SECTION_COLLAPSE: 'Colapsar sección',
   EDITOR_SECTION_ADD_BLOCK: 'Añadir bloque',
+
+  // ── Protocols — Version history drawer ────────────────────────────────────
+  EDITOR_HISTORY_BUTTON: 'Historial',
+  EDITOR_HISTORY_TITLE: 'Historial de versiones',
+  EDITOR_HISTORY_EMPTY: 'Sin versiones guardadas.',
+  EDITOR_HISTORY_CURRENT: 'Actual',
+  EDITOR_HISTORY_NO_SUMMARY: 'Sin resumen',
+  EDITOR_HISTORY_RESTORE: 'Restaurar como nueva versión',
+  EDITOR_HISTORY_RESTORING: 'Restaurando…',
+  EDITOR_HISTORY_SELECT_PROMPT: 'Selecciona una versión para ver su contenido.',
+  EDITOR_HISTORY_PREVIEW_TITLE: 'Vista previa',
 
   // ── Protocols — Text block editor ─────────────────────────────────────────
   EDITOR_TEXT_PLACEHOLDER: 'Escribe el contenido de este bloque de texto…',

@@ -1,5 +1,12 @@
 export type ProtocolStatus = 'draft' | 'active' | 'archived'
-export type BlockType = 'section' | 'text' | 'checklist' | 'steps' | 'decision' | 'dosage_table' | 'alert'
+export type BlockType =
+  | 'section'
+  | 'text'
+  | 'checklist'
+  | 'steps'
+  | 'decision'
+  | 'dosage_table'
+  | 'alert'
 export type AlertSeverity = 'info' | 'warning' | 'danger' | 'success'
 
 export interface ChecklistItem {
@@ -31,7 +38,14 @@ export interface DosageRow {
 }
 
 export type ProtocolBlock =
-  | { id: string; type: 'section'; title: string; description?: string; collapsed_by_default?: boolean; blocks: ProtocolBlock[] }
+  | {
+      id: string
+      type: 'section'
+      title: string
+      description?: string
+      collapsed_by_default?: boolean
+      blocks: ProtocolBlock[]
+    }
   | { id: string; type: 'text'; content: string }
   | { id: string; type: 'checklist'; title?: string; items: ChecklistItem[] }
   | { id: string; type: 'steps'; title?: string; steps: Step[] }
@@ -67,6 +81,22 @@ export interface ProtocolVersion {
   content: ProtocolContent
   changeSummary: string | null
   authorUserId: string
+  createdAt: string
+}
+
+export interface VersionListItem {
+  id: string
+  versionNumber: number
+  changeSummary: string | null
+  createdAt: string
+  isCurrent: boolean
+}
+
+export interface VersionDetailResponse {
+  id: string
+  versionNumber: number
+  content: ProtocolContent
+  changeSummary: string | null
   createdAt: string
 }
 

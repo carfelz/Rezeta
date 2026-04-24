@@ -7,6 +7,8 @@ import type {
   SaveVersionDto,
   ProtocolListItem,
   ProtocolResponse,
+  VersionListItem,
+  VersionDetailResponse,
 } from '@rezeta/shared'
 
 type SaveVersionResponse = {
@@ -17,8 +19,16 @@ type SaveVersionResponse = {
 }
 type RenameResponse = { id: string; title: string }
 
+export interface ProtocolListFilters {
+  search?: string
+  typeId?: string
+  status?: string
+  favoritesOnly?: boolean
+  sort?: 'updatedAt_desc' | 'updatedAt_asc' | 'title_asc' | 'title_desc'
+}
+
 interface UseProtocolsReturn {
-  useGetProtocols: () => UseQueryResult<ProtocolListItem[]>
+  useGetProtocols: (filters?: ProtocolListFilters) => UseQueryResult<ProtocolListItem[]>
   useGetProtocol: (id: string) => UseQueryResult<ProtocolResponse>
   useCreateProtocol: () => UseMutationResult<ProtocolResponse, Error, CreateProtocolDto>
   useRenameProtocol: (
@@ -27,15 +37,33 @@ interface UseProtocolsReturn {
   useSaveVersion: (
     protocolId: string,
   ) => UseMutationResult<SaveVersionResponse, Error, SaveVersionDto>
+  useToggleFavorite: (protocolId: string) => UseMutationResult<void, Error, boolean>
+  useGetVersionHistory: (protocolId: string) => UseQueryResult<VersionListItem[]>
+  useGetVersion: (
+    protocolId: string,
+    versionId: string | null,
+  ) => UseQueryResult<VersionDetailResponse>
+  useRestoreVersion: (protocolId: string) => UseMutationResult<SaveVersionResponse, Error, string>
+}
+
+function buildQuery(filters: ProtocolListFilters): string {
+  const params = new URLSearchParams()
+  if (filters.search) params.set('search', filters.search)
+  if (filters.typeId) params.set('typeId', filters.typeId)
+  if (filters.status) params.set('status', filters.status)
+  if (filters.favoritesOnly) params.set('favoritesOnly', 'true')
+  if (filters.sort) params.set('sort', filters.sort)
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
 }
 
 export function useProtocols(): UseProtocolsReturn {
   const queryClient = useQueryClient()
 
-  const useGetProtocols = () => {
+  const useGetProtocols = (filters: ProtocolListFilters = {}) => {
     return useQuery({
-      queryKey: ['protocols'],
-      queryFn: () => apiClient.get<ProtocolListItem[]>('/v1/protocols'),
+      queryKey: ['protocols', filters],
+      queryFn: () => apiClient.get<ProtocolListItem[]>(`/v1/protocols${buildQuery(filters)}`),
     })
   }
 
@@ -79,11 +107,60 @@ export function useProtocols(): UseProtocolsReturn {
     })
   }
 
+  const useToggleFavorite = (protocolId: string) => {
+    return useMutation({
+      mutationFn: (isFavorite: boolean) => {
+        if (isFavorite) {
+          return apiClient.post<void>(`/v1/protocols/${protocolId}/favorite`, {})
+        }
+        return apiClient.delete(`/v1/protocols/${protocolId}/favorite`)
+      },
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['protocols'] })
+      },
+    })
+  }
+
+  const useGetVersionHistory = (protocolId: string) => {
+    return useQuery({
+      queryKey: ['protocols', protocolId, 'versions'],
+      queryFn: () => apiClient.get<VersionListItem[]>(`/v1/protocols/${protocolId}/versions`),
+      enabled: !!protocolId,
+    })
+  }
+
+  const useGetVersion = (protocolId: string, versionId: string | null) => {
+    return useQuery({
+      queryKey: ['protocols', protocolId, 'versions', versionId],
+      queryFn: () =>
+        apiClient.get<VersionDetailResponse>(`/v1/protocols/${protocolId}/versions/${versionId!}`),
+      enabled: !!protocolId && !!versionId,
+    })
+  }
+
+  const useRestoreVersion = (protocolId: string) => {
+    return useMutation({
+      mutationFn: (versionId: string) =>
+        apiClient.post<SaveVersionResponse>(
+          `/v1/protocols/${protocolId}/versions/${versionId}/restore`,
+          {},
+        ),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
+        void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId, 'versions'] })
+      },
+    })
+  }
+
   return {
     useGetProtocols,
     useGetProtocol,
     useCreateProtocol,
     useRenameProtocol,
     useSaveVersion,
+    useToggleFavorite,
+    useGetVersionHistory,
+    useGetVersion,
+    useRestoreVersion,
   }
 }
