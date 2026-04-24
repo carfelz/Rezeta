@@ -26,31 +26,78 @@ import {
 // ── Palette config ─────────────────────────────────────────────────────────────
 
 const PALETTE_ITEMS = [
-  { type: 'section', icon: 'ph-rows', label: 'Sección', active: false },
+  { type: 'section', icon: 'ph-rows', label: 'Sección', active: true },
   { type: 'text', icon: 'ph-text-t', label: 'Texto', active: true },
-  { type: 'checklist', icon: 'ph-check-square', label: 'Lista', active: false },
-  { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: false },
-  { type: 'decision', icon: 'ph-git-fork', label: 'Decisión', active: false },
-  { type: 'dosage_table', icon: 'ph-table', label: 'Dosificación', active: false },
+  { type: 'checklist', icon: 'ph-check-square', label: 'Lista', active: true },
+  { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: true },
+  { type: 'decision', icon: 'ph-git-fork', label: 'Decisión', active: true },
+  { type: 'dosage_table', icon: 'ph-table', label: 'Dosificación', active: true },
   { type: 'alert', icon: 'ph-warning', label: 'Alerta', active: true },
 ] as const
 
-function makeTextBlock(): ProtocolBlock {
-  return { id: `blk_${crypto.randomUUID().slice(0, 8)}`, type: 'text', content: '' }
+const PALETTE_TITLES: Record<string, string> = {
+  section: strings.EDITOR_PALETTE_ADD_SECTION,
+  text: strings.EDITOR_PALETTE_ADD_TEXT,
+  alert: strings.EDITOR_PALETTE_ADD_ALERT,
+  checklist: strings.EDITOR_PALETTE_ADD_CHECKLIST,
+  steps: strings.EDITOR_PALETTE_ADD_STEPS,
+  decision: strings.EDITOR_PALETTE_ADD_DECISION,
+  dosage_table: strings.EDITOR_PALETTE_ADD_DOSAGE,
 }
 
-function makeAlertBlock(): ProtocolBlock {
-  return {
-    id: `blk_${crypto.randomUUID().slice(0, 8)}`,
-    type: 'alert',
-    severity: 'info',
-    content: '',
-  }
+function makeid() {
+  return `blk_${crypto.randomUUID().slice(0, 8)}`
 }
 
 function makeBlock(type: string): ProtocolBlock | null {
-  if (type === 'text') return makeTextBlock()
-  if (type === 'alert') return makeAlertBlock()
+  if (type === 'text') {
+    return { id: makeid(), type: 'text', content: '' }
+  }
+  if (type === 'alert') {
+    return { id: makeid(), type: 'alert', severity: 'info', content: '' }
+  }
+  if (type === 'checklist') {
+    return {
+      id: makeid(),
+      type: 'checklist',
+      items: [{ id: `itm_${crypto.randomUUID().slice(0, 8)}`, text: '' }],
+    }
+  }
+  if (type === 'steps') {
+    return {
+      id: makeid(),
+      type: 'steps',
+      steps: [{ id: `stp_${crypto.randomUUID().slice(0, 8)}`, order: 1, title: '' }],
+    }
+  }
+  if (type === 'decision') {
+    return {
+      id: makeid(),
+      type: 'decision',
+      condition: '',
+      branches: [
+        { id: `brn_${crypto.randomUUID().slice(0, 8)}`, label: 'Sí', action: '' },
+        { id: `brn_${crypto.randomUUID().slice(0, 8)}`, label: 'No', action: '' },
+      ],
+    }
+  }
+  if (type === 'dosage_table') {
+    return {
+      id: makeid(),
+      type: 'dosage_table',
+      columns: ['drug', 'dose', 'route', 'frequency', 'notes'],
+      rows: [
+        {
+          id: `row_${crypto.randomUUID().slice(0, 8)}`,
+          drug: '',
+          dose: '',
+          route: '',
+          frequency: '',
+          notes: '',
+        },
+      ],
+    }
+  }
   return null
 }
 
@@ -221,6 +268,33 @@ export function ProtocolEditor(): JSX.Element {
   // ── Palette click ─────────────────────────────────────────────────────────
 
   const handlePaletteClick = (type: string) => {
+    if (type === 'section') {
+      // Sections must always be top-level — never nested inside another section
+      const sectionBlock: ProtocolBlock = {
+        id: `sec_${crypto.randomUUID().slice(0, 8)}`,
+        type: 'section',
+        title: '',
+        blocks: [],
+      }
+      // Determine the correct top-level afterId
+      const topLevelMatch = blocks.findIndex((b) => b.id === selectedBlockId)
+      if (topLevelMatch !== -1) {
+        // Selected block is already top-level — insert section after it
+        insertBlock(sectionBlock, selectedBlockId)
+      } else {
+        // Selected block is nested inside a section — insert after its parent section
+        let parentSectionId: string | null = null
+        for (const b of blocks) {
+          if (b.type === 'section' && b.blocks.some((child) => child.id === selectedBlockId)) {
+            parentSectionId = b.id
+            break
+          }
+        }
+        insertBlock(sectionBlock, parentSectionId)
+      }
+      return
+    }
+
     const newBlock = makeBlock(type)
     if (!newBlock) return
     insertBlock(newBlock, selectedBlockId)
@@ -321,7 +395,7 @@ export function ProtocolEditor(): JSX.Element {
               <button
                 key={type}
                 onClick={() => handlePaletteClick(type)}
-                title={strings.EDITOR_PALETTE_ADD_TEXT}
+                title={PALETTE_TITLES[type] ?? label}
                 className="w-full px-2"
               >
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-700 hover:bg-n-100 hover:text-n-900 cursor-pointer transition-colors duration-[100ms] select-none">

@@ -124,6 +124,7 @@ interface EditorState {
   updateBlock: (id: string, updater: (b: ProtocolBlock) => ProtocolBlock) => void
   deleteBlock: (id: string) => void
   insertBlock: (block: ProtocolBlock, afterId?: string | null) => void
+  appendToSection: (sectionId: string, block: ProtocolBlock) => void
   moveBlock: (id: string, dir: 'up' | 'down') => void
   markSaved: () => void
   resetEditor: () => void
@@ -165,6 +166,17 @@ export const useEditorStore = create<EditorState>((set) => ({
   insertBlock: (block, afterId = null) =>
     set((s) => {
       const next = insertBlockAfter(s.blocks, afterId ?? null, block)
+      return { blocks: next, isDirty: !blocksEqual(next, s.savedBlocks), selectedBlockId: block.id }
+    }),
+
+  appendToSection: (sectionId, block) =>
+    set((s) => {
+      const next = s.blocks.map((b) => {
+        if (b.type === 'section' && b.id === sectionId) {
+          return { ...b, blocks: [...b.blocks, block] }
+        }
+        return b
+      })
       return { blocks: next, isDirty: !blocksEqual(next, s.savedBlocks), selectedBlockId: block.id }
     }),
 

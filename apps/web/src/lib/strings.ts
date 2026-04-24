@@ -122,6 +122,18 @@ export const strings = {
   EDITOR_BLOCK_CANCEL: 'Cancelar',
   EDITOR_BLOCK_EMPTY_TEXT: '(texto vacío)',
   EDITOR_SECTION_EMPTY: 'Sección sin bloques.',
+  EDITOR_SECTION_DEFAULT_TITLE: 'Nueva sección',
+  EDITOR_SECTION_TITLE_PLACEHOLDER: 'Título de la sección…',
+  EDITOR_SECTION_CLICK_TO_RENAME: 'Clic para renombrar',
+  EDITOR_SECTION_RENAME: 'Renombrar sección',
+  EDITOR_SECTION_DELETE: 'Eliminar sección',
+  EDITOR_SECTION_DELETE_CONFIRM: (childCount: number) =>
+    childCount > 0
+      ? `¿Eliminar esta sección y sus ${childCount} bloque${childCount === 1 ? '' : 's'}? Esta acción no se puede deshacer.`
+      : '¿Eliminar esta sección? Esta acción no se puede deshacer.',
+  EDITOR_SECTION_EXPAND: 'Expandir sección',
+  EDITOR_SECTION_COLLAPSE: 'Colapsar sección',
+  EDITOR_SECTION_ADD_BLOCK: 'Añadir bloque',
 
   // ── Protocols — Text block editor ─────────────────────────────────────────
   EDITOR_TEXT_PLACEHOLDER: 'Escribe el contenido de este bloque de texto…',
@@ -137,9 +149,49 @@ export const strings = {
   EDITOR_ALERT_CONTENT_LABEL: 'Contenido',
   EDITOR_ALERT_CONTENT_PLACEHOLDER: 'Describe la advertencia o información importante…',
 
+  // ── Protocols — Checklist block editor ───────────────────────────────────────
+  EDITOR_CHECKLIST_TITLE_LABEL: 'Título (opcional)',
+  EDITOR_CHECKLIST_TITLE_PLACEHOLDER: 'Ej. Verificaciones previas',
+  EDITOR_CHECKLIST_ITEMS_LABEL: 'Ítems',
+  EDITOR_CHECKLIST_ITEM_PLACEHOLDER: 'Descripción del ítem…',
+  EDITOR_CHECKLIST_CRITICAL_LABEL: 'Crítico',
+  EDITOR_CHECKLIST_ADD_ITEM: '+ Añadir ítem',
+  EDITOR_CHECKLIST_REMOVE_ITEM: 'Eliminar ítem',
+
+  // ── Protocols — Steps block editor ────────────────────────────────────────
+  EDITOR_STEPS_TITLE_LABEL: 'Título (opcional)',
+  EDITOR_STEPS_TITLE_PLACEHOLDER: 'Ej. Manejo de vía aérea',
+  EDITOR_STEPS_ITEMS_LABEL: 'Pasos',
+  EDITOR_STEPS_STEP_TITLE_PLACEHOLDER: 'Nombre del paso…',
+  EDITOR_STEPS_STEP_DETAIL_PLACEHOLDER: 'Detalle o instrucción adicional (opcional)',
+  EDITOR_STEPS_ADD_STEP: '+ Añadir paso',
+  EDITOR_STEPS_REMOVE_STEP: 'Eliminar paso',
+
+  // ── Protocols — Decision block editor ─────────────────────────────────────
+  EDITOR_DECISION_CONDITION_LABEL: 'Condición o pregunta',
+  EDITOR_DECISION_CONDITION_PLACEHOLDER: 'Ej. ¿Presión sistólica < 90 mmHg?',
+  EDITOR_DECISION_BRANCHES_LABEL: 'Ramas de decisión',
+  EDITOR_DECISION_BRANCH_LABEL: 'Rama',
+  EDITOR_DECISION_BRANCH_LABEL_PLACEHOLDER: 'Ej. Sí / No / ≥38°C',
+  EDITOR_DECISION_BRANCH_ACTION_PLACEHOLDER: 'Qué hacer si se cumple esta condición…',
+  EDITOR_DECISION_ADD_BRANCH: '+ Añadir rama',
+  EDITOR_DECISION_REMOVE_BRANCH: 'Eliminar rama (mín. 2)',
+
+  // ── Protocols — Dosage table editor ──────────────────────────────────────
+  EDITOR_DOSAGE_TITLE_LABEL: 'Título (opcional)',
+  EDITOR_DOSAGE_TITLE_PLACEHOLDER: 'Ej. Medicamentos de primera línea',
+  EDITOR_DOSAGE_ROWS_LABEL: 'Filas',
+  EDITOR_DOSAGE_ADD_ROW: '+ Añadir fila',
+  EDITOR_DOSAGE_REMOVE_ROW: 'Eliminar fila',
+
   // ── Protocols — Editor palette ─────────────────────────────────────────────
+  EDITOR_PALETTE_ADD_SECTION: 'Añadir sección',
   EDITOR_PALETTE_ADD_TEXT: 'Añadir bloque de texto',
   EDITOR_PALETTE_ADD_ALERT: 'Añadir bloque de alerta',
+  EDITOR_PALETTE_ADD_CHECKLIST: 'Añadir lista de verificación',
+  EDITOR_PALETTE_ADD_STEPS: 'Añadir pasos secuenciales',
+  EDITOR_PALETTE_ADD_DECISION: 'Añadir bloque de decisión',
+  EDITOR_PALETTE_ADD_DOSAGE: 'Añadir tabla de dosificación',
   EDITOR_PALETTE_DISABLED_TOOLTIP: 'Disponible próximamente',
 
   // ── Protocols — Autosave ──────────────────────────────────────────────────
