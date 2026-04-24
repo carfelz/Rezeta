@@ -43,11 +43,10 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production deps only — workspace packages are symlinked, filled below
-# --frozen-lockfile is omitted here: only partial workspace manifests are present
-# in this stage, which causes pnpm's lockfile validation to fail. Integrity was
-# already verified in the builder stage.
-RUN pnpm install --prod
+# Install production deps only — workspace packages are symlinked, filled below.
+# --ignore-scripts: skips lifecycle hooks (husky prepare, Prisma postinstall).
+#   husky is a devDep and isn't present; Prisma client is copied from builder.
+RUN pnpm install --prod --ignore-scripts
 
 # Compiled API
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
