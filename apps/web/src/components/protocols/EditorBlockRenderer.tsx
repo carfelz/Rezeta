@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { clsx } from 'clsx'
-import { PencilSimple, Trash, ArrowUp, ArrowDown } from '@phosphor-icons/react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { BlockRenderer } from './BlockRenderer'
 import type { ProtocolBlock } from './BlockRenderer'
 import { TextBlockEditor } from './TextBlockEditor'
@@ -55,8 +55,6 @@ function SectionEditor({
   isLast: boolean
   nested: boolean
 }): JSX.Element {
-  const [isCollapsed, setIsCollapsed] = useState(block.collapsed_by_default ?? false)
-  const [isEditingTitle, setIsEditingTitle] = useState(block.title === '')
   const [titleDraft, setTitleDraft] = useState(block.title)
 
   const requiredBlockIds = useEditorStore((s) => s.requiredBlockIds)
@@ -64,6 +62,7 @@ function SectionEditor({
   const deleteBlock = useEditorStore((s) => s.deleteBlock)
   const moveBlock = useEditorStore((s) => s.moveBlock)
   const appendToSection = useEditorStore((s) => s.appendToSection)
+  const duplicateBlock = useEditorStore((s) => s.duplicateBlock)
 
   const isRequired = requiredBlockIds.has(block.id)
 
@@ -75,24 +74,16 @@ function SectionEditor({
       return { ...b, title }
     })
     setTitleDraft(title)
-    setIsEditingTitle(false)
   }
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') commitTitle()
-    if (e.key === 'Escape') {
-      if (!block.title) {
-        commitTitle()
-      } else {
-        setTitleDraft(block.title)
-        setIsEditingTitle(false)
-      }
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()
     }
-  }
-
-  const startEditing = () => {
-    setTitleDraft(block.title)
-    setIsEditingTitle(true)
+    if (e.key === 'Escape') {
+      setTitleDraft(block.title || strings.EDITOR_SECTION_DEFAULT_TITLE)
+      e.currentTarget.blur()
+    }
   }
 
   const handleAddBlock = () => {
@@ -111,43 +102,21 @@ function SectionEditor({
   }
 
   return (
-    <div className={clsx('bg-n-0 border border-n-200 rounded-[5px] mb-3', nested && 'ml-7')}>
+    <div id={`section-${block.id}`} className={clsx('pblock', nested && 'ml-7')}>
       {/* Section header */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 px-[14px] py-2.5 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          title={isCollapsed ? strings.EDITOR_SECTION_EXPAND : strings.EDITOR_SECTION_COLLAPSE}
-          className="shrink-0 w-5 h-5 flex items-center justify-center text-n-400 hover:text-n-700 transition-colors duration-[100ms]"
-        >
-          <i className={`ph ${isCollapsed ? 'ph-caret-right' : 'ph-caret-down'} text-[11px]`} />
-        </button>
-
-        {/* Type chip */}
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
-          {strings.BLOCK_TYPE_SECTION}
-        </span>
+      <div className="pblock__header">
+        <i className="ph ph-dots-six-vertical pblock__handle" />
+        <span className="pblock__type-chip">{strings.BLOCK_TYPE_SECTION}</span>
 
         {/* Title — editable inline */}
-        {isEditingTitle ? (
-          <input
-            value={titleDraft}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={commitTitle}
-            onKeyDown={handleTitleKeyDown}
-            autoFocus
-            className="flex-1 min-w-0 text-[16px] font-serif font-medium text-n-900 bg-transparent border-b border-p-500 focus:outline-none pb-0.5"
-            placeholder={strings.EDITOR_SECTION_TITLE_PLACEHOLDER}
-          />
-        ) : (
-          <button
-            onClick={startEditing}
-            title={strings.EDITOR_SECTION_CLICK_TO_RENAME}
-            className="flex-1 min-w-0 text-left text-[16px] font-serif font-medium text-n-900 hover:text-p-700 truncate transition-colors duration-[100ms]"
-          >
-            {block.title || strings.EDITOR_SECTION_DEFAULT_TITLE}
-          </button>
-        )}
+        <input
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={commitTitle}
+          onKeyDown={handleTitleKeyDown}
+          className="flex-1 min-w-0 font-serif text-[17px] font-medium text-n-900 bg-transparent border-none outline-none focus:border-b focus:border-p-500 pb-px"
+          placeholder={strings.EDITOR_SECTION_TITLE_PLACEHOLDER}
+        />
 
         {isRequired && (
           <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
@@ -155,51 +124,31 @@ function SectionEditor({
           </span>
         )}
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-0.5 ml-1 shrink-0">
-          <button
-            onClick={() => moveBlock(block.id, 'up')}
-            disabled={isFirst}
-            title={strings.TEMPLATE_EDITOR_MOVE_UP}
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <ArrowUp size={13} />
-          </button>
-          <button
-            onClick={() => moveBlock(block.id, 'down')}
-            disabled={isLast}
-            title={strings.TEMPLATE_EDITOR_MOVE_DOWN}
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <ArrowDown size={13} />
-          </button>
-          <button
-            onClick={startEditing}
-            title={strings.EDITOR_SECTION_RENAME}
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms]"
-          >
-            <PencilSimple size={13} />
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isRequired}
-            title={
-              isRequired
-                ? strings.EDITOR_BLOCK_DELETE_REQUIRED_TOOLTIP
-                : strings.EDITOR_SECTION_DELETE
-            }
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-danger-text hover:bg-danger-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <Trash size={13} />
-          </button>
-        </div>
+        {/* Add block to section */}
+        <button
+          onClick={handleAddBlock}
+          title={strings.EDITOR_SECTION_ADD_BLOCK}
+          className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms] shrink-0"
+        >
+          <i className="ph ph-plus text-[13px]" />
+        </button>
+
+        <BlockContextMenu
+          isFirst={isFirst}
+          isLast={isLast}
+          isRequired={isRequired}
+          onMoveUp={() => moveBlock(block.id, 'up')}
+          onMoveDown={() => moveBlock(block.id, 'down')}
+          onDuplicate={() => duplicateBlock(block.id)}
+          onDelete={handleDelete}
+        />
       </div>
 
       {/* Section body */}
-      {!isCollapsed && (
-        <div className="p-3 flex flex-col gap-0">
-          {block.blocks.length > 0 ? (
-            block.blocks.map((child, idx) => (
+      <div className="pblock__body">
+        {block.blocks.length > 0 ? (
+          <div className="pblock-nested">
+            {block.blocks.map((child, idx) => (
               <EditorBlockRenderer
                 key={child.id}
                 block={child}
@@ -207,21 +156,14 @@ function SectionEditor({
                 isFirst={idx === 0}
                 isLast={idx === block.blocks.length - 1}
               />
-            ))
-          ) : (
-            <p className="text-[12.5px] font-sans text-n-400 italic text-center py-3">
-              {strings.EDITOR_SECTION_EMPTY}
-            </p>
-          )}
-          <button
-            onClick={handleAddBlock}
-            className="mt-1.5 flex items-center gap-1.5 px-2 py-1 text-[12px] font-sans text-n-500 hover:text-p-700 hover:bg-n-50 rounded transition-colors duration-[100ms] self-start"
-          >
-            <i className="ph ph-plus text-[11px]" />
-            {strings.EDITOR_SECTION_ADD_BLOCK}
-          </button>
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <p className="text-[12.5px] font-sans text-n-400 italic text-center py-3">
+            {strings.EDITOR_SECTION_EMPTY}
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -244,28 +186,31 @@ function LeafBlockEditor({
   const selectBlock = useEditorStore((s) => s.selectBlock)
   const deleteBlock = useEditorStore((s) => s.deleteBlock)
   const moveBlock = useEditorStore((s) => s.moveBlock)
+  const duplicateBlock = useEditorStore((s) => s.duplicateBlock)
 
   const isSelected = selectedBlockId === block.id
   const isRequired = requiredBlockIds.has(block.id)
   const isEditable = EDITABLE_BLOCK_TYPES.has(block.type)
-  const isEditingThis = isSelected && isEditable
+
+  const handleDelete = () => {
+    if (isRequired) return
+    if (window.confirm(strings.EDITOR_BLOCK_DELETE_CONFIRM)) {
+      deleteBlock(block.id)
+    }
+  }
 
   return (
     <div
       className={clsx(
-        'bg-n-0 border rounded-[5px] mb-2 transition-all duration-[100ms]',
-        nested ? 'ml-7' : '',
-        isSelected
-          ? 'border-p-500 shadow-[0_0_0_2px_rgba(45,87,96,0.12)]'
-          : 'border-n-200 hover:border-n-300',
+        'pblock',
+        isSelected && 'border-p-500 shadow-[0_0_0_2px_rgba(45,87,96,0.12)]',
       )}
     >
       {/* Block header */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 px-[18px] py-2.5 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
-          {blockTypeLabel(block.type)}
-        </span>
-        <span className="text-[14px] font-serif text-n-700 flex-1 min-w-0 truncate">
+      <div className="pblock__header">
+        <i className="ph ph-dots-six-vertical pblock__handle" />
+        <span className="pblock__type-chip">{blockTypeLabel(block.type)}</span>
+        <span className="pblock__title flex-1 min-w-0 truncate text-[15px] text-n-700">
           {blockDisplayTitle(block)}
         </span>
         {isRequired && (
@@ -274,67 +219,127 @@ function LeafBlockEditor({
           </span>
         )}
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-0.5 ml-1 shrink-0">
-          <button
-            onClick={() => moveBlock(block.id, 'up')}
-            disabled={isFirst}
-            title={strings.TEMPLATE_EDITOR_MOVE_UP}
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <ArrowUp size={13} />
-          </button>
-          <button
-            onClick={() => moveBlock(block.id, 'down')}
-            disabled={isLast}
-            title={strings.TEMPLATE_EDITOR_MOVE_DOWN}
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <ArrowDown size={13} />
-          </button>
-
-          {isEditable && (
-            <button
-              onClick={() => selectBlock(isSelected ? null : block.id)}
-              title={strings.EDITOR_BLOCK_EDIT}
-              className={clsx(
-                'w-6 h-6 flex items-center justify-center rounded transition-colors duration-[100ms]',
-                isSelected ? 'text-p-700 bg-p-50' : 'text-n-400 hover:text-n-800 hover:bg-n-100',
-              )}
-            >
-              <PencilSimple size={13} />
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              if (isRequired) return
-              if (window.confirm(strings.EDITOR_BLOCK_DELETE_CONFIRM)) {
-                deleteBlock(block.id)
-              }
-            }}
-            disabled={isRequired}
-            title={
-              isRequired
-                ? strings.EDITOR_BLOCK_DELETE_REQUIRED_TOOLTIP
-                : strings.EDITOR_BLOCK_DELETE
-            }
-            className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-danger-text hover:bg-danger-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-          >
-            <Trash size={13} />
-          </button>
-        </div>
+        <BlockContextMenu
+          isFirst={isFirst}
+          isLast={isLast}
+          isRequired={isRequired}
+          isEditable={isEditable}
+          onEdit={isEditable ? () => selectBlock(isSelected ? null : block.id) : undefined}
+          onMoveUp={() => moveBlock(block.id, 'up')}
+          onMoveDown={() => moveBlock(block.id, 'down')}
+          onDuplicate={() => duplicateBlock(block.id)}
+          onDelete={handleDelete}
+        />
       </div>
 
       {/* Block body */}
-      {isEditingThis ? (
+      {isSelected && isEditable ? (
         <EditForm block={block} />
       ) : (
-        <div className="p-4">
+        <div
+          className={clsx(
+            'pblock__body',
+            isEditable && 'cursor-pointer hover:bg-n-25 transition-colors duration-[100ms]',
+          )}
+          onClick={() => isEditable && !isSelected && selectBlock(block.id)}
+          title={isEditable && !isSelected ? strings.EDITOR_BLOCK_EDIT : undefined}
+        >
           <BlockRenderer block={block} nested={nested} />
         </div>
       )}
     </div>
+  )
+}
+
+// ── Context menu ──────────────────────────────────────────────────────────────
+
+interface BlockContextMenuProps {
+  isFirst: boolean
+  isLast: boolean
+  isRequired: boolean
+  isEditable?: boolean
+  onEdit?: (() => void) | undefined
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onDuplicate: () => void
+  onDelete: () => void
+}
+
+function BlockContextMenu({
+  isFirst,
+  isLast,
+  isRequired,
+  isEditable,
+  onEdit,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onDelete,
+}: BlockContextMenuProps): JSX.Element {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms] shrink-0"
+          title="Más acciones"
+        >
+          <i className="ph ph-dots-three text-[14px]" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          className="z-50 min-w-[168px] bg-n-0 border border-n-200 rounded-[5px] py-1"
+          style={{
+            boxShadow:
+              '0 1px 0 rgba(14,14,13,.04), 0 8px 24px -8px rgba(14,14,13,.12), 0 2px 6px rgba(14,14,13,.06)',
+          }}
+        >
+          {isEditable && onEdit && (
+            <DropdownMenu.Item
+              onSelect={onEdit}
+              className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+            >
+              <i className="ph ph-pencil-simple text-[13px] text-n-400" />
+              {strings.EDITOR_BLOCK_CTX_EDIT}
+            </DropdownMenu.Item>
+          )}
+          <DropdownMenu.Item
+            onSelect={onMoveUp}
+            disabled={isFirst}
+            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+          >
+            <i className="ph ph-arrow-up text-[13px] text-n-400" />
+            {strings.EDITOR_BLOCK_CTX_MOVE_UP}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={onMoveDown}
+            disabled={isLast}
+            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+          >
+            <i className="ph ph-arrow-down text-[13px] text-n-400" />
+            {strings.EDITOR_BLOCK_CTX_MOVE_DOWN}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={onDuplicate}
+            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+          >
+            <i className="ph ph-copy text-[13px] text-n-400" />
+            {strings.EDITOR_BLOCK_CTX_DUPLICATE}
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator className="h-px bg-n-100 my-1" />
+          <DropdownMenu.Item
+            onSelect={onDelete}
+            disabled={isRequired}
+            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+          >
+            <i className="ph ph-trash text-[13px]" />
+            {strings.EDITOR_BLOCK_CTX_DELETE}
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   )
 }
 

@@ -1,15 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
-import {
-  Badge,
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-} from '@/components/ui'
-import { ProtocolContainer } from '@/components/ui/ProtocolBlock'
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
@@ -26,36 +17,22 @@ import {
 // ── Palette config ─────────────────────────────────────────────────────────────
 
 const PALETTE_ITEMS = [
-  { type: 'section', icon: 'ph-rows', label: 'Sección', active: true },
-  { type: 'text', icon: 'ph-text-t', label: 'Texto', active: true },
-  { type: 'checklist', icon: 'ph-check-square', label: 'Lista', active: true },
+  { type: 'text', icon: 'ph-text-align-left', label: 'Texto', active: true },
+  { type: 'section', icon: 'ph-heading', label: 'Sección', active: true },
+  { type: 'checklist', icon: 'ph-list-checks', label: 'Checklist', active: true },
+  { type: 'dosage_table', icon: 'ph-table', label: 'Tabla de dosis', active: true },
+  { type: 'decision', icon: 'ph-tree-structure', label: 'Árbol de decisión', active: true },
+  { type: 'alert', icon: 'ph-warning-octagon', label: 'Alerta clínica', active: true },
   { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: true },
-  { type: 'decision', icon: 'ph-git-fork', label: 'Decisión', active: true },
-  { type: 'dosage_table', icon: 'ph-table', label: 'Dosificación', active: true },
-  { type: 'alert', icon: 'ph-warning', label: 'Alerta', active: true },
 ] as const
-
-const PALETTE_TITLES: Record<string, string> = {
-  section: strings.EDITOR_PALETTE_ADD_SECTION,
-  text: strings.EDITOR_PALETTE_ADD_TEXT,
-  alert: strings.EDITOR_PALETTE_ADD_ALERT,
-  checklist: strings.EDITOR_PALETTE_ADD_CHECKLIST,
-  steps: strings.EDITOR_PALETTE_ADD_STEPS,
-  decision: strings.EDITOR_PALETTE_ADD_DECISION,
-  dosage_table: strings.EDITOR_PALETTE_ADD_DOSAGE,
-}
 
 function makeid() {
   return `blk_${crypto.randomUUID().slice(0, 8)}`
 }
 
 function makeBlock(type: string): ProtocolBlock | null {
-  if (type === 'text') {
-    return { id: makeid(), type: 'text', content: '' }
-  }
-  if (type === 'alert') {
-    return { id: makeid(), type: 'alert', severity: 'info', content: '' }
-  }
+  if (type === 'text') return { id: makeid(), type: 'text', content: '' }
+  if (type === 'alert') return { id: makeid(), type: 'alert', severity: 'info', content: '' }
   if (type === 'checklist') {
     return {
       id: makeid(),
@@ -101,6 +78,32 @@ function makeBlock(type: string): ProtocolBlock | null {
   return null
 }
 
+function formatRelativeTime(isoDate: string): string {
+  const diffMs = Date.now() - new Date(isoDate).getTime()
+  const diffMins = Math.floor(diffMs / 60_000)
+  if (diffMins < 2) return 'hace un momento'
+  if (diffMins < 60) return `hace ${diffMins} min`
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `hace ${diffHours} h`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays === 1) return 'ayer'
+  return `hace ${diffDays} días`
+}
+
+function countBlockStats(blocks: ProtocolBlock[]): { total: number; sections: number } {
+  let total = 0
+  let sections = 0
+  for (const block of blocks) {
+    total++
+    if (block.type === 'section') {
+      sections++
+      const inner = countBlockStats(block.blocks)
+      total += inner.total
+    }
+  }
+  return { total, sections }
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ProtocolEditor(): JSX.Element {
@@ -119,12 +122,20 @@ export function ProtocolEditor(): JSX.Element {
   const { mutate: rename, isPending: isRenaming } = useRenameProtocol(id ?? '')
   const { mutate: saveVersion, isPending: isSaving } = useSaveVersion(id ?? '')
 
-  // Editor store
-  const { blocks, isDirty, selectedBlockId, initEditor, insertBlock, markSaved, resetEditor } =
-    useEditorStore()
+  const { blocks, isDirty, initEditor, insertBlock, markSaved, resetEditor } = useEditorStore()
+  const selectedBlockId = useEditorStore((s) => s.selectedBlockId)
 
   const [historyOpen, setHistoryOpen] = useState(false)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
+  const [publishModalOpen, setPublishModalOpen] = useState(false)
+  const [changeSummary, setChangeSummary] = useState('')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [draftBanner, setDraftBanner] = useState<{
+    blocks: ProtocolBlock[]
+    savedAt: number
+  } | null>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   const { data: versionHistory, isLoading: historyLoading } = useGetVersionHistory(id ?? '')
   const { data: selectedVersion, isLoading: versionPreviewLoading } = useGetVersion(
@@ -133,27 +144,7 @@ export function ProtocolEditor(): JSX.Element {
   )
   const { mutate: restoreVersion, isPending: isRestoring } = useRestoreVersion(id ?? '')
 
-  const handleRestore = () => {
-    if (!selectedVersionId) return
-    restoreVersion(selectedVersionId, {
-      onSuccess: () => {
-        setHistoryOpen(false)
-        setSelectedVersionId(null)
-      },
-    })
-  }
-
-  const [editingTitle, setEditingTitle] = useState(false)
-  const [titleDraft, setTitleDraft] = useState('')
-  const [saveModalOpen, setSaveModalOpen] = useState(false)
-  const [changeSummary, setChangeSummary] = useState('')
-  const [draftBanner, setDraftBanner] = useState<{
-    blocks: ProtocolBlock[]
-    savedAt: number
-  } | null>(null)
-  const titleInputRef = useRef<HTMLInputElement>(null)
-
-  // ── Initialize editor from server data ────────────────────────────────────
+  // ── Initialize editor ─────────────────────────────────────────────────────
 
   const initialized = useRef(false)
   useEffect(() => {
@@ -163,14 +154,9 @@ export function ProtocolEditor(): JSX.Element {
     const serverBlocks = (protocol.currentVersion?.content?.blocks ?? []) as ProtocolBlock[]
     const requiredIds = extractRequiredBlockIds(protocol.templateSchema)
 
-    // Check for a local draft
     const draft = id ? loadLocalDraft(id) : null
-    if (draft) {
-      setDraftBanner(draft)
-      initEditor(id!, serverBlocks, requiredIds)
-    } else {
-      initEditor(id!, serverBlocks, requiredIds)
-    }
+    if (draft) setDraftBanner(draft)
+    initEditor(id!, serverBlocks, requiredIds)
 
     return () => {
       resetEditor()
@@ -178,7 +164,7 @@ export function ProtocolEditor(): JSX.Element {
     }
   }, [protocol?.id])
 
-  // ── Autosave to localStorage every 30s when dirty ─────────────────────────
+  // ── Autosave ──────────────────────────────────────────────────────────────
 
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
@@ -188,34 +174,25 @@ export function ProtocolEditor(): JSX.Element {
   useEffect(() => {
     if (!id) return
     const interval = setInterval(() => {
-      if (isDirtyRef.current) {
-        saveLocalDraft(id, blocksRef.current)
-      }
+      if (isDirtyRef.current) saveLocalDraft(id, blocksRef.current)
     }, 30_000)
     return () => clearInterval(interval)
   }, [id])
 
-  // ── Navigation guard (unsaved changes) ────────────────────────────────────
+  // ── Navigation guard ──────────────────────────────────────────────────────
 
   const blocker = useBlocker(isDirty)
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      if (window.confirm(strings.EDITOR_NAVIGATE_AWAY)) {
-        blocker.proceed()
-      } else {
-        blocker.reset()
-      }
+      if (window.confirm(strings.EDITOR_NAVIGATE_AWAY)) blocker.proceed()
+      else blocker.reset()
     }
   }, [blocker])
-
-  // ── Guard: missing id ─────────────────────────────────────────────────────
 
   if (!id) {
     void navigate('/protocolos', { replace: true })
     return <></>
   }
-
-  // ── Loading / error states ────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -237,6 +214,10 @@ export function ProtocolEditor(): JSX.Element {
   }
 
   const versionNumber = protocol.currentVersion?.versionNumber ?? 1
+  const { total: totalBlocks, sections: sectionCount } = countBlockStats(blocks)
+  const topLevelSections = blocks.filter(
+    (b): b is Extract<ProtocolBlock, { type: 'section' }> => b.type === 'section',
+  )
 
   // ── Title editing ─────────────────────────────────────────────────────────
 
@@ -257,19 +238,28 @@ export function ProtocolEditor(): JSX.Element {
     if (e.key === 'Escape') setEditingTitle(false)
   }
 
-  // ── Save version ──────────────────────────────────────────────────────────
+  // ── Save helpers ──────────────────────────────────────────────────────────
 
-  const handleSaveConfirm = () => {
-    const content = {
-      version: '1.0',
-      template_version: '1.0',
-      blocks,
-    }
+  const buildContent = () => ({ version: '1.0', template_version: '1.0', blocks })
+
+  const handleSaveDraft = () => {
     saveVersion(
-      { content, changeSummary: changeSummary.trim() || null },
+      { content: buildContent(), changeSummary: null, publish: false },
       {
         onSuccess: () => {
-          setSaveModalOpen(false)
+          markSaved()
+          if (id) clearLocalDraft(id)
+        },
+      },
+    )
+  }
+
+  const handlePublishConfirm = () => {
+    saveVersion(
+      { content: buildContent(), changeSummary: changeSummary.trim() || null, publish: true },
+      {
+        onSuccess: () => {
+          setPublishModalOpen(false)
           setChangeSummary('')
           markSaved()
           if (id) clearLocalDraft(id)
@@ -278,7 +268,7 @@ export function ProtocolEditor(): JSX.Element {
     )
   }
 
-  // ── Draft banner actions ──────────────────────────────────────────────────
+  // ── Draft banner ──────────────────────────────────────────────────────────
 
   const applyDraft = () => {
     if (!draftBanner || !id) return
@@ -296,20 +286,16 @@ export function ProtocolEditor(): JSX.Element {
 
   const handlePaletteClick = (type: string) => {
     if (type === 'section') {
-      // Sections must always be top-level — never nested inside another section
       const sectionBlock: ProtocolBlock = {
         id: `sec_${crypto.randomUUID().slice(0, 8)}`,
         type: 'section',
         title: '',
         blocks: [],
       }
-      // Determine the correct top-level afterId
       const topLevelMatch = blocks.findIndex((b) => b.id === selectedBlockId)
       if (topLevelMatch !== -1) {
-        // Selected block is already top-level — insert section after it
         insertBlock(sectionBlock, selectedBlockId)
       } else {
-        // Selected block is nested inside a section — insert after its parent section
         let parentSectionId: string | null = null
         for (const b of blocks) {
           if (b.type === 'section' && b.blocks.some((child) => child.id === selectedBlockId)) {
@@ -321,42 +307,67 @@ export function ProtocolEditor(): JSX.Element {
       }
       return
     }
-
     const newBlock = makeBlock(type)
     if (!newBlock) return
     insertBlock(newBlock, selectedBlockId)
   }
 
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(`section-${sectionId}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleRestore = () => {
+    if (!selectedVersionId) return
+    restoreVersion(selectedVersionId, {
+      onSuccess: () => {
+        setHistoryOpen(false)
+        setSelectedVersionId(null)
+      },
+    })
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="flex flex-col h-full min-h-0" style={{ height: 'calc(100vh - 56px)' }}>
+    <div>
       {/* ── Draft recovery banner ──────────────────────────────────────────── */}
       {draftBanner && (
-        <div className="flex items-center gap-3 px-6 py-2 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text shrink-0">
+        <div className="flex items-center gap-3 -mx-12 -mt-8 mb-6 px-12 py-2.5 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text">
           <i className="ph ph-clock-counter-clockwise text-[14px]" />
           <span className="flex-1">{strings.EDITOR_DRAFT_RECOVERED}</span>
           <button onClick={applyDraft} className="font-medium hover:underline">
             {strings.EDITOR_DRAFT_USE}
           </button>
-          <button onClick={discardDraft} className="hover:underline">
+          <button onClick={discardDraft} className="hover:underline opacity-70">
             {strings.EDITOR_DRAFT_DISCARD}
           </button>
         </div>
       )}
 
-      {/* ── Editor top bar ──────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-4 px-6 py-3 bg-n-0 border-b border-n-200 shrink-0">
-        <Link
-          to="/protocolos"
-          className="flex items-center gap-1.5 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms] shrink-0"
-        >
-          <i className="ph ph-arrow-left text-[14px]" />
+      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-1.5 text-[13px] font-sans text-n-500 mb-5">
+        <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-[100ms]">
           {strings.EDITOR_BACK}
         </Link>
+        <i className="ph ph-caret-right text-[11px] text-n-300" />
+        <span className="text-n-700 font-medium truncate">{protocol.title}</span>
+        <span className="font-mono text-n-400 shrink-0">
+          · {strings.EDITOR_VERSION(versionNumber)}
+        </span>
+      </div>
 
-        <div className="w-px h-4 bg-n-200 shrink-0" />
-
-        {/* Title */}
+      {/* ── Editorial page header ──────────────────────────────────────────── */}
+      <div className="flex items-start gap-6 mb-7">
         <div className="flex-1 min-w-0">
+          {/* Kicker */}
+          <div className="text-[11.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+            {[protocol.typeName, formatRelativeTime(protocol.updatedAt)]
+              .filter(Boolean)
+              .join(' · ')}
+          </div>
+
+          {/* Title — editable */}
           {editingTitle ? (
             <input
               ref={titleInputRef}
@@ -364,284 +375,351 @@ export function ProtocolEditor(): JSX.Element {
               onChange={(e) => setTitleDraft(e.target.value)}
               onBlur={commitTitle}
               onKeyDown={handleTitleKeyDown}
-              className="text-[16px] font-serif font-medium text-n-900 bg-transparent border-b border-p-500 focus:outline-none w-full max-w-[480px] pb-0.5"
+              className="text-[28px] font-serif font-medium text-n-900 bg-transparent border-b-2 border-p-500 outline-none w-full pb-0.5 mb-2 leading-tight"
               disabled={isRenaming}
             />
           ) : (
-            <button
+            <h1
               onClick={startEditing}
-              className="text-[16px] font-serif font-medium text-n-900 hover:text-p-700 transition-colors duration-[100ms] truncate max-w-[480px] block text-left"
+              className="text-[28px] font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-[100ms] leading-tight"
               title="Haz clic para renombrar"
             >
               {protocol.title}
-            </button>
+            </h1>
+          )}
+
+          {/* Subtitle */}
+          <p className="text-[13px] font-sans text-n-500">
+            {totalBlocks} {totalBlocks === 1 ? 'bloque' : 'bloques'}
+            {sectionCount > 0 &&
+              ` · ${sectionCount} ${sectionCount === 1 ? 'sección' : 'secciones'}`}
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 shrink-0 pt-1">
+          {isDirty && (
+            <span className="badge badge--review">
+              <span className="badge__dot" />
+              {strings.EDITOR_UNSAVED_CHANGES}
+            </span>
+          )}
+          <Button variant="secondary" size="sm" onClick={() => void navigate(`/protocolos/${id}`)}>
+            <i className="ph ph-eye mr-1.5" />
+            {strings.EDITOR_VISTA_PREVIA}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleSaveDraft} disabled={isSaving}>
+            {isSaving ? <i className="ph ph-spinner animate-spin mr-1.5" /> : null}
+            {strings.EDITOR_GUARDAR}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setPublishModalOpen(true)}
+            disabled={isSaving}
+          >
+            <i className="ph ph-check mr-1.5" />
+            {strings.EDITOR_PUBLICAR(versionNumber + 1)}
+          </Button>
+        </div>
+      </div>
+
+      {/* ── 3-column editor layout ─────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '220px 1fr 260px',
+          gap: '20px',
+          alignItems: 'start',
+        }}
+      >
+        {/* ── Left: TOC ────────────────────────────────────────────────────── */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 'calc(var(--layout-topbar-height) + 24px)',
+            maxHeight: 'calc(100vh - var(--layout-topbar-height) - 48px)',
+            overflowY: 'auto',
+          }}
+        >
+          {topLevelSections.length === 0 ? (
+            <p className="text-[12px] font-sans text-n-400 italic px-2 py-3">
+              {strings.EDITOR_TOC_EMPTY_SECTIONS}
+            </p>
+          ) : (
+            topLevelSections.map((section, idx) => (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-[3px] text-[12.5px] font-sans text-n-500 hover:bg-n-50 hover:text-n-800 transition-colors duration-[100ms]"
+              >
+                <span className="font-mono text-[10.5px] text-n-400 min-w-[18px] shrink-0">
+                  {idx + 1}
+                </span>
+                <span className="truncate">
+                  {section.title || strings.EDITOR_SECTION_DEFAULT_TITLE}
+                </span>
+              </button>
+            ))
           )}
         </div>
 
-        {/* Dirty indicator */}
-        {isDirty && (
-          <span className="text-[12px] font-sans text-n-400 shrink-0 italic">
-            {strings.EDITOR_UNSAVED}
-          </span>
-        )}
-
-        {/* Status + version */}
-        <Badge variant="draft">{strings.EDITOR_STATUS_DRAFT}</Badge>
-        <span className="text-[12px] font-mono text-n-400 shrink-0">
-          {strings.EDITOR_VERSION(versionNumber)}
-        </span>
-
-        {/* History button */}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setHistoryOpen((o) => !o)}
-          className="shrink-0"
-        >
-          <i className="ph ph-clock-counter-clockwise mr-1.5" />
-          {strings.EDITOR_HISTORY_BUTTON}
-        </Button>
-
-        {/* Save button */}
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => setSaveModalOpen(true)}
-          disabled={isSaving}
-          className="shrink-0"
-        >
-          {isSaving ? (
-            <>
-              <i className="ph ph-spinner animate-spin mr-1.5" />
-              {strings.EDITOR_SAVING}
-            </>
-          ) : (
-            strings.EDITOR_SAVE_BUTTON
-          )}
-        </Button>
-      </div>
-
-      {/* ── Three-panel layout ─────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* Left — Palette */}
-        <aside className="w-[116px] shrink-0 bg-n-25 border-r border-n-200 flex flex-col items-center pt-5 gap-1.5">
-          <span className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
-            {strings.EDITOR_PALETTE_TITLE}
-          </span>
-          {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
-            active ? (
-              <button
-                key={type}
-                onClick={() => handlePaletteClick(type)}
-                title={PALETTE_TITLES[type] ?? label}
-                className="w-full px-2"
-              >
-                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-700 hover:bg-n-100 hover:text-n-900 cursor-pointer transition-colors duration-[100ms] select-none">
-                  <i className={`ph ${icon} text-[14px]`} />
-                  <span className="text-[11px] font-sans capitalize truncate">{label}</span>
-                </div>
-              </button>
-            ) : (
-              <div
-                key={type}
-                title={strings.EDITOR_PALETTE_DISABLED_TOOLTIP}
-                className="w-full px-2"
-              >
-                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-n-300 cursor-not-allowed select-none">
-                  <i className={`ph ${icon} text-[14px]`} />
-                  <span className="text-[11px] font-sans capitalize truncate">{label}</span>
-                </div>
-              </div>
-            ),
-          )}
-        </aside>
-
-        {/* Center — Canvas (editable blocks) */}
-        <main className="flex-1 overflow-y-auto bg-n-50 p-6">
+        {/* ── Center: Canvas ───────────────────────────────────────────────── */}
+        <div>
           {blocks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
               <i className="ph ph-file-text text-[36px] text-n-300" />
               <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
                 {strings.VIEWER_NO_CONTENT}
               </p>
             </div>
           ) : (
-            <div className="max-w-[720px] mx-auto flex flex-col gap-1">
-              {blocks.map((block, idx) => (
-                <EditorBlockRenderer
-                  key={block.id}
-                  block={block}
-                  isFirst={idx === 0}
-                  isLast={idx === blocks.length - 1}
-                />
-              ))}
-            </div>
+            blocks.map((block, idx) => (
+              <EditorBlockRenderer
+                key={block.id}
+                block={block}
+                isFirst={idx === 0}
+                isLast={idx === blocks.length - 1}
+              />
+            ))
           )}
-        </main>
 
-        {/* Right — Live Preview */}
-        <aside className="w-[220px] shrink-0 bg-n-0 border-l border-n-200 overflow-y-auto p-4">
-          <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-3">
-            {strings.EDITOR_PREVIEW_TITLE}
+          {/* Add block footer */}
+          <button className="pblock-add-btn" onClick={() => handlePaletteClick('section')}>
+            <i className="ph ph-plus text-[13px]" />
+            {strings.EDITOR_ADD_BLOCK_FOOTER}
+          </button>
+        </div>
+
+        {/* ── Right: Palette + mini History ────────────────────────────────── */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 'calc(var(--layout-topbar-height) + 24px)',
+            maxHeight: 'calc(100vh - var(--layout-topbar-height) - 48px)',
+            overflowY: 'auto',
+          }}
+        >
+          {/* Palette */}
+          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-2.5">
+            {strings.EDITOR_PALETTE_HEADER}
+          </h4>
+          <div className="flex flex-col gap-1.5 mb-6">
+            {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
+              active ? (
+                <button
+                  key={type}
+                  onClick={() => handlePaletteClick(type)}
+                  className="flex items-center gap-2.5 px-2.5 py-2 border border-n-200 rounded-[3px] bg-n-0 text-[12.5px] font-sans text-n-700 hover:border-n-400 hover:bg-n-25 transition-colors duration-[100ms] cursor-pointer text-left"
+                >
+                  <i className={`ph ${icon} text-p-500 text-[16px] shrink-0`} />
+                  {label}
+                </button>
+              ) : (
+                <div
+                  key={type}
+                  title={strings.EDITOR_PALETTE_DISABLED_TOOLTIP}
+                  className="flex items-center gap-2.5 px-2.5 py-2 border border-n-200 rounded-[3px] bg-n-50 text-[12.5px] font-sans text-n-400 cursor-not-allowed"
+                >
+                  <i className={`ph ${icon} text-n-300 text-[16px] shrink-0`} />
+                  {label}
+                </div>
+              ),
+            )}
           </div>
-          <div className="transform scale-[0.62] origin-top-left w-[354px]">
-            <ProtocolContainer
-              {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
-              title={protocol.title}
-              meta={strings.EDITOR_VERSION(versionNumber)}
-            >
-              {blocks.map((block) => (
-                <BlockRenderer key={block.id} block={block} />
+
+          {/* Mini history */}
+          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-2.5">
+            {strings.EDITOR_HISTORY_BUTTON}
+          </h4>
+          {historyLoading ? (
+            <div className="flex justify-center py-3">
+              <i className="ph ph-spinner animate-spin text-[18px] text-n-400" />
+            </div>
+          ) : !versionHistory || versionHistory.length === 0 ? (
+            <p className="text-[12px] font-sans text-n-400 italic">
+              {strings.EDITOR_HISTORY_EMPTY}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {versionHistory.slice(0, 3).map((v) => (
+                <div key={v.id} className="text-[12px] font-sans text-n-500">
+                  <span className="font-semibold text-n-800">
+                    {strings.EDITOR_VERSION(v.versionNumber)}
+                  </span>
+                  {' · '}
+                  {new Date(v.createdAt).toLocaleDateString('es-DO', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                  {v.changeSummary && (
+                    <span className="text-n-400 block truncate mt-0.5">{v.changeSummary}</span>
+                  )}
+                </div>
               ))}
-            </ProtocolContainer>
-          </div>
-        </aside>
-
-        {/* ── History drawer ────────────────────────────────────────────────── */}
-        {historyOpen && (
-          <div className="absolute right-0 top-0 bottom-0 w-[380px] bg-n-0 border-l border-n-200 flex flex-col z-10 shadow-[0_1px_0_rgba(14,14,13,.04),_-8px_0_24px_-8px_rgba(14,14,13,.10)]">
-            {/* Drawer header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-n-200 shrink-0">
-              <span className="text-[13.5px] font-sans font-semibold text-n-800">
-                {strings.EDITOR_HISTORY_TITLE}
-              </span>
               <button
-                onClick={() => setHistoryOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
-                aria-label="Cerrar historial"
+                onClick={() => setHistoryOpen(true)}
+                className="text-[12px] font-sans text-p-500 hover:text-p-700 text-left mt-1 transition-colors duration-[100ms]"
               >
-                <i className="ph ph-x text-[15px]" />
+                {strings.EDITOR_HISTORY_VIEW_ALL}
               </button>
             </div>
-
-            {/* Version list */}
-            <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">
-              {historyLoading ? (
-                <div className="flex justify-center py-6">
-                  <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
-                </div>
-              ) : !versionHistory || versionHistory.length === 0 ? (
-                <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
-                  {strings.EDITOR_HISTORY_EMPTY}
-                </p>
-              ) : (
-                versionHistory.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
-                    className={`flex items-center gap-3 px-5 py-2.5 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
-                      selectedVersionId === v.id ? 'bg-p-50' : 'hover:bg-n-25'
-                    }`}
-                  >
-                    <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
-                      {strings.EDITOR_VERSION(v.versionNumber)}
-                    </span>
-                    {v.isCurrent && (
-                      <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-1.5 py-0.5 shrink-0">
-                        {strings.EDITOR_HISTORY_CURRENT}
-                      </span>
-                    )}
-                    <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
-                      {v.changeSummary ?? strings.EDITOR_HISTORY_NO_SUMMARY}
-                    </span>
-                    <span className="text-[11px] font-mono text-n-400 shrink-0">
-                      {new Date(v.createdAt).toLocaleDateString('es-DO', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-
-            {/* Version content preview */}
-            <div className="flex-1 overflow-y-auto">
-              {!selectedVersionId ? (
-                <div className="flex items-center justify-center h-full p-6">
-                  <p className="text-[12.5px] font-sans text-n-400 text-center">
-                    {strings.EDITOR_HISTORY_SELECT_PROMPT}
-                  </p>
-                </div>
-              ) : versionPreviewLoading ? (
-                <div className="flex justify-center py-8">
-                  <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
-                </div>
-              ) : (
-                <div className="p-4 flex flex-col gap-2">
-                  <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
-                    {strings.EDITOR_HISTORY_PREVIEW_TITLE}
-                  </div>
-                  {selectedVersion?.content.blocks.map((block) => (
-                    <BlockRenderer key={block.id} block={block} />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Restore button */}
-            {selectedVersionId &&
-              versionHistory?.find((v) => v.id === selectedVersionId && !v.isCurrent) && (
-                <div className="px-5 py-3 border-t border-n-200 shrink-0">
-                  <Button
-                    variant="secondary"
-                    onClick={handleRestore}
-                    disabled={isRestoring}
-                    className="w-full justify-center"
-                  >
-                    {isRestoring ? (
-                      <>
-                        <i className="ph ph-spinner animate-spin mr-1.5" />
-                        {strings.EDITOR_HISTORY_RESTORING}
-                      </>
-                    ) : (
-                      <>
-                        <i className="ph ph-clock-counter-clockwise mr-1.5" />
-                        {strings.EDITOR_HISTORY_RESTORE}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ── Save version modal ─────────────────────────────────────────────── */}
-      <Modal open={saveModalOpen} onOpenChange={(open) => !open && setSaveModalOpen(false)}>
+      {/* ── History drawer ────────────────────────────────────────────────────── */}
+      {historyOpen && (
+        <div
+          className="fixed right-0 top-0 bottom-0 w-[380px] bg-n-0 border-l border-n-200 flex flex-col z-50"
+          style={{
+            boxShadow: '0 1px 0 rgba(14,14,13,.04), -8px 0 24px -8px rgba(14,14,13,.10)',
+          }}
+        >
+          <div className="flex items-center justify-between px-5 py-3 border-b border-n-200 shrink-0">
+            <span className="text-[13.5px] font-sans font-semibold text-n-800">
+              {strings.EDITOR_HISTORY_TITLE}
+            </span>
+            <button
+              onClick={() => setHistoryOpen(false)}
+              className="w-7 h-7 flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
+              aria-label="Cerrar historial"
+            >
+              <i className="ph ph-x text-[15px]" />
+            </button>
+          </div>
+
+          <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">
+            {historyLoading ? (
+              <div className="flex justify-center py-6">
+                <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+              </div>
+            ) : !versionHistory || versionHistory.length === 0 ? (
+              <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
+                {strings.EDITOR_HISTORY_EMPTY}
+              </p>
+            ) : (
+              versionHistory.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
+                  className={`flex items-center gap-3 px-5 py-2.5 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
+                    selectedVersionId === v.id ? 'bg-p-50' : 'hover:bg-n-25'
+                  }`}
+                >
+                  <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
+                    {strings.EDITOR_VERSION(v.versionNumber)}
+                  </span>
+                  {v.isCurrent && (
+                    <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-1.5 py-0.5 shrink-0">
+                      {strings.EDITOR_HISTORY_CURRENT}
+                    </span>
+                  )}
+                  <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
+                    {v.changeSummary ?? strings.EDITOR_HISTORY_NO_SUMMARY}
+                  </span>
+                  <span className="text-[11px] font-mono text-n-400 shrink-0">
+                    {new Date(v.createdAt).toLocaleDateString('es-DO', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {!selectedVersionId ? (
+              <div className="flex items-center justify-center h-full p-6">
+                <p className="text-[12.5px] font-sans text-n-400 text-center">
+                  {strings.EDITOR_HISTORY_SELECT_PROMPT}
+                </p>
+              </div>
+            ) : versionPreviewLoading ? (
+              <div className="flex justify-center py-8">
+                <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+              </div>
+            ) : (
+              <div className="p-4 flex flex-col gap-2">
+                <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
+                  {strings.EDITOR_HISTORY_PREVIEW_TITLE}
+                </div>
+                {selectedVersion?.content.blocks.map((block) => (
+                  <BlockRenderer key={block.id} block={block} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedVersionId &&
+            versionHistory?.find((v) => v.id === selectedVersionId && !v.isCurrent) && (
+              <div className="px-5 py-3 border-t border-n-200 shrink-0">
+                <Button
+                  variant="secondary"
+                  onClick={handleRestore}
+                  disabled={isRestoring}
+                  className="w-full justify-center"
+                >
+                  {isRestoring ? (
+                    <>
+                      <i className="ph ph-spinner animate-spin mr-1.5" />
+                      {strings.EDITOR_HISTORY_RESTORING}
+                    </>
+                  ) : (
+                    <>
+                      <i className="ph ph-clock-counter-clockwise mr-1.5" />
+                      {strings.EDITOR_HISTORY_RESTORE}
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+        </div>
+      )}
+
+      {/* ── Publish modal ─────────────────────────────────────────────────────── */}
+      <Modal open={publishModalOpen} onOpenChange={(open) => !open && setPublishModalOpen(false)}>
         <ModalContent>
           <ModalHeader
-            title={strings.EDITOR_SAVE_MODAL_TITLE}
-            subtitle={strings.EDITOR_SAVE_MODAL_SUBTITLE}
+            title={strings.EDITOR_PUBLISH_MODAL_TITLE}
+            subtitle={strings.EDITOR_PUBLISH_MODAL_SUBTITLE}
           />
           <ModalBody>
             <div className="flex flex-col gap-1.5">
               <label className="text-[12.5px] font-sans font-medium text-n-700">
-                {strings.EDITOR_SAVE_MODAL_LABEL}
+                {strings.EDITOR_PUBLISH_MODAL_LABEL}
               </label>
               <input
                 type="text"
                 value={changeSummary}
                 onChange={(e) => setChangeSummary(e.target.value)}
-                placeholder={strings.EDITOR_SAVE_MODAL_PLACEHOLDER}
+                placeholder={strings.EDITOR_PUBLISH_MODAL_PLACEHOLDER}
                 className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)] transition-all duration-[100ms]"
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveConfirm()}
+                onKeyDown={(e) => e.key === 'Enter' && handlePublishConfirm()}
                 autoFocus
               />
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="secondary" onClick={() => setSaveModalOpen(false)} disabled={isSaving}>
-              {strings.EDITOR_SAVE_MODAL_CANCEL}
+            <Button
+              variant="secondary"
+              onClick={() => setPublishModalOpen(false)}
+              disabled={isSaving}
+            >
+              {strings.EDITOR_PUBLISH_MODAL_CANCEL}
             </Button>
-            <Button variant="primary" onClick={handleSaveConfirm} disabled={isSaving}>
+            <Button variant="primary" onClick={handlePublishConfirm} disabled={isSaving}>
               {isSaving ? (
                 <>
                   <i className="ph ph-spinner animate-spin mr-1.5" />
                   {strings.EDITOR_SAVING}
                 </>
               ) : (
-                strings.EDITOR_SAVE_MODAL_CONFIRM
+                <>
+                  <i className="ph ph-check mr-1.5" />
+                  {strings.EDITOR_PUBLICAR(versionNumber + 1)}
+                </>
               )}
             </Button>
           </ModalFooter>

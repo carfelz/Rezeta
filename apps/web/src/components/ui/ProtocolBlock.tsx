@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { DotsSixVertical, PencilSimple, Trash, Plus } from '@phosphor-icons/react'
+import { DotsSixVerticalIcon, PencilSimpleIcon, TrashIcon, PlusIcon } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 
 // Protocol Container (top-level wrapper)
@@ -13,7 +13,14 @@ export interface ProtocolContainerProps {
   className?: string
 }
 
-export function ProtocolContainer({ kicker, title, meta, badge, children, className }: ProtocolContainerProps): JSX.Element {
+export function ProtocolContainer({
+  kicker,
+  title,
+  meta,
+  badge,
+  children,
+  className,
+}: ProtocolContainerProps): JSX.Element {
   return (
     <div className={clsx('bg-n-0 border border-n-200 rounded px-8 py-7', className)}>
       <div className="flex items-start justify-between gap-4 mb-6">
@@ -26,9 +33,7 @@ export function ProtocolContainer({ kicker, title, meta, badge, children, classN
           <h1 className="text-[26px] font-serif font-medium text-n-900 tracking-[-0.005em] leading-tight">
             {title}
           </h1>
-          {meta && (
-            <div className="text-[12.5px] font-sans text-n-500 mt-1">{meta}</div>
-          )}
+          {meta && <div className="text-[12.5px] font-sans text-n-500 mt-1">{meta}</div>}
         </div>
         {badge}
       </div>
@@ -50,7 +55,16 @@ export interface ProtocolBlockProps {
   className?: string
 }
 
-export function ProtocolBlock({ type, title, required, nested, children, onEdit, onDelete, className }: ProtocolBlockProps): JSX.Element {
+export function ProtocolBlock({
+  type,
+  title,
+  required,
+  nested,
+  children,
+  onEdit,
+  onDelete,
+  className,
+}: ProtocolBlockProps): JSX.Element {
   return (
     <div
       className={clsx(
@@ -60,14 +74,14 @@ export function ProtocolBlock({ type, title, required, nested, children, onEdit,
       )}
     >
       {/* Header with 2px teal left rule */}
-      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
         <span className="text-n-300 cursor-grab shrink-0">
-          <DotsSixVertical size={16} />
+          <DotsSixVerticalIcon size={16} />
         </span>
         <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
           {type}
         </span>
-        <span className="text-[17px] font-serif font-medium text-n-900 flex-1 min-w-0 truncate">
+        <span className="text-[12px] font-serif font-medium text-n-900 flex-1 min-w-0 truncate">
           {title}
         </span>
         {required && (
@@ -82,7 +96,7 @@ export function ProtocolBlock({ type, title, required, nested, children, onEdit,
               className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
               aria-label="Editar bloque"
             >
-              <PencilSimple size={14} />
+              <PencilSimpleIcon size={14} />
             </button>
           )}
           {onDelete && !required && (
@@ -91,14 +105,12 @@ export function ProtocolBlock({ type, title, required, nested, children, onEdit,
               className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-[100ms]"
               aria-label="Eliminar bloque"
             >
-              <Trash size={14} />
+              <TrashIcon size={14} />
             </button>
           )}
         </div>
       </div>
-      {children && (
-        <div className="px-[18px] py-4">{children}</div>
-      )}
+      {children && <div className="px-[18px] py-4">{children}</div>}
     </div>
   )
 }
@@ -134,7 +146,12 @@ export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): 
             onChange={() => onToggle?.(item.id)}
             className="w-4 h-4 rounded-sm border-n-400 text-p-500 cursor-pointer shrink-0"
           />
-          <span className={clsx('text-[13.5px] font-sans text-n-700 leading-[1.5] flex-1', item.done && 'line-through text-n-400')}>
+          <span
+            className={clsx(
+              'text-[13.5px] font-sans text-n-700 leading-[1.5] flex-1',
+              item.done && 'line-through text-n-400',
+            )}
+          >
             {item.text}
           </span>
           {item.critical && !item.done && (
@@ -172,7 +189,9 @@ export function ProtocolSteps({ steps }: ProtocolStepsProps): JSX.Element {
           <div className="flex-1">
             <div className="text-[13.5px] font-sans font-semibold text-n-800">{step.title}</div>
             {step.detail && (
-              <div className="text-[12.5px] font-sans text-n-500 mt-0.5 leading-[1.4]">{step.detail}</div>
+              <div className="text-[12.5px] font-sans text-n-500 mt-0.5 leading-[1.4]">
+                {step.detail}
+              </div>
             )}
           </div>
         </li>
@@ -239,7 +258,10 @@ export function ProtocolDosageTable({ title, rows }: ProtocolDosageTableProps): 
         <thead>
           <tr>
             {cols.map((col) => (
-              <th key={col} className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-600 bg-n-50 px-3 py-2 border-b border-n-200 font-semibold">
+              <th
+                key={col}
+                className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-600 bg-n-50 px-3 py-2 border-b border-n-200 font-semibold"
+              >
                 {col}
               </th>
             ))}
@@ -248,11 +270,21 @@ export function ProtocolDosageTable({ title, rows }: ProtocolDosageTableProps): 
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-n-25">
-              <td className="text-[13px] font-sans font-semibold text-n-800 px-3 py-2 border-b border-n-100">{row.drug}</td>
-              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">{row.dose}</td>
-              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">{row.route}</td>
-              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">{row.frequency}</td>
-              <td className="text-[12px] font-sans text-n-500 px-3 py-2 border-b border-n-100">{row.notes}</td>
+              <td className="text-[13px] font-sans font-semibold text-n-800 px-3 py-2 border-b border-n-100">
+                {row.drug}
+              </td>
+              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">
+                {row.dose}
+              </td>
+              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">
+                {row.route}
+              </td>
+              <td className="text-[13px] font-sans text-n-700 px-3 py-2 border-b border-n-100">
+                {row.frequency}
+              </td>
+              <td className="text-[12px] font-sans text-n-500 px-3 py-2 border-b border-n-100">
+                {row.notes}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -278,7 +310,12 @@ const alertStyles = {
 
 export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps): JSX.Element {
   return (
-    <div className={clsx('px-4 py-3 rounded border text-[13px] font-sans leading-[1.45]', alertStyles[severity])}>
+    <div
+      className={clsx(
+        'px-4 py-3 rounded border text-[13px] font-sans leading-[1.45]',
+        alertStyles[severity],
+      )}
+    >
       {title && <div className="font-semibold mb-0.5">{title}</div>}
       {content}
     </div>
@@ -287,13 +324,19 @@ export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps):
 
 // Add block button
 
-export function AddBlockButton({ onClick, label = 'Añadir bloque' }: { onClick?: () => void; label?: string }): JSX.Element {
+export function AddBlockButton({
+  onClick,
+  label = 'Añadir bloque',
+}: {
+  onClick?: () => void
+  label?: string
+}): JSX.Element {
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-n-200 rounded text-[12.5px] font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-[100ms]"
     >
-      <Plus size={14} />
+      <PlusIcon size={14} />
       {label}
     </button>
   )

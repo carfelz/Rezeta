@@ -10,11 +10,14 @@
 /* ============================================================
    RESET & BASE
    ============================================================ */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -176,8 +179,8 @@ body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background var(--transition-fast),
-              border-color var(--transition-fast),
-              color var(--transition-fast);
+    border-color var(--transition-fast),
+    color var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -375,7 +378,7 @@ textarea.input {
 select.input {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--color-n-500) 50%),
-                    linear-gradient(135deg, var(--color-n-500) 50%, transparent 50%);
+    linear-gradient(135deg, var(--color-n-500) 50%, transparent 50%);
   background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px;
   background-size: 5px 5px;
   background-repeat: no-repeat;
@@ -798,49 +801,70 @@ select.input {
   border-color: var(--color-n-200);
   color: var(--color-n-600);
 }
-.badge--draft .badge__dot { background: var(--color-n-400); }
+
+.badge--draft .badge__dot {
+  background: var(--color-n-400);
+}
 
 .badge--active {
   background: var(--color-success-bg);
   border-color: var(--color-success-border);
   color: var(--color-success-text);
 }
-.badge--active .badge__dot { background: var(--color-success-text); }
+
+.badge--active .badge__dot {
+  background: var(--color-success-text);
+}
 
 .badge--signed {
   background: var(--color-p-50);
   border-color: var(--color-p-100);
   color: var(--color-p-700);
 }
-.badge--signed .badge__dot { background: var(--color-p-500); }
+
+.badge--signed .badge__dot {
+  background: var(--color-p-500);
+}
 
 .badge--review {
   background: var(--color-warning-bg);
   border-color: var(--color-warning-border);
   color: var(--color-warning-text);
 }
-.badge--review .badge__dot { background: var(--color-warning-text); }
+
+.badge--review .badge__dot {
+  background: var(--color-warning-text);
+}
 
 .badge--archived {
   background: var(--color-n-50);
   border-color: var(--color-n-200);
   color: var(--color-n-500);
 }
-.badge--archived .badge__dot { background: var(--color-n-400); }
+
+.badge--archived .badge__dot {
+  background: var(--color-n-400);
+}
 
 .badge--paid {
   background: var(--color-success-bg);
   border-color: var(--color-success-border);
   color: var(--color-success-text);
 }
-.badge--paid .badge__dot { background: var(--color-success-text); }
+
+.badge--paid .badge__dot {
+  background: var(--color-success-text);
+}
 
 .badge--overdue {
   background: var(--color-danger-bg);
   border-color: var(--color-danger-border);
   color: var(--color-danger-text);
 }
-.badge--overdue .badge__dot { background: var(--color-danger-text); }
+
+.badge--overdue .badge__dot {
+  background: var(--color-danger-text);
+}
 
 /* ============================================================
    TABS
@@ -1302,10 +1326,21 @@ select.input {
   flex-shrink: 0;
 }
 
-.toast--success i:first-child { color: var(--color-success-text); }
-.toast--warning i:first-child { color: var(--color-warning-text); }
-.toast--danger  i:first-child { color: var(--color-danger-text); }
-.toast--info    i:first-child { color: var(--color-info-text); }
+.toast--success i:first-child {
+  color: var(--color-success-text);
+}
+
+.toast--warning i:first-child {
+  color: var(--color-warning-text);
+}
+
+.toast--danger i:first-child {
+  color: var(--color-danger-text);
+}
+
+.toast--info i:first-child {
+  color: var(--color-info-text);
+}
 
 /* ============================================================
    CALLOUT (inline alert)
@@ -1620,17 +1655,66 @@ select.input {
 /* ============================================================
    UTILITY CLASSES
    ============================================================ */
-.stack { display: flex; flex-direction: column; }
-.row   { display: flex; align-items: center; }
-.gap-1 { gap: var(--space-1); }
-.gap-2 { gap: var(--space-2); }
-.gap-3 { gap: var(--space-3); }
-.gap-4 { gap: var(--space-4); }
-.gap-6 { gap: var(--space-6); }
-.gap-8 { gap: var(--space-8); }
+.stack {
+  display: flex;
+  flex-direction: column;
+}
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.row {
+  display: flex;
+  align-items: center;
+}
 
-.truncate { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.sr-only  { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.gap-1 {
+  gap: var(--space-1);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-3 {
+  gap: var(--space-3);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+.gap-6 {
+  gap: var(--space-6);
+}
+
+.gap-8 {
+  gap: var(--space-8);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+.truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

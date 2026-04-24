@@ -32,11 +32,18 @@ For frameworks that control the `<head>`, preload the fonts separately for bette
 
 ### Phosphor Icons
 
-```html
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
+The project uses **`@phosphor-icons/web`** (the web component package, not `@phosphor-icons/react`). Icons render as `<i class="ph ph-{name}">` HTML elements.
+
+In the React app, import the weight CSS files once in `main.tsx` before any component code:
+
+```ts
+import '@phosphor-icons/web/regular'
+import '@phosphor-icons/web/fill'
 ```
 
-Or via npm: `@phosphor-icons/web`. Icons render as `<i class="ph ph-{name}">`.
+The package exports per-weight CSS, not a single barrel entry — importing `@phosphor-icons/web` directly will fail with a missing `"."` specifier error. Always import the specific weights needed.
+
+Do **not** use `@phosphor-icons/react` (React components like `<ArrowLeft />`). Stick to the `<i className="ph ph-{name}">` syntax throughout so rendering is consistent. `@phosphor-icons/react` is listed as a dependency but should be considered legacy — new code must use the class-based syntax.
 
 ---
 

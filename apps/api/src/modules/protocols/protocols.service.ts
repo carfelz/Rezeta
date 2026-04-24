@@ -4,7 +4,7 @@ import { ProtocolTypesRepository } from '../protocol-types/protocol-types.reposi
 import {
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
-  type SaveVersionDto,
+  type SaveProtocolVersionDto,
   type ProtocolListItem,
   type ProtocolListQuery,
   type ProtocolResponse,
@@ -118,7 +118,7 @@ export class ProtocolsService {
     protocolId: string,
     tenantId: string,
     userId: string,
-    dto: SaveVersionDto,
+    dto: SaveProtocolVersionDto,
   ): Promise<{
     id: string
     versionNumber: number
@@ -159,6 +159,7 @@ export class ProtocolsService {
       createdBy: userId,
       content: dto.content,
       changeSummary: dto.changeSummary ?? null,
+      publish: dto.publish,
     })
 
     if (!version) {

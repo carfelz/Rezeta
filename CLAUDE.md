@@ -22,7 +22,10 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/protocol-editor-ux.md
 @./specs/template-editor-ux.md
 @./specs/onboarding-flow.md
-@./specs/protocol-engine-slices.md
+
+<!-- Slice already done -->
+<!-- @./specs/protocol-engine-slices.md -->
+
 @./specs/design-system/tokens.md
 @./specs/design-system/components.md
 @./specs/design-system/principles.md
@@ -124,6 +127,10 @@ Features explicitly out of MVP: telemedicine, lab integrations, inventory, patie
 ## Code Quality Rule
 
 **Always run `pnpm lint` before finishing any task.** Fix all lint errors before reporting the task as done. Zero lint errors is the bar. If a lint error cannot be fixed cleanly, note it explicitly.
+
+## Changelog Rule
+
+**After every completed task, prepend a new entry to `CHANGELOG.md`.** Use the date format `[YYYY-MM-DD]` with a short title, then bullet points under `### Added`, `### Changed`, and/or `### Fixed` as applicable. Keep entries factual and specific — name the files, components, or endpoints affected. Do not wait for a commit; update the changelog as part of completing the task.
 
 ## When in Doubt
 

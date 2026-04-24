@@ -126,6 +126,7 @@ interface EditorState {
   insertBlock: (block: ProtocolBlock, afterId?: string | null) => void
   appendToSection: (sectionId: string, block: ProtocolBlock) => void
   moveBlock: (id: string, dir: 'up' | 'down') => void
+  duplicateBlock: (id: string) => void
   markSaved: () => void
   resetEditor: () => void
 }
@@ -183,6 +184,35 @@ export const useEditorStore = create<EditorState>((set) => ({
   moveBlock: (id, dir) =>
     set((s) => {
       const next = moveBlockById(s.blocks, id, dir)
+      return { blocks: next, isDirty: !blocksEqual(next, s.savedBlocks) }
+    }),
+
+  duplicateBlock: (id) =>
+    set((s) => {
+      const cloneBlock = (block: ProtocolBlock): ProtocolBlock => {
+        const prefix = block.type === 'section' ? 'sec' : 'blk'
+        const newId = `${prefix}_${crypto.randomUUID().slice(0, 8)}`
+        if (block.type === 'section') {
+          return { ...block, id: newId, blocks: block.blocks.map(cloneBlock) }
+        }
+        return { ...block, id: newId }
+      }
+      const findAndClone = (blocks: ProtocolBlock[]): ProtocolBlock[] => {
+        const idx = blocks.findIndex((b) => b.id === id)
+        if (idx !== -1) {
+          const clone = cloneBlock(blocks[idx]!)
+          const next = [...blocks]
+          next.splice(idx + 1, 0, clone)
+          return next
+        }
+        return blocks.map((block) => {
+          if (block.type === 'section') {
+            return { ...block, blocks: findAndClone(block.blocks) }
+          }
+          return block
+        })
+      }
+      const next = findAndClone(s.blocks)
       return { blocks: next, isDirty: !blocksEqual(next, s.savedBlocks) }
     }),
 

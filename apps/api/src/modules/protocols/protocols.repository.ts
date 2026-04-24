@@ -190,6 +190,7 @@ export class ProtocolsRepository {
     createdBy: string
     content: unknown
     changeSummary?: string | null
+    publish?: boolean
   }): Promise<ProtocolVersion | null> {
     return this.prisma.$transaction(async (tx) => {
       const protocol = await tx.protocol.findFirst({
@@ -216,7 +217,10 @@ export class ProtocolsRepository {
 
       await tx.protocol.update({
         where: { id: data.protocolId },
-        data: { currentVersionId: version.id },
+        data: {
+          currentVersionId: version.id,
+          ...(data.publish ? { status: 'active' } : {}),
+        },
       })
 
       return version

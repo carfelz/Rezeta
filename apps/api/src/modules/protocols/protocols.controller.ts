@@ -16,11 +16,11 @@ import {
 import {
   CreateProtocolSchema,
   UpdateProtocolTitleSchema,
-  SaveVersionSchema,
+  SaveProtocolVersionSchema,
   ProtocolListQuerySchema,
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
-  type SaveVersionDto,
+  type SaveProtocolVersionDto,
   type ProtocolListQuery,
   type AuthUser,
   type ProtocolListItem,
@@ -43,14 +43,6 @@ export class ProtocolsController {
     @Query(new ZodValidationPipe(ProtocolListQuerySchema)) query: ProtocolListQuery,
   ): Promise<ProtocolListItem[]> {
     return this.service.list(tenantId, query)
-  }
-
-  @Get(':id')
-  getOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @TenantId() tenantId: string,
-  ): Promise<ProtocolResponse> {
-    return this.service.getById(id, tenantId)
   }
 
   @Post()
@@ -76,10 +68,10 @@ export class ProtocolsController {
 
   @Post(':id/versions')
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ZodValidationPipe(SaveVersionSchema))
+  @UsePipes(new ZodValidationPipe(SaveProtocolVersionSchema))
   saveVersion(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: SaveVersionDto,
+    @Body() dto: SaveProtocolVersionDto,
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
   ): Promise<{
@@ -137,5 +129,13 @@ export class ProtocolsController {
     @TenantId() tenantId: string,
   ): Promise<void> {
     return this.service.setFavorite(id, tenantId, false)
+  }
+
+  @Get(':id')
+  getOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @TenantId() tenantId: string,
+  ): Promise<ProtocolResponse> {
+    return this.service.getById(id, tenantId)
   }
 }

@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client'
 import type {
   CreateProtocolDto,
   UpdateProtocolTitleDto,
-  SaveVersionDto,
+  SaveProtocolVersionDto,
   ProtocolListItem,
   ProtocolResponse,
   VersionListItem,
@@ -36,7 +36,7 @@ interface UseProtocolsReturn {
   ) => UseMutationResult<RenameResponse, Error, UpdateProtocolTitleDto>
   useSaveVersion: (
     protocolId: string,
-  ) => UseMutationResult<SaveVersionResponse, Error, SaveVersionDto>
+  ) => UseMutationResult<SaveVersionResponse, Error, SaveProtocolVersionDto>
   useToggleFavorite: (protocolId: string) => UseMutationResult<void, Error, boolean>
   useGetVersionHistory: (protocolId: string) => UseQueryResult<VersionListItem[]>
   useGetVersion: (
@@ -98,7 +98,7 @@ export function useProtocols(): UseProtocolsReturn {
 
   const useSaveVersion = (protocolId: string) => {
     return useMutation({
-      mutationFn: (dto: SaveVersionDto) =>
+      mutationFn: (dto: SaveProtocolVersionDto) =>
         apiClient.post<SaveVersionResponse>(`/v1/protocols/${protocolId}/versions`, dto),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
