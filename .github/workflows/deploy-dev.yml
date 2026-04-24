@@ -121,6 +121,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared package
+        run: pnpm --filter @rezeta/shared build
+
       - name: Build frontend
         env:
           VITE_API_URL: ${{ needs.deploy-api.outputs.url }}
