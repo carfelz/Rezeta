@@ -1,0 +1,69 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy API
+        run: ./scripts/deploy-api.sh
+
+      - name: Run Migrations
+        run: ./scripts/run-migrations.sh
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-api # Wait for API to get URL
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Frontend
+        run: ./scripts/deploy-frontend.sh
+
+      - name: Comment PR with URLs
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const frontend = 'https://storage.googleapis.com/medical-erp-dev-frontend/index.html';
+            const api = process.env.API_URL;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Deployed!\n\n- Frontend: ${frontend}\n- API: ${api}`
+            })

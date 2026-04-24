@@ -6,6 +6,15 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-24] — Supabase connection pooling configuration
+
+### Changed
+
+- `packages/db/prisma/schema.prisma`: added `directUrl = env("DIRECT_URL")` to datasource so `prisma migrate` uses a direct Postgres connection (port 5432) while the app uses Supabase's PgBouncer pooler (port 6543)
+- `apps/api/src/lib/prisma.service.ts`: removed eager `$connect()` on module init (lazy connect is correct for Cloud Run + PgBouncer); removed `OnModuleInit`; added NestJS `Logger` wired to Prisma's `error` and `warn` events
+- `apps/api/.env.example`: documented `DATABASE_URL` (pooler, `?pgbouncer=true&connection_limit=1`) and `DIRECT_URL` (direct) with Supabase URL patterns
+- `packages/db/.env`: added `DIRECT_URL` for local dev (both vars point to the same local Postgres instance)
+
 ## [2026-04-23] — Settings: Design System Viewer Pages
 
 ### Added
