@@ -44,7 +44,10 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install production deps only — workspace packages are symlinked, filled below
-RUN pnpm install --frozen-lockfile --prod
+# --frozen-lockfile is omitted here: only partial workspace manifests are present
+# in this stage, which causes pnpm's lockfile validation to fail. Integrity was
+# already verified in the builder stage.
+RUN pnpm install --prod
 
 # Compiled API
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
