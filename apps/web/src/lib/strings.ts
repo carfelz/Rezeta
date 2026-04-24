@@ -337,6 +337,12 @@ export const strings = {
   TYPES_LOCKED_BADGE: (count: number) => `Bloqueado · ${count} protocolo${count === 1 ? '' : 's'}`,
   TYPES_ACTIVE_BADGE: 'Activo',
 
+  // ── Settings — Design System ─────────────────────────────────────────────
+  DESIGN_SYSTEM_PROTOTYPE_TITLE: 'Prototipo de la aplicación',
+  DESIGN_SYSTEM_PROTOTYPE_DESCRIPTION: 'Fuente visual de verdad para cada pantalla del MVP',
+  DESIGN_SYSTEM_REFERENCE_TITLE: 'Referencia de componentes',
+  DESIGN_SYSTEM_REFERENCE_DESCRIPTION: 'Catálogo completo de componentes del sistema de diseño',
+
   // ── Onboarding — /bienvenido ──────────────────────────────────────────────
   ONBOARDING_WELCOME_HEADING: (name: string | null) =>
     name ? `Bienvenida, ${name}` : 'Bienvenida',

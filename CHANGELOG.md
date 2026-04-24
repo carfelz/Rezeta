@@ -6,6 +6,25 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-23] — Settings: Design System Viewer Pages
+
+### Added
+
+- **`/ajustes/design-system/prototype`** — full-height iframe displaying `design-system/app-prototype.html` (the 9-screen navigable MVP prototype) inside the app shell
+- **`/ajustes/design-system/reference`** — full-height iframe displaying `design-system/reference.html` (the component specimen library)
+- **`DesignSystemViewer.tsx`** — shared viewer component with breadcrumb, title, description, "open in tab" link, and a viewport-relative iframe
+- **`AppPrototype.tsx`** and **`DesignSystemReference.tsx`** — thin wrappers that supply the title, description, and src to the viewer
+- **Symlink** `apps/web/public/design-system` → `../../../design-system` so Vite serves the HTML files at `/design-system/*.html`
+- **Two new links in `Ajustes.tsx`** — "Prototipo de la aplicación" and "Referencia de componentes" added below the Tipos link in the settings card
+- **Design system strings** added to `strings.ts` under `// Settings — Design System`
+
+### Changed
+
+- `App.tsx` — added routes for `/ajustes/design-system/prototype` and `/ajustes/design-system/reference`
+- `Ajustes.tsx` — Tipos link gains `borderBottom` to separate it from the new design system section
+
+---
+
 ## [2026-04-23] — Protocol Engine: Full CRUD, Block Editors & Browsing
 
 ### Added

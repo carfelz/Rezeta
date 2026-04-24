@@ -14,6 +14,8 @@ import { Ajustes } from '@/pages/Ajustes'
 import { Plantillas } from '@/pages/ajustes/Plantillas'
 import { PlantillaEditor, PlantillaEditorNew } from '@/pages/ajustes/PlantillaEditor'
 import { Tipos } from '@/pages/ajustes/Tipos'
+import { AppPrototype } from '@/pages/ajustes/AppPrototype'
+import { DesignSystemReference } from '@/pages/ajustes/DesignSystemReference'
 import { Login } from '@/pages/Login'
 import { Signup } from '@/pages/Signup'
 import { Bienvenido } from '@/pages/Bienvenido'
@@ -24,11 +26,19 @@ const router = createBrowserRouter([
   // ── Public-only routes (redirect authenticated users away) ────────────────
   {
     path: '/login',
-    element: <PublicOnlyGate><Login /></PublicOnlyGate>,
+    element: (
+      <PublicOnlyGate>
+        <Login />
+      </PublicOnlyGate>
+    ),
   },
   {
     path: '/signup',
-    element: <PublicOnlyGate><Signup /></PublicOnlyGate>,
+    element: (
+      <PublicOnlyGate>
+        <Signup />
+      </PublicOnlyGate>
+    ),
   },
 
   // ── Onboarding routes (auth required, redirect away if already seeded) ──────
@@ -70,6 +80,8 @@ const router = createBrowserRouter([
       { path: 'ajustes/plantillas/new', element: <PlantillaEditorNew /> },
       { path: 'ajustes/plantillas/:id/edit', element: <PlantillaEditor /> },
       { path: 'ajustes/tipos', element: <Tipos /> },
+      { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
+      { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],
   },
 ])

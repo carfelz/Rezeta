@@ -15,12 +15,21 @@ export function Ajustes(): JSX.Element {
 
   return (
     <div>
-      <h1 className="text-h1" style={{ marginBottom: 'var(--space-6)' }}>Ajustes</h1>
+      <h1 className="text-h1" style={{ marginBottom: 'var(--space-6)' }}>
+        Ajustes
+      </h1>
 
       {user && (
         <div className="card" style={{ maxWidth: 560, marginBottom: 'var(--space-6)' }}>
           <div className="card__title">Mi cuenta</div>
-          <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <div
+            style={{
+              marginTop: 'var(--space-4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--space-3)',
+            }}
+          >
             <div>
               <span className="text-overline">Nombre</span>
               <div className="text-body">{user.fullName}</div>
@@ -46,10 +55,7 @@ export function Ajustes(): JSX.Element {
       )}
 
       {/* Quick-links to settings sub-sections */}
-      <div
-        className="card"
-        style={{ maxWidth: 560, marginBottom: 'var(--space-6)', padding: 0 }}
-      >
+      <div className="card" style={{ maxWidth: 560, marginBottom: 'var(--space-6)', padding: 0 }}>
         <Link
           to="/ajustes/plantillas"
           style={{
@@ -69,7 +75,10 @@ export function Ajustes(): JSX.Element {
               Gestiona las plantillas de protocolos de tu práctica
             </div>
           </div>
-          <i className="ph ph-caret-right" style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }} />
+          <i
+            className="ph ph-caret-right"
+            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
+          />
         </Link>
         <Link
           to="/ajustes/tipos"
@@ -80,6 +89,7 @@ export function Ajustes(): JSX.Element {
             padding: 'var(--space-4) var(--space-5)',
             textDecoration: 'none',
             color: 'var(--color-n-800)',
+            borderBottom: '1px solid var(--color-n-100)',
           }}
         >
           <i className="ph ph-tag" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
@@ -89,13 +99,69 @@ export function Ajustes(): JSX.Element {
               Categorías que agrupan tus protocolos
             </div>
           </div>
-          <i className="ph ph-caret-right" style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }} />
+          <i
+            className="ph ph-caret-right"
+            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
+          />
+        </Link>
+        <Link
+          to="/ajustes/design-system/prototype"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4) var(--space-5)',
+            textDecoration: 'none',
+            color: 'var(--color-n-800)',
+            borderBottom: '1px solid var(--color-n-100)',
+          }}
+        >
+          <i className="ph ph-monitor" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>
+              {strings.DESIGN_SYSTEM_PROTOTYPE_TITLE}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
+              {strings.DESIGN_SYSTEM_PROTOTYPE_DESCRIPTION}
+            </div>
+          </div>
+          <i
+            className="ph ph-caret-right"
+            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
+          />
+        </Link>
+        <Link
+          to="/ajustes/design-system/reference"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4) var(--space-5)',
+            textDecoration: 'none',
+            color: 'var(--color-n-800)',
+          }}
+        >
+          <i className="ph ph-squares-four" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>
+              {strings.DESIGN_SYSTEM_REFERENCE_TITLE}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
+              {strings.DESIGN_SYSTEM_REFERENCE_DESCRIPTION}
+            </div>
+          </div>
+          <i
+            className="ph ph-caret-right"
+            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
+          />
         </Link>
       </div>
 
       <button
         className="btn btn--secondary"
-        onClick={() => { void handleSignOut() }}
+        onClick={() => {
+          void handleSignOut()
+        }}
       >
         <i className="ph ph-sign-out" style={{ marginRight: 6 }} />
         {strings.AUTH_SIGN_OUT}
