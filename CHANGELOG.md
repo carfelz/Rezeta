@@ -6,6 +6,14 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-24] — Fix API build output path
+
+### Fixed
+
+- `apps/api/tsconfig.build.json` — added `rootDir: "src"` and `include: ["src"]` so `tsc` emits to `dist/main.js` instead of `dist/src/main.js`; the Dockerfile `CMD ["node", "dist/main.js"]` and `package.json` `start` script now resolve correctly
+
+---
+
 ## [2026-04-24] — API Dockerfile and production build pipeline
 
 ### Added
