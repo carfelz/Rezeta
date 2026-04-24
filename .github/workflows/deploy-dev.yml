@@ -15,8 +15,9 @@ jobs:
   deploy-api:
     runs-on: ubuntu-latest
 
+    # Output the API URL so frontend job can use it
     outputs:
-      url: ${{ steps.service-url.outputs.url }}
+      api_url: ${{ steps.get-url.outputs.url }}
 
     permissions:
       contents: read
@@ -26,17 +27,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: '20'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -74,24 +73,18 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 10 \
-            --timeout 60 \
-            --set-env-vars NODE_ENV=production \
+            --timeout 300 \
+            --set-env-vars NODE_ENV=production,PORT=8080 \
             --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
 
       - name: Get Service URL
-        id: service-url
+        id: get-url
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region ${{ env.REGION }} \
             --format 'value(status.url)')
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "API_URL=$URL" > apps/web/.env.production
-
-      - name: Upload API URL for frontend
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-env
-          path: apps/web/.env.production
+          echo "API deployed at: $URL"
 
       - name: Run Database Migrations
         run: |
@@ -102,20 +95,21 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: deploy-api
+    needs: deploy-api # Wait for API to finish
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -125,35 +119,37 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Download API URL
-        uses: actions/download-artifact@v4
-        with:
-          name: api-env
-          path: apps/web
+      - name: Create environment file
+        run: |
+          echo "VITE_API_URL=${{ needs.deploy-api.outputs.api_url }}" > apps/web/.env.production
+          cat apps/web/.env.production
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          cd apps/web
+          pnpm install --frozen-lockfile
 
       - name: Build frontend
         run: |
           cd apps/web
-          pnpm build
+          pnpm run build
 
       - name: Deploy to GCS
         run: |
-          # Sync files
-          gsutil -m rsync -r -d apps/web/dist/ gs://medical-erp-dev-frontend
+          # Sync files to GCS bucket
+          gsutil -m rsync -r -d apps/web/dist/ gs://${{ env.PROJECT_ID }}-frontend
 
           # Set cache headers for hashed assets (long cache)
           gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-            'gs://medical-erp-dev-frontend/assets/**'
+            'gs://${{ env.PROJECT_ID }}-frontend/assets/**' || true
 
           # Set cache headers for HTML (no cache)
           gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-            'gs://medical-erp-dev-frontend/*.html'
+            'gs://${{ env.PROJECT_ID }}-frontend/*.html' || true
 
-      - name: Output URLs
+      - name: Output Deployment URLs
         run: |
-          echo "🚀 Deployment complete!"
-          echo "Frontend: https://storage.googleapis.com/medical-erp-dev-frontend/index.html"
-          echo "API: ${{ needs.deploy-api.outputs.url }}"
+          echo "🚀 Deployment Complete!"
+          echo ""
+          echo "Frontend: https://storage.googleapis.com/${{ env.PROJECT_ID }}-frontend/index.html"
+          echo "API: ${{ needs.deploy-api.outputs.api_url }}"
