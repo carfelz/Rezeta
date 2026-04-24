@@ -85,13 +85,6 @@ jobs:
             --region ${{ env.REGION }} \
             --format 'value(status.url)')
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "API_URL=$URL" > apps/web/.env.production
-
-      - name: Upload API URL for frontend
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-env
-          path: apps/web/.env.production
 
       - name: Run Database Migrations
         run: |
@@ -125,16 +118,12 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Download API URL
-        uses: actions/download-artifact@v4
-        with:
-          name: api-env
-          path: apps/web
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build frontend
+        env:
+          VITE_API_URL: ${{ needs.deploy-api.outputs.url }}
         run: |
           cd apps/web
           pnpm build
