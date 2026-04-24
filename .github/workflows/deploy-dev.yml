@@ -3,21 +3,33 @@ name: Deploy to Dev
 on:
   push:
     branches: [main]
-  workflow_dispatch: # Allow manual triggers
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: medical-erp-dev
+  REGION: southamerica-east1
+  SERVICE_NAME: medical-erp-api
+  REPOSITORY: medical-erp
 
 jobs:
   deploy-api:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    permissions:
+      contents: read
+      id-token: write
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Authenticate to GCP
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -25,25 +37,75 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy API
-        run: ./scripts/deploy-api.sh
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
-      - name: Run Migrations
-        run: ./scripts/run-migrations.sh
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest \
+            -f apps/api/Dockerfile \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --timeout 60 \
+            --set-env-vars NODE_ENV=production,PORT=8080 \
+            --set-secrets DATABASE_URL=database-url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
+
+      - name: Get Service URL
+        id: service-url
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "API_URL=$URL" > apps/web/.env.production
+
+      - name: Upload API URL for frontend
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-env
+          path: apps/web/.env.production
+
+      - name: Run Database Migrations
+        run: |
+          DATABASE_URL=$(gcloud secrets versions access latest --secret=database-url)
+          export DATABASE_URL
+          cd packages/db
+          npx prisma migrate deploy
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: deploy-api # Wait for API to get URL
+    needs: deploy-api
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Authenticate to GCP
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
@@ -51,19 +113,37 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy Frontend
-        run: ./scripts/deploy-frontend.sh
-
-      - name: Comment PR with URLs
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - name: Download API URL
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const frontend = 'https://storage.googleapis.com/medical-erp-dev-frontend/index.html';
-            const api = process.env.API_URL;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `🚀 Deployed!\n\n- Frontend: ${frontend}\n- API: ${api}`
-            })
+          name: api-env
+          path: apps/web
+
+      - name: Install dependencies
+        run: |
+          cd apps/web
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd apps/web
+          npm run build
+
+      - name: Deploy to GCS
+        run: |
+          # Sync files
+          gsutil -m rsync -r -d apps/web/dist/ gs://medical-erp-dev-frontend
+
+          # Set cache headers for hashed assets (long cache)
+          gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
+            'gs://medical-erp-dev-frontend/assets/**'
+
+          # Set cache headers for HTML (no cache)
+          gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
+            'gs://medical-erp-dev-frontend/*.html'
+
+      - name: Output URLs
+        run: |
+          echo "🚀 Deployment complete!"
+          echo "Frontend: https://storage.googleapis.com/medical-erp-dev-frontend/index.html"
+          echo "API: ${{ needs.deploy-api.outputs.url }}"
