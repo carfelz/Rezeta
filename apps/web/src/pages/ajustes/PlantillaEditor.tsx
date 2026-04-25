@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   useProtocolTemplate,
@@ -11,6 +11,14 @@ import {
   type TemplateSchema,
 } from '@/components/template/TemplateEditor'
 import { strings } from '@/lib/strings'
+import {
+  Button,
+  Callout,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastDescription,
+} from '@/components/ui'
 
 // ─── New template wrapper ─────────────────────────────────────────────────────
 
@@ -39,17 +47,12 @@ export function PlantillaEditorNew(): JSX.Element {
   }
 
   return (
-    <div style={{ padding: 'var(--space-8) var(--space-6)' }}>
-      <nav style={{ marginBottom: 'var(--space-4)' }}>
-        <button
-          className="btn btn--ghost btn--sm"
-          onClick={() => {
-            void navigate('/ajustes/plantillas')
-          }}
-        >
-          <i className="ph ph-arrow-left" style={{ marginRight: 4 }} />
+    <div className="p-8 px-6">
+      <nav className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
+          <i className="ph ph-arrow-left mr-1" />
           {strings.TEMPLATES_PAGE_TITLE}
-        </button>
+        </Button>
       </nav>
       <TemplateEditor
         initialState={initialState}
@@ -71,46 +74,30 @@ export function PlantillaEditor(): JSX.Element {
   const navigate = useNavigate()
   const { data: template, isLoading, isError } = useProtocolTemplate(id ?? '')
   const updateMutation = useUpdateProtocolTemplate(id ?? '')
+  const [savedToast, setSavedToast] = useState(false)
 
-  // Show toast on successful save
   useEffect(() => {
     if (updateMutation.isSuccess) {
-      // Simple inline feedback — a proper toast system would live in a shared notification store
-      const toast = document.createElement('div')
-      toast.textContent = strings.TEMPLATE_EDITOR_SAVED
-      Object.assign(toast.style, {
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        background: 'var(--color-n-800)',
-        color: 'white',
-        padding: '10px 16px',
-        borderRadius: 'var(--radius-md)',
-        fontSize: '13px',
-        zIndex: '999',
-      })
-      document.body.appendChild(toast)
-      setTimeout(() => document.body.removeChild(toast), 2500)
+      setSavedToast(true)
+      const t = setTimeout(() => setSavedToast(false), 2500)
+      return () => clearTimeout(t)
     }
   }, [updateMutation.isSuccess])
 
   if (isLoading) {
     return (
-      <div style={{ padding: 'var(--space-8)' }}>
-        <p className="text-body" style={{ color: 'var(--color-n-500)' }}>
-          {strings.TEMPLATES_LOADING}
-        </p>
+      <div className="p-8">
+        <p className="text-body text-n-500">{strings.TEMPLATES_LOADING}</p>
       </div>
     )
   }
 
   if (isError || !template) {
     return (
-      <div style={{ padding: 'var(--space-8)' }}>
-        <div className="callout callout--danger">
-          <i className="ph ph-warning" style={{ fontSize: 18 }} />
-          <div className="callout__body">{strings.TEMPLATES_ERROR}</div>
-        </div>
+      <div className="p-8">
+        <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
+          {strings.TEMPLATES_ERROR}
+        </Callout>
       </div>
     )
   }
@@ -126,27 +113,35 @@ export function PlantillaEditor(): JSX.Element {
   }
 
   return (
-    <div style={{ padding: 'var(--space-8) var(--space-6)' }}>
-      <nav style={{ marginBottom: 'var(--space-4)' }}>
-        <button
-          className="btn btn--ghost btn--sm"
-          onClick={() => void navigate('/ajustes/plantillas')}
-        >
-          <i className="ph ph-arrow-left" style={{ marginRight: 4 }} />
-          {strings.TEMPLATES_PAGE_TITLE}
-        </button>
-      </nav>
-      <TemplateEditor
-        key={template.id}
-        initialState={initialState}
-        isLocked={template.isLocked}
-        blockingTypeIds={template.blockingTypeIds}
-        isSaving={updateMutation.isPending}
-        onSave={(name, specialty, schema) => {
-          void handleSave(name, specialty, schema)
-        }}
-        onCancel={() => void navigate('/ajustes/plantillas')}
-      />
-    </div>
+    <ToastProvider>
+      <div className="p-8 px-6">
+        <nav className="mb-4">
+          <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
+            <i className="ph ph-arrow-left mr-1" />
+            {strings.TEMPLATES_PAGE_TITLE}
+          </Button>
+        </nav>
+        <TemplateEditor
+          key={template.id}
+          initialState={initialState}
+          isLocked={template.isLocked}
+          blockingTypeIds={template.blockingTypeIds}
+          isSaving={updateMutation.isPending}
+          onSave={(name, specialty, schema) => {
+            void handleSave(name, specialty, schema)
+          }}
+          onCancel={() => void navigate('/ajustes/plantillas')}
+        />
+      </div>
+      <Toast
+        open={savedToast}
+        onOpenChange={setSavedToast}
+        variant="success"
+        icon={<i className="ph ph-check-circle" />}
+      >
+        <ToastDescription>{strings.TEMPLATE_EDITOR_SAVED}</ToastDescription>
+      </Toast>
+      <ToastViewport />
+    </ToastProvider>
   )
 }

@@ -1,6 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { X } from '@phosphor-icons/react'
-import { clsx } from 'clsx'
+import { cn } from '@/lib/utils'
 import type { ReactNode } from 'react'
 
 export interface ModalProps {
@@ -24,12 +23,16 @@ export interface ModalContentProps {
   className?: string
 }
 
-export function ModalContent({ children, size = 'default', className }: ModalContentProps): JSX.Element {
+export function ModalContent({
+  children,
+  size = 'default',
+  className,
+}: ModalContentProps): JSX.Element {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-[rgba(14,14,13,0.35)] z-[500] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
       <Dialog.Content
-        className={clsx(
+        className={cn(
           'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[500]',
           'bg-n-0 rounded shadow-floating outline-none',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -56,7 +59,14 @@ export interface ModalHeaderProps {
   className?: string
 }
 
-export function ModalHeader({ icon, iconVariant = 'default', title, subtitle, showClose = true, className }: ModalHeaderProps): JSX.Element {
+export function ModalHeader({
+  icon,
+  iconVariant = 'default',
+  title,
+  subtitle,
+  showClose = true,
+  className,
+}: ModalHeaderProps): JSX.Element {
   const iconStyles = {
     default: 'bg-p-50 text-p-700',
     danger: 'bg-danger-bg text-danger-text',
@@ -65,9 +75,16 @@ export function ModalHeader({ icon, iconVariant = 'default', title, subtitle, sh
   }
 
   return (
-    <div className={clsx('flex items-start gap-4 px-6 pt-5 pb-[14px] border-b border-n-100', className)}>
+    <div
+      className={cn('flex items-start gap-4 px-6 pt-5 pb-[14px] border-b border-n-100', className)}
+    >
       {icon && (
-        <span className={clsx('flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-[18px]', iconStyles[iconVariant])}>
+        <span
+          className={cn(
+            'flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-[18px]',
+            iconStyles[iconVariant],
+          )}
+        >
           {icon}
         </span>
       )}
@@ -83,7 +100,7 @@ export function ModalHeader({ icon, iconVariant = 'default', title, subtitle, sh
       </div>
       {showClose && (
         <Dialog.Close className="flex items-center justify-center w-8 h-8 rounded-sm text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms] shrink-0 -mr-1 mt-[-2px]">
-          <X size={16} />
+          <i className="ph ph-x text-[16px]" />
           <span className="sr-only">Cerrar</span>
         </Dialog.Close>
       )}
@@ -91,17 +108,30 @@ export function ModalHeader({ icon, iconVariant = 'default', title, subtitle, sh
   )
 }
 
-export function ModalBody({ children, className }: { children: ReactNode; className?: string }): JSX.Element {
-  return (
-    <div className={clsx('px-6 py-5', className)}>
-      {children}
-    </div>
-  )
+export function ModalBody({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}): JSX.Element {
+  return <div className={cn('px-6 py-5', className)}>{children}</div>
 }
 
-export function ModalFooter({ children, className }: { children: ReactNode; className?: string }): JSX.Element {
+export function ModalFooter({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}): JSX.Element {
   return (
-    <div className={clsx('flex items-center justify-end gap-3 px-5 py-[14px] bg-n-25 border-t border-n-100 rounded-b', className)}>
+    <div
+      className={cn(
+        'flex items-center justify-end gap-3 px-5 py-[14px] bg-n-25 border-t border-n-100 rounded-b',
+        className,
+      )}
+    >
       {children}
     </div>
   )

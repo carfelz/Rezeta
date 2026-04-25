@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { clsx } from 'clsx'
+import { cn } from '@/lib/utils'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { BlockRenderer } from './BlockRenderer'
 import type { ProtocolBlock } from './BlockRenderer'
@@ -102,11 +102,16 @@ function SectionEditor({
   }
 
   return (
-    <div id={`section-${block.id}`} className={clsx('pblock', nested && 'ml-7')}>
-      {/* Section header */}
-      <div className="pblock__header">
-        <i className="ph ph-dots-six-vertical pblock__handle" />
-        <span className="pblock__type-chip">{strings.BLOCK_TYPE_SECTION}</span>
+    <div
+      id={`section-${block.id}`}
+      className={cn('bg-n-0 border border-n-200 rounded mb-3', nested && 'ml-7')}
+    >
+      {/* Section header with 2px teal left rule */}
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+        <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
+        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
+          {strings.BLOCK_TYPE_SECTION}
+        </span>
 
         {/* Title — editable inline */}
         <input
@@ -145,9 +150,9 @@ function SectionEditor({
       </div>
 
       {/* Section body */}
-      <div className="pblock__body">
+      <div className="px-[18px] py-4">
         {block.blocks.length > 0 ? (
-          <div className="pblock-nested">
+          <div className="ml-7 border-l border-n-200">
             {block.blocks.map((child, idx) => (
               <EditorBlockRenderer
                 key={child.id}
@@ -201,16 +206,18 @@ function LeafBlockEditor({
 
   return (
     <div
-      className={clsx(
-        'pblock',
+      className={cn(
+        'bg-n-0 border border-n-200 rounded mb-3',
         isSelected && 'border-p-500 shadow-[0_0_0_2px_rgba(45,87,96,0.12)]',
       )}
     >
-      {/* Block header */}
-      <div className="pblock__header">
-        <i className="ph ph-dots-six-vertical pblock__handle" />
-        <span className="pblock__type-chip">{blockTypeLabel(block.type)}</span>
-        <span className="pblock__title flex-1 min-w-0 truncate text-[15px] text-n-700">
+      {/* Block header with 2px teal left rule */}
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+        <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
+        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
+          {blockTypeLabel(block.type)}
+        </span>
+        <span className="flex-1 min-w-0 truncate text-[15px] font-serif font-medium text-n-700">
           {blockDisplayTitle(block)}
         </span>
         {isRequired && (
@@ -237,8 +244,8 @@ function LeafBlockEditor({
         <EditForm block={block} />
       ) : (
         <div
-          className={clsx(
-            'pblock__body',
+          className={cn(
+            'px-[18px] py-4',
             isEditable && 'cursor-pointer hover:bg-n-25 transition-colors duration-[100ms]',
           )}
           onClick={() => isEditable && !isSelected && selectBlock(block.id)}

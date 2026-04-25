@@ -1,8 +1,4 @@
-// Design system — must come before index.css so Tailwind's Preflight doesn't override tokens
-import '../../../design-system/tokens.css'
-import '../../../design-system/components.css'
 import './index.css'
-import './styles/globals.css'
 import '@phosphor-icons/web/regular'
 import '@phosphor-icons/web/fill'
 import { StrictMode } from 'react'

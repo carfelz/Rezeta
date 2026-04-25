@@ -9,6 +9,19 @@ import {
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
 import { strings } from '@/lib/strings'
 import type { ProtocolTypeDto } from '@rezeta/shared'
+import {
+  Button,
+  Badge,
+  EmptyState,
+  Callout,
+  Field,
+  Input,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui'
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
@@ -33,36 +46,32 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
   const canSubmit = name.trim().length > 0 && templateId.length > 0
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal__header">
-          <div>
-            <h2 className="modal__title">{strings.TYPES_CREATE_TITLE}</h2>
-          </div>
-        </div>
-        <form onSubmit={(e) => { void handleSubmit(e) }}>
-          <div className="modal__body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            <div className="field">
-              <label className="field__label">
-                {strings.TYPES_CREATE_FIELD_NAME}
-                <span className="field__required">*</span>
-              </label>
-              <input
-                className="input"
+    <Modal
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <ModalContent>
+        <ModalHeader title={strings.TYPES_CREATE_TITLE} showClose={false} />
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e)
+          }}
+        >
+          <ModalBody className="flex flex-col gap-4">
+            <Field label={strings.TYPES_CREATE_FIELD_NAME} required>
+              <Input
                 type="text"
                 placeholder={strings.TYPES_CREATE_FIELD_NAME_PLACEHOLDER}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
-            </div>
-            <div className="field">
-              <label className="field__label">
-                {strings.TYPES_CREATE_FIELD_TEMPLATE}
-                <span className="field__required">*</span>
-              </label>
+            </Field>
+            <Field label={strings.TYPES_CREATE_FIELD_TEMPLATE} required>
               <select
-                className="input"
+                className="w-full h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none transition-[border-color] duration-[100ms] focus:border-p-500 disabled:bg-n-50 disabled:text-n-400 disabled:cursor-not-allowed"
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
                 disabled={templatesLoading}
@@ -74,29 +83,33 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
                   </option>
                 ))}
               </select>
-            </div>
+            </Field>
             {error && (
-              <div className="callout callout--danger">
-                <i className="ph ph-warning" style={{ fontSize: 16 }} />
-                <div className="callout__body">{error}</div>
-              </div>
+              <Callout
+                variant="danger"
+                icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}
+              >
+                {error}
+              </Callout>
             )}
-          </div>
-          <div className="modal__footer">
-            <button type="button" className="btn btn--secondary" onClick={onClose}>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" variant="secondary" onClick={onClose}>
               {strings.TYPES_CREATE_CANCEL}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="btn btn--primary"
+              variant="primary"
               disabled={!canSubmit || createMutation.isPending}
             >
-              {createMutation.isPending ? strings.TYPES_CREATE_SUBMITTING : strings.TYPES_CREATE_SUBMIT}
-            </button>
-          </div>
+              {createMutation.isPending
+                ? strings.TYPES_CREATE_SUBMITTING
+                : strings.TYPES_CREATE_SUBMIT}
+            </Button>
+          </ModalFooter>
         </form>
-      </div>
-    </div>
+      </ModalContent>
+    </Modal>
   )
 }
 
@@ -109,7 +122,10 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (name.trim() === type.name) { onClose(); return }
+    if (name.trim() === type.name) {
+      onClose()
+      return
+    }
     setError(null)
     try {
       await updateMutation.mutateAsync({ name: name.trim() })
@@ -120,47 +136,51 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal__header">
-          <div>
-            <h2 className="modal__title">{strings.TYPES_RENAME_TITLE}</h2>
-          </div>
-        </div>
-        <form onSubmit={(e) => { void handleSubmit(e) }}>
-          <div className="modal__body">
-            <div className="field">
-              <label className="field__label">{strings.TYPES_RENAME_FIELD}</label>
-              <input
-                className="input"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-            </div>
+    <Modal
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <ModalContent>
+        <ModalHeader title={strings.TYPES_RENAME_TITLE} showClose={false} />
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e)
+          }}
+        >
+          <ModalBody>
+            <Field label={strings.TYPES_RENAME_FIELD}>
+              <Input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+            </Field>
             {error && (
-              <div className="callout callout--danger" style={{ marginTop: 'var(--space-3)' }}>
-                <i className="ph ph-warning" style={{ fontSize: 16 }} />
-                <div className="callout__body">{error}</div>
+              <div className="mt-3">
+                <Callout
+                  variant="danger"
+                  icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}
+                >
+                  {error}
+                </Callout>
               </div>
             )}
-          </div>
-          <div className="modal__footer">
-            <button type="button" className="btn btn--secondary" onClick={onClose}>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" variant="secondary" onClick={onClose}>
               {strings.TYPES_RENAME_CANCEL}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="btn btn--primary"
+              variant="primary"
               disabled={name.trim().length === 0 || updateMutation.isPending}
             >
-              {updateMutation.isPending ? strings.TYPES_RENAME_SUBMITTING : strings.TYPES_RENAME_SUBMIT}
-            </button>
-          </div>
+              {updateMutation.isPending
+                ? strings.TYPES_RENAME_SUBMITTING
+                : strings.TYPES_RENAME_SUBMIT}
+            </Button>
+          </ModalFooter>
         </form>
-      </div>
-    </div>
+      </ModalContent>
+    </Modal>
   )
 }
 
@@ -193,139 +213,112 @@ export function Tipos(): JSX.Element {
       {showCreate && <CreateTypeModal onClose={() => setShowCreate(false)} />}
       {renaming && <RenameTypeModal type={renaming} onClose={() => setRenaming(null)} />}
 
-      {/* Page header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 'var(--space-6)',
-        }}
-      >
-        <h1 className="text-h1" style={{ margin: 0 }}>
-          {strings.TYPES_PAGE_TITLE}
-        </h1>
-        <button className="btn btn--primary" onClick={() => setShowCreate(true)}>
-          <i className="ph ph-plus" style={{ marginRight: 6 }} />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-h1 m-0">{strings.TYPES_PAGE_TITLE}</h1>
+        <Button variant="primary" onClick={() => setShowCreate(true)}>
+          <i className="ph ph-plus mr-1.5" />
           {strings.TYPES_NEW_BUTTON}
-        </button>
+        </Button>
       </div>
 
-      {/* Loading */}
-      {isLoading && (
-        <p className="text-body" style={{ color: 'var(--color-n-500)' }}>
-          {strings.TYPES_LOADING}
-        </p>
-      )}
+      {isLoading && <p className="text-body text-n-500">{strings.TYPES_LOADING}</p>}
 
-      {/* Error */}
       {isError && (
-        <div className="callout callout--danger">
-          <i className="ph ph-warning" style={{ fontSize: 18 }} />
-          <div className="callout__body">{strings.TYPES_ERROR}</div>
-        </div>
+        <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
+          {strings.TYPES_ERROR}
+        </Callout>
       )}
 
-      {/* Empty state */}
       {!isLoading && !isError && types?.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state__icon">
-            <i className="ph ph-tag" />
-          </div>
-          <h3 className="empty-state__title">{strings.TYPES_EMPTY_TITLE}</h3>
-          <p className="empty-state__description">{strings.TYPES_EMPTY_DESCRIPTION}</p>
-          <button className="btn btn--primary" onClick={() => setShowCreate(true)}>
-            {strings.TYPES_NEW_BUTTON}
-          </button>
-        </div>
+        <EmptyState
+          icon={<i className="ph ph-tag" />}
+          title={strings.TYPES_EMPTY_TITLE}
+          description={strings.TYPES_EMPTY_DESCRIPTION}
+          action={
+            <Button variant="primary" onClick={() => setShowCreate(true)}>
+              {strings.TYPES_NEW_BUTTON}
+            </Button>
+          }
+        />
       )}
 
-      {/* Types table */}
       {!isLoading && !isError && (types?.length ?? 0) > 0 && (
-        <table className="table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Plantilla base</th>
-              <th>Estado</th>
-              <th>Protocolos</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {types!.map((t) => (
-              <tr key={t.id}>
-                <td className="td--name">
-                  {t.name}
-                  {t.isSeeded && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 11,
-                        fontFamily: 'var(--font-mono)',
-                        color: 'var(--color-n-400)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                      }}
-                    >
-                      Predeterminado
-                    </span>
-                  )}
-                </td>
-                <td style={{ color: 'var(--color-n-500)', fontSize: 13 }}>
-                  <button
-                    className="btn btn--ghost btn--sm"
-                    style={{ padding: '0 4px', height: 'auto', fontSize: 13, color: 'var(--color-n-500)' }}
-                    onClick={() => void navigate(`/ajustes/plantillas/${t.templateId}/edit`)}
-                  >
-                    {t.templateName}
-                    <i className="ph ph-arrow-square-out" style={{ fontSize: 12, marginLeft: 4 }} />
-                  </button>
-                </td>
-                <td>
-                  {t.isLocked ? (
-                    <span className="badge badge--review">
-                      <span className="badge__dot" />
-                      {strings.TYPES_LOCKED_BADGE(t.protocolCount)}
-                    </span>
-                  ) : (
-                    <span className="badge badge--active">
-                      <span className="badge__dot" />
-                      {strings.TYPES_ACTIVE_BADGE}
-                    </span>
-                  )}
-                </td>
-                <td style={{ color: 'var(--color-n-500)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-                  {t.protocolCount}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-                    <button
-                      className="btn btn--secondary btn--sm"
-                      onClick={() => setRenaming(t)}
-                    >
-                      {strings.TYPES_LIST_EDIT}
-                    </button>
-                    <button
-                      className="btn btn--ghost btn--sm btn--icon-only"
-                      title={strings.TYPES_LIST_DELETE}
-                      disabled={t.isLocked || deletingId === t.id}
-                      onClick={() => void handleDelete(t)}
-                    >
-                      <i
-                        className="ph ph-trash"
-                        style={{
-                          fontSize: 15,
-                          color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
-                        }}
-                      />
-                    </button>
-                  </div>
-                </td>
+        <div className="border border-n-200 rounded-md overflow-hidden">
+          <table className="w-full border-collapse bg-n-0">
+            <thead>
+              <tr>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Nombre
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Plantilla base
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Estado
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Protocolos
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {types!.map((t) => (
+                <tr key={t.id} className="hover:bg-n-25">
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                    {t.name}
+                    {t.isSeeded && (
+                      <span className="ml-2 text-[11px] font-mono text-n-400 uppercase tracking-[0.06em]">
+                        Predeterminado
+                      </span>
+                    )}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-500">
+                    <button
+                      className="inline-flex items-center gap-1 text-[13px] text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
+                      onClick={() => void navigate(`/ajustes/plantillas/${t.templateId}/edit`)}
+                    >
+                      {t.templateName}
+                      <i className="ph ph-arrow-square-out text-[12px]" />
+                    </button>
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                    {t.isLocked ? (
+                      <Badge variant="review">{strings.TYPES_LOCKED_BADGE(t.protocolCount)}</Badge>
+                    ) : (
+                      <Badge variant="active">{strings.TYPES_ACTIVE_BADGE}</Badge>
+                    )}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-500">
+                    {t.protocolCount}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="secondary" size="sm" onClick={() => setRenaming(t)}>
+                        {strings.TYPES_LIST_EDIT}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-[28px] px-0"
+                        title={strings.TYPES_LIST_DELETE}
+                        disabled={t.isLocked || deletingId === t.id}
+                        onClick={() => void handleDelete(t)}
+                      >
+                        <i
+                          className="ph ph-trash text-[15px]"
+                          style={{
+                            color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
+                          }}
+                        />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

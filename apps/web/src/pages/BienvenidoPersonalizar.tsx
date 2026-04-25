@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useOnboardingStarters, useOnboardingCustom } from '@/hooks/onboarding/use-onboarding'
 import type { StarterCandidate } from '@/hooks/onboarding/use-onboarding'
 import { strings } from '@/lib/strings'
+import { Button, Callout } from '@/components/ui'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,70 +41,60 @@ function StepTemplates({
 
   function addBlank() {
     const id = `custom-${Date.now()}`
-    setLocal((prev) => [...prev, { clientId: id, name: '', schema: { version: '1.0', blocks: [] } }])
+    setLocal((prev) => [
+      ...prev,
+      { clientId: id, name: '', schema: { version: '1.0', blocks: [] } },
+    ])
   }
 
   const canContinue = local.length > 0 && local.every((t) => t.name.trim().length > 0)
 
   return (
     <div>
-      <h2 className="text-h2" style={{ marginBottom: 'var(--space-2)' }}>
-        {strings.ONBOARDING_STEP1_TITLE}
-      </h2>
-      <p className="text-body" style={{ color: 'var(--color-n-600)', marginBottom: 'var(--space-6)' }}>
-        {strings.ONBOARDING_STEP1_DESC}
-      </p>
+      <h2 className="text-h2 mb-2">{strings.ONBOARDING_STEP1_TITLE}</h2>
+      <p className="text-body text-n-600 mb-6">{strings.ONBOARDING_STEP1_DESC}</p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+      <div className="flex flex-col gap-2 mb-4">
         {local.map((t) => (
           <div
             key={t.clientId}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-3)',
-              background: 'var(--color-n-0)',
-              border: 'var(--border-default)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-3) var(--space-4)',
-            }}
+            className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
-            <i className="ph ph-file-text" style={{ fontSize: 16, color: 'var(--color-p-500)', flexShrink: 0 }} />
+            <i className="ph ph-file-text text-[16px] text-p-500 shrink-0" />
             <input
-              className="input"
-              style={{ flex: 1, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none' }}
+              className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
               value={t.name}
               placeholder="Nombre de la plantilla"
               onChange={(e) => updateName(t.clientId, e.target.value)}
             />
-            <button
-              className="btn btn--ghost btn--icon-only btn--sm"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-[28px] px-0"
               onClick={() => remove(t.clientId)}
               title="Eliminar"
             >
-              <i className="ph ph-trash" style={{ fontSize: 15, color: 'var(--color-danger-text)' }} />
-            </button>
+              <i className="ph ph-trash text-[15px] text-danger-text" />
+            </Button>
           </div>
         ))}
       </div>
 
       {local.length === 0 && (
-        <p className="text-caption" style={{ color: 'var(--color-warning-text)', marginBottom: 'var(--space-4)' }}>
-          {strings.ONBOARDING_STEP1_EMPTY}
-        </p>
+        <p className="text-caption text-warning-text mb-4">{strings.ONBOARDING_STEP1_EMPTY}</p>
       )}
 
-      <button className="btn btn--ghost btn--sm" onClick={addBlank} style={{ marginBottom: 'var(--space-8)' }}>
+      <Button variant="ghost" size="sm" onClick={addBlank} className="mb-8">
         {strings.ONBOARDING_STEP1_ADD}
-      </button>
+      </Button>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button className="btn btn--secondary" onClick={onBack}>
+      <div className="flex justify-between items-center">
+        <Button variant="secondary" onClick={onBack}>
           {strings.ONBOARDING_STEP1_BACK}
-        </button>
-        <button className="btn btn--primary" disabled={!canContinue} onClick={() => onContinue(local)}>
+        </Button>
+        <Button variant="primary" disabled={!canContinue} onClick={() => onContinue(local)}>
           {strings.ONBOARDING_STEP1_CONTINUE}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -141,10 +132,7 @@ function StepTypes({
   }
 
   function addBlank() {
-    setLocal((prev) => [
-      ...prev,
-      { name: '', templateClientId: templates[0]?.clientId ?? '' },
-    ])
+    setLocal((prev) => [...prev, { name: '', templateClientId: templates[0]?.clientId ?? '' }])
   }
 
   const canFinish =
@@ -153,45 +141,32 @@ function StepTypes({
 
   return (
     <div>
-      <h2 className="text-h2" style={{ marginBottom: 'var(--space-2)' }}>
-        {strings.ONBOARDING_STEP2_TITLE}
-      </h2>
-      <p className="text-body" style={{ color: 'var(--color-n-600)', marginBottom: 'var(--space-6)' }}>
-        {strings.ONBOARDING_STEP2_DESC}
-      </p>
+      <h2 className="text-h2 mb-2">{strings.ONBOARDING_STEP2_TITLE}</h2>
+      <p className="text-body text-n-600 mb-6">{strings.ONBOARDING_STEP2_DESC}</p>
 
       {error && (
-        <div className="callout callout--danger" style={{ marginBottom: 'var(--space-4)' }}>
-          <i className="ph ph-warning" style={{ fontSize: 18 }} />
-          <div className="callout__body">{strings.ONBOARDING_ERROR}</div>
+        <div className="mb-4">
+          <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
+            {strings.ONBOARDING_ERROR}
+          </Callout>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+      <div className="flex flex-col gap-2 mb-4">
         {local.map((t, i) => (
           <div
             key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-3)',
-              background: 'var(--color-n-0)',
-              border: 'var(--border-default)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-3) var(--space-4)',
-            }}
+            className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
-            <i className="ph ph-tag" style={{ fontSize: 16, color: 'var(--color-p-500)', flexShrink: 0 }} />
+            <i className="ph ph-tag text-[16px] text-p-500 shrink-0" />
             <input
-              className="input"
-              style={{ flex: 1, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none' }}
+              className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
               value={t.name}
               placeholder="Nombre del tipo"
               onChange={(e) => updateName(i, e.target.value)}
             />
             <select
-              className="input"
-              style={{ flex: 1, fontSize: 12 }}
+              className="flex-1 text-[12px] h-[34px] border border-n-300 rounded-sm bg-n-0 px-3 text-n-800 focus:outline-none focus:border-p-500"
               value={t.templateClientId}
               onChange={(e) => updateTemplate(i, e.target.value)}
             >
@@ -201,38 +176,38 @@ function StepTypes({
                 </option>
               ))}
             </select>
-            <button
-              className="btn btn--ghost btn--icon-only btn--sm"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-[28px] px-0"
               onClick={() => remove(i)}
               title="Eliminar"
             >
-              <i className="ph ph-trash" style={{ fontSize: 15, color: 'var(--color-danger-text)' }} />
-            </button>
+              <i className="ph ph-trash text-[15px] text-danger-text" />
+            </Button>
           </div>
         ))}
       </div>
 
       {local.length === 0 && (
-        <p className="text-caption" style={{ color: 'var(--color-warning-text)', marginBottom: 'var(--space-4)' }}>
-          {strings.ONBOARDING_STEP2_EMPTY}
-        </p>
+        <p className="text-caption text-warning-text mb-4">{strings.ONBOARDING_STEP2_EMPTY}</p>
       )}
 
-      <button className="btn btn--ghost btn--sm" onClick={addBlank} style={{ marginBottom: 'var(--space-8)' }}>
+      <Button variant="ghost" size="sm" onClick={addBlank} className="mb-8">
         {strings.ONBOARDING_STEP2_ADD}
-      </button>
+      </Button>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button className="btn btn--secondary" onClick={onBack} disabled={isSubmitting}>
+      <div className="flex justify-between items-center">
+        <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>
           {strings.ONBOARDING_STEP2_BACK}
-        </button>
-        <button
-          className="btn btn--primary"
+        </Button>
+        <Button
+          variant="primary"
           disabled={!canFinish || isSubmitting}
           onClick={() => onFinish(local)}
         >
           {isSubmitting ? strings.ONBOARDING_LOADING : strings.ONBOARDING_STEP2_FINISH}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -242,21 +217,14 @@ function StepTypes({
 
 function StepDots({ current }: { current: 1 | 2 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-6)' }}>
+    <div className="flex items-center gap-2 mb-6">
       {[1, 2].map((n) => (
         <div
           key={n}
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: n === current ? 'var(--color-p-500)' : 'var(--color-n-300)',
-          }}
+          className={`w-2 h-2 rounded-full ${n === current ? 'bg-p-500' : 'bg-n-300'}`}
         />
       ))}
-      <span className="text-caption" style={{ marginLeft: 'var(--space-2)', color: 'var(--color-n-500)' }}>
-        {current === 1 ? 'Plantillas' : 'Tipos'}
-      </span>
+      <span className="text-caption text-n-500 ml-2">{current === 1 ? 'Plantillas' : 'Tipos'}</span>
     </div>
   )
 }
@@ -272,15 +240,17 @@ export function BienvenidoPersonalizar(): JSX.Element {
   const [templates, setTemplates] = useState<TemplateCandidate[] | null>(null)
   const [types, setTypes] = useState<TypeCandidate[] | null>(null)
 
-  // Initialize candidates from starters once loaded
   const initialTemplates: TemplateCandidate[] = starters
-    ? starters.map((s: StarterCandidate) => ({ clientId: s.clientId, name: s.name, schema: s.schema }))
+    ? starters.map((s: StarterCandidate) => ({
+        clientId: s.clientId,
+        name: s.name,
+        schema: s.schema,
+      }))
     : []
   const activeTemplates = templates ?? initialTemplates
 
   function handleStep1Continue(updated: TemplateCandidate[]) {
     setTemplates(updated)
-    // Build default types: one per template, using starter typeName if available
     const defaultTypes: TypeCandidate[] = updated.map((t, i) => ({
       name: starters?.[i]?.typeName ?? t.name,
       templateClientId: t.clientId,
@@ -307,24 +277,15 @@ export function BienvenidoPersonalizar(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-n-25)' }}>
-        <p className="text-body-sm" style={{ color: 'var(--color-n-500)' }}>Cargando...</p>
+      <div className="min-h-screen flex items-center justify-center bg-n-25">
+        <p className="text-body-sm text-n-500">Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--color-n-25)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: 'var(--space-16) var(--space-8)',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 560 }}>
+    <div className="min-h-screen bg-n-25 flex items-start justify-center pt-16 px-8">
+      <div className="w-full max-w-[560px]">
         <StepDots current={step} />
 
         {step === 1 && (
@@ -339,7 +300,9 @@ export function BienvenidoPersonalizar(): JSX.Element {
           <StepTypes
             types={types ?? []}
             templates={activeTemplates}
-            onFinish={(finalTypes) => { void handleFinish(finalTypes) }}
+            onFinish={(finalTypes) => {
+              void handleFinish(finalTypes)
+            }}
             onBack={handleStep2Back}
             isSubmitting={customMutation.isPending}
             error={customMutation.isError}

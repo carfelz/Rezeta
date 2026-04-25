@@ -2,6 +2,16 @@ import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
+import {
+  Button,
+  Badge,
+  EmptyState,
+  Callout,
+  Card,
+  InputGroup,
+  InputIcon,
+  Input,
+} from '@/components/ui'
 
 function formatAge(dateOfBirth: string | null): string {
   if (!dateOfBirth) return '—'
@@ -16,32 +26,31 @@ function PatientRow({ patient }: { patient: Patient }) {
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
 
   return (
-    <tr>
-      <td>
-        <div className="row gap-2">
-          <div className="avatar avatar--sm">{initials}</div>
+    <tr className="hover:bg-n-25">
+      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+        <div className="flex items-center gap-2">
+          <div className="w-[30px] h-[30px] rounded-full bg-p-50 text-p-700 text-[11px] font-semibold flex items-center justify-center shrink-0">
+            {initials}
+          </div>
           <div>
-            <div style={{ fontWeight: 600, color: 'var(--color-n-800)' }}>{name}</div>
-            {patient.phone && (
-              <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>{patient.phone}</div>
-            )}
+            <div className="font-semibold text-n-800">{name}</div>
+            {patient.phone && <div className="text-[12px] text-n-500">{patient.phone}</div>}
           </div>
         </div>
       </td>
-      <td className="table td--mono">
+      <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-[12px] text-n-600">
         {patient.documentNumber ?? '—'}
       </td>
-      <td>{formatAge(patient.dateOfBirth)}</td>
-      <td>
-        <span className="badge badge--active">
-          <span className="badge__dot" />
-          Activo
-        </span>
+      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+        {formatAge(patient.dateOfBirth)}
       </td>
-      <td>
+      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+        <Badge variant="active">Activo</Badge>
+      </td>
+      <td className="text-[13px] px-4 py-3 border-b border-n-100">
         <Link
           to={`/pacientes/${patient.id}`}
-          className="btn btn--ghost btn--sm"
+          className="inline-flex items-center justify-center h-btn-sm px-3 rounded-sm text-[12.5px] font-medium text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
         >
           Ver
         </Link>
@@ -67,69 +76,66 @@ export function Pacientes(): JSX.Element {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 'var(--space-6)', gap: 'var(--space-4)' }}>
-        <h1 className="text-h1" style={{ flex: 1 }}>Pacientes</h1>
-        <button className="btn btn--primary">
-          <i className="ph ph-plus" />
+      <div className="flex items-center mb-6 gap-4">
+        <h1 className="text-h1 flex-1">Pacientes</h1>
+        <Button variant="primary">
+          <i className="ph ph-plus mr-1.5" />
           Registrar paciente
-        </button>
+        </Button>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div
-          className="row"
-          style={{ padding: 'var(--space-4)', borderBottom: 'var(--border-soft)' }}
-        >
-          <div className="input-group" style={{ maxWidth: 320 }}>
-            <span className="input-icon input-icon--leading">
-              <i className="ph ph-magnifying-glass" />
-            </span>
-            <input
-              className="input"
+      <Card className="p-0 overflow-hidden">
+        <div className="flex items-center p-4 border-b border-n-100">
+          <InputGroup className="max-w-[320px]">
+            <InputIcon side="left">
+              <i className="ph ph-magnifying-glass text-[16px]" />
+            </InputIcon>
+            <Input
               type="search"
               placeholder="Buscar por nombre, cédula, teléfono..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
             />
-          </div>
+          </InputGroup>
         </div>
 
-        {isLoading && (
-          <div style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--color-n-400)' }}>
-            Cargando pacientes...
-          </div>
-        )}
+        {isLoading && <div className="p-8 text-center text-n-400">Cargando pacientes...</div>}
 
         {isError && (
-          <div className="callout callout--danger" style={{ margin: 'var(--space-4)' }}>
-            <i className="ph ph-warning-circle" />
-            <div className="callout__body">No se pudo cargar la lista de pacientes.</div>
+          <div className="m-4">
+            <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
+              No se pudo cargar la lista de pacientes.
+            </Callout>
           </div>
         )}
 
         {!isLoading && !isError && data?.items.length === 0 && (
-          <div className="empty-state" style={{ borderRadius: 0, border: 'none' }}>
-            <div className="empty-state__icon">
-              <i className="ph ph-user" />
-            </div>
-            <h3 className="empty-state__title">Aún no hay pacientes registrados</h3>
-            <p className="empty-state__description">
-              Registra a tu primer paciente para empezar a gestionar citas, consultas y
-              prescripciones desde un solo lugar.
-            </p>
-            <button className="btn btn--primary">Registrar paciente</button>
-          </div>
+          <EmptyState
+            icon={<i className="ph ph-user" />}
+            title="Aún no hay pacientes registrados"
+            description="Registra a tu primer paciente para empezar a gestionar citas, consultas y prescripciones desde un solo lugar."
+            action={<Button variant="primary">Registrar paciente</Button>}
+            className="rounded-none border-0"
+          />
         )}
 
         {!isLoading && data && data.items.length > 0 && (
-          <table className="table">
+          <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th>Paciente</th>
-                <th>Cédula / Documento</th>
-                <th>Edad</th>
-                <th>Estado</th>
-                <th />
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Paciente
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Cédula / Documento
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Edad
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Estado
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left" />
               </tr>
             </thead>
             <tbody>
@@ -139,8 +145,7 @@ export function Pacientes(): JSX.Element {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
-
