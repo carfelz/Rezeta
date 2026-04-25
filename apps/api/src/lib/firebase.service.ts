@@ -11,7 +11,7 @@ export class FirebaseService implements OnModuleInit {
   constructor(@Inject(ConfigService) private config: ConfigService<AppConfig, true>) {}
 
   onModuleInit(): void {
-    const { projectId, clientEmail, privateKey } = this.config.get('firebase', { infer: true })
+    let { projectId, clientEmail, privateKey } = this.config.get('firebase', { infer: true })
     const emulatorHost = process.env['FIREBASE_AUTH_EMULATOR_HOST']
 
     // Re-use existing app in hot-reload environments (tsx watch)
@@ -28,11 +28,28 @@ export class FirebaseService implements OnModuleInit {
       return
     }
 
+    // Support a single FIREBASE_ADMIN_KEY JSON blob (e.g. Cloud Run secret)
+    // as a fallback when individual vars are not set.
+    if ((!projectId || !clientEmail || !privateKey) && process.env['FIREBASE_ADMIN_KEY']) {
+      try {
+        const parsed = JSON.parse(process.env['FIREBASE_ADMIN_KEY']) as {
+          project_id?: string
+          client_email?: string
+          private_key?: string
+        }
+        projectId = projectId || parsed.project_id || ''
+        clientEmail = clientEmail || parsed.client_email || ''
+        privateKey = privateKey || parsed.private_key || ''
+      } catch {
+        this.logger.error('Failed to parse FIREBASE_ADMIN_KEY — must be valid JSON')
+      }
+    }
+
     if (!projectId || !clientEmail || !privateKey) {
       this.logger.warn(
         'Firebase service account credentials missing — Auth guard will reject all requests. ' +
-          'Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY or ' +
-          'FIREBASE_AUTH_EMULATOR_HOST for local development.',
+          'Set FIREBASE_ADMIN_KEY (JSON) or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + ' +
+          'FIREBASE_PRIVATE_KEY, or FIREBASE_AUTH_EMULATOR_HOST for local development.',
       )
       return
     }
