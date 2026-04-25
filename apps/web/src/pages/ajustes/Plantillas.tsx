@@ -6,6 +6,7 @@ import {
 } from '@/hooks/protocol-templates/use-protocol-templates'
 import { strings } from '@/lib/strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
+import { Button, Badge, EmptyState, Callout } from '@/components/ui'
 
 export function Plantillas(): JSX.Element {
   const { data: templates, isLoading, isError } = useProtocolTemplates()
@@ -29,142 +30,116 @@ export function Plantillas(): JSX.Element {
 
   return (
     <div>
-      {/* Page header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 'var(--space-6)',
-        }}
-      >
-        <h1 className="text-h1" style={{ margin: 0 }}>
-          {strings.TEMPLATES_PAGE_TITLE}
-        </h1>
-        <button
-          className="btn btn--primary"
-          onClick={() => void navigate('/ajustes/plantillas/new')}
-        >
-          <i className="ph ph-plus" style={{ marginRight: 6 }} />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-h1 m-0">{strings.TEMPLATES_PAGE_TITLE}</h1>
+        <Button variant="primary" onClick={() => void navigate('/ajustes/plantillas/new')}>
+          <i className="ph ph-plus mr-1.5" />
           {strings.TEMPLATES_NEW_BUTTON}
-        </button>
+        </Button>
       </div>
 
-      {/* Loading */}
-      {isLoading && (
-        <p className="text-body" style={{ color: 'var(--color-n-500)' }}>
-          {strings.TEMPLATES_LOADING}
-        </p>
-      )}
+      {isLoading && <p className="text-body text-n-500">{strings.TEMPLATES_LOADING}</p>}
 
-      {/* Error */}
       {isError && (
-        <div className="callout callout--danger">
-          <i className="ph ph-warning" style={{ fontSize: 18 }} />
-          <div className="callout__body">{strings.TEMPLATES_ERROR}</div>
-        </div>
+        <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
+          {strings.TEMPLATES_ERROR}
+        </Callout>
       )}
 
-      {/* Empty state */}
       {!isLoading && !isError && templates?.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state__icon">
-            <i className="ph ph-file-text" />
-          </div>
-          <h3 className="empty-state__title">{strings.TEMPLATES_EMPTY_TITLE}</h3>
-          <p className="empty-state__description">{strings.TEMPLATES_EMPTY_DESCRIPTION}</p>
-          <button
-            className="btn btn--primary"
-            onClick={() => void navigate('/ajustes/plantillas/new')}
-          >
-            {strings.TEMPLATES_NEW_BUTTON}
-          </button>
-        </div>
+        <EmptyState
+          icon={<i className="ph ph-file-text" />}
+          title={strings.TEMPLATES_EMPTY_TITLE}
+          description={strings.TEMPLATES_EMPTY_DESCRIPTION}
+          action={
+            <Button variant="primary" onClick={() => void navigate('/ajustes/plantillas/new')}>
+              {strings.TEMPLATES_NEW_BUTTON}
+            </Button>
+          }
+        />
       )}
 
-      {/* Template table */}
       {!isLoading && !isError && (templates?.length ?? 0) > 0 && (
-        <table className="table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Especialidad</th>
-              <th>Estado</th>
-              <th>Actualizado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {templates!.map((t) => (
-              <tr key={t.id}>
-                <td className="td--name">
-                  {t.name}
-                  {t.isSeeded && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 11,
-                        fontFamily: 'var(--font-mono)',
-                        color: 'var(--color-n-400)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                      }}
-                    >
-                      {strings.TEMPLATES_LIST_SEEDED}
-                    </span>
-                  )}
-                </td>
-                <td style={{ color: 'var(--color-n-500)', fontSize: 13 }}>
-                  {t.suggestedSpecialty ?? '—'}
-                </td>
-                <td>
-                  {t.isLocked ? (
-                    <span className="badge badge--review">
-                      <span className="badge__dot" />
-                      {strings.TEMPLATES_LIST_BLOCKED_BY(t.blockingTypeIds?.length ?? 0)}
-                    </span>
-                  ) : (
-                    <span className="badge badge--active">
-                      <span className="badge__dot" />
-                      Activa
-                    </span>
-                  )}
-                </td>
-                <td style={{ color: 'var(--color-n-500)', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
-                  {new Date(t.updatedAt).toLocaleDateString('es-DO', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-                    <button
-                      className="btn btn--secondary btn--sm"
-                      onClick={() => void navigate(`/ajustes/plantillas/${t.id}/edit`)}
-                    >
-                      {t.isLocked ? 'Ver' : strings.TEMPLATES_LIST_EDIT}
-                    </button>
-                    <button
-                      className="btn btn--ghost btn--sm btn--icon-only"
-                      title={strings.TEMPLATES_LIST_DELETE}
-                      disabled={t.isLocked || deletingId === t.id}
-                      onClick={() => void handleDelete(t)}
-                    >
-                      <i
-                        className="ph ph-trash"
-                        style={{
-                          fontSize: 15,
-                          color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
-                        }}
-                      />
-                    </button>
-                  </div>
-                </td>
+        <div className="border border-n-200 rounded-md overflow-hidden">
+          <table className="w-full border-collapse bg-n-0">
+            <thead>
+              <tr>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Nombre
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Especialidad
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Estado
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                  Actualizado
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {templates!.map((t) => (
+                <tr key={t.id} className="hover:bg-n-25">
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                    {t.name}
+                    {t.isSeeded && (
+                      <span className="ml-2 text-[11px] font-mono text-n-400 uppercase tracking-[0.06em]">
+                        {strings.TEMPLATES_LIST_SEEDED}
+                      </span>
+                    )}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-500">
+                    {t.suggestedSpecialty ?? '—'}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                    {t.isLocked ? (
+                      <Badge variant="review">
+                        {strings.TEMPLATES_LIST_BLOCKED_BY(t.blockingTypeIds?.length ?? 0)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="active">Activa</Badge>
+                    )}
+                  </td>
+                  <td className="text-[12px] px-4 py-3 border-b border-n-100 font-mono text-n-500">
+                    {new Date(t.updatedAt).toLocaleDateString('es-DO', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => void navigate(`/ajustes/plantillas/${t.id}/edit`)}
+                      >
+                        {t.isLocked ? 'Ver' : strings.TEMPLATES_LIST_EDIT}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-[28px] px-0"
+                        title={strings.TEMPLATES_LIST_DELETE}
+                        disabled={t.isLocked || deletingId === t.id}
+                        onClick={() => void handleDelete(t)}
+                      >
+                        <i
+                          className="ph ph-trash text-[15px]"
+                          style={{
+                            color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
+                          }}
+                        />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { clsx } from 'clsx'
+import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
   'inline-flex items-center gap-[5px] text-[11.5px] font-sans font-medium px-2 py-1 rounded-sm border',
@@ -29,7 +29,7 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
 
 export function Badge({ variant, children, showDot = true, className }: BadgeProps): JSX.Element {
   return (
-    <span className={clsx(badgeVariants({ variant }), className)}>
+    <span className={cn(badgeVariants({ variant }), className)}>
       {showDot && (
         <span
           className="inline-block w-[6px] h-[6px] rounded-full shrink-0"

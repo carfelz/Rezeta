@@ -1,10 +1,21 @@
 import { useAuthStore } from '@/store/auth.store'
 import { strings } from '@/lib/strings'
+import { EmptyState } from '@/components/ui'
 
 const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MONTHS_ES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ]
 
 function formatDateKicker(date: Date): string {
@@ -25,24 +36,16 @@ export function Dashboard(): JSX.Element {
 
   return (
     <div>
-      {/* Page header */}
-      <p className="text-overline" style={{ marginBottom: 'var(--space-2)' }}>
+      <p className="text-overline font-mono font-medium text-n-500 uppercase mb-2">
         {formatDateKicker(new Date())}
       </p>
-      <h1 className="text-h1" style={{ marginBottom: 'var(--space-8)' }}>
-        {greeting}
-      </h1>
+      <h1 className="text-h1 font-serif font-medium text-n-900 mb-8">{greeting}</h1>
 
-      {/* Dashboard content placeholder */}
-      <div className="empty-state">
-        <div className="empty-state__icon">
-          <i className="ph ph-squares-four" />
-        </div>
-        <h3 className="empty-state__title">{strings.DASHBOARD_UNDER_CONSTRUCTION}</h3>
-        <p className="empty-state__description">
-          {strings.DASHBOARD_UNDER_CONSTRUCTION_DESCRIPTION}
-        </p>
-      </div>
+      <EmptyState
+        icon={<i className="ph ph-squares-four" />}
+        title={strings.DASHBOARD_UNDER_CONSTRUCTION}
+        description={strings.DASHBOARD_UNDER_CONSTRUCTION_DESCRIPTION}
+      />
     </div>
   )
 }

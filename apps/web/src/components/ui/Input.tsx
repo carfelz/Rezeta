@@ -1,5 +1,5 @@
 import { forwardRef, type ReactNode } from 'react'
-import { clsx } from 'clsx'
+import { cn } from '@/lib/utils'
 
 // Input
 
@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         ref={ref}
-        className={clsx(
+        className={cn(
           'w-full h-input-md px-3 text-[13px] font-sans',
           'bg-n-0 text-n-700 placeholder:text-n-400',
           'border rounded-sm outline-none',
@@ -42,7 +42,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         ref={ref}
-        className={clsx(
+        className={cn(
           'w-full px-3 py-3 text-[13px] font-sans',
           'bg-n-0 text-n-700 placeholder:text-n-400',
           'border rounded-sm outline-none resize-y',
@@ -71,7 +71,7 @@ export interface InputGroupProps {
 export function InputGroup({ children, error, className }: InputGroupProps): JSX.Element {
   return (
     <div
-      className={clsx(
+      className={cn(
         'flex items-stretch w-full',
         'border rounded-sm',
         'transition-[border-color,box-shadow] duration-[100ms]',
@@ -97,10 +97,15 @@ export interface InputAdornProps {
   className?: string
 }
 
-export function InputAdorn({ children, side = 'left', plain, className }: InputAdornProps): JSX.Element {
+export function InputAdorn({
+  children,
+  side = 'left',
+  plain,
+  className,
+}: InputAdornProps): JSX.Element {
   return (
     <span
-      className={clsx(
+      className={cn(
         'flex items-center px-3 text-[13px] font-sans text-n-500 whitespace-nowrap shrink-0',
         !plain && 'bg-n-50',
         side === 'left' && !plain && 'border-r border-n-300',
@@ -123,13 +128,19 @@ export interface InputIconProps {
   className?: string
 }
 
-export function InputIcon({ children, side: _side, action, onClick, className }: InputIconProps): JSX.Element {
+export function InputIcon({
+  children,
+  side: _side,
+  action,
+  onClick,
+  className,
+}: InputIconProps): JSX.Element {
   return (
     <span
       role={action ? 'button' : undefined}
       tabIndex={action ? 0 : undefined}
       onClick={action ? onClick : undefined}
-      className={clsx(
+      className={cn(
         'flex items-center justify-center w-8 shrink-0 text-n-400',
         action && 'cursor-pointer hover:text-n-800 hover:bg-n-50',
         className,
@@ -151,15 +162,20 @@ export interface FieldProps {
   className?: string
 }
 
-export function Field({ label, required, helper, error, children, className }: FieldProps): JSX.Element {
+export function Field({
+  label,
+  required,
+  helper,
+  error,
+  children,
+  className,
+}: FieldProps): JSX.Element {
   return (
-    <div className={clsx('flex flex-col gap-[6px]', className)}>
+    <div className={cn('flex flex-col gap-[6px]', className)}>
       {label && (
         <label className="text-[12.5px] font-sans font-medium text-n-700 leading-none">
           {label}
-          {required && (
-            <span className="text-danger-solid ml-0.5">*</span>
-          )}
+          {required && <span className="text-danger-solid ml-0.5">*</span>}
         </label>
       )}
       {children}

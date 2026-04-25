@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { strings, firebaseErrorToSpanish } from '@/lib/strings'
+import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
 function isSafeRedirect(path: string | null): path is string {
   if (!path) return false
@@ -38,54 +39,25 @@ export function Login(): JSX.Element {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--color-n-25)',
-      }}
-    >
-      <div className="card" style={{ width: '100%', maxWidth: 400 }}>
-        <div style={{ marginBottom: 'var(--space-6)', textAlign: 'center' }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              background: 'var(--color-p-500)',
-              borderRadius: 8,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-serif)',
-              fontSize: 24,
-              fontWeight: 500,
-              color: 'white',
-              marginBottom: 'var(--space-4)',
-            }}
-          >
+    <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
+      <Card className="w-full max-w-[400px]">
+        <div className="mb-6 text-center">
+          <div className="w-[44px] h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mx-auto mb-4">
             R
           </div>
           <h1 className="text-h2">{strings.LOGIN_TITLE}</h1>
-          <p className="text-body-sm" style={{ color: 'var(--color-n-500)', marginTop: 4 }}>
-            {strings.LOGIN_SUBTITLE}
-          </p>
+          <p className="text-body-sm mt-1">{strings.LOGIN_SUBTITLE}</p>
         </div>
 
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
+          className="flex flex-col gap-4"
         >
-          <div className="field">
-            <label className="field__label" htmlFor="login-email">
-              {strings.LOGIN_FIELD_EMAIL}
-            </label>
-            <input
+          <Field label={strings.LOGIN_FIELD_EMAIL}>
+            <Input
               id="login-email"
-              className="input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -93,15 +65,11 @@ export function Login(): JSX.Element {
               autoComplete="email"
               required
             />
-          </div>
+          </Field>
 
-          <div className="field">
-            <label className="field__label" htmlFor="login-password">
-              {strings.LOGIN_FIELD_PASSWORD}
-            </label>
-            <input
+          <Field label={strings.LOGIN_FIELD_PASSWORD}>
+            <Input
               id="login-password"
-              className="input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -109,33 +77,35 @@ export function Login(): JSX.Element {
               autoComplete="current-password"
               required
             />
-          </div>
+          </Field>
 
           {error && (
-            <div className="callout callout--danger">
-              <i className="ph ph-warning" />
-              <div className="callout__body">{error}</div>
-            </div>
+            <Callout variant="danger" icon={<i className="ph ph-warning" />}>
+              {error}
+            </Callout>
           )}
 
-          <button className="btn btn--primary btn--lg" type="submit" disabled={isLoading}>
-            {isLoading ? strings.LOGIN_SUBMITTING : strings.LOGIN_SUBMIT}
-          </button>
-
-          <p
-            className="text-body-sm"
-            style={{ textAlign: 'center', color: 'var(--color-n-500)', marginTop: 'var(--space-2)' }}
+          <Button
+            variant="primary"
+            size="lg"
+            type="submit"
+            disabled={isLoading}
+            className="w-full justify-center text-n-0"
           >
+            {isLoading ? strings.LOGIN_SUBMITTING : strings.LOGIN_SUBMIT}
+          </Button>
+
+          <p className="text-body-sm text-center mt-2">
             {strings.LOGIN_NO_ACCOUNT}{' '}
             <Link
               to="/signup"
-              style={{ color: 'var(--color-p-500)', textDecoration: 'none', fontWeight: 500 }}
+              className="text-p-500 font-medium hover:text-p-700 transition-colors duration-[100ms]"
             >
               {strings.LOGIN_SIGNUP_LINK}
             </Link>
           </p>
         </form>
-      </div>
+      </Card>
     </div>
   )
 }

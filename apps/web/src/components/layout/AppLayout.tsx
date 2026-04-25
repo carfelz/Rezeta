@@ -28,11 +28,11 @@ export function AppLayout(): JSX.Element {
   }
 
   return (
-    <div className="app-layout">
+    <div className="flex min-h-screen">
       <Sidebar />
-      <div className="app-main">
+      <div className="flex-1 ml-sidebar pt-topbar min-w-0">
         <Topbar />
-        <main className="page-content">
+        <main className="py-8 px-12 max-w-layout">
           <Outlet />
         </main>
       </div>

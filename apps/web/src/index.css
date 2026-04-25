@@ -1,6 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Neutrals ───────────────────────────────────────────────── */
+    --color-n-0: #ffffff;
+    --color-n-25: #fafaf7;
+    --color-n-50: #f4f4f0;
+    --color-n-100: #ebebe6;
+    --color-n-200: #d8d8d2;
+    --color-n-300: #b9b9b3;
+    --color-n-400: #8e8e88;
+    --color-n-500: #6b6b66;
+    --color-n-600: #4a4a46;
+    --color-n-700: #2e2e2b;
+    --color-n-800: #1c1c1a;
+    --color-n-900: #0e0e0d;
+
+    /* ── Brand teal ─────────────────────────────────────────────── */
+    --color-p-50: #eaf0f1;
+    --color-p-100: #c9d7da;
+    --color-p-300: #6a8b91;
+    --color-p-500: #2d5760;
+    --color-p-700: #1b3a41;
+    --color-p-900: #0e2429;
+
+    /* ── Semantic ───────────────────────────────────────────────── */
+    --color-success-bg: #edf3ec;
+    --color-success-border: #b8cfb2;
+    --color-success-text: #2f5c28;
+
+    --color-warning-bg: #f7f1e3;
+    --color-warning-border: #dcc89a;
+    --color-warning-text: #6e5319;
+
+    --color-danger-bg: #f6eae8;
+    --color-danger-border: #d9b4ae;
+    --color-danger-text: #7a2b22;
+    --color-danger-solid: #8c2a20;
+
+    --color-info-bg: #ecf0f3;
+    --color-info-border: #b8c6d0;
+    --color-info-text: #2b435a;
+
+    /* ── Typography ─────────────────────────────────────────────── */
+    --font-serif: 'Source Serif 4', ui-serif, Georgia, serif;
+    --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+
+    /* ── Spacing ────────────────────────────────────────────────── */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* ── Border radius ──────────────────────────────────────────── */
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --radius-lg: 8px;
+
+    /* ── Borders ────────────────────────────────────────────────── */
+    --border-default: 1px solid var(--color-n-200);
+    --border-soft: 1px solid var(--color-n-100);
+    --border-strong: 1px solid var(--color-n-300);
+    --border-accent: 2px solid var(--color-p-500);
+    --border-dashed: 1px dashed var(--color-n-200);
+    --border-focus: 1px solid var(--color-p-500);
+
+    /* ── Shadows ────────────────────────────────────────────────── */
+    --shadow-flat: none;
+    --shadow-raised: 0 1px 0 rgba(14, 14, 13, 0.04), 0 1px 2px rgba(14, 14, 13, 0.04);
+    --shadow-floating:
+      0 1px 0 rgba(14, 14, 13, 0.04), 0 8px 24px -8px rgba(14, 14, 13, 0.12),
+      0 2px 6px rgba(14, 14, 13, 0.06);
+    --shadow-focus: 0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-p-300);
+    --shadow-focus-danger: 0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-danger-border);
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    --layout-max-width: 1440px;
+    --layout-sidebar-width: 240px;
+    --layout-topbar-height: 56px;
+    --layout-margin-xl: 48px;
+    --layout-margin-lg: 32px;
+    --layout-gutter-xl: 24px;
+    --layout-gutter-lg: 20px;
+
+    /* ── Component sizes ────────────────────────────────────────── */
+    --size-btn-sm: 28px;
+    --size-btn-md: 32px;
+    --size-btn-lg: 40px;
+    --size-input-md: 34px;
+    --size-touch-min: 44px;
+
+    /* ── Icons ──────────────────────────────────────────────────── */
+    --icon-size-sm: 15px;
+    --icon-size-md: 16px;
+    --icon-size-lg: 18px;
+    --icon-size-xl: 22px;
+
+    /* ── Transitions ────────────────────────────────────────────── */
+    --transition-fast: 100ms ease;
+    --transition-medium: 150ms ease;
+
+    /* ── shadcn variable contract ───────────────────────────────── */
+    /* Maps shadcn's expected CSS vars to Rezeta tokens so every    */
+    /* shadcn component is automatically branded.                   */
+    --background: var(--color-n-25);
+    --foreground: var(--color-n-900);
+    --card: var(--color-n-0);
+    --card-foreground: var(--color-n-900);
+    --popover: var(--color-n-0);
+    --popover-foreground: var(--color-n-900);
+    --primary: var(--color-p-500);
+    --primary-foreground: var(--color-n-0);
+    --secondary: var(--color-n-50);
+    --secondary-foreground: var(--color-n-800);
+    --muted: var(--color-n-50);
+    --muted-foreground: var(--color-n-500);
+    --accent: var(--color-n-100);
+    --accent-foreground: var(--color-n-900);
+    --destructive: var(--color-danger-solid);
+    --destructive-foreground: var(--color-n-0);
+    --border: var(--color-n-200);
+    --input: var(--color-n-300);
+    --ring: var(--color-p-300);
+    --radius: 5px;
+
+    /* Sidebar (shadcn v4 sidebar tokens) */
+    --sidebar: var(--color-n-25);
+    --sidebar-foreground: var(--color-n-700);
+    --sidebar-primary: var(--color-p-500);
+    --sidebar-primary-foreground: var(--color-n-0);
+    --sidebar-accent: var(--color-n-50);
+    --sidebar-accent-foreground: var(--color-n-900);
+    --sidebar-border: var(--color-n-100);
+    --sidebar-ring: var(--color-p-300);
+
+    /* Charts */
+    --chart-1: var(--color-p-500);
+    --chart-2: var(--color-p-300);
+    --chart-3: var(--color-n-500);
+    --chart-4: var(--color-warning-text);
+    --chart-5: var(--color-success-text);
+  }
+}
+
+@layer components {
+  /* Composite typography — font-size comes from Tailwind utilities layer */
+  .text-display {
+    @apply font-serif font-medium text-n-900;
+  }
+  .text-h1 {
+    @apply font-serif font-medium text-n-900;
+  }
+  .text-h2 {
+    @apply font-serif font-medium text-n-800;
+  }
+  .text-h3 {
+    @apply font-sans font-semibold text-n-800;
+  }
+  .text-body-lg {
+    @apply font-sans text-n-700;
+  }
+  .text-body {
+    @apply font-sans text-n-700;
+  }
+  .text-body-sm {
+    @apply font-sans text-n-600;
+  }
+  .text-caption {
+    @apply font-sans font-medium text-n-500;
+  }
+  .text-overline {
+    @apply font-mono font-medium text-n-500 uppercase;
+  }
+  .text-mono {
+    @apply font-mono text-[12px] text-n-600;
+  }
+}
 
 * {
   box-sizing: border-box;

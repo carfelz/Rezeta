@@ -25,6 +25,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { strings } from '@/lib/strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
+import { Button, Badge, Callout, Field, Input, AddBlockButton } from '@/components/ui'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -499,22 +500,28 @@ function BlockRow({
             style={{ display: 'flex', gap: 2, flexShrink: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className="btn btn--ghost btn--sm btn--icon-only"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-[28px] px-0"
               title={strings.TEMPLATE_EDITOR_MOVE_UP}
               onClick={() => onMove(block.id, 'up', parentId)}
             >
-              <i className="ph ph-caret-up" style={{ fontSize: 14 }} />
-            </button>
-            <button
-              className="btn btn--ghost btn--sm btn--icon-only"
+              <i className="ph ph-caret-up text-[14px]" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-[28px] px-0"
               title={strings.TEMPLATE_EDITOR_MOVE_DOWN}
               onClick={() => onMove(block.id, 'down', parentId)}
             >
-              <i className="ph ph-caret-down" style={{ fontSize: 14 }} />
-            </button>
-            <button
-              className="btn btn--ghost btn--sm btn--icon-only"
+              <i className="ph ph-caret-down text-[14px]" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-[28px] px-0"
               title={
                 isRequired
                   ? strings.TEMPLATE_EDITOR_REQUIRED_TOOLTIP
@@ -539,13 +546,12 @@ function BlockRow({
               }}
             >
               <i
-                className="ph ph-trash"
+                className="ph ph-trash text-[14px]"
                 style={{
-                  fontSize: 14,
                   color: isRequired ? 'var(--color-n-300)' : 'var(--color-danger-text)',
                 }}
               />
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -562,12 +568,8 @@ function BlockRow({
         >
           {isSection ? (
             <>
-              <div className="field">
-                <label className="field__label">
-                  {strings.TEMPLATE_EDITOR_SECTION_TITLE_LABEL}
-                </label>
-                <input
-                  className="input"
+              <Field label={strings.TEMPLATE_EDITOR_SECTION_TITLE_LABEL}>
+                <Input
                   value={block.title ?? ''}
                   disabled={isLocked}
                   onChange={(e) =>
@@ -575,11 +577,9 @@ function BlockRow({
                   }
                   placeholder="Ej. Indicaciones"
                 />
-              </div>
-              <div className="field">
-                <label className="field__label">{strings.TEMPLATE_EDITOR_SECTION_DESC_LABEL}</label>
-                <input
-                  className="input"
+              </Field>
+              <Field label={strings.TEMPLATE_EDITOR_SECTION_DESC_LABEL}>
+                <Input
                   value={block.description ?? ''}
                   disabled={isLocked}
                   onChange={(e) =>
@@ -587,14 +587,12 @@ function BlockRow({
                   }
                   placeholder="Descripción corta (opcional)"
                 />
-              </div>
+              </Field>
             </>
           ) : (
             <>
-              <div className="field">
-                <label className="field__label">Título (opcional)</label>
-                <input
-                  className="input"
+              <Field label="Título (opcional)">
+                <Input
                   value={block.title ?? ''}
                   disabled={isLocked}
                   onChange={(e) =>
@@ -602,11 +600,10 @@ function BlockRow({
                   }
                   placeholder={`Ej. ${TYPE_LABELS[block.type]}`}
                 />
-              </div>
-              <div className="field">
-                <label className="field__label">{strings.TEMPLATE_EDITOR_PLACEHOLDER_HINT}</label>
+              </Field>
+              <Field label={strings.TEMPLATE_EDITOR_PLACEHOLDER_HINT}>
                 <textarea
-                  className="input"
+                  className="w-full px-3 py-3 text-[13px] font-sans bg-n-0 text-n-700 placeholder:text-n-400 border border-n-300 rounded-sm outline-none resize-y transition-[border-color,box-shadow] duration-[100ms] focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)] disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed"
                   value={block.placeholder ?? ''}
                   disabled={isLocked}
                   rows={2}
@@ -614,9 +611,8 @@ function BlockRow({
                     onUpdate(block.id, { placeholder: e.target.value || undefined }, parentId)
                   }
                   placeholder="Instrucción para el médico al rellenar este bloque"
-                  style={{ resize: 'vertical' }}
                 />
-              </div>
+              </Field>
             </>
           )}
         </div>
@@ -640,13 +636,7 @@ function BlockRow({
           )}
           {!isLocked && (
             <div style={{ padding: '4px 12px 0' }}>
-              <button
-                className="pblock-add-btn"
-                style={{ width: '100%' }}
-                onClick={() => onAddChild('text', block.id)}
-              >
-                <i className="ph ph-plus" /> Añadir bloque
-              </button>
+              <AddBlockButton onClick={() => onAddChild('text', block.id)} label="Añadir bloque" />
             </div>
           )}
         </div>
@@ -819,58 +809,40 @@ export function TemplateEditor({
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-3)',
-          marginBottom: 'var(--space-6)',
-          flexWrap: 'wrap',
-        }}
-      >
-        <h1 className="text-h2" style={{ flex: 1, margin: 0 }}>
-          {state.name || strings.TEMPLATE_EDITOR_NEW_TITLE}
-        </h1>
-        {statusLabel && (
-          <span className={`badge ${isLocked ? 'badge--review' : 'badge--draft'}`}>
-            <span className="badge__dot" />
-            {statusLabel}
-          </span>
-        )}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <h1 className="text-h2 flex-1 m-0">{state.name || strings.TEMPLATE_EDITOR_NEW_TITLE}</h1>
+        {statusLabel && <Badge variant={isLocked ? 'review' : 'draft'}>{statusLabel}</Badge>}
         {state.isDirty && !isLocked && (
-          <span style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
-            {strings.TEMPLATE_EDITOR_UNSAVED}
-          </span>
+          <span className="text-[12px] text-n-500">{strings.TEMPLATE_EDITOR_UNSAVED}</span>
         )}
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <button className="btn btn--secondary btn--sm" onClick={onCancel}>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={onCancel}>
             {strings.TEMPLATE_EDITOR_CANCEL}
-          </button>
+          </Button>
           {!isLocked && (
-            <button
-              className="btn btn--primary btn--sm"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleSave}
               disabled={isSaving || !state.name.trim()}
             >
               {isSaving ? strings.TEMPLATE_EDITOR_SAVING : strings.TEMPLATE_EDITOR_SAVE}
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Lock banner */}
       {isLocked && (
-        <div
-          className="callout callout--warning"
-          style={{ marginBottom: 'var(--space-6)' }}
-          role="status"
-        >
-          <i className="ph ph-lock" style={{ fontSize: 18 }} />
-          <div className="callout__body">
-            <div className="callout__title">{strings.TEMPLATE_EDITOR_STATUS_LOCKED}</div>
+        <div className="mb-6" role="status">
+          <Callout
+            variant="warning"
+            icon={<i className="ph ph-lock" style={{ fontSize: 18 }} />}
+            title={strings.TEMPLATE_EDITOR_STATUS_LOCKED}
+          >
             {strings.TEMPLATE_EDITOR_LOCKED_BANNER}
             {blockingTypeIds.length > 0 && (
-              <div style={{ marginTop: 4, fontSize: 12, color: 'var(--color-warning-text)' }}>
+              <div className="mt-1 text-[12px] text-warning-text">
                 {strings.TEMPLATE_EDITOR_LOCKED_TYPES_PREFIX}{' '}
                 {blockingTypeIds.map((id) => (
                   <a
@@ -883,43 +855,29 @@ export function TemplateEditor({
                 ))}
               </div>
             )}
-          </div>
+          </Callout>
         </div>
       )}
 
       {/* Name + Specialty */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-4)',
-          marginBottom: 'var(--space-6)',
-        }}
-      >
-        <div className="field">
-          <label className="field__label">
-            {strings.TEMPLATE_EDITOR_FIELD_NAME}
-            <span className="field__required">*</span>
-          </label>
-          <input
+      <div className="flex flex-col gap-4 mb-6">
+        <Field label={strings.TEMPLATE_EDITOR_FIELD_NAME} required>
+          <Input
             ref={nameRef}
-            className="input"
             value={state.name}
             disabled={isLocked}
             onChange={(e) => dispatch({ type: 'SET_NAME', value: e.target.value })}
             placeholder={strings.TEMPLATE_EDITOR_FIELD_NAME_PLACEHOLDER}
           />
-        </div>
-        <div className="field">
-          <label className="field__label">{strings.TEMPLATE_EDITOR_FIELD_SPECIALTY}</label>
-          <input
-            className="input"
+        </Field>
+        <Field label={strings.TEMPLATE_EDITOR_FIELD_SPECIALTY}>
+          <Input
             value={state.suggestedSpecialty}
             disabled={isLocked}
             onChange={(e) => dispatch({ type: 'SET_SPECIALTY', value: e.target.value })}
             placeholder={strings.TEMPLATE_EDITOR_FIELD_SPECIALTY_PLACEHOLDER}
           />
-        </div>
+        </Field>
       </div>
 
       {/* Block list */}
@@ -956,16 +914,7 @@ export function TemplateEditor({
 
       {/* Add-block palette */}
       {!isLocked && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 'var(--space-2)',
-            marginTop: 'var(--space-4)',
-            paddingTop: 'var(--space-4)',
-            borderTop: '1px solid var(--color-n-100)',
-          }}
-        >
+        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-n-100">
           {(
             [
               ['section', strings.TEMPLATE_EDITOR_ADD_SECTION],
@@ -977,13 +926,14 @@ export function TemplateEditor({
               ['alert', strings.TEMPLATE_EDITOR_ADD_ALERT],
             ] as [BlockType, string][]
           ).map(([blockType, label]) => (
-            <button
+            <Button
               key={blockType}
-              className="btn btn--secondary btn--sm"
+              variant="secondary"
+              size="sm"
               onClick={() => handleAddBlock(blockType)}
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
       )}

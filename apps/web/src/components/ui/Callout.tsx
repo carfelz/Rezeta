@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { clsx } from 'clsx'
+import { cn } from '@/lib/utils'
 import type { ReactNode } from 'react'
 
 const calloutVariants = cva(
@@ -28,14 +28,10 @@ export interface CalloutProps extends VariantProps<typeof calloutVariants> {
 
 export function Callout({ variant, icon, title, children, className }: CalloutProps): JSX.Element {
   return (
-    <div className={clsx(calloutVariants({ variant }), className)}>
-      {icon && (
-        <span className="text-[18px] shrink-0 leading-none mt-[1px]">{icon}</span>
-      )}
+    <div className={cn(calloutVariants({ variant }), className)}>
+      {icon && <span className="text-[18px] shrink-0 leading-none mt-[1px]">{icon}</span>}
       <div className="flex-1 min-w-0">
-        {title && (
-          <div className="font-semibold mb-0.5">{title}</div>
-        )}
+        {title && <div className="font-semibold mb-0.5">{title}</div>}
         {children}
       </div>
     </div>

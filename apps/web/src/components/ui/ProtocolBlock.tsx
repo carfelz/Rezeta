@@ -1,5 +1,4 @@
-import { clsx } from 'clsx'
-import { DotsSixVerticalIcon, PencilSimpleIcon, TrashIcon, PlusIcon } from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
 import type { ReactNode } from 'react'
 
 // Protocol Container (top-level wrapper)
@@ -22,7 +21,7 @@ export function ProtocolContainer({
   className,
 }: ProtocolContainerProps): JSX.Element {
   return (
-    <div className={clsx('bg-n-0 border border-n-200 rounded px-8 py-7', className)}>
+    <div className={cn('bg-n-0 border border-n-200 rounded px-8 py-7', className)}>
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           {kicker && (
@@ -67,7 +66,7 @@ export function ProtocolBlock({
 }: ProtocolBlockProps): JSX.Element {
   return (
     <div
-      className={clsx(
+      className={cn(
         'bg-n-0 border border-n-200 rounded mb-3',
         nested && 'ml-7 border-l-2 border-l-n-200',
         className,
@@ -76,7 +75,7 @@ export function ProtocolBlock({
       {/* Header with 2px teal left rule */}
       <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
         <span className="text-n-300 cursor-grab shrink-0">
-          <DotsSixVerticalIcon size={16} />
+          <i className="ph ph-dots-six-vertical text-[16px]" />
         </span>
         <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
           {type}
@@ -96,7 +95,7 @@ export function ProtocolBlock({
               className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
               aria-label="Editar bloque"
             >
-              <PencilSimpleIcon size={14} />
+              <i className="ph ph-pencil-simple text-[14px]" />
             </button>
           )}
           {onDelete && !required && (
@@ -105,7 +104,7 @@ export function ProtocolBlock({
               className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-[100ms]"
               aria-label="Eliminar bloque"
             >
-              <TrashIcon size={14} />
+              <i className="ph ph-trash text-[14px]" />
             </button>
           )}
         </div>
@@ -135,7 +134,7 @@ export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): 
       {items.map((item) => (
         <li
           key={item.id}
-          className={clsx(
+          className={cn(
             'flex items-center gap-3 py-2 px-1 hover:bg-n-25 rounded transition-colors duration-[100ms]',
             item.done && 'opacity-60',
           )}
@@ -147,7 +146,7 @@ export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): 
             className="w-4 h-4 rounded-sm border-n-400 text-p-500 cursor-pointer shrink-0"
           />
           <span
-            className={clsx(
+            className={cn(
               'text-[13.5px] font-sans text-n-700 leading-[1.5] flex-1',
               item.done && 'line-through text-n-400',
             )}
@@ -311,7 +310,7 @@ const alertStyles = {
 export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps): JSX.Element {
   return (
     <div
-      className={clsx(
+      className={cn(
         'px-4 py-3 rounded border text-[13px] font-sans leading-[1.45]',
         alertStyles[severity],
       )}
@@ -336,7 +335,7 @@ export function AddBlockButton({
       onClick={onClick}
       className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-n-200 rounded text-[12.5px] font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-[100ms]"
     >
-      <PlusIcon size={14} />
+      <i className="ph ph-plus text-[14px]" />
       {label}
     </button>
   )

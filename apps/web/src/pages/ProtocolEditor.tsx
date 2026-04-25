@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
-import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui'
+import {
+  Button,
+  Badge,
+  AddBlockButton,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
@@ -398,12 +407,7 @@ export function ProtocolEditor(): JSX.Element {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 pt-1">
-          {isDirty && (
-            <span className="badge badge--review">
-              <span className="badge__dot" />
-              {strings.EDITOR_UNSAVED_CHANGES}
-            </span>
-          )}
+          {isDirty && <Badge variant="review">{strings.EDITOR_UNSAVED_CHANGES}</Badge>}
           <Button variant="secondary" size="sm" onClick={() => void navigate(`/protocolos/${id}`)}>
             <i className="ph ph-eye mr-1.5" />
             {strings.EDITOR_VISTA_PREVIA}
@@ -485,10 +489,10 @@ export function ProtocolEditor(): JSX.Element {
           )}
 
           {/* Add block footer */}
-          <button className="pblock-add-btn" onClick={() => handlePaletteClick('section')}>
-            <i className="ph ph-plus text-[13px]" />
-            {strings.EDITOR_ADD_BLOCK_FOOTER}
-          </button>
+          <AddBlockButton
+            onClick={() => handlePaletteClick('section')}
+            label={strings.EDITOR_ADD_BLOCK_FOOTER}
+          />
         </div>
 
         {/* ── Right: Palette + mini History ────────────────────────────────── */}

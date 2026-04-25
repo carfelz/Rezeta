@@ -1,20 +1,20 @@
 import { useParams, Link } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
+import { Button, Card, CardTitle, Badge, Callout } from '@/components/ui'
 
 export function PacienteDetalle(): JSX.Element {
   const { patientId } = useParams<{ patientId: string }>()
   const { data: patient, isLoading, isError } = usePatient(patientId ?? '')
 
   if (isLoading) {
-    return <div style={{ color: 'var(--color-n-400)' }}>Cargando...</div>
+    return <div className="text-n-400">Cargando...</div>
   }
 
   if (isError || !patient) {
     return (
-      <div className="callout callout--danger">
-        <i className="ph ph-warning-circle" />
-        <div className="callout__body">Paciente no encontrado.</div>
-      </div>
+      <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
+        Paciente no encontrado.
+      </Callout>
     )
   }
 
@@ -22,35 +22,43 @@ export function PacienteDetalle(): JSX.Element {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 'var(--space-6)', gap: 'var(--space-3)' }}>
-        <Link to="/pacientes" className="btn btn--ghost btn--sm">
-          <i className="ph ph-arrow-left" />
+      <div className="flex items-center mb-6 gap-3">
+        <Link
+          to="/pacientes"
+          className="inline-flex items-center justify-center h-btn-sm w-btn-sm rounded-sm text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
+          aria-label="Volver"
+        >
+          <i className="ph ph-arrow-left text-[16px]" />
         </Link>
-        <h1 className="text-h1" style={{ flex: 1 }}>{name}</h1>
-        <button className="btn btn--secondary">
-          <i className="ph ph-pencil-simple" />
+        <h1 className="text-h1 flex-1">{name}</h1>
+        <Button variant="secondary">
+          <i className="ph ph-pencil-simple mr-1.5" />
           Editar
-        </button>
-        <button className="btn btn--primary">
-          <i className="ph ph-notepad" />
+        </Button>
+        <Button variant="primary">
+          <i className="ph ph-notepad mr-1.5" />
           Nueva consulta
-        </button>
+        </Button>
       </div>
 
-      <div className="grid-2">
-        <div className="card">
-          <div className="card__title">Información general</div>
-          <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <div className="grid grid-cols-2 gap-6">
+        <Card>
+          <CardTitle>Información general</CardTitle>
+          <div className="mt-4 flex flex-col gap-3">
             {patient.documentNumber && (
               <div>
                 <span className="text-overline">Documento</span>
-                <div className="text-body">{patient.documentType?.toUpperCase()} · {patient.documentNumber}</div>
+                <div className="text-body">
+                  {patient.documentType?.toUpperCase()} · {patient.documentNumber}
+                </div>
               </div>
             )}
             {patient.dateOfBirth && (
               <div>
                 <span className="text-overline">Fecha de nacimiento</span>
-                <div className="text-body">{new Date(patient.dateOfBirth).toLocaleDateString('es-DO')}</div>
+                <div className="text-body">
+                  {new Date(patient.dateOfBirth).toLocaleDateString('es-DO')}
+                </div>
               </div>
             )}
             {patient.phone && (
@@ -66,39 +74,40 @@ export function PacienteDetalle(): JSX.Element {
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="card">
-          <div className="card__title">Historia clínica</div>
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            {(patient.allergies).length > 0 && (
-              <div style={{ marginBottom: 'var(--space-3)' }}>
+        <Card>
+          <CardTitle>Historia clínica</CardTitle>
+          <div className="mt-4">
+            {patient.allergies.length > 0 && (
+              <div className="mb-3">
                 <span className="text-overline">Alergias</span>
-                <div className="row" style={{ flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 4 }}>
-                  {(patient.allergies).map((a) => (
-                    <span key={a} className="badge badge--overdue">{a}</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {patient.allergies.map((a) => (
+                    <Badge key={a} variant="overdue">
+                      {a}
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
-            {(patient.chronicConditions).length > 0 && (
+            {patient.chronicConditions.length > 0 && (
               <div>
                 <span className="text-overline">Condiciones crónicas</span>
-                <div className="row" style={{ flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 4 }}>
-                  {(patient.chronicConditions).map((c) => (
-                    <span key={c} className="badge badge--review">{c}</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {patient.chronicConditions.map((c) => (
+                    <Badge key={c} variant="review">
+                      {c}
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
-            {(patient.allergies).length === 0 &&
-              (patient.chronicConditions).length === 0 && (
-              <p className="text-body-sm" style={{ color: 'var(--color-n-400)' }}>
-                Sin antecedentes registrados.
-              </p>
+            {patient.allergies.length === 0 && patient.chronicConditions.length === 0 && (
+              <p className="text-body-sm text-n-400">Sin antecedentes registrados.</p>
             )}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )

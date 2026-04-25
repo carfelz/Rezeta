@@ -66,7 +66,13 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__click",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__press_key",
       "Bash(ln *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(cp \"/Users/carlosfeliz/.claude/projects/-Users-carlosfeliz-code-medical-app/be92c2ab-3016-45fd-93e2-da7d9ce13cc7/tool-results/webfetch-1777148779614-ll0jfr.bin\" /tmp/design.bin)",
+      "Bash(gunzip -c /tmp/design.bin)",
+      "Bash(tar xf *)",
+      "Bash(npx eslint *)",
+      "Bash(./node_modules/.bin/eslint apps/web/src)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ]
   }
 }

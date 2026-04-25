@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuthStore } from '@/store/auth.store'
 import { strings } from '@/lib/strings'
+import { Button, Card, CardTitle } from '@/components/ui'
 
 export function Ajustes(): JSX.Element {
   const { user } = useAuth()
@@ -15,21 +16,12 @@ export function Ajustes(): JSX.Element {
 
   return (
     <div>
-      <h1 className="text-h1" style={{ marginBottom: 'var(--space-6)' }}>
-        Ajustes
-      </h1>
+      <h1 className="text-h1 mb-6">Ajustes</h1>
 
       {user && (
-        <div className="card" style={{ maxWidth: 560, marginBottom: 'var(--space-6)' }}>
-          <div className="card__title">Mi cuenta</div>
-          <div
-            style={{
-              marginTop: 'var(--space-4)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-3)',
-            }}
-          >
+        <Card className="max-w-[560px] mb-6">
+          <CardTitle>Mi cuenta</CardTitle>
+          <div className="mt-4 flex flex-col gap-3">
             <div>
               <span className="text-overline">Nombre</span>
               <div className="text-body">{user.fullName}</div>
@@ -51,121 +43,71 @@ export function Ajustes(): JSX.Element {
               </div>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Quick-links to settings sub-sections */}
-      <div className="card" style={{ maxWidth: 560, marginBottom: 'var(--space-6)', padding: 0 }}>
+      <Card className="max-w-[560px] mb-6 p-0">
         <Link
           to="/ajustes/plantillas"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            padding: 'var(--space-4) var(--space-5)',
-            textDecoration: 'none',
-            color: 'var(--color-n-800)',
-            borderBottom: '1px solid var(--color-n-100)',
-          }}
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-file-text" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <i className="ph ph-file-text text-[18px] text-p-500" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{strings.TEMPLATES_PAGE_TITLE}</div>
-            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
+            <div className="text-[13px] font-semibold">{strings.TEMPLATES_PAGE_TITLE}</div>
+            <div className="text-[12px] text-n-500">
               Gestiona las plantillas de protocolos de tu práctica
             </div>
           </div>
-          <i
-            className="ph ph-caret-right"
-            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
-          />
+          <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
         <Link
           to="/ajustes/tipos"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            padding: 'var(--space-4) var(--space-5)',
-            textDecoration: 'none',
-            color: 'var(--color-n-800)',
-            borderBottom: '1px solid var(--color-n-100)',
-          }}
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-tag" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <i className="ph ph-tag text-[18px] text-p-500" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{strings.TYPES_PAGE_TITLE}</div>
-            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
-              Categorías que agrupan tus protocolos
-            </div>
+            <div className="text-[13px] font-semibold">{strings.TYPES_PAGE_TITLE}</div>
+            <div className="text-[12px] text-n-500">Categorías que agrupan tus protocolos</div>
           </div>
-          <i
-            className="ph ph-caret-right"
-            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
-          />
+          <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
         <Link
           to="/ajustes/design-system/prototype"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            padding: 'var(--space-4) var(--space-5)',
-            textDecoration: 'none',
-            color: 'var(--color-n-800)',
-            borderBottom: '1px solid var(--color-n-100)',
-          }}
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-monitor" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <i className="ph ph-monitor text-[18px] text-p-500" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>
-              {strings.DESIGN_SYSTEM_PROTOTYPE_TITLE}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
+            <div className="text-[13px] font-semibold">{strings.DESIGN_SYSTEM_PROTOTYPE_TITLE}</div>
+            <div className="text-[12px] text-n-500">
               {strings.DESIGN_SYSTEM_PROTOTYPE_DESCRIPTION}
             </div>
           </div>
-          <i
-            className="ph ph-caret-right"
-            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
-          />
+          <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
         <Link
           to="/ajustes/design-system/reference"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            padding: 'var(--space-4) var(--space-5)',
-            textDecoration: 'none',
-            color: 'var(--color-n-800)',
-          }}
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-squares-four" style={{ fontSize: 18, color: 'var(--color-p-500)' }} />
+          <i className="ph ph-squares-four text-[18px] text-p-500" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>
-              {strings.DESIGN_SYSTEM_REFERENCE_TITLE}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--color-n-500)' }}>
+            <div className="text-[13px] font-semibold">{strings.DESIGN_SYSTEM_REFERENCE_TITLE}</div>
+            <div className="text-[12px] text-n-500">
               {strings.DESIGN_SYSTEM_REFERENCE_DESCRIPTION}
             </div>
           </div>
-          <i
-            className="ph ph-caret-right"
-            style={{ marginLeft: 'auto', color: 'var(--color-n-400)' }}
-          />
+          <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
-      </div>
+      </Card>
 
-      <button
-        className="btn btn--secondary"
+      <Button
+        variant="secondary"
         onClick={() => {
           void handleSignOut()
         }}
       >
-        <i className="ph ph-sign-out" style={{ marginRight: 6 }} />
+        <i className="ph ph-sign-out mr-1.5" />
         {strings.AUTH_SIGN_OUT}
-      </button>
+      </Button>
     </div>
   )
 }
