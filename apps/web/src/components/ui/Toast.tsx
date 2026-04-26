@@ -3,6 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import type { ComponentPropsWithoutRef, ElementRef, ReactNode } from 'react'
 import { forwardRef } from 'react'
+import React from 'react'
 
 export const ToastProvider = ToastPrimitive.Provider
 
@@ -114,4 +115,5 @@ export const ToastDescription = forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitive.Description.displayName
 
-export type { ToastActionElement } from '@radix-ui/react-toast'
+export const ToastAction = ToastPrimitive.Action
+export type ToastActionElement = React.ReactElement<typeof ToastAction>

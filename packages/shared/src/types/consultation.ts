@@ -26,6 +26,7 @@ export interface Consultation {
   plan: string | null
   vitals: Vitals | null
   diagnoses: string[]
+  consultedAt: string
   signedAt: string | null
   signedByUserId: string | null
   createdAt: string
@@ -36,8 +37,33 @@ export interface Consultation {
 export interface ConsultationAmendment {
   id: string
   consultationId: string
+  amendmentNumber: number
   amendedByUserId: string
   reason: string
-  changes: Record<string, unknown>
-  createdAt: string
+  content: Record<string, unknown>
+  amendedAt: string
+  signedAt: string | null
+}
+
+export interface ConsultationProtocolUsage {
+  id: string
+  tenantId: string
+  consultationId: string
+  protocolId: string
+  protocolVersionId: string
+  checkedState: Record<string, boolean>
+  completedAt: string | null
+  notes: string | null
+  appliedAt: string
+  protocolTitle: string
+  protocolTypeName: string
+  versionNumber: number
+}
+
+export interface ConsultationWithDetails extends Consultation {
+  patientName: string
+  locationName: string
+  doctorName: string
+  amendments: ConsultationAmendment[]
+  protocolUsages: ConsultationProtocolUsage[]
 }

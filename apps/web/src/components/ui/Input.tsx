@@ -157,7 +157,7 @@ export interface FieldProps {
   label?: string
   required?: boolean
   helper?: string
-  error?: string
+  error?: string | undefined
   children: ReactNode
   className?: string
 }

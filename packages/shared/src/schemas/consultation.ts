@@ -40,3 +40,16 @@ export const AmendConsultationSchema = z.object({
 export type CreateConsultationDto = z.infer<typeof CreateConsultationSchema>
 export type UpdateConsultationDto = z.infer<typeof UpdateConsultationSchema>
 export type AmendConsultationDto = z.infer<typeof AmendConsultationSchema>
+
+export const AddProtocolUsageSchema = z.object({
+  protocolId: z.string().uuid(),
+})
+
+export const UpdateCheckedStateSchema = z.object({
+  checkedState: z.record(z.string(), z.boolean()),
+  completedAt: z.string().datetime().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+})
+
+export type AddProtocolUsageDto = z.infer<typeof AddProtocolUsageSchema>
+export type UpdateCheckedStateDto = z.infer<typeof UpdateCheckedStateSchema>

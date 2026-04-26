@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   usePatients,
   useCreatePatient,
   useUpdatePatient,
   useDeletePatient,
 } from '@/hooks/patients/use-patients'
-import type { Patient } from '@rezeta/shared'
+import { usePatientConsultations } from '@/hooks/consultations/use-consultations'
+import type { Patient, ConsultationWithDetails } from '@rezeta/shared'
 import {
   Button,
   Badge,
@@ -66,32 +68,106 @@ function ReadField({ label, value }: { label: string; value: React.ReactNode }):
   )
 }
 
-// ─── Clinical History (stub — wired up once consultations module is built) ────
+// ─── Consultation List Item ───────────────────────────────────────────────────
 
-function ClinicalHistory({ patientId }: { patientId: string }): JSX.Element {
-  // TODO: replace with usePatientConsultations(patientId) once consultations module is built
-  void patientId
-  const consultations: never[] = []
+function ConsultationListItem({
+  consultation,
+  onClick,
+}: {
+  consultation: ConsultationWithDetails
+  onClick: () => void
+}): JSX.Element {
+  const date = new Date(consultation.consultedAt).toLocaleDateString('es-DO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  const isSigned = consultation.status === 'signed'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
+    >
+      <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-sans font-semibold text-n-800 truncate">
+          {consultation.chiefComplaint ?? 'Sin motivo registrado'}
+        </div>
+        <div className="text-[11.5px] text-n-500 mt-0.5">
+          {date} · {consultation.locationName}
+        </div>
+      </div>
+      <span
+        className={`text-[10.5px] font-mono px-1.5 py-0.5 rounded border shrink-0 ${
+          isSigned ? 'bg-p-50 border-p-100 text-p-700' : 'bg-n-50 border-n-200 text-n-500'
+        }`}
+      >
+        {isSigned ? 'Firmada' : 'Borrador'}
+      </span>
+      <i className="ph ph-caret-right text-[13px] text-n-300 shrink-0" />
+    </button>
+  )
+}
+
+// ─── Clinical History ─────────────────────────────────────────────────────────
+
+function ClinicalHistory({
+  patientId,
+  locationId,
+}: {
+  patientId: string
+  locationId?: string
+}): JSX.Element {
+  const navigate = useNavigate()
+  const { data: consultations = [], isLoading } = usePatientConsultations(patientId)
 
   return (
     <div className="mt-6">
-      <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-[13px] font-sans font-semibold text-n-800 uppercase tracking-[0.06em]">
-          Historia clínica
-        </h3>
-        <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5">
-          {consultations.length}
-        </span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-[13px] font-sans font-semibold text-n-800 uppercase tracking-[0.06em]">
+            Historia clínica
+          </h3>
+          {!isLoading && (
+            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5">
+              {consultations.length}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            void navigate(
+              `/consultas/nueva?patientId=${patientId}${locationId ? `&locationId=${locationId}` : ''}`,
+            )
+          }
+          className="flex items-center gap-1 text-[11.5px] font-sans text-p-700 hover:text-p-900 transition-colors"
+        >
+          <i className="ph ph-plus text-[12px]" />
+          Nueva consulta
+        </button>
       </div>
 
-      {consultations.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-6 text-[12.5px] text-n-400 justify-center">
+          <i className="ph ph-spinner animate-spin text-[13px]" /> Cargando…
+        </div>
+      ) : consultations.length === 0 ? (
         <div className="flex flex-col items-center py-8 border border-dashed border-n-200 rounded-md">
           <i className="ph ph-notepad text-[28px] text-n-300 mb-2" />
           <p className="text-[13px] text-n-400">No hay consultas registradas</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {/* Consultation entries rendered here once available */}
+          {consultations.map((c) => (
+            <ConsultationListItem
+              key={c.id}
+              consultation={c}
+              onClick={() => void navigate(`/consultas/${c.id}`)}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -273,7 +273,7 @@ function AppointmentFormModal({
             )}
 
             <Field label="Ubicación" required>
-              <Select value={locationId || undefined} onValueChange={setLocationId}>
+              <Select {...(locationId ? { value: locationId } : {})} onValueChange={setLocationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar ubicación" />
                 </SelectTrigger>
@@ -510,7 +510,7 @@ export function Agenda(): JSX.Element {
     isLoading,
     isError,
   } = useAppointments({
-    locationId: activeLocationId ?? undefined,
+    ...(activeLocationId ? { locationId: activeLocationId } : {}),
     from: fromDate.toISOString(),
     to: toDate.toISOString(),
   })

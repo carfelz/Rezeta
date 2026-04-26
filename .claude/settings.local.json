@@ -76,7 +76,8 @@
       "Bash(lsof -ti:3000)",
       "Bash(xargs kill *)",
       "Bash(curl -s -X POST http://localhost:3000/v1/auth/dev/token -H 'Content-Type: application/json' -d '{\"email\":\"nobody@test.com\",\"password\":\"wrong\"}')",
-      "Bash(xargs basename *)"
+      "Bash(xargs basename *)",
+      "Bash(npx prisma *)"
     ]
   }
 }

@@ -28,7 +28,8 @@ export function Topbar(): JSX.Element {
   // Auto-select first location when list loads and nothing is active
   useEffect(() => {
     if (!activeLocationId && locations && locations.length > 0) {
-      setActiveLocation(locations[0].id)
+      const first = locations[0]
+      if (first) setActiveLocation(first.id)
     }
   }, [locations, activeLocationId, setActiveLocation])
 

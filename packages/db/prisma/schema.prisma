@@ -486,6 +486,8 @@ model ProtocolUsage {
   userId            String   @map("user_id") @db.Uuid
   patientId         String?  @map("patient_id") @db.Uuid
   consultationId    String?  @map("consultation_id") @db.Uuid
+  checkedState      Json     @default("{}") @map("checked_state")
+  completedAt       DateTime? @map("completed_at")
   appliedAt         DateTime @default(now()) @map("applied_at")
   notes             String?  @db.Text
   createdAt         DateTime @default(now()) @map("created_at")
