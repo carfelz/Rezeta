@@ -12,6 +12,7 @@ import { ResponseEnvelopeInterceptor } from './common/interceptors/response-enve
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor.js'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js'
 import { PatientsModule } from './modules/patients/index.js'
+import { LocationsModule } from './modules/locations/index.js'
 import { ProtocolTemplatesModule } from './modules/protocol-templates/index.js'
 import { ProtocolsModule } from './modules/protocols/index.js'
 import { AuthModule } from './modules/auth/index.js'
@@ -42,6 +43,7 @@ class AppController {
     AuthModule,
     UsersModule,
     PatientsModule,
+    LocationsModule,
     ProtocolTemplatesModule,
     ProtocolTypesModule,
     ProtocolsModule,
