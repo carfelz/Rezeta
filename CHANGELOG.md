@@ -6,6 +6,29 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-26] — Patient table actions, modal modes, PacienteDetalle removal
+
+### Added
+
+- `apps/web/src/pages/Pacientes.tsx` — three icon-button actions on every patient row: view (`ph-eye`), edit (`ph-pencil-simple`), delete (`ph-trash` with danger hover)
+- `PatientModal` component — single modal with `mode: 'create' | 'edit' | 'view'`; view mode renders read-only `ReadField` grid (name, sex, document, DOB, phone, email, blood type, notes); create/edit mode renders full form; all Select dropdowns use `value={x || undefined}` to avoid Radix placeholder bug
+- `ClinicalHistory` component inside `Pacientes.tsx` — collapsible section stub in view mode, ready to wire to `usePatientConsultations(patientId)` once consultations module is built
+- `DeleteConfirmModal` component — danger confirmation modal using `ModalHeader` with `icon` + `iconVariant="danger"`, subtitle showing patient name, error `Callout` below footer on API failure
+- `ReadField` component — read-only label (overline style) + value pair for patient view layout
+
+### Changed
+
+- Create patient button now opens `PatientModal` in `'create'` mode (was unhooked)
+- `apps/web/src/components/ui/Select.tsx` — removed `SelectPrimitive.Portal` wrapper from `SelectContent`; fixes Select dropdowns failing to open inside Radix Dialog (focus trap was blocking portal content)
+- `apps/web/src/components/ui/Modal.tsx` — added `aria-describedby={undefined}` to `Dialog.Content` to silence Radix accessibility warning when no description is provided
+
+### Removed
+
+- `apps/web/src/pages/PacienteDetalle.tsx` — deleted; patient detail is now fully modal-based
+- `apps/web/src/App.tsx` — removed `pacientes/:patientId` route and `PacienteDetalle` import
+
+---
+
 ## [2026-04-25] — Appointments & Calendar
 
 ### Added

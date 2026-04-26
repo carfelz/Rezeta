@@ -185,24 +185,23 @@ function AppointmentFormModal({
 
   const [patientId, setPatientId] = useState(appointment?.patientId ?? '')
   const [locationId, setLocationId] = useState(appointment?.locationId ?? defaultLocationId)
-  const [date, setDate] = useState(
-    existingStart ? toDateInputValue(existingStart) : defaultDate,
-  )
+  const [date, setDate] = useState(existingStart ? toDateInputValue(existingStart) : defaultDate)
   const [startTime, setStartTime] = useState(
-    existingStart
-      ? existingStart.toTimeString().slice(0, 5)
-      : '09:00',
+    existingStart ? existingStart.toTimeString().slice(0, 5) : '09:00',
   )
   const [endTime, setEndTime] = useState(
-    existingEnd
-      ? existingEnd.toTimeString().slice(0, 5)
-      : '09:30',
+    existingEnd ? existingEnd.toTimeString().slice(0, 5) : '09:30',
   )
   const [reason, setReason] = useState(appointment?.reason ?? '')
   const [notes, setNotes] = useState(appointment?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
 
-  const canSubmit = Boolean(patientId) && Boolean(locationId) && Boolean(date) && Boolean(startTime) && Boolean(endTime)
+  const canSubmit =
+    Boolean(patientId) &&
+    Boolean(locationId) &&
+    Boolean(date) &&
+    Boolean(startTime) &&
+    Boolean(endTime)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -238,7 +237,8 @@ function AppointmentFormModal({
       }
       onClose()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data?.error?.code
+      const msg = (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data
+        ?.error?.code
       if (msg === 'APPOINTMENT_CONFLICT') {
         setError('Este horario se solapa con otra cita. Elige un horario diferente.')
       } else {
@@ -252,29 +252,36 @@ function AppointmentFormModal({
   }
 
   return (
-    <Modal open={true} onOpenChange={(open) => { if (!open) onClose() }}>
+    <Modal
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
       <ModalContent>
         <ModalHeader title={isEdit ? 'Editar cita' : 'Nueva cita'} showClose={false} />
-        <form onSubmit={(e) => { void handleSubmit(e) }}>
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e)
+          }}
+        >
           <ModalBody className="flex flex-col gap-4">
             {!isEdit && (
               <Field label="Paciente" required>
-                <PatientCombobox
-                  value={patientId}
-                  onChange={(id) => setPatientId(id)}
-                />
+                <PatientCombobox value={patientId} onChange={(id) => setPatientId(id)} />
               </Field>
             )}
 
             <Field label="Ubicación" required>
-              <Select value={locationId} onValueChange={setLocationId}>
+              <Select value={locationId || undefined} onValueChange={setLocationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar ubicación" />
                 </SelectTrigger>
                 <SelectContent>
                   {locations?.map((loc) => (
                     <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name}{loc.city ? ` · ${loc.city}` : ''}
+                      {loc.name}
+                      {loc.city ? ` · ${loc.city}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,11 +289,7 @@ function AppointmentFormModal({
             </Field>
 
             <Field label="Fecha" required>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -298,11 +301,7 @@ function AppointmentFormModal({
                 />
               </Field>
               <Field label="Hora fin" required>
-                <Input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
+                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
               </Field>
             </div>
 
@@ -325,7 +324,10 @@ function AppointmentFormModal({
             </Field>
 
             {error && (
-              <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}>
+              <Callout
+                variant="danger"
+                icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}
+              >
                 {error}
               </Callout>
             )}
@@ -368,13 +370,14 @@ function AppointmentCard({
         <span className="text-[13px] font-mono font-medium text-n-700">
           {formatTime(appt.startsAt)}
         </span>
-        <span className="text-[11px] text-n-400 mt-0.5">
-          {formatTime(appt.endsAt)}
-        </span>
+        <span className="text-[11px] text-n-400 mt-0.5">{formatTime(appt.endsAt)}</span>
       </div>
 
       {/* 2px teal rule */}
-      <div className="w-[2px] shrink-0 rounded-full self-stretch" style={{ background: 'var(--color-p-500)' }} />
+      <div
+        className="w-[2px] shrink-0 rounded-full self-stretch"
+        style={{ background: 'var(--color-p-500)' }}
+      />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -388,9 +391,7 @@ function AppointmentCard({
           <Badge variant={statusBadgeVariant(appt.status)}>{statusLabel(appt.status)}</Badge>
         </div>
 
-        {appt.reason && (
-          <div className="text-[13px] text-n-600 mt-1">{appt.reason}</div>
-        )}
+        {appt.reason && <div className="text-[13px] text-n-600 mt-1">{appt.reason}</div>}
 
         <div className="text-[12px] text-n-400 mt-1">
           <i className="ph ph-map-pin mr-1" />
@@ -452,16 +453,26 @@ interface DeleteConfirmModalProps {
   isDeleting: boolean
 }
 
-function DeleteConfirmModal({ appt, onConfirm, onClose, isDeleting }: DeleteConfirmModalProps): JSX.Element {
+function DeleteConfirmModal({
+  appt,
+  onConfirm,
+  onClose,
+  isDeleting,
+}: DeleteConfirmModalProps): JSX.Element {
   return (
-    <Modal open={true} onOpenChange={(open) => { if (!open) onClose() }}>
+    <Modal
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
       <ModalContent>
         <ModalHeader title="Eliminar cita" showClose={false} />
         <ModalBody>
           <p className="text-body text-n-700">
-            ¿Eliminar la cita de{' '}
-            <span className="font-semibold">{appt.patientName}</span>{' '}
-            el {new Date(appt.startsAt).toLocaleDateString('es-DO', { day: 'numeric', month: 'long' })} a las {formatTime(appt.startsAt)}? Esta acción no se puede deshacer.
+            ¿Eliminar la cita de <span className="font-semibold">{appt.patientName}</span> el{' '}
+            {new Date(appt.startsAt).toLocaleDateString('es-DO', { day: 'numeric', month: 'long' })}{' '}
+            a las {formatTime(appt.startsAt)}? Esta acción no se puede deshacer.
           </p>
         </ModalBody>
         <ModalFooter>
@@ -494,7 +505,11 @@ export function Agenda(): JSX.Element {
   const toDate = new Date(currentDate)
   toDate.setHours(23, 59, 59, 999)
 
-  const { data: appointments, isLoading, isError } = useAppointments({
+  const {
+    data: appointments,
+    isLoading,
+    isError,
+  } = useAppointments({
     locationId: activeLocationId ?? undefined,
     from: fromDate.toISOString(),
     to: toDate.toISOString(),
@@ -526,8 +541,7 @@ export function Agenda(): JSX.Element {
     setDeleting(null)
   }
 
-  const isToday =
-    toDateInputValue(currentDate) === toDateInputValue(new Date())
+  const isToday = toDateInputValue(currentDate) === toDateInputValue(new Date())
 
   return (
     <div>
@@ -549,7 +563,9 @@ export function Agenda(): JSX.Element {
       {deleting && (
         <DeleteConfirmModal
           appt={deleting}
-          onConfirm={() => { void handleDelete() }}
+          onConfirm={() => {
+            void handleDelete()
+          }}
           onClose={() => setDeleting(null)}
           isDeleting={deleteMutation.isPending}
         />
@@ -610,9 +626,7 @@ export function Agenda(): JSX.Element {
         </Callout>
       )}
 
-      {activeLocationId && isLoading && (
-        <p className="text-body text-n-500">Cargando citas...</p>
-      )}
+      {activeLocationId && isLoading && <p className="text-body text-n-500">Cargando citas...</p>}
 
       {activeLocationId && isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
@@ -667,7 +681,9 @@ function AppointmentCardWithMutation({
       appt={appt}
       onEdit={onEdit}
       onDelete={onDelete}
-      onStatusChange={(status) => { void statusMutation.mutateAsync({ status }) }}
+      onStatusChange={(status) => {
+        void statusMutation.mutateAsync({ status })
+      }}
       isUpdatingStatus={statusMutation.isPending}
     />
   )

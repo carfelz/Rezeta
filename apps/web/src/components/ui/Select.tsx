@@ -37,28 +37,26 @@ export const SelectContent = forwardRef<
   ElementRef<typeof SelectPrimitive.Content>,
   ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = 'popper', ...props }, ref) => (
-  <SelectPrimitive.Portal>
-    <SelectPrimitive.Content
-      ref={ref}
-      position={position}
-      className={cn(
-        'relative z-50 min-w-[8rem] bg-n-0 border border-n-200 rounded',
-        'overflow-hidden',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        position === 'popper' && 'w-[var(--radix-select-trigger-width)] mt-1',
-        className,
-      )}
-      style={{
-        boxShadow:
-          '0 1px 0 rgba(14,14,13,.04), 0 8px 24px -8px rgba(14,14,13,.12), 0 2px 6px rgba(14,14,13,.06)',
-      }}
-      {...props}
-    >
-      <SelectPrimitive.Viewport className="py-1">{children}</SelectPrimitive.Viewport>
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
+  <SelectPrimitive.Content
+    ref={ref}
+    position={position}
+    className={cn(
+      'relative z-[600] min-w-[8rem] bg-n-0 border border-n-200 rounded',
+      'overflow-hidden',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+      position === 'popper' && 'w-[var(--radix-select-trigger-width)] mt-1',
+      className,
+    )}
+    style={{
+      boxShadow:
+        '0 1px 0 rgba(14,14,13,.04), 0 8px 24px -8px rgba(14,14,13,.12), 0 2px 6px rgba(14,14,13,.06)',
+    }}
+    {...props}
+  >
+    <SelectPrimitive.Viewport className="py-1">{children}</SelectPrimitive.Viewport>
+  </SelectPrimitive.Content>
 ))
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
