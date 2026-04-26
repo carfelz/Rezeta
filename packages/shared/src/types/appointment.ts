@@ -15,3 +15,9 @@ export interface Appointment {
   updatedAt: string
   deletedAt: string | null
 }
+
+export interface AppointmentWithDetails extends Appointment {
+  patientName: string
+  patientDocumentNumber: string | null
+  locationName: string
+}

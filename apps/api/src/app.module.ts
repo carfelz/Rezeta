@@ -20,6 +20,7 @@ import { UsersModule } from './modules/users/index.js'
 import { TenantSeedingModule } from './modules/tenant-seeding/index.js'
 import { ProtocolTypesModule } from './modules/protocol-types/index.js'
 import { OnboardingModule } from './modules/onboarding/index.js'
+import { AppointmentsModule } from './modules/appointments/index.js'
 import { Public } from './common/decorators/public.decorator.js'
 
 @Controller()
@@ -49,6 +50,7 @@ class AppController {
     ProtocolsModule,
     TenantSeedingModule,
     OnboardingModule,
+    AppointmentsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,6 +6,21 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-25] — Appointments & Calendar
+
+### Added
+
+- `packages/shared/src/types/appointment.ts` — added `AppointmentWithDetails` interface (extends `Appointment` with `patientName`, `patientDocumentNumber`, `locationName`)
+- `apps/api/src/modules/appointments/` — full CRUD module: `AppointmentsRepository`, `AppointmentsService`, `AppointmentsController`, `AppointmentsModule`
+  - `GET /v1/appointments` — list by locationId, date range, status (includes patient + location names)
+  - `GET /v1/appointments/:id`, `POST /v1/appointments`, `PATCH /v1/appointments/:id`, `PATCH /v1/appointments/:id/status`, `DELETE /v1/appointments/:id`
+  - Conflict detection: rejects overlapping appointments for the same doctor (excludes cancelled)
+  - Prisma `userId` mapped to shared type `doctorUserId` in `toAppointment()` mapper
+- `apps/web/src/hooks/appointments/use-appointments.ts` — TanStack Query hooks: `useAppointments`, `useAppointment`, `useCreateAppointment`, `useUpdateAppointment`, `useUpdateAppointmentStatus`, `useDeleteAppointment`
+- `apps/web/src/pages/Agenda.tsx` — full day-view agenda: date navigation (prev/next/today), appointment cards with status badges and inline actions (complete, no-show, edit, delete), create/edit modal with patient combobox (live search), location select, date + time inputs; integrates with `activeLocationId` from UI store
+
+---
+
 ## [2026-04-26] — Multi-location management (feat/multilocation)
 
 ### Added
