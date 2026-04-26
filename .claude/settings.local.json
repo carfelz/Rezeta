@@ -72,7 +72,11 @@
       "Bash(tar xf *)",
       "Bash(npx eslint *)",
       "Bash(./node_modules/.bin/eslint apps/web/src)",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill *)",
+      "Bash(curl -s -X POST http://localhost:3000/v1/auth/dev/token -H 'Content-Type: application/json' -d '{\"email\":\"nobody@test.com\",\"password\":\"wrong\"}')",
+      "Bash(xargs basename *)"
     ]
   }
 }

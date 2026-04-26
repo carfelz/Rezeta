@@ -6,6 +6,17 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-25] — Swagger / OpenAPI documentation for all API routes
+
+### Added
+
+- `@nestjs/swagger` v8 + `swagger-ui-express` installed on `apps/api`.
+- Swagger UI available at `http://localhost:3000/docs` (all environments).
+- **Firebase auth from Swagger:** `POST /v1/auth/dev/token` (non-production only) exchanges email + password for a Firebase ID token; accepts both JSON and `application/x-www-form-urlencoded` so Swagger's OAuth2 password flow dialog works natively — no external tooling needed.
+- Both `BearerAuth` (manual token paste) and `OAuth2 password flow` security schemes configured; both accepted on all protected routes.
+- Full `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBody`, `@ApiParam`, `@ApiQuery` decorators on all 6 controllers: Auth, Patients, Protocols, Protocol Templates, Protocol Types, Onboarding.
+- `FIREBASE_WEB_API_KEY` env var added to `.env` and `configuration.ts` (used by the dev/token endpoint in non-emulator environments).
+
 ## [2026-04-25] — Phase 2: Reconcile UI components and add Tabs, Select, Toast
 
 ### Added

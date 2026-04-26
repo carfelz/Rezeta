@@ -2,6 +2,7 @@ import { Global, Module, Controller, Get } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core'
 import { resolve } from 'path'
+import { fileURLToPath } from 'url'
 import { configuration } from './config/configuration.js'
 import { PrismaService } from './lib/prisma.service.js'
 import { FirebaseService } from './lib/firebase.service.js'
@@ -35,8 +36,8 @@ class AppController {
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      // Point at the monorepo root .env — process.cwd() is apps/api when pnpm runs scripts
-      envFilePath: resolve(process.cwd(), '../..', '.env'),
+      // Path relative to this file (apps/api/src → monorepo root) — reliable regardless of cwd
+      envFilePath: resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..', '.env'),
     }),
     AuthModule,
     UsersModule,

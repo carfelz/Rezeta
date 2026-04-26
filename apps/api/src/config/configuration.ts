@@ -6,6 +6,7 @@ export interface AppConfig {
     clientEmail: string
     privateKey: string
     emulatorHost: string
+    webApiKey: string
   }
   storage: { bucket: string }
   nodeEnv: string
@@ -21,6 +22,7 @@ export const configuration = (): AppConfig => ({
     clientEmail: process.env['FIREBASE_CLIENT_EMAIL'] ?? '',
     privateKey: (process.env['FIREBASE_PRIVATE_KEY'] ?? '').replace(/\\n/g, '\n'),
     emulatorHost: process.env['FIREBASE_AUTH_EMULATOR_HOST'] ?? '',
+    webApiKey: process.env['FIREBASE_WEB_API_KEY'] ?? '',
   },
   storage: {
     bucket: process.env['GCS_BUCKET'] ?? '',
