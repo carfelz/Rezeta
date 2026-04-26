@@ -14,6 +14,7 @@ import { Ajustes } from '@/pages/Ajustes'
 import { Plantillas } from '@/pages/ajustes/Plantillas'
 import { PlantillaEditor, PlantillaEditorNew } from '@/pages/ajustes/PlantillaEditor'
 import { Tipos } from '@/pages/ajustes/Tipos'
+import { Ubicaciones } from '@/pages/ajustes/Ubicaciones'
 import { AppPrototype } from '@/pages/ajustes/AppPrototype'
 import { DesignSystemReference } from '@/pages/ajustes/DesignSystemReference'
 import { Login } from '@/pages/Login'
@@ -80,6 +81,7 @@ const router = createBrowserRouter([
       { path: 'ajustes/plantillas/new', element: <PlantillaEditorNew /> },
       { path: 'ajustes/plantillas/:id/edit', element: <PlantillaEditor /> },
       { path: 'ajustes/tipos', element: <Tipos /> },
+      { path: 'ajustes/ubicaciones', element: <Ubicaciones /> },
       { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
       { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],

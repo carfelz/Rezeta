@@ -15,6 +15,7 @@ export const ErrorCode = {
 
   // ── Location ────────────────────────────────────────────────
   LOCATION_NOT_FOUND: 'LOCATION_NOT_FOUND',
+  LOCATION_HAS_FUTURE_APPOINTMENTS: 'LOCATION_HAS_FUTURE_APPOINTMENTS',
 
   // ── Patient ─────────────────────────────────────────────────
   PATIENT_NOT_FOUND: 'PATIENT_NOT_FOUND',

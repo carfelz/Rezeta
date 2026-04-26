@@ -48,6 +48,19 @@ export function Ajustes(): JSX.Element {
 
       <Card className="max-w-[560px] mb-6 p-0">
         <Link
+          to="/ajustes/ubicaciones"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+        >
+          <i className="ph ph-map-pin text-[18px] text-p-500" />
+          <div>
+            <div className="text-[13px] font-semibold">Ubicaciones</div>
+            <div className="text-[12px] text-n-500">
+              Centros médicos y consultorios donde ejerces
+            </div>
+          </div>
+          <i className="ph ph-caret-right ml-auto text-n-400" />
+        </Link>
+        <Link
           to="/ajustes/plantillas"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >

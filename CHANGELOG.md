@@ -6,6 +6,30 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-26] — Multi-location management (feat/multilocation)
+
+### Added
+
+- `packages/shared/src/types/location.ts` — added `city`, `isOwned`, `notes` fields to `Location` interface
+- `packages/shared/src/schemas/location.ts` — added `city`, `isOwned`, `notes` to `CreateLocationSchema` / `UpdateLocationSchema`
+- `packages/shared/src/errors.ts` — added `LOCATION_HAS_FUTURE_APPOINTMENTS` error code
+- `apps/api/src/modules/locations/` — full CRUD module: `LocationsRepository`, `LocationsService`, `LocationsController`, `LocationsModule`
+  - `GET /v1/locations`, `GET /v1/locations/:id`, `POST /v1/locations`, `PATCH /v1/locations/:id`, `DELETE /v1/locations/:id`
+  - Creating a location auto-creates a `DoctorLocation` row linking the owner to it
+  - Delete is blocked if the location has future non-cancelled appointments
+  - `commissionPercent` (Prisma Decimal) mapped to `number` via `toLocation()` mapper
+- `apps/api/src/app.module.ts` — registered `LocationsModule`
+- `apps/web/src/hooks/locations/use-locations.ts` — TanStack Query hooks: `useLocations`, `useLocation`, `useCreateLocation`, `useUpdateLocation`, `useDeleteLocation`
+- `apps/web/src/pages/ajustes/Ubicaciones.tsx` — locations management page with create/edit modal form and delete confirmation
+- `apps/web/src/App.tsx` — added `/ajustes/ubicaciones` route
+- `apps/web/src/pages/Ajustes.tsx` — added Ubicaciones link in settings hub
+
+### Changed
+
+- `apps/web/src/components/layout/Topbar.tsx` — location switcher now fetches real locations, auto-selects first location on load, shows dropdown to switch active location; active location persisted in `ui.store`
+
+---
+
 ## [2026-04-25] — Swagger / OpenAPI documentation for all API routes
 
 ### Added
