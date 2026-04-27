@@ -22,7 +22,7 @@ async function bootstrap() {
     origin: process.env['ALLOWED_ORIGINS']?.split(',').map((o) => o.trim()) ?? [
       'http://localhost:5173',
       'http://localhost:5174',
-      'https://medical-erp-dev.web.app/',
+      'https://medical-erp-dev.web.app',
     ],
     credentials: true,
   })
