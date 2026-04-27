@@ -39,3 +39,6 @@ coverage/
 
 # Turbo (if added later)
 .turbo/
+
+#firebase
+.firebase/

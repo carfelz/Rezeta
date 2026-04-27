@@ -1,8 +1,8 @@
 # Component Specifications
 
 > Every component in the design system, with states, variants, and sizing.
-> CSS lives in `design-system/components.css`. Requires `tokens.css`.
-> Live examples: `design-system/reference.html`.
+> React source: `apps/web/src/components/ui/`.
+> Live examples: `pnpm storybook` or `design-system/reference.html` (static HTML reference).
 
 ---
 
@@ -10,13 +10,19 @@
 
 Circular initials display for user identity.
 
-| Variant | Size | Font size | Token class |
+| Variant | Size | Font size | Prop |
 |---|---|---|---|
-| Default | 36×36px | 13px | `.avatar` |
-| Small | 30×30px | 11px | `.avatar--sm` |
-| Extra small | 28×28px | 11px | `.avatar--xs` |
+| Default | 36×36px | 13px | `size="md"` (default) |
+| Small | 30×30px | 11px | `size="sm"` |
+| Extra small | 28×28px | 11px | `size="xs"` |
 
-**Styles:** `background: --color-p-50`, `color: --color-p-700`, `font-weight: 600`.
+**Styles:** `bg-p-50 text-p-700 font-semibold`, circle via `rounded-full`.
+
+```tsx
+<Avatar initials="AR" />
+<Avatar initials="AR" size="sm" />
+<Avatar initials="AR" size="xs" />
+```
 
 ---
 
@@ -24,79 +30,94 @@ Circular initials display for user identity.
 
 ### Variants
 
-| Variant | Class | Default bg | Hover bg | Active bg | Text |
+| Variant | Prop | Default bg | Hover bg | Active bg | Text |
 |---|---|---|---|---|---|
-| Primary | `.btn--primary` | `--color-p-500` | `--color-p-700` | `--color-p-900` | White |
-| Secondary | `.btn--secondary` | `--color-n-0` | `--color-n-50` | `--color-n-100` | `--color-n-800` |
-| Ghost | `.btn--ghost` | transparent | `--color-n-100` | `--color-n-200` | `--color-n-700` |
-| Destructive | `.btn--danger` | `--color-danger-solid` (`#8C2A20`) | `#6E2018` | `#52170F` | White |
+| Primary | `variant="primary"` | `bg-p-500` | `bg-p-700` | `bg-p-900` | White |
+| Secondary | `variant="secondary"` | `bg-n-0` | `bg-n-50` | `bg-n-100` | `text-n-800` |
+| Ghost | `variant="ghost"` | transparent | `bg-n-100` | `bg-n-200` | `text-n-700` |
+| Destructive | `variant="danger"` | `bg-danger-solid` | `#6E2018` | `#52170F` | White |
 
 ### Sizes
 
-| Size | Height | Font | Padding | Class modifier |
-|---|---|---|---|---|
-| SM | 28px | 12.5px | 0 12px | `.btn--sm` |
-| MD (default) | 32px | 13px | 0 16px | — |
-| LG | 40px | 14px | 0 18px | `.btn--lg` |
+| Size | Height | Font | Prop |
+|---|---|---|---|
+| SM | 28px | 12.5px | `size="sm"` |
+| MD (default) | 32px | 13px | `size="md"` |
+| LG | 40px | 14px | `size="lg"` |
 
 ### Icon-only
 
-Width equals height. Add `.btn--icon-only`. Icon font-size: `--icon-size-sm` (15px).
+```tsx
+<Button variant="ghost" size="md" iconOnly aria-label="Más opciones">
+  <i className="ph ph-dots-three" />
+</Button>
+```
 
 ### States
 
 | State | Behavior |
 |---|---|
-| Default | Base styles |
-| Hover | Darker background (variant-specific) |
-| Active | Darkest background |
-| Focus | `box-shadow: --shadow-focus` (or `--shadow-focus-danger` for destructive) |
-| Disabled | `--color-n-200` bg, `--color-n-400` text, `cursor: not-allowed` |
-
-**Base styles shared across all variants:** `font-family: sans`, `font-weight: 500`, `font-size: 13px`, `border-radius: --radius-sm`, `transition: 100ms`.
+| Hover | Darker bg tier |
+| Active | Darkest bg tier |
+| Focus | `shadow-focus` (or `shadow-focus-danger` for danger variant) |
+| Disabled | `bg-n-200 text-n-400 cursor-not-allowed` |
 
 ---
 
 ## Form — Input
 
-Single-line text, textarea, and select.
+Single-line text, textarea, and select. Source: `Input.tsx`.
 
 | State | Border | Shadow |
 |---|---|---|
-| Default | `1px solid --color-n-300` | none |
-| Focus | `1px solid --color-p-500` | `0 0 0 3px rgba(45,87,96,.12)` |
-| Error | `1px solid --color-danger-solid` | none |
-| Disabled | `1px solid --color-n-200` | none — bg `--color-n-50`, text `--color-n-400` |
-| Read-only | `1px solid --color-n-200` | none — bg `--color-n-25`, cursor default |
+| Default | `border-n-300` | none |
+| Focus | `border-p-500` | `0 0 0 3px rgba(45,87,96,.12)` |
+| Error | `border-danger-solid` | none |
+| Disabled | `border-n-200`, `bg-n-50`, `text-n-400` | none |
+| Read-only | `border-n-200`, `bg-n-25` | none |
 
-**Sizing:** height `34px`, padding `0 12px`, font `13px`, `border-radius: --radius-sm`.
+**Sizing:** height `h-input-md` (34px), `px-3 py-0 text-body-sm rounded-sm`.
 
-Textarea: `padding: 12px`, `resize: vertical`, auto height.
+### Input with adornments
 
-Select: custom chevron via CSS `background-image`, `padding-right: 30px`.
+Compose using wrapper + sibling elements and conditionally apply leading/trailing padding:
 
-### Input Group (adornments + icons)
+```tsx
+{/* Currency prefix */}
+<div className="flex border border-n-300 rounded-sm focus-within:border-p-500
+  focus-within:shadow-[0_0_0_3px_rgba(45,87,96,.12)]">
+  <span className="px-3 flex items-center bg-n-50 border-r border-n-200 text-n-500 text-body-sm">
+    RD$
+  </span>
+  <Input className="border-0 shadow-none flex-1" placeholder="0.00" />
+</div>
 
-Wrapper class: `.input-group`. The border and focus ring live on the group, not the inner input.
-
-| Sub-element | Class | Description |
-|---|---|---|
-| Leading adornment | `.input-adorn.input-adorn--leading` | Text prefix (e.g. "RD$"), bg `--color-n-50`, left border |
-| Trailing adornment | `.input-adorn` | Text suffix, bg `--color-n-50`, left border |
-| Plain adornment | `.input-adorn--plain` | No background, no border — icon-like text |
-| Leading icon | `.input-icon.input-icon--leading` | 32px wide, `--color-n-400` |
-| Trailing icon | `.input-icon.input-icon--trailing` | 32px wide, `--color-n-400` |
-| Action icon | `.input-icon--action` | Clickable, hover `--color-n-800` + `--color-n-50` bg |
+{/* Search icon */}
+<div className="relative">
+  <i className="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
+  <Input className="pl-9" placeholder="Buscar paciente…" />
+</div>
+```
 
 ### Field (label + input + helper/error)
 
-```
-.field
-  .field__label          12.5px sans 500, --color-n-700
-  .field__required       --color-danger-solid asterisk
-  input.input
-  .field__helper         11.5px --color-n-500
-  .field__error          11.5px --color-danger-solid, with icon
+```tsx
+<div className="flex flex-col gap-1">
+  <label className="text-[12.5px] font-medium text-n-700">
+    Nombre <span className="text-danger-solid">*</span>
+  </label>
+  <Input placeholder="Ana María Reyes" />
+  <span className="text-[11.5px] text-n-500">Ingresa nombre completo según cédula.</span>
+</div>
+
+{/* Error */}
+<div className="flex flex-col gap-1">
+  <Input className="border-danger-solid" />
+  <span className="flex items-center gap-1 text-[11.5px] text-danger-solid">
+    <i className="ph ph-warning" />
+    Este campo es requerido.
+  </span>
+</div>
 ```
 
 ---
@@ -105,11 +126,11 @@ Wrapper class: `.input-group`. The border and focus ring live on the group, not 
 
 | State | Visual |
 |---|---|
-| Unchecked | 16×16px, border `--color-n-400`, bg white |
-| Checked | `--color-p-500` fill, white checkmark (8×4px) |
-| Indeterminate | `--color-p-500` fill, white horizontal bar |
+| Unchecked | 16×16px, `border-n-400` |
+| Checked | `bg-p-500` fill, white checkmark |
+| Indeterminate | `bg-p-500` fill, white dash |
 
-Class: `.checkbox`. Control element: `.checkbox__box`. States via `.checkbox--checked`, `.checkbox--indeterminate`.
+Use Radix UI `Checkbox` primitive from `@radix-ui/react-checkbox`, styled with Tailwind.
 
 ---
 
@@ -117,24 +138,19 @@ Class: `.checkbox`. Control element: `.checkbox__box`. States via `.checkbox--ch
 
 | State | Visual |
 |---|---|
-| Unchecked | 16×16px circle, border `--color-n-400` |
-| Checked | Border `--color-p-500`, inner dot 8px `--color-p-500` |
-
-Class: `.radio`. Control element: `.radio__dot`. State via `.radio--checked`.
+| Unchecked | 16×16px circle, `border-n-400` |
+| Checked | `border-p-500`, 8px inner dot `bg-p-500` |
 
 ---
 
 ## Form — Toggle
 
-Track: 30×18px, border-radius 999px.  
-Knob: 14×14px white circle, transitions left.
+Track 30×18px, `rounded-full`. Knob 14×14px white circle.
 
-| State | Track bg | Knob left |
+| State | Track | Knob |
 |---|---|---|
-| Off | `--color-n-300` | 2px |
-| On | `--color-p-500` | 14px |
-
-Class: `.toggle`. State via `.toggle--on`.
+| Off | `bg-n-300` | `left-[2px]` |
+| On | `bg-p-500` | `left-[14px]` |
 
 ---
 
@@ -142,321 +158,293 @@ Class: `.toggle`. State via `.toggle--on`.
 
 ### Standard Card
 
-```
-.card
-  padding: --space-5 (20px)
-  background: --color-n-0
-  border: 1px solid --color-n-200
-  border-radius: --radius-md (5px)
+```tsx
+<Card className="p-5">
+  <p className="text-[13.5px] font-semibold text-n-800">Próxima cita</p>
+  <p className="text-[12px] text-n-500 mt-0.5">Martes 22 abr · 10:30 AM</p>
+</Card>
 ```
 
-Inner elements: `.card__title` (14px sans 600, `--color-n-800`) and `.card__subtitle` (12.5px, `--color-n-500`).
+Base styles: `bg-n-0 border border-n-200 rounded-md`. Padding `p-5` (20px).
 
 ### List Item Card
 
-`.card-item` — horizontal layout with avatar/icon, main content block, and trailing metadata.
+Horizontal layout — avatar/icon + main content + trailing metadata.
 
-| Sub-element | Class | Styles |
-|---|---|---|
-| Main content | `.card-item__main` | flex 1, overflow hidden |
-| Name | `.card-item__name` | 13.5px sans 600, `--color-n-800` |
-| Meta | `.card-item__meta` | 12px, `--color-n-500`, margin-top 2px |
+```tsx
+<div className="flex items-center gap-3 px-4 py-3 hover:bg-n-25 cursor-pointer">
+  <Avatar initials="AR" size="sm" />
+  <div className="flex-1 min-w-0">
+    <p className="text-[13.5px] font-semibold text-n-800 truncate">Ana María Reyes</p>
+    <p className="text-[12px] text-n-500 mt-0.5">Cédula · 001-1234567-8 · 42 años</p>
+  </div>
+  <Badge variant="active">Activo</Badge>
+</div>
+```
 
-Hover: bg `--color-n-25`.
+### Selected Card
 
-### Selected/Highlighted Card
-
-`.card--selected` — same as `.card` but with:
-- Border: `1px solid --color-p-500`
-- 3px teal rule on left edge (absolute, inset 12px top/bottom)
+```tsx
+<Card className="border-p-500 relative pl-5
+  before:absolute before:left-0 before:top-3 before:bottom-3
+  before:w-[2px] before:bg-p-500 before:rounded-full p-5">
+```
 
 ---
 
 ## Table
 
-```
-.table
-  width: 100%
-  border: 1px solid --color-n-200
-  border-radius: --radius-md
-  background: --color-n-0
-  border-collapse: collapse
+```tsx
+<table className="w-full border border-n-200 rounded-md bg-n-0 border-collapse">
+  <thead>
+    <tr className="bg-n-50">
+      <th className="px-4 py-3 text-left text-[11.5px] font-semibold text-n-600 uppercase tracking-[0.06em]">
+        Paciente
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr className="border-t border-n-100 hover:bg-n-25">
+      <td className="px-4 py-3 text-[13px] font-semibold text-n-800">Ana María Reyes</td>
+    </tr>
+  </tbody>
+</table>
 ```
 
-| Part | Styles |
-|---|---|
-| `thead th` | bg `--color-n-50`, 11.5px sans 600 uppercase, letter-spacing 0.06em, `--color-n-600` |
-| `tbody td` | 13px, border-bottom `1px solid --color-n-100` |
-| Row hover | bg `--color-n-25` |
-| `.table td--name` | `font-weight: 600`, `--color-n-800` |
-| `.table td--mono` | `font-family: mono`, 12px, `--color-n-600` |
+Mono data cells: `font-mono text-[12px] text-n-600`.
 
 ---
 
 ## Badge / Status Chip
 
-Small inline indicators for clinical and administrative state.
+Source: `Badge.tsx`. Sizes: 11.5px font, `px-2 py-1 rounded-sm`.
 
-**Base:** `font-size: 11.5px`, `font-weight: 500`, `padding: 4px 8px`, `border-radius: 3px`, 6px dot.
-
-| Variant | Class | Bg | Border | Text |
+| Variant | Prop | Bg | Border | Text |
 |---|---|---|---|---|
-| Draft | `.badge--draft` | `--color-n-50` | `--color-n-200` | `--color-n-600` |
-| Active | `.badge--active` | `--color-success-bg` | `--color-success-border` | `--color-success-text` |
-| Signed | `.badge--signed` | `--color-p-50` | `--color-p-100` | `--color-p-700` |
-| Review | `.badge--review` | `--color-warning-bg` | `--color-warning-border` | `--color-warning-text` |
-| Archived | `.badge--archived` | `--color-n-50` | `--color-n-200` | `--color-n-500` |
-| Paid | `.badge--paid` | `--color-success-bg` | `--color-success-border` | `--color-success-text` |
-| Overdue | `.badge--overdue` | `--color-danger-bg` | `--color-danger-border` | `--color-danger-text` |
+| Draft | `variant="draft"` | `bg-n-50` | `border-n-200` | `text-n-600` |
+| Active | `variant="active"` | `bg-success-bg` | `border-success-border` | `text-success-text` |
+| Signed | `variant="signed"` | `bg-p-50` | `border-p-100` | `text-p-700` |
+| Review | `variant="review"` | `bg-warning-bg` | `border-warning-border` | `text-warning-text` |
+| Archived | `variant="archived"` | `bg-n-50` | `border-n-200` | `text-n-500` |
+| Paid | `variant="paid"` | `bg-success-bg` | `border-success-border` | `text-success-text` |
+| Overdue | `variant="overdue"` | `bg-danger-bg` | `border-danger-border` | `text-danger-text` |
 
-Dot color matches the text color of each variant.
+Each badge includes a 6px dot matching the text color.
 
 ---
 
 ## Tabs
 
-```
-.tabs          border-bottom: 1px solid --color-n-200
-  .tab         13px sans 500, --color-n-500, padding 12px 16px
-  .tab:hover   --color-n-800
-  .tab--active --color-n-900, border-bottom: 2px solid --color-p-500
-  .tab__count  11px mono --color-n-400
+Source: `Tabs.tsx` (wraps `@radix-ui/react-tabs`).
+
+```tsx
+<Tabs defaultValue="todos">
+  <TabsList className="border-b border-n-200">
+    <TabsTrigger value="todos">Todos</TabsTrigger>
+    <TabsTrigger value="activos">Activos</TabsTrigger>
+  </TabsList>
+  <TabsContent value="todos">…</TabsContent>
+</Tabs>
 ```
 
-Active tab sits at `margin-bottom: -1px` to cover the tabs container border.
+Active tab: `text-n-900 border-b-2 border-p-500` (sits at `mb-[-1px]` to cover container border).
 
 ---
 
 ## Sidebar Navigation
 
-Fixed left panel, 240px wide, full viewport height.
+```tsx
+<aside className="w-sidebar h-screen sticky top-0 flex flex-col
+  bg-n-25 border-r border-n-200 py-5">
 
-| Sub-element | Class | Styles |
-|---|---|---|
-| Container | `.sidebar` | `bg: --color-n-25`, `border-right: 1px solid --color-n-200`, `padding: 20px 0 16px` |
-| Brand area | `.sidebar__brand` | Avatar + name, `border-bottom: 1px solid --color-n-100`, `margin-bottom: 14px` |
-| Logo mark | `.sidebar__logo` | 28×28px, `bg: --color-p-500`, `border-radius: 4px`, white serif letter |
-| Brand name | `.sidebar__brand-name` | 18px serif 500, `--color-n-900`, letter-spacing −0.01em |
-| Section label | `.sidebar__section-label` | 10px mono uppercase, `--color-n-400`, letter-spacing 0.12em |
-| Nav item | `.sidebar__item` | 13px sans, `--color-n-600`, `padding: 7px 20px`, icon 16px |
-| Nav hover | `.sidebar__item:hover` | bg `--color-n-50`, text `--color-n-800` |
-| Nav active | `.sidebar__item--active` | bg `--color-n-0`, text `--color-n-900`, weight 500, **2px teal rule** on left (inset 6px) |
-| Active icon | `.sidebar__item--active i` | `--color-p-500` |
-| Count | `.sidebar__item__count` | 11px mono `--color-n-400`, margin-left auto |
-| Footer | `.sidebar__footer` | `border-top: 1px solid --color-n-100`, user block |
-| User | `.sidebar__user` | Avatar + name/role row, hover bg `--color-n-50` |
-| User name | `.sidebar__user-name` | 12.5px sans 600, `--color-n-800`, truncate |
-| User role | `.sidebar__user-role` | 11px, `--color-n-500` |
+  {/* Brand */}
+  <div className="px-5 pb-5 mb-3.5 border-b border-n-100 flex items-center gap-2.5">
+    <div className="w-7 h-7 bg-p-500 rounded-sm flex items-center justify-center
+      text-white font-serif font-medium text-[16px]">R</div>
+    <span className="font-serif font-medium text-[18px] text-n-900 tracking-[-0.01em]">
+      Rezeta
+    </span>
+  </div>
+
+  {/* Section label */}
+  <span className="px-5 pt-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-n-400">
+    Clínico
+  </span>
+
+  {/* Nav item — inactive */}
+  <a className="flex items-center gap-2.5 px-5 py-[7px] text-[13px]
+    text-n-600 hover:bg-n-50 hover:text-n-800">
+    <i className="ph ph-calendar-blank text-n-500" style={{ fontSize: 16 }} />
+    Agenda
+    <span className="ml-auto font-mono text-[11px] text-n-400">3</span>
+  </a>
+
+  {/* Nav item — active (2px teal rule) */}
+  <a className="relative flex items-center gap-2.5 px-5 py-[7px] text-[13px]
+    font-medium text-n-900 bg-n-0
+    before:absolute before:left-0 before:top-1.5 before:bottom-1.5
+    before:w-[2px] before:bg-p-500">
+    <i className="ph-fill ph-users text-p-500" style={{ fontSize: 16 }} />
+    Pacientes
+  </a>
+</aside>
+```
 
 ---
 
 ## Top Bar
 
-Fixed, 56px tall, spans from sidebar right edge to viewport right.
+```tsx
+<header className="h-topbar bg-n-0 border-b border-n-200
+  flex items-center px-6 gap-4 sticky top-0 z-20">
 
-| Sub-element | Class | Description |
-|---|---|---|
-| Container | `.topbar` | bg `--color-n-0`, `border-bottom: 1px solid --color-n-200`, `left: 240px` |
-| Location switcher | `.topbar__location-switcher` | Border-radius `--radius-sm`, hover bg `--color-n-50`, 6px teal dot |
-| Location name | `.topbar__location-name` | 13px sans 500, `--color-n-800` |
-| Location sub | `.topbar__location-sub` | 12px, `--color-n-500` |
-| Search | `.topbar__search` | max-width 480px, leading icon 16px, trailing `⌘K` kbd chip |
-| Kbd chip | `.topbar__search-kbd` | 10px mono, `border: 1px solid --color-n-200`, `bg: --color-n-25` |
-| Icon button | `.topbar__icon-btn` | 34×34px, `--radius-sm`, hover bg `--color-n-50` |
-| Notification dot | `.topbar__icon-btn__indicator` | 7px circle, `--color-danger-solid`, `border: 1.5px solid white` |
-| Doctor block | `.topbar__doctor` | Avatar + name/role, `border-left: 1px solid --color-n-200` |
+  {/* Location switcher */}
+  <button className="flex items-center gap-2 px-2.5 py-1.5
+    border border-n-200 rounded-sm hover:bg-n-50">
+    <span className="w-1.5 h-1.5 rounded-full bg-p-500" />
+    <span className="text-[13px] font-medium text-n-800">Centro Médico Real</span>
+    <i className="ph ph-caret-down text-n-400" />
+  </button>
+
+  {/* Search */}
+  <button className="flex-1 max-w-[480px] relative">
+    <i className="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
+    <div className="h-input-md w-full pl-9 pr-3 border border-n-200 rounded-sm
+      bg-n-0 text-[13px] text-n-400 flex items-center">
+      Buscar paciente, protocolo, factura…
+    </div>
+    <kbd className="absolute right-2 top-1/2 -translate-y-1/2
+      font-mono text-[10px] text-n-500 border border-n-200 bg-n-25 px-1.5 py-[2px] rounded-sm">
+      ⌘K
+    </kbd>
+  </button>
+</header>
+```
 
 ---
 
 ## Modal
 
-```
-.modal-overlay   position:fixed, inset:0, bg rgba(14,14,13,.35), z-index:500
-  .modal         440px wide, --radius-md, --shadow-floating, bg --color-n-0
-  .modal--lg     560px wide
+Source: `Modal.tsx` (wraps `@radix-ui/react-dialog`).
+
+```tsx
+<Modal
+  title="Archivar paciente"
+  subtitle="El expediente quedará en solo lectura."
+  icon={{ name: 'ph-archive', variant: 'danger' }}
+  footer={
+    <>
+      <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+      <Button variant="danger" onClick={onConfirm}>Archivar paciente</Button>
+    </>
+  }
+>
+  {/* body content */}
+</Modal>
 ```
 
-| Part | Class | Styles |
-|---|---|---|
-| Header | `.modal__header` | `padding: 20px 24px 14px`, `border-bottom: 1px solid --color-n-100` |
-| Icon | `.modal__icon` | 34×34px circle, semantic bg + text color (e.g. danger) |
-| Title | `.modal__title` | 19px serif 500, `--color-n-900`, letter-spacing −0.005em |
-| Subtitle | `.modal__subtitle` | 13px sans, `--color-n-600` |
-| Body | `.modal__body` | `padding: 20px 24px` |
-| Footer | `.modal__footer` | `padding: 14px 20px`, bg `--color-n-25`, `border-top: 1px solid --color-n-100`, flex end, gap 12px |
+Overlay: `bg-[rgba(14,14,13,0.35)]`. Dialog: `w-[440px] bg-n-0 rounded-md shadow-floating`.
+Large variant: `w-[560px]`.
 
 ---
 
 ## Toast / Notification
 
-Width 380px, floating above content (z-index as needed).
+Source: `Toast.tsx` + `Toaster.tsx` (wraps `@radix-ui/react-toast`).
 
-**Base:** bg `--color-n-0`, `border: 1px solid --color-n-200`, `--shadow-floating`, `--radius-md`, `padding: 12px 16px`.
+```tsx
+import { useToast } from '@/components/ui/Toaster'
 
-| Part | Class | Styles |
-|---|---|---|
-| Icon | first `i` | 18px, color set by variant modifier |
-| Title | `.toast__title` | 13px sans 600, `--color-n-800` |
-| Description | `.toast__description` | 12.5px, `--color-n-500`, line-height 1.45 |
-| Close | `.toast__close` | 16px, `--color-n-400` |
+const { toast } = useToast()
+toast({ variant: 'success', title: 'Pago recibido', description: 'RD$ 3,450.00 acreditados.' })
+```
 
-Variant modifiers (set icon color only):
-
-| Modifier | Icon color |
-|---|---|
-| `.toast--success` | `--color-success-text` |
-| `.toast--warning` | `--color-warning-text` |
-| `.toast--danger` | `--color-danger-text` |
-| `.toast--info` | `--color-info-text` |
+Variants: `success` | `warning` | `danger` | `info`. Width 380px, `shadow-floating rounded-md`.
 
 ---
 
 ## Callout (Inline Alert)
 
-Inline contextual messages within page content.
+Source: `Callout.tsx`.
 
-**Base:** `display: flex`, `gap: --space-3`, `padding: 14px 16px`, `border-radius: --radius-md`.
+```tsx
+<Callout variant="warning">
+  <i className="ph ph-warning-circle" />
+  <div>
+    <p className="font-semibold">Revisión pendiente</p>
+    El protocolo tiene 3 bloques sin revisar.
+  </div>
+</Callout>
+```
 
-| Variant | Class | Bg | Border | Text |
-|---|---|---|---|---|
-| Success | `.callout--success` | `--color-success-bg` | `--color-success-border` | `--color-success-text` |
-| Warning | `.callout--warning` | `--color-warning-bg` | `--color-warning-border` | `--color-warning-text` |
-| Danger | `.callout--danger` | `--color-danger-bg` | `--color-danger-border` | `--color-danger-text` |
-| Info | `.callout--info` | `--color-info-bg` | `--color-info-border` | `--color-info-text` |
-
-Icon: 18px, first child. Title: `.callout__title` 13px 600. Body: `.callout__body` 13px line-height 1.45.
+Variants: `success` | `warning` | `danger` | `info`. Each applies `bg-{semantic}-bg border-{semantic}-border text-{semantic}-text`.
 
 ---
 
 ## Empty State
 
-Used when a list or section has no content yet.
+Source: `EmptyState.tsx`.
 
-```
-.empty-state
-  bg: --color-n-0
-  border: 1px dashed --color-n-200
-  border-radius: --radius-md
-  padding: 48px 32px
-  flex column, center aligned
+```tsx
+<EmptyState
+  icon="ph-user"
+  title="Aún no hay pacientes registrados"
+  description="Registra a tu primer paciente para empezar a gestionar citas, consultas y prescripciones desde un solo lugar."
+>
+  <Button variant="primary">Registrar paciente</Button>
+</EmptyState>
 ```
 
-| Part | Class | Styles |
-|---|---|---|
-| Icon circle | `.empty-state__icon` | 56px, bg `--color-n-50`, `--color-n-500`, 24px icon |
-| Title | `.empty-state__title` | 20px serif 500, `--color-n-800` |
-| Description | `.empty-state__description` | 13px, `--color-n-500`, max-width 42ch |
+Container: `bg-n-0 border border-dashed border-n-200 rounded-md p-12 flex flex-col items-center text-center`.
+Icon circle: 56px, `bg-n-50 text-n-500`. Title: serif 500 `text-n-800`. Description: sans `text-n-500 max-w-[42ch]`.
 
 ---
 
 ## Protocol Block
 
-The product's signature component. Every clinical content block uses this pattern.
+The product's signature component. Source: `ProtocolBlock.tsx`.
 
-### Protocol Container
+```tsx
+import { ProtocolBlock } from '@/components/ui/ProtocolBlock'
 
-```
-.protocol-container
-  bg: --color-n-0
-  border: 1px solid --color-n-200
-  border-radius: --radius-md
-  padding: 28px 32px
-```
-
-Header elements:
-- `.protocol-kicker` — 11px mono uppercase, `--color-n-400`, letter-spacing 0.10em
-- `.protocol-title` — 26px serif 500, `--color-n-900`, letter-spacing −0.005em
-- `.protocol-meta` — 12.5px sans, `--color-n-500`
-
-### Protocol Block (pblock)
-
-Each block (section, checklist, steps, decision, dosage table, alert) renders as a `.pblock`.
-
-```
-.pblock
-  bg: --color-n-0
-  border: 1px solid --color-n-200
-  border-radius: --radius-md
-  margin-bottom: --space-3
+<ProtocolBlock
+  type="checklist"
+  title="Evaluación inicial"
+  required={true}
+  items={[
+    { id: 'itm_01', text: 'Permeabilidad de vía aérea', critical: true },
+    { id: 'itm_02', text: 'Estado de consciencia', critical: false },
+  ]}
+/>
 ```
 
-**Header (`.pblock__header`):**
-- bg `--color-n-25`, `border-bottom: 1px solid --color-n-100`
-- **2px teal rule** on left edge via `::before` (full header height, rounded top-left)
-- Padding: `12px 16px 12px 18px`
+**Block header** has a 2px teal rule on the left via `before:` pseudo-element. Type chip uses `font-mono text-[10.5px] uppercase text-p-700 bg-p-50 border border-p-100 rounded-sm`.
 
-| Element | Class | Styles |
-|---|---|---|
-| Drag handle | `.pblock__handle` | `--color-n-300`, `cursor: grab` |
-| Type chip | `.pblock__type-chip` | 10.5px mono uppercase, `--color-p-700`, bg `--color-p-50`, border `--color-p-100` |
-| Title | `.pblock__title` | 17px serif 500, `--color-n-900` |
-| Actions | `.pblock__actions` | flex row, gap 2px, margin-left auto |
-
-Body: `.pblock__body` — `padding: 16px 18px`.
-
-### Nested Blocks
-
-`.pblock-nested` — `margin-left: 28px`, `border-left: 1px solid --color-n-200`. Nested `.pblock__header` uses bg `--color-n-0`.
-
-### Protocol Checklist Items
-
-```
-.plist
-  .plist__item           flex, gap --space-3, padding --space-2, hover bg --color-n-25
-    .plist__text         13.5px, --color-n-700, line-height 1.5
-    .plist__critical     "CRÍTICO" label, 11.5px mono, --color-danger-solid, uppercase
-```
-
-Done state: `.plist__item--done` — text `--color-n-400`, `text-decoration: line-through`.
-
-### Add Block Button
-
-`.pblock-add-btn` — dashed border `1px dashed --color-n-200`, 12.5px sans, `--color-n-500`. Hover: border `--color-n-400`, text `--color-n-800`.
+Supported block types: `section` | `text` | `checklist` | `steps` | `decision` | `dosage_table` | `alert`.
 
 ---
 
 ## Anchor Rule
 
-The 2px vertical teal signature — not a standalone component, but an applied modifier.
+The 2px vertical teal rule is the product's signature. Apply via Tailwind `before:` utilities:
 
-```
-.anchor-rule
-  position: relative
-  padding-left: --space-4
-
-.anchor-rule::before
-  position: absolute
-  left: 0
-  top: 4px / bottom: 4px
-  width: 2px
-  background: --color-p-500
+```tsx
+className="relative before:absolute before:left-0 before:top-[4px] before:bottom-[4px]
+  before:w-[2px] before:bg-p-500"
 ```
 
-Applied to: active sidebar item, selected cards, protocol block headers, section headings.
+Applied to: active sidebar item, selected cards, protocol block headers.
 
 ---
 
 ## Page Layout
 
+```tsx
+<div className="flex min-h-screen bg-n-25">
+  <aside className="w-sidebar">…</aside>
+  <div className="flex-1 ml-sidebar flex flex-col">
+    <header className="h-topbar sticky top-0 z-20">…</header>
+    <main className="flex-1 p-8 xl:px-12">…</main>
+  </div>
+</div>
 ```
-.app-layout          display: flex, min-height: 100vh
-  .sidebar           240px fixed left
-  .app-main          margin-left: 240px, padding-top: 56px, flex: 1
-    .topbar          56px fixed
-    .page-content    padding: 32px 48px, max-width: 1440px
-```
-
----
-
-## Utilities
-
-| Class | CSS |
-|---|---|
-| `.stack` | `display: flex; flex-direction: column` |
-| `.row` | `display: flex; align-items: center` |
-| `.gap-1` through `.gap-8` | `gap: --space-{n}` |
-| `.grid-2` | `display: grid; grid-template-columns: 1fr 1fr; gap: --space-6` |
-| `.grid-3` | `display: grid; grid-template-columns: repeat(3, 1fr); gap: --space-6` |
-| `.truncate` | `overflow: hidden; white-space: nowrap; text-overflow: ellipsis` |
-| `.sr-only` | Visually hidden, accessible |
-| `.text-mono` | `font-family: mono; font-size: 12px; --color-n-600` |

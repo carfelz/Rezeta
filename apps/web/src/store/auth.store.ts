@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { User as FirebaseUser } from 'firebase/auth'
 import type { AuthUser } from '@rezeta/shared'
+import { FirebaseError } from 'firebase/app'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -44,7 +45,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { signInWithEmailAndPassword } = await import('firebase/auth')
     const { auth } = await import('@/lib/firebase')
     if (!auth) throw new Error('Firebase not configured')
-    await signInWithEmailAndPassword(auth, email, password)
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        throw new Error(error.message)
+      } else if (error instanceof Error) {
+        throw new Error(error.message)
+      } else {
+        throw new Error('Unknown error')
+      }
+    }
   },
 
   signOut: async () => {

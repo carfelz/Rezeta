@@ -185,7 +185,7 @@ export class AppointmentsRepository {
         tenantId,
         deletedAt: null,
         status: { notIn: ['cancelled'] },
-        id: excludeId ? { not: excludeId } : undefined,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
         AND: [{ startsAt: { lt: endsAt } }, { endsAt: { gt: startsAt } }],
       },
     })

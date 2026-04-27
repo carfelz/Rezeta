@@ -1,0 +1,249 @@
+/**
+ * Rezeta — colors_and_type.css
+ * Merges the original tokens.css (full token set) with semantic CSS rules
+ * for h1–h6, p, code, kbd, etc. Import this single file to get a fully-styled
+ * Rezeta-flavored document.
+ *
+ * Source of truth for raw values: source/tokens.css
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* === NEUTRALS — cool true-grey, hair of warmth in light end === */
+  --color-n-0:   #FFFFFF;
+  --color-n-25:  #FAFAF7;  /* paper — app bg */
+  --color-n-50:  #F4F4F0;  /* row alternates */
+  --color-n-100: #EBEBE6;  /* borders-soft */
+  --color-n-200: #D8D8D2;  /* borders */
+  --color-n-300: #B9B9B3;  /* dividers-strong */
+  --color-n-400: #8E8E88;  /* muted text */
+  --color-n-500: #6B6B66;  /* secondary text */
+  --color-n-600: #4A4A46;  /* body */
+  --color-n-700: #2E2E2B;  /* heading */
+  --color-n-800: #1C1C1A;  /* strong heading */
+  --color-n-900: #0E0E0D;  /* max contrast */
+
+  /* === PRIMARY — deep teal-slate (single brand color) === */
+  --color-p-50:  #EAF0F1;
+  --color-p-100: #C9D7DA;
+  --color-p-300: #6A8B91;
+  --color-p-500: #2D5760;  /* brand anchor */
+  --color-p-700: #1B3A41;
+  --color-p-900: #0E2429;
+
+  /* === SEMANTIC — clinical/admin state only === */
+  --color-success-bg:     #EDF3EC;
+  --color-success-border: #B8CFB2;
+  --color-success-text:   #2F5C28;
+
+  --color-warning-bg:     #F7F1E3;
+  --color-warning-border: #DCC89A;
+  --color-warning-text:   #6E5319;
+
+  --color-danger-bg:      #F6EAE8;
+  --color-danger-border:  #D9B4AE;
+  --color-danger-text:    #7A2B22;
+
+  --color-info-bg:        #ECF0F3;
+  --color-info-border:    #B8C6D0;
+  --color-info-text:      #2B435A;
+
+  --color-danger-solid:   #8C2A20;
+
+  /* === SEMANTIC FG / BG ALIASES === */
+  --fg-1: var(--color-n-900);  /* max contrast headings */
+  --fg-2: var(--color-n-800);  /* strong headings */
+  --fg-3: var(--color-n-700);  /* heading / body emphasis */
+  --fg-4: var(--color-n-600);  /* body */
+  --fg-5: var(--color-n-500);  /* secondary text */
+  --fg-6: var(--color-n-400);  /* muted text */
+  --bg-app:     var(--color-n-25);
+  --bg-surface: var(--color-n-0);
+  --bg-row-alt: var(--color-n-50);
+  --link:       var(--color-p-500);
+  --link-hover: var(--color-p-700);
+
+  /* === FONTS === */
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-sans:  "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  "IBM Plex Mono", ui-monospace, monospace;
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+
+  /* === TYPE SCALE === */
+  --text-display-size: 56px; --text-display-lh: 1.05;  --text-display-ls: -0.02em;
+  --text-h1-size:      40px; --text-h1-lh:      1.10;  --text-h1-ls:      -0.015em;
+  --text-h2-size:      28px; --text-h2-lh:      1.20;  --text-h2-ls:      -0.01em;
+  --text-h3-size:      18px; --text-h3-lh:      1.35;  --text-h3-ls:      -0.005em;
+  --text-body-lg-size: 16px; --text-body-lg-lh: 1.55;
+  --text-body-size:    14px; --text-body-lh:    1.55;
+  --text-body-sm-size: 13px; --text-body-sm-lh: 1.50;
+  --text-caption-size: 12px; --text-caption-lh: 1.40;
+  --text-overline-size:11px; --text-overline-lh:1.40;  --text-overline-ls: 0.10em;
+
+  /* === SPACING — base 4px === */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* === RADIUS — three values, no others === */
+  --radius-sm: 3px; --radius-md: 5px; --radius-lg: 8px;
+
+  /* === BORDERS === */
+  --border-default: 1px solid var(--color-n-200);
+  --border-soft:    1px solid var(--color-n-100);
+  --border-strong:  1px solid var(--color-n-300);
+  --border-accent:  2px solid var(--color-p-500);
+  --border-dashed:  1px dashed var(--color-n-200);
+  --border-focus:   1px solid var(--color-p-500);
+
+  /* === ELEVATION === */
+  --shadow-flat:     none;
+  --shadow-raised:   0 1px 0 rgba(14,14,13,0.04), 0 1px 2px rgba(14,14,13,0.04);
+  --shadow-floating: 0 1px 0 rgba(14,14,13,0.04),
+                     0 8px 24px -8px rgba(14,14,13,0.12),
+                     0 2px 6px rgba(14,14,13,0.06);
+  --shadow-focus:        0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-p-300);
+  --shadow-focus-danger: 0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-danger-border);
+
+  /* === LAYOUT === */
+  --layout-max-width:     1440px;
+  --layout-sidebar-width: 240px;
+  --layout-topbar-height: 56px;
+  --layout-margin-xl:     48px;
+  --layout-margin-lg:     32px;
+  --layout-gutter-xl:     24px;
+  --layout-gutter-lg:     20px;
+
+  /* === COMPONENT SIZES === */
+  --size-btn-sm:    28px;
+  --size-btn-md:    32px;
+  --size-btn-lg:    40px;
+  --size-input-md:  34px;
+  --size-touch-min: 44px;
+
+  /* === ICONS (Phosphor regular) === */
+  --icon-size-sm: 15px;
+  --icon-size-md: 16px;
+  --icon-size-lg: 18px;
+  --icon-size-xl: 22px;
+
+  /* === TRANSITIONS === */
+  --transition-fast:   100ms ease;
+  --transition-medium: 150ms ease;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   ============================================================ */
+html, body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--fg-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-lh);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--color-p-100); color: var(--color-p-900); }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: var(--font-weight-medium);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-3);
+}
+h1 { font-size: var(--text-h1-size); line-height: var(--text-h1-lh); letter-spacing: var(--text-h1-ls); }
+h2 { font-size: var(--text-h2-size); line-height: var(--text-h2-lh); letter-spacing: var(--text-h2-ls); }
+h3 { font-size: var(--text-h3-size); line-height: var(--text-h3-lh); letter-spacing: var(--text-h3-ls); }
+h4 { font-size: var(--text-body-lg-size); line-height: 1.35; letter-spacing: -0.005em; font-family: var(--font-sans); font-weight: var(--font-weight-semibold); color: var(--fg-2); }
+h5 { font-size: var(--text-body-size); line-height: 1.4; font-family: var(--font-sans); font-weight: var(--font-weight-semibold); color: var(--fg-2); }
+h6 {
+  font-size: var(--text-overline-size); line-height: var(--text-overline-lh);
+  letter-spacing: var(--text-overline-ls); text-transform: uppercase;
+  font-family: var(--font-mono); font-weight: var(--font-weight-regular); color: var(--fg-6);
+}
+
+/* Hero / display heading — opt-in via .display class on h1 */
+.display {
+  font-family: var(--font-serif);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-display-size);
+  line-height: var(--text-display-lh);
+  letter-spacing: var(--text-display-ls);
+  color: var(--fg-1);
+}
+
+p {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-lh);
+  color: var(--fg-4);
+}
+p.lead { font-size: var(--text-body-lg-size); line-height: var(--text-body-lg-lh); color: var(--fg-3); }
+p.small, small { font-size: var(--text-caption-size); line-height: var(--text-caption-lh); color: var(--fg-5); }
+
+a { color: var(--link); text-decoration: none; transition: color var(--transition-fast); }
+a:hover { color: var(--link-hover); text-decoration: underline; text-underline-offset: 2px; }
+
+strong, b { font-weight: var(--font-weight-semibold); color: var(--fg-2); }
+em { font-style: italic; }
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption-size);
+  color: var(--fg-3);
+}
+code {
+  background: var(--color-n-50);
+  border: 1px solid var(--color-n-100);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+}
+pre {
+  background: var(--color-n-25);
+  border: var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  overflow: auto;
+}
+kbd {
+  background: var(--color-n-25);
+  border: 1px solid var(--color-n-200);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  font-size: 10.5px;
+  color: var(--fg-5);
+}
+
+hr {
+  border: 0; height: 1px;
+  background: var(--color-n-200);
+  margin: var(--space-6) 0;
+}
+
+ul, ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+li { margin-bottom: var(--space-1); font-size: var(--text-body-size); color: var(--fg-4); }
+
+/* Mono kicker — over headings */
+.kicker, .overline {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-overline-size);
+  line-height: var(--text-overline-lh);
+  letter-spacing: var(--text-overline-ls);
+  text-transform: uppercase;
+  color: var(--fg-6);
+  margin-bottom: var(--space-2);
+}
+
+/* Mono utility class */
+.mono { font-family: var(--font-mono); }
+.serif { font-family: var(--font-serif); }
+.sans { font-family: var(--font-sans); }

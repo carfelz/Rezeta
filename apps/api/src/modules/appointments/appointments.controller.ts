@@ -69,10 +69,10 @@ export class AppointmentsController {
     return this.svc.list({
       tenantId,
       userId: user.id,
-      locationId,
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-      status,
+      ...(locationId ? { locationId } : {}),
+      ...(from ? { from: new Date(from) } : {}),
+      ...(to ? { to: new Date(to) } : {}),
+      ...(status ? { status } : {}),
     })
   }
 

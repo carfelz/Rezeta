@@ -155,6 +155,20 @@
     --chart-3: var(--color-n-500);
     --chart-4: var(--color-warning-text);
     --chart-5: var(--color-success-text);
+
+    /* ── Semantic FG/BG aliases ─────────────────────────────────── */
+    /* Shorthand references used in colors_and_type.css and ui_kit. */
+    --fg-1: var(--color-n-900);
+    --fg-2: var(--color-n-800);
+    --fg-3: var(--color-n-700);
+    --fg-4: var(--color-n-600);
+    --fg-5: var(--color-n-500);
+    --fg-6: var(--color-n-400);
+    --bg-app: var(--color-n-25);
+    --bg-surface: var(--color-n-0);
+    --bg-row-alt: var(--color-n-50);
+    --link: var(--color-p-500);
+    --link-hover: var(--color-p-700);
   }
 }
 

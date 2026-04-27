@@ -22,6 +22,7 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/protocol-editor-ux.md
 @./specs/template-editor-ux.md
 @./specs/onboarding-flow.md
+@./specs/protocol-in-consultation-spec.md
 
 <!-- Slice already done -->
 <!-- @./specs/protocol-engine-slices.md -->
@@ -49,21 +50,29 @@ These apply to every decision. If a proposed change violates one, flag it.
 
 ## Design System
 
-The design system lives in `design-system/`. Import order: `tokens.css` → `components.css`.
+The frontend uses **React + Tailwind CSS + Radix UI + CVA** (shadcn-style). Design tokens live in `apps/web/src/index.css` as CSS custom properties; Tailwind consumes them via `tailwind.config.ts`.
 
-- **`design-system/tokens.css`** — all CSS custom properties (colors, type, spacing, radius, shadows, layout)
-- **`design-system/components.css`** — component styles (buttons, inputs, cards, sidebar, topbar, modals, badges, protocol blocks, etc.)
-- **`design-system/reference.html`** — component library specimens; open in a browser to inspect every individual component and state
-- **`design-system/app-prototype.html`** — 9-screen navigable MVP prototype (all routes: /dashboard → /ajustes); the pixel-perfect visual source of truth for each screen
+**Key files:**
 
-**Before making any UI changes:** read `./design-system/tokens.css`, `./design-system/components.css`, and the spec docs in `./specs/design-system/` (tokens.md, components.md, principles.md, implementation.md). Use `app-prototype.html` as the screen-level reference and `reference.html` for component-level detail.
+- **`apps/web/src/index.css`** — all CSS custom properties (colors, type, spacing, radius, shadows, layout, shadcn contract, semantic FG/BG aliases)
+- **`apps/web/tailwind.config.ts`** — maps tokens to Tailwind utility classes (`text-n-700`, `bg-p-500`, `border-n-200`, etc.)
+- **`apps/web/src/components/ui/`** — React components (Button, Card, Badge, Input, Modal, Tabs, etc.) built on Radix UI + CVA
+- **`design-system/colors_and_type.css`** — merged token file + semantic element rules (h1–h6, p, a, code) for standalone HTML documents
+- **`design-system/shadcn-tokens.css`** — Rezeta → shadcn CSS variable mapping reference
+- **`design-system/ui_kit/index.html`** — interactive 5-screen prototype; open in a browser as the pixel-perfect screen-level reference
+- **`design-system/reference.html`** — static component specimen library (self-contained, browser-ready)
+- **`design-system/app-prototype.html`** — static 9-screen navigable MVP prototype (self-contained, browser-ready)
+- **`design-system/assets/`** — `logo.svg` and `logo-mark.svg`
+- **`pnpm storybook`** — live component reference for React code
 
-- Every color, spacing value, radius, and type size must reference a token from `tokens.css`. Never write raw hex values or arbitrary pixel sizes in component code.
-- Before building any new UI, check `specs/design-system/components.md` for an existing component that fits. Only create a new component if nothing in the system covers the need — and if so, propose adding it to the system first.
-- All new UI must use tokens from `tokens.css`. Components that hardcode values fail the design review.
+**Before making any UI changes:** read `apps/web/src/index.css` and the spec docs in `./specs/design-system/`. Use `design-system/ui_kit/index.html` as the screen-level reference and `design-system/reference.html` for component-level detail.
+
+- Every color, spacing value, radius, and type size must reference a token from `index.css`. Never write raw hex values or arbitrary pixel sizes in component code.
+- In Tailwind: use `text-n-700`, `bg-p-500`, `border-n-200`, `rounded-sm`, `shadow-floating` — never raw CSS values.
+- Before building any new UI, check `specs/design-system/components.md` and `apps/web/src/components/ui/` for an existing component that fits. Only create a new component if nothing in the system covers the need.
 - Follow the typography scale exactly. Do not introduce new sizes or weights.
-- Stick to the defined spacing scale. No `padding: 14px` if the scale is 4/8/12/16/24/32.
-- When in doubt, reference `app-prototype.html` before making a judgment call.
+- Stick to the defined spacing scale. No `p-[14px]` if the scale is 1/2/3/4/5/6/8/10/12/16.
+- When in doubt, reference `design-system/ui_kit/index.html` before making a judgment call.
 
 Key design decisions:
 
@@ -71,18 +80,18 @@ Key design decisions:
 - **Brand color:** `#2D5760` (deep teal-slate) — not SaaS blue, not clinical green
 - **Signature element:** 2px vertical teal rule marks active nav, selected items, protocol block headers
 - **Hierarchy:** borders over shadows; color only for semantic meaning
-- **Icons:** Phosphor Icons (regular weight) — `@phosphor-icons/web`
-- **Spacing base:** 4px, scale via `--space-{1..16}` tokens
-- **Radius:** 3px (sm) / 5px (md) / 8px (lg) only
-- **Density:** information-dense; min touch target 44px
+- **Icons:** Phosphor Icons (regular weight) — `@phosphor-icons/web` (`<i className="ph ph-{name}">`)
+- **Spacing base:** 4px, scale via `--space-{1..16}` tokens / Tailwind `p-1` through `p-16`
+- **Radius:** 3px (sm) / 5px (md) / 8px (lg) only — `rounded-sm`, `rounded-md`, `rounded-lg`
+- **Density:** information-dense; min touch target 44px (`min-h-touch`)
 
 ## Tech Stack
 
 - **Database:** PostgreSQL (leverage JSONB for flexible fields: vitals, allergies, diagnoses, protocol content, prescription items)
-- **Backend:** TBD — document here once decided
-- **Frontend:** TBD — document here once decided
+- **Backend:** Node.js + NestJS + Prisma (see `specs/technical-architecture.md`)
+- **Frontend:** React 18 + Vite + Tailwind CSS + Radix UI + CVA (shadcn-style) + TanStack Query + Zustand
 - **Mobile:** Responsive PWA in MVP; native iOS/Android in v2
-- **Hosting:** TBD — document here once decided
+- **Hosting:** Google Cloud Platform (Cloud Run API, GCS + CDN frontend)
 
 ## Domain Conventions
 

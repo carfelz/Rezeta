@@ -1,6 +1,5 @@
 import 'reflect-metadata'
 import { resolve } from 'path'
-import { fileURLToPath } from 'url'
 import { config as loadEnv } from 'dotenv'
 import { NestFactory } from '@nestjs/core'
 import { Logger } from '@nestjs/common'
@@ -10,7 +9,7 @@ import { AppModule } from './app.module.js'
 // Load .env before NestJS initializes — path is relative to this file so it's
 // reliable regardless of the cwd pnpm uses when running the script.
 loadEnv({
-  path: resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..', '.env'),
+  path: resolve(__dirname, '../../..', '.env'),
   override: true,
 })
 
@@ -23,6 +22,7 @@ async function bootstrap() {
     origin: process.env['ALLOWED_ORIGINS']?.split(',').map((o) => o.trim()) ?? [
       'http://localhost:5173',
       'http://localhost:5174',
+      'https://medical-erp-dev.web.app/',
     ],
     credentials: true,
   })

@@ -1,0 +1,65 @@
+/**
+ * shadcn-tokens.css
+ * Maps Rezeta tokens (colors_and_type.css) onto the shadcn CSS variable
+ * contract. Import AFTER colors_and_type.css. Tailwind config (in the
+ * <script> tag of any page that uses this) reads these via theme.extend.
+ *
+ * shadcn uses HSL-as-three-numbers in its variables; we use direct hex values
+ * because the Tailwind v3 Play CDN is configured to consume them as-is via
+ * theme.extend.colors. This is Rezeta's preferred form.
+ */
+
+:root {
+  /* Surfaces */
+  --background:        var(--color-n-25);   /* paper — app bg */
+  --foreground:        var(--color-n-900);
+  --card:              var(--color-n-0);
+  --card-foreground:   var(--color-n-900);
+  --popover:           var(--color-n-0);
+  --popover-foreground:var(--color-n-900);
+
+  /* Primary — Rezeta deep teal */
+  --primary:           var(--color-p-500);
+  --primary-foreground:var(--color-n-0);
+
+  /* Secondary — soft neutral surface (used by buttons, soft pills) */
+  --secondary:           var(--color-n-50);
+  --secondary-foreground:var(--color-n-800);
+
+  /* Muted — backgrounds for code blocks, soft tags */
+  --muted:               var(--color-n-50);
+  --muted-foreground:    var(--color-n-500);
+
+  /* Accent — hover states for buttons/menu items */
+  --accent:              var(--color-n-100);
+  --accent-foreground:   var(--color-n-900);
+
+  /* Destructive */
+  --destructive:           var(--color-danger-solid);
+  --destructive-foreground:var(--color-n-0);
+
+  /* Lines */
+  --border:  var(--color-n-200);
+  --input:   var(--color-n-300);
+  --ring:    var(--color-p-300);
+
+  /* Radius — shadcn picks ONE base (sm/md/lg derive from it). Rezeta md=5px. */
+  --radius: 5px;
+
+  /* Charts (Rezeta only uses the single brand teal across charts) */
+  --chart-1: var(--color-p-500);
+  --chart-2: var(--color-p-300);
+  --chart-3: var(--color-n-500);
+  --chart-4: var(--color-warning-text);
+  --chart-5: var(--color-success-text);
+
+  /* Sidebar block (shadcn v4 sidebar tokens) */
+  --sidebar:                    var(--color-n-25);
+  --sidebar-foreground:         var(--color-n-700);
+  --sidebar-primary:            var(--color-p-500);
+  --sidebar-primary-foreground: var(--color-n-0);
+  --sidebar-accent:             var(--color-n-50);
+  --sidebar-accent-foreground:  var(--color-n-900);
+  --sidebar-border:             var(--color-n-100);
+  --sidebar-ring:               var(--color-p-300);
+}

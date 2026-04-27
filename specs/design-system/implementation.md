@@ -1,468 +1,334 @@
 # Implementation Guide
 
 > How to use the design tokens and components when writing code.
-> Source files: `design-system/tokens.css` and `design-system/components.css`.
+> Stack: React 18 + Vite + Tailwind CSS + Radix UI + CVA.
+> Token source: `apps/web/src/index.css`. Tailwind config: `apps/web/tailwind.config.ts`.
+> Component source: `apps/web/src/components/ui/`.
 
 ---
 
 ## Setup
 
-### Import Order
+### Token layer
+
+All design tokens are CSS custom properties defined in `apps/web/src/index.css` inside `@layer base :root`. They cover neutrals, brand teal, semantic colors, typography, spacing, borders, shadows, layout, and shadcn contract variables. No separate CSS file to import — Vite picks them up automatically.
+
+For **standalone HTML** documents (prototypes, previews):
 
 ```html
-<link rel="stylesheet" href="/design-system/tokens.css" />
-<link rel="stylesheet" href="/design-system/components.css" />
+<link rel="stylesheet" href="/design-system/colors_and_type.css" />
+<link rel="stylesheet" href="/design-system/shadcn-tokens.css" />
 ```
 
-`tokens.css` must come first — `components.css` references its custom properties.
+`colors_and_type.css` provides the full token set plus semantic element styles (h1–h6, p, a, code, kbd). `shadcn-tokens.css` maps those tokens onto the shadcn CSS variable contract.
 
-### Google Fonts
+### Tailwind config
 
-`tokens.css` imports the fonts automatically via `@import`. No additional font setup needed:
-- Source Serif 4 (400, 500, 600 — optical sizes 8–60)
-- IBM Plex Sans (400, 500, 600)
-- IBM Plex Mono (400, 500)
+`tailwind.config.ts` reads the CSS custom properties and exposes them as utility classes:
 
-For frameworks that control the `<head>`, preload the fonts separately for better performance:
-
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-```
+| Intent | Tailwind class | Token behind it |
+|---|---|---|
+| Body text | `text-n-700` | `--color-n-700` |
+| Heading | `text-n-800` | `--color-n-800` |
+| Brand bg | `bg-p-500` | `--color-p-500` |
+| Default border | `border-n-200` | `--color-n-200` |
+| Small radius | `rounded-sm` | `--radius-sm` (3px) |
+| Floating shadow | `shadow-floating` | `--shadow-floating` |
+| Standard padding | `p-4` | `--space-4` (16px) |
+| Sidebar width | `w-sidebar` | `--layout-sidebar-width` (240px) |
+| Topbar height | `h-topbar` | `--layout-topbar-height` (56px) |
 
 ### Phosphor Icons
 
-The project uses **`@phosphor-icons/web`** (the web component package, not `@phosphor-icons/react`). Icons render as `<i class="ph ph-{name}">` HTML elements.
+The project uses `@phosphor-icons/web` (not `@phosphor-icons/react`). Icons render as `<i>` elements.
 
-In the React app, import the weight CSS files once in `main.tsx` before any component code:
+In `main.tsx`, import once before any component code:
 
 ```ts
 import '@phosphor-icons/web/regular'
 import '@phosphor-icons/web/fill'
 ```
 
-The package exports per-weight CSS, not a single barrel entry — importing `@phosphor-icons/web` directly will fail with a missing `"."` specifier error. Always import the specific weights needed.
+Usage in JSX:
 
-Do **not** use `@phosphor-icons/react` (React components like `<ArrowLeft />`). Stick to the `<i className="ph ph-{name}">` syntax throughout so rendering is consistent. `@phosphor-icons/react` is listed as a dependency but should be considered legacy — new code must use the class-based syntax.
+```tsx
+<i className="ph ph-calendar-blank" />
+<i className="ph-fill ph-user" />  {/* fill variant — active nav only */}
+```
+
+Do **not** use `@phosphor-icons/react` (`<ArrowLeft />` style). It is listed as a dependency but is legacy. All new code uses the class-based syntax.
+
+### Live component reference
+
+```bash
+pnpm storybook   # runs at localhost:6006
+```
+
+Storybook covers every component in `apps/web/src/components/ui/`. For pixel-accurate screen reference, open `design-system/ui_kit/index.html` directly in a browser (no build step needed).
 
 ---
 
-## Using Tokens
+## Using Tokens in Code
 
-**Always use token names, never raw values.** This keeps the system refactorable and makes the intent clear.
+**Never write raw values.** Always reference a token name — either through a Tailwind class or a CSS custom property.
 
-```css
-/* Correct */
-color: var(--color-n-700);
-border: var(--border-default);
-padding: var(--space-4);
-border-radius: var(--radius-sm);
+```tsx
+// Tailwind utility classes (preferred in component code)
+<div className="text-n-700 bg-n-0 border border-n-200 rounded-md p-4">
 
-/* Wrong — hardcoded values */
-color: #2E2E2B;
-border: 1px solid #D8D8D2;
-padding: 16px;
-border-radius: 3px;
+// CSS custom properties (for inline styles or non-Tailwind contexts)
+style={{ color: 'var(--color-n-700)', padding: 'var(--space-4)' }}
+
+// Never — raw values
+<div style={{ color: '#2E2E2B', padding: '16px' }}>
 ```
 
-### Picking the Right Neutral
+### Picking the right neutral
 
-| Intent | Token |
-|---|---|
-| App background | `--color-n-25` |
-| Component background (cards, inputs) | `--color-n-0` |
-| Alternate row / disabled background | `--color-n-50` |
-| Subtle border (inside a card) | `--color-n-100` |
-| Default border | `--color-n-200` |
-| Divider / strong border | `--color-n-300` |
-| Placeholder, muted text | `--color-n-400` |
-| Secondary / caption text | `--color-n-500` |
-| Body text | `--color-n-700` |
-| Heading | `--color-n-800` |
-| Maximum contrast | `--color-n-900` |
+| Intent | Tailwind class | Token |
+|---|---|---|
+| App background | `bg-n-25` | `--color-n-25` |
+| Card / component bg | `bg-n-0` | `--color-n-0` |
+| Row alternate / disabled bg | `bg-n-50` | `--color-n-50` |
+| Subtle inner border | `border-n-100` | `--color-n-100` |
+| Default border | `border-n-200` | `--color-n-200` |
+| Strong divider | `border-n-300` | `--color-n-300` |
+| Placeholder / muted text | `text-n-400` | `--color-n-400` |
+| Secondary / caption text | `text-n-500` | `--color-n-500` |
+| Body text | `text-n-700` | `--color-n-700` |
+| Heading | `text-n-800` | `--color-n-800` |
+| Maximum contrast | `text-n-900` | `--color-n-900` |
 
-### Picking the Right Spacing
+### Picking the right spacing
 
-Prefer named tokens over arithmetic. For new surfaces, start with `--space-4` (16px) as the default padding and adjust up or down by one step.
+Use only the defined scale steps. For new surfaces, start at `p-4` (16px) and adjust by one step.
 
-```css
-/* A standard card */
-padding: var(--space-5); /* 20px */
-
-/* A tight list item */
-padding: var(--space-2) var(--space-4); /* 8px 16px */
-
-/* A page content area */
-padding: var(--space-8) var(--layout-margin-xl); /* 32px 48px */
+```tsx
+<div className="p-5">        {/* 20px — card padding */}
+<div className="py-2 px-4">  {/* 8/16px — tight list item */}
+<main className="p-8 xl:px-12">  {/* 32/48px — page content */}
 ```
 
-### Picking the Right Shadow
+### Picking the right shadow
 
-```css
-/* Most surfaces — no shadow, border only */
-box-shadow: var(--shadow-flat);
-border: var(--border-default);
+```tsx
+// Most surfaces — no shadow, border only
+<div className="border border-n-200 shadow-none">
 
-/* Floating element (modal, popover, toast) */
-box-shadow: var(--shadow-floating);
+// Floating element (modal, popover, toast)
+<div className="shadow-floating">
 
-/* Focus state on any interactive element */
-box-shadow: var(--shadow-focus);        /* default */
-box-shadow: var(--shadow-focus-danger); /* destructive context */
+// Focus ring on interactive elements
+className="focus-visible:shadow-focus"
+className="focus-visible:shadow-focus-danger"  // destructive context
 ```
 
 ---
 
 ## Using Components
 
-### Buttons
+Import from the `ui` barrel:
 
-Combine the base class with one variant and optionally one size modifier:
+```ts
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/Select'
+import { Callout } from '@/components/ui/Callout'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Avatar } from '@/components/ui/Avatar'
+```
 
-```html
-<!-- Primary (default size) -->
-<button class="btn btn--primary">
-  <i class="ph ph-plus"></i>
+### Button
+
+```tsx
+<Button variant="primary">
+  <i className="ph ph-plus" />
   Nueva consulta
-</button>
+</Button>
 
-<!-- Secondary, small -->
-<button class="btn btn--secondary btn--sm">Guardar borrador</button>
+<Button variant="secondary" size="sm">Guardar borrador</Button>
 
-<!-- Destructive, large -->
-<button class="btn btn--danger btn--lg">
-  <i class="ph ph-trash"></i>
+<Button variant="danger" size="lg">
+  <i className="ph ph-trash" />
   Archivar paciente
-</button>
+</Button>
 
-<!-- Icon-only ghost -->
-<button class="btn btn--ghost btn--icon-only" aria-label="Más opciones">
-  <i class="ph ph-dots-three"></i>
-</button>
+<Button variant="ghost" size="md" iconOnly aria-label="Más opciones">
+  <i className="ph ph-dots-three" />
+</Button>
+
+<Button variant="primary" disabled>Guardar</Button>
 ```
 
-Use `disabled` attribute (not a class) for native form elements. For non-button elements, add the `.btn--primary:disabled` visual styles manually.
+Variants: `primary` | `secondary` | `ghost` | `danger`
+Sizes: `sm` (28px) | `md` (32px, default) | `lg` (40px)
 
-### Form Fields
+### Input / Field
 
-Wrap every input in `.field` for label + helper/error text:
+```tsx
+<Input placeholder="Ana María Reyes" />
 
-```html
-<div class="field">
-  <label class="field__label">
-    Nombre del paciente
-    <span class="field__required">*</span>
+{/* With label and helper */}
+<div className="flex flex-col gap-1">
+  <label className="text-[12.5px] font-medium text-n-700">
+    Nombre del paciente <span className="text-danger-solid">*</span>
   </label>
-  <input class="input" type="text" placeholder="Ana María Reyes" />
-  <span class="field__helper">Ingresa nombre completo según cédula.</span>
+  <Input placeholder="Ana María Reyes" />
+  <span className="text-[11.5px] text-n-500">Ingresa nombre completo según cédula.</span>
 </div>
+
+{/* Error state */}
+<Input className="border-danger-solid focus-visible:shadow-focus-danger" />
 ```
 
-Error state — add class to input and show error message:
+### Badge
 
-```html
-<input class="input input--error" type="text" />
-<span class="field__error">
-  <i class="ph ph-warning"></i>
-  Este campo es requerido.
-</span>
+```tsx
+<Badge variant="draft">Borrador</Badge>
+<Badge variant="active">Activo</Badge>
+<Badge variant="signed">Firmado</Badge>
+<Badge variant="review">En revisión</Badge>
+<Badge variant="archived">Archivado</Badge>
+<Badge variant="paid">Pagado</Badge>
+<Badge variant="overdue">Vencido</Badge>
 ```
 
-### Input Groups
+### Tabs
 
-Wrap when adding leading/trailing adornments or icons:
-
-```html
-<!-- Currency prefix -->
-<div class="input-group">
-  <span class="input-adorn input-adorn--leading">RD$</span>
-  <input class="input" type="number" placeholder="0.00" />
-</div>
-
-<!-- Search with icon -->
-<div class="input-group">
-  <span class="input-icon input-icon--leading">
-    <i class="ph ph-magnifying-glass"></i>
-  </span>
-  <input class="input" type="search" placeholder="Buscar paciente..." />
-  <span class="input-icon input-icon--trailing input-icon--action">
-    <i class="ph ph-x"></i>
-  </span>
-</div>
+```tsx
+<Tabs defaultValue="todos">
+  <TabsList>
+    <TabsTrigger value="todos">Todos</TabsTrigger>
+    <TabsTrigger value="activos">Activos</TabsTrigger>
+  </TabsList>
+  <TabsContent value="todos">…</TabsContent>
+  <TabsContent value="activos">…</TabsContent>
+</Tabs>
 ```
 
-Error state on input group: add `input-group--error` to the wrapper.
+### Callout
 
-### Cards
-
-```html
-<!-- Standard info card -->
-<div class="card">
-  <div class="card__title">Próxima cita</div>
-  <div class="card__subtitle">Martes 22 abr · 10:30 AM</div>
-</div>
-
-<!-- List item (patient row, appointment row) -->
-<div class="card-item">
-  <div class="avatar">AR</div>
-  <div class="card-item__main">
-    <div class="card-item__name">Ana María Reyes</div>
-    <div class="card-item__meta">Cédula · 001-1234567-8 · 42 años</div>
-  </div>
-  <span class="badge badge--active">
-    <span class="badge__dot"></span>Activo
-  </span>
-</div>
-
-<!-- Selected card (e.g. active patient in a list) -->
-<div class="card--selected">
-  <!-- content -->
-</div>
-```
-
-### Badges
-
-```html
-<span class="badge badge--draft"><span class="badge__dot"></span>Borrador</span>
-<span class="badge badge--active"><span class="badge__dot"></span>Activo</span>
-<span class="badge badge--signed"><span class="badge__dot"></span>Firmado</span>
-<span class="badge badge--review"><span class="badge__dot"></span>En revisión</span>
-<span class="badge badge--archived"><span class="badge__dot"></span>Archivado</span>
-<span class="badge badge--paid"><span class="badge__dot"></span>Pagado</span>
-<span class="badge badge--overdue"><span class="badge__dot"></span>Vencido</span>
-```
-
-### Callouts
-
-```html
-<div class="callout callout--success">
-  <i class="ph ph-check-circle"></i>
-  <div class="callout__body">
-    <div class="callout__title">Pago recibido</div>
+```tsx
+<Callout variant="success">
+  <i className="ph ph-check-circle" />
+  <div>
+    <p className="font-semibold">Pago recibido</p>
     RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes.
   </div>
-</div>
+</Callout>
 
-<div class="callout callout--danger">
-  <i class="ph ph-x-circle"></i>
-  <div class="callout__body">
-    <div class="callout__title">Contraindicación absoluta</div>
+<Callout variant="danger">
+  <i className="ph ph-x-circle" />
+  <div>
+    <p className="font-semibold">Contraindicación absoluta</p>
     Amoxicilina registrada como alergia previa (anafilaxia, 2024).
   </div>
-</div>
+</Callout>
+```
+
+Variants: `success` | `warning` | `danger` | `info`
+
+### Empty State
+
+```tsx
+<EmptyState
+  icon="ph-user"
+  title="Aún no hay pacientes registrados"
+  description="Registra a tu primer paciente para empezar a gestionar citas, consultas y prescripciones desde un solo lugar."
+>
+  <Button variant="primary">Registrar paciente</Button>
+</EmptyState>
+```
+
+### Modal
+
+```tsx
+<Modal
+  title="Archivar paciente"
+  subtitle="El expediente quedará en solo lectura."
+  icon={{ name: 'ph-archive', variant: 'danger' }}
+  footer={
+    <>
+      <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+      <Button variant="danger" onClick={onConfirm}>Archivar paciente</Button>
+    </>
+  }
+>
+  {/* body content */}
+</Modal>
+```
+
+### Avatar
+
+```tsx
+<Avatar initials="AR" />            {/* 36px default */}
+<Avatar initials="AR" size="sm" />  {/* 30px */}
+<Avatar initials="AR" size="xs" />  {/* 28px */}
 ```
 
 ### Typography
 
-Apply text classes directly to the element:
+Apply `.text-{scale}` composite classes (defined in `@layer components` in `index.css`):
 
-```html
-<h1 class="text-h1">Pacientes</h1>
-<h2 class="text-h2">Historial clínico</h2>
-<h3 class="text-h3">Alergias conocidas</h3>
-<p class="text-body">La paciente refiere disnea súbita...</p>
-<span class="text-caption">Última actualización · 18 abr 2026</span>
-<span class="text-overline">Protocolo</span>
+```tsx
+<h1 className="text-h1">Pacientes</h1>
+<h2 className="text-h2">Historial clínico</h2>
+<h3 className="text-h3">Alergias conocidas</h3>
+<p className="text-body">La paciente refiere disnea súbita…</p>
+<span className="text-caption">Última actualización · 18 abr 2026</span>
+<span className="text-overline">Protocolo</span>
 ```
-
-For the display size (landing/hero), use `.text-display`.
-
-### Anchor Rule
-
-Apply `.anchor-rule` to any element that needs the left teal mark:
-
-```html
-<div class="anchor-rule">
-  <h3 class="text-h3">Indicaciones</h3>
-</div>
-```
-
-This is separate from the sidebar active rule and protocol block header rule — those use dedicated `::before` pseudo-elements with the same visual output.
 
 ### Page Layout
 
-```html
-<div class="app-layout">
-  <nav class="sidebar">
-    <!-- sidebar content -->
-  </nav>
-  <div class="app-main">
-    <header class="topbar">
-      <!-- topbar content -->
-    </header>
-    <main class="page-content">
-      <!-- page content -->
+```tsx
+<div className="flex min-h-screen">
+  <Sidebar />
+  <div className="ml-sidebar flex-1 pt-topbar">
+    <Topbar />
+    <main className="p-8 xl:px-12 max-w-layout mx-auto">
+      {/* page content */}
     </main>
   </div>
 </div>
 ```
 
-### Empty States
+### Anchor Rule (2px teal left mark)
 
-```html
-<div class="empty-state">
-  <div class="empty-state__icon">
-    <i class="ph ph-user"></i>
-  </div>
-  <h3 class="empty-state__title">Aún no hay pacientes registrados</h3>
-  <p class="empty-state__description">
-    Registra a tu primer paciente para empezar a gestionar
-    citas, consultas y prescripciones desde un solo lugar.
-  </p>
-  <button class="btn btn--primary">Registrar paciente</button>
-</div>
+The 2px teal rule is the product's signature for active/selected state:
+
+```tsx
+{/* Active nav item */}
+<button className="relative before:absolute before:left-0 before:top-1.5
+  before:bottom-1.5 before:w-[2px] before:bg-p-500">
+
+{/* Selected card */}
+<Card className="border-p-500 relative before:absolute before:left-0
+  before:top-3 before:bottom-3 before:w-[2px] before:bg-p-500">
 ```
 
 ---
 
 ## Protocol Blocks
 
-Protocol blocks are the most complex component. Build them section by section:
-
-```html
-<div class="protocol-container">
-  <div class="protocol-header">
-    <div>
-      <div class="protocol-kicker">Protocolo · Emergencia</div>
-      <h1 class="protocol-title">Manejo de anafilaxia</h1>
-      <div class="protocol-meta">Actualizado 18 abr 2026 · v2.3</div>
-    </div>
-    <span class="badge badge--active"><span class="badge__dot"></span>Activo</span>
-  </div>
-
-  <!-- A section block -->
-  <div class="pblock">
-    <div class="pblock__header">
-      <i class="ph ph-dots-six-vertical pblock__handle"></i>
-      <span class="pblock__type-chip">Sección</span>
-      <span class="pblock__title">Indicaciones</span>
-      <div class="pblock__actions">
-        <button class="btn btn--ghost btn--icon-only btn--sm" aria-label="Editar">
-          <i class="ph ph-pencil-simple"></i>
-        </button>
-      </div>
-    </div>
-    <div class="pblock__body">
-      <!-- block content here -->
-    </div>
-  </div>
-
-  <!-- Add block button -->
-  <button class="pblock-add-btn">
-    <i class="ph ph-plus"></i>
-    Añadir bloque
-  </button>
-</div>
-```
-
----
-
-## Common Patterns
-
-### Sidebar Navigation
-
-```html
-<nav class="sidebar">
-  <div class="sidebar__brand">
-    <div class="sidebar__logo">M</div>
-    <span class="sidebar__brand-name">MedERP</span>
-  </div>
-
-  <span class="sidebar__section-label">Clínico</span>
-
-  <a class="sidebar__item sidebar__item--active" href="/pacientes">
-    <i class="ph-fill ph-user"></i>
-    Pacientes
-  </a>
-  <a class="sidebar__item" href="/citas">
-    <i class="ph ph-calendar-blank"></i>
-    Citas
-    <span class="sidebar__item__count">3</span>
-  </a>
-
-  <div class="sidebar__footer">
-    <div class="sidebar__user">
-      <div class="avatar avatar--sm">JG</div>
-      <div class="sidebar__user-info">
-        <div class="sidebar__user-name">Dr. Juan García</div>
-        <div class="sidebar__user-role">Cardiología</div>
-      </div>
-    </div>
-  </div>
-</nav>
-```
-
-### Table with Status
-
-```html
-<table class="table">
-  <thead>
-    <tr>
-      <th>Paciente</th>
-      <th>Cédula</th>
-      <th>Estado</th>
-      <th>Última consulta</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td class="table td--name">Ana María Reyes</td>
-      <td class="table td--mono">001-1234567-8</td>
-      <td><span class="badge badge--active"><span class="badge__dot"></span>Activo</span></td>
-      <td>18 abr 2026</td>
-    </tr>
-  </tbody>
-</table>
-```
-
-### Modal with Destructive Action
-
-```html
-<div class="modal-overlay">
-  <div class="modal">
-    <div class="modal__header">
-      <div class="modal__icon" style="background: var(--color-danger-bg); color: var(--color-danger-text);">
-        <i class="ph ph-archive"></i>
-      </div>
-      <div>
-        <h2 class="modal__title">Archivar paciente</h2>
-        <p class="modal__subtitle">El expediente quedará en solo lectura.</p>
-      </div>
-    </div>
-    <div class="modal__body">
-      <!-- confirmation content -->
-    </div>
-    <div class="modal__footer">
-      <button class="btn btn--secondary">Cancelar</button>
-      <button class="btn btn--danger">Archivar paciente</button>
-    </div>
-  </div>
-</div>
-```
-
----
-
-## Framework Notes
-
-When using a component framework (React, Vue, etc.):
-
-1. Wrap token usage in CSS Modules or a global stylesheet — the tokens are framework-agnostic CSS custom properties.
-2. Component class names (`.btn`, `.card`, etc.) can be applied directly or wrapped in framework components that compose them.
-3. State modifiers (`.btn--primary`, `.badge--active`) map naturally to props.
-4. The `disabled` HTML attribute handles disabled button state natively; no extra class needed for `<button>` elements.
-5. Focus management: the system provides the ring via CSS — ensure no `outline: none` overrides survive in component styles.
+Use the `ProtocolBlock` component from `apps/web/src/components/ui/ProtocolBlock.tsx`. See `ProtocolBlock.stories.tsx` for all variants and block types.
 
 ---
 
 ## Checklist Before Shipping a New Screen
 
-- [ ] All colors reference token names, not hex values
-- [ ] Spacing uses `--space-{n}` tokens, not arbitrary px
-- [ ] Border radius is one of `--radius-sm / md / lg`
-- [ ] Interactive elements have visible focus state (`--shadow-focus`)
+- [ ] All colors use Tailwind token classes — no raw hex
+- [ ] Spacing uses only `p-1` through `p-16` (the defined scale)
+- [ ] Border radius is `rounded-sm`, `rounded-md`, or `rounded-lg` only
+- [ ] Interactive elements have `focus-visible:shadow-focus`
 - [ ] Icon-only buttons have `aria-label`
-- [ ] Status indicators use the correct semantic badge variant
-- [ ] Empty states follow the title + description + CTA pattern
-- [ ] Touch targets are at least 44px (`--size-touch-min`)
-- [ ] Typography uses `.text-{scale}` utility classes or the correct font/size/weight combination from the type scale
-- [ ] The 2px teal rule is applied to all active/selected states (not a colored background)
+- [ ] Status indicators use `<Badge variant="…">`
+- [ ] Empty states use `<EmptyState>` with title + description + specific CTA verb
+- [ ] Touch targets are at least `min-h-touch` (44px)
+- [ ] Typography uses `.text-{scale}` composite classes
+- [ ] Active/selected state uses the 2px teal rule, not a colored background
+- [ ] No `@phosphor-icons/react` imports — use `<i className="ph ph-{name}">` syntax
