@@ -76,7 +76,7 @@ jobs:
             --max-instances 10 \
             --timeout 60 \
             --set-env-vars NODE_ENV=production \
-            --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
+            --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest,ALLOWED_ORIGINS=allowed_origins:latest
 
       - name: Get Service URL
         id: service-url
