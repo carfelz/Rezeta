@@ -1,4 +1,5 @@
 export type ProtocolStatus = 'draft' | 'active' | 'archived'
+export type ProtocolUsageStatus = 'in_progress' | 'completed' | 'abandoned'
 export type BlockType =
   | 'section'
   | 'text'
@@ -7,7 +8,11 @@ export type BlockType =
   | 'decision'
   | 'dosage_table'
   | 'alert'
+  | 'imaging_order'
+  | 'lab_order'
 export type AlertSeverity = 'info' | 'warning' | 'danger' | 'success'
+export type OrderUrgency = 'routine' | 'urgent' | 'stat'
+export type LabSampleType = 'blood' | 'urine' | 'stool' | 'other'
 
 export interface ChecklistItem {
   id: string
@@ -26,6 +31,8 @@ export interface DecisionBranch {
   id: string
   label: string
   action: string
+  linked_protocol_id?: string
+  auto_launch?: boolean
 }
 
 export interface DosageRow {
@@ -35,6 +42,27 @@ export interface DosageRow {
   route: string
   frequency: string
   notes: string
+}
+
+export interface ImagingOrderItem {
+  id: string
+  study_type: string
+  indication: string
+  urgency: OrderUrgency
+  contrast: boolean
+  fasting_required: boolean
+  special_instructions?: string
+}
+
+export interface LabOrderItem {
+  id: string
+  test_name: string
+  test_code?: string
+  indication: string
+  urgency: OrderUrgency
+  fasting_required: boolean
+  sample_type: LabSampleType
+  special_instructions?: string
 }
 
 export type ProtocolBlock =
@@ -52,6 +80,8 @@ export type ProtocolBlock =
   | { id: string; type: 'decision'; condition: string; branches: DecisionBranch[] }
   | { id: string; type: 'dosage_table'; title?: string; columns: string[]; rows: DosageRow[] }
   | { id: string; type: 'alert'; severity: AlertSeverity; title?: string; content: string }
+  | { id: string; type: 'imaging_order'; title?: string; orders: ImagingOrderItem[] }
+  | { id: string; type: 'lab_order'; title?: string; orders: LabOrderItem[] }
 
 export interface ProtocolContent {
   version: string
@@ -64,14 +94,36 @@ export interface Protocol {
   tenantId: string
   typeId: string
   title: string
+  description: string | null
+  specialty: string | null
   tags: string[]
   status: ProtocolStatus
+  visibility: string
   currentVersionId: string | null
   isFavorite: boolean
+  metadata: { auto_generated?: boolean; source_protocol_id?: string } | null
   createdBy: string
   createdAt: string
   updatedAt: string
   deletedAt: string | null
+}
+
+export interface ProtocolSuggestion {
+  id: string
+  protocolId: string
+  protocolVersionId: string
+  tenantId: string
+  patternType: string
+  patternData: Record<string, unknown>
+  suggestedChanges: Record<string, unknown>
+  impactSummary: string
+  occurrenceCount: number
+  totalUses: number
+  occurrencePercentage: number
+  status: 'pending' | 'applied' | 'dismissed'
+  appliedAt: string | null
+  dismissedAt: string | null
+  createdAt: string
 }
 
 export interface ProtocolVersion {

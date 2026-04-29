@@ -21,6 +21,8 @@ import { ProtocolTypesModule } from './modules/protocol-types/index.js'
 import { OnboardingModule } from './modules/onboarding/index.js'
 import { AppointmentsModule } from './modules/appointments/index.js'
 import { ConsultationsModule } from './modules/consultations/index.js'
+import { OrdersModule } from './modules/orders/index.js'
+import { ProtocolSuggestionsModule } from './modules/protocol-suggestions/index.js'
 import { Public } from './common/decorators/public.decorator.js'
 
 @Controller()
@@ -52,6 +54,8 @@ class AppController {
     OnboardingModule,
     AppointmentsModule,
     ConsultationsModule,
+    OrdersModule,
+    ProtocolSuggestionsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -13,6 +13,7 @@ import type {
   AmendConsultationDto,
   AddProtocolUsageDto,
   UpdateCheckedStateDto,
+  UpdateProtocolUsageDto,
 } from '@rezeta/shared'
 import { ErrorCode } from '@rezeta/shared'
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
@@ -114,6 +115,8 @@ export class ConsultationsService {
     await this.repo.softDelete(id, tenantId)
   }
 
+  // ── Protocol usages ──────────────────────────────────────────────────────
+
   async addProtocolUsage(
     consultationId: string,
     tenantId: string,
@@ -124,7 +127,10 @@ export class ConsultationsService {
 
     const protocol = await this.prisma.protocol.findFirst({
       where: { id: dto.protocolId, tenantId, deletedAt: null },
-      select: { currentVersionId: true },
+      select: {
+        currentVersionId: true,
+        type: { select: { templateId: true } },
+      },
     })
     if (!protocol) {
       throw new NotFoundException({
@@ -139,13 +145,59 @@ export class ConsultationsService {
       })
     }
 
-    return this.repo.addProtocolUsage(
+    // Validate parent usage if provided
+    if (dto.parentUsageId) {
+      const parent = await this.repo.findProtocolUsageById(dto.parentUsageId, tenantId)
+      if (!parent || parent.consultationId !== consultationId) {
+        throw new NotFoundException({
+          code: ErrorCode.PARENT_USAGE_NOT_FOUND,
+          message: 'Parent protocol usage not found',
+        })
+      }
+    }
+
+    // Fetch the version content to use as the working copy
+    const version = await this.prisma.protocolVersion.findFirst({
+      where: { id: protocol.currentVersionId, tenantId },
+    })
+    if (!version) {
+      throw new BadRequestException({
+        code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
+        message: 'Protocol version not found',
+      })
+    }
+
+    // Compute chain depth
+    const depth = dto.parentUsageId ? await this.repo.getUsageDepth(dto.parentUsageId, tenantId) : 0
+
+    return this.repo.launchProtocolUsage({
       consultationId,
       tenantId,
       userId,
-      dto.protocolId,
-      protocol.currentVersionId,
-    )
+      protocolId: dto.protocolId,
+      protocolVersionId: protocol.currentVersionId,
+      content: version.content as Record<string, unknown>,
+      parentUsageId: dto.parentUsageId,
+      triggerBlockId: dto.triggerBlockId,
+      depth,
+    })
+  }
+
+  async updateProtocolUsage(
+    consultationId: string,
+    usageId: string,
+    tenantId: string,
+    dto: UpdateProtocolUsageDto,
+  ): Promise<ConsultationProtocolUsage> {
+    await this.getById(consultationId, tenantId)
+    const usage = await this.repo.findProtocolUsageById(usageId, tenantId)
+    if (!usage || usage.consultationId !== consultationId) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_USAGE_NOT_FOUND,
+        message: 'Protocol usage not found',
+      })
+    }
+    return this.repo.updateProtocolUsage(usageId, tenantId, dto)
   }
 
   async updateCheckedState(
@@ -169,6 +221,22 @@ export class ConsultationsService {
           ? null
           : new Date(dto.completedAt)
     return this.repo.updateCheckedState(usageId, tenantId, dto.checkedState, completedAt, dto.notes)
+  }
+
+  async getProtocolUsage(
+    consultationId: string,
+    usageId: string,
+    tenantId: string,
+  ): Promise<ConsultationProtocolUsage> {
+    await this.getById(consultationId, tenantId)
+    const usage = await this.repo.findProtocolUsageById(usageId, tenantId)
+    if (!usage || usage.consultationId !== consultationId) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_USAGE_NOT_FOUND,
+        message: 'Protocol usage not found',
+      })
+    }
+    return usage
   }
 
   async removeProtocolUsage(

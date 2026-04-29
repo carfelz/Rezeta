@@ -29,11 +29,13 @@ import {
   AmendConsultationSchema,
   AddProtocolUsageSchema,
   UpdateCheckedStateSchema,
+  UpdateProtocolUsageSchema,
   type CreateConsultationDto,
   type UpdateConsultationDto,
   type AmendConsultationDto,
   type AddProtocolUsageDto,
   type UpdateCheckedStateDto,
+  type UpdateProtocolUsageDto,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -173,7 +175,37 @@ export class ConsultationsController {
     return this.svc.addProtocolUsage(id, tenantId, user.id, dto)
   }
 
+  @Get(':id/protocols/:usageId')
+  @ApiOperation({ summary: 'Get a protocol usage by ID' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiParam({ name: 'usageId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'PROTOCOL_USAGE_NOT_FOUND' })
+  getProtocolUsage(
+    @TenantId() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('usageId', ParseUUIDPipe) usageId: string,
+  ): Promise<ConsultationProtocolUsage> {
+    return this.svc.getProtocolUsage(id, usageId, tenantId)
+  }
+
   @Patch(':id/protocols/:usageId')
+  @UsePipes(new ZodValidationPipe(UpdateProtocolUsageSchema))
+  @ApiOperation({ summary: 'Update protocol usage (working copy, modifications, status)' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiParam({ name: 'usageId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'PROTOCOL_USAGE_NOT_FOUND' })
+  updateProtocolUsage(
+    @TenantId() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('usageId', ParseUUIDPipe) usageId: string,
+    @Body() dto: UpdateProtocolUsageDto,
+  ): Promise<ConsultationProtocolUsage> {
+    return this.svc.updateProtocolUsage(id, usageId, tenantId, dto)
+  }
+
+  @Patch(':id/protocols/:usageId/checked-state')
   @UsePipes(new ZodValidationPipe(UpdateCheckedStateSchema))
   @ApiOperation({ summary: 'Update checked state for a protocol usage' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })

@@ -9,6 +9,13 @@ import type {
   AmendConsultationDto,
   AddProtocolUsageDto,
   UpdateCheckedStateDto,
+  UpdateProtocolUsageDto,
+  Prescription,
+  ImagingOrder,
+  LabOrder,
+  CreatePrescriptionGroupDto,
+  CreateImagingOrderGroupDto,
+  CreateLabOrderGroupDto,
 } from '@rezeta/shared'
 
 const QK = 'consultations'
@@ -162,5 +169,91 @@ export function useRemoveProtocolUsage(
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
     },
+  })
+}
+
+export function useUpdateProtocolUsage(
+  consultationId: string,
+  usageId: string,
+): UseMutationResult<ConsultationProtocolUsage, Error, UpdateProtocolUsageDto> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: UpdateProtocolUsageDto) =>
+      apiClient.patch<ConsultationProtocolUsage>(
+        `/v1/consultations/${consultationId}/protocols/${usageId}`,
+        dto,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+export function useCreatePrescription(
+  consultationId: string,
+): UseMutationResult<Prescription, Error, CreatePrescriptionGroupDto> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreatePrescriptionGroupDto) =>
+      apiClient.post<Prescription>(`/v1/consultations/${consultationId}/prescriptions`, dto),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+export function useListPrescriptions(
+  consultationId: string,
+): UseQueryResult<Prescription[], Error> {
+  return useQuery({
+    queryKey: [QK, consultationId, 'prescriptions'],
+    queryFn: () =>
+      apiClient.get<Prescription[]>(`/v1/consultations/${consultationId}/prescriptions`),
+    enabled: Boolean(consultationId),
+  })
+}
+
+export function useCreateImagingOrder(
+  consultationId: string,
+): UseMutationResult<ImagingOrder[], Error, CreateImagingOrderGroupDto> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateImagingOrderGroupDto) =>
+      apiClient.post<ImagingOrder[]>(`/v1/consultations/${consultationId}/imaging-orders`, dto),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+export function useListImagingOrders(
+  consultationId: string,
+): UseQueryResult<ImagingOrder[], Error> {
+  return useQuery({
+    queryKey: [QK, consultationId, 'imaging-orders'],
+    queryFn: () =>
+      apiClient.get<ImagingOrder[]>(`/v1/consultations/${consultationId}/imaging-orders`),
+    enabled: Boolean(consultationId),
+  })
+}
+
+export function useCreateLabOrder(
+  consultationId: string,
+): UseMutationResult<LabOrder[], Error, CreateLabOrderGroupDto> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateLabOrderGroupDto) =>
+      apiClient.post<LabOrder[]>(`/v1/consultations/${consultationId}/lab-orders`, dto),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+export function useListLabOrders(consultationId: string): UseQueryResult<LabOrder[], Error> {
+  return useQuery({
+    queryKey: [QK, consultationId, 'lab-orders'],
+    queryFn: () => apiClient.get<LabOrder[]>(`/v1/consultations/${consultationId}/lab-orders`),
+    enabled: Boolean(consultationId),
   })
 }

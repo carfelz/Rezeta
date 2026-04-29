@@ -27,6 +27,7 @@ import {
 } from '@/components/ui'
 import { BlockRendererRunMode } from '@/components/protocols/BlockRendererRunMode'
 import type { RunModeProps } from '@/components/protocols/BlockRendererRunMode'
+import { OrderQueuePanel } from '@/components/consultations/OrderQueuePanel'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1059,6 +1060,9 @@ export function Consulta(): JSX.Element {
               </div>
             </AsideCard>
           )}
+
+          {/* Order queue panel */}
+          {!isSigned && <OrderQueuePanel consultationId={consultation.id} />}
         </div>
       </div>
 

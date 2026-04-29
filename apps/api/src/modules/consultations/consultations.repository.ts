@@ -5,12 +5,15 @@ import type {
   ConsultationWithDetails,
   ConsultationAmendment,
   ConsultationProtocolUsage,
+  ProtocolUsageModifications,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
   UpdateConsultationDto,
   AmendConsultationDto,
+  UpdateProtocolUsageDto,
 } from '@rezeta/shared'
+import type { ProtocolContent } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
 type PrismaConsultation = {
@@ -54,12 +57,26 @@ type PrismaProtocolUsage = {
   consultationId: string | null
   protocolId: string
   protocolVersionId: string
+  content: unknown
+  modifications: unknown
+  modificationSummary: string | null
+  parentUsageId: string | null
+  triggerBlockId: string | null
+  depth: number
+  status: string
   checkedState: unknown
   completedAt: Date | null
   notes: string | null
   appliedAt: Date
   protocol: { title: string; type: { name: string } }
   protocolVersion: { versionNumber: number }
+  childUsages?: Array<{
+    id: string
+    protocolId: string
+    depth: number
+    status: string
+    protocol: { title: string }
+  }>
 }
 
 type PrismaConsultationWithRelations = PrismaConsultation & {
@@ -115,6 +132,13 @@ function toProtocolUsage(row: PrismaProtocolUsage): ConsultationProtocolUsage {
     consultationId: row.consultationId ?? '',
     protocolId: row.protocolId,
     protocolVersionId: row.protocolVersionId,
+    content: (row.content ?? { version: '1.0', blocks: [] }) as ProtocolContent,
+    modifications: (row.modifications ?? {}) as ProtocolUsageModifications,
+    modificationSummary: row.modificationSummary,
+    parentUsageId: row.parentUsageId,
+    triggerBlockId: row.triggerBlockId,
+    depth: row.depth,
+    status: row.status as ConsultationProtocolUsage['status'],
     checkedState: (row.checkedState ?? {}) as Record<string, boolean>,
     completedAt: row.completedAt?.toISOString() ?? null,
     notes: row.notes,
@@ -122,6 +146,13 @@ function toProtocolUsage(row: PrismaProtocolUsage): ConsultationProtocolUsage {
     protocolTitle: row.protocol.title,
     protocolTypeName: row.protocol.type.name,
     versionNumber: row.protocolVersion.versionNumber,
+    childUsages: row.childUsages?.map((c) => ({
+      id: c.id,
+      protocolId: c.protocolId,
+      protocolTitle: c.protocol.title,
+      depth: c.depth,
+      status: c.status as ConsultationProtocolUsage['status'],
+    })),
   }
 }
 
@@ -136,6 +167,22 @@ function toConsultationWithDetails(row: PrismaConsultationWithRelations): Consul
   }
 }
 
+const PROTOCOL_USAGE_INCLUDE = {
+  protocol: { select: { title: true, type: { select: { name: true } } } },
+  protocolVersion: { select: { versionNumber: true } },
+  childUsages: {
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      protocolId: true,
+      depth: true,
+      status: true,
+      protocol: { select: { title: true } },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
+}
+
 const RELATIONS_INCLUDE = {
   patient: { select: { firstName: true, lastName: true } },
   location: { select: { name: true } },
@@ -143,10 +190,7 @@ const RELATIONS_INCLUDE = {
   amendments: { orderBy: { amendmentNumber: 'asc' as const } },
   protocolUsages: {
     where: { deletedAt: null },
-    include: {
-      protocol: { select: { title: true, type: { select: { name: true } } } },
-      protocolVersion: { select: { versionNumber: true } },
-    },
+    include: PROTOCOL_USAGE_INCLUDE,
     orderBy: { appliedAt: 'asc' as const },
   },
 }
@@ -308,26 +352,83 @@ export class ConsultationsRepository {
     })
   }
 
-  async addProtocolUsage(
-    consultationId: string,
-    tenantId: string,
-    userId: string,
-    protocolId: string,
-    protocolVersionId: string,
-  ): Promise<ConsultationProtocolUsage> {
+  async launchProtocolUsage(params: {
+    consultationId: string
+    tenantId: string
+    userId: string
+    protocolId: string
+    protocolVersionId: string
+    content: Record<string, unknown>
+    parentUsageId?: string
+    triggerBlockId?: string
+    depth: number
+  }): Promise<ConsultationProtocolUsage> {
     const row = await this.prisma.protocolUsage.create({
       data: {
-        tenantId,
-        consultationId,
-        protocolId,
-        protocolVersionId,
-        userId,
+        tenantId: params.tenantId,
+        consultationId: params.consultationId,
+        protocolId: params.protocolId,
+        protocolVersionId: params.protocolVersionId,
+        userId: params.userId,
+        content: params.content as Prisma.InputJsonValue,
+        modifications: {} as Prisma.InputJsonValue,
         checkedState: {} as Prisma.InputJsonValue,
+        status: 'in_progress',
+        depth: params.depth,
+        ...(params.parentUsageId ? { parentUsageId: params.parentUsageId } : {}),
+        ...(params.triggerBlockId ? { triggerBlockId: params.triggerBlockId } : {}),
       },
-      include: {
-        protocol: { select: { title: true, type: { select: { name: true } } } },
-        protocolVersion: { select: { versionNumber: true } },
-      },
+      include: PROTOCOL_USAGE_INCLUDE,
+    })
+    return toProtocolUsage(row as unknown as PrismaProtocolUsage)
+  }
+
+  async updateProtocolUsage(
+    usageId: string,
+    tenantId: string,
+    dto: UpdateProtocolUsageDto,
+  ): Promise<ConsultationProtocolUsage> {
+    const data: Prisma.ProtocolUsageUpdateInput = {}
+
+    if (dto.content !== undefined) {
+      data.content = dto.content as Prisma.InputJsonValue
+    }
+    if (dto.modifications !== undefined) {
+      // Merge new modifications onto existing ones rather than replacing
+      const existing = await this.prisma.protocolUsage.findFirst({
+        where: { id: usageId, tenantId },
+        select: { modifications: true },
+      })
+      const prev = (existing?.modifications ?? {}) as Record<string, unknown[]>
+      const next = dto.modifications as Record<string, unknown[]>
+      const merged: Record<string, unknown[]> = { ...prev }
+      for (const key of Object.keys(next)) {
+        if (next[key]) {
+          merged[key] = [...(prev[key] ?? []), ...next[key]]
+        }
+      }
+      data.modifications = merged as Prisma.InputJsonValue
+    }
+    if (dto.modificationSummary !== undefined) {
+      data.modificationSummary = dto.modificationSummary ?? undefined
+    }
+    if (dto.status !== undefined) {
+      data.status = dto.status
+    }
+    if (dto.checkedState !== undefined) {
+      data.checkedState = dto.checkedState as Prisma.InputJsonValue
+    }
+    if (dto.completedAt !== undefined) {
+      data.completedAt = dto.completedAt ? new Date(dto.completedAt) : null
+    }
+    if (dto.notes !== undefined) {
+      data.notes = dto.notes ?? undefined
+    }
+
+    const row = await this.prisma.protocolUsage.update({
+      where: { id: usageId, tenantId, deletedAt: null },
+      data,
+      include: PROTOCOL_USAGE_INCLUDE,
     })
     return toProtocolUsage(row as unknown as PrismaProtocolUsage)
   }
@@ -346,10 +447,7 @@ export class ConsultationsRepository {
         ...(completedAt !== undefined ? { completedAt } : {}),
         ...(notes !== undefined ? { notes } : {}),
       },
-      include: {
-        protocol: { select: { title: true, type: { select: { name: true } } } },
-        protocolVersion: { select: { versionNumber: true } },
-      },
+      include: PROTOCOL_USAGE_INCLUDE,
     })
     return toProtocolUsage(row as unknown as PrismaProtocolUsage)
   }
@@ -357,7 +455,7 @@ export class ConsultationsRepository {
   async removeProtocolUsage(usageId: string, tenantId: string): Promise<void> {
     await this.prisma.protocolUsage.update({
       where: { id: usageId, tenantId, deletedAt: null },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: new Date(), status: 'abandoned' },
     })
   }
 
@@ -367,11 +465,16 @@ export class ConsultationsRepository {
   ): Promise<ConsultationProtocolUsage | null> {
     const row = await this.prisma.protocolUsage.findFirst({
       where: { id: usageId, tenantId, deletedAt: null },
-      include: {
-        protocol: { select: { title: true, type: { select: { name: true } } } },
-        protocolVersion: { select: { versionNumber: true } },
-      },
+      include: PROTOCOL_USAGE_INCLUDE,
     })
     return row ? toProtocolUsage(row as unknown as PrismaProtocolUsage) : null
+  }
+
+  async getUsageDepth(parentUsageId: string, tenantId: string): Promise<number> {
+    const parent = await this.prisma.protocolUsage.findFirst({
+      where: { id: parentUsageId, tenantId },
+      select: { depth: true },
+    })
+    return (parent?.depth ?? 0) + 1
   }
 }
