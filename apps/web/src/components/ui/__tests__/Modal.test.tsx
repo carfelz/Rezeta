@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
@@ -19,11 +19,7 @@ function renderModal(open?: boolean, onOpenChange?: (v: boolean) => void) {
         <Button id="open-btn">Abrir Modal</Button>
       </ModalTrigger>
       <ModalContent>
-        <ModalHeader
-          title="Test Modal"
-          subtitle="This is a subtitle"
-          id-for-test="modal-header"
-        />
+        <ModalHeader title="Test Modal" subtitle="This is a subtitle" id-for-test="modal-header" />
         <ModalBody>
           <p>Modal body content</p>
         </ModalBody>

@@ -90,7 +90,8 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['scripts','devDependencies','dependencies']}, indent=2\\)\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['scripts','devDependencies']}, indent=2\\)\\)\")",
       "Bash(sort -k2 -t'|' -n)",
-      "Bash(grep -v \"------\")"
+      "Bash(grep -v \"------\")",
+      "Bash(eslint . --max-warnings=0)"
     ]
   }
 }

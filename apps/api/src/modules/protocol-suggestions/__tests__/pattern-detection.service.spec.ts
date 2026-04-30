@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PatternDetectionService } from '../pattern-detection.service.js'
 
-const now = new Date('2026-01-01T00:00:00Z')
+const _now = new Date('2026-01-01T00:00:00Z')
 
 const mockTx = {
   protocol: { create: vi.fn(), update: vi.fn() },
@@ -341,9 +341,7 @@ describe('PatternDetectionService', () => {
 
     it('detects medication removed pattern at 75%', async () => {
       const mods = {
-        medications_removed: [
-          { block_id: 'blk1', row_id: 'row1', drug: 'Epinephrine' },
-        ],
+        medications_removed: [{ block_id: 'blk1', row_id: 'row1', drug: 'Epinephrine' }],
       }
       mockPrisma.protocolUsage.findMany.mockResolvedValue([
         makeUsage(mods),
