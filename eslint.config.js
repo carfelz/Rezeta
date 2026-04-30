@@ -15,6 +15,7 @@ export default [
       '**/*.js.map',
       'tools/**',
       '**/.storybook/**',
+      '**/vitest.config.d.ts',
     ],
   },
 
