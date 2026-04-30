@@ -6,6 +6,19 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-04-30] — GitHub Actions: enforce lint + typecheck + 90% test coverage
+
+### Added
+
+- `.github/workflows/ci.yml` — new CI workflow that runs on every push and PR to any branch; runs lint, typecheck, and `test:coverage` (enforces ≥90% coverage threshold); blocks merge if any step fails
+- `.github/workflows/deploy-dev.yml`: added `ci` job (lint + typecheck + test:coverage) that both `deploy-api` and `deploy-frontend` depend on via `needs`; deploy to Cloud Run is blocked if CI fails
+
+## [2026-04-30] — Pre-commit hook: enforce passing tests + 90% coverage
+
+### Added
+
+- `.husky/pre-commit`: added `pnpm test:coverage` after `pnpm lint-staged` so every commit must pass all tests and maintain ≥90% coverage (statements, branches, functions, lines) across `apps/web`, `apps/api`, and `packages/shared`
+
 ## [2026-04-30] — Fix all ESLint errors across monorepo
 
 ### Fixed
