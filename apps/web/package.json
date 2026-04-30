@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -43,10 +44,13 @@
   "devDependencies": {
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/react-vite": "^10.3.5",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.5.0",
     "jsdom": "^25.0.1",
     "postcss": "^8.5.10",

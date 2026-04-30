@@ -86,7 +86,11 @@
       "Bash(python3 -c \" import sys, json lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\) for line in lines[-20:]: try: d = json.loads\\(line\\) if d.get\\('type'\\) == 'user' or d.get\\('type'\\) == 'assistant': content = d.get\\('message', {}\\).get\\('content', ''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'[{d[\\\\\"type\\\\\"]}]:', c['text'][:500]\\) elif isinstance\\(content, str\\): print\\(f'[{d[\\\\\"type\\\\\"]}]:', content[:500]\\) except: pass \")",
       "Bash(python3 -c \" import sys, json lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\) messages = [] for line in lines: try: d = json.loads\\(line\\) if d.get\\('type'\\) in \\('user', 'assistant'\\): content = d.get\\('message', {}\\).get\\('content', ''\\) text = '' if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': text += c['text'] elif isinstance\\(content, str\\): text = content if text.strip\\(\\): messages.append\\(\\(d['type'], text[:800]\\)\\) except: pass for t, m in messages[-30:]: print\\(f'[{t}]: {m}'\\) print\\('---'\\) \")",
       "Bash(awk '/orders\\\\/|protocol-suggestions\\\\//,0')",
-      "Bash(./node_modules/.bin/eslint *)"
+      "Bash(./node_modules/.bin/eslint *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['scripts','devDependencies','dependencies']}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['scripts','devDependencies']}, indent=2\\)\\)\")",
+      "Bash(sort -k2 -t'|' -n)",
+      "Bash(grep -v \"------\")"
     ]
   }
 }

@@ -137,6 +137,10 @@ Features explicitly out of MVP: telemedicine, lab integrations, inventory, patie
 
 **Always run `pnpm lint` before finishing any task.** Fix all lint errors before reporting the task as done. Zero lint errors is the bar. If a lint error cannot be fixed cleanly, note it explicitly.
 
+## Test Rule
+
+**Always run `pnpm test` before finishing any task.** Zero failing tests is the bar. If you add new code, add the corresponding tests. Minimum 90% coverage across all packages (statements, branches, functions, lines). Run `pnpm test:coverage` to check coverage numbers.
+
 ## Changelog Rule
 
 **After every completed task, prepend a new entry to `CHANGELOG.md`.** Use the date format `[YYYY-MM-DD]` with a short title, then bullet points under `### Added`, `### Changed`, and/or `### Fixed` as applicable. Keep entries factual and specific — name the files, components, or endpoints affected. Do not wait for a commit; update the changelog as part of completing the task.

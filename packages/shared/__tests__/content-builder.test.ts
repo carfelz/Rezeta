@@ -224,4 +224,165 @@ describe('buildInitialContentFromTemplate', () => {
     expect(typeof row.id).toBe('string')
     expect(row.id.length).toBeGreaterThan(0)
   })
+
+  // ── Individual block type coverage ────────────────────────────────────────
+
+  it('seeds required text block with empty content', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_txt', type: 'text', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { id: string; type: string; content: string }
+    expect(block.id).toBe('blk_txt')
+    expect(block.type).toBe('text')
+    expect(block.content).toBe('')
+  })
+
+  it('seeds required checklist block with one empty item', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_chk', type: 'checklist', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { type: string; items: Array<{ text: string; critical: boolean }> }
+    expect(block.type).toBe('checklist')
+    expect(block.items).toHaveLength(1)
+    expect(block.items[0].critical).toBe(false)
+  })
+
+  it('seeds required steps block with one empty step', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_stp', type: 'steps', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { type: string; steps: Array<{ order: number; title: string }> }
+    expect(block.type).toBe('steps')
+    expect(block.steps).toHaveLength(1)
+    expect(block.steps[0].order).toBe(1)
+  })
+
+  it('seeds required decision block with two branches', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_dec', type: 'decision', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { type: string; condition: string; branches: unknown[] }
+    expect(block.type).toBe('decision')
+    expect(block.condition).toBe('')
+    expect(block.branches).toHaveLength(2)
+  })
+
+  it('seeds required alert block with default info severity when not specified', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_alr', type: 'alert', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { type: string; severity: string; content: string }
+    expect(block.type).toBe('alert')
+    expect(block.severity).toBe('info')
+    expect(block.content).toBe('')
+  })
+
+  it('seeds required alert block preserving specified severity', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_alr', type: 'alert', severity: 'danger', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { severity: string }
+    expect(block.severity).toBe('danger')
+  })
+
+  it('seeds unknown block type with only id and type fields (default case)', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'blk_unk', type: 'imaging_order', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { id: string; type: string }
+    expect(block.id).toBe('blk_unk')
+    expect(block.type).toBe('imaging_order')
+  })
+
+  it('generates id when block has no id property', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ type: 'text', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const block = content.blocks[0] as { id: string }
+    expect(typeof block.id).toBe('string')
+    expect(block.id.startsWith('blk_')).toBe(true)
+  })
+
+  it('generates id for section when block has no id property', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ type: 'section', title: 'No ID', required: true, placeholder_blocks: [] }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { id: string; type: string }
+    expect(section.type).toBe('section')
+    expect(section.id.startsWith('sec_')).toBe(true)
+  })
+
+  it('section uses blocks array when placeholder_blocks is absent', () => {
+    const template = {
+      version: '1.0',
+      blocks: [
+        {
+          id: 'sec_x',
+          type: 'section',
+          title: 'Section X',
+          required: true,
+          blocks: [{ id: 'blk_t', type: 'text', required: true }],
+        },
+      ],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { blocks: Array<{ id: string }> }
+    expect(section.blocks[0].id).toBe('blk_t')
+  })
+
+  it('section includes description when provided', () => {
+    const template = {
+      version: '1.0',
+      blocks: [
+        {
+          id: 'sec_d',
+          type: 'section',
+          title: 'Desc Section',
+          description: 'My description',
+          required: true,
+          placeholder_blocks: [],
+        },
+      ],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { description: string }
+    expect(section.description).toBe('My description')
+  })
+
+  it('section includes collapsed_by_default when true', () => {
+    const template = {
+      version: '1.0',
+      blocks: [
+        {
+          id: 'sec_c',
+          type: 'section',
+          title: 'Collapsed',
+          collapsed_by_default: true,
+          required: true,
+          placeholder_blocks: [],
+        },
+      ],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { collapsed_by_default: boolean }
+    expect(section.collapsed_by_default).toBe(true)
+  })
 })

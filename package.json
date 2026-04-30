@@ -17,6 +17,7 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
     "prepare": "husky",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
