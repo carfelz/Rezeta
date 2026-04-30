@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @rezeta/db generate
+
       - name: Build shared package
         run: pnpm --filter @rezeta/shared build
 
