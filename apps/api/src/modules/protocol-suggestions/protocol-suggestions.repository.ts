@@ -69,7 +69,13 @@ export class ProtocolSuggestionsRepository {
     totalUses: number
     occurrencePercentage: number
   }): Promise<ProtocolSuggestion> {
-    const row = await this.prisma.protocolSuggestion.create({ data })
+    const row = await this.prisma.protocolSuggestion.create({
+      data: {
+        ...data,
+        patternData: data.patternData as object,
+        suggestedChanges: data.suggestedChanges as object,
+      },
+    })
     return toSuggestion(row)
   }
 

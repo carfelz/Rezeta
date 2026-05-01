@@ -146,13 +146,14 @@ function toProtocolUsage(row: PrismaProtocolUsage): ConsultationProtocolUsage {
     protocolTitle: row.protocol.title,
     protocolTypeName: row.protocol.type.name,
     versionNumber: row.protocolVersion.versionNumber,
-    childUsages: row.childUsages?.map((c) => ({
-      id: c.id,
-      protocolId: c.protocolId,
-      protocolTitle: c.protocol.title,
-      depth: c.depth,
-      status: c.status as ConsultationProtocolUsage['status'],
-    })),
+    childUsages:
+      row.childUsages?.map((c) => ({
+        id: c.id,
+        protocolId: c.protocolId,
+        protocolTitle: c.protocol.title,
+        depth: c.depth,
+        status: c.status as ConsultationProtocolUsage['status'],
+      })) ?? [],
   }
 }
 
@@ -410,7 +411,7 @@ export class ConsultationsRepository {
       data.modifications = merged as Prisma.InputJsonValue
     }
     if (dto.modificationSummary !== undefined) {
-      data.modificationSummary = dto.modificationSummary ?? undefined
+      data.modificationSummary = dto.modificationSummary ?? null
     }
     if (dto.status !== undefined) {
       data.status = dto.status
@@ -422,7 +423,7 @@ export class ConsultationsRepository {
       data.completedAt = dto.completedAt ? new Date(dto.completedAt) : null
     }
     if (dto.notes !== undefined) {
-      data.notes = dto.notes ?? undefined
+      data.notes = dto.notes ?? null
     }
 
     const row = await this.prisma.protocolUsage.update({

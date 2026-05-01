@@ -71,7 +71,6 @@ export class ProtocolSuggestionsService {
           versionNumber: (maxVersion._max.versionNumber ?? 0) + 1,
           content: currentVersion.content as object,
           changeSummary: `Applied suggestion: ${suggestion.impactSummary}`,
-          status: 'draft',
           createdBy: userId,
         },
       })
@@ -111,7 +110,7 @@ export class ProtocolSuggestionsService {
           data: {
             tenantId,
             typeId: originalProtocol.typeId,
-            ownerUserId: userId,
+            createdBy: userId,
             title: `${originalProtocol.title} - Variante`,
             status: 'draft',
             metadata: {
@@ -129,7 +128,6 @@ export class ProtocolSuggestionsService {
             versionNumber: 1,
             content: currentVersion.content as object,
             changeSummary: `Created from suggestion: ${suggestion.impactSummary}`,
-            status: 'draft',
             createdBy: userId,
           },
         })

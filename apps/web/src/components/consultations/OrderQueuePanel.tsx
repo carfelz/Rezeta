@@ -492,7 +492,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
         route: route.trim(),
         frequency: frequency.trim(),
         duration: duration.trim(),
-        notes: notes.trim() || undefined,
+        ...(notes.trim() && { notes: notes.trim() }),
       },
       groupId || undefined,
     )

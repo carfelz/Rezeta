@@ -177,8 +177,8 @@ export class ConsultationsService {
       protocolId: dto.protocolId,
       protocolVersionId: protocol.currentVersionId,
       content: version.content as Record<string, unknown>,
-      parentUsageId: dto.parentUsageId,
-      triggerBlockId: dto.triggerBlockId,
+      ...(dto.parentUsageId !== undefined && { parentUsageId: dto.parentUsageId }),
+      ...(dto.triggerBlockId !== undefined && { triggerBlockId: dto.triggerBlockId }),
       depth,
     })
   }

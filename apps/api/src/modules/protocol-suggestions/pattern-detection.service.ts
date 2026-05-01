@@ -68,7 +68,7 @@ export class PatternDetectionService {
         tenantId,
         status: 'completed',
         deletedAt: null,
-        startedAt: { gte: cutoff },
+        appliedAt: { gte: cutoff },
       },
       select: { id: true, modifications: true },
     })
@@ -274,7 +274,7 @@ export class PatternDetectionService {
         tenantId,
         patternType: pattern.patternType,
         status: 'pending',
-        patternData: { equals: pattern.patternData },
+        patternData: { equals: pattern.patternData as object },
       },
     })
     if (existing) return
@@ -297,7 +297,7 @@ export class PatternDetectionService {
     const [originalProtocol, currentVersion] = await Promise.all([
       this.prisma.protocol.findUnique({
         where: { id: protocolId },
-        select: { title: true, typeId: true, ownerUserId: true },
+        select: { title: true, typeId: true, createdBy: true },
       }),
       this.prisma.protocolVersion.findUnique({
         where: { id: currentVersionId },
@@ -307,14 +307,14 @@ export class PatternDetectionService {
 
     if (!originalProtocol || !currentVersion) return
 
-    const { typeId, ownerUserId, title } = originalProtocol
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+    const { typeId, createdBy, title } = originalProtocol
+
     await this.prisma.$transaction(async (tx) => {
       const variant = await tx.protocol.create({
         data: {
           tenantId,
           typeId,
-          ownerUserId,
+          createdBy,
           title: `${title} - Variante Optimizada`,
           status: 'draft',
           metadata: {
@@ -332,11 +332,9 @@ export class PatternDetectionService {
           versionNumber: 1,
           content: currentVersion.content as object,
           changeSummary: `Auto-generated from pattern: ${pattern.impactSummary}`,
-          status: 'draft',
-          createdBy: ownerUserId,
+          createdBy,
         },
       })
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
       await tx.protocol.update({
         where: { id: variant.id },
