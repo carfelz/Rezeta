@@ -382,20 +382,51 @@ function SoapTextarea({
 
 interface ProtocolRunCardProps {
   usage: ConsultationProtocolUsage
+  allUsages: ConsultationProtocolUsage[]
   consultationId: string
   isSigned: boolean
+  onAppendToSoap: (field: 'objective' | 'assessment' | 'plan', text: string) => void
 }
 
-function ProtocolRunCard({ usage, consultationId, isSigned }: ProtocolRunCardProps): JSX.Element {
+function ProtocolRunCard({
+  usage,
+  allUsages,
+  consultationId,
+  isSigned,
+  onAppendToSoap,
+}: ProtocolRunCardProps): JSX.Element {
   const { useGetVersion } = useProtocols()
   const versionQuery = useGetVersion(usage.protocolId, usage.protocolVersionId)
   const updateCheckedState = useUpdateCheckedState(consultationId, usage.id)
   const removeUsage = useRemoveProtocolUsage(consultationId)
+  const addLinkedUsage = useAddProtocolUsage(consultationId)
 
-  const [checkedState, setCheckedState] = useState<Record<string, boolean>>(usage.checkedState)
+  const localKey = `prun-${consultationId}-${usage.id}`
+
+  const [checkedState, setCheckedState] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem(localKey)
+      if (stored) {
+        return { ...usage.checkedState, ...(JSON.parse(stored) as Record<string, boolean>) }
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return usage.checkedState
+  })
+
+  const [isRestored, setIsRestored] = useState(() => {
+    try {
+      return !!localStorage.getItem(localKey)
+    } catch {
+      return false
+    }
+  })
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialMount = useRef(true)
 
+  // Debounced server sync
   useEffect(() => {
     if (initialMount.current) {
       initialMount.current = false
@@ -404,14 +435,46 @@ function ProtocolRunCard({ usage, consultationId, isSigned }: ProtocolRunCardPro
     if (isSigned) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      updateCheckedState.mutate({ checkedState })
+      updateCheckedState.mutate(
+        { checkedState },
+        {
+          onSuccess: () => {
+            try {
+              localStorage.removeItem(localKey)
+            } catch {
+              // ignore
+            }
+          },
+        },
+      )
     }, 800)
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
-  }, [checkedState]) // intentional: only watch checkedState changes
+  }, [checkedState]) // intentional: only watch checkedState
 
-  const addLinkedUsage = useAddProtocolUsage(consultationId)
+  // 30s localStorage auto-save
+  useEffect(() => {
+    if (isSigned) return
+    const interval = setInterval(() => {
+      try {
+        localStorage.setItem(localKey, JSON.stringify(checkedState))
+      } catch {
+        // ignore storage errors
+      }
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [isSigned, localKey, checkedState])
+
+  // Build ancestor breadcrumb chain
+  const ancestors: ConsultationProtocolUsage[] = []
+  let current = usage
+  while (current.parentUsageId) {
+    const parent = allUsages.find((u) => u.id === current.parentUsageId)
+    if (!parent) break
+    ancestors.unshift(parent)
+    current = parent
+  }
 
   const handleCheck = useCallback(
     (id: string, checked: boolean) => {
@@ -433,12 +496,52 @@ function ProtocolRunCard({ usage, consultationId, isSigned }: ProtocolRunCardPro
     checkedState,
     onCheck: handleCheck,
     onLaunchLinkedProtocol: handleLaunchLinkedProtocol,
+    onAutoPopulate: isSigned ? undefined : onAppendToSoap,
   }
   const blocks = versionQuery.data?.content?.blocks ?? []
   const completedCount = Object.values(checkedState).filter(Boolean).length
+  const isChild = usage.depth > 0
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-4">
+    <div
+      className={cn(
+        'bg-n-0 border border-n-200 rounded-md overflow-hidden mb-4',
+        isChild && 'ml-4 border-l-2 border-l-p-100',
+      )}
+    >
+      {/* Breadcrumb chain for child protocols */}
+      {ancestors.length > 0 && (
+        <div className="flex items-center gap-1 px-5 pt-2.5 pb-0">
+          {ancestors.map((a, i) => (
+            <span key={a.id} className="flex items-center gap-1">
+              <span className="text-[11px] font-mono text-n-400 truncate max-w-[120px]">
+                {a.protocolTitle}
+              </span>
+              {i < ancestors.length - 1 && (
+                <i className="ph ph-caret-right text-[10px] text-n-300" />
+              )}
+            </span>
+          ))}
+          <i className="ph ph-caret-right text-[10px] text-n-300" />
+        </div>
+      )}
+
+      {/* Restore notice */}
+      {isRestored && (
+        <div className="flex items-center justify-between px-5 py-1.5 bg-info-bg border-b border-info-border">
+          <span className="text-[11.5px] font-sans text-info-text">
+            Estado recuperado del almacenamiento local
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsRestored(false)}
+            className="text-[11px] font-mono text-info-text hover:text-n-700 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 px-5 py-3 bg-n-25 border-b border-n-100">
         <div className="flex-1 min-w-0">
           <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-p-700 mb-0.5">
@@ -763,6 +866,16 @@ export function Consulta(): JSX.Element {
     }, 1500)
   }, [consultation, buildPayload, updateMutation])
 
+  // ── Protocol SOAP auto-populate ──
+  const handleAppendToSoap = useCallback(
+    (field: 'objective' | 'assessment' | 'plan', text: string) => {
+      if (field === 'objective') setObjective((prev) => (prev ? `${prev}\n${text}` : text))
+      if (field === 'assessment') setAssessment((prev) => (prev ? `${prev}\n${text}` : text))
+      if (field === 'plan') setPlan((prev) => (prev ? `${prev}\n${text}` : text))
+    },
+    [],
+  )
+
   // ── Explicit save (button) ──
   function saveNow(): void {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -983,8 +1096,10 @@ export function Consulta(): JSX.Element {
                 <ProtocolRunCard
                   key={usage.id}
                   usage={usage}
+                  allUsages={consultation.protocolUsages}
                   consultationId={consultation.id}
                   isSigned={isSigned}
+                  onAppendToSoap={handleAppendToSoap}
                 />
               ))}
             </div>

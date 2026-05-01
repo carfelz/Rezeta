@@ -19,6 +19,7 @@ export interface AppointmentListParams {
 
 export function useAppointments(
   params: AppointmentListParams,
+  options?: { enabled?: boolean },
 ): UseQueryResult<AppointmentWithDetails[], Error> {
   const search = new URLSearchParams()
   if (params.locationId) search.set('locationId', params.locationId)
@@ -30,8 +31,15 @@ export function useAppointments(
   return useQuery({
     queryKey: [QK, params],
     queryFn: () => apiClient.get<AppointmentWithDetails[]>(`/v1/appointments${qs ? `?${qs}` : ''}`),
-    enabled: Boolean(params.locationId),
+    enabled: options?.enabled ?? Boolean(params.locationId),
   })
+}
+
+export function useTodayAppointments(): UseQueryResult<AppointmentWithDetails[], Error> {
+  const today = new Date()
+  const from = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+  const to = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
+  return useAppointments({ from, to }, { enabled: true })
 }
 
 export function useAppointment(id: string): UseQueryResult<AppointmentWithDetails, Error> {

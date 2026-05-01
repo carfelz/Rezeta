@@ -5,6 +5,7 @@ import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
 import { Dashboard } from '@/pages/Dashboard'
 import { Agenda } from '@/pages/Agenda'
 import { Pacientes } from '@/pages/Pacientes'
+import { PacienteDetalle } from '@/pages/PacienteDetalle'
 import { Consulta } from '@/pages/Consulta'
 import { ConsultaNueva } from '@/pages/ConsultaNueva'
 import { Protocolos } from '@/pages/Protocolos'
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'agenda', element: <Agenda /> },
       { path: 'pacientes', element: <Pacientes /> },
+      { path: 'pacientes/:id', element: <PacienteDetalle /> },
       { path: 'consultas/nueva', element: <ConsultaNueva /> },
       { path: 'consultas/:id', element: <Consulta /> },
       { path: 'protocolos', element: <Protocolos /> },

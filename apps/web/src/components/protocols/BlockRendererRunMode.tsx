@@ -1,18 +1,16 @@
-import {
-  ProtocolBlock,
-  ProtocolChecklist,
-  ProtocolDosageTable,
-  ProtocolAlert,
-} from '@/components/ui/ProtocolBlock'
+import { ProtocolBlock, ProtocolDosageTable, ProtocolAlert } from '@/components/ui/ProtocolBlock'
 import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
 
+export type SoapField = 'objective' | 'assessment' | 'plan'
+
 export interface RunModeProps {
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
+  onAutoPopulate?: (field: SoapField, text: string) => void
 }
 
 interface BlockRunModeProps {
@@ -25,48 +23,144 @@ function StepsRunMode({
   steps,
   checkedState,
   onCheck,
+  onAutoPopulate,
 }: {
   steps: Array<{ id: string; order: number; title: string; detail?: string }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
+  onAutoPopulate?: (field: SoapField, text: string) => void
 }): JSX.Element {
   return (
     <ol className="flex flex-col gap-3">
       {steps.map((step) => {
-        const done = checkedState[step.id] ?? false
+        const state = checkedState[`${step.id}:skipped`]
+          ? 'skipped'
+          : (checkedState[step.id] ?? false)
+            ? 'completed'
+            : 'pending'
+
         return (
           <li
             key={step.id}
-            className={cn('flex gap-3 cursor-pointer group', done && 'opacity-60')}
-            onClick={() => onCheck(step.id, !done)}
+            className={cn('flex flex-col gap-2', state !== 'pending' && 'opacity-70')}
           >
-            <input
-              type="checkbox"
-              checked={done}
-              onChange={() => onCheck(step.id, !done)}
-              onClick={(e) => e.stopPropagation()}
-              className="w-4 h-4 rounded-sm border-n-400 text-p-500 cursor-pointer shrink-0 mt-1"
-            />
-            <div className="flex-1">
-              <div
+            <div className="flex gap-3">
+              <span
                 className={cn(
-                  'text-[13.5px] font-sans font-semibold text-n-800',
-                  done && 'line-through text-n-400',
+                  'font-mono text-[12px] shrink-0 mt-0.5 w-5 text-right',
+                  state !== 'pending' ? 'text-n-400' : 'text-p-700',
                 )}
               >
-                <span className="font-mono text-[12px] text-p-700 mr-1.5">{step.order}.</span>
-                {step.title}
-              </div>
-              {step.detail && (
-                <div className="text-[12.5px] font-sans text-n-500 mt-0.5 leading-[1.4]">
-                  {step.detail}
+                {step.order}.
+              </span>
+              <div className="flex-1">
+                <div
+                  className={cn(
+                    'text-[13.5px] font-sans font-semibold text-n-800',
+                    state === 'skipped' && 'line-through text-n-400',
+                    state === 'completed' && 'text-n-600',
+                  )}
+                >
+                  {step.title}
                 </div>
+                {step.detail && (
+                  <div className="text-[12.5px] font-sans text-n-500 mt-0.5 leading-[1.4]">
+                    {step.detail}
+                  </div>
+                )}
+              </div>
+              {state === 'completed' && (
+                <span className="shrink-0 text-[11px] font-mono text-success-text bg-success-bg border border-success-border px-1.5 py-0.5 rounded-sm h-fit mt-0.5">
+                  ✓ Completado
+                </span>
+              )}
+              {state === 'skipped' && (
+                <span className="shrink-0 text-[11px] font-mono text-n-400 bg-n-50 border border-n-200 px-1.5 py-0.5 rounded-sm h-fit mt-0.5">
+                  ⊘ Omitido
+                </span>
               )}
             </div>
+            {state === 'pending' && (
+              <div className="flex gap-2 ml-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCheck(step.id, true)
+                    onAutoPopulate?.('plan', `✓ ${step.title}`)
+                  }}
+                  className="text-[12px] font-sans text-success-text border border-success-border bg-success-bg hover:bg-success-border px-2.5 py-1 rounded-sm transition-colors"
+                >
+                  ✓ Completado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCheck(`${step.id}:skipped`, true)}
+                  className="text-[12px] font-sans text-n-500 border border-n-200 bg-n-0 hover:bg-n-50 px-2.5 py-1 rounded-sm transition-colors"
+                >
+                  ⊘ Omitido
+                </button>
+              </div>
+            )}
           </li>
         )
       })}
     </ol>
+  )
+}
+
+function ChecklistRunMode({
+  items,
+  checkedState,
+  onCheck,
+  onAutoPopulate,
+}: {
+  items: Array<{ id: string; text: string; critical?: boolean }>
+  checkedState: Record<string, boolean>
+  onCheck: (id: string, checked: boolean) => void
+  onAutoPopulate?: (field: SoapField, text: string) => void
+}): JSX.Element {
+  return (
+    <ul className="flex flex-col gap-2">
+      {items.map((item) => {
+        const done = checkedState[item.id] ?? false
+        return (
+          <li
+            key={item.id}
+            className={cn('flex gap-3 cursor-pointer', done && 'opacity-60')}
+            onClick={() => {
+              const next = !done
+              onCheck(item.id, next)
+              if (next && item.critical) {
+                onAutoPopulate?.('objective', `✓ ${item.text}`)
+              }
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={done}
+              onChange={() => {}}
+              onClick={(e) => e.stopPropagation()}
+              className="w-4 h-4 rounded-sm border-n-400 text-p-500 cursor-pointer shrink-0 mt-0.5"
+              readOnly
+            />
+            <span
+              className={cn(
+                'text-[13px] font-sans text-n-700',
+                done && 'line-through text-n-400',
+                item.critical && !done && 'font-semibold text-n-800',
+              )}
+            >
+              {item.text}
+              {item.critical && (
+                <span className="ml-1.5 text-[10.5px] font-mono text-danger-text uppercase">
+                  crítico
+                </span>
+              )}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -77,6 +171,7 @@ function DecisionRunMode({
   checkedState,
   onCheck,
   onLaunchLinkedProtocol,
+  onAutoPopulate,
 }: {
   blockId: string
   condition: string
@@ -84,6 +179,7 @@ function DecisionRunMode({
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
+  onAutoPopulate?: (field: SoapField, text: string) => void
 }): JSX.Element {
   const selectedId = branches.find((b) => checkedState[b.id])?.id ?? null
   return (
@@ -99,10 +195,14 @@ function DecisionRunMode({
               <button
                 type="button"
                 onClick={() => {
+                  const wasSelected = selected
                   branches.forEach((b) => {
                     if (b.id !== branch.id && checkedState[b.id]) onCheck(b.id, false)
                   })
                   onCheck(branch.id, !selected)
+                  if (!wasSelected) {
+                    onAutoPopulate?.('assessment', branch.action)
+                  }
                 }}
                 className={cn(
                   'flex gap-3 text-left w-full px-3 py-2.5 rounded border transition-colors duration-[100ms]',
@@ -150,7 +250,13 @@ function DecisionRunMode({
   )
 }
 
-function ImagingOrderRunMode({ orders }: { orders: ImagingOrderItem[] }): JSX.Element {
+function ImagingOrderRunMode({
+  orders,
+  onAutoPopulate,
+}: {
+  orders: ImagingOrderItem[]
+  onAutoPopulate?: (field: SoapField, text: string) => void
+}): JSX.Element {
   const queueImagingOrder = useOrderQueueStore((s) => s.queueImagingOrder)
   return (
     <div className="flex flex-col gap-2">
@@ -170,7 +276,7 @@ function ImagingOrderRunMode({ orders }: { orders: ImagingOrderItem[] }): JSX.El
           </div>
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
               queueImagingOrder({
                 study_type: order.study_type,
                 indication: order.indication,
@@ -180,7 +286,8 @@ function ImagingOrderRunMode({ orders }: { orders: ImagingOrderItem[] }): JSX.El
                 special_instructions: order.special_instructions,
                 source: `protocol:${order.id}`,
               })
-            }
+              onAutoPopulate?.('plan', `Imagen: ${order.study_type}`)
+            }}
             className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-2.5 py-1 rounded-sm transition-colors"
           >
             + Añadir a órdenes
@@ -191,7 +298,13 @@ function ImagingOrderRunMode({ orders }: { orders: ImagingOrderItem[] }): JSX.El
   )
 }
 
-function LabOrderRunMode({ orders }: { orders: LabOrderItem[] }): JSX.Element {
+function LabOrderRunMode({
+  orders,
+  onAutoPopulate,
+}: {
+  orders: LabOrderItem[]
+  onAutoPopulate?: (field: SoapField, text: string) => void
+}): JSX.Element {
   const queueLabOrder = useOrderQueueStore((s) => s.queueLabOrder)
   return (
     <div className="flex flex-col gap-2">
@@ -211,7 +324,7 @@ function LabOrderRunMode({ orders }: { orders: LabOrderItem[] }): JSX.Element {
           </div>
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
               queueLabOrder({
                 test_name: order.test_name,
                 test_code: order.test_code,
@@ -222,7 +335,8 @@ function LabOrderRunMode({ orders }: { orders: LabOrderItem[] }): JSX.Element {
                 special_instructions: order.special_instructions,
                 source: `protocol:${order.id}`,
               })
-            }
+              onAutoPopulate?.('plan', `Lab: ${order.test_name}`)
+            }}
             className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-2.5 py-1 rounded-sm transition-colors"
           >
             + Añadir a órdenes
@@ -239,7 +353,7 @@ export function BlockRendererRunMode({
   runMode,
 }: BlockRunModeProps): JSX.Element | null {
   const b = block as Block
-  const { checkedState, onCheck, onLaunchLinkedProtocol } = runMode
+  const { checkedState, onCheck, onLaunchLinkedProtocol, onAutoPopulate } = runMode
 
   switch (b.type) {
     case 'section':
@@ -267,9 +381,11 @@ export function BlockRendererRunMode({
     case 'checklist':
       return (
         <ProtocolBlock type="Lista" title={b.title ?? 'Lista de verificación'} nested={nested}>
-          <ProtocolChecklist
-            items={b.items.map((item) => ({ ...item, done: checkedState[item.id] ?? false }))}
-            onToggle={(id) => onCheck(id, !(checkedState[id] ?? false))}
+          <ChecklistRunMode
+            items={b.items}
+            checkedState={checkedState}
+            onCheck={onCheck}
+            onAutoPopulate={onAutoPopulate}
           />
         </ProtocolBlock>
       )
@@ -277,7 +393,12 @@ export function BlockRendererRunMode({
     case 'steps':
       return (
         <ProtocolBlock type="Pasos" title={b.title ?? 'Pasos'} nested={nested}>
-          <StepsRunMode steps={b.steps} checkedState={checkedState} onCheck={onCheck} />
+          <StepsRunMode
+            steps={b.steps}
+            checkedState={checkedState}
+            onCheck={onCheck}
+            onAutoPopulate={onAutoPopulate}
+          />
         </ProtocolBlock>
       )
 
@@ -291,6 +412,7 @@ export function BlockRendererRunMode({
             checkedState={checkedState}
             onCheck={onCheck}
             onLaunchLinkedProtocol={onLaunchLinkedProtocol}
+            onAutoPopulate={onAutoPopulate}
           />
         </ProtocolBlock>
       )
@@ -317,7 +439,7 @@ export function BlockRendererRunMode({
       const imgBlock = b as unknown as { title?: string; orders: ImagingOrderItem[] }
       return (
         <ProtocolBlock type="Imagen" title={imgBlock.title ?? 'Estudios de imagen'} nested={nested}>
-          <ImagingOrderRunMode orders={imgBlock.orders} />
+          <ImagingOrderRunMode orders={imgBlock.orders} onAutoPopulate={onAutoPopulate} />
         </ProtocolBlock>
       )
     }
@@ -330,7 +452,7 @@ export function BlockRendererRunMode({
           title={labBlock.title ?? 'Estudios de laboratorio'}
           nested={nested}
         >
-          <LabOrderRunMode orders={labBlock.orders} />
+          <LabOrderRunMode orders={labBlock.orders} onAutoPopulate={onAutoPopulate} />
         </ProtocolBlock>
       )
     }

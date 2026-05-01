@@ -83,6 +83,10 @@ export class PatternDetectionService {
       ...this.detectMedicationsAddedPatterns(modsList, totalUses),
       ...this.detectMedicationsRemovedPatterns(modsList, totalUses),
       ...this.detectStepsSkippedPatterns(modsList, totalUses),
+      ...this.detectImagingOrdersQueuedPatterns(modsList, totalUses),
+      ...this.detectImagingOrdersRemovedPatterns(modsList, totalUses),
+      ...this.detectLabOrdersQueuedPatterns(modsList, totalUses),
+      ...this.detectLabOrdersRemovedPatterns(modsList, totalUses),
     ]
 
     let variantsCreated = 0
@@ -252,6 +256,166 @@ export class PatternDetectionService {
           patternData: { stepId },
           suggestedChanges: { type: 'mark_step_optional', stepId },
           impactSummary: `Step ${stepId} skipped in ${count}/${totalUses} uses`,
+          occurrenceCount: count,
+          totalUses,
+          occurrencePercentage: pct,
+        })
+      }
+    }
+
+    return patterns
+  }
+
+  private detectImagingOrdersQueuedPatterns(
+    modsList: ProtocolUsageModifications[],
+    totalUses: number,
+  ): DetectedPattern[] {
+    const patterns: DetectedPattern[] = []
+    const queueMap = new Map<string, { count: number; studyType: string }>()
+
+    for (const mods of modsList) {
+      const seen = new Set<string>()
+      for (const queued of mods.imaging_orders_queued ?? []) {
+        const key = queued.order_id
+        if (!seen.has(key)) {
+          seen.add(key)
+          const existing = queueMap.get(key)
+          queueMap.set(key, {
+            count: (existing?.count ?? 0) + 1,
+            studyType: queued.study_type,
+          })
+        }
+      }
+    }
+
+    for (const [orderId, { count, studyType }] of queueMap.entries()) {
+      const pct = (count / totalUses) * 100
+      if (pct >= 75) {
+        patterns.push({
+          patternType: 'imaging_order_consistently_queued',
+          patternData: { orderId, studyType },
+          suggestedChanges: { type: 'add_imaging_order', orderId, studyType },
+          impactSummary: `"${studyType}" imaging order queued in ${count}/${totalUses} uses`,
+          occurrenceCount: count,
+          totalUses,
+          occurrencePercentage: pct,
+        })
+      }
+    }
+
+    return patterns
+  }
+
+  private detectImagingOrdersRemovedPatterns(
+    modsList: ProtocolUsageModifications[],
+    totalUses: number,
+  ): DetectedPattern[] {
+    const patterns: DetectedPattern[] = []
+    const removeMap = new Map<string, { count: number; studyType: string }>()
+
+    for (const mods of modsList) {
+      const seen = new Set<string>()
+      for (const removed of mods.imaging_orders_removed ?? []) {
+        const key = removed.order_id
+        if (!seen.has(key)) {
+          seen.add(key)
+          const existing = removeMap.get(key)
+          removeMap.set(key, {
+            count: (existing?.count ?? 0) + 1,
+            studyType: removed.study_type,
+          })
+        }
+      }
+    }
+
+    for (const [orderId, { count, studyType }] of removeMap.entries()) {
+      const pct = (count / totalUses) * 100
+      if (pct >= 75) {
+        patterns.push({
+          patternType: 'imaging_order_consistently_removed',
+          patternData: { orderId, studyType },
+          suggestedChanges: { type: 'remove_imaging_order', orderId },
+          impactSummary: `"${studyType}" imaging order removed in ${count}/${totalUses} uses`,
+          occurrenceCount: count,
+          totalUses,
+          occurrencePercentage: pct,
+        })
+      }
+    }
+
+    return patterns
+  }
+
+  private detectLabOrdersQueuedPatterns(
+    modsList: ProtocolUsageModifications[],
+    totalUses: number,
+  ): DetectedPattern[] {
+    const patterns: DetectedPattern[] = []
+    const queueMap = new Map<string, { count: number; testName: string }>()
+
+    for (const mods of modsList) {
+      const seen = new Set<string>()
+      for (const queued of mods.lab_orders_queued ?? []) {
+        const key = queued.order_id
+        if (!seen.has(key)) {
+          seen.add(key)
+          const existing = queueMap.get(key)
+          queueMap.set(key, {
+            count: (existing?.count ?? 0) + 1,
+            testName: queued.test_name,
+          })
+        }
+      }
+    }
+
+    for (const [orderId, { count, testName }] of queueMap.entries()) {
+      const pct = (count / totalUses) * 100
+      if (pct >= 75) {
+        patterns.push({
+          patternType: 'lab_order_consistently_queued',
+          patternData: { orderId, testName },
+          suggestedChanges: { type: 'add_lab_order', orderId, testName },
+          impactSummary: `"${testName}" lab order queued in ${count}/${totalUses} uses`,
+          occurrenceCount: count,
+          totalUses,
+          occurrencePercentage: pct,
+        })
+      }
+    }
+
+    return patterns
+  }
+
+  private detectLabOrdersRemovedPatterns(
+    modsList: ProtocolUsageModifications[],
+    totalUses: number,
+  ): DetectedPattern[] {
+    const patterns: DetectedPattern[] = []
+    const removeMap = new Map<string, { count: number; testName: string }>()
+
+    for (const mods of modsList) {
+      const seen = new Set<string>()
+      for (const removed of mods.lab_orders_removed ?? []) {
+        const key = removed.order_id
+        if (!seen.has(key)) {
+          seen.add(key)
+          const existing = removeMap.get(key)
+          removeMap.set(key, {
+            count: (existing?.count ?? 0) + 1,
+            testName: removed.test_name,
+          })
+        }
+      }
+    }
+
+    for (const [orderId, { count, testName }] of removeMap.entries()) {
+      const pct = (count / totalUses) * 100
+      if (pct >= 75) {
+        patterns.push({
+          patternType: 'lab_order_consistently_removed',
+          patternData: { orderId, testName },
+          suggestedChanges: { type: 'remove_lab_order', orderId },
+          impactSummary: `"${testName}" lab order removed in ${count}/${totalUses} uses`,
           occurrenceCount: count,
           totalUses,
           occurrencePercentage: pct,

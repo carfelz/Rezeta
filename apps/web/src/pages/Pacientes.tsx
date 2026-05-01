@@ -559,6 +559,7 @@ function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProps): JSX
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export function Pacientes(): JSX.Element {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [modalMode, setModalMode] = useState<ModalMode | null>(null)
@@ -584,8 +585,7 @@ export function Pacientes(): JSX.Element {
   }
 
   function openView(patient: Patient) {
-    setSelectedPatient(patient)
-    setModalMode('view')
+    void navigate(`/pacientes/${patient.id}`)
   }
 
   function openEdit(patient: Patient) {

@@ -18,7 +18,17 @@ export const CreateInvoiceSchema = z.object({
   notes: z.string().max(2000).nullable().optional(),
 })
 
-export const UpdateInvoiceSchema = CreateInvoiceSchema.partial()
+export const UpdateInvoiceSchema = z.object({
+  currency: CurrencySchema.optional(),
+  items: z.array(InvoiceItemSchema).min(1).optional(),
+  notes: z.string().max(2000).nullable().optional(),
+})
+
+export const UpdateInvoiceStatusSchema = z.object({
+  status: z.enum(['issued', 'paid', 'cancelled']),
+  paymentMethod: z.string().max(100).nullable().optional(),
+})
 
 export type CreateInvoiceDto = z.infer<typeof CreateInvoiceSchema>
 export type UpdateInvoiceDto = z.infer<typeof UpdateInvoiceSchema>
+export type UpdateInvoiceStatusDto = z.infer<typeof UpdateInvoiceStatusSchema>

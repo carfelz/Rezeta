@@ -93,7 +93,10 @@
       "Bash(grep -v \"------\")",
       "Bash(eslint . --max-warnings=0)",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
-      "Bash(grep -E \"\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(awk '/^model Protocol\\\\b/,/^}/' /Users/carlosfeliz/code/medical_app/packages/db/prisma/schema.prisma)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(awk -F: '{print $1}')"
     ]
   }
 }

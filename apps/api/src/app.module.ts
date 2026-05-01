@@ -24,6 +24,7 @@ import { AppointmentsModule } from './modules/appointments/index.js'
 import { ConsultationsModule } from './modules/consultations/index.js'
 import { OrdersModule } from './modules/orders/index.js'
 import { ProtocolSuggestionsModule } from './modules/protocol-suggestions/index.js'
+import { InvoicesModule } from './modules/invoices/index.js'
 import { Public } from './common/decorators/public.decorator.js'
 
 @Controller()
@@ -58,6 +59,7 @@ class AppController {
     ConsultationsModule,
     OrdersModule,
     ProtocolSuggestionsModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [

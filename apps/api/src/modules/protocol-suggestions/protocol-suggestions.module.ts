@@ -4,6 +4,8 @@ import { ProtocolSuggestionsService } from './protocol-suggestions.service.js'
 import { ProtocolSuggestionsRepository } from './protocol-suggestions.repository.js'
 import { PatternDetectionService } from './pattern-detection.service.js'
 import { PatternDetectionScheduler } from './pattern-detection.scheduler.js'
+import { WeeklySummaryService } from './weekly-summary.service.js'
+import { WeeklySummaryScheduler } from './weekly-summary.scheduler.js'
 
 @Module({
   controllers: [ProtocolSuggestionsController],
@@ -12,6 +14,8 @@ import { PatternDetectionScheduler } from './pattern-detection.scheduler.js'
     ProtocolSuggestionsRepository,
     PatternDetectionService,
     PatternDetectionScheduler,
+    WeeklySummaryService,
+    WeeklySummaryScheduler,
   ],
   exports: [ProtocolSuggestionsService, PatternDetectionService],
 })
