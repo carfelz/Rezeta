@@ -129,7 +129,7 @@ describe('PatternDetectionService', () => {
       mockPrisma.protocol.findUnique.mockResolvedValue({
         title: 'Anaphylaxis',
         typeId: 'type1',
-        ownerUserId: 'u1',
+        createdBy: 'u1',
       })
       mockPrisma.protocolVersion.findUnique.mockResolvedValue({ content: { blocks: [] } })
       mockTx.protocol.create.mockResolvedValue({ id: 'variant1' })
@@ -168,7 +168,7 @@ describe('PatternDetectionService', () => {
       mockPrisma.protocol.findUnique.mockResolvedValue({
         title: 'Test',
         typeId: 't1',
-        ownerUserId: 'u1',
+        createdBy: 'u1',
       })
       mockPrisma.protocolVersion.findUnique.mockResolvedValue(null)
       await service.runWeeklyDetection()
@@ -418,7 +418,7 @@ describe('PatternDetectionService', () => {
       mockPrisma.protocol.findUnique.mockResolvedValue({
         title: 'Procedure',
         typeId: 'type1',
-        ownerUserId: 'u1',
+        createdBy: 'u1',
       })
       mockPrisma.protocolVersion.findUnique.mockResolvedValue({ content: { blocks: [] } })
       mockTx.protocol.create.mockResolvedValue({ id: 'variant1' })
@@ -475,7 +475,7 @@ describe('PatternDetectionService', () => {
       mockPrisma.protocol.findUnique.mockResolvedValue({
         title: 'Protocol X',
         typeId: 'type1',
-        ownerUserId: 'owner1',
+        createdBy: 'owner1',
       })
       mockPrisma.protocolVersion.findUnique.mockResolvedValue({ content: { blocks: [] } })
       mockTx.protocol.create.mockResolvedValue({ id: 'variant1' })
