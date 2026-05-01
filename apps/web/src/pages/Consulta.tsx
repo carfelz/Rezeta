@@ -411,6 +411,8 @@ function ProtocolRunCard({ usage, consultationId, isSigned }: ProtocolRunCardPro
     }
   }, [checkedState]) // intentional: only watch checkedState changes
 
+  const addLinkedUsage = useAddProtocolUsage(consultationId)
+
   const handleCheck = useCallback(
     (id: string, checked: boolean) => {
       if (isSigned) return
@@ -419,7 +421,19 @@ function ProtocolRunCard({ usage, consultationId, isSigned }: ProtocolRunCardPro
     [isSigned],
   )
 
-  const runMode: RunModeProps = { checkedState, onCheck: handleCheck }
+  const handleLaunchLinkedProtocol = useCallback(
+    (protocolId: string, triggerBlockId: string) => {
+      if (isSigned) return
+      addLinkedUsage.mutate({ protocolId, parentUsageId: usage.id, triggerBlockId })
+    },
+    [isSigned, addLinkedUsage, usage.id],
+  )
+
+  const runMode: RunModeProps = {
+    checkedState,
+    onCheck: handleCheck,
+    onLaunchLinkedProtocol: handleLaunchLinkedProtocol,
+  }
   const blocks = versionQuery.data?.content?.blocks ?? []
   const completedCount = Object.values(checkedState).filter(Boolean).length
 

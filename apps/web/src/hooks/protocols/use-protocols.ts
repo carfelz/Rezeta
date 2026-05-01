@@ -9,6 +9,7 @@ import type {
   ProtocolResponse,
   VersionListItem,
   VersionDetailResponse,
+  ProtocolSuggestion,
 } from '@rezeta/shared'
 
 type SaveVersionResponse = {
@@ -44,6 +45,10 @@ interface UseProtocolsReturn {
     versionId: string | null,
   ) => UseQueryResult<VersionDetailResponse>
   useRestoreVersion: (protocolId: string) => UseMutationResult<SaveVersionResponse, Error, string>
+  useGetSuggestions: (protocolId: string) => UseQueryResult<ProtocolSuggestion[]>
+  useApplySuggestion: (protocolId: string) => UseMutationResult<void, Error, string>
+  useCreateVariantFromSuggestion: (protocolId: string) => UseMutationResult<void, Error, string>
+  useDismissSuggestion: (protocolId: string) => UseMutationResult<void, Error, string>
 }
 
 function buildQuery(filters: ProtocolListFilters): string {
@@ -152,6 +157,55 @@ export function useProtocols(): UseProtocolsReturn {
     })
   }
 
+  const useGetSuggestions = (protocolId: string) => {
+    return useQuery({
+      queryKey: ['protocols', protocolId, 'suggestions'],
+      queryFn: () => apiClient.get<ProtocolSuggestion[]>(`/v1/protocols/${protocolId}/suggestions`),
+      enabled: !!protocolId,
+    })
+  }
+
+  const useApplySuggestion = (protocolId: string) => {
+    return useMutation({
+      mutationFn: (suggestionId: string) =>
+        apiClient.post<void>(`/v1/protocols/${protocolId}/suggestions/${suggestionId}/apply`, {}),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
+        void queryClient.invalidateQueries({
+          queryKey: ['protocols', protocolId, 'suggestions'],
+        })
+      },
+    })
+  }
+
+  const useCreateVariantFromSuggestion = (protocolId: string) => {
+    return useMutation({
+      mutationFn: (suggestionId: string) =>
+        apiClient.post<void>(
+          `/v1/protocols/${protocolId}/suggestions/${suggestionId}/create-variant`,
+          {},
+        ),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['protocols'] })
+        void queryClient.invalidateQueries({
+          queryKey: ['protocols', protocolId, 'suggestions'],
+        })
+      },
+    })
+  }
+
+  const useDismissSuggestion = (protocolId: string) => {
+    return useMutation({
+      mutationFn: (suggestionId: string) =>
+        apiClient.delete(`/v1/protocols/${protocolId}/suggestions/${suggestionId}`),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({
+          queryKey: ['protocols', protocolId, 'suggestions'],
+        })
+      },
+    })
+  }
+
   return {
     useGetProtocols,
     useGetProtocol,
@@ -162,5 +216,9 @@ export function useProtocols(): UseProtocolsReturn {
     useGetVersionHistory,
     useGetVersion,
     useRestoreVersion,
+    useGetSuggestions,
+    useApplySuggestion,
+    useCreateVariantFromSuggestion,
+    useDismissSuggestion,
   }
 }

@@ -3,6 +3,7 @@ import { Badge, Button } from '@/components/ui'
 import { ProtocolContainer } from '@/components/ui/ProtocolBlock'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
+import { SuggestionBanner } from '@/components/protocols/SuggestionBanner'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { strings } from '@/lib/strings'
 
@@ -67,6 +68,8 @@ export function ProtocolViewer(): JSX.Element {
           {strings.VIEWER_EDIT_BUTTON}
         </Button>
       </div>
+
+      <SuggestionBanner protocolId={id} />
 
       <ProtocolContainer
         {...(protocol.typeName ? { kicker: protocol.typeName } : {})}

@@ -1,5 +1,6 @@
 import { Global, Module, Controller, Get } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core'
 import { resolve } from 'path'
 import { configuration } from './config/configuration.js'
@@ -43,6 +44,7 @@ class AppController {
       // Path relative to compiled runtime directory (dist/apps/api/src → monorepo root)
       envFilePath: resolve(__dirname, '../../..', '.env'),
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     PatientsModule,
