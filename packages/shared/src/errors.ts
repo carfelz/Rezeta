@@ -73,6 +73,10 @@ export const ErrorCode = {
   // ── Validation ──────────────────────────────────────────────
   VALIDATION_ERROR: 'VALIDATION_ERROR',
 
+  // ── Audit Log ───────────────────────────────────────────────
+  AUDIT_LOG_NOT_FOUND: 'AUDIT_LOG_NOT_FOUND',
+  AUDIT_EXPORT_REQUIRES_CLINIC_PLAN: 'AUDIT_EXPORT_REQUIRES_CLINIC_PLAN',
+
   // ── Generic ─────────────────────────────────────────────────
   NOT_FOUND: 'NOT_FOUND',
   INTERNAL_ERROR: 'INTERNAL_ERROR',

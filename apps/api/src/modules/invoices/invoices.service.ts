@@ -1,6 +1,8 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 import {
   InvoicesRepository,
   type InvoiceListParams,
@@ -27,6 +29,7 @@ export class InvoicesService {
     @Inject(InvoicesRepository) private repo: InvoicesRepository,
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(PdfService) private pdf: PdfService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
   async list(params: InvoiceListParams): Promise<InvoiceListResult> {
@@ -106,7 +109,7 @@ export class InvoicesService {
       select: { fullName: true, specialty: true, licenseNumber: true },
     })
 
-    return this.pdf.generateInvoice({
+    const buffer = await this.pdf.generateInvoice({
       invoice,
       doctor: {
         fullName: doctor?.fullName ?? null,
@@ -114,6 +117,21 @@ export class InvoicesService {
         licenseNumber: doctor?.licenseNumber ?? null,
       },
     })
+
+    const httpCtx = httpAuditContextStore.getStore()
+    void this.auditLog.record({
+      tenantId,
+      actorUserId: httpCtx?.actorUserId,
+      actorType: httpCtx ? 'user' : 'system',
+      category: 'communication',
+      action: 'pdf_generated',
+      entityType: 'Invoice',
+      entityId: id,
+      metadata: { documentType: 'invoice', invoiceNumber: invoice.invoiceNumber },
+      status: 'success',
+    })
+
+    return buffer
   }
 
   private allowedTransitions(current: string): string[] {

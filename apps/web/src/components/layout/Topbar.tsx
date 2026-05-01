@@ -105,7 +105,7 @@ export function Topbar(): JSX.Element {
         <input
           type="search"
           placeholder="Buscar pacientes, citas..."
-          className="w-full h-input-md pl-8 pr-14 text-[13px] font-sans bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors duration-[100ms]"
+          className="w-full h-input-md pl-8 pr-12 text-[13px] font-sans bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors duration-[100ms]"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
           ⌘K
@@ -124,7 +124,7 @@ export function Topbar(): JSX.Element {
 
         {user && (
           <div className="flex items-center gap-3 pl-4 border-l border-n-200">
-            <div className="w-9 h-9 rounded-full bg-p-50 text-p-700 flex items-center justify-center text-[13px] font-semibold shrink-0">
+            <div className="w-[36px] h-[36px] rounded-full bg-p-50 text-p-700 flex items-center justify-center text-[13px] font-semibold shrink-0">
               {initials(user.fullName)}
             </div>
             <div>

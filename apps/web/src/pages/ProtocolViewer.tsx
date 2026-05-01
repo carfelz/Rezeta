@@ -20,7 +20,7 @@ export function ProtocolViewer(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-[256px]">
         <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
       </div>
     )
@@ -28,7 +28,7 @@ export function ProtocolViewer(): JSX.Element {
 
   if (error || !protocol) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
         <p className="text-[14px] font-sans text-n-600">{strings.VIEWER_NOT_FOUND}</p>
         <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
           ← {strings.VIEWER_BACK}

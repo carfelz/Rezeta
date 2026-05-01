@@ -84,8 +84,12 @@ describe('AuthController', () => {
   describe('provision', () => {
     it('calls service.provision and returns toAuthUser result', async () => {
       const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
-      const result = await controller.provision(decoded)
-      expect(mockService.provision).toHaveBeenCalledWith(decoded)
+      const req = { ip: '127.0.0.1', headers: {} } as never
+      const result = await controller.provision(decoded, req)
+      expect(mockService.provision).toHaveBeenCalledWith(
+        decoded,
+        expect.objectContaining({ ip: '127.0.0.1' }),
+      )
       expect(mockService.toAuthUser).toHaveBeenCalledWith(baseUser)
       expect(result).toEqual(authUser)
     })

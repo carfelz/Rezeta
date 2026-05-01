@@ -16,8 +16,8 @@ describe('Avatar', () => {
   it('renders default size (36px)', () => {
     render(<Avatar initials="AB" />)
     const el = screen.getByText('AB')
-    expect(el.className).toContain('w-9')
-    expect(el.className).toContain('h-9')
+    expect(el.className).toContain('w-[36px]')
+    expect(el.className).toContain('h-[36px]')
   })
 
   it('renders sm size', () => {
@@ -29,7 +29,7 @@ describe('Avatar', () => {
   it('renders xs size', () => {
     render(<Avatar initials="AB" size="xs" />)
     const el = screen.getByText('AB')
-    expect(el.className).toContain('w-7')
+    expect(el.className).toContain('w-[28px]')
   })
 
   it('applies custom className', () => {

@@ -3,7 +3,14 @@ import { ConfigService } from '@nestjs/config'
 import type { AuthUser } from '@rezeta/shared'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 import type { AppConfig } from '../../config/configuration.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AuthRepository, type UserWithTenant } from './auth.repository.js'
+
+export interface ProvisionMeta {
+  ip?: string
+  userAgent?: string
+  requestId?: string
+}
 
 export interface DevTokenResponse {
   access_token: string
@@ -16,14 +23,27 @@ export class AuthService {
   constructor(
     @Inject(AuthRepository) private repository: AuthRepository,
     @Inject(ConfigService) private config: ConfigService<AppConfig, true>,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
   /**
    * Idempotent provision: called by POST /v1/auth/provision.
    * Returns the User row (existing or newly created) with tenant data.
    */
-  async provision(decoded: DecodedIdToken): Promise<UserWithTenant> {
-    return this.repository.provisionUser(decoded)
+  async provision(decoded: DecodedIdToken, meta?: ProvisionMeta): Promise<UserWithTenant> {
+    const user = await this.repository.provisionUser(decoded)
+    void this.auditLog.record({
+      tenantId: user.tenantId,
+      actorUserId: user.id,
+      actorType: 'user',
+      category: 'auth',
+      action: 'login',
+      ipAddress: meta?.ip,
+      userAgent: meta?.userAgent,
+      requestId: meta?.requestId,
+      status: 'success',
+    })
+    return user
   }
 
   /**
@@ -73,6 +93,7 @@ export class AuthService {
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
+      tenantPlan: user.tenant.plan,
     }
   }
 }

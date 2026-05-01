@@ -3,15 +3,15 @@ import { PrismaService } from '../../lib/prisma.service.js'
 import type { User } from '@rezeta/db'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 
-export type UserWithTenant = User & { tenant: { seededAt: Date | null } }
+export type UserWithTenant = User & { tenant: { seededAt: Date | null; plan: string } }
 
-const TENANT_SELECT = { tenant: { select: { seededAt: true } } } as const
+const TENANT_SELECT = { tenant: { select: { seededAt: true, plan: true } } } as const
 
 @Injectable()
 export class AuthRepository {
   private readonly logger = new Logger(AuthRepository.name)
 
-  constructor(@Inject(PrismaService) private prisma: PrismaService) { }
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   /**
    * Idempotent provision:

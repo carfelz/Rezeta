@@ -7,6 +7,8 @@ const mockRepo = {
   findByFirebaseUid: vi.fn(),
 }
 
+const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
+
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
   get: vi.fn((key: string) => {
     if (key === 'nodeEnv') return nodeEnv
@@ -38,14 +40,52 @@ describe('AuthService', () => {
   // ── provision ─────────────────────────────────────────────────────────────
 
   describe('provision', () => {
+    beforeEach(() => {
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('development') as never,
+        mockAuditLog as never,
+      )
+    })
+
     it('delegates to repository.provisionUser', async () => {
-      const config = makeConfig('development')
-      service = new AuthService(mockRepo as never, config as never)
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
       const result = await service.provision(decoded)
       expect(result).toEqual(baseUser)
       expect(mockRepo.provisionUser).toHaveBeenCalledWith(decoded)
+    })
+
+    it('records login audit event after successful provision', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      await service.provision(decoded, {
+        ip: '192.168.1.1',
+        userAgent: 'TestBrowser/1.0',
+        requestId: 'req-abc',
+      })
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 't1',
+          actorUserId: 'u1',
+          actorType: 'user',
+          category: 'auth',
+          action: 'login',
+          status: 'success',
+          ipAddress: '192.168.1.1',
+          userAgent: 'TestBrowser/1.0',
+          requestId: 'req-abc',
+        }),
+      )
+    })
+
+    it('records login audit event without meta when meta is not provided', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      await service.provision(decoded)
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'auth', action: 'login' }),
+      )
     })
   })
 
@@ -53,7 +93,11 @@ describe('AuthService', () => {
 
   describe('toAuthUser', () => {
     beforeEach(() => {
-      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('development') as never,
+        mockAuditLog as never,
+      )
     })
 
     it('maps user fields correctly', () => {
@@ -82,12 +126,20 @@ describe('AuthService', () => {
 
   describe('devGetToken', () => {
     it('throws ForbiddenException in production', async () => {
-      service = new AuthService(mockRepo as never, makeConfig('production') as never)
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('production') as never,
+        mockAuditLog as never,
+      )
       await expect(service.devGetToken('dr@test.com', 'pass')).rejects.toThrow(ForbiddenException)
     })
 
     it('calls Firebase REST API with real endpoint', async () => {
-      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('development') as never,
+        mockAuditLog as never,
+      )
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ idToken: 'tok-123', expiresIn: '3600' }),
@@ -101,7 +153,11 @@ describe('AuthService', () => {
     })
 
     it('throws UnauthorizedException when Firebase returns error', async () => {
-      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('development') as never,
+        mockAuditLog as never,
+      )
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -115,7 +171,11 @@ describe('AuthService', () => {
     })
 
     it('throws UnauthorizedException with fallback message when no error message', async () => {
-      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      service = new AuthService(
+        mockRepo as never,
+        makeConfig('development') as never,
+        mockAuditLog as never,
+      )
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({

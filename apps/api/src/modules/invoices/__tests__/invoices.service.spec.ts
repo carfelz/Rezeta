@@ -59,6 +59,11 @@ describe('InvoicesService', () => {
   let repo: InvoicesRepository
   let prisma: PrismaService
   let service: InvoicesService
+  let auditLog: { record: ReturnType<typeof vi.fn> }
+  let pdfService: {
+    generatePrescription: ReturnType<typeof vi.fn>
+    generateInvoice: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     repo = {
@@ -75,12 +80,14 @@ describe('InvoicesService', () => {
       user: { findFirst: vi.fn() },
     } as unknown as PrismaService
 
-    const pdfService = {
+    pdfService = {
       generatePrescription: vi.fn(),
       generateInvoice: vi.fn().mockResolvedValue(Buffer.from([])),
     }
 
-    service = new InvoicesService(repo, prisma, pdfService as never)
+    auditLog = { record: vi.fn().mockResolvedValue(undefined) }
+
+    service = new InvoicesService(repo, prisma, pdfService as never, auditLog as never)
   })
 
   // ── list ────────────────────────────────────────────────────────────────────
@@ -266,6 +273,28 @@ describe('InvoicesService', () => {
       } as never)
       const result = await service.getInvoicePdf('inv-1', 'tenant-1')
       expect(Buffer.isBuffer(result)).toBe(true)
+    })
+
+    it('records pdf_generated audit event after generating PDF', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(makeRow())
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        fullName: 'Dr. Test',
+        specialty: null,
+        licenseNumber: null,
+      } as never)
+      await service.getInvoicePdf('inv-1', 'tenant-1')
+      await new Promise((r) => setTimeout(r, 10))
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 'tenant-1',
+          actorType: 'system',
+          category: 'communication',
+          action: 'pdf_generated',
+          entityType: 'Invoice',
+          entityId: 'inv-1',
+          status: 'success',
+        }),
+      )
     })
 
     it('throws NotFoundException when invoice not found', async () => {

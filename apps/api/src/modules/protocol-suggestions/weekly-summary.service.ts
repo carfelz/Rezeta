@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import nodemailer from 'nodemailer'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 
 interface SuggestionRow {
   id: string
@@ -22,7 +23,10 @@ interface VariantRow {
 export class WeeklySummaryService {
   private readonly logger = new Logger(WeeklySummaryService.name)
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   async sendWeeklySummaries(): Promise<void> {
     this.logger.log('Starting weekly summary email job')
@@ -135,11 +139,38 @@ export class WeeklySummaryService {
     const html = this.buildEmailHtml(user.fullName, suggestions, newVariants, appUrl)
 
     const date = new Date().toLocaleDateString('es-DO', { day: 'numeric', month: 'long' })
-    await transporter.sendMail({
+    const subject = `Resumen Semanal de Protocolos - ${date}`
+
+    void this.auditLog.record({
+      tenantId: user.tenantId,
+      actorUserId: user.id,
+      actorType: 'cron',
+      category: 'communication',
+      action: 'email_queued',
+      metadata: { recipient: user.email, subject, template: 'weekly_summary' },
+      status: 'success',
+    })
+
+    const info = (await transporter.sendMail({
       from: process.env.SMTP_FROM ?? 'Rezeta <noreply@rezeta.com>',
       to: user.email,
-      subject: `Resumen Semanal de Protocolos - ${date}`,
+      subject,
       html,
+    })) as { messageId?: string }
+
+    void this.auditLog.record({
+      tenantId: user.tenantId,
+      actorUserId: user.id,
+      actorType: 'cron',
+      category: 'communication',
+      action: 'email_sent',
+      metadata: {
+        messageId: info.messageId,
+        recipient: user.email,
+        subject,
+        template: 'weekly_summary',
+      },
+      status: 'success',
     })
   }
 

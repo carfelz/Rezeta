@@ -4,7 +4,7 @@ import { WeeklySummaryService } from '../weekly-summary.service.js'
 vi.mock('nodemailer', () => ({
   default: {
     createTransport: vi.fn(() => ({
-      sendMail: vi.fn().mockResolvedValue({}),
+      sendMail: vi.fn().mockResolvedValue({ messageId: 'msg-123' }),
     })),
   },
 }))
@@ -26,11 +26,13 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
 describe('WeeklySummaryService', () => {
   let service: WeeklySummaryService
   let prisma: ReturnType<typeof makePrisma>
+  let auditLog: { record: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     vi.clearAllMocks()
     prisma = makePrisma()
-    service = new WeeklySummaryService(prisma as never)
+    auditLog = { record: vi.fn().mockResolvedValue(undefined) }
+    service = new WeeklySummaryService(prisma as never, auditLog as never)
   })
 
   describe('sendWeeklySummaries', () => {
@@ -131,7 +133,7 @@ describe('WeeklySummaryService', () => {
     it('sends email with auto-generated variants', async () => {
       process.env.SMTP_HOST = 'smtp.test.com'
       const nodemailer = await import('nodemailer')
-      const mockSendMail = vi.fn().mockResolvedValue({})
+      const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'msg-abc' })
       vi.mocked(nodemailer.default.createTransport).mockReturnValueOnce({
         sendMail: mockSendMail,
       } as never)
@@ -150,6 +152,89 @@ describe('WeeklySummaryService', () => {
 
       await service.sendWeeklySummaries()
       expect(mockSendMail).toHaveBeenCalledOnce()
+
+      delete process.env.SMTP_HOST
+    })
+
+    it('records email_queued audit event before sending', async () => {
+      process.env.SMTP_HOST = 'smtp.test.com'
+      const nodemailer = await import('nodemailer')
+      const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'msg-xyz' })
+      vi.mocked(nodemailer.default.createTransport).mockReturnValueOnce({
+        sendMail: mockSendMail,
+      } as never)
+
+      prisma.protocolSuggestion.findMany
+        .mockResolvedValueOnce([{ protocol: { creator: { ...baseUser } } }])
+        .mockResolvedValueOnce([
+          {
+            id: 'sug-1',
+            impactSummary: 'Test',
+            occurrenceCount: 5,
+            totalUses: 10,
+            occurrencePercentage: { toString: () => '50' },
+            protocol: { id: 'proto-1', title: 'Test Protocol' },
+          },
+        ])
+      prisma.protocol.findMany.mockResolvedValue([])
+
+      await service.sendWeeklySummaries()
+
+      const queuedCall = auditLog.record.mock.calls.find(
+        (c: unknown[]) => (c[0] as Record<string, unknown>)['action'] === 'email_queued',
+      )
+      expect(queuedCall).toBeDefined()
+      expect(queuedCall?.[0]).toMatchObject({
+        tenantId: 'tenant-1',
+        actorType: 'cron',
+        category: 'communication',
+        action: 'email_queued',
+        status: 'success',
+        metadata: expect.objectContaining({
+          recipient: 'doc@test.com',
+          template: 'weekly_summary',
+        }),
+      })
+
+      delete process.env.SMTP_HOST
+    })
+
+    it('records email_sent audit event after successful send', async () => {
+      process.env.SMTP_HOST = 'smtp.test.com'
+      const nodemailer = await import('nodemailer')
+      const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'msg-sent-456' })
+      vi.mocked(nodemailer.default.createTransport).mockReturnValueOnce({
+        sendMail: mockSendMail,
+      } as never)
+
+      prisma.protocolSuggestion.findMany
+        .mockResolvedValueOnce([{ protocol: { creator: { ...baseUser } } }])
+        .mockResolvedValueOnce([
+          {
+            id: 'sug-1',
+            impactSummary: 'Test',
+            occurrenceCount: 5,
+            totalUses: 10,
+            occurrencePercentage: { toString: () => '50' },
+            protocol: { id: 'proto-1', title: 'Test Protocol' },
+          },
+        ])
+      prisma.protocol.findMany.mockResolvedValue([])
+
+      await service.sendWeeklySummaries()
+
+      const sentCall = auditLog.record.mock.calls.find(
+        (c: unknown[]) => (c[0] as Record<string, unknown>)['action'] === 'email_sent',
+      )
+      expect(sentCall).toBeDefined()
+      expect(sentCall?.[0]).toMatchObject({
+        tenantId: 'tenant-1',
+        actorType: 'cron',
+        category: 'communication',
+        action: 'email_sent',
+        status: 'success',
+        metadata: expect.objectContaining({ messageId: 'msg-sent-456', recipient: 'doc@test.com' }),
+      })
 
       delete process.env.SMTP_HOST
     })

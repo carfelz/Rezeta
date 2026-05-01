@@ -6,18 +6,23 @@ import { FirebaseAuthGuard } from '../firebase-auth.guard.js'
 const mockFirebase = { verifyIdToken: vi.fn() }
 const mockPrisma = { user: { findUnique: vi.fn() } }
 const mockReflector = { getAllAndOverride: vi.fn() }
+const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 
 function makeCtx(overrides: {
   headers?: Record<string, string>
   isPublic?: boolean
   isProvision?: boolean
+  ip?: string
 }) {
   mockReflector.getAllAndOverride.mockImplementation((key: string) => {
     if (key === 'isPublic') return overrides.isPublic ?? false
     if (key === 'isProvisionRoute') return overrides.isProvision ?? false
     return false
   })
-  const req = { headers: overrides.headers ?? {} } as Record<string, unknown>
+  const req = {
+    headers: overrides.headers ?? {},
+    ip: overrides.ip ?? '127.0.0.1',
+  } as Record<string, unknown>
   return {
     getHandler: vi.fn(),
     getClass: vi.fn(),
@@ -48,6 +53,7 @@ describe('FirebaseAuthGuard', () => {
       mockReflector as unknown as Reflector,
       mockFirebase as never,
       mockPrisma as never,
+      mockAuditLog as never,
     )
   })
 
@@ -71,6 +77,31 @@ describe('FirebaseAuthGuard', () => {
     mockFirebase.verifyIdToken.mockRejectedValue(new Error('invalid token'))
     const ctx = makeCtx({ headers: { authorization: 'Bearer bad-token' } })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('records login_failed audit event when token is invalid', async () => {
+    mockFirebase.verifyIdToken.mockRejectedValue(new Error('invalid token'))
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer bad-token', 'user-agent': 'TestAgent/1.0' },
+      ip: '10.0.0.1',
+    })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    expect(mockAuditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorType: 'user',
+        category: 'auth',
+        action: 'login_failed',
+        status: 'failed',
+        ipAddress: '10.0.0.1',
+        userAgent: 'TestAgent/1.0',
+      }),
+    )
+  })
+
+  it('does not record audit event when Authorization header is missing', async () => {
+    const ctx = makeCtx({})
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    expect(mockAuditLog.record).not.toHaveBeenCalled()
   })
 
   it('returns true for @ProvisionRoute() after token verification (no DB lookup)', async () => {

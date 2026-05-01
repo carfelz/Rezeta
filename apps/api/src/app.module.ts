@@ -26,6 +26,7 @@ import { ConsultationsModule } from './modules/consultations/index.js'
 import { OrdersModule } from './modules/orders/index.js'
 import { ProtocolSuggestionsModule } from './modules/protocol-suggestions/index.js'
 import { InvoicesModule } from './modules/invoices/index.js'
+import { AuditLogModule } from './common/audit-log/audit-log.module.js'
 import { Public } from './common/decorators/public.decorator.js'
 
 @Controller()
@@ -47,6 +48,7 @@ class AppController {
       envFilePath: resolve(__dirname, '../../..', '.env'),
     }),
     ScheduleModule.forRoot(),
+    AuditLogModule,
     AuthModule,
     UsersModule,
     PatientsModule,

@@ -34,6 +34,7 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/design-system/principles.md
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
+@./specs/audit-log-spec.md
 @./specs/audit-log-implementation-prompt.md
 
 The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).

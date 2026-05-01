@@ -21,7 +21,7 @@ export function ProtocolContainer({
   className,
 }: ProtocolContainerProps): JSX.Element {
   return (
-    <div className={cn('bg-n-0 border border-n-200 rounded px-8 py-7', className)}>
+    <div className={cn('bg-n-0 border border-n-200 rounded px-8 py-8', className)}>
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           {kicker && (
@@ -68,7 +68,7 @@ export function ProtocolBlock({
     <div
       className={cn(
         'bg-n-0 border border-n-200 rounded mb-3',
-        nested && 'ml-7 border-l-2 border-l-n-200',
+        nested && 'ml-6 border-l-2 border-l-n-200',
         className,
       )}
     >
@@ -92,7 +92,7 @@ export function ProtocolBlock({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
+              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
               aria-label="Editar bloque"
             >
               <i className="ph ph-pencil-simple text-[14px]" />
@@ -101,7 +101,7 @@ export function ProtocolBlock({
           {onDelete && !required && (
             <button
               onClick={onDelete}
-              className="flex items-center justify-center w-7 h-7 rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-[100ms]"
+              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-[100ms]"
               aria-label="Eliminar bloque"
             >
               <i className="ph ph-trash text-[14px]" />

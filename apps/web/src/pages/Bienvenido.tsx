@@ -17,7 +17,7 @@ export function Bienvenido(): JSX.Element {
   return (
     <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
       <div className="w-full max-w-[560px]">
-        <div className="w-11 h-11 bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6">
+        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6">
           R
         </div>
 

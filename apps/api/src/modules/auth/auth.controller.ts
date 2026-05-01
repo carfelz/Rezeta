@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Req,
 } from '@nestjs/common'
 import {
   ApiTags,
@@ -16,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import type { Request } from 'express'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 import type { AuthUser } from '@rezeta/shared'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
@@ -112,8 +114,18 @@ export class AuthController {
     description: 'The provisioned (or existing) user.',
     schema: { $ref: '#/components/schemas/AuthUser' },
   })
-  async provision(@FirebaseToken() decoded: DecodedIdToken): Promise<AuthUser> {
-    const user = await this.service.provision(decoded)
+  async provision(
+    @FirebaseToken() decoded: DecodedIdToken,
+    @Req() req: Request,
+  ): Promise<AuthUser> {
+    const meta = {
+      ip: req.ip,
+      userAgent:
+        typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined,
+      requestId:
+        typeof req.headers['x-request-id'] === 'string' ? req.headers['x-request-id'] : undefined,
+    }
+    const user = await this.service.provision(decoded, meta)
     return this.service.toAuthUser(user)
   }
 

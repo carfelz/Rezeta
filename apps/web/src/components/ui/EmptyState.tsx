@@ -25,7 +25,7 @@ export function EmptyState({
         className,
       )}
     >
-      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-n-50 text-n-500 text-[24px] mb-5">
+      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-n-50 text-n-500 text-[24px] mb-5">
         {icon}
       </div>
       <h3 className="text-[20px] font-serif font-medium text-n-800 leading-snug mb-2">{title}</h3>

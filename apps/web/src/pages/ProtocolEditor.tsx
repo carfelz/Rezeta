@@ -205,7 +205,7 @@ export function ProtocolEditor(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-[256px]">
         <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
       </div>
     )
@@ -213,7 +213,7 @@ export function ProtocolEditor(): JSX.Element {
 
   if (error || !protocol) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
         <p className="text-[14px] font-sans text-n-600">{strings.VIEWER_NOT_FOUND}</p>
         <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
           ← {strings.EDITOR_BACK}
@@ -367,7 +367,7 @@ export function ProtocolEditor(): JSX.Element {
       </div>
 
       {/* ── Editorial page header ──────────────────────────────────────────── */}
-      <div className="flex items-start gap-6 mb-7">
+      <div className="flex items-start gap-6 mb-6">
         <div className="flex-1 min-w-0">
           {/* Kicker */}
           <div className="text-[11.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
@@ -471,7 +471,7 @@ export function ProtocolEditor(): JSX.Element {
         {/* ── Center: Canvas ───────────────────────────────────────────────── */}
         <div>
           {blocks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <i className="ph ph-file-text text-[36px] text-n-300" />
               <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
                 {strings.VIEWER_NO_CONTENT}
@@ -586,7 +586,7 @@ export function ProtocolEditor(): JSX.Element {
             </span>
             <button
               onClick={() => setHistoryOpen(false)}
-              className="w-7 h-7 flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
+              className="w-btn-sm h-btn-sm flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
               aria-label="Cerrar historial"
             >
               <i className="ph ph-x text-[15px]" />

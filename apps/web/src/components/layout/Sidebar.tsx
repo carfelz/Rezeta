@@ -87,7 +87,7 @@ export function Sidebar(): JSX.Element {
     <nav className="fixed left-0 top-0 w-sidebar h-screen bg-n-25 border-r border-n-200 flex flex-col overflow-y-auto z-40">
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
-        <div className="w-7 h-7 bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
+        <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
           R
         </div>
         <span className="text-[18px] font-serif font-medium text-n-900 tracking-[-0.01em]">

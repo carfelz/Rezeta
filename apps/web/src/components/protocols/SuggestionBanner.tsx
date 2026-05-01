@@ -37,7 +37,7 @@ function SuggestionCard({
               type="button"
               onClick={() => apply.mutate(suggestion.id)}
               disabled={apply.isPending}
-              className="h-7 px-3 text-[12px] font-sans font-medium text-white bg-p-500 hover:bg-p-700 disabled:bg-n-200 disabled:text-n-400 rounded-sm transition-colors"
+              className="h-btn-sm px-3 text-[12px] font-sans font-medium text-white bg-p-500 hover:bg-p-700 disabled:bg-n-200 disabled:text-n-400 rounded-sm transition-colors"
             >
               {apply.isPending ? 'Aplicando…' : 'Aplicar cambio'}
             </button>
@@ -45,7 +45,7 @@ function SuggestionCard({
               type="button"
               onClick={() => createVariant.mutate(suggestion.id)}
               disabled={createVariant.isPending}
-              className="h-7 px-3 text-[12px] font-sans font-medium text-n-700 border border-n-200 bg-n-0 hover:bg-n-50 disabled:bg-n-50 disabled:text-n-400 rounded-sm transition-colors"
+              className="h-btn-sm px-3 text-[12px] font-sans font-medium text-n-700 border border-n-200 bg-n-0 hover:bg-n-50 disabled:bg-n-50 disabled:text-n-400 rounded-sm transition-colors"
             >
               {createVariant.isPending ? 'Creando…' : 'Crear variante'}
             </button>
@@ -53,7 +53,7 @@ function SuggestionCard({
               type="button"
               onClick={() => dismiss.mutate(suggestion.id)}
               disabled={dismiss.isPending}
-              className="h-7 px-3 text-[12px] font-sans text-n-400 hover:text-n-600 transition-colors"
+              className="h-btn-sm px-3 text-[12px] font-sans text-n-400 hover:text-n-600 transition-colors"
             >
               Ignorar
             </button>

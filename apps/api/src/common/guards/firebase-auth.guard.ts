@@ -13,6 +13,7 @@ import { ErrorCode } from '@rezeta/shared'
 import type { AuthUser } from '@rezeta/shared'
 import { FirebaseService } from '../../lib/firebase.service.js'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { AuditLogService } from '../audit-log/audit-log.service.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
 
@@ -30,6 +31,7 @@ export class FirebaseAuthGuard implements CanActivate {
     @Inject(Reflector) private reflector: Reflector,
     @Inject(FirebaseService) private firebase: FirebaseService,
     @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -57,6 +59,18 @@ export class FirebaseAuthGuard implements CanActivate {
       decoded = await this.firebase.verifyIdToken(token)
     } catch (err) {
       this.logger.debug(`Token verification failed: ${(err as Error).message}`)
+      void this.auditLog.record({
+        actorType: 'user',
+        category: 'auth',
+        action: 'login_failed',
+        ipAddress: request.ip,
+        userAgent:
+          typeof request.headers['user-agent'] === 'string'
+            ? request.headers['user-agent']
+            : undefined,
+        status: 'failed',
+        errorCode: ErrorCode.TOKEN_INVALID,
+      })
       throw new UnauthorizedException({
         code: ErrorCode.TOKEN_INVALID,
         message: 'Firebase ID token is invalid or expired',
@@ -76,7 +90,7 @@ export class FirebaseAuthGuard implements CanActivate {
     // 6. Normal route — require a DB User row (with tenant for seededAt)
     const user = await this.prisma.user.findUnique({
       where: { firebaseUid: decoded.uid, deletedAt: null },
-      include: { tenant: { select: { seededAt: true } } },
+      include: { tenant: { select: { seededAt: true, plan: true } } },
     })
 
     if (!user) {
@@ -103,6 +117,7 @@ export class FirebaseAuthGuard implements CanActivate {
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
+      tenantPlan: user.tenant.plan,
     }
 
     return true

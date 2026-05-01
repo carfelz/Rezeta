@@ -106,7 +106,7 @@ function KpiCard({
         {label}
       </div>
       {loading ? (
-        <div className="h-9 w-24 bg-n-100 rounded animate-pulse" />
+        <div className="h-10 w-[96px] bg-n-100 rounded animate-pulse" />
       ) : (
         <div className="font-serif font-medium text-[34px] text-n-900 leading-none tracking-[-0.015em]">
           {value}
@@ -399,7 +399,7 @@ export function Dashboard(): JSX.Element {
             </div>
             <button
               type="button"
-              className="self-start mt-1 h-7 px-[10px] bg-n-0 text-n-800 border border-n-300 rounded-sm font-sans font-medium text-[12.5px] flex items-center gap-2 hover:bg-n-50 hover:border-n-400 transition-colors"
+              className="self-start mt-1 h-btn-sm px-[10px] bg-n-0 text-n-800 border border-n-300 rounded-sm font-sans font-medium text-[12.5px] flex items-center gap-2 hover:bg-n-50 hover:border-n-400 transition-colors"
             >
               Firmar todas
             </button>

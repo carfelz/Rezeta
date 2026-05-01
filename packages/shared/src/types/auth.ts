@@ -5,16 +5,17 @@ export interface AuthUser {
   firebaseUid: string
   tenantId: string
   email: string
-  fullName: string | null  // nullable until onboarding is complete
+  fullName: string | null // nullable until onboarding is complete
   role: UserRole
   specialty: string | null
   licenseNumber: string | null
-  tenantSeededAt: string | null  // ISO string; null means onboarding not yet complete
+  tenantSeededAt: string | null // ISO string; null means onboarding not yet complete
+  tenantPlan?: string
 }
 
 export interface Tenant {
   id: string
-  name: string | null       // nullable until onboarding is complete
+  name: string | null // nullable until onboarding is complete
   type: string
   plan: string
   country: string

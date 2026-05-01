@@ -564,7 +564,7 @@ function ProtocolRunCard({
             <button
               type="button"
               onClick={() => removeUsage.mutate(usage.id)}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
+              className="w-btn-sm h-btn-sm flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
               title="Quitar protocolo"
             >
               <i className="ph ph-x text-[14px]" />
@@ -643,7 +643,7 @@ function ProtocolPickerModal({
             {search ? 'Sin resultados.' : 'No hay protocolos activos.'}
           </p>
         ) : (
-          <div className="flex flex-col gap-1 max-h-72 overflow-y-auto">
+          <div className="flex flex-col gap-1 max-h-[288px] overflow-y-auto">
             {filtered.map((p) => (
               <button
                 key={p.id}

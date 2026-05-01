@@ -106,7 +106,11 @@
       "Bash(curl *)",
       "Bash(xargs sed *)",
       "Bash(xargs perl -pi -e ' *)",
-      "Bash(perl -pi -e 's/pt-2\\\\.5/pt-3/g; s/gap-3\\\\.5/gap-4/g' apps/web/src/pages/Consulta.tsx)"
+      "Bash(perl -pi -e 's/pt-2\\\\.5/pt-3/g; s/gap-3\\\\.5/gap-4/g' apps/web/src/pages/Consulta.tsx)",
+      "Bash(npx vitest *)",
+      "Bash(grep -rn '$use\\\\|$extends' apps/api/src/ '--include=*.ts')",
+      "Bash(grep -rn 'this\\\\.$use\\\\|PrismaClient' apps/api/src/ '--include=*.ts')",
+      "Bash(xargs cat *)"
     ]
   }
 }

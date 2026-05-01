@@ -41,7 +41,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
       className="flex items-center gap-4 w-full px-5 py-4 bg-n-0 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms] text-left group"
     >
       {/* Icon */}
-      <div className="w-9 h-9 rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors duration-[100ms]">
+      <div className="w-[36px] h-[36px] rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors duration-[100ms]">
         <i className="ph ph-stack text-[16px]" />
       </div>
 
@@ -83,7 +83,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
         title={
           protocol.isFavorite ? strings.PROTOCOLS_FAVORITE_REMOVE : strings.PROTOCOLS_FAVORITE_ADD
         }
-        className="w-7 h-7 flex items-center justify-center rounded text-n-300 hover:text-warning-text transition-colors duration-[100ms] shrink-0"
+        className="w-btn-sm h-btn-sm flex items-center justify-center rounded text-n-300 hover:text-warning-text transition-colors duration-[100ms] shrink-0"
         aria-label={
           protocol.isFavorite ? strings.PROTOCOLS_FAVORITE_REMOVE : strings.PROTOCOLS_FAVORITE_ADD
         }
@@ -204,7 +204,7 @@ export function Protocolos(): JSX.Element {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as ProtocolListFilters['sort'])}
-            className="h-[32px] px-2 pr-7 text-[12px] font-sans border border-n-300 rounded-sm bg-n-0 text-n-700 focus:outline-none focus:border-p-500 cursor-pointer transition-colors duration-[100ms]"
+            className="h-[32px] px-2 pr-6 text-[12px] font-sans border border-n-300 rounded-sm bg-n-0 text-n-700 focus:outline-none focus:border-p-500 cursor-pointer transition-colors duration-[100ms]"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>

@@ -104,7 +104,7 @@ function SectionEditor({
   return (
     <div
       id={`section-${block.id}`}
-      className={cn('bg-n-0 border border-n-200 rounded mb-3', nested && 'ml-7')}
+      className={cn('bg-n-0 border border-n-200 rounded mb-3', nested && 'ml-6')}
     >
       {/* Section header with 2px teal left rule */}
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
@@ -152,7 +152,7 @@ function SectionEditor({
       {/* Section body */}
       <div className="px-[18px] py-4">
         {block.blocks.length > 0 ? (
-          <div className="ml-7 border-l border-n-200">
+          <div className="ml-6 border-l border-n-200">
             {block.blocks.map((child, idx) => (
               <EditorBlockRenderer
                 key={child.id}

@@ -80,7 +80,7 @@ model User {
   protocolVersions      ProtocolVersion[]       @relation("VersionCreator")
   approvedVersions      ProtocolVersion[]       @relation("VersionApprover")
   protocolUsages        ProtocolUsage[]
-  auditLogs             AuditLog[]
+  auditLogs             AuditLog[]              @relation("AuditLogActor")
   uploadedAttachments   Attachment[]
 
   @@index([tenantId])
@@ -664,23 +664,31 @@ model LabOrder {
 // ─────────────────────────────────────────────
 
 model AuditLog {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId   String   @map("tenant_id") @db.Uuid
-  userId     String?  @map("user_id") @db.Uuid
-  entityType String   @map("entity_type") @db.VarChar(100)
-  entityId   String   @map("entity_id") @db.Uuid
-  action     String   @db.VarChar(50) // create | update | delete | sign | amend | archive
-  changes    Json?
-  ipAddress  String?  @map("ip_address") @db.VarChar(45)
-  userAgent  String?  @map("user_agent") @db.VarChar(500)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String?  @map("tenant_id") @db.Uuid
+  actorUserId  String?  @map("actor_user_id") @db.Uuid
+  actorType    String   @map("actor_type") @db.VarChar(20) // user | system | webhook | cron
+  onBehalfOfId String?  @map("on_behalf_of_id") @db.Uuid
+  category     String   @db.VarChar(20) // entity | auth | communication | system
+  action       String   @db.VarChar(50)
+  entityType   String?  @map("entity_type") @db.VarChar(100)
+  entityId     String?  @map("entity_id") @db.Uuid
+  changes      Json?
+  metadata     Json?
+  requestId    String?  @map("request_id") @db.VarChar(128)
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent") @db.Text
+  status       String   @default("success") @db.VarChar(10) // success | failed
+  errorCode    String?  @map("error_code") @db.VarChar(100)
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User?  @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  actor  User?   @relation("AuditLogActor", fields: [actorUserId], references: [id])
 
+  @@index([tenantId, createdAt(sort: Desc)])
   @@index([tenantId, entityType, entityId])
-  @@index([tenantId, userId])
-  @@index([createdAt])
+  @@index([tenantId, actorUserId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
   @@map("audit_logs")
 }
 

@@ -58,7 +58,7 @@ export function ProtocolPickerModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar protocolo…"
-              className="w-full pl-9 pr-3 h-[34px] text-[13px] font-sans border border-n-300 rounded-sm bg-n-0 text-n-800 placeholder-n-400 focus:outline-none focus:border-p-500"
+              className="w-full pl-8 pr-3 h-[34px] text-[13px] font-sans border border-n-300 rounded-sm bg-n-0 text-n-800 placeholder-n-400 focus:outline-none focus:border-p-500"
             />
           </div>
         </div>
