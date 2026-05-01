@@ -66,8 +66,8 @@ describe('ProtocolsController', () => {
 
   it('list: delegates to service.list', async () => {
     mockService.list.mockResolvedValue([protocol])
-    const result = await controller.list('t1', {})
-    expect(mockService.list).toHaveBeenCalledWith('t1', {})
+    const result = await controller.list('t1', { favoritesOnly: false })
+    expect(mockService.list).toHaveBeenCalledWith('t1', { favoritesOnly: false })
     expect(result).toEqual([protocol])
   })
 
@@ -103,7 +103,11 @@ describe('ProtocolsController', () => {
 
   it('saveVersion: delegates to service.saveVersion with userId', async () => {
     mockService.saveVersion.mockResolvedValue(versionSummary)
-    const dto = { content: { version: '1.0', blocks: [] }, changeSummary: 'Updated doses' }
+    const dto = {
+      content: { version: '1.0', blocks: [] },
+      changeSummary: 'Updated doses',
+      publish: false,
+    }
     const result = await controller.saveVersion('p1', dto, 't1', user)
     expect(mockService.saveVersion).toHaveBeenCalledWith('p1', 't1', 'u1', dto)
     expect(result).toEqual(versionSummary)
