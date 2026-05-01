@@ -12,7 +12,9 @@ import {
   UsePipes,
   ParseUUIDPipe,
   Inject,
+  Res,
 } from '@nestjs/common'
+import type { Response } from 'express'
 import {
   ApiTags,
   ApiBearerAuth,
@@ -76,6 +78,25 @@ export class InvoicesController {
       cursor,
       limit: limit ? parseInt(limit, 10) : undefined,
     })
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Download invoice as PDF' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404 })
+  async downloadPdf(
+    @TenantId() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.svc.getInvoicePdf(id, tenantId)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="factura-${id}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
   }
 
   @Get(':id')

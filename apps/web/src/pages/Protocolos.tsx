@@ -38,7 +38,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-4 w-full px-5 py-3.5 bg-n-0 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms] text-left group"
+      className="flex items-center gap-4 w-full px-5 py-4 bg-n-0 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms] text-left group"
     >
       {/* Icon */}
       <div className="w-9 h-9 rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors duration-[100ms]">
@@ -57,7 +57,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
+        <div className="flex items-center gap-3 mt-1">
           <Badge variant={statusVariant(protocol.status)} showDot>
             {protocol.status === 'draft' ? strings.EDITOR_STATUS_DRAFT : protocol.status}
           </Badge>
@@ -137,7 +137,7 @@ export function Protocolos(): JSX.Element {
           {strings.PROTOCOLS_PAGE_TITLE}
         </h1>
         <Button variant="primary" onClick={() => setPickerOpen(true)}>
-          <i className="ph ph-plus mr-1.5" />
+          <i className="ph ph-plus mr-2" />
           {strings.PROTOCOLS_NEW_BUTTON}
         </Button>
       </div>
@@ -146,7 +146,7 @@ export function Protocolos(): JSX.Element {
       <div className="flex flex-wrap items-center gap-3 mb-5">
         {/* Search */}
         <div className="relative flex-1 min-w-[180px] max-w-[320px]">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-400 pointer-events-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400 pointer-events-none">
             <i className="ph ph-magnifying-glass text-[14px]" />
           </span>
           <input
@@ -159,7 +159,7 @@ export function Protocolos(): JSX.Element {
         </div>
 
         {/* Type filter chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setTypeId(undefined)}
             className={`h-[28px] px-3 text-[12px] font-sans rounded-sm border transition-colors duration-[100ms] ${
@@ -190,7 +190,7 @@ export function Protocolos(): JSX.Element {
           <button
             onClick={() => setFavoritesOnly(!favoritesOnly)}
             title={strings.PROTOCOLS_FILTER_FAVORITES}
-            className={`h-[32px] px-3 text-[12px] font-sans rounded-sm border flex items-center gap-1.5 transition-colors duration-[100ms] ${
+            className={`h-[32px] px-3 text-[12px] font-sans rounded-sm border flex items-center gap-2 transition-colors duration-[100ms] ${
               favoritesOnly
                 ? 'bg-warning-bg border-warning-border text-warning-text'
                 : 'bg-n-0 border-n-300 text-n-600 hover:border-n-400 hover:text-n-800'

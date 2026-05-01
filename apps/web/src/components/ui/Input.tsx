@@ -175,7 +175,7 @@ export function Field({
       {label && (
         <label className="text-[12.5px] font-sans font-medium text-n-700 leading-none">
           {label}
-          {required && <span className="text-danger-solid ml-0.5">*</span>}
+          {required && <span className="text-danger-solid ml-1">*</span>}
         </label>
       )}
       {children}

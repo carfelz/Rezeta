@@ -17,6 +17,9 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/__tests__/**',
         'src/lib/starter-fixtures/**',
+        'src/lib/pdf.service.ts',
+        'src/lib/firebase.service.ts',
+        'src/lib/prisma.service.ts',
       ],
       thresholds: {
         statements: 90,

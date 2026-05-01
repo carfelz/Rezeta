@@ -342,7 +342,7 @@ export function ProtocolEditor(): JSX.Element {
     <div>
       {/* ── Draft recovery banner ──────────────────────────────────────────── */}
       {draftBanner && (
-        <div className="flex items-center gap-3 -mx-12 -mt-8 mb-6 px-12 py-2.5 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text">
+        <div className="flex items-center gap-3 -mx-12 -mt-8 mb-6 px-12 py-3 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text">
           <i className="ph ph-clock-counter-clockwise text-[14px]" />
           <span className="flex-1">{strings.EDITOR_DRAFT_RECOVERED}</span>
           <button onClick={applyDraft} className="font-medium hover:underline">
@@ -355,7 +355,7 @@ export function ProtocolEditor(): JSX.Element {
       )}
 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 text-[13px] font-sans text-n-500 mb-5">
+      <div className="flex items-center gap-2 text-[13px] font-sans text-n-500 mb-5">
         <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-[100ms]">
           {strings.EDITOR_BACK}
         </Link>
@@ -370,7 +370,7 @@ export function ProtocolEditor(): JSX.Element {
       <div className="flex items-start gap-6 mb-7">
         <div className="flex-1 min-w-0">
           {/* Kicker */}
-          <div className="text-[11.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+          <div className="text-[11.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
             {[protocol.typeName, formatRelativeTime(protocol.updatedAt)]
               .filter(Boolean)
               .join(' · ')}
@@ -384,7 +384,7 @@ export function ProtocolEditor(): JSX.Element {
               onChange={(e) => setTitleDraft(e.target.value)}
               onBlur={commitTitle}
               onKeyDown={handleTitleKeyDown}
-              className="text-[28px] font-serif font-medium text-n-900 bg-transparent border-b-2 border-p-500 outline-none w-full pb-0.5 mb-2 leading-tight"
+              className="text-[28px] font-serif font-medium text-n-900 bg-transparent border-b-2 border-p-500 outline-none w-full pb-1 mb-2 leading-tight"
               disabled={isRenaming}
             />
           ) : (
@@ -409,11 +409,11 @@ export function ProtocolEditor(): JSX.Element {
         <div className="flex items-center gap-2 shrink-0 pt-1">
           {isDirty && <Badge variant="review">{strings.EDITOR_UNSAVED_CHANGES}</Badge>}
           <Button variant="secondary" size="sm" onClick={() => void navigate(`/protocolos/${id}`)}>
-            <i className="ph ph-eye mr-1.5" />
+            <i className="ph ph-eye mr-2" />
             {strings.EDITOR_VISTA_PREVIA}
           </Button>
           <Button variant="secondary" size="sm" onClick={handleSaveDraft} disabled={isSaving}>
-            {isSaving ? <i className="ph ph-spinner animate-spin mr-1.5" /> : null}
+            {isSaving ? <i className="ph ph-spinner animate-spin mr-2" /> : null}
             {strings.EDITOR_GUARDAR}
           </Button>
           <Button
@@ -422,7 +422,7 @@ export function ProtocolEditor(): JSX.Element {
             onClick={() => setPublishModalOpen(true)}
             disabled={isSaving}
           >
-            <i className="ph ph-check mr-1.5" />
+            <i className="ph ph-check mr-2" />
             {strings.EDITOR_PUBLICAR(versionNumber + 1)}
           </Button>
         </div>
@@ -455,7 +455,7 @@ export function ProtocolEditor(): JSX.Element {
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-[3px] text-[12.5px] font-sans text-n-500 hover:bg-n-50 hover:text-n-800 transition-colors duration-[100ms]"
+                className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-[3px] text-[12.5px] font-sans text-n-500 hover:bg-n-50 hover:text-n-800 transition-colors duration-[100ms]"
               >
                 <span className="font-mono text-[10.5px] text-n-400 min-w-[18px] shrink-0">
                   {idx + 1}
@@ -505,16 +505,16 @@ export function ProtocolEditor(): JSX.Element {
           }}
         >
           {/* Palette */}
-          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-2.5">
+          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
             {strings.EDITOR_PALETTE_HEADER}
           </h4>
-          <div className="flex flex-col gap-1.5 mb-6">
+          <div className="flex flex-col gap-2 mb-6">
             {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
               active ? (
                 <button
                   key={type}
                   onClick={() => handlePaletteClick(type)}
-                  className="flex items-center gap-2.5 px-2.5 py-2 border border-n-200 rounded-[3px] bg-n-0 text-[12.5px] font-sans text-n-700 hover:border-n-400 hover:bg-n-25 transition-colors duration-[100ms] cursor-pointer text-left"
+                  className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-0 text-[12.5px] font-sans text-n-700 hover:border-n-400 hover:bg-n-25 transition-colors duration-[100ms] cursor-pointer text-left"
                 >
                   <i className={`ph ${icon} text-p-500 text-[16px] shrink-0`} />
                   {label}
@@ -523,7 +523,7 @@ export function ProtocolEditor(): JSX.Element {
                 <div
                   key={type}
                   title={strings.EDITOR_PALETTE_DISABLED_TOOLTIP}
-                  className="flex items-center gap-2.5 px-2.5 py-2 border border-n-200 rounded-[3px] bg-n-50 text-[12.5px] font-sans text-n-400 cursor-not-allowed"
+                  className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-50 text-[12.5px] font-sans text-n-400 cursor-not-allowed"
                 >
                   <i className={`ph ${icon} text-n-300 text-[16px] shrink-0`} />
                   {label}
@@ -533,7 +533,7 @@ export function ProtocolEditor(): JSX.Element {
           </div>
 
           {/* Mini history */}
-          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-2.5">
+          <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
             {strings.EDITOR_HISTORY_BUTTON}
           </h4>
           {historyLoading ? (
@@ -545,7 +545,7 @@ export function ProtocolEditor(): JSX.Element {
               {strings.EDITOR_HISTORY_EMPTY}
             </p>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {versionHistory.slice(0, 3).map((v) => (
                 <div key={v.id} className="text-[12px] font-sans text-n-500">
                   <span className="font-semibold text-n-800">
@@ -557,7 +557,7 @@ export function ProtocolEditor(): JSX.Element {
                     month: 'short',
                   })}
                   {v.changeSummary && (
-                    <span className="text-n-400 block truncate mt-0.5">{v.changeSummary}</span>
+                    <span className="text-n-400 block truncate mt-1">{v.changeSummary}</span>
                   )}
                 </div>
               ))}
@@ -607,7 +607,7 @@ export function ProtocolEditor(): JSX.Element {
                 <button
                   key={v.id}
                   onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
-                  className={`flex items-center gap-3 px-5 py-2.5 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
+                  className={`flex items-center gap-3 px-5 py-3 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
                     selectedVersionId === v.id ? 'bg-p-50' : 'hover:bg-n-25'
                   }`}
                 >
@@ -615,7 +615,7 @@ export function ProtocolEditor(): JSX.Element {
                     {strings.EDITOR_VERSION(v.versionNumber)}
                   </span>
                   {v.isCurrent && (
-                    <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-1.5 py-0.5 shrink-0">
+                    <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
                       {strings.EDITOR_HISTORY_CURRENT}
                     </span>
                   )}
@@ -667,12 +667,12 @@ export function ProtocolEditor(): JSX.Element {
                 >
                   {isRestoring ? (
                     <>
-                      <i className="ph ph-spinner animate-spin mr-1.5" />
+                      <i className="ph ph-spinner animate-spin mr-2" />
                       {strings.EDITOR_HISTORY_RESTORING}
                     </>
                   ) : (
                     <>
-                      <i className="ph ph-clock-counter-clockwise mr-1.5" />
+                      <i className="ph ph-clock-counter-clockwise mr-2" />
                       {strings.EDITOR_HISTORY_RESTORE}
                     </>
                   )}
@@ -690,7 +690,7 @@ export function ProtocolEditor(): JSX.Element {
             subtitle={strings.EDITOR_PUBLISH_MODAL_SUBTITLE}
           />
           <ModalBody>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label className="text-[12.5px] font-sans font-medium text-n-700">
                 {strings.EDITOR_PUBLISH_MODAL_LABEL}
               </label>
@@ -716,12 +716,12 @@ export function ProtocolEditor(): JSX.Element {
             <Button variant="primary" onClick={handlePublishConfirm} disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <i className="ph ph-spinner animate-spin mr-1.5" />
+                  <i className="ph ph-spinner animate-spin mr-2" />
                   {strings.EDITOR_SAVING}
                 </>
               ) : (
                 <>
-                  <i className="ph ph-check mr-1.5" />
+                  <i className="ph ph-check mr-2" />
                   {strings.EDITOR_PUBLICAR(versionNumber + 1)}
                 </>
               )}

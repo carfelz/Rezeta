@@ -126,6 +126,55 @@ describe('AppointmentsService', () => {
     })
   })
 
+  // ── update ───────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    it('updates appointment when no time change in dto', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.update).mockResolvedValue(mockAppt({ reason: 'Follow-up' }))
+      const result = await service.update('appt-1', 'tenant-1', 'user-1', { reason: 'Follow-up' })
+      expect(result.reason).toBe('Follow-up')
+      expect(repo.hasConflict).not.toHaveBeenCalled()
+    })
+
+    it('throws NotFoundException when appointment not found', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(null)
+      await expect(
+        service.update('bad', 'tenant-1', 'user-1', { startsAt: STARTS }),
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('throws BadRequestException when endsAt is before startsAt in update', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      await expect(
+        service.update('appt-1', 'tenant-1', 'user-1', {
+          startsAt: STARTS,
+          endsAt: ENDS_BEFORE,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('throws ConflictException when updated time conflicts', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(true)
+      await expect(
+        service.update('appt-1', 'tenant-1', 'user-1', { startsAt: STARTS, endsAt: ENDS }),
+      ).rejects.toThrow(ConflictException)
+    })
+
+    it('updates when time change is valid and no conflict', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+      const result = await service.update('appt-1', 'tenant-1', 'user-1', {
+        startsAt: STARTS,
+        endsAt: ENDS,
+      })
+      expect(repo.update).toHaveBeenCalledOnce()
+      expect(result).toBeDefined()
+    })
+  })
+
   // ── updateStatus ─────────────────────────────────────────────────────────────
 
   describe('updateStatus', () => {

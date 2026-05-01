@@ -33,7 +33,7 @@ export function Plantillas(): JSX.Element {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-h1 m-0">{strings.TEMPLATES_PAGE_TITLE}</h1>
         <Button variant="primary" onClick={() => void navigate('/ajustes/plantillas/new')}>
-          <i className="ph ph-plus mr-1.5" />
+          <i className="ph ph-plus mr-2" />
           {strings.TEMPLATES_NEW_BUTTON}
         </Button>
       </div>
@@ -64,19 +64,19 @@ export function Plantillas(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Especialidad
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Actualizado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left"></th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>

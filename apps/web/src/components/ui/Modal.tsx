@@ -93,7 +93,7 @@ export function ModalHeader({
           {title}
         </Dialog.Title>
         {subtitle && (
-          <Dialog.Description className="text-[13px] font-sans text-n-600 mt-0.5 leading-tight">
+          <Dialog.Description className="text-[13px] font-sans text-n-600 mt-1 leading-tight">
             {subtitle}
           </Dialog.Description>
         )}

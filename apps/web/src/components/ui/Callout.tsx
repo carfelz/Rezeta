@@ -31,7 +31,7 @@ export function Callout({ variant, icon, title, children, className }: CalloutPr
     <div className={cn(calloutVariants({ variant }), className)}>
       {icon && <span className="text-[18px] shrink-0 leading-none mt-[1px]">{icon}</span>}
       <div className="flex-1 min-w-0">
-        {title && <div className="font-semibold mb-0.5">{title}</div>}
+        {title && <div className="font-semibold mb-1">{title}</div>}
         {children}
       </div>
     </div>

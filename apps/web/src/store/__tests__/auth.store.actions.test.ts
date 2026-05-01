@@ -39,14 +39,6 @@ describe('useAuthStore — signIn', () => {
     resetStore()
   })
 
-  it('throws when Firebase not configured (auth=null)', async () => {
-    mocks.firebaseAuth = null
-    const { result } = renderHook(() => useAuthStore())
-    await expect(act(() => result.current.signIn('e@e.com', 'pass'))).rejects.toThrow(
-      'Firebase not configured',
-    )
-  })
-
   it('calls signInWithEmailAndPassword with credentials', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signIn('doc@rezeta.app', 'mypassword'))
@@ -57,7 +49,7 @@ describe('useAuthStore — signIn', () => {
     )
   })
 
-  it('re-throws FirebaseError message', async () => {
+  it('propagates FirebaseError with code intact', async () => {
     const { FirebaseError } = await import('firebase/app')
     const firebaseErr = new FirebaseError('auth/user-not-found', 'User not found')
     mocks.signInWithEmailAndPassword.mockRejectedValue(firebaseErr)
@@ -66,18 +58,12 @@ describe('useAuthStore — signIn', () => {
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow('User not found')
   })
 
-  it('re-throws generic Error message', async () => {
+  it('propagates generic Error', async () => {
     mocks.signInWithEmailAndPassword.mockRejectedValue(new Error('network failure'))
     const { result } = renderHook(() => useAuthStore())
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow(
       'network failure',
     )
-  })
-
-  it('throws Unknown error for non-Error rejections', async () => {
-    mocks.signInWithEmailAndPassword.mockRejectedValue('string error')
-    const { result } = renderHook(() => useAuthStore())
-    await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow('Unknown error')
   })
 })
 
@@ -87,14 +73,6 @@ describe('useAuthStore — signUp', () => {
     mocks.firebaseAuth = { currentUser: null }
     mocks.createUserWithEmailAndPassword.mockResolvedValue({ user: {} })
     resetStore()
-  })
-
-  it('throws when Firebase not configured', async () => {
-    mocks.firebaseAuth = null
-    const { result } = renderHook(() => useAuthStore())
-    await expect(act(() => result.current.signUp('e@e.com', 'pass'))).rejects.toThrow(
-      'Firebase not configured',
-    )
   })
 
   it('calls createUserWithEmailAndPassword', async () => {
@@ -116,18 +94,7 @@ describe('useAuthStore — signOut', () => {
     resetStore()
   })
 
-  it('sets unauthenticated state when auth is null', async () => {
-    mocks.firebaseAuth = null
-    const { result } = renderHook(() => useAuthStore())
-    act(() => result.current._setStatus('authenticated'))
-    await act(() => result.current.signOut())
-
-    expect(result.current.status).toBe('unauthenticated')
-    expect(result.current.user).toBeNull()
-    expect(result.current.firebaseUser).toBeNull()
-  })
-
-  it('calls Firebase signOut when auth is configured', async () => {
+  it('calls Firebase signOut', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signOut())
     expect(mocks.signOut).toHaveBeenCalled()

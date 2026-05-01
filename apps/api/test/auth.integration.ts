@@ -3,12 +3,10 @@
  *
  * Prerequisites to run:
  *   1. Postgres running (docker compose up -d)
- *   2. Firebase Auth emulator running:
- *      firebase emulators:start --only auth --project rezeta-dev
- *   3. FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 in env
+ *   2. Firebase credentials in root .env (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL,
+ *      FIREBASE_PRIVATE_KEY, FIREBASE_WEB_API_KEY)
  *
  * Run: pnpm --filter @rezeta/api test:integration
- *   or: FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 vitest run test/auth.integration.ts
  */
 
 import 'reflect-metadata'
@@ -23,28 +21,28 @@ import { PrismaService } from '../src/lib/prisma.service.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const EMULATOR_HOST = process.env['FIREBASE_AUTH_EMULATOR_HOST'] ?? 'localhost:9099'
-const PROJECT_ID = process.env['FIREBASE_PROJECT_ID'] ?? 'rezeta-dev'
+const PROJECT_ID = process.env['FIREBASE_PROJECT_ID'] ?? ''
+const WEB_API_KEY = process.env['FIREBASE_WEB_API_KEY'] ?? ''
 
-type SignUpResponse = { localId: string; idToken: string }
+type SignInResponse = { idToken: string }
 
-/**
- * Create a real Firebase user in the emulator and return an ID token.
- */
 async function createTestUser(
   email: string,
   password: string,
 ): Promise<{ uid: string; idToken: string }> {
+  const user = await admin.auth().createUser({ email, password })
+  const customToken = await admin.auth().createCustomToken(user.uid)
+
   const res = await fetch(
-    `http://${EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${WEB_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true }),
+      body: JSON.stringify({ token: customToken, returnSecureToken: true }),
     },
   )
-  const data = (await res.json()) as SignUpResponse
-  return { uid: data.localId, idToken: data.idToken }
+  const data = (await res.json()) as SignInResponse
+  return { uid: user.uid, idToken: data.idToken }
 }
 
 async function deleteTestUser(uid: string): Promise<void> {
@@ -70,7 +68,6 @@ describe('Auth Integration', () => {
   const TEST_PASSWORD = 'TestPass123!'
 
   beforeAll(async () => {
-    // Ensure Admin SDK is connected to emulator
     if (!admin.apps.length) {
       admin.initializeApp({ projectId: PROJECT_ID })
     }
@@ -85,23 +82,20 @@ describe('Auth Integration', () => {
     prisma = app.get(PrismaService)
     request = supertest(app.getHttpServer() as Server)
 
-    // Create two Firebase users in emulator
     userA = await createTestUser(USER_A_EMAIL, TEST_PASSWORD)
     userB = await createTestUser(USER_B_EMAIL, TEST_PASSWORD)
   })
 
   afterAll(async () => {
-    // Resolve tenantIds so we can delete patients first (FK constraint)
     const users = await prisma.user.findMany({
       where: { firebaseUid: { in: [userA.uid, userB.uid] } },
     })
     const tenantIds = users.map((u) => u.tenantId)
 
-    // Delete child records before users (ON DELETE RESTRICT)
     await prisma.patient.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.user.deleteMany({ where: { firebaseUid: { in: [userA.uid, userB.uid] } } })
+    await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } })
 
-    // Delete Firebase users from emulator
     await Promise.all([deleteTestUser(userA.uid), deleteTestUser(userB.uid)])
 
     await app.close()
@@ -144,7 +138,6 @@ describe('Auth Integration', () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     )
 
-    // Verify DB records
     const dbUser = await prisma.user.findUnique({ where: { firebaseUid: userA.uid } })
     expect(dbUser).not.toBeNull()
     const dbTenant = await prisma.tenant.findUnique({ where: { id: dbUser!.tenantId } })
@@ -168,7 +161,6 @@ describe('Auth Integration', () => {
     expect(body1.data.id).toBe(body2.data.id)
     expect(body1.data.tenantId).toBe(body2.data.tenantId)
 
-    // Verify exactly ONE tenant and ONE user for this Firebase uid
     const users = await prisma.user.findMany({ where: { firebaseUid: userA.uid } })
     expect(users).toHaveLength(1)
   })
@@ -184,7 +176,6 @@ describe('Auth Integration', () => {
 
   // ── Test 6 ─────────────────────────────────────────────────────────────────
   it('GET /v1/auth/me returns 401 for a valid token with no provisioned user', async () => {
-    // userB exists in Firebase but has NOT been provisioned yet
     const res = await request.get('/v1/auth/me').set('Authorization', `Bearer ${userB.idToken}`)
     const body = res.body as ApiErr
     expect(res.status).toBe(401)
@@ -193,10 +184,8 @@ describe('Auth Integration', () => {
 
   // ── Test 7 ─────────────────────────────────────────────────────────────────
   it('cross-tenant isolation: userB cannot see userA patients', async () => {
-    // Provision userB into a separate tenant
     await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userB.idToken}`)
 
-    // Create a patient under userA's account (direct DB insert for speed)
     const userADb = await prisma.user.findUnique({ where: { firebaseUid: userA.uid } })
     await prisma.patient.create({
       data: {
@@ -207,7 +196,6 @@ describe('Auth Integration', () => {
       },
     })
 
-    // userB requests patients — should get empty list (their own tenant has none)
     const res = await request.get('/v1/patients').set('Authorization', `Bearer ${userB.idToken}`)
     const body = res.body as ApiOk<unknown[]>
     expect(res.status).toBe(200)

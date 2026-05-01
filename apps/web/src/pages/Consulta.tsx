@@ -114,7 +114,7 @@ function SaveBadge({ status }: { status: SaveStatus }): JSX.Element | null {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 text-[11.5px] font-mono px-2.5 py-1 rounded border',
+        'inline-flex items-center gap-2 text-[11.5px] font-mono px-3 py-1 rounded border',
         status === 'dirty' && 'bg-n-50 border-n-200 text-n-500',
         status === 'saving' && 'bg-n-50 border-n-200 text-n-500',
         status === 'saved' && 'bg-success-bg border-success-border text-success-text',
@@ -122,7 +122,7 @@ function SaveBadge({ status }: { status: SaveStatus }): JSX.Element | null {
     >
       {status === 'dirty' && (
         <>
-          <span className="w-1.5 h-1.5 rounded-full bg-n-400 inline-block" />
+          <span className="w-2 h-2 rounded-full bg-n-400 inline-block" />
           Sin guardar
         </>
       )}
@@ -176,7 +176,7 @@ function VitalInput({
             readOnly && 'bg-n-25 text-n-500 cursor-default',
           )}
         />
-        <span className="px-2.5 flex items-center text-[11.5px] font-mono text-n-500 bg-n-50 border-l border-n-200 shrink-0 whitespace-nowrap">
+        <span className="px-3 flex items-center text-[11.5px] font-mono text-n-500 bg-n-50 border-l border-n-200 shrink-0 whitespace-nowrap">
           {unit}
         </span>
       </div>
@@ -276,14 +276,14 @@ function DiagnosesSection({
       {diagnoses.map((d) => (
         <span
           key={d}
-          className="inline-flex items-center gap-1.5 text-[12.5px] font-sans px-2.5 py-1 rounded bg-p-50 border border-p-100 text-p-700"
+          className="inline-flex items-center gap-2 text-[12.5px] font-sans px-3 py-1 rounded bg-p-50 border border-p-100 text-p-700"
         >
           {d}
           {!disabled && (
             <button
               type="button"
               onClick={() => removeDiagnosis(d)}
-              className="ml-0.5 text-p-500 hover:text-p-900 leading-none"
+              className="ml-1 text-p-500 hover:text-p-900 leading-none"
             >
               <i className="ph ph-x text-[11px]" />
             </button>
@@ -291,7 +291,7 @@ function DiagnosesSection({
         </span>
       ))}
       {!disabled && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={input}
@@ -303,7 +303,7 @@ function DiagnosesSection({
               }
             }}
             placeholder="Añadir diagnóstico…"
-            className="h-[30px] px-2.5 text-[12.5px] font-sans border border-dashed border-n-300 rounded-sm bg-n-0 placeholder:text-n-300 text-n-700 focus:outline-none focus:border-p-500 w-[200px]"
+            className="h-[30px] px-3 text-[12.5px] font-sans border border-dashed border-n-300 rounded-sm bg-n-0 placeholder:text-n-300 text-n-700 focus:outline-none focus:border-p-500 w-[200px]"
           />
           {input.trim() && (
             <button
@@ -496,7 +496,7 @@ function ProtocolRunCard({
     checkedState,
     onCheck: handleCheck,
     onLaunchLinkedProtocol: handleLaunchLinkedProtocol,
-    onAutoPopulate: isSigned ? undefined : onAppendToSoap,
+    ...(isSigned ? {} : { onAutoPopulate: onAppendToSoap }),
   }
   const blocks = versionQuery.data?.content?.blocks ?? []
   const completedCount = Object.values(checkedState).filter(Boolean).length
@@ -511,7 +511,7 @@ function ProtocolRunCard({
     >
       {/* Breadcrumb chain for child protocols */}
       {ancestors.length > 0 && (
-        <div className="flex items-center gap-1 px-5 pt-2.5 pb-0">
+        <div className="flex items-center gap-1 px-5 pt-3 pb-0">
           {ancestors.map((a, i) => (
             <span key={a.id} className="flex items-center gap-1">
               <span className="text-[11px] font-mono text-n-400 truncate max-w-[120px]">
@@ -528,7 +528,7 @@ function ProtocolRunCard({
 
       {/* Restore notice */}
       {isRestored && (
-        <div className="flex items-center justify-between px-5 py-1.5 bg-info-bg border-b border-info-border">
+        <div className="flex items-center justify-between px-5 py-2 bg-info-bg border-b border-info-border">
           <span className="text-[11.5px] font-sans text-info-text">
             Estado recuperado del almacenamiento local
           </span>
@@ -544,7 +544,7 @@ function ProtocolRunCard({
 
       <div className="flex items-center gap-3 px-5 py-3 bg-n-25 border-b border-n-100">
         <div className="flex-1 min-w-0">
-          <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-p-700 mb-0.5">
+          <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-p-700 mb-1">
             {usage.protocolTypeName}
           </div>
           <div className="text-[17px] font-serif font-medium text-n-900 truncate leading-tight">
@@ -553,11 +553,11 @@ function ProtocolRunCard({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {completedCount > 0 && (
-            <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-0.5">
+            <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-1">
               {completedCount} completado{completedCount !== 1 ? 's' : ''}
             </span>
           )}
-          <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5">
+          <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-2 py-1">
             v{usage.versionNumber}
           </span>
           {!isSigned && (
@@ -652,14 +652,14 @@ function ProtocolPickerModal({
                   addUsage.mutate({ protocolId: p.id }, { onSuccess: () => onClose() })
                 }
                 disabled={addUsage.isPending}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors disabled:opacity-50"
+                className="flex items-center gap-3 w-full text-left px-3 py-3 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors disabled:opacity-50"
               >
                 <i className="ph ph-stack text-[16px] text-p-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[13.5px] font-sans font-semibold text-n-800 truncate">
                     {p.title}
                   </div>
-                  <div className="text-[11px] font-mono text-n-400 mt-0.5">{p.typeName}</div>
+                  <div className="text-[11px] font-mono text-n-400 mt-1">{p.typeName}</div>
                 </div>
               </button>
             ))}
@@ -695,7 +695,7 @@ function SignModal({
       />
       <ModalBody>
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-md px-4 py-3">
-          <i className="ph ph-warning text-[18px] text-warning-text shrink-0 mt-0.5" />
+          <i className="ph ph-warning text-[18px] text-warning-text shrink-0 mt-1" />
           <p className="text-[13px] text-warning-text leading-[1.45]">
             Esta acción es irreversible. Verifica que todos los datos sean correctos antes de
             continuar.
@@ -937,7 +937,7 @@ export function Consulta(): JSX.Element {
   return (
     <div className="py-8 px-8 max-w-[1440px]">
       {/* ── Breadcrumb ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 text-[12.5px] font-sans text-n-500 mb-5">
+      <div className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 mb-5">
         <Link to="/pacientes" className="hover:text-n-800 transition-colors">
           Pacientes
         </Link>
@@ -974,7 +974,7 @@ export function Consulta(): JSX.Element {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 pt-1">
+        <div className="flex items-center gap-2 shrink-0 pt-1">
           <SaveBadge status={saveStatus} />
           {isSigned ? (
             <Button variant="secondary" size="sm" onClick={() => setShowAmend(true)}>
@@ -1107,7 +1107,7 @@ export function Consulta(): JSX.Element {
         </div>
 
         {/* ── RIGHT: sidebar ──────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-4">
           {/* Patient alerts */}
           {patient && (patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
             <AsideCard title="Alertas del paciente">
@@ -1115,9 +1115,9 @@ export function Consulta(): JSX.Element {
                 {patient.allergies.map((a) => (
                   <div
                     key={a}
-                    className="flex gap-2.5 px-3 py-2.5 bg-danger-bg border border-danger-border rounded text-[12.5px] text-danger-text leading-[1.4]"
+                    className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-[12.5px] text-danger-text leading-[1.4]"
                   >
-                    <i className="ph ph-x-circle text-[16px] shrink-0 mt-0.5" />
+                    <i className="ph ph-x-circle text-[16px] shrink-0 mt-1" />
                     <div>
                       <strong>Alergia</strong> · {a}
                     </div>
@@ -1126,9 +1126,9 @@ export function Consulta(): JSX.Element {
                 {patient.chronicConditions.map((c) => (
                   <div
                     key={c}
-                    className="flex gap-2.5 px-3 py-2.5 bg-warning-bg border border-warning-border rounded text-[12.5px] text-warning-text leading-[1.4]"
+                    className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-[12.5px] text-warning-text leading-[1.4]"
                   >
-                    <i className="ph ph-warning-circle text-[16px] shrink-0 mt-0.5" />
+                    <i className="ph ph-warning-circle text-[16px] shrink-0 mt-1" />
                     <div>{c}</div>
                   </div>
                 ))}
@@ -1138,11 +1138,11 @@ export function Consulta(): JSX.Element {
 
           {/* Protocol quick-add */}
           <AsideCard title="Aplicar protocolo">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {consultation.protocolUsages.slice(0, 3).map((u) => (
                 <div
                   key={u.id}
-                  className="flex items-center gap-2.5 px-2.5 py-2 border border-n-200 rounded-sm text-[12.5px] text-n-700"
+                  className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-sm text-[12.5px] text-n-700"
                 >
                   <i className="ph ph-stack text-[15px] text-p-500 shrink-0" />
                   <span className="flex-1 truncate">{u.protocolTitle}</span>
@@ -1176,7 +1176,7 @@ export function Consulta(): JSX.Element {
                     key={c.id}
                     type="button"
                     onClick={() => void navigate(`/consultas/${c.id}`)}
-                    className="flex items-center justify-between w-full text-left py-1.5 text-[12.5px] group"
+                    className="flex items-center justify-between w-full text-left py-2 text-[12.5px] group"
                   >
                     <span className="text-n-700 group-hover:text-n-900 transition-colors truncate flex-1 text-left">
                       {c.chiefComplaint ?? 'Sin motivo'}
@@ -1191,7 +1191,7 @@ export function Consulta(): JSX.Element {
           )}
 
           {/* Order queue panel */}
-          {!isSigned && <OrderQueuePanel consultationId={consultation.id} />}
+          <OrderQueuePanel consultationId={consultation.id} isSigned={isSigned} />
         </div>
       </div>
 

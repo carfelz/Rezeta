@@ -107,9 +107,9 @@ function SectionEditor({
       className={cn('bg-n-0 border border-n-200 rounded mb-3', nested && 'ml-7')}
     >
       {/* Section header with 2px teal left rule */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
+        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {strings.BLOCK_TYPE_SECTION}
         </span>
 
@@ -212,9 +212,9 @@ function LeafBlockEditor({
       )}
     >
       {/* Block header with 2px teal left rule */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
+        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {blockTypeLabel(block.type)}
         </span>
         <span className="flex-1 min-w-0 truncate text-[15px] font-serif font-medium text-n-700">

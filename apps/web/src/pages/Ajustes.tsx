@@ -118,7 +118,7 @@ export function Ajustes(): JSX.Element {
           void handleSignOut()
         }}
       >
-        <i className="ph ph-sign-out mr-1.5" />
+        <i className="ph ph-sign-out mr-2" />
         {strings.AUTH_SIGN_OUT}
       </Button>
     </div>

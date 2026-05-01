@@ -3,6 +3,7 @@ import { useInvoices, useUpdateInvoiceStatus } from '@/hooks/invoices/use-invoic
 import type { InvoiceWithDetails, InvoiceStatus } from '@rezeta/shared'
 import { Badge, Card, Callout, EmptyState } from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
+import { apiClient, triggerDownload } from '@/lib/api-client'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -81,15 +82,27 @@ function StatusAction({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element
 // ─── Invoice row ──────────────────────────────────────────────────────────────
 
 function InvoiceRow({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element {
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleDownloadPdf(): Promise<void> {
+    setDownloading(true)
+    try {
+      const blob = await apiClient.download(`/v1/invoices/${invoice.id}/pdf`)
+      triggerDownload(blob, `factura-${invoice.invoiceNumber}.pdf`)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <tr className="hover:bg-n-25">
       <td className="px-4 py-3 border-b border-n-100">
         <div className="text-[13px] font-mono font-medium text-n-700">{invoice.invoiceNumber}</div>
-        <div className="text-[11.5px] text-n-500 mt-0.5">{formatDate(invoice.createdAt)}</div>
+        <div className="text-[11.5px] text-n-500 mt-1">{formatDate(invoice.createdAt)}</div>
       </td>
       <td className="px-4 py-3 border-b border-n-100">
         <div className="text-[13px] font-sans font-semibold text-n-800">{invoice.patientName}</div>
-        <div className="text-[11.5px] text-n-500 mt-0.5">{invoice.locationName}</div>
+        <div className="text-[11.5px] text-n-500 mt-1">{invoice.locationName}</div>
       </td>
       <td className="px-4 py-3 border-b border-n-100">
         <Badge variant={statusVariant(invoice.status)} showDot={false}>
@@ -101,13 +114,26 @@ function InvoiceRow({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element {
           {formatCurrency(invoice.total, invoice.currency)}
         </div>
         {invoice.commissionPercent > 0 && (
-          <div className="text-[11px] font-mono text-n-500 mt-0.5">
+          <div className="text-[11px] font-mono text-n-500 mt-1">
             Neto: {formatCurrency(invoice.netToDoctor, invoice.currency)}
           </div>
         )}
       </td>
       <td className="px-4 py-3 border-b border-n-100 text-right">
-        <StatusAction invoice={invoice} />
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
+            className="text-[11.5px] font-sans text-n-500 hover:text-n-800 transition-colors disabled:opacity-40 flex items-center gap-1"
+            title="Descargar PDF"
+          >
+            <i
+              className={`ph ${downloading ? 'ph-spinner animate-spin' : 'ph-file-pdf'} text-[14px]`}
+            />
+          </button>
+          <StatusAction invoice={invoice} />
+        </div>
       </td>
     </tr>
   )
@@ -189,7 +215,7 @@ export function Facturacion(): JSX.Element {
               key={opt.value}
               type="button"
               onClick={() => setStatusFilter(opt.value)}
-              className={`px-3 py-1.5 rounded-sm text-[12px] font-sans transition-colors ${
+              className={`px-3 py-2 rounded-sm text-[12px] font-sans transition-colors ${
                 statusFilter === opt.value
                   ? 'bg-p-500 text-white'
                   : 'bg-n-50 text-n-600 hover:bg-n-100'
@@ -225,19 +251,19 @@ export function Facturacion(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Número
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Paciente / Ubicación
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-right">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-right">
                   Monto
                 </th>
-                <th className="bg-n-50 px-4 py-2.5" />
+                <th className="bg-n-50 px-4 py-3" />
               </tr>
             </thead>
             <tbody>

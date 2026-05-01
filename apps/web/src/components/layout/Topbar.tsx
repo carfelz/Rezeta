@@ -50,10 +50,10 @@ export function Topbar(): JSX.Element {
       <div className="relative shrink-0" ref={dropdownRef}>
         <button
           type="button"
-          className="flex items-center gap-2 px-3 py-1.5 rounded-sm hover:bg-n-50 transition-colors duration-[100ms]"
+          className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-n-50 transition-colors duration-[100ms]"
           onClick={() => setDropdownOpen((o) => !o)}
         >
-          <span className="w-1.5 h-1.5 bg-p-500 rounded-full shrink-0" />
+          <span className="w-2 h-2 bg-p-500 rounded-full shrink-0" />
           <span className="text-[13px] font-sans font-medium text-n-800">
             {activeLocation ? activeLocation.name : 'Seleccionar ubicación'}
           </span>
@@ -69,14 +69,14 @@ export function Topbar(): JSX.Element {
               <button
                 key={loc.id}
                 type="button"
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-n-25 transition-colors duration-[100ms]"
+                className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-n-25 transition-colors duration-[100ms]"
                 onClick={() => {
                   setActiveLocation(loc.id)
                   setDropdownOpen(false)
                 }}
               >
                 <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{
                     background:
                       loc.id === activeLocationId ? 'var(--color-p-500)' : 'var(--color-n-300)',
@@ -105,9 +105,9 @@ export function Topbar(): JSX.Element {
         <input
           type="search"
           placeholder="Buscar pacientes, citas..."
-          className="w-full h-input-md pl-9 pr-14 text-[13px] font-sans bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors duration-[100ms]"
+          className="w-full h-input-md pl-8 pr-14 text-[13px] font-sans bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors duration-[100ms]"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-0.5 pointer-events-none">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
           ⌘K
         </span>
       </div>

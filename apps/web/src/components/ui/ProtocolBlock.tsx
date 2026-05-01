@@ -73,11 +73,11 @@ export function ProtocolBlock({
       )}
     >
       {/* Header with 2px teal left rule */}
-      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <span className="text-n-300 cursor-grab shrink-0">
           <i className="ph ph-dots-six-vertical text-[16px]" />
         </span>
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-1.5 py-0.5 rounded-sm shrink-0">
+        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {type}
         </span>
         <span className="text-[12px] font-serif font-medium text-n-900 flex-1 min-w-0 truncate">
@@ -88,7 +88,7 @@ export function ProtocolBlock({
             REQUERIDA
           </span>
         )}
-        <div className="flex items-center gap-0.5 ml-auto shrink-0">
+        <div className="flex items-center gap-1 ml-auto shrink-0">
           {onEdit && (
             <button
               onClick={onEdit}
@@ -182,13 +182,13 @@ export function ProtocolSteps({ steps }: ProtocolStepsProps): JSX.Element {
     <ol className="flex flex-col gap-3">
       {steps.map((step) => (
         <li key={step.id} className="flex gap-3">
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-p-50 text-p-700 text-[12px] font-mono font-medium shrink-0 mt-0.5">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-p-50 text-p-700 text-[12px] font-mono font-medium shrink-0 mt-1">
             {step.order}
           </span>
           <div className="flex-1">
             <div className="text-[13.5px] font-sans font-semibold text-n-800">{step.title}</div>
             {step.detail && (
-              <div className="text-[12.5px] font-sans text-n-500 mt-0.5 leading-[1.4]">
+              <div className="text-[12.5px] font-sans text-n-500 mt-1 leading-[1.4]">
                 {step.detail}
               </div>
             )}
@@ -221,7 +221,7 @@ export function ProtocolDecision({ condition, branches }: ProtocolDecisionProps)
       <div className="flex flex-col gap-3">
         {branches.map((branch) => (
           <div key={branch.id} className="flex gap-3">
-            <span className="text-[11.5px] font-mono font-medium text-p-700 bg-p-50 border border-p-100 px-2 py-0.5 rounded-sm shrink-0 h-fit mt-0.5">
+            <span className="text-[11.5px] font-mono font-medium text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0 h-fit mt-1">
               {branch.label}
             </span>
             <div className="text-[13px] font-sans text-n-700 leading-[1.45]">{branch.action}</div>
@@ -315,7 +315,7 @@ export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps):
         alertStyles[severity],
       )}
     >
-      {title && <div className="font-semibold mb-0.5">{title}</div>}
+      {title && <div className="font-semibold mb-1">{title}</div>}
       {content}
     </div>
   )
@@ -333,7 +333,7 @@ export function AddBlockButton({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-n-200 rounded text-[12.5px] font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-[100ms]"
+      className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-n-200 rounded text-[12.5px] font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-[100ms]"
     >
       <i className="ph ph-plus text-[14px]" />
       {label}

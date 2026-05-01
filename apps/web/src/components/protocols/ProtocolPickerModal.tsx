@@ -93,9 +93,7 @@ export function ProtocolPickerModal({
                     <div className="text-[13.5px] font-sans font-semibold text-n-800 truncate">
                       {protocol.title}
                     </div>
-                    <div className="text-[12px] font-sans text-n-500 mt-0.5">
-                      {protocol.typeName}
-                    </div>
+                    <div className="text-[12px] font-sans text-n-500 mt-1">{protocol.typeName}</div>
                   </div>
                   {protocol.isFavorite && (
                     <i className="ph-fill ph-star text-warning-text text-[14px] shrink-0" />

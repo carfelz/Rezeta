@@ -96,7 +96,17 @@
       "Bash(grep -E \"\\\\.ts$\")",
       "Bash(awk '/^model Protocol\\\\b/,/^}/' /Users/carlosfeliz/code/medical_app/packages/db/prisma/schema.prisma)",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(awk -F: '{print $1}')"
+      "Bash(awk -F: '{print $1}')",
+      "Bash(chmod +x /Users/carlosfeliz/code/medical_app/tools/seed-regression.sh)",
+      "Bash(curl -sf http://localhost:3000/health)",
+      "Bash(./tools/seed-regression.sh *)",
+      "Bash(bash -x tools/seed-regression.sh)",
+      "Bash(curl -sf -X POST http://localhost:3000/v1/auth/dev/token -H 'Content-Type: application/json' -d '{\"email\":\"test@test.com\",\"password\":\"Test12345\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('compilerOptions',{}\\).get\\('module','not set'\\)\\)\")",
+      "Bash(curl *)",
+      "Bash(xargs sed *)",
+      "Bash(xargs perl -pi -e ' *)",
+      "Bash(perl -pi -e 's/pt-2\\\\.5/pt-3/g; s/gap-3\\\\.5/gap-4/g' apps/web/src/pages/Consulta.tsx)"
     ]
   }
 }

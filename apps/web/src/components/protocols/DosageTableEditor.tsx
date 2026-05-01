@@ -100,12 +100,12 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
                 {COLUMNS.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-1.5 text-left text-[10.5px] font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                    className="px-2 py-2 text-left text-[10.5px] font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
                   >
                     {COLUMN_LABELS[col]}
                   </th>
                 ))}
-                <th className="px-2 py-1.5 w-8" />
+                <th className="px-2 py-2 w-8" />
               </tr>
             </thead>
             <tbody>

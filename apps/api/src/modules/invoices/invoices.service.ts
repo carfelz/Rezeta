@@ -1,5 +1,6 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { PdfService } from '../../lib/pdf.service.js'
 import {
   InvoicesRepository,
   type InvoiceListParams,
@@ -25,6 +26,7 @@ export class InvoicesService {
   constructor(
     @Inject(InvoicesRepository) private repo: InvoicesRepository,
     @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(PdfService) private pdf: PdfService,
   ) {}
 
   async list(params: InvoiceListParams): Promise<InvoiceListResult> {
@@ -94,6 +96,24 @@ export class InvoicesService {
       throw new BadRequestException('Cannot delete issued or paid invoices')
     }
     await this.repo.softDelete(id, tenantId)
+  }
+
+  async getInvoicePdf(id: string, tenantId: string): Promise<Buffer> {
+    const invoice = await this.getById(id, tenantId)
+
+    const doctor = await this.prisma.user.findFirst({
+      where: { id: invoice.doctorUserId },
+      select: { fullName: true, specialty: true, licenseNumber: true },
+    })
+
+    return this.pdf.generateInvoice({
+      invoice,
+      doctor: {
+        fullName: doctor?.fullName ?? null,
+        specialty: doctor?.specialty ?? null,
+        licenseNumber: doctor?.licenseNumber ?? null,
+      },
+    })
   }
 
   private allowedTransitions(current: string): string[] {

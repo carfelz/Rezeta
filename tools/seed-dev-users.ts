@@ -1,21 +1,20 @@
 /**
- * Seed dev users into the Firebase Auth emulator and Postgres.
+ * Seed dev users into the Firebase Auth dev project and Postgres.
  *
  * Prerequisites:
- *   - Firebase Auth emulator running: pnpm emulator
- *   - FIREBASE_AUTH_EMULATOR_HOST set (e.g. localhost:9099)
+ *   - Firebase credentials set in root .env (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL,
+ *     FIREBASE_PRIVATE_KEY)
  *   - Postgres running: pnpm docker:up
  *
- * Credentials (for manual login — do NOT hardcode in UI):
+ * Credentials (for manual login):
  *   dr.garcia@ejemplo.do  / Test1234!  → Consultorio García, Cardiología
  *   dra.reyes@ejemplo.do  / Test1234!  → Consultorio Reyes, Pediatría
  *
  * Safe to re-run: fully idempotent.
  */
 
-import * as admin from 'firebase-admin'
+import admin from 'firebase-admin'
 import { PrismaClient } from '../packages/db/generated/index.js'
-import { getStarterFixtures } from '../apps/api/src/lib/starter-fixtures/index.js'
 
 // ── Guards ────────────────────────────────────────────────────────────────────
 
@@ -24,20 +23,16 @@ if (process.env['NODE_ENV'] === 'production') {
   process.exit(1)
 }
 
-const EMULATOR_HOST = process.env['FIREBASE_AUTH_EMULATOR_HOST']
-if (!EMULATOR_HOST) {
-  console.error(
-    'ERROR: FIREBASE_AUTH_EMULATOR_HOST is not set.\n' +
-      'Start the emulator first: pnpm emulator\n' +
-      'Then set FIREBASE_AUTH_EMULATOR_HOST=localhost:9099',
-  )
-  process.exit(1)
-}
-
-// ── Firebase Admin init (emulator) ────────────────────────────────────────────
+// ── Firebase Admin init ───────────────────────────────────────────────────────
 
 if (!admin.apps.length) {
-  admin.initializeApp({ projectId: process.env['FIREBASE_PROJECT_ID'] ?? 'rezeta-dev' })
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env['FIREBASE_PROJECT_ID'],
+      clientEmail: process.env['FIREBASE_CLIENT_EMAIL'],
+      privateKey: process.env['FIREBASE_PRIVATE_KEY']?.replace(/\\n/g, '\n'),
+    }),
+  })
 }
 
 const prisma = new PrismaClient()
@@ -85,11 +80,9 @@ async function seedUser(dev: DevUser) {
       },
     })
     console.log(`  Postgres: updated existing user (id=${existingUser.id})`)
-    await seedTenant(existingUser.tenantId)
     return
   }
 
-  // First provision: create Tenant + User atomically
   const user = await prisma.$transaction(async (tx) => {
     const tenant = await tx.tenant.create({
       data: {
@@ -116,42 +109,19 @@ async function seedUser(dev: DevUser) {
   })
 
   console.log(`  Postgres: created tenant + user (userId=${user.id}, tenantId=${user.tenantId})`)
-  await seedTenant(user.tenantId)
-}
-
-async function seedTenant(tenantId: string): Promise<void> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } })
-  if (tenant?.seededAt) {
-    console.log(`  Seeding: tenant already seeded, skipping`)
-    return
-  }
-
-  const fixtures = getStarterFixtures('es')
-
-  await prisma.$transaction(async (tx) => {
-    const createdTemplates = await Promise.all(
-      fixtures.map((f) =>
-        tx.protocolTemplate.create({
-          data: { tenantId, name: f.name, suggestedSpecialty: f.suggestedSpecialty, schema: f.schema, isSeeded: true },
-        }),
-      ),
-    )
-    await Promise.all(
-      fixtures.map((f, i) =>
-        tx.protocolType.create({
-          data: { tenantId, name: f.typeName, templateId: createdTemplates[i]!.id, isSeeded: true },
-        }),
-      ),
-    )
-    await tx.tenant.update({ where: { id: tenantId }, data: { seededAt: new Date() } })
-  })
-
-  console.log(`  Seeding: created 5 templates + 5 types for tenant ${tenantId}`)
 }
 
 // ── Dev user definitions ──────────────────────────────────────────────────────
 
 const DEV_USERS: DevUser[] = [
+  {
+    email: 'test@test.com',
+    password: 'Test12345',
+    tenantName: 'Consultorio Test',
+    fullName: 'Dr. Test García',
+    specialty: 'Medicina General',
+    licenseNumber: 'MED-DO-00001',
+  },
   {
     email: 'dr.garcia@ejemplo.do',
     password: 'Test1234!',
@@ -173,7 +143,7 @@ const DEV_USERS: DevUser[] = [
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`Seeding dev users (emulator: ${EMULATOR_HOST})…`)
+  console.log('Seeding dev users into Firebase dev project and Postgres…')
   for (const dev of DEV_USERS) {
     await seedUser(dev)
   }

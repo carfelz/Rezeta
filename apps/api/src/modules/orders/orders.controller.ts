@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Body,
   HttpCode,
@@ -9,7 +10,9 @@ import {
   Inject,
   ParseUUIDPipe,
   UsePipes,
+  Res,
 } from '@nestjs/common'
+import type { Response } from 'express'
 import {
   ApiTags,
   ApiBearerAuth,
@@ -55,6 +58,27 @@ export class OrdersController {
     return this.svc.listPrescriptions(consultationId, tenantId)
   }
 
+  @Get('prescriptions/:prescriptionId/pdf')
+  @ApiOperation({ summary: 'Download prescription as PDF' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'prescriptionId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404, description: 'PRESCRIPTION_NOT_FOUND' })
+  async downloadPrescriptionPdf(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('prescriptionId', ParseUUIDPipe) prescriptionId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.svc.getPrescriptionPdf(consultationId, prescriptionId, tenantId)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="receta-${prescriptionId}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
+  }
+
   @Get('prescriptions/:prescriptionId')
   @ApiOperation({ summary: 'Get prescription by ID' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -83,6 +107,21 @@ export class OrdersController {
     @Body() dto: CreatePrescriptionGroupDto,
   ): Promise<Prescription> {
     return this.svc.createPrescription(consultationId, tenantId, user.id, dto)
+  }
+
+  @Delete('prescriptions/:prescriptionId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a prescription' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'prescriptionId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 404, description: 'PRESCRIPTION_NOT_FOUND' })
+  deletePrescription(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('prescriptionId', ParseUUIDPipe) prescriptionId: string,
+  ): Promise<void> {
+    return this.svc.deletePrescription(consultationId, prescriptionId, tenantId)
   }
 
   // ── Imaging orders ─────────────────────────────────────────────────────────
@@ -128,6 +167,21 @@ export class OrdersController {
     return this.svc.createImagingOrder(consultationId, tenantId, user.id, dto)
   }
 
+  @Delete('imaging-orders/:orderId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete an imaging order' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'orderId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 404, description: 'IMAGING_ORDER_NOT_FOUND' })
+  deleteImagingOrder(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<void> {
+    return this.svc.deleteImagingOrder(consultationId, orderId, tenantId)
+  }
+
   // ── Lab orders ─────────────────────────────────────────────────────────────
 
   @Get('lab-orders')
@@ -169,6 +223,21 @@ export class OrdersController {
     @Body() dto: CreateLabOrderGroupDto,
   ): Promise<LabOrder[]> {
     return this.svc.createLabOrder(consultationId, tenantId, user.id, dto)
+  }
+
+  @Delete('lab-orders/:orderId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a lab order' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'orderId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 404, description: 'LAB_ORDER_NOT_FOUND' })
+  deleteLabOrder(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<void> {
+    return this.svc.deleteLabOrder(consultationId, orderId, tenantId)
   }
 
   // ── Generate all ───────────────────────────────────────────────────────────

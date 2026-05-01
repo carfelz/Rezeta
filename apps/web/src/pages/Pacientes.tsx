@@ -58,7 +58,7 @@ const DOC_LABELS: Record<string, string> = { cedula: 'Cédula', passport: 'Pasap
 function ReadField({ label, value }: { label: string; value: React.ReactNode }): JSX.Element {
   return (
     <div>
-      <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-0.5">
+      <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1">
         {label}
       </div>
       <div className="text-[13px] font-sans text-n-700">
@@ -88,19 +88,19 @@ function ConsultationListItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
+      className="flex items-center gap-3 w-full text-left px-3 py-3 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
     >
       <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-sans font-semibold text-n-800 truncate">
           {consultation.chiefComplaint ?? 'Sin motivo registrado'}
         </div>
-        <div className="text-[11.5px] text-n-500 mt-0.5">
+        <div className="text-[11.5px] text-n-500 mt-1">
           {date} · {consultation.locationName}
         </div>
       </div>
       <span
-        className={`text-[10.5px] font-mono px-1.5 py-0.5 rounded border shrink-0 ${
+        className={`text-[10.5px] font-mono px-2 py-1 rounded border shrink-0 ${
           isSigned ? 'bg-p-50 border-p-100 text-p-700' : 'bg-n-50 border-n-200 text-n-500'
         }`}
       >
@@ -131,7 +131,7 @@ function ClinicalHistory({
             Historia clínica
           </h3>
           {!isLoading && (
-            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5">
+            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-2 py-1">
               {consultations.length}
             </span>
           )}
@@ -289,7 +289,7 @@ function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX.Elemen
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 py-5 border-b border-n-100">
                 {patient.allergies.length > 0 && (
                   <div>
-                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                       Alergias
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -303,7 +303,7 @@ function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX.Elemen
                 )}
                 {patient.chronicConditions.length > 0 && (
                   <div>
-                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                       Condiciones crónicas
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -638,7 +638,7 @@ export function Pacientes(): JSX.Element {
       <div className="flex items-center mb-6 gap-4">
         <h1 className="text-h1 flex-1">Pacientes</h1>
         <Button variant="primary" onClick={openCreate}>
-          <i className="ph ph-plus mr-1.5" />
+          <i className="ph ph-plus mr-2" />
           Registrar paciente
         </Button>
       </div>
@@ -686,19 +686,19 @@ export function Pacientes(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Paciente
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Cédula / Documento
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Edad
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5 text-left">
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-2.5" />
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3" />
               </tr>
             </thead>
             <tbody>

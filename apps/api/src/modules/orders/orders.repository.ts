@@ -348,4 +348,25 @@ export class OrdersRepository {
     })
     return rows.map(toLabOrder)
   }
+
+  async softDeletePrescription(id: string, tenantId: string): Promise<void> {
+    await this.prisma.prescription.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() },
+    })
+  }
+
+  async softDeleteImagingOrder(id: string, tenantId: string): Promise<void> {
+    await this.prisma.imagingOrder.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() },
+    })
+  }
+
+  async softDeleteLabOrder(id: string, tenantId: string): Promise<void> {
+    await this.prisma.labOrder.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() },
+    })
+  }
 }

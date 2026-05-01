@@ -81,7 +81,7 @@ export function DecisionBlockEditor({
           {draftBranches.map((branch, idx) => (
             <div
               key={branch.id}
-              className="border border-n-200 rounded-sm p-2.5 flex flex-col gap-1.5 bg-n-25"
+              className="border border-n-200 rounded-sm p-3 flex flex-col gap-2 bg-n-25"
             >
               <div className="flex items-center gap-2">
                 <span className="text-[10.5px] font-mono text-n-400 uppercase tracking-[0.05em] shrink-0">
@@ -104,7 +104,7 @@ export function DecisionBlockEditor({
                 </button>
               </div>
               <textarea
-                className="w-full min-h-[52px] px-2 py-1.5 text-[12.5px] font-sans text-n-700 border border-n-300 rounded-sm resize-vertical focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
+                className="w-full min-h-[52px] px-2 py-2 text-[12.5px] font-sans text-n-700 border border-n-300 rounded-sm resize-vertical focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
                 value={branch.action}
                 onChange={(e) => updateBranch(branch.id, { action: e.target.value })}
                 placeholder={strings.EDITOR_DECISION_BRANCH_ACTION_PLACEHOLDER}

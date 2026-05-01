@@ -47,12 +47,12 @@ export function ProtocolViewer(): JSX.Element {
   })
 
   return (
-    <div className="max-w-[800px]">
+    <div className="max-w-[800px] m-auto">
       {/* Back nav */}
       <div className="flex items-center justify-between mb-6">
         <Link
           to="/protocolos"
-          className="flex items-center gap-1.5 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
+          className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
         >
           <i className="ph ph-arrow-left text-[14px]" />
           {strings.VIEWER_BACK}
@@ -64,7 +64,7 @@ export function ProtocolViewer(): JSX.Element {
             void navigate(`/protocolos/${id}/edit`)
           }}
         >
-          <i className="ph ph-pencil-simple mr-1.5 text-[14px]" />
+          <i className="ph ph-pencil-simple mr-2 text-[14px]" />
           {strings.VIEWER_EDIT_BUTTON}
         </Button>
       </div>

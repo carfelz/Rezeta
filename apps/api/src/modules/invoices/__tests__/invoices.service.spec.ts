@@ -7,6 +7,13 @@ import type { PrismaService } from '../../../lib/prisma.service.js'
 import { Prisma } from '@rezeta/db'
 const { Decimal } = Prisma
 
+vi.mock('../../../lib/pdf.service.js', () => ({
+  PdfService: class {
+    generatePrescription = vi.fn().mockResolvedValue(Buffer.from([]))
+    generateInvoice = vi.fn().mockResolvedValue(Buffer.from([]))
+  },
+}))
+
 function makeRow(overrides: Partial<InvoiceRow> = {}): InvoiceRow {
   return {
     id: 'inv-1',
@@ -64,12 +71,16 @@ describe('InvoicesService', () => {
     } as unknown as InvoicesRepository
 
     prisma = {
-      location: {
-        findFirst: vi.fn(),
-      },
+      location: { findFirst: vi.fn() },
+      user: { findFirst: vi.fn() },
     } as unknown as PrismaService
 
-    service = new InvoicesService(repo, prisma)
+    const pdfService = {
+      generatePrescription: vi.fn(),
+      generateInvoice: vi.fn().mockResolvedValue(Buffer.from([])),
+    }
+
+    service = new InvoicesService(repo, prisma, pdfService as never)
   })
 
   // ── list ────────────────────────────────────────────────────────────────────
@@ -240,6 +251,26 @@ describe('InvoicesService', () => {
       )
       await service.updateStatus('inv-1', 'tenant-1', { status: 'paid', paymentMethod: 'card' })
       expect(repo.updateStatus).toHaveBeenCalledWith('inv-1', 'tenant-1', 'paid', 'card')
+    })
+  })
+
+  // ── getInvoicePdf ────────────────────────────────────────────────────────────
+
+  describe('getInvoicePdf', () => {
+    it('returns PDF buffer for valid invoice', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(makeRow())
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        fullName: 'Dr. Test',
+        specialty: 'Cardiology',
+        licenseNumber: 'MED-001',
+      } as never)
+      const result = await service.getInvoicePdf('inv-1', 'tenant-1')
+      expect(Buffer.isBuffer(result)).toBe(true)
+    })
+
+    it('throws NotFoundException when invoice not found', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(null)
+      await expect(service.getInvoicePdf('bad', 'tenant-1')).rejects.toThrow(NotFoundException)
     })
   })
 

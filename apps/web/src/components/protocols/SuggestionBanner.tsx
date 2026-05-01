@@ -21,7 +21,7 @@ function SuggestionCard({
   return (
     <div className="border border-warning-border bg-warning-bg rounded-md p-4">
       <div className="flex items-start gap-3">
-        <i className="ph ph-lightbulb text-warning-text text-[18px] shrink-0 mt-0.5" />
+        <i className="ph ph-lightbulb text-warning-text text-[18px] shrink-0 mt-1" />
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-sans font-semibold text-n-800 mb-1">
             Sugerencia de optimización

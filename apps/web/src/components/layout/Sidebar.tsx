@@ -53,7 +53,7 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
             cn(
               'relative flex items-center gap-3 px-5 py-[7px] text-[13px] font-sans transition-colors duration-[100ms]',
               isActive
-                ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-0.5 before:bg-p-500 before:rounded-sm'
+                ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-[2px] before:bg-p-500 before:rounded-sm'
                 : 'text-n-600 hover:bg-n-50 hover:text-n-800',
             )
           }

@@ -35,17 +35,10 @@ export class AuthService {
       throw new ForbiddenException('Not available in production')
     }
 
-    const firebaseConfig = this.config.get<AppConfig['firebase']>('firebase')
-    const emulatorHost = firebaseConfig?.emulatorHost ?? ''
-    const webApiKey = firebaseConfig?.webApiKey ?? ''
-
-    const baseUrl = emulatorHost
-      ? `http://${emulatorHost}/identitytoolkit.googleapis.com`
-      : 'https://identitytoolkit.googleapis.com'
-    const apiKey = emulatorHost ? 'fake-api-key' : webApiKey
+    const webApiKey = this.config.get('firebase', { infer: true }).webApiKey
 
     const res = await fetch(
-      `${baseUrl}/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(webApiKey)}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

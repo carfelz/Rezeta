@@ -32,17 +32,19 @@ function TypeCard({ type, selected, onSelect }: TypeCardProps): JSX.Element {
       type="button"
       onClick={onSelect}
       className={[
-        'relative text-left w-full px-4 py-3.5 rounded border transition-all duration-[100ms] focus:outline-none focus:shadow-[0_0_0_2px_white,0_0_0_4px_#6A8B91]',
+        'relative text-left w-full px-4 py-4 rounded border transition-all duration-[100ms] focus:outline-none focus:shadow-[0_0_0_2px_white,0_0_0_4px_#6A8B91]',
         selected ? 'border-p-500 bg-p-50' : 'border-n-200 bg-n-0 hover:border-n-300 hover:bg-n-25',
       ].join(' ')}
     >
       {/* Active teal rule */}
-      {selected && <span className="absolute left-0 top-3 bottom-3 w-0.5 bg-p-500 rounded-full" />}
+      {selected && (
+        <span className="absolute left-0 top-3 bottom-3 w-[2px] bg-p-500 rounded-full" />
+      )}
       <span className="block text-[13.5px] font-sans font-semibold text-n-800 leading-snug">
         {type.name}
       </span>
       {type.templateName && (
-        <span className="block text-[11.5px] font-sans text-n-400 mt-0.5 truncate">
+        <span className="block text-[11.5px] font-sans text-n-400 mt-1 truncate">
           {type.templateName}
         </span>
       )}
@@ -146,7 +148,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
             <Button variant="primary" onClick={handleCreate} disabled={!canSubmit}>
               {isPending ? (
                 <>
-                  <i className="ph ph-spinner animate-spin mr-1.5" />
+                  <i className="ph ph-spinner animate-spin mr-2" />
                   {strings.TYPE_PICKER_CREATING}
                 </>
               ) : (

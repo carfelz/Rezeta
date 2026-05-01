@@ -130,7 +130,7 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col gap-0.5 shrink-0 mt-0.5">
+              <div className="flex flex-col gap-1 shrink-0 mt-1">
                 <button
                   onClick={() => moveStep(step.id, 'up')}
                   disabled={idx === 0}

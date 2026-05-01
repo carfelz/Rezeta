@@ -11,25 +11,15 @@ export class FirebaseService implements OnModuleInit {
   constructor(@Inject(ConfigService) private config: ConfigService<AppConfig, true>) {}
 
   onModuleInit(): void {
-    let { projectId, clientEmail, privateKey } = this.config.get('firebase', { infer: true })
-    const emulatorHost = process.env['FIREBASE_AUTH_EMULATOR_HOST']
-
     // Re-use existing app in hot-reload environments (tsx watch)
     if (admin.apps.length > 0) {
       this.app = admin.apps[0] as admin.app.App
-      this.logger.log('Re-using existing Firebase Admin app')
       return
     }
 
-    if (emulatorHost) {
-      // Emulator mode — no real credentials needed, Admin SDK picks up the env var automatically
-      this.logger.warn(`Firebase Auth Emulator detected at ${emulatorHost}`)
-      this.app = admin.initializeApp({ projectId: projectId || 'rezeta-dev' })
-      return
-    }
+    let { projectId, clientEmail, privateKey } = this.config.get('firebase', { infer: true })
 
     // Support a single FIREBASE_ADMIN_KEY JSON blob (e.g. Cloud Run secret)
-    // as a fallback when individual vars are not set.
     if ((!projectId || !clientEmail || !privateKey) && process.env['FIREBASE_ADMIN_KEY']) {
       try {
         const parsed = JSON.parse(process.env['FIREBASE_ADMIN_KEY']) as {
@@ -48,8 +38,8 @@ export class FirebaseService implements OnModuleInit {
     if (!projectId || !clientEmail || !privateKey) {
       this.logger.warn(
         'Firebase service account credentials missing — Auth guard will reject all requests. ' +
-          'Set FIREBASE_ADMIN_KEY (JSON) or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + ' +
-          'FIREBASE_PRIVATE_KEY, or FIREBASE_AUTH_EMULATOR_HOST for local development.',
+          'Set FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY, ' +
+          'or FIREBASE_ADMIN_KEY (JSON blob for Cloud Run).',
       )
       return
     }

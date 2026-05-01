@@ -68,7 +68,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
         <label className="text-[12px] font-sans font-medium text-n-600">
           {strings.EDITOR_CHECKLIST_ITEMS_LABEL}
         </label>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           {draftItems.map((item, idx) => (
             <div key={item.id} className="flex items-center gap-2">
               <span className="text-[11px] font-mono text-n-400 w-4 shrink-0 text-right">
@@ -87,7 +87,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                   type="checkbox"
                   checked={item.critical ?? false}
                   onChange={(e) => updateItem(item.id, { critical: e.target.checked })}
-                  className="w-3.5 h-3.5 accent-danger-text"
+                  className="w-4 h-4 accent-danger-text"
                 />
                 <span className="text-[11px] font-mono text-n-500 uppercase tracking-[0.05em]">
                   {strings.EDITOR_CHECKLIST_CRITICAL_LABEL}

@@ -370,7 +370,7 @@ function AppointmentCard({
         <span className="text-[13px] font-mono font-medium text-n-700">
           {formatTime(appt.startsAt)}
         </span>
-        <span className="text-[11px] text-n-400 mt-0.5">{formatTime(appt.endsAt)}</span>
+        <span className="text-[11px] text-n-400 mt-1">{formatTime(appt.endsAt)}</span>
       </div>
 
       {/* 2px teal rule */}
@@ -405,7 +405,7 @@ function AppointmentCard({
           <>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-[12px] text-success-text hover:underline"
+              className="flex items-center gap-2 text-[12px] text-success-text hover:underline"
               onClick={() => onStatusChange('completed')}
               disabled={isUpdatingStatus}
             >
@@ -414,7 +414,7 @@ function AppointmentCard({
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-[12px] text-warning-text hover:underline"
+              className="flex items-center gap-2 text-[12px] text-warning-text hover:underline"
               onClick={() => onStatusChange('no_show')}
               disabled={isUpdatingStatus}
             >
@@ -423,7 +423,7 @@ function AppointmentCard({
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-[12px] text-n-500 hover:underline"
+              className="flex items-center gap-2 text-[12px] text-n-500 hover:underline"
               onClick={onEdit}
             >
               <i className="ph ph-pencil-simple text-[14px]" />
@@ -433,7 +433,7 @@ function AppointmentCard({
         )}
         <button
           type="button"
-          className="flex items-center gap-1.5 text-[12px] text-danger-text hover:underline mt-1"
+          className="flex items-center gap-2 text-[12px] text-danger-text hover:underline mt-1"
           onClick={onDelete}
         >
           <i className="ph ph-trash text-[14px]" />
@@ -575,7 +575,7 @@ export function Agenda(): JSX.Element {
       <div className="flex items-center justify-between mb-6 gap-4">
         <h1 className="text-h1 m-0">Agenda</h1>
         <Button variant="primary" onClick={() => setShowCreate(true)}>
-          <i className="ph ph-plus mr-1.5" />
+          <i className="ph ph-plus mr-2" />
           Nueva cita
         </Button>
       </div>
@@ -603,7 +603,7 @@ export function Agenda(): JSX.Element {
             {formatDate(currentDate)}
           </span>
           {isToday && (
-            <span className="text-[11px] font-mono font-medium px-1.5 py-0.5 rounded bg-p-50 text-p-700 border border-p-100">
+            <span className="text-[11px] font-mono font-medium px-2 py-1 rounded bg-p-50 text-p-700 border border-p-100">
               Hoy
             </span>
           )}

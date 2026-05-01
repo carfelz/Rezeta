@@ -4,13 +4,77 @@ import { OrdersController } from '../orders.controller.js'
 import type { OrdersService } from '../orders.service.js'
 import type { AuthUser } from '@rezeta/shared'
 
-const mockUser: AuthUser = { id: 'user-1', tenantId: 'tenant-1', email: 'doc@test.com', role: 'owner' }
+vi.mock('../../../lib/pdf.service.js', () => ({
+  PdfService: class {
+    generatePrescription = vi.fn().mockResolvedValue(Buffer.from([]))
+    generateInvoice = vi.fn().mockResolvedValue(Buffer.from([]))
+  },
+}))
+
+const mockUser: AuthUser = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'doc@test.com',
+  role: 'owner',
+}
 const tenantId = 'tenant-1'
 const consultationId = 'c1'
 
-const mockPrescription = { id: 'presc1', tenantId, consultationId, patientId: 'p1', groupTitle: null, groupOrder: 1, status: 'draft', signedAt: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null, items: [] }
-const mockImagingOrder = { id: 'img1', tenantId, consultationId, patientId: 'p1', groupTitle: null, groupOrder: 1, studyType: 'Rx Tórax', indication: 'Test', urgency: 'routine', contrast: false, fastingRequired: false, specialInstructions: null, source: null, status: 'draft', signedAt: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null }
-const mockLabOrder = { id: 'lab1', tenantId, consultationId, patientId: 'p1', groupTitle: null, groupOrder: 1, testName: 'CBC', testCode: null, indication: 'Test', urgency: 'routine', fastingRequired: false, sampleType: 'blood', specialInstructions: null, source: null, status: 'draft', signedAt: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null }
+const mockPrescription = {
+  id: 'presc1',
+  tenantId,
+  consultationId,
+  patientId: 'p1',
+  groupTitle: null,
+  groupOrder: 1,
+  status: 'draft',
+  signedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  items: [],
+}
+const mockImagingOrder = {
+  id: 'img1',
+  tenantId,
+  consultationId,
+  patientId: 'p1',
+  groupTitle: null,
+  groupOrder: 1,
+  studyType: 'Rx Tórax',
+  indication: 'Test',
+  urgency: 'routine',
+  contrast: false,
+  fastingRequired: false,
+  specialInstructions: null,
+  source: null,
+  status: 'draft',
+  signedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+}
+const mockLabOrder = {
+  id: 'lab1',
+  tenantId,
+  consultationId,
+  patientId: 'p1',
+  groupTitle: null,
+  groupOrder: 1,
+  testName: 'CBC',
+  testCode: null,
+  indication: 'Test',
+  urgency: 'routine',
+  fastingRequired: false,
+  sampleType: 'blood',
+  specialInstructions: null,
+  source: null,
+  status: 'draft',
+  signedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+}
 
 describe('OrdersController', () => {
   let controller: OrdersController
@@ -21,15 +85,31 @@ describe('OrdersController', () => {
       listPrescriptions: vi.fn(),
       getPrescription: vi.fn(),
       createPrescription: vi.fn(),
+      deletePrescription: vi.fn(),
+      getPrescriptionPdf: vi.fn(),
       listImagingOrders: vi.fn(),
       getImagingOrder: vi.fn(),
       createImagingOrder: vi.fn(),
+      deleteImagingOrder: vi.fn(),
       listLabOrders: vi.fn(),
       getLabOrder: vi.fn(),
       createLabOrder: vi.fn(),
+      deleteLabOrder: vi.fn(),
       generateAll: vi.fn(),
     } as unknown as OrdersService
     controller = new OrdersController(svc)
+  })
+
+  it('downloadPrescriptionPdf streams PDF buffer', async () => {
+    const buf = Buffer.from([1, 2, 3])
+    vi.mocked(svc.getPrescriptionPdf).mockResolvedValue(buf)
+    const res = { set: vi.fn(), end: vi.fn() }
+    await controller.downloadPrescriptionPdf(tenantId, consultationId, 'presc1', res as never)
+    expect(svc.getPrescriptionPdf).toHaveBeenCalledWith(consultationId, 'presc1', tenantId)
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({ 'Content-Type': 'application/pdf' }),
+    )
+    expect(res.end).toHaveBeenCalledWith(buf)
   })
 
   it('listPrescriptions delegates to service', async () => {
@@ -52,6 +132,12 @@ describe('OrdersController', () => {
     expect(svc.createPrescription).toHaveBeenCalledWith(consultationId, tenantId, 'user-1', dto)
   })
 
+  it('deletePrescription delegates to service', async () => {
+    vi.mocked(svc.deletePrescription).mockResolvedValue(undefined)
+    await controller.deletePrescription(tenantId, consultationId, 'presc1')
+    expect(svc.deletePrescription).toHaveBeenCalledWith(consultationId, 'presc1', tenantId)
+  })
+
   it('listImagingOrders delegates to service', async () => {
     vi.mocked(svc.listImagingOrders).mockResolvedValue([mockImagingOrder as never])
     const result = await controller.listImagingOrders(tenantId, consultationId)
@@ -72,6 +158,12 @@ describe('OrdersController', () => {
     expect(svc.createImagingOrder).toHaveBeenCalledWith(consultationId, tenantId, 'user-1', dto)
   })
 
+  it('deleteImagingOrder delegates to service', async () => {
+    vi.mocked(svc.deleteImagingOrder).mockResolvedValue(undefined)
+    await controller.deleteImagingOrder(tenantId, consultationId, 'img1')
+    expect(svc.deleteImagingOrder).toHaveBeenCalledWith(consultationId, 'img1', tenantId)
+  })
+
   it('listLabOrders delegates to service', async () => {
     vi.mocked(svc.listLabOrders).mockResolvedValue([mockLabOrder as never])
     const result = await controller.listLabOrders(tenantId, consultationId)
@@ -90,6 +182,12 @@ describe('OrdersController', () => {
     const dto = { orders: [], groupOrder: 1 }
     await controller.createLabOrder(tenantId, mockUser, consultationId, dto as never)
     expect(svc.createLabOrder).toHaveBeenCalledWith(consultationId, tenantId, 'user-1', dto)
+  })
+
+  it('deleteLabOrder delegates to service', async () => {
+    vi.mocked(svc.deleteLabOrder).mockResolvedValue(undefined)
+    await controller.deleteLabOrder(tenantId, consultationId, 'lab1')
+    expect(svc.deleteLabOrder).toHaveBeenCalledWith(consultationId, 'lab1', tenantId)
   })
 
   it('generateAll delegates to service', async () => {

@@ -7,10 +7,10 @@ const mockRepo = {
   findByFirebaseUid: vi.fn(),
 }
 
-const makeConfig = (nodeEnv: string, emulatorHost = '', webApiKey = 'key-123') => ({
+const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
   get: vi.fn((key: string) => {
     if (key === 'nodeEnv') return nodeEnv
-    if (key === 'firebase') return { emulatorHost, webApiKey }
+    if (key === 'firebase') return { webApiKey }
     return undefined
   }),
 })
@@ -86,11 +86,8 @@ describe('AuthService', () => {
       await expect(service.devGetToken('dr@test.com', 'pass')).rejects.toThrow(ForbiddenException)
     })
 
-    it('calls Firebase REST API with emulator host when set', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development', 'localhost:9099') as never,
-      )
+    it('calls Firebase REST API with real endpoint', async () => {
+      service = new AuthService(mockRepo as never, makeConfig('development') as never)
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ idToken: 'tok-123', expiresIn: '3600' }),
@@ -99,51 +96,36 @@ describe('AuthService', () => {
 
       const result = await service.devGetToken('dr@test.com', 'pass')
       expect(result).toEqual({ access_token: 'tok-123', token_type: 'bearer', expires_in: 3600 })
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('localhost:9099'),
-        expect.objectContaining({ method: 'POST' }),
-      )
-      // Emulator always uses 'fake-api-key'
-      expect(mockFetch.mock.calls[0][0]).toContain('fake-api-key')
-    })
-
-    it('calls Firebase REST API with real endpoint when no emulator', async () => {
-      service = new AuthService(mockRepo as never, makeConfig('development', '') as never)
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ idToken: 'tok-456', expiresIn: '3600' }),
-      })
-      vi.stubGlobal('fetch', mockFetch)
-
-      await service.devGetToken('dr@test.com', 'pass')
       expect(mockFetch.mock.calls[0][0]).toContain('identitytoolkit.googleapis.com')
       expect(mockFetch.mock.calls[0][0]).toContain('key-123')
     })
 
     it('throws UnauthorizedException when Firebase returns error', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development', 'localhost:9099') as never,
+      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          json: () => Promise.resolve({ error: { message: 'INVALID_PASSWORD' } }),
+        }),
       )
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: { message: 'INVALID_PASSWORD' } }),
-      }))
       await expect(service.devGetToken('dr@test.com', 'wrong')).rejects.toThrow(
         UnauthorizedException,
       )
     })
 
     it('throws UnauthorizedException with fallback message when no error message', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development', 'localhost:9099') as never,
+      service = new AuthService(mockRepo as never, makeConfig('development') as never)
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          json: () => Promise.resolve({}),
+        }),
       )
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({}),
-      }))
-      await expect(service.devGetToken('dr@test.com', 'wrong')).rejects.toThrow('Invalid credentials')
+      await expect(service.devGetToken('dr@test.com', 'wrong')).rejects.toThrow(
+        'Invalid credentials',
+      )
     })
   })
 })

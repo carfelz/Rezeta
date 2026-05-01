@@ -257,3 +257,40 @@ export function useListLabOrders(consultationId: string): UseQueryResult<LabOrde
     enabled: Boolean(consultationId),
   })
 }
+
+export function useDeletePrescription(
+  consultationId: string,
+): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (prescriptionId: string) =>
+      apiClient.delete(`/v1/consultations/${consultationId}/prescriptions/${prescriptionId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'prescriptions'] })
+    },
+  })
+}
+
+export function useDeleteImagingOrder(
+  consultationId: string,
+): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (orderId: string) =>
+      apiClient.delete(`/v1/consultations/${consultationId}/imaging-orders/${orderId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'imaging-orders'] })
+    },
+  })
+}
+
+export function useDeleteLabOrder(consultationId: string): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (orderId: string) =>
+      apiClient.delete(`/v1/consultations/${consultationId}/lab-orders/${orderId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'lab-orders'] })
+    },
+  })
+}

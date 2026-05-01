@@ -3,9 +3,8 @@
  *
  * Prerequisites:
  *   1. Postgres running (docker compose up -d)
- *   2. Firebase Auth emulator running:
- *      firebase emulators:start --only auth --project rezeta-dev
- *   3. FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 in env
+ *   2. Firebase credentials in root .env (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL,
+ *      FIREBASE_PRIVATE_KEY, FIREBASE_WEB_API_KEY)
  *
  * Run: pnpm --filter @rezeta/api test:integration
  */
@@ -22,25 +21,28 @@ import { PrismaService } from '../src/lib/prisma.service.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const EMULATOR_HOST = process.env['FIREBASE_AUTH_EMULATOR_HOST'] ?? 'localhost:9099'
-const PROJECT_ID = process.env['FIREBASE_PROJECT_ID'] ?? 'rezeta-dev'
+const PROJECT_ID = process.env['FIREBASE_PROJECT_ID'] ?? ''
+const WEB_API_KEY = process.env['FIREBASE_WEB_API_KEY'] ?? ''
 
-type SignUpResponse = { localId: string; idToken: string }
+type SignInResponse = { idToken: string }
 
 async function createTestUser(
   email: string,
   password: string,
 ): Promise<{ uid: string; idToken: string }> {
+  const user = await admin.auth().createUser({ email, password })
+  const customToken = await admin.auth().createCustomToken(user.uid)
+
   const res = await fetch(
-    `http://${EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${WEB_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true }),
+      body: JSON.stringify({ token: customToken, returnSecureToken: true }),
     },
   )
-  const data = (await res.json()) as SignUpResponse
-  return { uid: data.localId, idToken: data.idToken }
+  const data = (await res.json()) as SignInResponse
+  return { uid: user.uid, idToken: data.idToken }
 }
 
 async function deleteTestUser(uid: string): Promise<void> {
@@ -57,9 +59,7 @@ describe('Protocols Integration (Slice 2+3)', () => {
   let prisma: PrismaService
   let request: ReturnType<typeof supertest>
 
-  // User A — fully seeded tenant (will create protocols)
   let userA: { uid: string; idToken: string }
-  // User B — fully seeded tenant (for cross-tenant isolation)
   let userB: { uid: string; idToken: string }
 
   const USER_A_EMAIL = `proto-a-${Date.now()}@example.com`
@@ -84,11 +84,9 @@ describe('Protocols Integration (Slice 2+3)', () => {
     userA = await createTestUser(USER_A_EMAIL, TEST_PASSWORD)
     userB = await createTestUser(USER_B_EMAIL, TEST_PASSWORD)
 
-    // Provision both users (creates tenant rows)
     await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userA.idToken}`)
     await request.post('/v1/auth/provision').set('Authorization', `Bearer ${userB.idToken}`)
 
-    // Seed both tenants with default starter templates + types
     await request.post('/v1/onboarding/default').set('Authorization', `Bearer ${userA.idToken}`)
     await request.post('/v1/onboarding/default').set('Authorization', `Bearer ${userB.idToken}`)
   })
@@ -122,7 +120,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
   // ── Create ─────────────────────────────────────────────────────────────────
 
   it('POST /v1/protocols creates a protocol from a seeded type', async () => {
-    // Get userA's types to pick one
     const typesRes = await request
       .get('/v1/protocol-types')
       .set('Authorization', `Bearer ${userA.idToken}`)
@@ -150,7 +147,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
     expect(body.data.status).toBe('draft')
     expect(body.data.currentVersion).not.toBeNull()
     expect(body.data.currentVersion!.versionNumber).toBe(1)
-    // Initial content is seeded from the template's placeholder_blocks
     expect(Array.isArray(body.data.currentVersion!.content.blocks)).toBe(true)
   })
 
@@ -256,7 +252,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
     >
     expect(res.status).toBe(200)
     expect(body.data.length).toBeGreaterThan(0)
-    // Every item should have a typeName and version
     for (const item of body.data) {
       expect(item.typeName).toBeTruthy()
       expect(item.currentVersionNumber).toBe(1)
@@ -308,7 +303,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
       }>
     ).data
 
-    // Save a new version (same content for simplicity)
     const versionRes = await request
       .post(`/v1/protocols/${protocol.id}/versions`)
       .set('Authorization', `Bearer ${userA.idToken}`)
@@ -330,7 +324,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
   // ── Cross-tenant isolation ─────────────────────────────────────────────────
 
   it("GET /v1/protocols/:id returns 404 for another tenant's protocol", async () => {
-    // Create a protocol under userA
     const typesRes = await request
       .get('/v1/protocol-types')
       .set('Authorization', `Bearer ${userA.idToken}`)
@@ -343,7 +336,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
       .send({ typeId, title: 'Protocolo privado de A' })
     const { id } = (createRes.body as ApiOk<{ id: string }>).data
 
-    // userB tries to read it — should get 404 (not 403, don't confirm existence)
     const res = await request
       .get(`/v1/protocols/${id}`)
       .set('Authorization', `Bearer ${userB.idToken}`)
@@ -353,14 +345,12 @@ describe('Protocols Integration (Slice 2+3)', () => {
   })
 
   it('POST /v1/protocols rejects typeId from another tenant', async () => {
-    // Get userA's typeId
     const typesRes = await request
       .get('/v1/protocol-types')
       .set('Authorization', `Bearer ${userA.idToken}`)
     const typesBody = typesRes.body as ApiOk<{ id: string }[]>
     const userATypeId = typesBody.data[0]!.id
 
-    // userB tries to create a protocol using userA's typeId
     const res = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userB.idToken}`)
@@ -371,7 +361,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
   })
 
   it('GET /v1/protocols list is isolated per tenant', async () => {
-    // userB list should not contain userA's protocols
     const resA = await request.get('/v1/protocols').set('Authorization', `Bearer ${userA.idToken}`)
     const resB = await request.get('/v1/protocols').set('Authorization', `Bearer ${userB.idToken}`)
 
@@ -381,7 +370,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
     const idsA = new Set(bodyA.map((p) => p.id))
     const idsB = new Set(bodyB.map((p) => p.id))
 
-    // No overlap
     for (const id of idsB) {
       expect(idsA.has(id)).toBe(false)
     }

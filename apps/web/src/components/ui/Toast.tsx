@@ -109,7 +109,7 @@ export const ToastDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Description
     ref={ref}
-    className={cn('text-[12.5px] text-n-500 leading-[1.45] mt-0.5', className)}
+    className={cn('text-[12.5px] text-n-500 leading-[1.45] mt-1', className)}
     {...props}
   />
 ))

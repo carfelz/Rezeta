@@ -4,6 +4,13 @@ import { InvoicesController } from '../invoices.controller.js'
 import type { InvoicesService } from '../invoices.service.js'
 import type { AuthUser, InvoiceWithDetails } from '@rezeta/shared'
 
+vi.mock('../../../lib/pdf.service.js', () => ({
+  PdfService: class {
+    generatePrescription = vi.fn().mockResolvedValue(Buffer.from([]))
+    generateInvoice = vi.fn().mockResolvedValue(Buffer.from([]))
+  },
+}))
+
 const mockUser: AuthUser = {
   id: 'user-1',
   tenantId: 'tenant-1',
@@ -61,12 +68,29 @@ describe('InvoicesController', () => {
     service = {
       list: vi.fn(),
       getById: vi.fn(),
+      getInvoicePdf: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       updateStatus: vi.fn(),
       delete: vi.fn(),
     } as unknown as InvoicesService
     controller = new InvoicesController(service)
+  })
+
+  // ── downloadPdf ──────────────────────────────────────────────────────────────
+
+  describe('downloadPdf', () => {
+    it('streams PDF buffer with correct headers', async () => {
+      const buf = Buffer.from([1, 2, 3])
+      vi.mocked(service.getInvoicePdf).mockResolvedValue(buf)
+      const res = { set: vi.fn(), end: vi.fn() }
+      await controller.downloadPdf(tenantId, 'inv-1', res as never)
+      expect(service.getInvoicePdf).toHaveBeenCalledWith('inv-1', tenantId)
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({ 'Content-Type': 'application/pdf' }),
+      )
+      expect(res.end).toHaveBeenCalledWith(buf)
+    })
   })
 
   // ── list ────────────────────────────────────────────────────────────────────

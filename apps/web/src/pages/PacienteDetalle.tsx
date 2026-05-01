@@ -49,7 +49,7 @@ const DOC_LABELS: Record<string, string> = { cedula: 'Cédula', passport: 'Pasap
 function ReadField({ label, value }: { label: string; value: React.ReactNode }): JSX.Element {
   return (
     <div>
-      <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-0.5">
+      <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1">
         {label}
       </div>
       <div className="text-[13px] font-sans text-n-700">
@@ -78,19 +78,19 @@ function ConsultationListItem({
     <button
       type="button"
       onClick={() => void navigate(`/consultas/${consultation.id}`)}
-      className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
+      className="flex items-center gap-3 w-full text-left px-3 py-3 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
     >
       <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-sans font-semibold text-n-800 truncate">
           {consultation.chiefComplaint ?? 'Sin motivo registrado'}
         </div>
-        <div className="text-[11.5px] text-n-500 mt-0.5">
+        <div className="text-[11.5px] text-n-500 mt-1">
           {date} · {consultation.locationName}
         </div>
       </div>
       <span
-        className={`text-[10.5px] font-mono px-1.5 py-0.5 rounded border shrink-0 ${
+        className={`text-[10.5px] font-mono px-2 py-1 rounded border shrink-0 ${
           isSigned ? 'bg-p-50 border-p-100 text-p-700' : 'bg-n-50 border-n-200 text-n-500'
         }`}
       >
@@ -115,7 +115,7 @@ function ClinicalHistory({ patientId }: { patientId: string }): JSX.Element {
             Historia clínica
           </h2>
           {!isLoading && (
-            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5">
+            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-2 py-1">
               {consultations.length}
             </span>
           )}
@@ -348,20 +348,20 @@ export function PacienteDetalle(): JSX.Element {
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
 
   return (
-    <div className="max-w-[800px]">
+    <div className="max-w-[800px] m-auto">
       {showEdit && <EditModal patient={patient} onClose={() => setShowEdit(false)} />}
 
       {/* Back nav */}
       <div className="flex items-center justify-between mb-6">
         <Link
           to="/pacientes"
-          className="flex items-center gap-1.5 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors"
+          className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors"
         >
           <i className="ph ph-arrow-left text-[14px]" />
           Pacientes
         </Link>
         <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
-          <i className="ph ph-pencil-simple mr-1.5 text-[14px]" />
+          <i className="ph ph-pencil-simple mr-2 text-[14px]" />
           Editar
         </Button>
       </div>
@@ -373,7 +373,7 @@ export function PacienteDetalle(): JSX.Element {
         </div>
         <div>
           <h1 className="text-h2 font-serif font-medium text-n-900">{fullName}</h1>
-          <p className="text-[12.5px] font-sans text-n-500 mt-0.5">
+          <p className="text-[12.5px] font-sans text-n-500 mt-1">
             {patient.dateOfBirth ? `${formatAge(patient.dateOfBirth)} · ` : ''}
             {patient.documentNumber
               ? `${DOC_LABELS[patient.documentType ?? ''] ?? patient.documentType} ${patient.documentNumber}`
@@ -416,7 +416,7 @@ export function PacienteDetalle(): JSX.Element {
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             {patient.allergies.length > 0 && (
               <div>
-                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                   Alergias
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -430,7 +430,7 @@ export function PacienteDetalle(): JSX.Element {
             )}
             {patient.chronicConditions.length > 0 && (
               <div>
-                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-1.5">
+                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                   Condiciones crónicas
                 </div>
                 <div className="flex flex-wrap gap-1">

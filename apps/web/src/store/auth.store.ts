@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { User as FirebaseUser } from 'firebase/auth'
 import type { AuthUser } from '@rezeta/shared'
-import { FirebaseError } from 'firebase/app'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -36,36 +35,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   signUp: async (email, password) => {
     const { createUserWithEmailAndPassword } = await import('firebase/auth')
     const { auth } = await import('@/lib/firebase')
-    if (!auth) throw new Error('Firebase not configured')
-    // onAuthStateChanged in AuthProvider handles the rest (provision + state update)
+    // onAuthStateChanged in AuthProvider handles provision + state update
     await createUserWithEmailAndPassword(auth, email, password)
   },
 
   signIn: async (email, password) => {
     const { signInWithEmailAndPassword } = await import('firebase/auth')
     const { auth } = await import('@/lib/firebase')
-    if (!auth) throw new Error('Firebase not configured')
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-    } catch (error: unknown) {
-      if (error instanceof FirebaseError) {
-        throw new Error(error.message)
-      } else if (error instanceof Error) {
-        throw new Error(error.message)
-      } else {
-        throw new Error('Unknown error')
-      }
-    }
+    // Let FirebaseError propagate with its .code intact (Login.tsx reads it)
+    await signInWithEmailAndPassword(auth, email, password)
   },
 
   signOut: async () => {
     const { signOut } = await import('firebase/auth')
     const { auth } = await import('@/lib/firebase')
-    if (!auth) {
-      set({ user: null, firebaseUser: null, status: 'unauthenticated' })
-      return
-    }
     await signOut(auth)
     // onAuthStateChanged fires with null → state updated by AuthProvider
   },

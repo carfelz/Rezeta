@@ -19,7 +19,7 @@ import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.
 export interface AuthenticatedRequest extends Request {
   user: AuthUser
   tenantId: string
-  firebaseToken?: DecodedIdToken  // only populated on provision route
+  firebaseToken?: DecodedIdToken // only populated on provision route
 }
 
 @Injectable()
@@ -39,32 +39,6 @@ export class FirebaseAuthGuard implements CanActivate {
     // 1. @Public() — skip all auth
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [handler, classRef])
     if (isPublic) return true
-
-    // 2. STUB_AUTH — local dev bypass (mirrors VITE_STUB_AUTH=true on the frontend)
-    //    Only active when NODE_ENV=development AND STUB_AUTH=true.
-    //    Uses the same hardcoded UUIDs as the dev seed script.
-    if (process.env['STUB_AUTH'] === 'true' && process.env['NODE_ENV'] !== 'production') {
-      this.logger.warn('STUB_AUTH is active — using hardcoded dev user. Never use this in production.')
-      const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
-      const stubTenantId = '00000000-0000-0000-0000-000000000001'
-      const stubTenant = await this.prisma.tenant.findUnique({
-        where: { id: stubTenantId },
-        select: { seededAt: true },
-      })
-      request.user = {
-        id: '00000000-0000-0000-0000-000000000002',
-        firebaseUid: 'dev-firebase-uid',
-        tenantId: stubTenantId,
-        email: 'demo@rezeta.app',
-        fullName: 'Dr. Juan García',
-        role: 'owner',
-        specialty: 'Cardiología',
-        licenseNumber: 'CMP-12345',
-        tenantSeededAt: stubTenant?.seededAt?.toISOString() ?? null,
-      }
-      request.tenantId = stubTenantId
-      return true
-    }
 
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
 

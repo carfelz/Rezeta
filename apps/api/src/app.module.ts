@@ -6,6 +6,7 @@ import { resolve } from 'path'
 import { configuration } from './config/configuration.js'
 import { PrismaService } from './lib/prisma.service.js'
 import { FirebaseService } from './lib/firebase.service.js'
+import { PdfService } from './lib/pdf.service.js'
 import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard.js'
 import { TenantGuard } from './common/guards/tenant.guard.js'
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js'
@@ -73,7 +74,9 @@ class AppController {
     { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
     // Global exception filter
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    // Shared services
+    PdfService,
   ],
-  exports: [PrismaService, FirebaseService],
+  exports: [PrismaService, FirebaseService, PdfService],
 })
 export class AppModule {}
