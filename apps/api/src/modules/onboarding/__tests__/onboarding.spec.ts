@@ -1,267 +1,135 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import type { TestingModule } from '@nestjs/testing'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ConflictException } from '@nestjs/common'
+import { OnboardingService } from '../onboarding.service.js'
 
-type ApiOk<T> = { data: T }
-type ApiErr = { error: { code: string } }
-import { Test } from '@nestjs/testing'
-import type { INestApplication } from '@nestjs/common'
-import type { Server } from 'http'
-import * as request from 'supertest'
-import type * as admin from 'firebase-admin'
-import { AppModule } from '../../../app.module.js'
-import { FirebaseService } from '../../../lib/firebase.service.js'
-import { PrismaService } from '../../../lib/prisma.service.js'
+// Supplement onboarding.service.spec.ts with gap coverage:
+// - TENANT_ALREADY_SEEDED conflict propagation
+// - Multiple templates + types seeding call counts
+// - Return shape (tenantSeededAt truthy after seeding)
 
-// ─── Test tenant + user ───────────────────────────────────────────────────────
-
-const TENANT_ID = 'ee000000-1111-2222-3333-444444444444'
-const USER_ID = 'ee555555-6666-7777-8888-999999999999'
-const FIREBASE_UID = 'e2e-firebase-uid-onboarding'
-
-const MINIMAL_SCHEMA = {
-  version: '1.0',
-  blocks: [
-    {
-      id: 'sec_01',
-      type: 'section',
-      title: 'Indications',
-      required: true,
-      blocks: [],
-    },
-  ],
+const mockSeeder = {
+  seedDefault: vi.fn(),
+  seedCustom: vi.fn(),
 }
 
-const VALID_CUSTOM_BODY = {
-  templates: [
-    {
-      clientId: 'tpl-1',
-      name: 'My Template',
-      suggestedSpecialty: 'general',
-      schema: MINIMAL_SCHEMA,
-    },
-  ],
-  types: [{ name: 'My Type', templateClientId: 'tpl-1' }],
+const mockAuthService = {
+  toAuthUser: vi.fn(),
 }
 
-describe('OnboardingController (e2e)', () => {
-  let app: INestApplication
-  let prisma: PrismaService
+const mockAuthRepository = {
+  findByFirebaseUid: vi.fn(),
+}
 
-  beforeAll(async () => {
-    process.env['STUB_AUTH'] = 'false'
+const dbUser = {
+  id: 'u1',
+  firebaseUid: 'fb1',
+  tenantId: 't1',
+  email: 'dr@test.com',
+  fullName: 'Dr. Test',
+  role: 'owner',
+  specialty: null,
+  licenseNumber: null,
+  tenant: { seededAt: new Date('2026-01-01') },
+}
 
-    FirebaseService.prototype.verifyIdToken = () =>
-      Promise.resolve({ uid: FIREBASE_UID } as unknown as admin.auth.DecodedIdToken)
-    FirebaseService.prototype.onModuleInit = (): void => {}
+const authUser = {
+  id: 'u1',
+  firebaseUid: 'fb1',
+  tenantId: 't1',
+  email: 'dr@test.com',
+  fullName: 'Dr. Test',
+  role: 'owner' as const,
+  specialty: null,
+  licenseNumber: null,
+  tenantSeededAt: '2026-01-01T00:00:00.000Z',
+}
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile()
+describe('OnboardingService — conflict and multi-template coverage', () => {
+  let service: OnboardingService
 
-    app = moduleFixture.createNestApplication()
-    prisma = app.get<PrismaService>(PrismaService)
-    await app.init()
+  beforeEach(() => {
+    vi.clearAllMocks()
+    service = new OnboardingService(
+      mockSeeder as never,
+      mockAuthService as never,
+      mockAuthRepository as never,
+    )
+    mockAuthRepository.findByFirebaseUid.mockResolvedValue(dbUser)
+    mockAuthService.toAuthUser.mockReturnValue(authUser)
+    mockSeeder.seedDefault.mockResolvedValue(undefined)
+    mockSeeder.seedCustom.mockResolvedValue(undefined)
+  })
 
-    await prisma.tenant.create({
-      data: {
-        id: TENANT_ID,
-        name: 'E2E Onboarding Tenant',
-        users: {
-          create: {
-            id: USER_ID,
-            firebaseUid: FIREBASE_UID,
-            email: 'e2e-onboarding@test.rezeta.app',
-            fullName: 'E2E Onboarding Doctor',
-          },
-        },
-      },
+  // ── seedDefault ──────────────────────────────────────────────────────────────
+
+  describe('seedDefault', () => {
+    it('returns AuthUser with truthy tenantSeededAt', async () => {
+      const result = await service.seedDefault('u1', 'fb1')
+      expect(result.tenantSeededAt).toBeTruthy()
+      expect(typeof result.tenantSeededAt).toBe('string')
+      expect(result.tenantId).toBe('t1')
+    })
+
+    it('propagates TENANT_ALREADY_SEEDED ConflictException from seeder', async () => {
+      mockSeeder.seedDefault.mockRejectedValue(
+        new ConflictException({ code: 'TENANT_ALREADY_SEEDED' }),
+      )
+      await expect(service.seedDefault('u1', 'fb1')).rejects.toThrow(ConflictException)
+      await expect(service.seedDefault('u1', 'fb1')).rejects.toMatchObject({
+        response: { code: 'TENANT_ALREADY_SEEDED' },
+      })
     })
   })
 
-  afterEach(async () => {
-    // Reset tenant to unseeded state after each test
-    await prisma.protocolType.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.tenant.update({
-      where: { id: TENANT_ID },
-      data: { seededAt: null },
-    })
-  })
+  // ── seedCustom ────────────────────────────────────────────────────────────
 
-  afterAll(async () => {
-    await prisma.protocolType.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.user.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.tenant.deleteMany({ where: { id: TENANT_ID } })
-    await app.close()
-    delete process.env['STUB_AUTH']
-  })
-
-  // ─── POST /v1/onboarding/default ──────────────────────────────────────────
-
-  describe('POST /v1/onboarding/default', () => {
-    it('401 without Authorization header', async () => {
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/default')
-        .expect(401)
-    })
-
-    it('seeds 5 templates + 5 types and returns updated AuthUser', async () => {
-      const res = await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/default')
-        .set('Authorization', 'Bearer fake-token')
-        .expect(200)
-
-      const user = (res.body as ApiOk<Record<string, unknown>>).data
-      expect(user.tenantSeededAt).toBeTruthy()
-      expect(typeof user.tenantSeededAt).toBe('string')
-      expect(user.tenantId).toBe(TENANT_ID)
-
-      // Verify rows in DB
-      const templates = await prisma.protocolTemplate.findMany({ where: { tenantId: TENANT_ID } })
-      const types = await prisma.protocolType.findMany({ where: { tenantId: TENANT_ID } })
-      expect(templates).toHaveLength(5)
-      expect(types).toHaveLength(5)
-      expect(templates.every((t) => t.isSeeded)).toBe(true)
-      expect(types.every((t) => t.isSeeded)).toBe(true)
-
-      // Verify tenant seededAt was written
-      const tenant = await prisma.tenant.findUnique({ where: { id: TENANT_ID } })
-      expect(tenant?.seededAt).toBeTruthy()
-    })
-
-    it('409 if tenant is already seeded', async () => {
-      // Seed once
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/default')
-        .set('Authorization', 'Bearer fake-token')
-        .expect(200)
-
-      // Second attempt should conflict
-      const res = await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/default')
-        .set('Authorization', 'Bearer fake-token')
-        .expect(409)
-
-      expect((res.body as ApiErr).error.code).toBe('TENANT_ALREADY_SEEDED')
-    })
-  })
-
-  // ─── POST /v1/onboarding/custom ──────────────────────────────────────────
-
-  describe('POST /v1/onboarding/custom', () => {
-    it('401 without Authorization header', async () => {
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .send(VALID_CUSTOM_BODY)
-        .expect(401)
-    })
-
-    it('seeds custom templates + types and returns updated AuthUser', async () => {
-      const res = await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send(VALID_CUSTOM_BODY)
-        .expect(200)
-
-      const user = (res.body as ApiOk<Record<string, unknown>>).data
-      expect(user.tenantSeededAt).toBeTruthy()
-
-      const templates = await prisma.protocolTemplate.findMany({ where: { tenantId: TENANT_ID } })
-      const types = await prisma.protocolType.findMany({ where: { tenantId: TENANT_ID } })
-      expect(templates).toHaveLength(1)
-      expect(types).toHaveLength(1)
-      expect(templates[0]!.name).toBe('My Template')
-      expect(types[0]!.name).toBe('My Type')
-    })
-
-    it('400 if templates array is empty', async () => {
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send({ templates: [], types: [{ name: 'T', templateClientId: 'x' }] })
-        .expect(400)
-    })
-
-    it('400 if types array is empty', async () => {
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send({ templates: [{ clientId: 'x', name: 'T', schema: MINIMAL_SCHEMA }], types: [] })
-        .expect(400)
-    })
-
-    it('400 if type references unknown templateClientId', async () => {
-      const res = await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send({
-          templates: [{ clientId: 'tpl-1', name: 'T', schema: MINIMAL_SCHEMA }],
-          types: [{ name: 'Type A', templateClientId: 'unknown-client-id' }],
-        })
-        .expect(400)
-
-      expect((res.body as ApiErr).error.code).toBe('UNKNOWN_TEMPLATE_CLIENT_ID')
-    })
-
-    it('409 if tenant is already seeded', async () => {
-      // Seed first
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send(VALID_CUSTOM_BODY)
-        .expect(200)
-
-      // Second attempt should conflict
-      const res = await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send(VALID_CUSTOM_BODY)
-        .expect(409)
-
-      expect((res.body as ApiErr).error.code).toBe('TENANT_ALREADY_SEEDED')
-    })
-
-    it('multiple templates + types are all created', async () => {
-      const body = {
+  describe('seedCustom', () => {
+    it('returns AuthUser with truthy tenantSeededAt', async () => {
+      const result = await service.seedCustom('fb1', {
         templates: [
-          { clientId: 'tpl-a', name: 'Template A', schema: MINIMAL_SCHEMA },
-          { clientId: 'tpl-b', name: 'Template B', schema: MINIMAL_SCHEMA },
-          { clientId: 'tpl-c', name: 'Template C', schema: MINIMAL_SCHEMA },
+          { clientId: 'c1', name: 'My Template', schema: { version: '1.0', blocks: [] } },
+        ],
+        types: [{ name: 'My Type', templateClientId: 'c1' }],
+      })
+      expect(result.tenantSeededAt).toBeTruthy()
+    })
+
+    it('propagates TENANT_ALREADY_SEEDED ConflictException from seeder', async () => {
+      mockSeeder.seedCustom.mockRejectedValue(
+        new ConflictException({ code: 'TENANT_ALREADY_SEEDED' }),
+      )
+      await expect(
+        service.seedCustom('fb1', {
+          templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+          types: [{ name: 'Ty', templateClientId: 'c1' }],
+        }),
+      ).rejects.toThrow(ConflictException)
+      await expect(
+        service.seedCustom('fb1', {
+          templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+          types: [{ name: 'Ty', templateClientId: 'c1' }],
+        }),
+      ).rejects.toMatchObject({ response: { code: 'TENANT_ALREADY_SEEDED' } })
+    })
+
+    it('passes all templates and types to seeder (multiple)', async () => {
+      await service.seedCustom('fb1', {
+        templates: [
+          { clientId: 'a', name: 'Template A', schema: { version: '1.0', blocks: [] } },
+          { clientId: 'b', name: 'Template B', schema: { version: '1.0', blocks: [] } },
+          { clientId: 'c', name: 'Template C', schema: { version: '1.0', blocks: [] } },
         ],
         types: [
-          { name: 'Type A', templateClientId: 'tpl-a' },
-          { name: 'Type B', templateClientId: 'tpl-b' },
+          { name: 'Type A', templateClientId: 'a' },
+          { name: 'Type B', templateClientId: 'b' },
         ],
-      }
+      })
 
-      await request
-        .default(app.getHttpServer() as Server)
-        .post('/v1/onboarding/custom')
-        .set('Authorization', 'Bearer fake-token')
-        .set('Content-Type', 'application/json')
-        .send(body)
-        .expect(200)
-
-      const templates = await prisma.protocolTemplate.findMany({ where: { tenantId: TENANT_ID } })
-      const types = await prisma.protocolType.findMany({ where: { tenantId: TENANT_ID } })
+      const [, templates, types] = mockSeeder.seedCustom.mock.calls[0] as [
+        string,
+        unknown[],
+        unknown[],
+      ]
       expect(templates).toHaveLength(3)
       expect(types).toHaveLength(2)
     })

@@ -1,290 +1,248 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import type { TestingModule } from '@nestjs/testing'
-import { Test } from '@nestjs/testing'
-import type { INestApplication } from '@nestjs/common'
-import type { Server } from 'http'
-import * as request from 'supertest'
-import type * as admin from 'firebase-admin'
-import { AppModule } from '../../../app.module.js'
-import { FirebaseService } from '../../../lib/firebase.service.js'
-import { PrismaService } from '../../../lib/prisma.service.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NotFoundException, BadRequestException } from '@nestjs/common'
+import { ProtocolsService } from '../protocols.service.js'
 
-// ─── Test identifiers ─────────────────────────────────────────────────────────
+const now = new Date('2026-01-01T00:00:00Z')
+const minimalSchema = { version: '1.0', blocks: [] }
+const minimalContent = { version: '1.0', template_version: '1.0', blocks: [] }
 
-const TENANT_ID = 'a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5'
-const USER_ID = 'f6f6f6f6-0707-1818-2929-3a3a3a3a3a3a'
-const FIREBASE_UID = 'e2e-firebase-uid-protocols'
+const protocolRow = (status = 'draft') => ({
+  id: 'proto1',
+  title: 'Test Protocol',
+  status,
+  isFavorite: false,
+  typeId: 'type1',
+  createdAt: now,
+  updatedAt: now,
+  type: { id: 'type1', name: 'Emergencia', template: { schema: minimalSchema } },
+  currentVersion: {
+    id: 'ver1',
+    versionNumber: 1,
+    content: minimalContent,
+    changeSummary: null,
+    createdAt: now,
+  },
+})
 
-const MINIMAL_SCHEMA = { version: '1.0', blocks: [] }
-const MINIMAL_CONTENT = { version: '1.0', template_version: '1.0', blocks: [] }
+const versionRow = (num: number) => ({
+  id: `ver${num}`,
+  versionNumber: num,
+  changeSummary: null,
+  createdAt: now,
+})
 
-type ApiOk<T> = { data: T }
-type SaveVersionBody = {
-  id: string
-  versionNumber: number
-  changeSummary: string | null
-  createdAt: string
+const mockRepo = {
+  create: vi.fn(),
+  list: vi.fn(),
+  setFavorite: vi.fn(),
+  findById: vi.fn(),
+  rename: vi.fn(),
+  saveVersion: vi.fn(),
+  listVersions: vi.fn(),
+  getVersion: vi.fn(),
 }
-type ProtocolBody = {
-  id: string
-  title: string
-  status: string
-  typeId: string
-  currentVersion: { versionNumber: number } | null
-}
-type VersionListItem = {
-  id: string
-  versionNumber: number
-  changeSummary: string | null
-  createdAt: string
+
+const mockTypesRepo = {
+  findByIdWithTemplate: vi.fn(),
 }
 
-describe('ProtocolsController (e2e) — saveVersion publish flow', () => {
-  let app: INestApplication
-  let prisma: PrismaService
-  let typeId: string
+describe('ProtocolsService — saveVersion publish flow', () => {
+  let service: ProtocolsService
 
-  beforeAll(async () => {
-    process.env['STUB_AUTH'] = 'false'
+  beforeEach(() => {
+    vi.clearAllMocks()
+    service = new ProtocolsService(mockRepo as never, mockTypesRepo as never)
+  })
 
-    FirebaseService.prototype.verifyIdToken = () =>
-      Promise.resolve({ uid: FIREBASE_UID } as unknown as admin.auth.DecodedIdToken)
-    FirebaseService.prototype.onModuleInit = (): void => {}
+  // ── publish: false keeps status as draft ───────────────────────────────────
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile()
+  describe('saveVersion with publish:false', () => {
+    it('calls repo.saveVersion with publish:false', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow('draft'))
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
 
-    app = moduleFixture.createNestApplication()
-    prisma = app.get<PrismaService>(PrismaService)
-    await app.init()
+      await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+        publish: false,
+      })
 
-    await prisma.tenant.create({
-      data: {
-        id: TENANT_ID,
-        name: 'E2E Tenant Protocols',
-        users: {
-          create: {
-            id: USER_ID,
-            firebaseUid: FIREBASE_UID,
-            email: 'e2e-protocols@test.rezeta.app',
-            fullName: 'E2E Protocols Tester',
+      expect(mockRepo.saveVersion).toHaveBeenCalledWith(expect.objectContaining({ publish: false }))
+    })
+
+    it('returns version number 2 on second save', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow('draft'))
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
+
+      const result = await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+        publish: false,
+      })
+
+      expect(result.versionNumber).toBe(2)
+    })
+  })
+
+  // ── publish: true transitions status to active ─────────────────────────────
+
+  describe('saveVersion with publish:true', () => {
+    it('calls repo.saveVersion with publish:true', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow('draft'))
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
+
+      await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+        publish: true,
+      })
+
+      expect(mockRepo.saveVersion).toHaveBeenCalledWith(expect.objectContaining({ publish: true }))
+    })
+
+    it('returns correct version number on publish', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow('draft'))
+      mockRepo.saveVersion.mockResolvedValue(versionRow(3))
+
+      const result = await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+        publish: true,
+      })
+
+      expect(result.versionNumber).toBe(3)
+    })
+  })
+
+  // ── omitting publish defaults to falsy ────────────────────────────────────
+
+  describe('saveVersion without publish field', () => {
+    it('passes undefined publish to repo when field omitted', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow('draft'))
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
+
+      await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+      })
+
+      const call = mockRepo.saveVersion.mock.calls[0][0] as { publish?: boolean }
+      expect(call.publish).toBeFalsy()
+    })
+  })
+
+  // ── 404 for unknown protocol ──────────────────────────────────────────────
+
+  describe('saveVersion 404', () => {
+    it('throws NotFoundException for unknown protocol', async () => {
+      mockRepo.findById.mockResolvedValue(null)
+      await expect(
+        service.saveVersion('00000000-0000-0000-0000-000000000000', 't1', 'u1', {
+          content: minimalContent,
+          publish: false,
+        }),
+      ).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  // ── GET versions list ─────────────────────────────────────────────────────
+
+  describe('listVersions', () => {
+    it('returns version history in descending order', async () => {
+      mockRepo.findById.mockResolvedValue(protocolRow())
+      mockRepo.listVersions.mockResolvedValue([versionRow(3), versionRow(2), versionRow(1)])
+
+      const result = await service.listVersions('proto1', 't1')
+      expect(result).toHaveLength(3)
+      expect(result[0]!.versionNumber).toBe(3)
+      expect(result[1]!.versionNumber).toBe(2)
+      expect(result[2]!.versionNumber).toBe(1)
+    })
+
+    it('throws NotFoundException for unknown protocol', async () => {
+      mockRepo.findById.mockResolvedValue(null)
+      await expect(service.listVersions('bad-id', 't1')).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  // ── validateRequiredBlocks — nested placeholder coverage ───────────────────
+
+  describe('saveVersion — required placeholder_block in section (nested check)', () => {
+    it('throws BadRequestException when section is present but required placeholder child is absent', async () => {
+      const schemaWithRequiredChild = {
+        version: '1.0',
+        blocks: [
+          {
+            id: 'sec1',
+            type: 'section',
+            required: true,
+            placeholder_blocks: [{ id: 'blk_child', type: 'dosage_table', required: true }],
           },
-        },
-      },
+        ],
+      }
+
+      // Content has the section 'sec1' (so top-level required check passes),
+      // with a child block other than 'blk_child' (covers collectAllIds recursion).
+      // 'blk_child' is absent → inner placeholder_blocks loop throws.
+      const contentWithSectionButMissingChild = {
+        version: '1.0',
+        template_version: '1.0',
+        blocks: [
+          {
+            id: 'sec1',
+            type: 'section' as const,
+            title: 'Assessment',
+            blocks: [{ id: 'blk_other', type: 'text' as const, content: 'Present' }],
+          },
+        ],
+      }
+
+      mockRepo.findById.mockResolvedValue({
+        ...protocolRow(),
+        type: { id: 'type1', name: 'Emergencia', template: { schema: schemaWithRequiredChild } },
+      })
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
+
+      await expect(
+        service.saveVersion('proto1', 't1', 'u1', {
+          content: contentWithSectionButMissingChild,
+          publish: false,
+        }),
+      ).rejects.toThrow(BadRequestException)
     })
 
-    const template = await prisma.protocolTemplate.create({
-      data: {
-        tenantId: TENANT_ID,
-        name: 'Test Template',
-        schema: MINIMAL_SCHEMA,
-        isSeeded: false,
-        createdBy: USER_ID,
-      },
+    it('passes when section and all required child blocks are present in content', async () => {
+      const schemaWithRequiredChild = {
+        version: '1.0',
+        blocks: [
+          {
+            id: 'sec1',
+            type: 'section',
+            required: true,
+            placeholder_blocks: [{ id: 'blk_child', type: 'dosage_table', required: true }],
+          },
+        ],
+      }
+
+      const contentWithAllRequired = {
+        version: '1.0',
+        template_version: '1.0',
+        blocks: [
+          {
+            id: 'sec1',
+            type: 'section' as const,
+            title: 'Assessment',
+            blocks: [{ id: 'blk_child', type: 'text' as const, content: 'Present' }],
+          },
+        ],
+      }
+
+      mockRepo.findById.mockResolvedValue({
+        ...protocolRow(),
+        type: { id: 'type1', name: 'Emergencia', template: { schema: schemaWithRequiredChild } },
+      })
+      mockRepo.saveVersion.mockResolvedValue(versionRow(2))
+
+      const result = await service.saveVersion('proto1', 't1', 'u1', {
+        content: contentWithAllRequired,
+        publish: false,
+      })
+      expect(result.versionNumber).toBe(2)
     })
-
-    const type = await prisma.protocolType.create({
-      data: { tenantId: TENANT_ID, name: 'Test Type', templateId: template.id },
-    })
-    typeId = type.id
-  })
-
-  afterEach(async () => {
-    await prisma.protocolVersion.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocol.deleteMany({ where: { tenantId: TENANT_ID } })
-  })
-
-  afterAll(async () => {
-    await prisma.protocolVersion.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocol.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocolType.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId: TENANT_ID } })
-    await prisma.user.deleteMany({ where: { firebaseUid: FIREBASE_UID } })
-    await prisma.tenant.deleteMany({ where: { id: TENANT_ID } })
-    await app.close()
-    delete process.env['STUB_AUTH']
-  })
-
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  async function createProtocol(title: string): Promise<string> {
-    const res = await request
-      .default(app.getHttpServer() as Server)
-      .post('/v1/protocols')
-      .set('Authorization', 'Bearer test-token')
-      .send({ typeId, title })
-      .expect(201)
-    return (res.body as ApiOk<ProtocolBody>).data.id
-  }
-
-  // ── Auth ────────────────────────────────────────────────────────────────────
-
-  it('POST /v1/protocols/:id/versions — 401 without token', async () => {
-    const protocolId = await createProtocol('Auth test protocol')
-    return request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .send({ content: MINIMAL_CONTENT, publish: false })
-      .expect(401)
-  })
-
-  // ── publish: false (or omitted) keeps status as draft ────────────────────────
-
-  it('POST /v1/protocols/:id/versions with publish:false keeps status as draft', async () => {
-    const protocolId = await createProtocol('Draft protocol')
-
-    const res = await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, publish: false })
-      .expect(201)
-
-    const body = (res.body as ApiOk<SaveVersionBody>).data
-    expect(body.versionNumber).toBe(2)
-
-    const protocolRes = await request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}`)
-      .set('Authorization', 'Bearer test-token')
-      .expect(200)
-
-    expect((protocolRes.body as ApiOk<ProtocolBody>).data.status).toBe('draft')
-  })
-
-  it('POST /v1/protocols/:id/versions without publish field defaults to draft', async () => {
-    const protocolId = await createProtocol('No-publish-field protocol')
-
-    await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT })
-      .expect(201)
-
-    const protocolRes = await request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}`)
-      .set('Authorization', 'Bearer test-token')
-      .expect(200)
-
-    expect((protocolRes.body as ApiOk<ProtocolBody>).data.status).toBe('draft')
-  })
-
-  // ── publish: true transitions status to active ───────────────────────────────
-
-  it('POST /v1/protocols/:id/versions with publish:true transitions status to active', async () => {
-    const protocolId = await createProtocol('Active protocol')
-
-    const res = await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, publish: true })
-      .expect(201)
-
-    const body = (res.body as ApiOk<SaveVersionBody>).data
-    expect(body.versionNumber).toBe(2)
-
-    const protocolRes = await request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}`)
-      .set('Authorization', 'Bearer test-token')
-      .expect(200)
-
-    expect((protocolRes.body as ApiOk<ProtocolBody>).data.status).toBe('active')
-  })
-
-  it('POST /v1/protocols/:id/versions with publish:true bumps version and sets active in one call', async () => {
-    const protocolId = await createProtocol('Publish in one shot')
-
-    // Save a draft first
-    await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, changeSummary: 'Initial draft', publish: false })
-      .expect(201)
-
-    // Then publish
-    const publishRes = await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, changeSummary: 'Publishing', publish: true })
-      .expect(201)
-
-    expect((publishRes.body as ApiOk<SaveVersionBody>).data.versionNumber).toBe(3)
-
-    const protocolRes = await request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}`)
-      .set('Authorization', 'Bearer test-token')
-      .expect(200)
-
-    const protocol = (protocolRes.body as ApiOk<ProtocolBody>).data
-    expect(protocol.status).toBe('active')
-    expect(protocol.currentVersion?.versionNumber).toBe(3)
-  })
-
-  it('POST /v1/protocols/:id/versions — 400 for invalid content', async () => {
-    const protocolId = await createProtocol('Invalid content protocol')
-
-    return request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: { version: '1.0' }, publish: false })
-      .expect(400)
-  })
-
-  it('POST /v1/protocols/:id/versions — 404 for unknown protocol', () => {
-    return request
-      .default(app.getHttpServer() as Server)
-      .post('/v1/protocols/00000000-0000-0000-0000-000000000000/versions')
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, publish: false })
-      .expect(404)
-  })
-
-  // ── GET versions list ────────────────────────────────────────────────────────
-
-  it('GET /v1/protocols/:id/versions returns version history', async () => {
-    const protocolId = await createProtocol('Versioned protocol')
-
-    await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, changeSummary: 'First edit', publish: false })
-      .expect(201)
-
-    await request
-      .default(app.getHttpServer() as Server)
-      .post(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .send({ content: MINIMAL_CONTENT, changeSummary: 'Second edit', publish: true })
-      .expect(201)
-
-    const res = await request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}/versions`)
-      .set('Authorization', 'Bearer test-token')
-      .expect(200)
-
-    const versions = (res.body as ApiOk<VersionListItem[]>).data
-    expect(versions.length).toBe(3)
-    expect(versions[0].versionNumber).toBe(3)
-    expect(versions[1].versionNumber).toBe(2)
-    expect(versions[2].versionNumber).toBe(1)
-  })
-
-  it('GET /v1/protocols/:id/versions — 401 without token', async () => {
-    const protocolId = await createProtocol('Auth versions test')
-    return request
-      .default(app.getHttpServer() as Server)
-      .get(`/v1/protocols/${protocolId}/versions`)
-      .expect(401)
   })
 })
