@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-02] — Fix Firebase Hosting routing returning HTML for API routes
+
+### Fixed
+
+- `firebase.json` — moved `/v1/**` Cloud Run proxy rule before the `**` SPA catch-all (Firebase evaluates rewrites in order; catch-all was winning and returning `index.html` for every API request). Also corrected path prefix from `/api/**` to `/v1/**` to match the actual API route structure.
+
 ## [2026-05-02] — Replace @react-pdf/renderer with PDFKit
 
 ### Changed

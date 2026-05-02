@@ -4,15 +4,15 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
-        "source": "**",
-        "destination": "/index.html"
-      },
-      {
-        "source": "/api/**",
+        "source": "/v1/**",
         "run": {
           "serviceId": "medical-erp-api",
           "region": "southamerica-east1"
         }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
     ],
     "headers": [
