@@ -8,6 +8,7 @@ export interface Location {
   isOwned: boolean
   notes: string | null
   commissionPercent: number
+  consultationFee: number
   createdAt: string
   updatedAt: string
   deletedAt: string | null

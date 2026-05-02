@@ -4,6 +4,61 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-02] — Consultation fee per location (fixes auto-invoice)
+
+### Added
+
+- `packages/shared`: `consultationFee: number` field added to `Location` type and `CreateLocationSchema`/`UpdateLocationSchema`
+- `Ubicaciones.tsx`: "Honorarios (RD$)" field in location create/edit form — sets the doctor's per-location consultation fee
+- `Ubicaciones.tsx`: "Honorarios" column in the locations table showing the configured fee
+
+### Changed
+
+- `LocationsRepository`: `findMany`/`findById` now join `DoctorLocation` to include `consultationFee` in the response (scoped to current user)
+- `LocationsRepository.create`: seeds `DoctorLocation.consultationFee` from `dto.consultationFee` instead of hardcoded `0`
+- `LocationsRepository.update`: updates `DoctorLocation.consultationFee` in same transaction as location update
+- `LocationsService`/`LocationsController`: pass `userId` through `list`, `getById`, and `update` paths so doctor-specific fee is correctly resolved and saved
+
+### Fixed
+
+- Auto-invoice on consultation sign now fires correctly once the doctor sets a non-zero consultation fee via Ajustes → Ubicaciones
+
+## [2026-05-02] — Invoice create/edit/delete UI
+
+### Added
+
+- `Facturacion.tsx`: "Nueva factura" button in page header opens `InvoiceFormModal`
+- `InvoiceFormModal`: patient picker, location picker, currency toggle (DOP/USD), dynamic items table with add/remove rows, live commission preview, notes field; wires `useCreateInvoice` and `useUpdateInvoice`
+- Edit (pencil) and delete (trash) action buttons on draft invoice rows
+- `DeleteConfirmModal`: confirmation dialog using `useDeleteInvoice`
+- Empty state action button ("Nueva factura") added to the no-invoices state
+
+### Changed
+
+- `EmptyState` description updated to mention manual invoice creation as an option alongside auto-generation on consultation sign
+
+## [2026-05-02] — Audit events for invoice status transitions
+
+### Added
+
+- `InvoicesService.updateStatus()` now records audit events after every status transition:
+  - `draft → issued`: `category: 'system'`, `action: 'invoice_issued'`, with `invoiceNumber` in metadata
+  - `issued → paid` and `draft/issued → cancelled`: `category: 'entity'`, `action: 'update'`, with `status` before/after diff in `changes`
+- 3 new tests in `invoices.service.spec.ts` covering audit event shape for each transition path
+
+## [2026-05-02] — Auto-create draft invoice on consultation sign
+
+### Added
+
+- `InvoicesService.createFromConsultation()` — looks up `DoctorLocation.consultationFee` and `commissionPct` for the doctor+location pair; creates a draft invoice with one "Consulta médica" item; skips silently when fee is 0 or no `DoctorLocation` row exists
+- `ConsultationsModule` now imports `InvoicesModule` so `InvoicesService` is injectable into `ConsultationsService`
+- `ConsultationsService.sign()` calls `createFromConsultation()` after signing; failure is non-fatal (fire-and-forget with catch) so the sign operation always succeeds
+
+### Changed
+
+- `consultations.service.spec.ts` — added `InvoicesService` mock to constructor; added tests for auto-invoice trigger, auto-invoice with fee=0 skip, and sign-succeeds-on-invoice-failure
+- `invoices.service.spec.ts` — added `doctorLocation` to prisma mock; added `createFromConsultation` describe block with 3 test cases
+
 ## [2026-05-02] — Fix Firebase Hosting routing returning HTML for API routes
 
 ### Fixed

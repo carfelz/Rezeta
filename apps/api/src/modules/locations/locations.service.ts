@@ -8,12 +8,12 @@ import { LocationsRepository } from './locations.repository.js'
 export class LocationsService {
   constructor(@Inject(LocationsRepository) private repo: LocationsRepository) {}
 
-  list(tenantId: string): Promise<Location[]> {
-    return this.repo.findMany(tenantId)
+  list(tenantId: string, userId: string): Promise<Location[]> {
+    return this.repo.findMany(tenantId, userId)
   }
 
-  async getById(id: string, tenantId: string): Promise<Location> {
-    const location = await this.repo.findById(id, tenantId)
+  async getById(id: string, tenantId: string, userId?: string): Promise<Location> {
+    const location = await this.repo.findById(id, tenantId, userId)
     if (!location) {
       throw new NotFoundException({
         code: ErrorCode.LOCATION_NOT_FOUND,
@@ -27,9 +27,14 @@ export class LocationsService {
     return this.repo.create(tenantId, userId, dto)
   }
 
-  async update(id: string, tenantId: string, dto: UpdateLocationDto): Promise<Location> {
+  async update(
+    id: string,
+    tenantId: string,
+    userId: string,
+    dto: UpdateLocationDto,
+  ): Promise<Location> {
     await this.getById(id, tenantId)
-    return this.repo.update(id, tenantId, dto)
+    return this.repo.update(id, tenantId, userId, dto)
   }
 
   async remove(id: string, tenantId: string): Promise<void> {

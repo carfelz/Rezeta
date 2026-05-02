@@ -89,6 +89,34 @@ export class InvoicesService {
     }
 
     const row = await this.repo.updateStatus(id, tenantId, dto.status, dto.paymentMethod)
+
+    const httpCtx = httpAuditContextStore.getStore()
+    const actorType: 'user' | 'system' = httpCtx ? 'user' : 'system'
+    const actorBase = {
+      tenantId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
+      actorType,
+      entityType: 'Invoice' as const,
+      entityId: id,
+      status: 'success' as const,
+    }
+
+    if (dto.status === 'issued') {
+      void this.auditLog.record({
+        ...actorBase,
+        category: 'system',
+        action: 'invoice_issued',
+        metadata: { invoiceNumber: row.invoiceNumber },
+      })
+    } else {
+      void this.auditLog.record({
+        ...actorBase,
+        category: 'entity',
+        action: 'update',
+        changes: { status: { before: existing.status, after: dto.status } },
+      })
+    }
+
     return this.toDto(row)
   }
 
@@ -99,6 +127,37 @@ export class InvoicesService {
       throw new BadRequestException('Cannot delete issued or paid invoices')
     }
     await this.repo.softDelete(id, tenantId)
+  }
+
+  async createFromConsultation(params: {
+    consultationId: string
+    patientId: string
+    locationId: string
+    userId: string
+    tenantId: string
+  }): Promise<void> {
+    const dl = await this.prisma.doctorLocation.findFirst({
+      where: { userId: params.userId, locationId: params.locationId },
+      select: { consultationFee: true, commissionPct: true },
+    })
+
+    if (!dl || Number(dl.consultationFee) === 0) return
+
+    const fee = Number(dl.consultationFee)
+    const commissionPct = Number(dl.commissionPct)
+
+    await this.repo.create(
+      params.tenantId,
+      params.userId,
+      {
+        patientId: params.patientId,
+        locationId: params.locationId,
+        consultationId: params.consultationId,
+        currency: 'DOP',
+        items: [{ description: 'Consulta médica', quantity: 1, unitPrice: fee, total: fee }],
+      },
+      commissionPct,
+    )
   }
 
   async getInvoicePdf(id: string, tenantId: string): Promise<Buffer> {

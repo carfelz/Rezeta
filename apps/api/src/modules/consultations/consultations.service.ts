@@ -18,12 +18,14 @@ import type {
 import { ErrorCode } from '@rezeta/shared'
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { InvoicesService } from '../invoices/invoices.service.js'
 
 @Injectable()
 export class ConsultationsService {
   constructor(
     @Inject(ConsultationsRepository) private repo: ConsultationsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(InvoicesService) private invoicesSvc: InvoicesService,
   ) {}
 
   list(params: ConsultationListParams): Promise<ConsultationWithDetails[]> {
@@ -85,7 +87,21 @@ export class ConsultationsService {
         }),
       )
       .digest('hex')
-    return this.repo.sign(id, tenantId, userId, contentHash)
+
+    const result = await this.repo.sign(id, tenantId, userId, contentHash)
+
+    // Auto-create draft invoice from DoctorLocation fee — non-fatal if it fails
+    void this.invoicesSvc
+      .createFromConsultation({
+        consultationId: id,
+        patientId: c.patientId,
+        locationId: c.locationId,
+        userId,
+        tenantId,
+      })
+      .catch(() => undefined)
+
+    return result
   }
 
   async amend(

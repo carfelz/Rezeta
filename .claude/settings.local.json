@@ -112,7 +112,11 @@
       "Bash(grep -rn 'this\\\\.$use\\\\|PrismaClient' apps/api/src/ '--include=*.ts')",
       "Bash(xargs cat *)",
       "Bash(grep -r 'OnModuleInit\\\\|connect\\\\|$connect' /Users/carlosfeliz/code/medical_app/apps/api/src/lib '--include=*.ts')",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_network_requests",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__get_network_request",
+      "Bash(echo \"API PID: $!\")"
     ]
   }
 }

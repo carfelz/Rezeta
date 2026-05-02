@@ -8,6 +8,7 @@ export const CreateLocationSchema = z.object({
   isOwned: z.boolean().default(false),
   notes: z.string().max(2000).nullable().optional(),
   commissionPercent: z.number().min(0).max(100).default(0),
+  consultationFee: z.number().min(0).default(0),
 })
 
 export const UpdateLocationSchema = CreateLocationSchema.partial()

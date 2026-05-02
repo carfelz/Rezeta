@@ -4,7 +4,12 @@ import { LocationsController } from '../locations.controller.js'
 import type { LocationsService } from '../locations.service.js'
 import type { Location, AuthUser } from '@rezeta/shared'
 
-const mockUser: AuthUser = { id: 'user-1', tenantId: 'tenant-1', email: 'doc@test.com', role: 'owner' }
+const mockUser: AuthUser = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'doc@test.com',
+  role: 'owner',
+}
 const tenantId = 'tenant-1'
 
 function makeLocation(id = 'loc1'): Location {
@@ -13,7 +18,12 @@ function makeLocation(id = 'loc1'): Location {
     tenantId,
     name: 'Clínica Central',
     address: null,
+    city: null,
     phone: null,
+    isOwned: false,
+    notes: null,
+    commissionPercent: 0,
+    consultationFee: 0,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     deletedAt: null,
@@ -37,15 +47,15 @@ describe('LocationsController', () => {
 
   it('list delegates to service', async () => {
     vi.mocked(service.list).mockResolvedValue([makeLocation()])
-    const result = await controller.list(tenantId)
-    expect(service.list).toHaveBeenCalledWith(tenantId)
+    const result = await controller.list(tenantId, mockUser)
+    expect(service.list).toHaveBeenCalledWith(tenantId, 'user-1')
     expect(result).toHaveLength(1)
   })
 
   it('getOne delegates to service', async () => {
     vi.mocked(service.getById).mockResolvedValue(makeLocation())
-    const result = await controller.getOne('loc1', tenantId)
-    expect(service.getById).toHaveBeenCalledWith('loc1', tenantId)
+    const result = await controller.getOne('loc1', tenantId, mockUser)
+    expect(service.getById).toHaveBeenCalledWith('loc1', tenantId, 'user-1')
     expect(result.id).toBe('loc1')
   })
 
@@ -59,8 +69,8 @@ describe('LocationsController', () => {
   it('update delegates to service', async () => {
     vi.mocked(service.update).mockResolvedValue(makeLocation())
     const dto = { name: 'Updated Name' }
-    await controller.update('loc1', dto as never, tenantId)
-    expect(service.update).toHaveBeenCalledWith('loc1', tenantId, dto)
+    await controller.update('loc1', dto as never, tenantId, mockUser)
+    expect(service.update).toHaveBeenCalledWith('loc1', tenantId, 'user-1', dto)
   })
 
   it('remove delegates to service', async () => {

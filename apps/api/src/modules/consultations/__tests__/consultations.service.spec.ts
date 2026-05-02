@@ -4,12 +4,15 @@ import { NotFoundException, ConflictException, BadRequestException } from '@nest
 import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
+import type { InvoicesService } from '../../invoices/invoices.service.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
 
 const VALID_UUID = '00000000-0000-0000-0000-000000000001'
 
-function mockConsultation(overrides: Partial<ConsultationWithDetails> = {}): ConsultationWithDetails {
+function mockConsultation(
+  overrides: Partial<ConsultationWithDetails> = {},
+): ConsultationWithDetails {
   return {
     id: 'consult-1',
     tenantId: 'tenant-1',
@@ -40,7 +43,9 @@ function mockConsultation(overrides: Partial<ConsultationWithDetails> = {}): Con
   }
 }
 
-function mockProtocolUsage(overrides: Partial<ConsultationProtocolUsage> = {}): ConsultationProtocolUsage {
+function mockProtocolUsage(
+  overrides: Partial<ConsultationProtocolUsage> = {},
+): ConsultationProtocolUsage {
   return {
     id: 'usage-1',
     consultationId: 'consult-1',
@@ -67,6 +72,7 @@ function mockProtocolUsage(overrides: Partial<ConsultationProtocolUsage> = {}): 
 describe('ConsultationsService', () => {
   let repo: ConsultationsRepository
   let prisma: PrismaService
+  let invoicesSvc: InvoicesService
   let service: ConsultationsService
 
   beforeEach(() => {
@@ -92,7 +98,11 @@ describe('ConsultationsService', () => {
       auditLog: { create: vi.fn() },
     } as unknown as PrismaService
 
-    service = new ConsultationsService(repo, prisma)
+    invoicesSvc = {
+      createFromConsultation: vi.fn().mockResolvedValue(undefined),
+    } as unknown as InvoicesService
+
+    service = new ConsultationsService(repo, prisma, invoicesSvc)
   })
 
   // ── list / getById ─────────────────────────────────────────────────────────
@@ -155,9 +165,9 @@ describe('ConsultationsService', () => {
 
     it('throws ConflictException when consultation is already signed', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
-      await expect(
-        service.update('consult-1', 'tenant-1', { plan: 'X' }),
-      ).rejects.toThrow(ConflictException)
+      await expect(service.update('consult-1', 'tenant-1', { plan: 'X' })).rejects.toThrow(
+        ConflictException,
+      )
     })
 
     it('thrown error has CONSULTATION_ALREADY_SIGNED code', async () => {
@@ -197,6 +207,33 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
       await service.sign('consult-1', 'tenant-1', 'user-1').catch(() => {})
       expect(repo.sign).not.toHaveBeenCalled()
+    })
+
+    it('triggers auto-invoice creation after signing', async () => {
+      const draft = mockConsultation({ status: 'draft' })
+      const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      // Allow fire-and-forget to settle
+      await Promise.resolve()
+      expect(invoicesSvc.createFromConsultation).toHaveBeenCalledWith({
+        consultationId: 'consult-1',
+        patientId: draft.patientId,
+        locationId: draft.locationId,
+        userId: 'user-1',
+        tenantId: 'tenant-1',
+      })
+    })
+
+    it('sign succeeds even when auto-invoice creation fails', async () => {
+      const draft = mockConsultation({ status: 'draft' })
+      const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(invoicesSvc.createFromConsultation).mockRejectedValue(new Error('DB error'))
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.status).toBe('signed')
     })
   })
 
@@ -371,7 +408,10 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)
       await expect(
-        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', { content: {}, modifications: {} }),
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          content: {},
+          modifications: {},
+        }),
       ).rejects.toThrow(NotFoundException)
     })
 
@@ -381,7 +421,10 @@ describe('ConsultationsService', () => {
         mockProtocolUsage({ consultationId: 'other-consult' }),
       )
       await expect(
-        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', { content: {}, modifications: {} }),
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          content: {},
+          modifications: {},
+        }),
       ).rejects.toThrow(NotFoundException)
     })
   })
@@ -399,9 +442,9 @@ describe('ConsultationsService', () => {
     it('throws NotFoundException when usage not found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)
-      await expect(
-        service.getProtocolUsage('consult-1', 'usage-1', 'tenant-1'),
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.getProtocolUsage('consult-1', 'usage-1', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
 
     it('throws NotFoundException when usage belongs to different consultation', async () => {
@@ -409,9 +452,9 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
         mockProtocolUsage({ consultationId: 'other-consult' }),
       )
-      await expect(
-        service.getProtocolUsage('consult-1', 'usage-1', 'tenant-1'),
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.getProtocolUsage('consult-1', 'usage-1', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 
@@ -431,9 +474,9 @@ describe('ConsultationsService', () => {
     it('throws NotFoundException when usage not found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)
-      await expect(
-        service.removeProtocolUsage('consult-1', 'usage-1', 'tenant-1'),
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.removeProtocolUsage('consult-1', 'usage-1', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
 
     it('throws NotFoundException when usage belongs to different consultation', async () => {
@@ -441,9 +484,9 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
         mockProtocolUsage({ consultationId: 'other-consult' }),
       )
-      await expect(
-        service.removeProtocolUsage('consult-1', 'usage-1', 'tenant-1'),
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.removeProtocolUsage('consult-1', 'usage-1', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 

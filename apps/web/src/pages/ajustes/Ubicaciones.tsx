@@ -43,6 +43,7 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
   const [commissionPercent, setCommissionPercent] = useState(
     String(location?.commissionPercent ?? 0),
   )
+  const [consultationFee, setConsultationFee] = useState(String(location?.consultationFee ?? 0))
   const [isOwned, setIsOwned] = useState(location?.isOwned ?? false)
   const [notes, setNotes] = useState(location?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +61,7 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
       city: city.trim() || null,
       phone: phone.trim() || null,
       commissionPercent: parseFloat(commissionPercent) || 0,
+      consultationFee: parseFloat(consultationFee) || 0,
       isOwned,
       notes: notes.trim() || null,
     }
@@ -134,6 +136,16 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
+              <Field label="Honorarios (RD$)" helper="Tu tarifa de consulta en esta ubicación">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={consultationFee}
+                  onChange={(e) => setConsultationFee(e.target.value)}
+                />
+              </Field>
               <Field label="Comisión (%)" helper="Porcentaje que retiene el centro">
                 <Input
                   type="number"
@@ -145,6 +157,9 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
                   onChange={(e) => setCommissionPercent(e.target.value)}
                 />
               </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <Field label="Tipo">
                 <label className="flex items-center gap-2 h-input-md cursor-pointer select-none">
                   <input
@@ -321,6 +336,9 @@ export function Ubicaciones(): JSX.Element {
                   Teléfono
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                  Honorarios
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Comisión
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
@@ -342,6 +360,13 @@ export function Ubicaciones(): JSX.Element {
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
                     {loc.phone ?? <span className="text-n-400">—</span>}
+                  </td>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
+                    {Number(loc.consultationFee) > 0 ? (
+                      `RD$ ${Number(loc.consultationFee).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
+                    ) : (
+                      <span className="text-n-400">—</span>
+                    )}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
                     {Number(loc.commissionPercent) > 0 ? (

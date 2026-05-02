@@ -17,13 +17,14 @@ function makePrismaLocation(overrides: Record<string, unknown> = {}) {
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
+    doctorLocations: [{ consultationFee: { toNumber: () => 1500 } }],
     ...overrides,
   }
 }
 
 const mockTx = {
-  location: { create: vi.fn() },
-  doctorLocation: { create: vi.fn() },
+  location: { create: vi.fn(), update: vi.fn() },
+  doctorLocation: { create: vi.fn(), upsert: vi.fn() },
 }
 
 const mockPrisma = {
@@ -47,27 +48,35 @@ describe('LocationsRepository', () => {
   })
 
   describe('findMany', () => {
-    it('returns mapped locations', async () => {
+    it('returns mapped locations with consultationFee', async () => {
       mockPrisma.location.findMany.mockResolvedValue([makePrismaLocation()])
-      const result = await repo.findMany('t1')
+      const result = await repo.findMany('t1', 'u1')
       expect(result).toHaveLength(1)
       expect(result[0].name).toBe('Clínica Central')
       expect(result[0].commissionPercent).toBe(15)
+      expect(result[0].consultationFee).toBe(1500)
       expect(result[0].createdAt).toBe(now.toISOString())
+    })
+
+    it('returns consultationFee of 0 when no doctorLocation', async () => {
+      mockPrisma.location.findMany.mockResolvedValue([makePrismaLocation({ doctorLocations: [] })])
+      const result = await repo.findMany('t1', 'u1')
+      expect(result[0].consultationFee).toBe(0)
     })
 
     it('returns empty array when no locations', async () => {
       mockPrisma.location.findMany.mockResolvedValue([])
-      expect(await repo.findMany('t1')).toEqual([])
+      expect(await repo.findMany('t1', 'u1')).toEqual([])
     })
   })
 
   describe('findById', () => {
     it('returns mapped location when found', async () => {
       mockPrisma.location.findFirst.mockResolvedValue(makePrismaLocation())
-      const result = await repo.findById('loc1', 't1')
+      const result = await repo.findById('loc1', 't1', 'u1')
       expect(result?.id).toBe('loc1')
       expect(result?.isOwned).toBe(true)
+      expect(result?.consultationFee).toBe(1500)
     })
 
     it('returns null when not found', async () => {
@@ -77,10 +86,12 @@ describe('LocationsRepository', () => {
   })
 
   describe('create', () => {
-    it('creates location and doctor-location in transaction', async () => {
+    it('creates location and doctor-location in transaction, returns re-fetched location', async () => {
       const prismaLoc = makePrismaLocation()
       mockTx.location.create.mockResolvedValue(prismaLoc)
       mockTx.doctorLocation.create.mockResolvedValue({})
+      // findById re-fetch after transaction
+      mockPrisma.location.findFirst.mockResolvedValue(prismaLoc)
 
       const dto = {
         name: 'Clínica Central',
@@ -89,36 +100,66 @@ describe('LocationsRepository', () => {
         phone: '809-555-0001',
         isOwned: true,
         commissionPercent: 15,
+        consultationFee: 1500,
       }
       const result = await repo.create('t1', 'u1', dto as never)
       expect(result.name).toBe('Clínica Central')
-      expect(mockTx.location.create).toHaveBeenCalled()
+      expect(result.consultationFee).toBe(1500)
       expect(mockTx.doctorLocation.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ userId: 'u1' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'u1', consultationFee: 1500 }),
+        }),
       )
     })
 
-    it('uses default values when optional fields are missing', async () => {
-      const prismaLoc = makePrismaLocation({ address: null, city: null, phone: null, notes: null })
+    it('uses default consultationFee of 0 when not provided', async () => {
+      const prismaLoc = makePrismaLocation({
+        doctorLocations: [{ consultationFee: { toNumber: () => 0 } }],
+      })
       mockTx.location.create.mockResolvedValue(prismaLoc)
       mockTx.doctorLocation.create.mockResolvedValue({})
+      mockPrisma.location.findFirst.mockResolvedValue(prismaLoc)
 
       const dto = { name: 'Clínica B' }
       await repo.create('t1', 'u1', dto as never)
-      expect(mockTx.location.create).toHaveBeenCalledWith(
+      expect(mockTx.doctorLocation.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ address: null, city: null, isOwned: false }),
+          data: expect.objectContaining({ consultationFee: 0 }),
         }),
       )
     })
   })
 
   describe('update', () => {
-    it('updates and returns mapped location', async () => {
+    it('updates location and consultationFee in transaction, returns re-fetched location', async () => {
       const updated = makePrismaLocation({ name: 'Clínica B' })
-      mockPrisma.location.update.mockResolvedValue(updated)
-      const result = await repo.update('loc1', 't1', { name: 'Clínica B' } as never)
+      mockTx.location.update.mockResolvedValue(updated)
+      mockTx.doctorLocation.upsert.mockResolvedValue({})
+      mockPrisma.location.findFirst.mockResolvedValue(updated)
+
+      const result = await repo.update('loc1', 't1', 'u1', {
+        name: 'Clínica B',
+        consultationFee: 2000,
+      } as never)
       expect(result.name).toBe('Clínica B')
+      expect(mockTx.doctorLocation.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({ consultationFee: 2000 }),
+          create: expect.objectContaining({
+            consultationFee: 2000,
+            userId: 'u1',
+            locationId: 'loc1',
+          }),
+        }),
+      )
+    })
+
+    it('skips doctorLocation update when consultationFee not in dto', async () => {
+      mockTx.location.update.mockResolvedValue(makePrismaLocation())
+      mockPrisma.location.findFirst.mockResolvedValue(makePrismaLocation())
+
+      await repo.update('loc1', 't1', 'u1', { name: 'New Name' } as never)
+      expect(mockTx.doctorLocation.upsert).not.toHaveBeenCalled()
     })
   })
 

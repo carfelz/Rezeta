@@ -24,16 +24,16 @@ describe('LocationsService', () => {
   describe('list', () => {
     it('returns locations from repo', async () => {
       mockRepo.findMany.mockResolvedValue([location])
-      const result = await service.list('t1')
+      const result = await service.list('t1', 'u1')
       expect(result).toEqual([location])
-      expect(mockRepo.findMany).toHaveBeenCalledWith('t1')
+      expect(mockRepo.findMany).toHaveBeenCalledWith('t1', 'u1')
     })
   })
 
   describe('getById', () => {
     it('returns location when found', async () => {
       mockRepo.findById.mockResolvedValue(location)
-      const result = await service.getById('loc1', 't1')
+      const result = await service.getById('loc1', 't1', 'u1')
       expect(result).toEqual(location)
     })
 
@@ -59,14 +59,16 @@ describe('LocationsService', () => {
       const updated = { ...location, name: 'Updated' }
       mockRepo.findById.mockResolvedValue(location)
       mockRepo.update.mockResolvedValue(updated)
-      const result = await service.update('loc1', 't1', dto as never)
+      const result = await service.update('loc1', 't1', 'u1', dto as never)
       expect(result).toEqual(updated)
-      expect(mockRepo.update).toHaveBeenCalledWith('loc1', 't1', dto)
+      expect(mockRepo.update).toHaveBeenCalledWith('loc1', 't1', 'u1', dto)
     })
 
     it('throws NotFoundException when location not found', async () => {
       mockRepo.findById.mockResolvedValue(null)
-      await expect(service.update('missing', 't1', {} as never)).rejects.toThrow(NotFoundException)
+      await expect(service.update('missing', 't1', 'u1', {} as never)).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 

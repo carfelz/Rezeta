@@ -42,8 +42,8 @@ export class LocationsController {
     description: "Returns all active locations for the authenticated doctor's tenant.",
   })
   @ApiResponse({ status: 200, description: 'Location list.' })
-  list(@TenantId() tenantId: string): Promise<Location[]> {
-    return this.service.list(tenantId)
+  list(@TenantId() tenantId: string, @CurrentUser() user: AuthUser): Promise<Location[]> {
+    return this.service.list(tenantId, user.id)
   }
 
   @Get(':id')
@@ -51,8 +51,12 @@ export class LocationsController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Location record.' })
   @ApiResponse({ status: 404, description: 'Location not found.' })
-  getOne(@Param('id', ParseUUIDPipe) id: string, @TenantId() tenantId: string): Promise<Location> {
-    return this.service.getById(id, tenantId)
+  getOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<Location> {
+    return this.service.getById(id, tenantId, user.id)
   }
 
   @Post()
@@ -78,8 +82,9 @@ export class LocationsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(UpdateLocationSchema)) dto: UpdateLocationDto,
     @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
   ): Promise<Location> {
-    return this.service.update(id, tenantId, dto)
+    return this.service.update(id, tenantId, user.id, dto)
   }
 
   @Delete(':id')

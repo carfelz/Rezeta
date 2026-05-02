@@ -78,6 +78,7 @@ describe('InvoicesService', () => {
     prisma = {
       location: { findFirst: vi.fn() },
       user: { findFirst: vi.fn() },
+      doctorLocation: { findFirst: vi.fn() },
     } as unknown as PrismaService
 
     pdfService = {
@@ -259,6 +260,52 @@ describe('InvoicesService', () => {
       await service.updateStatus('inv-1', 'tenant-1', { status: 'paid', paymentMethod: 'card' })
       expect(repo.updateStatus).toHaveBeenCalledWith('inv-1', 'tenant-1', 'paid', 'card')
     })
+
+    it('records invoice_issued audit event on draft → issued', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(makeRow({ status: 'draft' }))
+      vi.mocked(repo.updateStatus).mockResolvedValue(makeRow({ status: 'issued' }))
+      await service.updateStatus('inv-1', 'tenant-1', { status: 'issued' })
+      await Promise.resolve()
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'system',
+          action: 'invoice_issued',
+          entityType: 'Invoice',
+          entityId: 'inv-1',
+          status: 'success',
+        }),
+      )
+    })
+
+    it('records entity update audit event on issued → paid', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(makeRow({ status: 'issued' }))
+      vi.mocked(repo.updateStatus).mockResolvedValue(makeRow({ status: 'paid' }))
+      await service.updateStatus('inv-1', 'tenant-1', { status: 'paid' })
+      await Promise.resolve()
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'entity',
+          action: 'update',
+          entityType: 'Invoice',
+          entityId: 'inv-1',
+          changes: { status: { before: 'issued', after: 'paid' } },
+        }),
+      )
+    })
+
+    it('records entity update audit event on draft → cancelled', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(makeRow({ status: 'draft' }))
+      vi.mocked(repo.updateStatus).mockResolvedValue(makeRow({ status: 'cancelled' }))
+      await service.updateStatus('inv-1', 'tenant-1', { status: 'cancelled' })
+      await Promise.resolve()
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'entity',
+          action: 'update',
+          changes: { status: { before: 'draft', after: 'cancelled' } },
+        }),
+      )
+    })
   })
 
   // ── getInvoicePdf ────────────────────────────────────────────────────────────
@@ -339,6 +386,68 @@ describe('InvoicesService', () => {
       vi.mocked(repo.findById).mockResolvedValue(null)
       await service.delete('bad', 'tenant-1').catch(() => {})
       expect(repo.softDelete).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── createFromConsultation ────────────────────────────────────────────────────
+
+  describe('createFromConsultation', () => {
+    const params = {
+      consultationId: 'consult-1',
+      patientId: 'patient-1',
+      locationId: 'loc-1',
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+    }
+
+    it('creates draft invoice using DoctorLocation fee', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue({
+        consultationFee: new Decimal(2000),
+        commissionPct: new Decimal(15),
+      } as never)
+      vi.mocked(repo.create).mockResolvedValue(makeRow())
+      await service.createFromConsultation(params)
+      expect(repo.create).toHaveBeenCalledWith(
+        'tenant-1',
+        'user-1',
+        expect.objectContaining({
+          consultationId: 'consult-1',
+          patientId: 'patient-1',
+          locationId: 'loc-1',
+          items: [
+            expect.objectContaining({
+              description: 'Consulta médica',
+              unitPrice: 2000,
+              total: 2000,
+            }),
+          ],
+        }),
+        15,
+      )
+    })
+
+    it('skips creation when consultationFee is 0', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue({
+        consultationFee: new Decimal(0),
+        commissionPct: new Decimal(10),
+      } as never)
+      await service.createFromConsultation(params)
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('skips creation when DoctorLocation not found', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue(null)
+      await service.createFromConsultation(params)
+      expect(repo.create).not.toHaveBeenCalled()
     })
   })
 })
