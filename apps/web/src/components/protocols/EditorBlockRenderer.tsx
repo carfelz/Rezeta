@@ -381,13 +381,13 @@ function EditForm({ block }: { block: ProtocolBlock }): JSX.Element | null {
     )
   }
   if (block.type === 'dosage_table') {
-    return <DosageTableEditor id={block.id} title={block.title} rows={block.rows} />
+    return <DosageTableEditor id={block.id} title={block.title ?? ''} rows={block.rows} />
   }
   if (block.type === 'imaging_order') {
-    return <ImagingOrderBlockEditor id={block.id} title={block.title} orders={block.orders} />
+    return <ImagingOrderBlockEditor id={block.id} title={block.title ?? ''} orders={block.orders} />
   }
   if (block.type === 'lab_order') {
-    return <LabOrderBlockEditor id={block.id} title={block.title} orders={block.orders} />
+    return <LabOrderBlockEditor id={block.id} title={block.title ?? ''} orders={block.orders} />
   }
   return null
 }
