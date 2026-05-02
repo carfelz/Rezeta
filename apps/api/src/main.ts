@@ -74,8 +74,8 @@ async function bootstrap() {
   })
 
   const port = parseInt(process.env['PORT'] ?? '3000', 10)
-  await app.listen(port)
-  Logger.log(`API running on http://localhost:${port}`, 'Bootstrap')
+  await app.listen(port, '0.0.0.0')
+  Logger.log(`API running on http://0.0.0.0:${port}`, 'Bootstrap')
   Logger.log(`Swagger docs: http://localhost:${port}/docs`, 'Bootstrap')
 }
 

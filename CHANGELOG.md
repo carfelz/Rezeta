@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-01] — Fix Cloud Run container startup failure
+
+### Fixed
+
+- `apps/api/src/main.ts`: bind NestJS to `0.0.0.0` instead of `localhost` so Cloud Run health checks reach the process (`app.listen(port, '0.0.0.0')`)
+
 ## [2026-05-01] — Schedule/availability management (Slices 1–3)
 
 ### Added
