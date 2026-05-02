@@ -110,7 +110,8 @@
       "Bash(npx vitest *)",
       "Bash(grep -rn '$use\\\\|$extends' apps/api/src/ '--include=*.ts')",
       "Bash(grep -rn 'this\\\\.$use\\\\|PrismaClient' apps/api/src/ '--include=*.ts')",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "Bash(grep -r 'OnModuleInit\\\\|connect\\\\|$connect' /Users/carlosfeliz/code/medical_app/apps/api/src/lib '--include=*.ts')"
     ]
   }
 }

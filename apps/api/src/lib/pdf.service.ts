@@ -1,14 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import React from 'react'
-import { Document, Page, Text, View, StyleSheet, renderToBuffer, Font } from '@react-pdf/renderer'
+import PDFDocument from 'pdfkit'
 import type { Prescription, PrescriptionItemRow, InvoiceWithDetails } from '@rezeta/shared'
-
-type Style = Exclude<React.ComponentProps<typeof View>['style'], undefined>
-
-// ─── Fonts ────────────────────────────────────────────────────────────────────
-// Register system fonts as fallback (react-pdf bundles Helvetica by default)
-// In production, embed custom fonts via GCS URLs.
-Font.registerHyphenationCallback((word) => [word])
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -30,130 +22,23 @@ const T = {
   errText: '#7A2B22',
 }
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
-const base = StyleSheet.create({
-  page: {
-    fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: T.n700,
-    backgroundColor: '#FFFFFF',
-    padding: 40,
-  },
-  // Header band
-  headerBand: {
-    borderBottomWidth: 2,
-    borderBottomColor: T.teal,
-    paddingBottom: 14,
-    marginBottom: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  doctorName: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 16,
-    color: T.teal,
-    marginBottom: 2,
-  },
-  doctorMeta: {
-    fontSize: 9,
-    color: T.n500,
-    marginBottom: 1,
-  },
-  dateRight: {
-    fontSize: 9,
-    color: T.n500,
-    textAlign: 'right',
-  },
-  // Section label
-  sectionLabel: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    color: T.n500,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  // Patient block
-  patientBlock: {
-    backgroundColor: T.n25,
-    borderRadius: 4,
-    padding: 10,
-    marginBottom: 16,
-  },
-  patientName: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 13,
-    color: T.n900,
-    marginBottom: 3,
-  },
-  patientMeta: {
-    fontSize: 9,
-    color: T.n500,
-  },
-  // Table
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: T.n50,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: T.n200,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: T.n100,
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-  },
-  tableHeaderCell: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-    color: T.n600,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  tableCell: {
-    fontSize: 10,
-    color: T.n700,
-  },
-  tableCellMuted: {
-    fontSize: 9,
-    color: T.n500,
-  },
-  // Footer
-  footer: {
-    marginTop: 'auto',
-    borderTopWidth: 1,
-    borderTopColor: T.n100,
-    paddingTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  footerText: {
-    fontSize: 8,
-    color: T.n400,
-  },
-  signatureBlock: {
-    alignItems: 'center',
-  },
-  signatureLine: {
-    width: 160,
-    borderTopWidth: 1,
-    borderTopColor: T.n400,
-    marginBottom: 4,
-  },
-  signatureLabel: {
-    fontSize: 9,
-    color: T.n500,
-    textAlign: 'center',
-  },
-})
+// ─── Layout constants ─────────────────────────────────────────────────────────
+// LETTER: 612 x 792 pt
+const PAGE_W = 612
+const PAGE_H = 792
+const MARGIN = 40
+const CONTENT_W = PAGE_W - MARGIN * 2
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+function toBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk))
+    doc.on('end', () => resolve(Buffer.concat(chunks)))
+    doc.on('error', reject)
+    doc.end()
+  })
+}
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
@@ -181,8 +66,41 @@ function calcAge(dateOfBirth: string | null): string {
   return `${age} años`
 }
 
-// ─── Prescription PDF ─────────────────────────────────────────────────────────
+function hexToRgb(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return [r, g, b]
+}
 
+function fillRect(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+): void {
+  doc.save().rect(x, y, w, h).fill(color).restore()
+}
+
+function strokeLine(
+  doc: PDFKit.PDFDocument,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  width = 1,
+): void {
+  doc.save().moveTo(x1, y1).lineTo(x2, y2).strokeColor(color).lineWidth(width).stroke().restore()
+}
+
+function truncate(text: string, maxChars: number): string {
+  return text.length > maxChars ? text.slice(0, maxChars - 1) + '…' : text
+}
+
+// ─── PDF data types ───────────────────────────────────────────────────────────
 export interface PrescriptionPdfData {
   prescription: Prescription
   doctor: {
@@ -203,7 +121,17 @@ export interface PrescriptionPdfData {
   } | null
 }
 
-function PrescriptionDocument({ data }: { data: PrescriptionPdfData }): React.ReactElement {
+export interface InvoicePdfData {
+  invoice: InvoiceWithDetails
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+}
+
+// ─── Prescription PDF ─────────────────────────────────────────────────────────
+function buildPrescription(doc: PDFKit.PDFDocument, data: PrescriptionPdfData): void {
   const { prescription, doctor, patient, location } = data
   const items: PrescriptionItemRow[] = prescription.prescriptionItems ?? []
   const doctorName = doctor.fullName ?? 'Médico'
@@ -214,247 +142,157 @@ function PrescriptionDocument({ data }: { data: PrescriptionPdfData }): React.Re
     : null
   const issuedDate = formatDate(prescription.createdAt)
 
-  const col: {
-    drug: Style
-    dose: Style
-    route: Style
-    frequency: Style
-    duration: Style
-  } = {
-    drug: { flex: 3 },
-    dose: { flex: 2 },
-    route: { flex: 1.5 },
-    frequency: { flex: 2 },
-    duration: { flex: 1.5 },
+  let y = MARGIN
+
+  // ── Header band ──
+  // Doctor name (left)
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  y += 18
+
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) {
+    doc.text(doctor.specialty, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (doctor.licenseNumber) {
+    doc.text(`Matrícula: ${doctor.licenseNumber}`, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (location) {
+    doc.text(location.name, MARGIN, y, { lineBreak: false })
+    y += 12
   }
 
-  return React.createElement(
-    Document,
-    { title: `Receta — ${patientFullName}` },
-    React.createElement(
-      Page,
-      { size: 'LETTER', style: base.page },
-      // Header
-      React.createElement(
-        View,
-        { style: base.headerBand },
-        React.createElement(
-          View,
-          null,
-          React.createElement(Text, { style: base.doctorName }, `Dr. ${doctorName}`),
-          doctor.specialty &&
-            React.createElement(Text, { style: base.doctorMeta }, doctor.specialty),
-          doctor.licenseNumber &&
-            React.createElement(
-              Text,
-              { style: base.doctorMeta },
-              `Matrícula: ${doctor.licenseNumber}`,
-            ),
-          location && React.createElement(Text, { style: base.doctorMeta }, location.name),
-        ),
-        React.createElement(
-          View,
-          null,
-          React.createElement(Text, { style: base.dateRight }, issuedDate),
-          prescription.groupTitle &&
-            React.createElement(
-              Text,
-              { style: { ...base.dateRight, marginTop: 4 } },
-              prescription.groupTitle,
-            ),
-        ),
-      ),
+  // Date (right-aligned)
+  doc.text(issuedDate, MARGIN, MARGIN + 2, { width: CONTENT_W, align: 'right', lineBreak: false })
+  if (prescription.groupTitle) {
+    doc.text(prescription.groupTitle, MARGIN, MARGIN + 14, {
+      width: CONTENT_W,
+      align: 'right',
+      lineBreak: false,
+    })
+  }
 
-      // Rx symbol + patient
-      React.createElement(
-        View,
-        { style: base.patientBlock },
-        React.createElement(
-          View,
-          { style: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 } },
-          React.createElement(
-            Text,
-            {
-              style: { fontFamily: 'Helvetica-Bold', fontSize: 18, color: T.teal, marginRight: 8 },
-            },
-            'Rx',
-          ),
-          React.createElement(Text, { style: base.patientName }, patientFullName),
-        ),
-        React.createElement(
-          Text,
-          { style: base.patientMeta },
-          [age, docId].filter(Boolean).join('  ·  '),
-        ),
-      ),
+  // Border under header
+  y = Math.max(y, MARGIN + 44) + 10
+  strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.teal, 2)
+  y += 14
 
-      // Medications table
-      React.createElement(Text, { style: base.sectionLabel }, 'Medicamentos prescritos'),
-      React.createElement(
-        View,
-        { style: { borderWidth: 1, borderColor: T.n200, borderRadius: 3 } },
-        // Table header
-        React.createElement(
-          View,
-          { style: base.tableHeader },
-          React.createElement(
-            Text,
-            { style: { ...base.tableHeaderCell, ...col.drug } },
-            'Medicamento',
-          ),
-          React.createElement(Text, { style: { ...base.tableHeaderCell, ...col.dose } }, 'Dosis'),
-          React.createElement(Text, { style: { ...base.tableHeaderCell, ...col.route } }, 'Vía'),
-          React.createElement(
-            Text,
-            { style: { ...base.tableHeaderCell, ...col.frequency } },
-            'Frecuencia',
-          ),
-          React.createElement(
-            Text,
-            { style: { ...base.tableHeaderCell, ...col.duration } },
-            'Duración',
-          ),
-        ),
-        // Rows
-        ...items.map((item, idx) =>
-          React.createElement(
-            View,
-            {
-              key: item.id,
-              style: {
-                ...base.tableRow,
-                backgroundColor: idx % 2 === 0 ? '#FFFFFF' : T.n25,
-                borderBottomWidth: idx === items.length - 1 ? 0 : 1,
-              },
-            },
-            React.createElement(
-              View,
-              { style: col.drug },
-              React.createElement(
-                Text,
-                { style: { ...base.tableCell, fontFamily: 'Helvetica-Bold' } },
-                item.drug,
-              ),
-              item.notes && React.createElement(Text, { style: base.tableCellMuted }, item.notes),
-            ),
-            React.createElement(Text, { style: { ...base.tableCell, ...col.dose } }, item.dose),
-            React.createElement(Text, { style: { ...base.tableCell, ...col.route } }, item.route),
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col.frequency } },
-              item.frequency,
-            ),
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col.duration } },
-              item.duration,
-            ),
-          ),
-        ),
-      ),
+  // ── Patient block ──
+  fillRect(doc, MARGIN, y, CONTENT_W, 48, T.n25)
+  // "Rx" label
+  doc.font('Helvetica-Bold').fontSize(18).fillColor(T.teal)
+  doc.text('Rx', MARGIN + 10, y + 10, { lineBreak: false })
+  // Patient name
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900)
+  doc.text(patientFullName, MARGIN + 32, y + 12, { lineBreak: false })
+  // Patient meta
+  const meta = [age, docId].filter(Boolean).join('  ·  ')
+  if (meta) {
+    doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+    doc.text(meta, MARGIN + 10, y + 32, { lineBreak: false })
+  }
+  y += 62
 
-      // Notes
-      prescription.notes &&
-        React.createElement(
-          View,
-          { style: { marginTop: 14 } },
-          React.createElement(Text, { style: base.sectionLabel }, 'Indicaciones adicionales'),
-          React.createElement(
-            Text,
-            { style: { ...base.tableCell, lineHeight: 1.5 } },
-            prescription.notes,
-          ),
-        ),
+  // ── Medications section label ──
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+  doc.text('MEDICAMENTOS PRESCRITOS', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
+  y += 14
 
-      // Footer / signature
-      React.createElement(
-        View,
-        { style: base.footer },
-        React.createElement(
-          Text,
-          { style: base.footerText },
-          'Válida para uso médico exclusivamente.',
-        ),
-        React.createElement(
-          View,
-          { style: base.signatureBlock },
-          React.createElement(View, { style: base.signatureLine }),
-          React.createElement(Text, { style: base.signatureLabel }, `Dr. ${doctorName}`),
-          doctor.licenseNumber &&
-            React.createElement(
-              Text,
-              { style: base.signatureLabel },
-              `Mat. ${doctor.licenseNumber}`,
-            ),
-        ),
-      ),
-    ),
-  )
+  // ── Medications table ──
+  const colWidths = {
+    drug: CONTENT_W * 0.3,
+    dose: CONTENT_W * 0.17,
+    route: CONTENT_W * 0.13,
+    freq: CONTENT_W * 0.23,
+    dur: CONTENT_W * 0.17,
+  }
+  const colX = {
+    drug: MARGIN,
+    dose: MARGIN + colWidths.drug,
+    route: MARGIN + colWidths.drug + colWidths.dose,
+    freq: MARGIN + colWidths.drug + colWidths.dose + colWidths.route,
+    dur: MARGIN + colWidths.drug + colWidths.dose + colWidths.route + colWidths.freq,
+  }
+  const ROW_H = 28
+  const HEADER_H = 22
+
+  // Table border
+  doc
+    .save()
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * items.length)
+    .stroke(T.n200)
+    .restore()
+
+  // Header row
+  fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n600)
+  doc.text('MEDICAMENTO', colX.drug + 8, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('DOSIS', colX.dose + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('VÍA', colX.route + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('FRECUENCIA', colX.freq + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('DURACIÓN', colX.dur + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  y += HEADER_H
+
+  // Data rows
+  items.forEach((item, idx) => {
+    const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
+    fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
+    if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
+
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(item.drug, 22), colX.drug + 8, y + 5, { lineBreak: false })
+    if (item.notes) {
+      doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+      doc.text(truncate(item.notes, 24), colX.drug + 8, y + 16, { lineBreak: false })
+    }
+
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(item.dose, 14), colX.dose + 4, y + 9, { lineBreak: false })
+    doc.text(truncate(item.route, 10), colX.route + 4, y + 9, { lineBreak: false })
+    doc.text(truncate(item.frequency, 18), colX.freq + 4, y + 9, { lineBreak: false })
+    doc.text(truncate(item.duration, 12), colX.dur + 4, y + 9, { lineBreak: false })
+    y += ROW_H
+  })
+
+  // ── Notes ──
+  if (prescription.notes) {
+    y += 14
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+    doc.text('INDICACIONES ADICIONALES', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
+    y += 12
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(prescription.notes, MARGIN, y, { width: CONTENT_W, lineGap: 3 })
+    y = doc.y + 4
+  }
+
+  // ── Footer / signature ──
+  const footerY = PAGE_H - MARGIN - 30
+  strokeLine(doc, MARGIN, footerY, MARGIN + CONTENT_W, footerY, T.n100)
+
+  doc.font('Helvetica').fontSize(8).fillColor(T.n400)
+  doc.text('Válida para uso médico exclusivamente.', MARGIN, footerY + 8, { lineBreak: false })
+
+  // Signature block (right)
+  const sigX = MARGIN + CONTENT_W - 160
+  strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+    width: 160,
+    align: 'center',
+    lineBreak: false,
+  })
+  if (doctor.licenseNumber) {
+    doc.text(`Mat. ${doctor.licenseNumber}`, sigX, footerY + 20, {
+      width: 160,
+      align: 'center',
+      lineBreak: false,
+    })
+  }
 }
 
 // ─── Invoice PDF ──────────────────────────────────────────────────────────────
-
-export interface InvoicePdfData {
-  invoice: InvoiceWithDetails
-  doctor: {
-    fullName: string | null
-    specialty: string | null
-    licenseNumber: string | null
-  }
-}
-
-const invStyles = StyleSheet.create({
-  totalsBlock: {
-    marginTop: 16,
-    alignSelf: 'flex-end',
-    width: 220,
-  },
-  totalsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 3,
-  },
-  totalsLabel: {
-    fontSize: 10,
-    color: T.n600,
-  },
-  totalsValue: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 10,
-    color: T.n800,
-  },
-  totalFinal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: T.n300,
-    paddingTop: 6,
-    marginTop: 4,
-  },
-  totalFinalLabel: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 12,
-    color: T.teal,
-  },
-  totalFinalValue: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 12,
-    color: T.teal,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 3,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 9,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-})
-
 function statusColor(status: string): { bg: string; text: string } {
   switch (status) {
     case 'paid':
@@ -488,248 +326,209 @@ function formatCurrency(amount: number, currency: string): string {
   return `${sym} ${amount.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
 }
 
-function InvoiceDocument({ data }: { data: InvoicePdfData }): React.ReactElement {
+function buildInvoice(doc: PDFKit.PDFDocument, data: InvoicePdfData): void {
   const { invoice, doctor } = data
   const doctorName = doctor.fullName ?? 'Médico'
   const { bg, text: textColor } = statusColor(invoice.status)
-  const col2: {
-    desc: Style
-    qty: Style
-    unit: Style
-    total: Style
-  } = {
-    desc: { flex: 4 },
-    qty: { flex: 1, textAlign: 'right' },
-    unit: { flex: 2, textAlign: 'right' },
-    total: { flex: 2, textAlign: 'right' },
+
+  let y = MARGIN
+
+  // ── Header band ──
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  y += 18
+
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) {
+    doc.text(doctor.specialty, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (doctor.licenseNumber) {
+    doc.text(`Matrícula: ${doctor.licenseNumber}`, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  doc.text(invoice.locationName, MARGIN, y, { lineBreak: false })
+  y += 12
+
+  // Right side: status badge + invoice number + date
+  const rightX = MARGIN + CONTENT_W - 160
+  const badgeLabel = statusLabel(invoice.status)
+  const [br, bg2, bb] = hexToRgb(bg)
+  doc.save().rect(rightX, MARGIN, 160, 16).fill([br, bg2, bb]).restore()
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(textColor)
+  doc.text(badgeLabel, rightX, MARGIN + 4, {
+    width: 160,
+    align: 'center',
+    lineBreak: false,
+    characterSpacing: 0.5,
+  })
+
+  doc.font('Helvetica-Bold').fontSize(14).fillColor(T.n800)
+  doc.text(`Factura ${invoice.invoiceNumber}`, rightX, MARGIN + 22, {
+    width: 160,
+    align: 'right',
+    lineBreak: false,
+  })
+
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  doc.text(formatDate(invoice.issuedAt ?? invoice.createdAt), rightX, MARGIN + 38, {
+    width: 160,
+    align: 'right',
+    lineBreak: false,
+  })
+
+  y = Math.max(y, MARGIN + 54) + 6
+  strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.teal, 2)
+  y += 14
+
+  // ── Patient block ──
+  fillRect(doc, MARGIN, y, CONTENT_W, 36, T.n25)
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+  doc.text('PACIENTE', MARGIN + 10, y + 6, { lineBreak: false, characterSpacing: 0.8 })
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900)
+  doc.text(invoice.patientName, MARGIN + 10, y + 18, { lineBreak: false })
+  y += 50
+
+  // ── Items table ──
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+  doc.text('DETALLE DE SERVICIOS', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
+  y += 14
+
+  const col = {
+    desc: CONTENT_W * 0.5,
+    qty: CONTENT_W * 0.1,
+    unit: CONTENT_W * 0.2,
+    total: CONTENT_W * 0.2,
+  }
+  const colX2 = {
+    desc: MARGIN,
+    qty: MARGIN + col.desc,
+    unit: MARGIN + col.desc + col.qty,
+    total: MARGIN + col.desc + col.qty + col.unit,
+  }
+  const ROW_H = 24
+  const HEADER_H = 22
+
+  doc
+    .save()
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * invoice.items.length)
+    .stroke(T.n200)
+    .restore()
+
+  fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n600)
+  doc.text('DESCRIPCIÓN', colX2.desc + 8, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('CANT.', colX2.qty + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('P. UNIT.', colX2.unit + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('TOTAL', colX2.total + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  y += HEADER_H
+
+  invoice.items.forEach((item, idx) => {
+    const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
+    fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
+    if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
+
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(item.description, 38), colX2.desc + 8, y + 7, { lineBreak: false })
+    doc.text(String(item.quantity), colX2.qty + 4, y + 7, { lineBreak: false })
+    doc.text(formatCurrency(item.unitPrice, invoice.currency), colX2.unit + 4, y + 7, {
+      lineBreak: false,
+    })
+    doc.text(formatCurrency(item.total, invoice.currency), colX2.total + 4, y + 7, {
+      lineBreak: false,
+    })
+    y += ROW_H
+  })
+
+  // ── Totals block ──
+  y += 12
+  const totX = MARGIN + CONTENT_W - 220
+  const totW = 220
+
+  const totRow = (label: string, value: string, color = T.n800, bold = false): void => {
+    doc
+      .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+      .fontSize(bold ? 12 : 10)
+      .fillColor(T.n600)
+    doc.text(label, totX, y, { lineBreak: false })
+    doc
+      .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+      .fontSize(bold ? 12 : 10)
+      .fillColor(color)
+    doc.text(value, totX, y, { width: totW, align: 'right', lineBreak: false })
+    y += bold ? 20 : 16
   }
 
-  return React.createElement(
-    Document,
-    { title: `Factura ${invoice.invoiceNumber} — ${invoice.patientName}` },
-    React.createElement(
-      Page,
-      { size: 'LETTER', style: base.page },
+  totRow('Subtotal', formatCurrency(invoice.subtotal, invoice.currency))
+  if (invoice.tax > 0) totRow('ITBIS (18%)', formatCurrency(invoice.tax, invoice.currency))
+  if (invoice.commissionAmount > 0) {
+    totRow(
+      `Comisión centro (${invoice.commissionPercent}%)`,
+      `− ${formatCurrency(invoice.commissionAmount, invoice.currency)}`,
+      T.errText,
+    )
+  }
+  strokeLine(doc, totX, y, totX + totW, y, T.n300)
+  y += 6
+  totRow('Total', formatCurrency(invoice.total, invoice.currency), T.teal, true)
+  if (invoice.netToDoctor !== invoice.total) {
+    doc.font('Helvetica').fontSize(9).fillColor(T.n600)
+    doc.text('Neto al médico', totX, y, { lineBreak: false })
+    doc.font('Helvetica').fontSize(9).fillColor(T.okText)
+    doc.text(formatCurrency(invoice.netToDoctor, invoice.currency), totX, y, {
+      width: totW,
+      align: 'right',
+      lineBreak: false,
+    })
+    y += 14
+  }
 
-      // Header
-      React.createElement(
-        View,
-        { style: base.headerBand },
-        React.createElement(
-          View,
-          null,
-          React.createElement(Text, { style: base.doctorName }, `Dr. ${doctorName}`),
-          doctor.specialty &&
-            React.createElement(Text, { style: base.doctorMeta }, doctor.specialty),
-          doctor.licenseNumber &&
-            React.createElement(
-              Text,
-              { style: base.doctorMeta },
-              `Matrícula: ${doctor.licenseNumber}`,
-            ),
-          React.createElement(Text, { style: base.doctorMeta }, invoice.locationName),
-        ),
-        React.createElement(
-          View,
-          { style: { alignItems: 'flex-end', gap: 4 } },
-          React.createElement(
-            View,
-            { style: { ...invStyles.statusBadge, backgroundColor: bg } },
-            React.createElement(
-              Text,
-              { style: { ...invStyles.statusText, color: textColor } },
-              statusLabel(invoice.status),
-            ),
-          ),
-          React.createElement(
-            Text,
-            { style: { fontFamily: 'Helvetica-Bold', fontSize: 14, color: T.n800 } },
-            `Factura ${invoice.invoiceNumber}`,
-          ),
-          React.createElement(
-            Text,
-            { style: base.dateRight },
-            formatDate(invoice.issuedAt ?? invoice.createdAt),
-          ),
-        ),
-      ),
+  // ── Payment method ──
+  if (invoice.paymentMethod) {
+    y += 8
+    doc.font('Helvetica').fontSize(8).fillColor(T.n400)
+    doc.text(`Método de pago: ${invoice.paymentMethod}`, MARGIN, y, { lineBreak: false })
+  }
 
-      // Patient block
-      React.createElement(
-        View,
-        { style: base.patientBlock },
-        React.createElement(Text, { style: { ...base.sectionLabel, marginBottom: 2 } }, 'Paciente'),
-        React.createElement(Text, { style: base.patientName }, invoice.patientName),
-      ),
+  // ── Footer ──
+  const footerY = PAGE_H - MARGIN - 30
+  strokeLine(doc, MARGIN, footerY, MARGIN + CONTENT_W, footerY, T.n100)
 
-      // Items table
-      React.createElement(Text, { style: base.sectionLabel }, 'Detalle de servicios'),
-      React.createElement(
-        View,
-        { style: { borderWidth: 1, borderColor: T.n200, borderRadius: 3 } },
-        React.createElement(
-          View,
-          { style: base.tableHeader },
-          React.createElement(
-            Text,
-            { style: { ...base.tableHeaderCell, ...col2.desc } },
-            'Descripción',
-          ),
-          React.createElement(Text, { style: { ...base.tableHeaderCell, ...col2.qty } }, 'Cant.'),
-          React.createElement(
-            Text,
-            { style: { ...base.tableHeaderCell, ...col2.unit } },
-            'P. unit.',
-          ),
-          React.createElement(Text, { style: { ...base.tableHeaderCell, ...col2.total } }, 'Total'),
-        ),
-        ...invoice.items.map((item, idx) =>
-          React.createElement(
-            View,
-            {
-              key: item.id,
-              style: {
-                ...base.tableRow,
-                backgroundColor: idx % 2 === 0 ? '#FFFFFF' : T.n25,
-                borderBottomWidth: idx === invoice.items.length - 1 ? 0 : 1,
-              },
-            },
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col2.desc } },
-              item.description,
-            ),
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col2.qty } },
-              String(item.quantity),
-            ),
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col2.unit } },
-              formatCurrency(item.unitPrice, invoice.currency),
-            ),
-            React.createElement(
-              Text,
-              { style: { ...base.tableCell, ...col2.total } },
-              formatCurrency(item.total, invoice.currency),
-            ),
-          ),
-        ),
-      ),
+  doc.font('Helvetica').fontSize(8).fillColor(T.n400)
+  doc.text('Documento generado electrónicamente · Rezeta Medical ERP', MARGIN, footerY + 8, {
+    lineBreak: false,
+  })
 
-      // Totals
-      React.createElement(
-        View,
-        { style: invStyles.totalsBlock },
-        React.createElement(
-          View,
-          { style: invStyles.totalsRow },
-          React.createElement(Text, { style: invStyles.totalsLabel }, 'Subtotal'),
-          React.createElement(
-            Text,
-            { style: invStyles.totalsValue },
-            formatCurrency(invoice.subtotal, invoice.currency),
-          ),
-        ),
-        invoice.tax > 0 &&
-          React.createElement(
-            View,
-            { style: invStyles.totalsRow },
-            React.createElement(Text, { style: invStyles.totalsLabel }, 'ITBIS (18%)'),
-            React.createElement(
-              Text,
-              { style: invStyles.totalsValue },
-              formatCurrency(invoice.tax, invoice.currency),
-            ),
-          ),
-        invoice.commissionAmount > 0 &&
-          React.createElement(
-            View,
-            { style: invStyles.totalsRow },
-            React.createElement(
-              Text,
-              { style: invStyles.totalsLabel },
-              `Comisión centro (${invoice.commissionPercent}%)`,
-            ),
-            React.createElement(
-              Text,
-              { style: { ...invStyles.totalsValue, color: T.errText } },
-              `− ${formatCurrency(invoice.commissionAmount, invoice.currency)}`,
-            ),
-          ),
-        React.createElement(
-          View,
-          { style: invStyles.totalFinal },
-          React.createElement(Text, { style: invStyles.totalFinalLabel }, 'Total'),
-          React.createElement(
-            Text,
-            { style: invStyles.totalFinalValue },
-            formatCurrency(invoice.total, invoice.currency),
-          ),
-        ),
-        invoice.netToDoctor !== invoice.total &&
-          React.createElement(
-            View,
-            { style: { ...invStyles.totalsRow, marginTop: 4 } },
-            React.createElement(
-              Text,
-              { style: { ...invStyles.totalsLabel, fontSize: 9 } },
-              'Neto al médico',
-            ),
-            React.createElement(
-              Text,
-              { style: { ...invStyles.totalsValue, color: T.okText, fontSize: 9 } },
-              formatCurrency(invoice.netToDoctor, invoice.currency),
-            ),
-          ),
-      ),
-
-      // Payment method
-      invoice.paymentMethod &&
-        React.createElement(
-          View,
-          { style: { marginTop: 12 } },
-          React.createElement(
-            Text,
-            { style: base.footerText },
-            `Método de pago: ${invoice.paymentMethod}`,
-          ),
-        ),
-
-      // Footer
-      React.createElement(
-        View,
-        { style: { ...base.footer, marginTop: 16 } },
-        React.createElement(
-          Text,
-          { style: base.footerText },
-          'Documento generado electrónicamente · Rezeta Medical ERP',
-        ),
-        React.createElement(
-          View,
-          { style: base.signatureBlock },
-          React.createElement(View, { style: base.signatureLine }),
-          React.createElement(Text, { style: base.signatureLabel }, `Dr. ${doctorName}`),
-        ),
-      ),
-    ),
-  )
+  const sigX = MARGIN + CONTENT_W - 160
+  strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+    width: 160,
+    align: 'center',
+    lineBreak: false,
+  })
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
-
 @Injectable()
 export class PdfService {
   async generatePrescription(data: PrescriptionPdfData): Promise<Buffer> {
-    const doc = React.createElement(PrescriptionDocument, { data })
-    const buffer = await renderToBuffer(doc as Parameters<typeof renderToBuffer>[0])
-    return Buffer.from(buffer)
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: 0,
+      info: { Title: `Receta — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildPrescription(doc, data)
+    return toBuffer(doc)
   }
 
   async generateInvoice(data: InvoicePdfData): Promise<Buffer> {
-    const doc = React.createElement(InvoiceDocument, { data })
-    const buffer = await renderToBuffer(doc as Parameters<typeof renderToBuffer>[0])
-    return Buffer.from(buffer)
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: 0,
+      info: { Title: `Factura ${data.invoice.invoiceNumber}` },
+    })
+    buildInvoice(doc, data)
+    return toBuffer(doc)
   }
 }
