@@ -1,4 +1,4 @@
-import { ProtocolBlock, ProtocolDosageTable, ProtocolAlert } from '@/components/ui/ProtocolBlock'
+import { ProtocolBlock, ProtocolAlert } from '@/components/ui/ProtocolBlock'
 import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
@@ -300,6 +300,72 @@ function ImagingOrderRunMode({
   )
 }
 
+function DosageTableRunMode({
+  rows,
+  onAutoPopulate,
+}: {
+  rows: Array<{
+    id: string
+    drug: string
+    dose: string
+    route: string
+    frequency: string
+    notes: string
+  }>
+  onAutoPopulate?: (field: SoapField, text: string) => void
+}): JSX.Element {
+  const queueMedication = useOrderQueueStore((s) => s.queueMedication)
+  const queuedMedications = useOrderQueueStore((s) => s.medications)
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => {
+        const source = `protocol:${row.id}`
+        const alreadyQueued = queuedMedications.some((m) => m.source === source)
+        return (
+          <div
+            key={row.id}
+            className="flex items-start justify-between gap-3 px-3 py-3 border border-n-200 rounded bg-n-0"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-sans font-semibold text-n-800">{row.drug}</div>
+              <div className="text-[12px] font-mono text-n-500 mt-1">
+                {row.dose} · {row.route} · {row.frequency}
+              </div>
+              {row.notes && (
+                <div className="text-[12px] font-sans text-n-500 mt-1 italic">{row.notes}</div>
+              )}
+            </div>
+            {alreadyQueued ? (
+              <span className="shrink-0 text-[12px] font-mono text-success-text bg-success-bg border border-success-border px-3 py-1 rounded-sm">
+                ✓ Añadido
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  queueMedication({
+                    drug: row.drug,
+                    dose: row.dose,
+                    route: row.route,
+                    frequency: row.frequency,
+                    duration: '',
+                    ...(row.notes ? { notes: row.notes } : {}),
+                    source,
+                  })
+                  onAutoPopulate?.('plan', `${row.drug} ${row.dose}`)
+                }}
+                className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-3 py-1 rounded-sm transition-colors"
+              >
+                + Añadir a receta
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function LabOrderRunMode({
   orders,
   onAutoPopulate,
@@ -423,8 +489,8 @@ export function BlockRendererRunMode({
 
     case 'dosage_table':
       return (
-        <ProtocolBlock type="Tabla" title={b.title ?? 'Tabla de dosis'} nested={nested}>
-          <ProtocolDosageTable rows={b.rows} {...(b.title ? { title: b.title } : {})} />
+        <ProtocolBlock type="Medicación" title={b.title ?? 'Medicamentos'} nested={nested}>
+          <DosageTableRunMode rows={b.rows} {...(onAutoPopulate ? { onAutoPopulate } : {})} />
         </ProtocolBlock>
       )
 

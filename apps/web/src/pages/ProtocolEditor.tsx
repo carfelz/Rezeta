@@ -33,6 +33,8 @@ const PALETTE_ITEMS = [
   { type: 'decision', icon: 'ph-tree-structure', label: 'Árbol de decisión', active: true },
   { type: 'alert', icon: 'ph-warning-octagon', label: 'Alerta clínica', active: true },
   { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: true },
+  { type: 'imaging_order', icon: 'ph-scan', label: 'Orden de imagen', active: true },
+  { type: 'lab_order', icon: 'ph-test-tube', label: 'Orden de laboratorio', active: true },
 ] as const
 
 function makeid() {
@@ -80,6 +82,38 @@ function makeBlock(type: string): ProtocolBlock | null {
           route: '',
           frequency: '',
           notes: '',
+        },
+      ],
+    }
+  }
+  if (type === 'imaging_order') {
+    return {
+      id: makeid(),
+      type: 'imaging_order',
+      orders: [
+        {
+          id: `img_${crypto.randomUUID().slice(0, 8)}`,
+          study_type: '',
+          indication: '',
+          urgency: 'routine' as const,
+          contrast: false,
+          fasting_required: false,
+        },
+      ],
+    }
+  }
+  if (type === 'lab_order') {
+    return {
+      id: makeid(),
+      type: 'lab_order',
+      orders: [
+        {
+          id: `lab_${crypto.randomUUID().slice(0, 8)}`,
+          test_name: '',
+          indication: '',
+          urgency: 'routine' as const,
+          fasting_required: false,
+          sample_type: 'blood' as const,
         },
       ],
     }

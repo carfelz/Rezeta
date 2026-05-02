@@ -249,6 +249,8 @@ export const strings = {
   BLOCK_TYPE_DECISION: 'Decisión',
   BLOCK_TYPE_DOSAGE_TABLE: 'Dosificación',
   BLOCK_TYPE_ALERT: 'Alerta',
+  BLOCK_TYPE_IMAGING_ORDER: 'Imagen',
+  BLOCK_TYPE_LAB_ORDER: 'Laboratorio',
   BLOCK_TYPE_UNKNOWN: 'Bloque',
 
   // ── Settings — Templates ──────────────────────────────────────────────────

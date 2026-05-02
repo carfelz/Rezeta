@@ -4,6 +4,34 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-02] — Protocol dosage_table run mode: add medications to prescription queue
+
+### Added
+
+- `BlockRendererRunMode.tsx`: `DosageTableRunMode` component renders each dosage row with a "+ Añadir a receta" button; clicking queues the medication via `useOrderQueueStore.queueMedication()` and auto-populates the Plan SOAP field
+
+### Changed
+
+- `BlockRendererRunMode.tsx`: `dosage_table` case now renders interactive `DosageTableRunMode` instead of the static `ProtocolDosageTable`; removed unused `ProtocolDosageTable` import
+
+---
+
+## [2026-05-02] — Consultation protocol fixes (imaging/lab blocks, layout, snapshot)
+
+### Added
+
+- `packages/shared`: `imaging_order` and `lab_order` block types added to `ProtocolBlockSchema` and `TemplateBlockSchema` with `ImagingOrderItemSchema` and `LabOrderItemSchema`
+- `EditorBlockRenderer.tsx`: `ImagingOrderBlockEditor` and `LabOrderBlockEditor` inline editors with urgency/sample-type selects and add/remove row controls
+- `ProtocolEditor.tsx`: "Orden de imagen" and "Orden de laboratorio" added to block palette and `makeBlock()` factory
+- `BlockRenderer.tsx`: `ImagingOrderBlock` and `LabOrderBlock` interfaces added to `ProtocolBlock` discriminated union; render cases added for both types
+- `strings.ts`: `BLOCK_TYPE_IMAGING_ORDER` and `BLOCK_TYPE_LAB_ORDER` Spanish labels
+
+### Changed
+
+- `Consulta.tsx`: Protocol cards moved from left SOAP column to right sidebar (360px wide) so doctors can reference the protocol while writing notes
+- `Consulta.tsx`: `ProtocolRunCard` now reads blocks from `usage.content.blocks` (stored snapshot) instead of fetching via `useGetVersion` — eliminates redundant API call and loading spinner
+- `Consulta.tsx`: Editor grid widened from `1fr 320px` to `1fr 360px`
+
 ## [2026-05-02] — Consultation fee per location (fixes auto-invoice)
 
 ### Added

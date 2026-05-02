@@ -11,6 +11,7 @@ import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
+import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
 type SectionBlock = Extract<ProtocolBlock, { type: 'section' }>
 
@@ -21,6 +22,8 @@ const EDITABLE_BLOCK_TYPES = new Set([
   'steps',
   'decision',
   'dosage_table',
+  'imaging_order',
+  'lab_order',
 ])
 
 interface EditorBlockRendererProps {
@@ -380,7 +383,330 @@ function EditForm({ block }: { block: ProtocolBlock }): JSX.Element | null {
   if (block.type === 'dosage_table') {
     return <DosageTableEditor id={block.id} title={block.title} rows={block.rows} />
   }
+  if (block.type === 'imaging_order') {
+    return <ImagingOrderBlockEditor id={block.id} title={block.title} orders={block.orders} />
+  }
+  if (block.type === 'lab_order') {
+    return <LabOrderBlockEditor id={block.id} title={block.title} orders={block.orders} />
+  }
   return null
+}
+
+// ── ImagingOrderBlockEditor ───────────────────────────────────────────────────
+
+const URGENCY_OPTIONS: { value: OrderUrgency; label: string }[] = [
+  { value: 'routine', label: 'Rutina' },
+  { value: 'urgent', label: 'Urgente' },
+  { value: 'stat', label: 'STAT' },
+]
+
+function ImagingOrderBlockEditor({
+  id,
+  title,
+  orders,
+}: {
+  id: string
+  title?: string
+  orders: ImagingOrderItem[]
+}): JSX.Element {
+  const [draftTitle, setDraftTitle] = useState(title ?? '')
+  const [draftOrders, setDraftOrders] = useState<ImagingOrderItem[]>(orders)
+  const updateBlock = useEditorStore((s) => s.updateBlock)
+  const selectBlock = useEditorStore((s) => s.selectBlock)
+
+  const addOrder = () => {
+    setDraftOrders((prev) => [
+      ...prev,
+      {
+        id: `img_${crypto.randomUUID().slice(0, 8)}`,
+        study_type: '',
+        indication: '',
+        urgency: 'routine' as OrderUrgency,
+        contrast: false,
+        fasting_required: false,
+      },
+    ])
+  }
+
+  const updateOrder = (orderId: string, patch: Partial<ImagingOrderItem>) => {
+    setDraftOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...patch } : o)))
+  }
+
+  const removeOrder = (orderId: string) => {
+    setDraftOrders((prev) => prev.filter((o) => o.id !== orderId))
+  }
+
+  const commit = () => {
+    updateBlock(id, (b) => {
+      if (b.type !== 'imaging_order') return b
+      const trimmed = draftTitle.trim()
+      return { ...b, orders: draftOrders, ...(trimmed ? { title: trimmed } : {}) }
+    })
+    selectBlock(null)
+  }
+
+  return (
+    <div className="p-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <label className="text-[12px] font-sans font-medium text-n-600">Título (opcional)</label>
+        <input
+          type="text"
+          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder="Ej. Estudios de imagen cardíaca"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-[12px] font-sans font-medium text-n-600">Estudios</label>
+        {draftOrders.map((order, idx) => (
+          <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
+              <input
+                type="text"
+                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                value={order.study_type}
+                onChange={(e) => updateOrder(order.id, { study_type: e.target.value })}
+                placeholder="Tipo de estudio (ej. Radiografía de tórax PA)"
+                autoFocus={idx === draftOrders.length - 1 && order.study_type === ''}
+              />
+              <button
+                onClick={() => removeOrder(order.id)}
+                disabled={draftOrders.length === 1}
+                className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <i className="ph ph-x text-[12px]" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                value={order.indication}
+                onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
+                placeholder="Indicación clínica"
+              />
+              <select
+                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+                value={order.urgency}
+                onChange={(e) => updateOrder(order.id, { urgency: e.target.value as OrderUrgency })}
+              >
+                {URGENCY_OPTIONS.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={order.contrast}
+                  onChange={(e) => updateOrder(order.id, { contrast: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span className="text-[12px] font-sans text-n-600">Con contraste</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={order.fasting_required}
+                  onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span className="text-[12px] font-sans text-n-600">Requiere ayuno</span>
+              </label>
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addOrder}
+          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start"
+        >
+          + Añadir estudio
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          onClick={() => selectBlock(null)}
+          className="h-[28px] px-3 text-[12.5px] font-sans border border-n-300 rounded-sm text-n-700 hover:bg-n-50"
+        >
+          {strings.EDITOR_BLOCK_CANCEL}
+        </button>
+        <button
+          onClick={commit}
+          disabled={draftOrders.length === 0}
+          className="h-[28px] px-3 text-[12.5px] font-sans bg-p-500 text-white rounded-sm hover:bg-p-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {strings.EDITOR_BLOCK_APPLY}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── LabOrderBlockEditor ───────────────────────────────────────────────────────
+
+const SAMPLE_TYPE_OPTIONS: { value: LabSampleType; label: string }[] = [
+  { value: 'blood', label: 'Sangre' },
+  { value: 'urine', label: 'Orina' },
+  { value: 'stool', label: 'Heces' },
+  { value: 'other', label: 'Otro' },
+]
+
+function LabOrderBlockEditor({
+  id,
+  title,
+  orders,
+}: {
+  id: string
+  title?: string
+  orders: LabOrderItem[]
+}): JSX.Element {
+  const [draftTitle, setDraftTitle] = useState(title ?? '')
+  const [draftOrders, setDraftOrders] = useState<LabOrderItem[]>(orders)
+  const updateBlock = useEditorStore((s) => s.updateBlock)
+  const selectBlock = useEditorStore((s) => s.selectBlock)
+
+  const addOrder = () => {
+    setDraftOrders((prev) => [
+      ...prev,
+      {
+        id: `lab_${crypto.randomUUID().slice(0, 8)}`,
+        test_name: '',
+        indication: '',
+        urgency: 'routine' as OrderUrgency,
+        fasting_required: false,
+        sample_type: 'blood' as LabSampleType,
+      },
+    ])
+  }
+
+  const updateOrder = (orderId: string, patch: Partial<LabOrderItem>) => {
+    setDraftOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...patch } : o)))
+  }
+
+  const removeOrder = (orderId: string) => {
+    setDraftOrders((prev) => prev.filter((o) => o.id !== orderId))
+  }
+
+  const commit = () => {
+    updateBlock(id, (b) => {
+      if (b.type !== 'lab_order') return b
+      const trimmed = draftTitle.trim()
+      return { ...b, orders: draftOrders, ...(trimmed ? { title: trimmed } : {}) }
+    })
+    selectBlock(null)
+  }
+
+  return (
+    <div className="p-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <label className="text-[12px] font-sans font-medium text-n-600">Título (opcional)</label>
+        <input
+          type="text"
+          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder="Ej. Perfil metabólico completo"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-[12px] font-sans font-medium text-n-600">Pruebas</label>
+        {draftOrders.map((order, idx) => (
+          <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
+              <input
+                type="text"
+                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                value={order.test_name}
+                onChange={(e) => updateOrder(order.id, { test_name: e.target.value })}
+                placeholder="Nombre de la prueba (ej. Hemograma completo)"
+                autoFocus={idx === draftOrders.length - 1 && order.test_name === ''}
+              />
+              <button
+                onClick={() => removeOrder(order.id)}
+                disabled={draftOrders.length === 1}
+                className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <i className="ph ph-x text-[12px]" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                value={order.indication}
+                onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
+                placeholder="Indicación clínica"
+              />
+              <select
+                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+                value={order.urgency}
+                onChange={(e) => updateOrder(order.id, { urgency: e.target.value as OrderUrgency })}
+              >
+                {URGENCY_OPTIONS.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+                value={order.sample_type}
+                onChange={(e) =>
+                  updateOrder(order.id, { sample_type: e.target.value as LabSampleType })
+                }
+              >
+                {SAMPLE_TYPE_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={order.fasting_required}
+                onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span className="text-[12px] font-sans text-n-600">Requiere ayuno</span>
+            </label>
+          </div>
+        ))}
+        <button
+          onClick={addOrder}
+          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start"
+        >
+          + Añadir prueba
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          onClick={() => selectBlock(null)}
+          className="h-[28px] px-3 text-[12.5px] font-sans border border-n-300 rounded-sm text-n-700 hover:bg-n-50"
+        >
+          {strings.EDITOR_BLOCK_CANCEL}
+        </button>
+        <button
+          onClick={commit}
+          disabled={draftOrders.length === 0}
+          className="h-[28px] px-3 text-[12.5px] font-sans bg-p-500 text-white rounded-sm hover:bg-p-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {strings.EDITOR_BLOCK_APPLY}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -394,6 +720,8 @@ function blockTypeLabel(type: string): string {
     dosage_table: strings.BLOCK_TYPE_DOSAGE_TABLE,
     alert: strings.BLOCK_TYPE_ALERT,
     section: strings.BLOCK_TYPE_SECTION,
+    imaging_order: strings.BLOCK_TYPE_IMAGING_ORDER,
+    lab_order: strings.BLOCK_TYPE_LAB_ORDER,
   }
   return labels[type] ?? strings.BLOCK_TYPE_UNKNOWN
 }
@@ -416,6 +744,16 @@ function blockDisplayTitle(block: ProtocolBlock): string {
       return block.title ?? strings.BLOCK_TYPE_DOSAGE_TABLE
     case 'section':
       return block.title
+    case 'imaging_order':
+      return (
+        block.title ??
+        `${block.orders.length} estudio${block.orders.length !== 1 ? 's' : ''} de imagen`
+      )
+    case 'lab_order':
+      return (
+        block.title ??
+        `${block.orders.length} prueba${block.orders.length !== 1 ? 's' : ''} de laboratorio`
+      )
     default:
       return strings.BLOCK_TYPE_UNKNOWN
   }

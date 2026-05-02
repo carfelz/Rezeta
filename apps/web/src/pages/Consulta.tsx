@@ -15,7 +15,6 @@ import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ConsultationProtocolUsage, Vitals } from '@rezeta/shared'
 import {
   Button,
-  Badge,
   Modal,
   ModalContent,
   ModalHeader,
@@ -395,8 +394,6 @@ function ProtocolRunCard({
   isSigned,
   onAppendToSoap,
 }: ProtocolRunCardProps): JSX.Element {
-  const { useGetVersion } = useProtocols()
-  const versionQuery = useGetVersion(usage.protocolId, usage.protocolVersionId)
   const updateCheckedState = useUpdateCheckedState(consultationId, usage.id)
   const removeUsage = useRemoveProtocolUsage(consultationId)
   const addLinkedUsage = useAddProtocolUsage(consultationId)
@@ -498,7 +495,7 @@ function ProtocolRunCard({
     onLaunchLinkedProtocol: handleLaunchLinkedProtocol,
     ...(isSigned ? {} : { onAutoPopulate: onAppendToSoap }),
   }
-  const blocks = versionQuery.data?.content?.blocks ?? []
+  const blocks = usage.content?.blocks ?? []
   const completedCount = Object.values(checkedState).filter(Boolean).length
   const isChild = usage.depth > 0
 
@@ -573,11 +570,7 @@ function ProtocolRunCard({
         </div>
       </div>
       <div className="px-5 py-4">
-        {versionQuery.isLoading ? (
-          <div className="flex items-center gap-2 py-3 text-[13px] text-n-400">
-            <i className="ph ph-spinner animate-spin text-[13px]" /> Cargando…
-          </div>
-        ) : blocks.length === 0 ? (
+        {blocks.length === 0 ? (
           <p className="text-[13px] text-n-400 py-2">Sin bloques.</p>
         ) : (
           <div className="flex flex-col gap-0">
@@ -1025,7 +1018,7 @@ export function Consulta(): JSX.Element {
       )}
 
       {/* ── Two-column layout ─────────────────────────────────────────────────── */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 320px' }}>
+      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 360px' }}>
         {/* ── LEFT: clinical sections ─────────────────────────────────────────── */}
         <div>
           <SectionBlock title="Motivo de consulta">
@@ -1085,25 +1078,6 @@ export function Consulta(): JSX.Element {
           <SectionBlock title="Diagnósticos">
             <DiagnosesSection diagnoses={diagnoses} onChange={setDiagnoses} disabled={isSigned} />
           </SectionBlock>
-
-          {/* Applied protocols render inline in main column */}
-          {consultation.protocolUsages.length > 0 && (
-            <div>
-              <div className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400 mb-3 px-1">
-                Protocolos aplicados · {consultation.protocolUsages.length}
-              </div>
-              {consultation.protocolUsages.map((usage) => (
-                <ProtocolRunCard
-                  key={usage.id}
-                  usage={usage}
-                  allUsages={consultation.protocolUsages}
-                  consultationId={consultation.id}
-                  isSigned={isSigned}
-                  onAppendToSoap={handleAppendToSoap}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         {/* ── RIGHT: sidebar ──────────────────────────────────────────────────── */}
@@ -1136,36 +1110,50 @@ export function Consulta(): JSX.Element {
             </AsideCard>
           )}
 
-          {/* Protocol quick-add */}
-          <AsideCard title="Aplicar protocolo">
-            <div className="flex flex-col gap-2">
-              {consultation.protocolUsages.slice(0, 3).map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-sm text-[12.5px] text-n-700"
-                >
-                  <i className="ph ph-stack text-[15px] text-p-500 shrink-0" />
-                  <span className="flex-1 truncate">{u.protocolTitle}</span>
-                  <Badge variant="signed" showDot={false}>
-                    v{u.versionNumber}
-                  </Badge>
-                </div>
-              ))}
+          {/* Protocols panel */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400">
+                Protocolos
+                {consultation.protocolUsages.length > 0 && (
+                  <span className="ml-2 text-n-500">· {consultation.protocolUsages.length}</span>
+                )}
+              </span>
               {!isSigned && (
                 <button
                   type="button"
                   onClick={() => setShowPicker(true)}
-                  className="flex items-center justify-center gap-2 w-full py-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 border border-n-200 rounded-sm hover:border-n-400 transition-colors bg-n-0"
+                  className="flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-sans text-n-500 hover:text-n-800 border border-n-200 rounded-sm hover:border-n-400 transition-colors bg-n-0"
                 >
-                  <i className="ph ph-magnifying-glass text-[13px]" />
-                  Buscar protocolo…
+                  <i className="ph ph-plus text-[12px]" />
+                  Agregar
                 </button>
               )}
-              {consultation.protocolUsages.length === 0 && isSigned && (
-                <p className="text-[12.5px] text-n-400">Sin protocolos aplicados.</p>
-              )}
             </div>
-          </AsideCard>
+            {consultation.protocolUsages.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-6 border border-dashed border-n-200 rounded-md text-center">
+                <i className="ph ph-stack text-[22px] text-n-400" />
+                <p className="text-[12.5px] text-n-400">
+                  {isSigned
+                    ? 'Sin protocolos aplicados.'
+                    : 'Agrega un protocolo para guiar esta consulta.'}
+                </p>
+              </div>
+            ) : (
+              <div>
+                {consultation.protocolUsages.map((usage) => (
+                  <ProtocolRunCard
+                    key={usage.id}
+                    usage={usage}
+                    allUsages={consultation.protocolUsages}
+                    consultationId={consultation.id}
+                    isSigned={isSigned}
+                    onAppendToSoap={handleAppendToSoap}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Previous consultations */}
           {prevList.length > 0 && (

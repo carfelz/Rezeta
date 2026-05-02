@@ -34,6 +34,30 @@ export const DosageRowSchema = z.object({
   notes: z.string(),
 })
 
+export const OrderUrgencySchema = z.enum(['routine', 'urgent', 'stat'])
+export const LabSampleTypeSchema = z.enum(['blood', 'urine', 'stool', 'other'])
+
+export const ImagingOrderItemSchema = z.object({
+  id: z.string(),
+  study_type: z.string(),
+  indication: z.string(),
+  urgency: OrderUrgencySchema,
+  contrast: z.boolean(),
+  fasting_required: z.boolean(),
+  special_instructions: z.string().optional(),
+})
+
+export const LabOrderItemSchema = z.object({
+  id: z.string(),
+  test_name: z.string(),
+  test_code: z.string().optional(),
+  indication: z.string(),
+  urgency: OrderUrgencySchema,
+  fasting_required: z.boolean(),
+  sample_type: LabSampleTypeSchema,
+  special_instructions: z.string().optional(),
+})
+
 const FixedDosageColumnsSchema = z.tuple([
   z.literal('drug'),
   z.literal('dose'),
@@ -83,6 +107,16 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       title: z.string().optional(),
       content: z.string(),
     }),
+    BaseBlockSchema.extend({
+      type: z.literal('imaging_order'),
+      title: z.string().optional(),
+      orders: z.array(ImagingOrderItemSchema).min(1),
+    }),
+    BaseBlockSchema.extend({
+      type: z.literal('lab_order'),
+      title: z.string().optional(),
+      orders: z.array(LabOrderItemSchema).min(1),
+    }),
   ]),
 )
 
@@ -130,6 +164,16 @@ export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       severity: AlertSeveritySchema.optional(),
       title: z.string().optional(),
       content: z.string().optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('imaging_order'),
+      title: z.string().optional(),
+      orders: z.array(ImagingOrderItemSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('lab_order'),
+      title: z.string().optional(),
+      orders: z.array(LabOrderItemSchema).optional(),
     }),
   ]),
 )
