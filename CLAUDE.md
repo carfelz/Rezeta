@@ -105,29 +105,32 @@ Key design decisions:
 - **No ICD-10 coding** — diagnoses are free-text. Latin American markets do not typically use ICD-10 in ambulatory care.
 - **SOAP note fields:** `subjective`, `objective`, `assessment`, `plan` (plus `chief_complaint`, `vitals`, `diagnoses`).
 
-## MVP Scope Reminder
+## Current Version
 
-If asked to add a feature, first check whether it's in MVP scope. The MVP includes:
+**v0.0.1 — MVP shipped (2026-05-01).** All seven MVP modules are complete and deployed.
 
-- Patient management
-- Multi-location management
-- Appointments & calendar
-- Consultations (SOAP notes)
-- Prescriptions
-- Basic billing/invoicing
-- Protocol engine (full — tenant-owned templates, types, onboarding, and protocol CRUD)
+| Module                                | Status  |
+| ------------------------------------- | ------- |
+| Patient management                    | ✅ Done |
+| Multi-location management + schedules | ✅ Done |
+| Appointments & calendar               | ✅ Done |
+| Consultations (SOAP notes)            | ✅ Done |
+| Prescriptions                         | ✅ Done |
+| Basic billing / invoicing             | ✅ Done |
+| Protocol engine (full)                | ✅ Done |
+| Audit log                             | ✅ Done |
 
-Features explicitly out of MVP: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing, protocol-to-consultation integration. If a feature request falls in the out-of-scope list, flag it and ask whether to defer.
-
-**For protocol engine work specifically**, the source of truth for what's been built and what's next is `specs/protocol-engine-slices.md`. Read it before starting any protocol engine slice — it encodes architectural decisions and slice boundaries that aren't repeated elsewhere.
+Work now targets **v1.5** features (see `specs/full-scope.md` Phase 2). If asked to add a feature, check `specs/full-scope.md` for its target phase before starting. Features explicitly deferred: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing, protocol-to-consultation integration.
 
 ## Code Conventions
 
-> To be filled in as implementation begins. Add conventions here as we establish them.
-
-- (placeholder) Indentation: 2 spaces
-- (placeholder) Naming: snake_case for DB, camelCase for TypeScript
-- (placeholder) Tests live alongside source in `__tests__/` directories
+- Indentation: 2 spaces
+- Naming: `snake_case` for DB columns/tables, `camelCase` for TypeScript
+- Tests live alongside source in `__tests__/` directories
+- Zod schemas in `packages/shared/src/schemas/` — shared between API validation and frontend forms
+- Error codes: closed enum in `packages/shared/src/errors.ts`
+- Repository layer always filters by `tenant_id` (or `userId` for tenant-less models like ScheduleBlock)
+- Hard deletes only on models without `deleted_at` (e.g. ScheduleBlock, ScheduleException); soft deletes everywhere else
 
 ## Commands
 

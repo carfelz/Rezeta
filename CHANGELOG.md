@@ -4,6 +4,30 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [0.0.1] — 2026-05-01 — MVP release
+
+First complete release of the Medical ERP. All seven MVP modules ship in this version.
+
+### Modules
+
+- **Patient Management** — demographics, medical history, allergies, chronic conditions, doctor-owned patient relationships
+- **Multi-Location Management** — unlimited locations per tenant, per-location fees and commissions, weekly schedule blocks and date exceptions (`/ajustes/ubicaciones`, `/ajustes/horarios`)
+- **Appointments & Calendar** — location-aware scheduling, conflict detection, status workflow, calendar view (`/agenda`)
+- **Consultations / SOAP Notes** — structured clinical notes (chief complaint, vitals, subjective/objective/assessment/plan, diagnoses), sign and amend workflow for immutability
+- **Prescriptions** — prescription items with dose/route/frequency, lab and imaging orders, PDF generation
+- **Basic Billing / Invoicing** — per-location invoicing, commission tracking, payment status workflow (`/facturacion`)
+- **Protocol Engine** — full three-layer model (ProtocolTemplate → ProtocolType → Protocol), template editor, type CRUD, protocol editor with block palette and live preview, mobile viewer, immutable version history, onboarding flow at `/bienvenido`
+
+### Cross-cutting
+
+- **Audit Log** — unified append-only event log covering entity mutations, auth, communications, and system events; plan-tier UI gating; CSV export (`/ajustes/registros`)
+- **Multi-tenancy** — every record scoped by `tenant_id`; tenant isolation enforced at the repository layer
+- **Soft deletes** — `deleted_at` flags on all clinical entities
+- **Firebase Authentication** — email/password + Google OAuth
+- **Design system** — Source Serif 4 + IBM Plex Sans + IBM Plex Mono, design tokens, Radix UI components, Phosphor Icons
+
+---
+
 ## [2026-05-01] — Fix Cloud Run container startup failure
 
 ### Fixed
