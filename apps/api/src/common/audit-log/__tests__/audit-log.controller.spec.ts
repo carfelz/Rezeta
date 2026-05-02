@@ -92,6 +92,46 @@ describe('AuditLogController', () => {
       await controller.list('tenant-1', 'cursor-abc')
       expect(mockSvc.list).toHaveBeenCalledWith(expect.objectContaining({ cursor: 'cursor-abc' }))
     })
+
+    it('passes actorUserId filter through', async () => {
+      await controller.list('tenant-1', undefined, undefined, undefined, undefined, 'user-x')
+      expect(mockSvc.list).toHaveBeenCalledWith(expect.objectContaining({ actorUserId: 'user-x' }))
+    })
+
+    it('passes entityType and entityId filters through', async () => {
+      await controller.list(
+        'tenant-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'Patient',
+        'patient-1',
+      )
+      expect(mockSvc.list).toHaveBeenCalledWith(
+        expect.objectContaining({ entityType: 'Patient', entityId: 'patient-1' }),
+      )
+    })
+
+    it('passes status filter through', async () => {
+      await controller.list(
+        'tenant-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'failed',
+      )
+      expect(mockSvc.list).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }))
+    })
   })
 
   describe('getById', () => {
@@ -189,6 +229,80 @@ describe('AuditLogController', () => {
       )
       const filters = mockSvc.exportCsv.mock.calls[0]?.[1] as Record<string, unknown>
       expect(filters['toDate']).toBeInstanceOf(Date)
+    })
+
+    it('passes actorUserId filter to exportCsv', async () => {
+      const res = makeRes()
+      await controller.exportCsv(
+        'tenant-1',
+        undefined,
+        undefined,
+        'user-x',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        res as never,
+      )
+      const filters = mockSvc.exportCsv.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(filters['actorUserId']).toBe('user-x')
+    })
+
+    it('passes category and action filters to exportCsv', async () => {
+      const res = makeRes()
+      await controller.exportCsv(
+        'tenant-1',
+        undefined,
+        undefined,
+        undefined,
+        'auth',
+        'login',
+        undefined,
+        undefined,
+        undefined,
+        res as never,
+      )
+      const filters = mockSvc.exportCsv.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(filters['category']).toBe('auth')
+      expect(filters['action']).toBe('login')
+    })
+
+    it('passes entityType and entityId filters to exportCsv', async () => {
+      const res = makeRes()
+      await controller.exportCsv(
+        'tenant-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'Patient',
+        'patient-1',
+        undefined,
+        res as never,
+      )
+      const filters = mockSvc.exportCsv.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(filters['entityType']).toBe('Patient')
+      expect(filters['entityId']).toBe('patient-1')
+    })
+
+    it('passes status filter to exportCsv', async () => {
+      const res = makeRes()
+      await controller.exportCsv(
+        'tenant-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'failed',
+        res as never,
+      )
+      const filters = mockSvc.exportCsv.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(filters['status']).toBe('failed')
     })
   })
 })

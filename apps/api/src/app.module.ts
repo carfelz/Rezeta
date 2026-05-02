@@ -26,6 +26,7 @@ import { ConsultationsModule } from './modules/consultations/index.js'
 import { OrdersModule } from './modules/orders/index.js'
 import { ProtocolSuggestionsModule } from './modules/protocol-suggestions/index.js'
 import { InvoicesModule } from './modules/invoices/index.js'
+import { SchedulesModule } from './modules/schedules/index.js'
 import { AuditLogModule } from './common/audit-log/audit-log.module.js'
 import { Public } from './common/decorators/public.decorator.js'
 
@@ -63,6 +64,7 @@ class AppController {
     OrdersModule,
     ProtocolSuggestionsModule,
     InvoicesModule,
+    SchedulesModule,
   ],
   controllers: [AppController],
   providers: [

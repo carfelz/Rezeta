@@ -48,7 +48,11 @@ export class AuditLogService {
       fromDate = getPlanDateCutoff(plan)
     }
 
-    const rows = await this.repo.findByTenant({ ...filters, fromDate, limit })
+    const rows = await this.repo.findByTenant({
+      ...filters,
+      ...(fromDate ? { fromDate } : {}),
+      limit,
+    })
     const hasMore = rows.length > limit
     const data = hasMore ? rows.slice(0, limit) : rows
     const nextCursor = hasMore ? (data[data.length - 1]?.id ?? null) : null

@@ -63,16 +63,16 @@ export class AuditLogController {
   ): Promise<AuditLogListResponse> {
     const filters: AuditLogFilters = {
       tenantId,
-      cursor,
-      limit: limitStr ? parseInt(limitStr, 10) : undefined,
-      fromDate: dateFrom ? new Date(dateFrom) : undefined,
-      toDate: dateTo ? new Date(dateTo) : undefined,
-      actorUserId,
-      category: category as AuditLogFilters['category'],
-      action: action as AuditLogFilters['action'],
-      entityType,
-      entityId,
-      status: status as AuditLogFilters['status'],
+      ...(cursor ? { cursor } : {}),
+      ...(limitStr ? { limit: parseInt(limitStr, 10) } : {}),
+      ...(dateFrom ? { fromDate: new Date(dateFrom) } : {}),
+      ...(dateTo ? { toDate: new Date(dateTo) } : {}),
+      ...(actorUserId ? { actorUserId } : {}),
+      ...(category ? { category: category as NonNullable<AuditLogFilters['category']> } : {}),
+      ...(action ? { action: action as NonNullable<AuditLogFilters['action']> } : {}),
+      ...(entityType ? { entityType } : {}),
+      ...(entityId ? { entityId } : {}),
+      ...(status ? { status: status as NonNullable<AuditLogFilters['status']> } : {}),
     }
     return this.svc.list(filters)
   }
@@ -95,14 +95,14 @@ export class AuditLogController {
     @Res() res?: Response,
   ): Promise<void> {
     const csv = await this.svc.exportCsv(tenantId, {
-      fromDate: dateFrom ? new Date(dateFrom) : undefined,
-      toDate: dateTo ? new Date(dateTo) : undefined,
-      actorUserId,
-      category: category as AuditLogFilters['category'],
-      action: action as AuditLogFilters['action'],
-      entityType,
-      entityId,
-      status: status as AuditLogFilters['status'],
+      ...(dateFrom ? { fromDate: new Date(dateFrom) } : {}),
+      ...(dateTo ? { toDate: new Date(dateTo) } : {}),
+      ...(actorUserId ? { actorUserId } : {}),
+      ...(category ? { category: category as NonNullable<AuditLogFilters['category']> } : {}),
+      ...(action ? { action: action as NonNullable<AuditLogFilters['action']> } : {}),
+      ...(entityType ? { entityType } : {}),
+      ...(entityId ? { entityId } : {}),
+      ...(status ? { status: status as NonNullable<AuditLogFilters['status']> } : {}),
     })
 
     const timestamp = new Date().toISOString().split('T')[0]

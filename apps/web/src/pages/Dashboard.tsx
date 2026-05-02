@@ -304,7 +304,7 @@ export function Dashboard(): JSX.Element {
         <KpiCard
           label="Consultas hoy"
           value={apptLoading ? '—' : todayCompleted}
-          unit={apptLoading ? undefined : `/ ${todayTotal}`}
+          {...(!apptLoading && { unit: `/ ${todayTotal}` })}
           delta={
             apptLoading
               ? '…'

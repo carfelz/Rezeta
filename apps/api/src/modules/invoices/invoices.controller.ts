@@ -72,11 +72,11 @@ export class InvoicesController {
     return this.svc.list({
       tenantId,
       userId: user.id,
-      status,
-      patientId,
-      locationId,
-      cursor,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      ...(status ? { status } : {}),
+      ...(patientId ? { patientId } : {}),
+      ...(locationId ? { locationId } : {}),
+      ...(cursor ? { cursor } : {}),
+      ...(limit ? { limit: parseInt(limit, 10) } : {}),
     })
   }
 

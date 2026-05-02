@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { AuditLogItem } from '@rezeta/shared'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-logs'
+import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
 import { Button, Callout, EmptyState } from '@/components/ui'
 
@@ -352,14 +353,14 @@ export function Registros(): JSX.Element {
   const [exportError, setExportError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
 
-  const params = {
+  const params: AuditLogParams = {
     limit: 50,
-    dateFrom: filters.dateFrom ? new Date(filters.dateFrom).toISOString() : undefined,
-    dateTo: filters.dateTo ? new Date(filters.dateTo + 'T23:59:59Z').toISOString() : undefined,
-    category: filters.category || undefined,
-    action: filters.action || undefined,
-    status: filters.status || undefined,
-    cursor,
+    ...(filters.dateFrom && { dateFrom: new Date(filters.dateFrom).toISOString() }),
+    ...(filters.dateTo && { dateTo: new Date(filters.dateTo + 'T23:59:59Z').toISOString() }),
+    ...(filters.category && { category: filters.category }),
+    ...(filters.action && { action: filters.action }),
+    ...(filters.status && { status: filters.status }),
+    ...(cursor && { cursor }),
   }
 
   const { data, isLoading, isError } = useAuditLogs(params)
@@ -374,11 +375,11 @@ export function Registros(): JSX.Element {
     setExporting(true)
     try {
       const blob = await downloadAuditLogCsv({
-        dateFrom: params.dateFrom,
-        dateTo: params.dateTo,
-        category: params.category,
-        action: params.action,
-        status: params.status,
+        ...(params.dateFrom && { dateFrom: params.dateFrom }),
+        ...(params.dateTo && { dateTo: params.dateTo }),
+        ...(params.category && { category: params.category }),
+        ...(params.action && { action: params.action }),
+        ...(params.status && { status: params.status }),
       })
       const ts = new Date().toISOString().slice(0, 10)
       triggerDownload(blob, `audit-log-${ts}.csv`)

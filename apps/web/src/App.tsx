@@ -18,6 +18,7 @@ import { PlantillaEditor, PlantillaEditorNew } from '@/pages/ajustes/PlantillaEd
 import { Tipos } from '@/pages/ajustes/Tipos'
 import { Ubicaciones } from '@/pages/ajustes/Ubicaciones'
 import { Registros } from '@/pages/ajustes/Registros'
+import { Horarios } from '@/pages/ajustes/Horarios'
 import { AppPrototype } from '@/pages/ajustes/AppPrototype'
 import { DesignSystemReference } from '@/pages/ajustes/DesignSystemReference'
 import { Login } from '@/pages/Login'
@@ -88,6 +89,7 @@ const router = createBrowserRouter([
       { path: 'ajustes/tipos', element: <Tipos /> },
       { path: 'ajustes/ubicaciones', element: <Ubicaciones /> },
       { path: 'ajustes/registros', element: <Registros /> },
+      { path: 'ajustes/horarios', element: <Horarios /> },
       { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
       { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],

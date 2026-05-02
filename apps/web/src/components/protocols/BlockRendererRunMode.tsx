@@ -283,7 +283,9 @@ function ImagingOrderRunMode({
                 urgency: order.urgency,
                 contrast: order.contrast,
                 fasting_required: order.fasting_required,
-                special_instructions: order.special_instructions,
+                ...(order.special_instructions !== undefined
+                  ? { special_instructions: order.special_instructions }
+                  : {}),
                 source: `protocol:${order.id}`,
               })
               onAutoPopulate?.('plan', `Imagen: ${order.study_type}`)
@@ -327,12 +329,14 @@ function LabOrderRunMode({
             onClick={() => {
               queueLabOrder({
                 test_name: order.test_name,
-                test_code: order.test_code,
+                ...(order.test_code !== undefined ? { test_code: order.test_code } : {}),
                 indication: order.indication,
                 urgency: order.urgency,
                 fasting_required: order.fasting_required,
                 sample_type: order.sample_type,
-                special_instructions: order.special_instructions,
+                ...(order.special_instructions !== undefined
+                  ? { special_instructions: order.special_instructions }
+                  : {}),
                 source: `protocol:${order.id}`,
               })
               onAutoPopulate?.('plan', `Lab: ${order.test_name}`)
@@ -385,7 +389,7 @@ export function BlockRendererRunMode({
             items={b.items}
             checkedState={checkedState}
             onCheck={onCheck}
-            onAutoPopulate={onAutoPopulate}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
           />
         </ProtocolBlock>
       )
@@ -397,7 +401,7 @@ export function BlockRendererRunMode({
             steps={b.steps}
             checkedState={checkedState}
             onCheck={onCheck}
-            onAutoPopulate={onAutoPopulate}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
           />
         </ProtocolBlock>
       )
@@ -411,8 +415,8 @@ export function BlockRendererRunMode({
             branches={b.branches}
             checkedState={checkedState}
             onCheck={onCheck}
-            onLaunchLinkedProtocol={onLaunchLinkedProtocol}
-            onAutoPopulate={onAutoPopulate}
+            {...(onLaunchLinkedProtocol ? { onLaunchLinkedProtocol } : {})}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
           />
         </ProtocolBlock>
       )
@@ -435,16 +439,19 @@ export function BlockRendererRunMode({
         </ProtocolBlock>
       )
 
-    case 'imaging_order': {
+    case 'imaging_order' as Block['type']: {
       const imgBlock = b as unknown as { title?: string; orders: ImagingOrderItem[] }
       return (
         <ProtocolBlock type="Imagen" title={imgBlock.title ?? 'Estudios de imagen'} nested={nested}>
-          <ImagingOrderRunMode orders={imgBlock.orders} onAutoPopulate={onAutoPopulate} />
+          <ImagingOrderRunMode
+            orders={imgBlock.orders}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
+          />
         </ProtocolBlock>
       )
     }
 
-    case 'lab_order': {
+    case 'lab_order' as Block['type']: {
       const labBlock = b as unknown as { title?: string; orders: LabOrderItem[] }
       return (
         <ProtocolBlock
@@ -452,7 +459,10 @@ export function BlockRendererRunMode({
           title={labBlock.title ?? 'Estudios de laboratorio'}
           nested={nested}
         >
-          <LabOrderRunMode orders={labBlock.orders} onAutoPopulate={onAutoPopulate} />
+          <LabOrderRunMode
+            orders={labBlock.orders}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
+          />
         </ProtocolBlock>
       )
     }

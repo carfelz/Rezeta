@@ -121,7 +121,7 @@ export class InvoicesService {
     const httpCtx = httpAuditContextStore.getStore()
     void this.auditLog.record({
       tenantId,
-      actorUserId: httpCtx?.actorUserId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
       actorType: httpCtx ? 'user' : 'system',
       category: 'communication',
       action: 'pdf_generated',

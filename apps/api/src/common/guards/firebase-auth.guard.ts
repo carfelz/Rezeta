@@ -63,11 +63,10 @@ export class FirebaseAuthGuard implements CanActivate {
         actorType: 'user',
         category: 'auth',
         action: 'login_failed',
-        ipAddress: request.ip,
-        userAgent:
-          typeof request.headers['user-agent'] === 'string'
-            ? request.headers['user-agent']
-            : undefined,
+        ...(request.ip ? { ipAddress: request.ip } : {}),
+        ...(typeof request.headers['user-agent'] === 'string'
+          ? { userAgent: request.headers['user-agent'] }
+          : {}),
         status: 'failed',
         errorCode: ErrorCode.TOKEN_INVALID,
       })

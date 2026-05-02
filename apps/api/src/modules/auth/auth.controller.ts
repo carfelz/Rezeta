@@ -119,11 +119,13 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthUser> {
     const meta = {
-      ip: req.ip,
-      userAgent:
-        typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined,
-      requestId:
-        typeof req.headers['x-request-id'] === 'string' ? req.headers['x-request-id'] : undefined,
+      ...(req.ip ? { ip: req.ip } : {}),
+      ...(typeof req.headers['user-agent'] === 'string'
+        ? { userAgent: req.headers['user-agent'] }
+        : {}),
+      ...(typeof req.headers['x-request-id'] === 'string'
+        ? { requestId: req.headers['x-request-id'] }
+        : {}),
     }
     const user = await this.service.provision(decoded, meta)
     return this.service.toAuthUser(user)

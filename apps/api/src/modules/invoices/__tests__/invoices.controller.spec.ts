@@ -127,7 +127,7 @@ describe('InvoicesController', () => {
       )
     })
 
-    it('passes undefined limit when limit param is absent', async () => {
+    it('omits limit from params when limit param is absent', async () => {
       vi.mocked(service.list).mockResolvedValue({
         items: [],
         hasMore: false,
@@ -142,7 +142,7 @@ describe('InvoicesController', () => {
         undefined,
         undefined,
       )
-      expect(service.list).toHaveBeenCalledWith(expect.objectContaining({ limit: undefined }))
+      expect(service.list).toHaveBeenCalledWith({ tenantId, userId: 'user-1' })
     })
   })
 

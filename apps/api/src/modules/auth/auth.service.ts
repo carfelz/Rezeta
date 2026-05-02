@@ -38,9 +38,9 @@ export class AuthService {
       actorType: 'user',
       category: 'auth',
       action: 'login',
-      ipAddress: meta?.ip,
-      userAgent: meta?.userAgent,
-      requestId: meta?.requestId,
+      ...(meta?.ip ? { ipAddress: meta.ip } : {}),
+      ...(meta?.userAgent ? { userAgent: meta.userAgent } : {}),
+      ...(meta?.requestId ? { requestId: meta.requestId } : {}),
       status: 'success',
     })
     return user

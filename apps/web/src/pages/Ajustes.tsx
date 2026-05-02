@@ -98,6 +98,19 @@ export function Ajustes(): JSX.Element {
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
         <Link
+          to="/ajustes/horarios"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+        >
+          <i className="ph ph-calendar-check text-[18px] text-p-500" />
+          <div>
+            <div className="text-[13px] font-semibold">Horario de disponibilidad</div>
+            <div className="text-[12px] text-n-500">
+              Bloques semanales y excepciones por ubicación
+            </div>
+          </div>
+          <i className="ph ph-caret-right ml-auto text-n-400" />
+        </Link>
+        <Link
           to="/ajustes/design-system/prototype"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >

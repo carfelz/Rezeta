@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common'
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, renderToBuffer, Font } from '@react-pdf/renderer'
-import type { Style } from '@react-pdf/types'
 import type { Prescription, PrescriptionItemRow, InvoiceWithDetails } from '@rezeta/shared'
+
+type Style = Exclude<React.ComponentProps<typeof View>['style'], undefined>
 
 // ─── Fonts ────────────────────────────────────────────────────────────────────
 // Register system fonts as fallback (react-pdf bundles Helvetica by default)
@@ -214,7 +214,13 @@ function PrescriptionDocument({ data }: { data: PrescriptionPdfData }): React.Re
     : null
   const issuedDate = formatDate(prescription.createdAt)
 
-  const col: Record<string, Style> = {
+  const col: {
+    drug: Style
+    dose: Style
+    route: Style
+    frequency: Style
+    duration: Style
+  } = {
     drug: { flex: 3 },
     dose: { flex: 2 },
     route: { flex: 1.5 },
@@ -486,7 +492,12 @@ function InvoiceDocument({ data }: { data: InvoicePdfData }): React.ReactElement
   const { invoice, doctor } = data
   const doctorName = doctor.fullName ?? 'Médico'
   const { bg, text: textColor } = statusColor(invoice.status)
-  const col2: Record<string, Style> = {
+  const col2: {
+    desc: Style
+    qty: Style
+    unit: Style
+    total: Style
+  } = {
     desc: { flex: 4 },
     qty: { flex: 1, textAlign: 'right' },
     unit: { flex: 2, textAlign: 'right' },
