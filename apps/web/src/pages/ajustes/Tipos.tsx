@@ -21,6 +21,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  TextLink,
 } from '@/components/ui'
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
@@ -274,13 +275,14 @@ export function Tipos(): JSX.Element {
                     )}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-500">
-                    <button
-                      className="inline-flex items-center gap-1 text-[13px] text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
+                    <TextLink
+                      tone="neutral"
+                      size="lg"
                       onClick={() => void navigate(`/ajustes/plantillas/${t.templateId}/edit`)}
                     >
                       {t.templateName}
                       <i className="ph ph-arrow-square-out text-[12px]" />
-                    </button>
+                    </TextLink>
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isLocked ? (

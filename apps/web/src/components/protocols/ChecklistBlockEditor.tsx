@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
-import { Button } from '@/components/ui'
+import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 interface ChecklistItem {
   id: string
@@ -21,19 +21,19 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
   const updateBlock = useEditorStore((s) => s.updateBlock)
   const selectBlock = useEditorStore((s) => s.selectBlock)
 
-  const addItem = () => {
+  const addItem = (): void => {
     setDraftItems((prev) => [...prev, { id: `itm_${crypto.randomUUID().slice(0, 8)}`, text: '' }])
   }
 
-  const updateItem = (itemId: string, patch: Partial<ChecklistItem>) => {
+  const updateItem = (itemId: string, patch: Partial<ChecklistItem>): void => {
     setDraftItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...patch } : it)))
   }
 
-  const removeItem = (itemId: string) => {
+  const removeItem = (itemId: string): void => {
     setDraftItems((prev) => prev.filter((it) => it.id !== itemId))
   }
 
-  const commit = () => {
+  const commit = (): void => {
     updateBlock(id, (b) => {
       if (b.type !== 'checklist') return b
       const trimmed = draftTitle.trim()
@@ -45,44 +45,33 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
     selectBlock(null)
   }
 
-  const cancel = () => selectBlock(null)
+  const cancel = (): void => selectBlock(null)
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      {/* Title */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_CHECKLIST_TITLE_LABEL}
-        </label>
-        <input
-          type="text"
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
+    <Stack gap={3} className="p-4">
+      <Field label={strings.EDITOR_CHECKLIST_TITLE_LABEL}>
+        <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           placeholder={strings.EDITOR_CHECKLIST_TITLE_PLACEHOLDER}
         />
-      </div>
+      </Field>
 
-      {/* Items */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_CHECKLIST_ITEMS_LABEL}
-        </label>
-        <div className="flex flex-col gap-2">
+      <Field label={strings.EDITOR_CHECKLIST_ITEMS_LABEL}>
+        <Stack gap={2}>
           {draftItems.map((item, idx) => (
-            <div key={item.id} className="flex items-center gap-2">
+            <Row key={item.id} gap={2}>
               <span className="text-[11px] font-mono text-n-400 w-4 shrink-0 text-right">
                 {idx + 1}
               </span>
-              <input
-                type="text"
-                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
+              <Input
+                className="flex-1"
                 value={item.text}
                 onChange={(e) => updateItem(item.id, { text: e.target.value })}
                 placeholder={strings.EDITOR_CHECKLIST_ITEM_PLACEHOLDER}
                 autoFocus={idx === draftItems.length - 1 && item.text === ''}
               />
-              <label className="flex items-center gap-1 shrink-0 cursor-pointer select-none">
+              <Row gap={1} as="label" className="shrink-0 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={item.critical ?? false}
@@ -92,34 +81,31 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                 <span className="text-[11px] font-mono text-n-500 uppercase tracking-[0.05em]">
                   {strings.EDITOR_CHECKLIST_CRITICAL_LABEL}
                 </span>
-              </label>
-              <button
-                onClick={() => removeItem(item.id)}
+              </Row>
+              <IconButton
+                icon="ph ph-x"
+                aria-label={strings.EDITOR_CHECKLIST_REMOVE_ITEM}
+                tone="danger"
+                size="sm"
                 disabled={draftItems.length === 1}
-                className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms]"
-                title={strings.EDITOR_CHECKLIST_REMOVE_ITEM}
-              >
-                <i className="ph ph-x text-[12px]" />
-              </button>
-            </div>
+                onClick={() => removeItem(item.id)}
+              />
+            </Row>
           ))}
-        </div>
-        <button
-          onClick={addItem}
-          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start transition-colors duration-[100ms]"
-        >
+        </Stack>
+        <TextLink tone="primary" size="md" onClick={addItem} className="mt-1 self-start">
           {strings.EDITOR_CHECKLIST_ADD_ITEM}
-        </button>
-      </div>
+        </TextLink>
+      </Field>
 
-      <div className="flex items-center gap-2 justify-end">
+      <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
           {strings.EDITOR_BLOCK_CANCEL}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftItems.length === 0}>
           {strings.EDITOR_BLOCK_APPLY}
         </Button>
-      </div>
-    </div>
+      </Row>
+    </Stack>
   )
 }

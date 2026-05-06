@@ -9,6 +9,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  IconButton,
+  TextLink,
 } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
@@ -379,12 +381,18 @@ export function ProtocolEditor(): JSX.Element {
         <div className="flex items-center gap-3 -mx-12 -mt-8 mb-6 px-12 py-3 bg-warning-bg border-b border-warning-border text-[12.5px] font-sans text-warning-text">
           <i className="ph ph-clock-counter-clockwise text-[14px]" />
           <span className="flex-1">{strings.EDITOR_DRAFT_RECOVERED}</span>
-          <button onClick={applyDraft} className="font-medium hover:underline">
+          <TextLink tone="warning" size="md" weight="medium" underline="hover" onClick={applyDraft}>
             {strings.EDITOR_DRAFT_USE}
-          </button>
-          <button onClick={discardDraft} className="hover:underline opacity-70">
+          </TextLink>
+          <TextLink
+            tone="warning"
+            size="md"
+            underline="hover"
+            onClick={discardDraft}
+            className="opacity-70"
+          >
             {strings.EDITOR_DRAFT_DISCARD}
-          </button>
+          </TextLink>
         </div>
       )}
 
@@ -595,12 +603,14 @@ export function ProtocolEditor(): JSX.Element {
                   )}
                 </div>
               ))}
-              <button
+              <TextLink
+                tone="primary"
+                size="md"
                 onClick={() => setHistoryOpen(true)}
-                className="text-[12px] font-sans text-p-500 hover:text-p-700 text-left mt-1 transition-colors duration-[100ms]"
+                className="mt-1"
               >
                 {strings.EDITOR_HISTORY_VIEW_ALL}
-              </button>
+              </TextLink>
             </div>
           )}
         </div>
@@ -618,13 +628,13 @@ export function ProtocolEditor(): JSX.Element {
             <span className="text-[13.5px] font-sans font-semibold text-n-800">
               {strings.EDITOR_HISTORY_TITLE}
             </span>
-            <button
-              onClick={() => setHistoryOpen(false)}
-              className="w-btn-sm h-btn-sm flex items-center justify-center rounded text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms]"
+            <IconButton
+              icon="ph ph-x"
               aria-label="Cerrar historial"
-            >
-              <i className="ph ph-x text-[15px]" />
-            </button>
+              tone="neutral"
+              size="sm"
+              onClick={() => setHistoryOpen(false)}
+            />
           </div>
 
           <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">

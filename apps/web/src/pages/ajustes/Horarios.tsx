@@ -20,6 +20,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  IconButton,
 } from '@/components/ui'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -286,14 +287,13 @@ function BlockRow({ block, onDelete }: { block: ScheduleBlock; onDelete: () => v
           min/turno
         </div>
       </div>
-      <button
-        type="button"
-        className="text-n-400 hover:text-danger-text transition-colors p-1 rounded min-h-touch flex items-center justify-center"
+      <IconButton
+        icon="ph ph-trash"
         aria-label="Eliminar bloque"
+        tone="danger"
+        size="md"
         onClick={onDelete}
-      >
-        <i className="ph ph-trash" style={{ fontSize: 16 }} />
-      </button>
+      />
     </div>
   )
 }
@@ -389,18 +389,14 @@ export function Horarios(): JSX.Element {
           <div className="mb-6">
             <div className="flex flex-wrap gap-2">
               {locations.map((loc) => (
-                <button
+                <Button
                   key={loc.id}
-                  type="button"
+                  variant={selectedLocationId === loc.id ? 'primary' : 'secondary'}
+                  size="sm"
                   onClick={() => setLocationId(loc.id)}
-                  className={`relative px-3 py-1.5 rounded-sm text-[13px] border transition-colors duration-[100ms] min-h-touch flex items-center ${
-                    selectedLocationId === loc.id
-                      ? 'bg-p-50 border-p-300 text-p-700 font-medium before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-p-500'
-                      : 'bg-n-0 border-n-200 text-n-600 hover:bg-n-25'
-                  }`}
                 >
                   {loc.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

@@ -3,8 +3,15 @@ import { useAuthStore } from '@/store/auth.store'
 import { useTodayAppointments } from '@/hooks/appointments/use-appointments'
 import { usePatients } from '@/hooks/patients/use-patients'
 import { useInvoices } from '@/hooks/invoices/use-invoices'
-import { Badge } from '@/components/ui'
-import type { AppointmentWithDetails, AppointmentStatus } from '@rezeta/shared'
+import { useProtocols } from '@/hooks/protocols/use-protocols'
+import { useAuditLogs } from '@/hooks/audit-logs/use-audit-logs'
+import { Badge, Button, Caption, Row, TextLink } from '@/components/ui'
+import type {
+  AppointmentWithDetails,
+  AppointmentStatus,
+  AuditLogItem,
+  ProtocolListItem,
+} from '@rezeta/shared'
 import type { BadgeProps } from '@/components/ui'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -210,6 +217,77 @@ function ActivityItem({
   )
 }
 
+// ─── Audit-feed helpers ──────────────────────────────────────────────────────
+
+function initialsForActor(fullName: string | null): string {
+  if (!fullName) return '?'
+  return fullName
+    .split(' ')
+    .slice(0, 2)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .join('')
+    .toUpperCase()
+}
+
+function describeAuditEntry(entry: AuditLogItem): string {
+  const actor = entry.actor?.fullName ?? 'Sistema'
+  const entityType = entry.entityType ?? 'registro'
+  const action = entry.action.toLowerCase()
+  // Friendly Spanish phrasing for the most common actions
+  if (action.includes('create')) return `<b>${actor}</b> creó ${friendlyEntity(entityType)}`
+  if (action.includes('update')) return `<b>${actor}</b> actualizó ${friendlyEntity(entityType)}`
+  if (action.includes('delete')) return `<b>${actor}</b> eliminó ${friendlyEntity(entityType)}`
+  if (action.includes('sign')) return `<b>${actor}</b> firmó ${friendlyEntity(entityType)}`
+  if (action.includes('login') || action.includes('signin')) return `<b>${actor}</b> inició sesión`
+  return `<b>${actor}</b> ${entry.action} (${entityType})`
+}
+
+function friendlyEntity(t: string): string {
+  const map: Record<string, string> = {
+    Consultation: 'una consulta',
+    Patient: 'un paciente',
+    Protocol: 'un protocolo',
+    ProtocolVersion: 'una versión de protocolo',
+    Prescription: 'una prescripción',
+    Appointment: 'una cita',
+    Invoice: 'una factura',
+    Location: 'una ubicación',
+    ProtocolType: 'un tipo de protocolo',
+    ProtocolTemplate: 'una plantilla',
+  }
+  return map[t] ?? `un registro (${t})`
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diffMs / 60_000)
+  if (mins < 1) return 'hace un momento'
+  if (mins < 60) return `hace ${mins} minuto${mins !== 1 ? 's' : ''}`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `hace ${hrs} hora${hrs !== 1 ? 's' : ''}`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `hace ${days} día${days !== 1 ? 's' : ''}`
+  return new Date(iso).toLocaleDateString('es-DO', { day: 'numeric', month: 'short' })
+}
+
+function statusToBadgeVariant(status: string): BadgeProps['variant'] {
+  if (status === 'active') return 'active'
+  if (status === 'archived') return 'archived'
+  if (status === 'review') return 'review'
+  return 'draft'
+}
+
+function labelForProtocolStatus(status: string): string {
+  const map: Record<string, string> = {
+    active: 'Activo',
+    draft: 'Borrador',
+    archived: 'Archivado',
+    review: 'En revisión',
+  }
+  return map[status] ?? status
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function Dashboard(): JSX.Element {
@@ -219,6 +297,13 @@ export function Dashboard(): JSX.Element {
   const { data: todayAppts, isLoading: apptLoading } = useTodayAppointments()
   const { data: patients, isLoading: patientsLoading } = usePatients()
   const { data: invoices } = useInvoices({ status: 'paid', limit: 50 })
+  const { data: invoicesPrevMonth } = useInvoices({ status: 'paid', limit: 50 })
+  const { useGetProtocols } = useProtocols()
+  const { data: recentProtocols } = useGetProtocols({
+    status: 'active',
+    sort: 'updatedAt_desc',
+  })
+  const { data: auditFeed } = useAuditLogs({ limit: 5 })
 
   const now = new Date()
   const totalPatients = patients?.items.length ?? 0
@@ -247,6 +332,35 @@ export function Dashboard(): JSX.Element {
     thisMonthTotal > 0
       ? `RD$ ${thisMonthTotal.toLocaleString('es-DO', { minimumFractionDigits: 0 })}`
       : '—'
+
+  // Compare against last month
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonthTotal = (invoicesPrevMonth?.items ?? []).reduce((sum, inv) => {
+    const d = new Date(inv.createdAt)
+    if (
+      d.getMonth() === lastMonthDate.getMonth() &&
+      d.getFullYear() === lastMonthDate.getFullYear()
+    ) {
+      return sum + Number(inv.total ?? 0)
+    }
+    return sum
+  }, 0)
+  const billingDelta =
+    lastMonthTotal > 0
+      ? `${Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)}% vs mes anterior`
+      : 'Sin datos del mes anterior'
+  const billingDeltaDir: 'up' | 'down' | 'flat' =
+    lastMonthTotal === 0 || thisMonthTotal === lastMonthTotal
+      ? 'flat'
+      : thisMonthTotal > lastMonthTotal
+        ? 'up'
+        : 'down'
+
+  // Patients added this month — count from list
+  const patientsAddedThisMonth = (patients?.items ?? []).filter((p) => {
+    const d = new Date(p.createdAt)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  }).length
 
   // Doctor display name
   const fullName = user?.fullName ?? ''
@@ -279,24 +393,16 @@ export function Dashboard(): JSX.Element {
           </h1>
           <p className="text-[13px] text-n-500 mt-1 mb-0">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => void navigate('/agenda')}
-            className="btn h-8 px-[14px] bg-n-0 text-n-800 border border-n-300 rounded-sm font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-n-50 hover:border-n-400 transition-colors"
-          >
+        <Row gap={2} className="shrink-0">
+          <Button variant="secondary" size="md" onClick={() => void navigate('/agenda')}>
             <i className="ph ph-calendar-blank text-[15px]" />
             Ver agenda
-          </button>
-          <button
-            type="button"
-            onClick={() => void navigate('/consultas/nueva')}
-            className="h-8 px-[14px] bg-p-500 text-white border border-p-500 rounded-sm font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-p-700 hover:border-p-700 transition-colors"
-          >
+          </Button>
+          <Button variant="primary" size="md" onClick={() => void navigate('/consultas/nueva')}>
             <i className="ph ph-plus text-[15px]" />
             Nueva consulta
-          </button>
-        </div>
+          </Button>
+        </Row>
       </div>
 
       {/* ── KPI grid ── */}
@@ -318,21 +424,27 @@ export function Dashboard(): JSX.Element {
         <KpiCard
           label="Pacientes activos"
           value={patientsLoading ? '—' : totalPatients.toLocaleString('es-DO')}
-          delta="+32 este mes"
-          deltaDir="up"
+          delta={
+            patientsLoading
+              ? '…'
+              : patientsAddedThisMonth > 0
+                ? `+${patientsAddedThisMonth} este mes`
+                : 'Sin nuevos este mes'
+          }
+          deltaDir={patientsAddedThisMonth > 0 ? 'up' : 'flat'}
           loading={patientsLoading}
         />
         <KpiCard
           label={`Facturación · ${MONTHS_ES[now.getMonth()]}`}
           value={billingFormatted}
-          delta="+12% vs mes anterior"
-          deltaDir="up"
+          delta={billingDelta}
+          deltaDir={billingDeltaDir}
         />
         <KpiCard
-          label="Prescripciones pendientes"
-          value="3"
-          delta="requieren firma"
-          deltaDir="down"
+          label="Protocolos activos"
+          value={(recentProtocols?.length ?? 0).toString()}
+          delta={recentProtocols && recentProtocols.length > 0 ? 'en uso' : 'aún no hay protocolos'}
+          deltaDir="flat"
         />
       </div>
 
@@ -344,13 +456,9 @@ export function Dashboard(): JSX.Element {
             <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
               Próximas citas
             </h3>
-            <button
-              type="button"
-              onClick={() => void navigate('/agenda')}
-              className="text-[12px] text-n-500 hover:text-n-800 transition-colors"
-            >
+            <TextLink tone="neutral" size="md" onClick={() => void navigate('/agenda')}>
               Ver agenda completa →
-            </button>
+            </TextLink>
           </div>
 
           {apptLoading ? (
@@ -373,37 +481,56 @@ export function Dashboard(): JSX.Element {
           )}
         </div>
 
-        {/* Pending prescriptions */}
+        {/* Pacientes recientes */}
         <div className="bg-n-0 border border-n-200 rounded-md p-5">
-          <div className="mb-[14px]">
+          <div className="flex items-center justify-between mb-[14px]">
             <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
-              Prescripciones pendientes
+              Pacientes recientes
             </h3>
+            <TextLink tone="neutral" size="md" onClick={() => void navigate('/pacientes')}>
+              Ver todos →
+            </TextLink>
           </div>
-          <div className="flex flex-col gap-3">
-            <div>
-              <div className="text-[13px] font-semibold text-n-900">Loratadina 10 mg · 7 días</div>
-              <div className="text-[11.5px] text-n-500 mt-1">Ana María Reyes · hace 5 min</div>
+          {patientsLoading ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[40px] bg-n-50 rounded animate-pulse" />
+              ))}
             </div>
-            <div>
-              <div className="text-[13px] font-semibold text-n-900">
-                Metformina 850 mg · continuo
-              </div>
-              <div className="text-[11.5px] text-n-500 mt-1">Juan Pablo Castillo · hace 1 h</div>
+          ) : (patients?.items ?? []).length === 0 ? (
+            <Caption tone="muted" size="lg" as="p" className="py-2 block">
+              Aún no tienes pacientes registrados.
+            </Caption>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {(patients?.items ?? [])
+                .slice()
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 4)
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => void navigate(`/pacientes/${p.id}`)}
+                    className="flex items-center gap-3 text-left hover:bg-n-25 -mx-1 px-1 py-1 rounded transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-semibold text-n-900 truncate">
+                        {p.firstName} {p.lastName}
+                      </div>
+                      <Caption tone="neutral" size="sm" as="div" className="mt-1">
+                        {p.documentNumber ?? 'Sin documento'} ·{' '}
+                        {new Date(p.createdAt).toLocaleDateString('es-DO', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </Caption>
+                    </div>
+                    <i className="ph ph-caret-right text-[12px] text-n-300" />
+                  </button>
+                ))}
             </div>
-            <div>
-              <div className="text-[13px] font-semibold text-n-900">
-                Atorvastatina 20 mg · 30 días
-              </div>
-              <div className="text-[11.5px] text-n-500 mt-1">Miguel Ángel Santana · ayer</div>
-            </div>
-            <button
-              type="button"
-              className="self-start mt-1 h-btn-sm px-[10px] bg-n-0 text-n-800 border border-n-300 rounded-sm font-sans font-medium text-[12.5px] flex items-center gap-2 hover:bg-n-50 hover:border-n-400 transition-colors"
-            >
-              Firmar todas
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
@@ -415,73 +542,74 @@ export function Dashboard(): JSX.Element {
             <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
               Protocolos recientes
             </h3>
-            <button
-              type="button"
-              onClick={() => void navigate('/protocolos')}
-              className="text-[12px] text-n-500 hover:text-n-800 transition-colors"
-            >
+            <TextLink tone="neutral" size="md" onClick={() => void navigate('/protocolos')}>
               Ver todos →
-            </button>
+            </TextLink>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-[10px] border-b border-n-100">
-              <div>
-                <div className="text-[13px] font-semibold text-n-900">
-                  Manejo de anafilaxia en adultos
-                </div>
-                <div className="text-[11.5px] text-n-500 mt-1">v2.3 · actualizado hace 2 días</div>
-              </div>
-              <Badge variant="signed" showDot>
-                Firmado
-              </Badge>
+          {(recentProtocols?.length ?? 0) === 0 ? (
+            <Caption tone="muted" size="lg" as="p" className="py-2 block">
+              Aún no tienes protocolos. Crea uno desde la sección Protocolos.
+            </Caption>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {(recentProtocols ?? []).slice(0, 3).map((proto: ProtocolListItem, idx: number) => (
+                <button
+                  key={proto.id}
+                  type="button"
+                  onClick={() => void navigate(`/protocolos/${proto.id}`)}
+                  className={`flex items-center justify-between text-left hover:bg-n-25 -mx-1 px-1 py-1 rounded transition-colors ${
+                    idx < (recentProtocols ?? []).slice(0, 3).length - 1
+                      ? 'pb-[10px] border-b border-n-100'
+                      : ''
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold text-n-900 truncate">
+                      {proto.title}
+                    </div>
+                    <Caption tone="neutral" size="sm" as="div" className="mt-1">
+                      {proto.currentVersionNumber !== null
+                        ? `v${proto.currentVersionNumber} · `
+                        : ''}
+                      actualizado{' '}
+                      {new Date(proto.updatedAt).toLocaleDateString('es-DO', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </Caption>
+                  </div>
+                  <Badge variant={statusToBadgeVariant(proto.status)} showDot>
+                    {labelForProtocolStatus(proto.status)}
+                  </Badge>
+                </button>
+              ))}
             </div>
-            <div className="flex items-center justify-between pb-[10px] border-b border-n-100">
-              <div>
-                <div className="text-[13px] font-semibold text-n-900">Dolor torácico agudo</div>
-                <div className="text-[11.5px] text-n-500 mt-1">
-                  v1.8 · actualizado hace 1 semana
-                </div>
-              </div>
-              <Badge variant="review" showDot>
-                En revisión
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[13px] font-semibold text-n-900">Cetoacidosis diabética</div>
-                <div className="text-[11.5px] text-n-500 mt-1">v3.1 · actualizado hoy</div>
-              </div>
-              <Badge variant="signed" showDot>
-                Firmado
-              </Badge>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Activity feed */}
         <div className="bg-n-0 border border-n-200 rounded-md p-5">
           <div className="mb-[14px]">
             <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
-              Actividad
+              Actividad reciente
             </h3>
           </div>
-          <div className="flex flex-col gap-3">
-            <ActivityItem
-              initials="DR"
-              html={`Firmaste la prescripción para <b>Carlos Méndez</b>`}
-              time="hace 15 minutos"
-            />
-            <ActivityItem
-              initials="AM"
-              html={`<b>Ana Martínez</b> confirmó su cita del miércoles`}
-              time="hace 1 hora"
-            />
-            <ActivityItem
-              initials="SS"
-              html={`Se publicó la v2.3 de <b>Manejo de anafilaxia</b>`}
-              time="hace 2 días"
-            />
-          </div>
+          {(auditFeed?.data ?? []).length === 0 ? (
+            <Caption tone="muted" size="lg" as="p" className="py-2 block">
+              Sin actividad reciente.
+            </Caption>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {(auditFeed?.data ?? []).slice(0, 5).map((entry: AuditLogItem) => (
+                <ActivityItem
+                  key={entry.id}
+                  initials={initialsForActor(entry.actor?.fullName ?? null)}
+                  html={describeAuditEntry(entry)}
+                  time={timeAgo(entry.createdAt)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

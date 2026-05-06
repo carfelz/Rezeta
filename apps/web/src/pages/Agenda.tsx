@@ -28,6 +28,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  IconButton,
+  Row,
+  Stack,
+  TextLink,
+  Chip,
 } from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
 
@@ -138,7 +143,7 @@ function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.Element
               <button
                 key={p.id}
                 type="button"
-                className="w-full flex flex-col items-start px-3 py-2 text-left hover:bg-n-50 transition-colors duration-[100ms]"
+                className="w-full flex flex-col items-start px-3 py-2 text-left hover:bg-n-50 transition-colors"
                 onClick={() => handleSelect(p)}
               >
                 <span className="text-[13px] font-medium text-n-800">
@@ -400,46 +405,41 @@ function AppointmentCard({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-1 shrink-0">
+      <Stack gap={1} className="shrink-0">
         {appt.status === 'scheduled' && (
           <>
-            <button
-              type="button"
-              className="flex items-center gap-2 text-[12px] text-success-text hover:underline"
+            <TextLink
+              tone="primary"
+              size="md"
+              underline="hover"
               onClick={() => onStatusChange('completed')}
               disabled={isUpdatingStatus}
+              className="text-success-text hover:text-success-text"
             >
               <i className="ph ph-check-circle text-[14px]" />
               Completar
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-2 text-[12px] text-warning-text hover:underline"
+            </TextLink>
+            <TextLink
+              tone="warning"
+              size="md"
+              underline="hover"
               onClick={() => onStatusChange('no_show')}
               disabled={isUpdatingStatus}
             >
               <i className="ph ph-user-x text-[14px]" />
               No asistió
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-2 text-[12px] text-n-500 hover:underline"
-              onClick={onEdit}
-            >
+            </TextLink>
+            <TextLink tone="neutral" size="md" underline="hover" onClick={onEdit}>
               <i className="ph ph-pencil-simple text-[14px]" />
               Editar
-            </button>
+            </TextLink>
           </>
         )}
-        <button
-          type="button"
-          className="flex items-center gap-2 text-[12px] text-danger-text hover:underline mt-1"
-          onClick={onDelete}
-        >
+        <TextLink tone="danger" size="md" underline="hover" onClick={onDelete} className="mt-1">
           <i className="ph ph-trash text-[14px]" />
           Eliminar
-        </button>
-      </div>
+        </TextLink>
+      </Stack>
     </div>
   )
 }
@@ -581,43 +581,37 @@ export function Agenda(): JSX.Element {
       </div>
 
       {/* Date navigation */}
-      <div className="flex items-center gap-3 mb-5">
-        <button
-          type="button"
-          className="flex items-center justify-center w-8 h-8 rounded-sm text-n-600 hover:bg-n-100 transition-colors duration-[100ms]"
-          onClick={prevDay}
+      <Row gap={3} className="mb-5">
+        <IconButton
+          icon="ph ph-caret-left"
           aria-label="Día anterior"
-        >
-          <i className="ph ph-caret-left text-[14px]" />
-        </button>
-        <button
-          type="button"
-          className="flex items-center justify-center w-8 h-8 rounded-sm text-n-600 hover:bg-n-100 transition-colors duration-[100ms]"
-          onClick={nextDay}
+          tone="neutral"
+          size="md"
+          onClick={prevDay}
+        />
+        <IconButton
+          icon="ph ph-caret-right"
           aria-label="Día siguiente"
-        >
-          <i className="ph ph-caret-right text-[14px]" />
-        </button>
-        <div className="flex items-center gap-2">
-          <span className="text-[15px] font-sans font-semibold text-n-800 capitalize">
+          tone="neutral"
+          size="md"
+          onClick={nextDay}
+        />
+        <Row gap={2}>
+          <span className="text-[15px] font-semibold text-n-800 capitalize">
             {formatDate(currentDate)}
           </span>
           {isToday && (
-            <span className="text-[11px] font-mono font-medium px-2 py-1 rounded bg-p-50 text-p-700 border border-p-100">
+            <Chip tone="primarySolid" size="md" format="sentence">
               Hoy
-            </span>
+            </Chip>
           )}
-        </div>
+        </Row>
         {!isToday && (
-          <button
-            type="button"
-            className="text-[13px] text-p-500 hover:text-p-700 font-medium ml-1"
-            onClick={goToday}
-          >
+          <TextLink tone="primary" size="lg" weight="medium" onClick={goToday} className="ml-1">
             Ir a hoy
-          </button>
+          </TextLink>
         )}
-      </div>
+      </Row>
 
       {/* Content */}
       {!activeLocationId && (

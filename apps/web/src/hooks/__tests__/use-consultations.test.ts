@@ -372,3 +372,166 @@ describe('useListLabOrders', () => {
     expect(result.current.fetchStatus).toBe('idle')
   })
 })
+
+// Import the new hooks added in the latest backend integration pass
+import {
+  useResumableForPatient,
+  useSwitchProtocolUsage,
+  useSkipStep,
+  useAddOffProtocolNote,
+} from '../consultations/use-consultations'
+
+describe('useResumableForPatient', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('fetches resumable consultation for a patient', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ consultationId: 'c1' })
+    const { result } = renderHook(() => useResumableForPatient('pat-1'), {
+      wrapper: makeWrapper(),
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/patients/pat-1/in-progress-consultation')
+  })
+
+  it('is disabled when patientId is null', () => {
+    const { result } = renderHook(() => useResumableForPatient(null), { wrapper: makeWrapper() })
+    expect(result.current.fetchStatus).toBe('idle')
+  })
+})
+
+describe('useSwitchProtocolUsage', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('PATCHes the old usage status=switched, then POSTs the new protocol', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    vi.mocked(apiClient.post).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useSwitchProtocolUsage('cons-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({ usageId: 'u-old', newProtocolId: 'proto-new' })
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/v1/consultations/cons-1/protocols/u-old',
+      expect.objectContaining({ status: 'switched' }),
+    )
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/v1/consultations/cons-1/protocols',
+      expect.objectContaining({ protocolId: 'proto-new' }),
+    )
+  })
+})
+
+describe('useSkipStep', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('PATCHes usage with steps_skipped reason', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useSkipStep('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({ stepId: 'step-1', reason: 'No aplica hoy' })
+    })
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    const [url, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(url).toBe('/v1/consultations/cons-1/protocols/usage-1')
+    const skipped = (
+      body as { modifications: { steps_skipped: { step_id: string; reason: string }[] } }
+    ).modifications.steps_skipped
+    expect(skipped).toHaveLength(1)
+    expect(skipped[0]).toMatchObject({ step_id: 'step-1', reason: 'No aplica hoy' })
+  })
+
+  it('preserves existingSkipped entries when appending', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useSkipStep('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({
+        stepId: 'step-2',
+        reason: 'Otro',
+        existingSkipped: [{ step_id: 'step-0', timestamp: 'past', reason: 'old' }],
+      })
+    })
+    const skipped = (
+      vi.mocked(apiClient.patch).mock.calls[0]![1] as {
+        modifications: { steps_skipped: { step_id: string }[] }
+      }
+    ).modifications.steps_skipped
+    expect(skipped.map((s) => s.step_id)).toEqual(['step-0', 'step-2'])
+  })
+})
+
+describe('useAddOffProtocolNote', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('PATCHes usage with off_protocol_notes entry', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({ note: 'Hallazgo extra' })
+    })
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    const [url, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(url).toBe('/v1/consultations/cons-1/protocols/usage-1')
+    const notes = (body as { modifications: { off_protocol_notes: { note: string }[] } })
+      .modifications.off_protocol_notes
+    expect(notes).toHaveLength(1)
+    expect(notes[0]?.note).toBe('Hallazgo extra')
+  })
+
+  it('appends note to existingNotes', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({
+        note: 'New',
+        existingNotes: [{ timestamp: 'past', note: 'Old' }],
+      })
+    })
+    const notes = (
+      vi.mocked(apiClient.patch).mock.calls[0]![1] as {
+        modifications: { off_protocol_notes: { note: string }[] }
+      }
+    ).modifications.off_protocol_notes
+    expect(notes.map((n) => n.note)).toEqual(['Old', 'New'])
+  })
+
+  it('also patches the consultation SOAP field when promoteTo is set', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({
+        title: 'Dolor',
+        note: 'Episodio breve',
+        promoteTo: 'subjective',
+        existingSoapValue: 'Existing subjective',
+      })
+    })
+    expect(apiClient.patch).toHaveBeenCalledTimes(2)
+    const secondCall = vi.mocked(apiClient.patch).mock.calls[1]!
+    expect(secondCall[0]).toBe('/v1/consultations/cons-1')
+    expect(secondCall[1]).toMatchObject({
+      subjective: expect.stringContaining('Episodio breve'),
+    })
+  })
+
+  it('does NOT patch consultation SOAP field when promoteTo is unset', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await result.current.mutateAsync({ note: 'Just a note' })
+    })
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+  })
+})

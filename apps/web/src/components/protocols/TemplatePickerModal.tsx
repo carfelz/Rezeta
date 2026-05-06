@@ -7,8 +7,11 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Caption,
   Field,
   Input,
+  SelectableCard,
+  Stack,
 } from '@/components/ui'
 import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
@@ -28,27 +31,19 @@ interface TypeCardProps {
 
 function TypeCard({ type, selected, onSelect }: TypeCardProps): JSX.Element {
   return (
-    <button
-      type="button"
+    <SelectableCard
+      density="large"
+      state={selected ? 'selected' : 'default'}
       onClick={onSelect}
-      className={[
-        'relative text-left w-full px-4 py-4 rounded border transition-all duration-[100ms] focus:outline-none focus:shadow-[0_0_0_2px_white,0_0_0_4px_#6A8B91]',
-        selected ? 'border-p-500 bg-p-50' : 'border-n-200 bg-n-0 hover:border-n-300 hover:bg-n-25',
-      ].join(' ')}
+      className="flex-col items-start"
     >
-      {/* Active teal rule */}
-      {selected && (
-        <span className="absolute left-0 top-3 bottom-3 w-[2px] bg-p-500 rounded-full" />
-      )}
-      <span className="block text-[13.5px] font-sans font-semibold text-n-800 leading-snug">
-        {type.name}
-      </span>
+      <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">{type.name}</span>
       {type.templateName && (
-        <span className="block text-[11.5px] font-sans text-n-400 mt-1 truncate">
+        <Caption tone="muted" size="sm" as="span" className="block mt-1 truncate">
           {type.templateName}
-        </span>
+        </Caption>
       )}
-    </button>
+    </SelectableCard>
   )
 }
 
@@ -99,21 +94,21 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
               <i className="ph ph-spinner animate-spin text-[24px] text-n-400" />
             </div>
           ) : hasNoTypes ? (
-            /* Empty state — no types exist */
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <Stack gap={3} align="center" className="py-8 text-center">
               <i className="ph ph-stack text-[32px] text-n-300" />
-              <p className="text-[13px] font-sans text-n-500">{strings.TYPE_PICKER_NO_TYPES}</p>
+              <Caption tone="neutral" size="lg" as="p">
+                {strings.TYPE_PICKER_NO_TYPES}
+              </Caption>
               <Link
                 to="/ajustes/tipos"
                 onClick={handleClose}
-                className="text-[13px] font-sans text-p-500 hover:text-p-700 transition-colors duration-[100ms]"
+                className="text-[13px] text-p-500 hover:text-p-700 transition-colors"
               >
                 {strings.TYPE_PICKER_NO_TYPES_CTA} →
               </Link>
-            </div>
+            </Stack>
           ) : (
-            <div className="flex flex-col gap-5">
-              {/* Type grid */}
+            <Stack gap={5}>
               <div className="grid grid-cols-2 gap-2">
                 {(types ?? []).map((type) => (
                   <TypeCard
@@ -124,8 +119,6 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                   />
                 ))}
               </div>
-
-              {/* Protocol name input */}
               <Field label={strings.TYPE_PICKER_NAME_LABEL} required>
                 <Input
                   placeholder={strings.TYPE_PICKER_NAME_PLACEHOLDER}
@@ -136,7 +129,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                   disabled={isPending}
                 />
               </Field>
-            </div>
+            </Stack>
           )}
         </ModalBody>
 

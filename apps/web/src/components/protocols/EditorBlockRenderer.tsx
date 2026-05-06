@@ -11,6 +11,7 @@ import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
+import { Button, IconButton, Row, TextLink } from '@/components/ui'
 import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
 type SectionBlock = Extract<ProtocolBlock, { type: 'section' }>
@@ -133,13 +134,13 @@ function SectionEditor({
         )}
 
         {/* Add block to section */}
-        <button
+        <IconButton
+          icon="ph ph-plus"
+          aria-label={strings.EDITOR_SECTION_ADD_BLOCK}
+          tone="neutral"
+          size="sm"
           onClick={handleAddBlock}
-          title={strings.EDITOR_SECTION_ADD_BLOCK}
-          className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms] shrink-0"
-        >
-          <i className="ph ph-plus text-[13px]" />
-        </button>
+        />
 
         <BlockContextMenu
           isFirst={isFirst}
@@ -472,13 +473,14 @@ function ImagingOrderBlockEditor({
                 placeholder="Tipo de estudio (ej. Radiografía de tórax PA)"
                 autoFocus={idx === draftOrders.length - 1 && order.study_type === ''}
               />
-              <button
-                onClick={() => removeOrder(order.id)}
+              <IconButton
+                icon="ph ph-x"
+                aria-label="Eliminar"
+                tone="danger"
+                size="sm"
                 disabled={draftOrders.length === 1}
-                className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <i className="ph ph-x text-[12px]" />
-              </button>
+                onClick={() => removeOrder(order.id)}
+              />
             </div>
             <div className="flex gap-2">
               <input
@@ -522,29 +524,19 @@ function ImagingOrderBlockEditor({
             </div>
           </div>
         ))}
-        <button
-          onClick={addOrder}
-          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start"
-        >
+        <TextLink tone="primary" size="md" onClick={addOrder} className="mt-1 self-start">
           + Añadir estudio
-        </button>
+        </TextLink>
       </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <button
-          onClick={() => selectBlock(null)}
-          className="h-[28px] px-3 text-[12.5px] font-sans border border-n-300 rounded-sm text-n-700 hover:bg-n-50"
-        >
+      <Row gap={2} justify="end">
+        <Button variant="secondary" size="sm" onClick={() => selectBlock(null)}>
           {strings.EDITOR_BLOCK_CANCEL}
-        </button>
-        <button
-          onClick={commit}
-          disabled={draftOrders.length === 0}
-          className="h-[28px] px-3 text-[12.5px] font-sans bg-p-500 text-white rounded-sm hover:bg-p-700 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
+        </Button>
+        <Button variant="primary" size="sm" onClick={commit} disabled={draftOrders.length === 0}>
           {strings.EDITOR_BLOCK_APPLY}
-        </button>
-      </div>
+        </Button>
+      </Row>
     </div>
   )
 }
@@ -630,13 +622,14 @@ function LabOrderBlockEditor({
                 placeholder="Nombre de la prueba (ej. Hemograma completo)"
                 autoFocus={idx === draftOrders.length - 1 && order.test_name === ''}
               />
-              <button
-                onClick={() => removeOrder(order.id)}
+              <IconButton
+                icon="ph ph-x"
+                aria-label="Eliminar"
+                tone="danger"
+                size="sm"
                 disabled={draftOrders.length === 1}
-                className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <i className="ph ph-x text-[12px]" />
-              </button>
+                onClick={() => removeOrder(order.id)}
+              />
             </div>
             <div className="flex gap-2">
               <input
@@ -682,29 +675,19 @@ function LabOrderBlockEditor({
             </label>
           </div>
         ))}
-        <button
-          onClick={addOrder}
-          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start"
-        >
+        <TextLink tone="primary" size="md" onClick={addOrder} className="mt-1 self-start">
           + Añadir prueba
-        </button>
+        </TextLink>
       </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <button
-          onClick={() => selectBlock(null)}
-          className="h-[28px] px-3 text-[12.5px] font-sans border border-n-300 rounded-sm text-n-700 hover:bg-n-50"
-        >
+      <Row gap={2} justify="end">
+        <Button variant="secondary" size="sm" onClick={() => selectBlock(null)}>
           {strings.EDITOR_BLOCK_CANCEL}
-        </button>
-        <button
-          onClick={commit}
-          disabled={draftOrders.length === 0}
-          className="h-[28px] px-3 text-[12.5px] font-sans bg-p-500 text-white rounded-sm hover:bg-p-700 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
+        </Button>
+        <Button variant="primary" size="sm" onClick={commit} disabled={draftOrders.length === 0}>
           {strings.EDITOR_BLOCK_APPLY}
-        </button>
-      </div>
+        </Button>
+      </Row>
     </div>
   )
 }

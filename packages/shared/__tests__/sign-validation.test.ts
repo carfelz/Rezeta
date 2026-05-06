@@ -179,4 +179,246 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     expect(r.length).toBe(2)
     expect(r.map((m) => m.id)).toEqual(['chiefComplaint', 'protocol:u1:chk1'])
   })
+
+  it('flags required steps block when not all steps checked', () => {
+    const block = {
+      id: 'stp1',
+      type: 'steps' as const,
+      title: 'Pasos',
+      steps: [
+        { id: 's1', order: 1, title: 'A' },
+        { id: 's2', order: 2, title: 'B' },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { s1: true })])
+    expect(r.some((m) => m.id === 'protocol:u1:stp1')).toBe(true)
+  })
+
+  it('passes required steps block when all steps checked', () => {
+    const block = {
+      id: 'stp1',
+      type: 'steps' as const,
+      steps: [{ id: 's1', order: 1, title: 'A' }],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { s1: true })])
+    expect(r).toEqual([])
+  })
+
+  it('flags required dosage_table with no rows checked', () => {
+    const block = {
+      id: 'dt1',
+      type: 'dosage_table' as const,
+      title: 'Meds',
+      columns: ['drug', 'dose', 'route', 'frequency', 'notes'],
+      rows: [
+        { id: 'r1', drug: 'A', dose: '1', route: 'PO', frequency: 'qd', notes: '' },
+        { id: 'r2', drug: 'B', dose: '2', route: 'IV', frequency: 'bid', notes: '' },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:dt1')).toBe(true)
+  })
+
+  it('passes required dosage_table when at least one row checked', () => {
+    const block = {
+      id: 'dt1',
+      type: 'dosage_table' as const,
+      columns: ['drug', 'dose', 'route', 'frequency', 'notes'],
+      rows: [{ id: 'r1', drug: 'A', dose: '1', route: 'PO', frequency: 'qd', notes: '' }],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { r1: true })])
+    expect(r).toEqual([])
+  })
+
+  it('flags required imaging_order with no orders checked', () => {
+    const block = {
+      id: 'img1',
+      type: 'imaging_order' as const,
+      title: 'Imágenes',
+      orders: [
+        {
+          id: 'o1',
+          study_type: 'TAC',
+          indication: 'x',
+          urgency: 'routine',
+          contrast: false,
+          fasting_required: false,
+        },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:img1')).toBe(true)
+  })
+
+  it('passes required imaging_order when an order is checked', () => {
+    const block = {
+      id: 'img1',
+      type: 'imaging_order' as const,
+      orders: [
+        {
+          id: 'o1',
+          study_type: 'TAC',
+          indication: 'x',
+          urgency: 'routine',
+          contrast: false,
+          fasting_required: false,
+        },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { o1: true })])
+    expect(r).toEqual([])
+  })
+
+  it('flags required lab_order with no orders checked', () => {
+    const block = {
+      id: 'lab1',
+      type: 'lab_order' as const,
+      orders: [
+        {
+          id: 'o1',
+          test_name: 'CBC',
+          indication: 'x',
+          urgency: 'routine',
+          fasting_required: false,
+          sample_type: 'blood',
+        },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:lab1')).toBe(true)
+  })
+
+  it('passes required lab_order when an order is checked', () => {
+    const block = {
+      id: 'lab1',
+      type: 'lab_order' as const,
+      orders: [
+        {
+          id: 'o1',
+          test_name: 'CBC',
+          indication: 'x',
+          urgency: 'routine',
+          fasting_required: false,
+          sample_type: 'blood',
+        },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { o1: true })])
+    expect(r).toEqual([])
+  })
+
+  it('unknown block type defaults to completed (passes required check)', () => {
+    const block = {
+      id: 'unk1',
+      type: 'mystery_block',
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    expect(r).toEqual([])
+  })
+
+  it('section with all required children completed passes', () => {
+    const block = {
+      id: 'sec1',
+      type: 'section' as const,
+      title: 'Eval',
+      blocks: [
+        {
+          id: 'chk1',
+          type: 'checklist' as const,
+          items: [{ id: 'i1', text: 'PA' }],
+          required: true,
+        },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { i1: true })])
+    expect(r).toEqual([])
+  })
+
+  it('section with optional non-required child skips completion check', () => {
+    const block = {
+      id: 'sec1',
+      type: 'section' as const,
+      title: 'Eval',
+      blocks: [
+        {
+          id: 'chk1',
+          type: 'checklist' as const,
+          items: [{ id: 'i1', text: 'PA' }],
+        },
+      ],
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    expect(r).toEqual([])
+  })
+
+  it('uses fallback "Bloque {id}" label when required block has no title or condition', () => {
+    const block = {
+      id: 'chk_no_title',
+      type: 'checklist' as const,
+      items: [{ id: 'i1', text: 'X' }],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const entry = r.find((m) => m.id === 'protocol:u1:chk_no_title')
+    expect(entry?.label).toBe('Bloque chk_no_title')
+  })
+
+  it('uses decision condition as label when no title set', () => {
+    const block = {
+      id: 'd1',
+      type: 'decision' as const,
+      condition: '¿Hay fiebre?',
+      branches: [
+        { id: 'b1', label: 'Sí', action: 'x' },
+        { id: 'b2', label: 'No', action: 'y' },
+      ],
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const entry = r.find((m) => m.id === 'protocol:u1:d1')
+    expect(entry?.label).toBe('¿Hay fiebre?')
+  })
+
+  it('skips usages with status completed-but-not-in-progress NOT — completed is included', () => {
+    const block = {
+      id: 'chk1',
+      type: 'checklist' as const,
+      items: [{ id: 'i1', text: 'PA' }],
+      required: true,
+    } as unknown as ProtocolBlock
+    const usage = makeUsage([block])
+    usage.status = 'completed'
+    const r = computeMissingRequiredFields(okSoap, [usage])
+    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+  })
+
+  it('handles usage with null content (no blocks)', () => {
+    const usage = makeUsage([])
+    usage.content = null
+    const r = computeMissingRequiredFields(okSoap, [usage])
+    expect(r).toEqual([])
+  })
+
+  it('handles usage with null checkedState', () => {
+    const block = {
+      id: 'chk1',
+      type: 'checklist' as const,
+      items: [{ id: 'i1', text: 'PA' }],
+      required: true,
+    } as unknown as ProtocolBlock
+    const usage = makeUsage([block])
+    usage.checkedState = null as unknown as Record<string, boolean>
+    const r = computeMissingRequiredFields(okSoap, [usage])
+    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+  })
 })

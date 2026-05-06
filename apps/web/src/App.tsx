@@ -30,6 +30,7 @@ import { GatePreview } from '@/pages/_preview/GatePreview'
 import { StripPreview } from '@/pages/_preview/StripPreview'
 import { EdgePreview } from '@/pages/_preview/EdgePreview'
 import { CanvasPreview } from '@/pages/_preview/CanvasPreview'
+import { OrderQueuePreview } from '@/pages/_preview/OrderQueuePreview'
 
 const router = createBrowserRouter([
   // ── Dev-only auth-free previews ────────────────────────────────────────────
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
   { path: '/_preview/strip', element: <StripPreview /> },
   { path: '/_preview/edge', element: <EdgePreview /> },
   { path: '/_preview/canvas', element: <CanvasPreview /> },
+  { path: '/_preview/order-queue', element: <OrderQueuePreview /> },
   // ── Public-only routes (redirect authenticated users away) ────────────────
   {
     path: '/login',

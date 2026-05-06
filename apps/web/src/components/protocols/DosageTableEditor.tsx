@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
-import { Button } from '@/components/ui'
+import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 const COLUMNS = ['drug', 'dose', 'route', 'frequency', 'notes'] as const
 type Column = (typeof COLUMNS)[number]
@@ -35,7 +35,7 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
   const updateBlock = useEditorStore((s) => s.updateBlock)
   const selectBlock = useEditorStore((s) => s.selectBlock)
 
-  const addRow = () => {
+  const addRow = (): void => {
     setDraftRows((prev) => [
       ...prev,
       {
@@ -49,16 +49,16 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
     ])
   }
 
-  const updateRow = (rowId: string, col: Column, value: string) => {
+  const updateRow = (rowId: string, col: Column, value: string): void => {
     setDraftRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, [col]: value } : r)))
   }
 
-  const removeRow = (rowId: string) => {
+  const removeRow = (rowId: string): void => {
     if (draftRows.length === 1) return
     setDraftRows((prev) => prev.filter((r) => r.id !== rowId))
   }
 
-  const commit = () => {
+  const commit = (): void => {
     updateBlock(id, (b) => {
       if (b.type !== 'dosage_table') return b
       const trimmed = draftTitle.trim()
@@ -70,29 +70,19 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
     selectBlock(null)
   }
 
-  const cancel = () => selectBlock(null)
+  const cancel = (): void => selectBlock(null)
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      {/* Title */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_DOSAGE_TITLE_LABEL}
-        </label>
-        <input
-          type="text"
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
+    <Stack gap={3} className="p-4">
+      <Field label={strings.EDITOR_DOSAGE_TITLE_LABEL}>
+        <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           placeholder={strings.EDITOR_DOSAGE_TITLE_PLACEHOLDER}
         />
-      </div>
+      </Field>
 
-      {/* Table */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_DOSAGE_ROWS_LABEL}
-        </label>
+      <Field label={strings.EDITOR_DOSAGE_ROWS_LABEL}>
         <div className="overflow-x-auto rounded-sm border border-n-200">
           <table className="w-full text-[12px] font-sans">
             <thead>
@@ -113,9 +103,7 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
                 <tr key={row.id} className={idx % 2 === 0 ? 'bg-n-0' : 'bg-n-25'}>
                   {COLUMNS.map((col) => (
                     <td key={col} className="px-1 py-1">
-                      <input
-                        type="text"
-                        className="w-full h-[26px] px-2 text-[12px] font-sans border border-n-200 rounded-[3px] focus:outline-none focus:border-p-500 transition-all duration-[100ms] bg-transparent"
+                      <Input
                         value={row[col]}
                         onChange={(e) => updateRow(row.id, col, e.target.value)}
                         placeholder={col === 'drug' && idx === 0 ? 'Ej. Epinefrina' : ''}
@@ -126,36 +114,34 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
                     </td>
                   ))}
                   <td className="px-1 py-1 text-center">
-                    <button
-                      onClick={() => removeRow(row.id)}
+                    <IconButton
+                      icon="ph ph-x"
+                      aria-label={strings.EDITOR_DOSAGE_REMOVE_ROW}
+                      tone="danger"
+                      size="sm"
                       disabled={draftRows.length === 1}
-                      className="w-6 h-6 flex items-center justify-center text-n-400 hover:text-danger-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-[100ms] mx-auto"
-                      title={strings.EDITOR_DOSAGE_REMOVE_ROW}
-                    >
-                      <i className="ph ph-x text-[11px]" />
-                    </button>
+                      onClick={() => removeRow(row.id)}
+                      className="mx-auto"
+                    />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <button
-          onClick={addRow}
-          className="mt-1 text-[12px] font-sans text-p-500 hover:text-p-700 self-start transition-colors duration-[100ms]"
-        >
+        <TextLink tone="primary" size="md" onClick={addRow} className="mt-1 self-start">
           {strings.EDITOR_DOSAGE_ADD_ROW}
-        </button>
-      </div>
+        </TextLink>
+      </Field>
 
-      <div className="flex items-center gap-2 justify-end">
+      <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
           {strings.EDITOR_BLOCK_CANCEL}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftRows.length === 0}>
           {strings.EDITOR_BLOCK_APPLY}
         </Button>
-      </div>
-    </div>
+      </Row>
+    </Stack>
   )
 }

@@ -5,6 +5,13 @@ import {
   TabsTrigger,
   TabsContent,
   Button,
+  Caption,
+  Chip,
+  DashedButton,
+  GroupSectionCard,
+  IconButton,
+  Input,
+  Overline,
   Select,
   SelectTrigger,
   SelectValue,
@@ -30,23 +37,37 @@ import {
   useDeleteImagingOrder,
   useDeleteLabOrder,
 } from '@/hooks/consultations/use-consultations'
-import { cn } from '@/lib/utils'
 import { apiClient, triggerDownload } from '@/lib/api-client'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }): JSX.Element {
-  return (
-    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 px-1 mb-2">
-      {children}
-    </div>
-  )
-}
 
 const URGENCY_LABELS: Record<string, string> = {
   routine: 'Rutina',
   urgent: 'Urgente',
   stat: 'Stat',
+}
+
+const URGENCY_TONES = {
+  stat: 'danger',
+  urgent: 'warning',
+  routine: 'neutral',
+} as const
+
+function UrgencyChip({ urgency }: { urgency: keyof typeof URGENCY_TONES }): JSX.Element {
+  return (
+    <Chip tone={URGENCY_TONES[urgency]} size="sm" format="uppercase">
+      {URGENCY_LABELS[urgency]}
+    </Chip>
+  )
+}
+
+function SavedChip(): JSX.Element {
+  return (
+    <Chip tone="success" size="md" format="sentence">
+      <i className="ph ph-check text-[10px]" />
+      Guardada
+    </Chip>
+  )
 }
 
 // ─── Saved prescription card (from DB) ───────────────────────────────────────
@@ -81,73 +102,76 @@ function SavedPrescriptionCard({
   }
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <div className="flex items-center gap-2">
-          <span className="text-[12.5px] font-sans font-semibold text-n-800">
-            {prescription.groupTitle ?? `Receta ${prescription.groupOrder}`}
+    <div className="mb-3">
+      <GroupSectionCard
+        title={
+          <span className="flex items-center gap-2">
+            <span className="text-[12.5px] font-semibold text-n-800">
+              {prescription.groupTitle ?? `Receta ${prescription.groupOrder}`}
+            </span>
+            <SavedChip />
           </span>
-          <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-1 flex items-center gap-1">
-            <i className="ph ph-check text-[10px]" />
-            Guardada
-          </span>
-        </div>
-        {!isSigned && (
-          <button
-            type="button"
-            onClick={() => onDelete(prescription.id)}
-            disabled={isDeleting}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-danger-text transition-colors disabled:opacity-40"
-            title="Eliminar receta"
+        }
+        headerActions={
+          !isSigned ? (
+            <IconButton
+              icon="ph ph-trash"
+              aria-label="Eliminar receta"
+              tone="danger"
+              size="sm"
+              disabled={isDeleting}
+              onClick={() => onDelete(prescription.id)}
+            />
+          ) : undefined
+        }
+        footer={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
           >
-            <i className="ph ph-trash text-[12px]" />
-          </button>
-        )}
-      </div>
-
-      <div className="divide-y divide-n-100">
-        {prescription.prescriptionItems.map((item) => (
-          <div key={item.id} className="px-4 py-3">
-            <div className="text-[13px] font-sans font-semibold text-n-800">{item.drug}</div>
-            <div className="text-[12px] font-mono text-n-500 mt-1">
-              {item.dose} · {item.route} · {item.frequency}
-              {item.duration && ` · ${item.duration}`}
-            </div>
-            {item.notes && (
-              <div className="text-[12px] font-sans text-n-500 mt-1 italic">{item.notes}</div>
+            {downloading ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                Descargando…
+              </>
+            ) : (
+              <>
+                <i className="ph ph-download-simple mr-1 text-[12px]" />
+                Descargar PDF
+              </>
             )}
-          </div>
-        ))}
-        {prescription.prescriptionItems.length === 0 && (
-          <p className="text-[12.5px] text-n-300 italic py-3 px-4">Sin medicamentos.</p>
-        )}
-      </div>
-
-      <div className="px-4 py-3 border-t border-n-100 flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => void handleDownloadPdf()}
-          disabled={downloading}
-        >
-          {downloading ? (
-            <>
-              <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-              Descargando…
-            </>
-          ) : (
-            <>
-              <i className="ph ph-download-simple mr-1 text-[12px]" />
-              Descargar PDF
-            </>
+          </Button>
+        }
+      >
+        <div className="divide-y divide-n-100">
+          {prescription.prescriptionItems.map((item) => (
+            <div key={item.id} className="px-4 py-3">
+              <div className="text-[13px] font-semibold text-n-800">{item.drug}</div>
+              <Caption tone="muted" size="md" as="div" className="font-mono mt-1">
+                {item.dose} · {item.route} · {item.frequency}
+                {item.duration && ` · ${item.duration}`}
+              </Caption>
+              {item.notes && (
+                <Caption tone="muted" size="md" as="div" className="italic mt-1">
+                  {item.notes}
+                </Caption>
+              )}
+            </div>
+          ))}
+          {prescription.prescriptionItems.length === 0 && (
+            <Caption tone="muted" size="lg" as="p" className="italic py-3 px-4 block">
+              Sin medicamentos.
+            </Caption>
           )}
-        </Button>
-      </div>
+        </div>
+      </GroupSectionCard>
     </div>
   )
 }
 
-// ─── Saved imaging group card (from DB) ──────────────────────────────────────
+// ─── Saved imaging group card ────────────────────────────────────────────────
 
 interface SavedImagingGroupCardProps {
   groupTitle: string
@@ -164,64 +188,61 @@ function SavedImagingGroupCard({
   onDelete,
   isDeleting,
 }: SavedImagingGroupCardProps): JSX.Element {
+  void isSigned
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <div className="flex items-center gap-2">
-          <span className="text-[12.5px] font-sans font-semibold text-n-800">{groupTitle}</span>
-          <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-1 flex items-center gap-1">
-            <i className="ph ph-check text-[10px]" />
-            Guardada
+    <div className="mb-3">
+      <GroupSectionCard
+        title={
+          <span className="flex items-center gap-2">
+            <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+            <SavedChip />
           </span>
-        </div>
-      </div>
-
-      <div className="divide-y divide-n-100">
-        {orders.map((order) => (
-          <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-sans font-semibold text-n-800">
-                  {order.studyType}
-                </span>
-                <span
-                  className={cn(
-                    'text-[10.5px] font-mono px-2 py-px rounded border',
-                    order.urgency === 'stat' &&
-                      'bg-danger-bg border-danger-border text-danger-text',
-                    order.urgency === 'urgent' &&
-                      'bg-warning-bg border-warning-border text-warning-text',
-                    order.urgency === 'routine' && 'bg-n-50 border-n-200 text-n-500',
+        }
+      >
+        <div className="divide-y divide-n-100">
+          {orders.map((order) => (
+            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-semibold text-n-800">{order.studyType}</span>
+                  <UrgencyChip urgency={order.urgency} />
+                </div>
+                <Caption tone="muted" size="md" as="div" className="mt-1">
+                  {order.indication}
+                </Caption>
+                <div className="flex items-center gap-3 mt-1">
+                  {order.contrast && (
+                    <Caption tone="muted" size="xs" className="font-mono">
+                      Con contraste
+                    </Caption>
                   )}
-                >
-                  {URGENCY_LABELS[order.urgency]}
-                </span>
+                  {order.fastingRequired && (
+                    <Caption tone="muted" size="xs" className="font-mono">
+                      En ayunas
+                    </Caption>
+                  )}
+                </div>
               </div>
-              <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
-              <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-n-400">
-                {order.contrast && <span>Con contraste</span>}
-                {order.fastingRequired && <span>En ayunas</span>}
-              </div>
+              {!isSigned && (
+                <IconButton
+                  icon="ph ph-trash"
+                  aria-label="Eliminar orden"
+                  tone="danger"
+                  size="sm"
+                  disabled={isDeleting}
+                  onClick={() => onDelete(order.id)}
+                  className="opacity-0 group-hover:opacity-100 mt-1"
+                />
+              )}
             </div>
-            {!isSigned && (
-              <button
-                type="button"
-                onClick={() => onDelete(order.id)}
-                disabled={isDeleting}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-300 hover:text-danger-text transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1 disabled:opacity-40"
-                title="Eliminar"
-              >
-                <i className="ph ph-trash text-[11px]" />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </GroupSectionCard>
     </div>
   )
 }
 
-// ─── Saved lab group card (from DB) ──────────────────────────────────────────
+// ─── Saved lab group card ────────────────────────────────────────────────────
 
 interface SavedLabGroupCardProps {
   groupTitle: string
@@ -239,50 +260,59 @@ function SavedLabGroupCard({
   isDeleting,
 }: SavedLabGroupCardProps): JSX.Element {
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <div className="flex items-center gap-2">
-          <span className="text-[12.5px] font-sans font-semibold text-n-800">{groupTitle}</span>
-          <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-1 flex items-center gap-1">
-            <i className="ph ph-check text-[10px]" />
-            Guardada
+    <div className="mb-3">
+      <GroupSectionCard
+        title={
+          <span className="flex items-center gap-2">
+            <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+            <SavedChip />
           </span>
-        </div>
-      </div>
-
-      <div className="divide-y divide-n-100">
-        {orders.map((order) => (
-          <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-sans font-semibold text-n-800">
-                  {order.testName}
-                </span>
-                {order.testCode && (
-                  <span className="text-[10.5px] font-mono text-n-400">{order.testCode}</span>
-                )}
+        }
+      >
+        <div className="divide-y divide-n-100">
+          {orders.map((order) => (
+            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-semibold text-n-800">{order.testName}</span>
+                  {order.testCode && (
+                    <Caption tone="muted" size="xs" className="font-mono">
+                      {order.testCode}
+                    </Caption>
+                  )}
+                </div>
+                <Caption tone="muted" size="md" as="div" className="mt-1">
+                  {order.indication}
+                </Caption>
+                <div className="flex items-center gap-3 mt-1">
+                  <Caption tone="muted" size="xs" className="font-mono">
+                    {URGENCY_LABELS[order.urgency]}
+                  </Caption>
+                  {order.fastingRequired && (
+                    <Caption tone="muted" size="xs" className="font-mono">
+                      En ayunas
+                    </Caption>
+                  )}
+                  <Caption tone="muted" size="xs" className="font-mono capitalize">
+                    {order.sampleType}
+                  </Caption>
+                </div>
               </div>
-              <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
-              <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-n-400">
-                <span>{URGENCY_LABELS[order.urgency]}</span>
-                {order.fastingRequired && <span>En ayunas</span>}
-                <span className="capitalize">{order.sampleType}</span>
-              </div>
+              {!isSigned && (
+                <IconButton
+                  icon="ph ph-trash"
+                  aria-label="Eliminar orden"
+                  tone="danger"
+                  size="sm"
+                  disabled={isDeleting}
+                  onClick={() => onDelete(order.id)}
+                  className="opacity-0 group-hover:opacity-100 mt-1"
+                />
+              )}
             </div>
-            {!isSigned && (
-              <button
-                type="button"
-                onClick={() => onDelete(order.id)}
-                disabled={isDeleting}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-300 hover:text-danger-text transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1 disabled:opacity-40"
-                title="Eliminar"
-              >
-                <i className="ph ph-trash text-[11px]" />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </GroupSectionCard>
     </div>
   )
 }
@@ -324,88 +354,91 @@ function MedicationGroup({
           source: m.source,
         })),
       },
-      {
-        onSuccess: () => {
-          onRemoveGroup(group.id)
-        },
-      },
+      { onSuccess: () => onRemoveGroup(group.id) },
     )
   }
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <span className="text-[12.5px] font-sans font-semibold text-n-800">{group.title}</span>
-        {!isOnlyGroup && (
-          <button
-            type="button"
-            onClick={() => onRemoveGroup(group.id)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
-            title="Eliminar grupo"
+    <div className="mb-3">
+      <GroupSectionCard
+        title={group.title}
+        headerActions={
+          !isOnlyGroup ? (
+            <IconButton
+              icon="ph ph-x"
+              aria-label="Eliminar grupo"
+              tone="muted"
+              size="sm"
+              onClick={() => onRemoveGroup(group.id)}
+            />
+          ) : undefined
+        }
+        footer={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleGenerate}
+            disabled={medications.length === 0 || createPrescription.isPending}
           >
-            <i className="ph ph-x text-[12px]" />
-          </button>
-        )}
-      </div>
-
-      {medications.length === 0 ? (
-        <div className="px-4 py-3">
-          <p className="text-[12.5px] text-n-300 italic py-2 px-1">
-            Sin medicamentos en este grupo.
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-n-100">
-          {medications.map((med) => (
-            <div key={med.id} className="flex items-start gap-3 px-4 py-3 group">
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-sans font-semibold text-n-800">{med.drug}</div>
-                <div className="text-[12px] font-mono text-n-500 mt-1">
-                  {med.dose} · {med.route} · {med.frequency}
-                  {med.duration && ` · ${med.duration}`}
+            {createPrescription.isPending ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                Generando…
+              </>
+            ) : (
+              <>
+                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                Generar receta
+              </>
+            )}
+          </Button>
+        }
+      >
+        {medications.length === 0 ? (
+          <div className="px-4 py-3">
+            <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
+              Sin medicamentos en este grupo.
+            </Caption>
+          </div>
+        ) : (
+          <div className="divide-y divide-n-100">
+            {medications.map((med) => (
+              <div key={med.id} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-semibold text-n-800">{med.drug}</div>
+                  <Caption tone="muted" size="md" as="div" className="font-mono mt-1">
+                    {med.dose} · {med.route} · {med.frequency}
+                    {med.duration && ` · ${med.duration}`}
+                  </Caption>
+                  {med.notes && (
+                    <Caption tone="muted" size="md" as="div" className="italic mt-1">
+                      {med.notes}
+                    </Caption>
+                  )}
+                  {med.source && (
+                    <Caption
+                      tone="primary"
+                      size="xs"
+                      as="div"
+                      className="font-mono mt-1 opacity-70"
+                    >
+                      {med.source}
+                    </Caption>
+                  )}
                 </div>
-                {med.notes && (
-                  <div className="text-[12px] font-sans text-n-500 mt-1 italic">{med.notes}</div>
-                )}
-                {med.source && (
-                  <div className="text-[11px] font-mono text-p-600 mt-1 opacity-70">
-                    {med.source}
-                  </div>
-                )}
+                <IconButton
+                  icon="ph ph-x"
+                  aria-label="Quitar medicamento"
+                  tone="muted"
+                  size="sm"
+                  onClick={() => onRemoveMedication(med.id)}
+                  className="opacity-0 group-hover:opacity-100 mt-1"
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => onRemoveMedication(med.id)}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-300 hover:text-n-700 transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1"
-                title="Quitar"
-              >
-                <i className="ph ph-x text-[11px]" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="px-4 py-3 border-t border-n-100 flex justify-end">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleGenerate}
-          disabled={medications.length === 0 || createPrescription.isPending}
-        >
-          {createPrescription.isPending ? (
-            <>
-              <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-              Generando…
-            </>
-          ) : (
-            <>
-              <i className="ph ph-file-pdf mr-1 text-[12px]" />
-              Generar receta
-            </>
-          )}
-        </Button>
-      </div>
+            ))}
+          </div>
+        )}
+      </GroupSectionCard>
     </div>
   )
 }
@@ -452,87 +485,90 @@ function ImagingGroup({
   }
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <span className="text-[12.5px] font-sans font-semibold text-n-800">{group.title}</span>
-        {!isOnlyGroup && (
-          <button
-            type="button"
-            onClick={() => onRemoveGroup(group.id)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
+    <div className="mb-3">
+      <GroupSectionCard
+        title={group.title}
+        headerActions={
+          !isOnlyGroup ? (
+            <IconButton
+              icon="ph ph-x"
+              aria-label="Eliminar grupo"
+              tone="muted"
+              size="sm"
+              onClick={() => onRemoveGroup(group.id)}
+            />
+          ) : undefined
+        }
+        footer={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleGenerate}
+            disabled={orders.length === 0 || createImagingOrder.isPending}
           >
-            <i className="ph ph-x text-[12px]" />
-          </button>
-        )}
-      </div>
-
-      {orders.length === 0 ? (
-        <div className="px-4 py-3">
-          <p className="text-[12.5px] text-n-300 italic py-2 px-1">Sin estudios en este grupo.</p>
-        </div>
-      ) : (
-        <div className="divide-y divide-n-100">
-          {orders.map((order) => (
-            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-sans font-semibold text-n-800">
-                    {order.study_type}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-[10.5px] font-mono px-2 py-px rounded border',
-                      order.urgency === 'stat' &&
-                        'bg-danger-bg border-danger-border text-danger-text',
-                      order.urgency === 'urgent' &&
-                        'bg-warning-bg border-warning-border text-warning-text',
-                      order.urgency === 'routine' && 'bg-n-50 border-n-200 text-n-500',
+            {createImagingOrder.isPending ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                Generando…
+              </>
+            ) : (
+              <>
+                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                Generar orden
+              </>
+            )}
+          </Button>
+        }
+      >
+        {orders.length === 0 ? (
+          <div className="px-4 py-3">
+            <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
+              Sin estudios en este grupo.
+            </Caption>
+          </div>
+        ) : (
+          <div className="divide-y divide-n-100">
+            {orders.map((order) => (
+              <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-n-800">{order.study_type}</span>
+                    <UrgencyChip urgency={order.urgency} />
+                  </div>
+                  <Caption tone="muted" size="md" as="div" className="mt-1">
+                    {order.indication}
+                  </Caption>
+                  <div className="flex items-center gap-3 mt-1">
+                    {order.contrast && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        Con contraste
+                      </Caption>
                     )}
-                  >
-                    {URGENCY_LABELS[order.urgency]}
-                  </span>
+                    {order.fasting_required && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        En ayunas
+                      </Caption>
+                    )}
+                    {order.special_instructions && (
+                      <Caption tone="muted" size="xs" className="italic">
+                        {order.special_instructions}
+                      </Caption>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
-                <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-n-400">
-                  {order.contrast && <span>Con contraste</span>}
-                  {order.fasting_required && <span>En ayunas</span>}
-                  {order.special_instructions && (
-                    <span className="italic">{order.special_instructions}</span>
-                  )}
-                </div>
+                <IconButton
+                  icon="ph ph-x"
+                  aria-label="Quitar estudio"
+                  tone="muted"
+                  size="sm"
+                  onClick={() => onRemoveOrder(order.id)}
+                  className="opacity-0 group-hover:opacity-100 mt-1"
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => onRemoveOrder(order.id)}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-300 hover:text-n-700 transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1"
-              >
-                <i className="ph ph-x text-[11px]" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="px-4 py-3 border-t border-n-100 flex justify-end">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleGenerate}
-          disabled={orders.length === 0 || createImagingOrder.isPending}
-        >
-          {createImagingOrder.isPending ? (
-            <>
-              <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-              Generando…
-            </>
-          ) : (
-            <>
-              <i className="ph ph-file-pdf mr-1 text-[12px]" />
-              Generar orden
-            </>
-          )}
-        </Button>
-      </div>
+            ))}
+          </div>
+        )}
+      </GroupSectionCard>
     </div>
   )
 }
@@ -580,78 +616,92 @@ function LabGroup({
   }
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden mb-3">
-      <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
-        <span className="text-[12.5px] font-sans font-semibold text-n-800">{group.title}</span>
-        {!isOnlyGroup && (
-          <button
-            type="button"
-            onClick={() => onRemoveGroup(group.id)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
+    <div className="mb-3">
+      <GroupSectionCard
+        title={group.title}
+        headerActions={
+          !isOnlyGroup ? (
+            <IconButton
+              icon="ph ph-x"
+              aria-label="Eliminar grupo"
+              tone="muted"
+              size="sm"
+              onClick={() => onRemoveGroup(group.id)}
+            />
+          ) : undefined
+        }
+        footer={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleGenerate}
+            disabled={orders.length === 0 || createLabOrder.isPending}
           >
-            <i className="ph ph-x text-[12px]" />
-          </button>
-        )}
-      </div>
-
-      {orders.length === 0 ? (
-        <div className="px-4 py-3">
-          <p className="text-[12.5px] text-n-300 italic py-2 px-1">Sin estudios en este grupo.</p>
-        </div>
-      ) : (
-        <div className="divide-y divide-n-100">
-          {orders.map((order) => (
-            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-sans font-semibold text-n-800">
-                    {order.test_name}
-                  </span>
-                  {order.test_code && (
-                    <span className="text-[10.5px] font-mono text-n-400">{order.test_code}</span>
-                  )}
+            {createLabOrder.isPending ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                Generando…
+              </>
+            ) : (
+              <>
+                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                Generar laboratorio
+              </>
+            )}
+          </Button>
+        }
+      >
+        {orders.length === 0 ? (
+          <div className="px-4 py-3">
+            <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
+              Sin estudios en este grupo.
+            </Caption>
+          </div>
+        ) : (
+          <div className="divide-y divide-n-100">
+            {orders.map((order) => (
+              <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-n-800">{order.test_name}</span>
+                    {order.test_code && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        {order.test_code}
+                      </Caption>
+                    )}
+                  </div>
+                  <Caption tone="muted" size="md" as="div" className="mt-1">
+                    {order.indication}
+                  </Caption>
+                  <div className="flex items-center gap-3 mt-1">
+                    <Caption tone="muted" size="xs" className="font-mono">
+                      {URGENCY_LABELS[order.urgency]}
+                    </Caption>
+                    {order.fasting_required && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        En ayunas
+                      </Caption>
+                    )}
+                    {order.special_instructions && (
+                      <Caption tone="muted" size="xs" className="italic">
+                        {order.special_instructions}
+                      </Caption>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
-                <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-n-400">
-                  <span>{URGENCY_LABELS[order.urgency]}</span>
-                  {order.fasting_required && <span>En ayunas</span>}
-                  {order.special_instructions && (
-                    <span className="italic">{order.special_instructions}</span>
-                  )}
-                </div>
+                <IconButton
+                  icon="ph ph-x"
+                  aria-label="Quitar estudio"
+                  tone="muted"
+                  size="sm"
+                  onClick={() => onRemoveOrder(order.id)}
+                  className="opacity-0 group-hover:opacity-100 mt-1"
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => onRemoveOrder(order.id)}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-n-100 text-n-300 hover:text-n-700 transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1"
-              >
-                <i className="ph ph-x text-[11px]" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="px-4 py-3 border-t border-n-100 flex justify-end">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleGenerate}
-          disabled={orders.length === 0 || createLabOrder.isPending}
-        >
-          {createLabOrder.isPending ? (
-            <>
-              <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-              Generando…
-            </>
-          ) : (
-            <>
-              <i className="ph ph-file-pdf mr-1 text-[12px]" />
-              Generar laboratorio
-            </>
-          )}
-        </Button>
-      </div>
+            ))}
+          </div>
+        )}
+      </GroupSectionCard>
     </div>
   )
 }
@@ -675,14 +725,10 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full py-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 border border-dashed border-n-300 rounded-sm hover:border-n-400 transition-colors bg-n-0 justify-center"
-      >
+      <DashedButton tone="neutral" size="sm" onClick={() => setOpen(true)}>
         <i className="ph ph-plus text-[12px]" />
         Añadir medicamento
-      </button>
+      </DashedButton>
     )
   }
 
@@ -708,50 +754,33 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
     setOpen(false)
   }
 
-  const inputClass =
-    'w-full h-[32px] px-3 text-[12.5px] font-sans border border-n-300 rounded-sm focus:border-p-500 focus:outline-none bg-n-0 text-n-700 placeholder:text-n-300'
-
   return (
     <div className="bg-n-0 border border-n-200 rounded-md p-4 mb-3">
-      <div className="text-[11.5px] font-mono uppercase tracking-[0.06em] text-n-500 mb-3">
+      <Overline tone="muted" size="lg" className="mb-3">
         Nuevo medicamento
-      </div>
+      </Overline>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div className="col-span-2">
-          <input
-            className={inputClass}
+          <Input
             placeholder="Medicamento *"
             value={drug}
             onChange={(e) => setDrug(e.target.value)}
           />
         </div>
-        <input
-          className={inputClass}
-          placeholder="Dosis *"
-          value={dose}
-          onChange={(e) => setDose(e.target.value)}
-        />
-        <input
-          className={inputClass}
-          placeholder="Vía *"
-          value={route}
-          onChange={(e) => setRoute(e.target.value)}
-        />
-        <input
-          className={inputClass}
+        <Input placeholder="Dosis *" value={dose} onChange={(e) => setDose(e.target.value)} />
+        <Input placeholder="Vía *" value={route} onChange={(e) => setRoute(e.target.value)} />
+        <Input
           placeholder="Frecuencia *"
           value={frequency}
           onChange={(e) => setFrequency(e.target.value)}
         />
-        <input
-          className={inputClass}
+        <Input
           placeholder="Duración"
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
         />
         <div className="col-span-2">
-          <input
-            className={inputClass}
+          <Input
             placeholder="Notas (opcional)"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -760,7 +789,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
         {groups.length > 1 && (
           <div className="col-span-2">
             <Select value={groupId} onValueChange={setGroupId}>
-              <SelectTrigger className="h-[32px] text-[12.5px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Receta…" />
               </SelectTrigger>
               <SelectContent>
@@ -821,12 +850,10 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     reset,
   } = useOrderQueueStore()
 
-  // Reset the local queue whenever the consultation changes
   useEffect(() => {
     reset()
   }, [consultationId, reset])
 
-  // Load saved records from backend
   const savedPrescriptions = useListPrescriptions(consultationId)
   const savedImagingOrders = useListImagingOrders(consultationId)
   const savedLabOrders = useListLabOrders(consultationId)
@@ -835,7 +862,6 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
   const deleteImagingOrder = useDeleteImagingOrder(consultationId)
   const deleteLabOrder = useDeleteLabOrder(consultationId)
 
-  // Group saved imaging orders by groupTitle/groupOrder
   const imagingGroups_saved = (savedImagingOrders.data ?? []).reduce<
     { key: string; title: string; orders: ImagingOrder[] }[]
   >((acc, order) => {
@@ -844,16 +870,11 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     if (existing) {
       existing.orders.push(order)
     } else {
-      acc.push({
-        key,
-        title: order.groupTitle ?? `Orden ${order.groupOrder}`,
-        orders: [order],
-      })
+      acc.push({ key, title: order.groupTitle ?? `Orden ${order.groupOrder}`, orders: [order] })
     }
     return acc
   }, [])
 
-  // Group saved lab orders similarly
   const labGroups_saved = (savedLabOrders.data ?? []).reduce<
     { key: string; title: string; orders: LabOrder[] }[]
   >((acc, order) => {
@@ -883,44 +904,23 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden">
       <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
         <i className="ph ph-prescription text-[16px] text-p-500" />
-        <h3 className="text-[13.5px] font-sans font-semibold text-n-800">Órdenes médicas</h3>
+        <h3 className="text-[13.5px] font-semibold text-n-800">Órdenes médicas</h3>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="px-2">
-          <TabsTrigger value="medications" className="text-[12.5px] px-3 py-3">
-            Medicamentos
-            {totalMeds > 0 && (
-              <span className="ml-2 font-mono text-[11px] text-p-600 bg-p-50 border border-p-100 rounded px-2">
-                {totalMeds}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="imaging" className="text-[12.5px] px-3 py-3">
-            Imagen
-            {totalImaging > 0 && (
-              <span className="ml-2 font-mono text-[11px] text-p-600 bg-p-50 border border-p-100 rounded px-2">
-                {totalImaging}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="labs" className="text-[12.5px] px-3 py-3">
-            Laboratorio
-            {totalLabs > 0 && (
-              <span className="ml-2 font-mono text-[11px] text-p-600 bg-p-50 border border-p-100 rounded px-2">
-                {totalLabs}
-              </span>
-            )}
-          </TabsTrigger>
+          <TabRailTrigger value="medications" label="Medicamentos" count={totalMeds} />
+          <TabRailTrigger value="imaging" label="Imagen" count={totalImaging} />
+          <TabRailTrigger value="labs" label="Laboratorio" count={totalLabs} />
         </TabsList>
 
-        {/* ── Medications tab ── */}
         <TabsContent value="medications" className="p-4">
-          {/* Saved prescriptions from DB */}
           {(savedPrescriptions.data ?? []).length > 0 && (
             <>
               {savedRxCount > 0 && !isSigned && medications.length > 0 && (
-                <SectionLabel>Generadas</SectionLabel>
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  Generadas
+                </Overline>
               )}
               {(savedPrescriptions.data ?? []).map((rx) => (
                 <SavedPrescriptionCard
@@ -935,10 +935,13 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             </>
           )}
 
-          {/* Queue (only when not signed) */}
           {!isSigned && (
             <>
-              {savedRxCount > 0 && medications.length > 0 && <SectionLabel>En cola</SectionLabel>}
+              {savedRxCount > 0 && medications.length > 0 && (
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  En cola
+                </Overline>
+              )}
               {medicationGroups.map((group) => (
                 <MedicationGroup
                   key={group.id}
@@ -952,30 +955,29 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
               ))}
               <div className="flex flex-col gap-2 mt-1">
                 <AddMedicationForm groups={medicationGroups} onAdd={queueMedication} />
-                <button
-                  type="button"
-                  onClick={() => addMedicationGroup()}
-                  className="flex items-center gap-2 w-full py-2 text-[12px] font-sans text-n-400 hover:text-n-700 border border-n-100 rounded-sm hover:border-n-200 transition-colors bg-transparent justify-center"
-                >
+                <DashedButton tone="subtle" size="sm" onClick={() => addMedicationGroup()}>
                   <i className="ph ph-plus text-[11px]" />
                   Nueva receta
-                </button>
+                </DashedButton>
               </div>
             </>
           )}
 
-          {/* Empty state when signed with no prescriptions */}
           {isSigned && savedRxCount === 0 && (
-            <p className="text-[12.5px] text-n-400 py-2 px-1">Sin recetas en esta consulta.</p>
+            <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
+              Sin recetas en esta consulta.
+            </Caption>
           )}
         </TabsContent>
 
-        {/* ── Imaging tab ── */}
         <TabsContent value="imaging" className="p-4">
-          {/* Saved imaging orders from DB */}
           {imagingGroups_saved.length > 0 && (
             <>
-              {!isSigned && imagingOrders.length > 0 && <SectionLabel>Generadas</SectionLabel>}
+              {!isSigned && imagingOrders.length > 0 && (
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  Generadas
+                </Overline>
+              )}
               {imagingGroups_saved.map((g) => (
                 <SavedImagingGroupCard
                   key={g.key}
@@ -989,11 +991,12 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             </>
           )}
 
-          {/* Queue (only when not signed) */}
           {!isSigned && (
             <>
               {imagingGroups_saved.length > 0 && imagingOrders.length > 0 && (
-                <SectionLabel>En cola</SectionLabel>
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  En cola
+                </Overline>
               )}
               {imagingGroups.map((group) => (
                 <ImagingGroup
@@ -1006,31 +1009,28 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                   isOnlyGroup={imagingGroups.length === 1}
                 />
               ))}
-              <button
-                type="button"
-                onClick={() => addImagingGroup()}
-                className="flex items-center gap-2 w-full py-2 text-[12px] font-sans text-n-400 hover:text-n-700 border border-n-100 rounded-sm hover:border-n-200 transition-colors bg-transparent justify-center"
-              >
+              <DashedButton tone="subtle" size="sm" onClick={() => addImagingGroup()}>
                 <i className="ph ph-plus text-[11px]" />
                 Nueva orden de imagen
-              </button>
+              </DashedButton>
             </>
           )}
 
-          {/* Empty state when signed */}
           {isSigned && imagingGroups_saved.length === 0 && (
-            <p className="text-[12.5px] text-n-400 py-2 px-1">
+            <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
               Sin órdenes de imagen en esta consulta.
-            </p>
+            </Caption>
           )}
         </TabsContent>
 
-        {/* ── Labs tab ── */}
         <TabsContent value="labs" className="p-4">
-          {/* Saved lab orders from DB */}
           {labGroups_saved.length > 0 && (
             <>
-              {!isSigned && labOrders.length > 0 && <SectionLabel>Generadas</SectionLabel>}
+              {!isSigned && labOrders.length > 0 && (
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  Generadas
+                </Overline>
+              )}
               {labGroups_saved.map((g) => (
                 <SavedLabGroupCard
                   key={g.key}
@@ -1044,11 +1044,12 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             </>
           )}
 
-          {/* Queue (only when not signed) */}
           {!isSigned && (
             <>
               {labGroups_saved.length > 0 && labOrders.length > 0 && (
-                <SectionLabel>En cola</SectionLabel>
+                <Overline tone="neutral" size="sm" className="px-1 mb-2">
+                  En cola
+                </Overline>
               )}
               {labGroups.map((group) => (
                 <LabGroup
@@ -1061,25 +1062,41 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                   isOnlyGroup={labGroups.length === 1}
                 />
               ))}
-              <button
-                type="button"
-                onClick={() => addLabGroup()}
-                className="flex items-center gap-2 w-full py-2 text-[12px] font-sans text-n-400 hover:text-n-700 border border-n-100 rounded-sm hover:border-n-200 transition-colors bg-transparent justify-center"
-              >
+              <DashedButton tone="subtle" size="sm" onClick={() => addLabGroup()}>
                 <i className="ph ph-plus text-[11px]" />
                 Nuevo laboratorio
-              </button>
+              </DashedButton>
             </>
           )}
 
-          {/* Empty state when signed */}
           {isSigned && labGroups_saved.length === 0 && (
-            <p className="text-[12.5px] text-n-400 py-2 px-1">
+            <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
               Sin órdenes de laboratorio en esta consulta.
-            </p>
+            </Caption>
           )}
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+function TabRailTrigger({
+  value,
+  label,
+  count,
+}: {
+  value: string
+  label: string
+  count: number
+}): JSX.Element {
+  return (
+    <TabsTrigger value={value} className="text-[12.5px] px-3 py-3">
+      {label}
+      {count > 0 && (
+        <Chip tone="primarySolid" size="md" className="ml-2">
+          {count}
+        </Chip>
+      )}
+    </TabsTrigger>
   )
 }

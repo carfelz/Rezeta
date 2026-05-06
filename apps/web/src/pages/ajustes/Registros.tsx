@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-logs'
 import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
-import { Button, Callout, EmptyState } from '@/components/ui'
+import { Button, Callout, EmptyState, IconButton, TextLink } from '@/components/ui'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -146,13 +146,13 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
             </p>
             <p className="text-[12px] font-mono text-n-500 mt-0.5">{formatTs(item.createdAt)}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-n-500 hover:text-n-800 transition-colors"
+          <IconButton
+            icon="ph ph-x"
             aria-label="Cerrar"
-          >
-            <i className="ph ph-x text-[18px]" />
-          </button>
+            tone="neutral"
+            size="md"
+            onClick={onClose}
+          />
         </div>
 
         {/* body */}
@@ -308,12 +308,13 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
       </select>
 
       {(filters.category || filters.status) && (
-        <button
+        <TextLink
+          tone="primary"
+          size="md"
           onClick={() => onChange({ ...filters, category: '', action: '', status: '' })}
-          className="text-[12px] text-p-500 hover:text-p-700 transition-colors"
         >
           Limpiar filtros
-        </button>
+        </TextLink>
       )}
     </div>
   )

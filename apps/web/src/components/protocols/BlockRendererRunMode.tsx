@@ -1,4 +1,5 @@
 import { ProtocolBlock, ProtocolAlert } from '@/components/ui/ProtocolBlock'
+import { Button, Row, SelectableCard, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
@@ -81,25 +82,26 @@ function StepsRunMode({
               )}
             </div>
             {state === 'pending' && (
-              <div className="flex gap-2 ml-8">
-                <button
-                  type="button"
+              <Row gap={2} className="ml-8">
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     onCheck(step.id, true)
                     onAutoPopulate?.('plan', `✓ ${step.title}`)
                   }}
-                  className="text-[12px] font-sans text-success-text border border-success-border bg-success-bg hover:bg-success-border px-3 py-1 rounded-sm transition-colors"
+                  className="text-success-text border-success-border bg-success-bg hover:bg-success-border"
                 >
                   ✓ Completado
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => onCheck(`${step.id}:skipped`, true)}
-                  className="text-[12px] font-sans text-n-500 border border-n-200 bg-n-0 hover:bg-n-50 px-3 py-1 rounded-sm transition-colors"
                 >
                   ⊘ Omitido
-                </button>
-              </div>
+                </Button>
+              </Row>
             )}
           </li>
         )
@@ -192,8 +194,9 @@ function DecisionRunMode({
           const selected = checkedState[branch.id] ?? false
           return (
             <div key={branch.id} className="flex flex-col gap-2">
-              <button
-                type="button"
+              <SelectableCard
+                density="standard"
+                state={selected ? 'selected' : 'default'}
                 onClick={() => {
                   const wasSelected = selected
                   branches.forEach((b) => {
@@ -204,47 +207,43 @@ function DecisionRunMode({
                     onAutoPopulate?.('assessment', branch.action)
                   }
                 }}
-                className={cn(
-                  'flex gap-3 text-left w-full px-3 py-3 rounded border transition-colors duration-[100ms]',
-                  selected
-                    ? 'bg-p-50 border-p-300 text-n-800'
-                    : 'bg-n-0 border-n-200 text-n-600 hover:bg-n-25',
-                )}
               >
                 <span
                   className={cn(
                     'text-[11.5px] font-mono font-medium px-2 py-1 rounded-sm shrink-0 h-fit mt-1',
                     selected
-                      ? 'bg-p-500 text-white border border-p-500'
+                      ? 'bg-p-500 text-n-0 border border-p-500'
                       : 'bg-p-50 text-p-700 border border-p-100',
                   )}
                 >
                   {branch.label}
                 </span>
-                <div className="text-[13px] font-sans leading-[1.45]">{branch.action}</div>
-              </button>
+                <div className="text-[13px] leading-[1.45] flex-1">{branch.action}</div>
+              </SelectableCard>
               {selected && branch.linked_protocol_id && onLaunchLinkedProtocol && (
-                <button
-                  type="button"
+                <TextLink
+                  tone="primary"
+                  size="md"
                   onClick={() => onLaunchLinkedProtocol(branch.linked_protocol_id!, blockId)}
-                  className="ml-3 flex items-center gap-2 text-[12px] font-sans text-p-700 hover:text-p-500 transition-colors"
+                  className="ml-3"
                 >
                   <i className="ph ph-arrow-square-out text-[14px]" />
                   Abrir protocolo vinculado
-                </button>
+                </TextLink>
               )}
             </div>
           )
         })}
       </div>
       {selectedId && (
-        <button
-          type="button"
+        <TextLink
+          tone="neutral"
+          size="sm"
           onClick={() => branches.forEach((b) => onCheck(b.id, false))}
-          className="mt-2 text-[11.5px] font-mono text-n-400 hover:text-n-700 transition-colors"
+          className="mt-2 font-mono"
         >
           Limpiar selección
-        </button>
+        </TextLink>
       )}
     </div>
   )
@@ -274,8 +273,10 @@ function ImagingOrderRunMode({
               </span>
             )}
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
             onClick={() => {
               queueImagingOrder({
                 study_type: order.study_type,
@@ -290,10 +291,9 @@ function ImagingOrderRunMode({
               })
               onAutoPopulate?.('plan', `Imagen: ${order.study_type}`)
             }}
-            className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-3 py-1 rounded-sm transition-colors"
           >
             + Añadir a órdenes
-          </button>
+          </Button>
         </div>
       ))}
     </div>
@@ -340,8 +340,10 @@ function DosageTableRunMode({
                 ✓ Añadido
               </span>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
                 onClick={() => {
                   queueMedication({
                     drug: row.drug,
@@ -354,10 +356,9 @@ function DosageTableRunMode({
                   })
                   onAutoPopulate?.('plan', `${row.drug} ${row.dose}`)
                 }}
-                className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-3 py-1 rounded-sm transition-colors"
               >
                 + Añadir a receta
-              </button>
+              </Button>
             )}
           </div>
         )
@@ -390,8 +391,10 @@ function LabOrderRunMode({
               </span>
             )}
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
             onClick={() => {
               queueLabOrder({
                 test_name: order.test_name,
@@ -407,10 +410,9 @@ function LabOrderRunMode({
               })
               onAutoPopulate?.('plan', `Lab: ${order.test_name}`)
             }}
-            className="shrink-0 text-[12px] font-sans text-p-700 border border-p-300 bg-p-50 hover:bg-p-100 px-3 py-1 rounded-sm transition-colors"
           >
             + Añadir a órdenes
-          </button>
+          </Button>
         </div>
       ))}
     </div>

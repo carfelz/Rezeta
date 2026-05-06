@@ -29,6 +29,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  IconButton,
+  Row,
+  Caption,
+  Chip,
+  SelectableCard,
+  TextLink,
 } from '@/components/ui'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,29 +91,21 @@ function ConsultationListItem({
   const isSigned = consultation.status === 'signed'
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-3 w-full text-left px-3 py-3 rounded border border-n-200 bg-n-0 hover:bg-n-25 transition-colors"
-    >
+    <SelectableCard density="compact" onClick={onClick}>
       <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-sans font-semibold text-n-800 truncate">
+        <div className="text-[13px] font-semibold text-n-800 truncate">
           {consultation.chiefComplaint ?? 'Sin motivo registrado'}
         </div>
-        <div className="text-[11.5px] text-n-500 mt-1">
+        <Caption tone="neutral" size="sm" as="div" className="mt-1">
           {date} · {consultation.locationName}
-        </div>
+        </Caption>
       </div>
-      <span
-        className={`text-[10.5px] font-mono px-2 py-1 rounded border shrink-0 ${
-          isSigned ? 'bg-p-50 border-p-100 text-p-700' : 'bg-n-50 border-n-200 text-n-500'
-        }`}
-      >
+      <Chip tone={isSigned ? 'primarySolid' : 'neutral'} size="sm">
         {isSigned ? 'Firmada' : 'Borrador'}
-      </span>
+      </Chip>
       <i className="ph ph-caret-right text-[13px] text-n-300 shrink-0" />
-    </button>
+    </SelectableCard>
   )
 }
 
@@ -136,18 +134,18 @@ function ClinicalHistory({
             </span>
           )}
         </div>
-        <button
-          type="button"
+        <TextLink
+          tone="primary"
+          size="sm"
           onClick={() =>
             void navigate(
               `/consultas/nueva?patientId=${patientId}${locationId ? `&locationId=${locationId}` : ''}`,
             )
           }
-          className="flex items-center gap-1 text-[11.5px] font-sans text-p-700 hover:text-p-900 transition-colors"
         >
           <i className="ph ph-plus text-[12px]" />
           Nueva consulta
-        </button>
+        </TextLink>
       </div>
 
       {isLoading ? (
@@ -525,32 +523,29 @@ function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProps): JSX
         <Badge variant="active">Activo</Badge>
       </td>
       <td className="text-[13px] px-4 py-3 border-b border-n-100">
-        <div className="flex items-center gap-1 justify-end">
-          <button
-            type="button"
+        <Row gap={1} justify="end">
+          <IconButton
+            icon="ph ph-eye"
+            aria-label="Ver paciente"
+            tone="neutral"
+            size="md"
             onClick={onView}
-            className="flex items-center justify-center w-[28px] h-[28px] rounded-sm text-n-500 hover:bg-n-100 hover:text-n-800 transition-colors duration-[100ms]"
-            title="Ver paciente"
-          >
-            <i className="ph ph-eye text-[15px]" />
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon="ph ph-pencil-simple"
+            aria-label="Editar paciente"
+            tone="neutral"
+            size="md"
             onClick={onEdit}
-            className="flex items-center justify-center w-[28px] h-[28px] rounded-sm text-n-500 hover:bg-n-100 hover:text-n-800 transition-colors duration-[100ms]"
-            title="Editar paciente"
-          >
-            <i className="ph ph-pencil-simple text-[15px]" />
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon="ph ph-trash"
+            aria-label="Eliminar paciente"
+            tone="danger"
+            size="md"
             onClick={onDelete}
-            className="flex items-center justify-center w-[28px] h-[28px] rounded-sm text-n-500 hover:bg-danger-bg hover:text-danger-text transition-colors duration-[100ms]"
-            title="Eliminar paciente"
-          >
-            <i className="ph ph-trash text-[15px]" />
-          </button>
-        </div>
+          />
+        </Row>
       </td>
     </tr>
   )

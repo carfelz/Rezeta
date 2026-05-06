@@ -3,6 +3,7 @@ import { useUiStore } from '@/store/ui.store'
 import { useAuth } from '@/hooks/use-auth'
 import type { Location as ClinicLocation } from '@rezeta/shared'
 import { useLocations } from '@/hooks/locations/use-locations'
+import { Avatar, Caption, IconButton } from '@/components/ui'
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -25,7 +26,6 @@ export function Topbar(): JSX.Element {
   const activeLocation: ClinicLocation | null =
     locations?.find((l) => l.id === activeLocationId) ?? locations?.[0] ?? null
 
-  // Auto-select first location when list loads and nothing is active
   useEffect(() => {
     if (!activeLocationId && locations && locations.length > 0) {
       const first = locations[0]
@@ -33,9 +33,8 @@ export function Topbar(): JSX.Element {
     }
   }, [locations, activeLocationId, setActiveLocation])
 
-  // Close dropdown on outside click
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handleClick(e: MouseEvent): void {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
       }
@@ -46,19 +45,20 @@ export function Topbar(): JSX.Element {
 
   return (
     <header className="fixed top-0 left-sidebar right-0 h-topbar bg-n-0 border-b border-n-200 flex items-center px-5 gap-4 z-30">
-      {/* Location switcher */}
       <div className="relative shrink-0" ref={dropdownRef}>
         <button
           type="button"
-          className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-n-50 transition-colors duration-[100ms]"
+          className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-n-50 transition-colors"
           onClick={() => setDropdownOpen((o) => !o)}
         >
           <span className="w-2 h-2 bg-p-500 rounded-full shrink-0" />
-          <span className="text-[13px] font-sans font-medium text-n-800">
+          <span className="text-[13px] font-medium text-n-800">
             {activeLocation ? activeLocation.name : 'Seleccionar ubicación'}
           </span>
           {activeLocation?.city && (
-            <span className="text-[12px] font-sans text-n-500">· {activeLocation.city}</span>
+            <Caption tone="neutral" size="md">
+              · {activeLocation.city}
+            </Caption>
           )}
           <i className="ph ph-caret-down text-[12px] text-n-400 ml-1" />
         </button>
@@ -69,27 +69,34 @@ export function Topbar(): JSX.Element {
               <button
                 key={loc.id}
                 type="button"
-                className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-n-25 transition-colors duration-[100ms]"
+                className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-n-25 transition-colors"
                 onClick={() => {
                   setActiveLocation(loc.id)
                   setDropdownOpen(false)
                 }}
               >
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{
-                    background:
-                      loc.id === activeLocationId ? 'var(--color-p-500)' : 'var(--color-n-300)',
-                  }}
+                  className={
+                    loc.id === activeLocationId
+                      ? 'w-2 h-2 bg-p-500 rounded-full shrink-0'
+                      : 'w-2 h-2 bg-n-300 rounded-full shrink-0'
+                  }
                 />
                 <div>
                   <div
-                    className="text-[13px] font-sans text-n-800"
-                    style={{ fontWeight: loc.id === activeLocationId ? 600 : 400 }}
+                    className={
+                      loc.id === activeLocationId
+                        ? 'text-[13px] font-semibold text-n-800'
+                        : 'text-[13px] font-regular text-n-800'
+                    }
                   >
                     {loc.name}
                   </div>
-                  {loc.city && <div className="text-[11.5px] font-sans text-n-500">{loc.city}</div>}
+                  {loc.city && (
+                    <Caption tone="neutral" size="sm" as="div">
+                      {loc.city}
+                    </Caption>
+                  )}
                 </div>
               </button>
             ))}
@@ -97,7 +104,6 @@ export function Topbar(): JSX.Element {
         )}
       </div>
 
-      {/* Search */}
       <div className="flex-1 max-w-[480px] relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400 flex items-center pointer-events-none">
           <i className="ph ph-magnifying-glass text-[16px]" />
@@ -105,31 +111,24 @@ export function Topbar(): JSX.Element {
         <input
           type="search"
           placeholder="Buscar pacientes, citas..."
-          className="w-full h-input-md pl-8 pr-12 text-[13px] font-sans bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors duration-[100ms]"
+          className="w-full h-input-md pl-8 pr-12 text-[13px] bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
           ⌘K
         </span>
       </div>
 
-      {/* Right side */}
       <div className="ml-auto flex items-center gap-2">
-        <button
-          type="button"
-          aria-label="Notificaciones"
-          className="flex items-center justify-center w-[34px] h-[34px] rounded-sm text-n-600 hover:bg-n-50 transition-colors duration-[100ms]"
-        >
-          <i className="ph ph-bell text-[16px]" />
-        </button>
+        <IconButton icon="ph ph-bell" aria-label="Notificaciones" tone="neutral" size="md" />
 
         {user && (
           <div className="flex items-center gap-3 pl-4 border-l border-n-200">
-            <div className="w-[36px] h-[36px] rounded-full bg-p-50 text-p-700 flex items-center justify-center text-[13px] font-semibold shrink-0">
-              {initials(user.fullName)}
-            </div>
+            <Avatar initials={initials(user.fullName)} size="default" />
             <div>
-              <div className="text-[13px] font-sans font-semibold text-n-800">{user.fullName}</div>
-              <div className="text-[12px] font-sans text-n-500">{user.specialty ?? 'Médico'}</div>
+              <div className="text-[13px] font-semibold text-n-800">{user.fullName}</div>
+              <Caption tone="neutral" size="md" as="div">
+                {user.specialty ?? 'Médico'}
+              </Caption>
             </div>
           </div>
         )}

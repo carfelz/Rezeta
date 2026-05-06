@@ -245,7 +245,10 @@ describe('buildInitialContentFromTemplate', () => {
       blocks: [{ id: 'blk_chk', type: 'checklist', required: true }],
     }
     const content = buildInitialContentFromTemplate(template)
-    const block = content.blocks[0] as { type: string; items: Array<{ text: string; critical: boolean }> }
+    const block = content.blocks[0] as {
+      type: string
+      items: Array<{ text: string; critical: boolean }>
+    }
     expect(block.type).toBe('checklist')
     expect(block.items).toHaveLength(1)
     expect(block.items[0].critical).toBe(false)
@@ -257,7 +260,10 @@ describe('buildInitialContentFromTemplate', () => {
       blocks: [{ id: 'blk_stp', type: 'steps', required: true }],
     }
     const content = buildInitialContentFromTemplate(template)
-    const block = content.blocks[0] as { type: string; steps: Array<{ order: number; title: string }> }
+    const block = content.blocks[0] as {
+      type: string
+      steps: Array<{ order: number; title: string }>
+    }
     expect(block.type).toBe('steps')
     expect(block.steps).toHaveLength(1)
     expect(block.steps[0].order).toBe(1)
@@ -365,6 +371,26 @@ describe('buildInitialContentFromTemplate', () => {
     const content = buildInitialContentFromTemplate(template)
     const section = content.blocks[0] as { description: string }
     expect(section.description).toBe('My description')
+  })
+
+  it('section without placeholder_blocks or blocks falls back to empty array', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'sec_e', type: 'section', title: 'Empty', required: true }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { blocks: unknown[] }
+    expect(section.blocks).toEqual([])
+  })
+
+  it('section without title falls back to empty string', () => {
+    const template = {
+      version: '1.0',
+      blocks: [{ id: 'sec_nt', type: 'section', required: true, placeholder_blocks: [] }],
+    }
+    const content = buildInitialContentFromTemplate(template)
+    const section = content.blocks[0] as { title: string }
+    expect(section.title).toBe('')
   })
 
   it('section includes collapsed_by_default when true', () => {

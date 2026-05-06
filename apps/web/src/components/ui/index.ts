@@ -1,4 +1,7 @@
 export { Button, type ButtonProps } from './Button'
+export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './Breadcrumbs'
+export { Stack, type StackProps } from './Stack'
+export { Row, type RowProps } from './Row'
 export { IconButton, type IconButtonProps } from './IconButton'
 export { TextLink, type TextLinkProps } from './TextLink'
 export { Overline, type OverlineProps } from './Overline'

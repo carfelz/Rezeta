@@ -4,6 +4,159 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-06] — Lift test coverage above 90% threshold
+
+### Fixed
+
+- `packages/shared/__tests__/sign-validation.test.ts`: 17 new tests covering `steps`/`dosage_table`/`imaging_order`/`lab_order` block completion, unknown block type default, section all-children-completed and optional-child paths, `blockLabel` fallbacks (decision condition, "Bloque {id}"), `completed`-status usage, null `content`/`checkedState` handling — branch coverage 78.57% → 95.65%
+- `packages/shared/__tests__/content-builder.test.ts`: 2 new tests for section without `placeholder_blocks`/`blocks` (empty fallback) and section without `title` — file branch coverage 92% → 100%
+- `apps/api/src/modules/auth/__tests__/auth.controller.spec.ts`: 3 new tests covering `provision` request-meta header branches (user-agent + x-request-id present, all absent, non-string array) — file branch coverage 72.72% → 100%
+
+### Tests
+
+- shared 96.84%/96.33% · api 93.95%/90.05% · web 93.9%/95.53% — all stmts/branches ≥ 90%
+- 1,460/1,460 pass · zero lint · zero typecheck
+
+## [2026-05-06] — Dashboard hardcoded data removed + final raw-button pass
+
+### Fixed — `apps/web/src/pages/Dashboard.tsx` (CRITICAL)
+
+Replaced **all hardcoded fake data** with real database queries:
+
+- KPI "Pacientes activos" delta: was `+32 este mes` (fake) → now counts patients created this calendar month from `usePatients()`
+- KPI "Facturación" delta: was `+12% vs mes anterior` (fake) → now compares `thisMonthTotal` vs prior month's paid invoices, computes real percentage and direction (up/down/flat)
+- KPI "Prescripciones pendientes" tile: was hardcoded value `"3"` → replaced with "Protocolos activos" tile sourcing from `useProtocols.useGetProtocols({ status: 'active' })`
+- "Prescripciones pendientes" card: had 3 fully hardcoded patient names (`Ana María Reyes`, `Juan Pablo Castillo`, `Miguel Ángel Santana`) and meds → replaced with "Pacientes recientes" card pulled from `usePatients()` sorted by `createdAt DESC`, top 4
+- "Protocolos recientes" card: had 3 hardcoded protocol entries → now pulled from `useGetProtocols({ status: 'active', sort: 'updatedAt_desc' })`, top 3, with real `status`/`updatedAt`/version
+- "Actividad" feed: had 3 fully hardcoded entries → now pulls from `useAuditLogs({ limit: 5 })`; new helpers `describeAuditEntry`, `friendlyEntity`, `timeAgo`, `initialsForActor` translate audit entries to Spanish UI strings
+
+### Refactored — final raw-button cleanup
+
+- `BlockRendererRunMode.tsx`: 8 raw buttons → `Button`/`TextLink`/`SelectableCard` (decision branch buttons, queue-add buttons, complete/skip buttons, "limpiar selección" link)
+- `EditorBlockRenderer.tsx`: 9 raw buttons → `IconButton`/`Button`/`TextLink`/`Row` (add-block, remove-order, footer commit/cancel pairs in imaging + lab block editors)
+
+### Tests
+
+- 1,850/1,850 pass (281 + 858 + 711)
+- Coverage: shared 96.25% · api 93.92% · web 93.9% — all over 90%
+- Zero lint · zero typecheck
+
+### Remaining (10 raw `<button>` left across feature/page code)
+
+All are protocol-required by host primitive: `DropdownMenu.Trigger` body (Radix requires native `<button>`), dropdown menu items inside custom popovers, list-row hover-trigger buttons. Replacing these would make code longer not shorter; acceptable residual.
+
+## [2026-05-06] — Phase 6: pages refactor (button-level)
+
+### Changed — `apps/web/src/pages/`
+
+- **`Protocolos.tsx`**: filter chips → `Chip`/`Button`; search → `SearchInput`; sort → `Select`; row labels → `Caption`; layout → `Row`
+- **`Pacientes.tsx`**: row action buttons (view/edit/delete) → `IconButton` (neutral/danger); consultation rows → `SelectableCard` + `Chip` + `Caption`; "Nueva consulta" link → `TextLink`
+- **`Facturacion.tsx`**: currency toggle → `Button` (primary/secondary); item-row remove → `IconButton`; "Añadir ítem" link → `TextLink`; status actions ("Emitir" / "Marcar pagada") → `TextLink`; PDF/edit/trash icons → `IconButton`; status filter chips → `Button`
+- **`Agenda.tsx`**: appointment row actions ("Completar"/"No asistió"/"Editar"/"Eliminar") → `TextLink`; date navigation arrows → `IconButton`; "Hoy" pill → `Chip`; "Ir a hoy" → `TextLink`
+- **`Dashboard.tsx`**: page header CTAs ("Ver agenda"/"Nueva consulta") → `Button`; "Ver agenda completa →" / "Ver todos →" → `TextLink`; "Firmar todas" → `Button`
+- **`PacienteDetalle.tsx`**: consultation row → `SelectableCard` + `Chip` + `Caption`; "Nueva consulta" inline link → `TextLink`
+- **`ProtocolEditor.tsx`**: draft recovery banner buttons → `TextLink`; history drawer close → `IconButton`; "Ver todas las versiones" → `TextLink`
+- **`Consulta.tsx`**: diagnosis "Añadir" → `TextLink`; off-protocol note trigger → `Button`; "Agregar protocolo" → `Button`; layout uses `Row` for footer
+- **`ajustes/Horarios.tsx`**: trash buttons → `IconButton`; location selector chips → `Button`
+- **`ajustes/Tipos.tsx`**: template-link → `TextLink`
+- **`ajustes/Registros.tsx`**: close button → `IconButton`; "Limpiar filtros" → `TextLink`
+
+### Tests
+
+- 1,850/1,850 pass (281 + 858 + 711)
+- Coverage: shared 96.25% · api 93.92% · web 93.9% — all over 90%
+- Zero lint · zero typecheck
+
+### Pending — final pass
+
+The following components still have raw `<button>` elements (37 remaining across these files):
+
+- `Consulta.tsx` — protocol picker rows + several conditional UI buttons
+- `MissingFieldsPanel.tsx` / `OffProtocolNote.tsx` — 1-2 internal buttons each
+- `BlockRendererRunMode.tsx` (8 raw buttons) — protocol run mode block buttons
+- `EditorBlockRenderer.tsx` (10 raw buttons) — editor block move/delete affordances
+- `Topbar.tsx` (location switcher dropdown rows)
+  These are mostly low-impact internal buttons; targeted batch cleanup recommended in next pass.
+
+## [2026-05-06] — Phase 3+4+5: protocols module + layout shell refactored
+
+### Added — `apps/web/src/components/ui/`
+
+- `Breadcrumbs.tsx` (+ stories + 6 unit tests) — generic trail with `<Link>` for intermediate items, plain text for last; replaces inline breadcrumb logic in `ConsultHeader` and (future) all detail-page headers
+- `Stack.tsx` (+ stories + 11 unit tests) — vertical flex container with `gap` (0–12), `align`, `justify`; replaces `flex flex-col gap-N` ad-hoc declarations
+- `Row.tsx` (+ stories + 9 unit tests) — horizontal flex container with `gap`, `align`, `justify`, `wrap`; replaces `flex items-center gap-N` ad-hoc declarations
+
+### Changed — `apps/web/src/components/consultations/`
+
+- `ConsultHeader.tsx`: refactored to compose `Breadcrumbs`, `Overline`, `Row`, `Stack` from ui primitives — was 60 LOC, now 28 LOC
+
+### Changed — `apps/web/src/components/protocols/` (Phase 4 — protocols module)
+
+- `SuggestionBanner.tsx`: replaced 3 raw buttons with `Button` (primary/secondary) + `TextLink`; outer card now uses `Callout tone="warning"` + `Caption` + `Stack` + `Row`
+- `ProtocolPickerModal.tsx`: list rows now use `SelectableCard` (compact density); search input → `SearchInput`; footer buttons → `Button`; loading/empty states → `Caption`
+- `TemplatePickerModal.tsx`: type cards now use `SelectableCard` (large density); empty state uses `Stack` + `Caption`
+- `TextBlockEditor.tsx`: form layout uses `Stack` + `Row` + `Textarea` ui primitive
+- `AlertBlockEditor.tsx`: uses `Field` + `Input` + `Textarea` + `Select` + `Stack` + `Row` (was raw `<input>`/`<textarea>`/`<select>`)
+- `ChecklistBlockEditor.tsx`: uses `Field` + `Input` + `IconButton` (trash) + `Row` + `Stack` + `TextLink`
+- `DecisionBlockEditor.tsx`: uses `Field` + `Input` + `Textarea` + `IconButton` + `Row` + `Stack` + `Overline` + `TextLink`
+- `StepsBlockEditor.tsx`: uses `Field` + `Input` + `IconButton` (up/down/trash) + `Row` + `Stack` + `TextLink`; replaced `@phosphor-icons/react` `ArrowUp`/`ArrowDown` with class-based icons in `IconButton`
+- `DosageTableEditor.tsx`: uses `Field` + `Input` + `IconButton` + `Row` + `Stack` + `TextLink`
+
+### Changed — `apps/web/src/components/layout/` (Phase 5 — layout shell)
+
+- `Sidebar.tsx`: nav-group label → `Overline`; user footer avatar → `Avatar`; user specialty caption → `Caption`
+- `Topbar.tsx`: notification bell → `IconButton`; user avatar → `Avatar`; secondary text → `Caption`
+
+### Tests
+
+- 1,830/1,830 pass (281 + 858 + 711) — added 26 new ui-primitive tests
+- Coverage maintained: shared 96.25% · api 93.92% · web 93.9%
+- Zero lint · zero typecheck
+
+### Pending — Phase 6 (pages) deferred to next pass
+
+The following pages still have raw `<button>` elements and inline Tailwind:
+
+- `Consulta.tsx` (7 raw buttons, 101 className) — biggest target, page-shell layout
+- `Dashboard.tsx` (6) — KPI cards + today calendar
+- `Facturacion.tsx` (9) — invoice list + filters
+- `Agenda.tsx` (8) — calendar grid
+- `ProtocolEditor.tsx` (7) — block editor sidebar
+- `Protocolos.tsx` / `Pacientes.tsx` (5 each) — list pages
+- `BlockRendererRunMode.tsx` (8) / `EditorBlockRenderer.tsx` (10) — protocol block renderers
+- `BlockRenderer.tsx` (229 LOC display-only renderer)
+- Remaining ajustes pages (`Plantillas`, `PlantillaEditor`, `Tipos`, `Ubicaciones`, `Registros`, `AppPrototype`, `DesignSystemReference`, `Horarios`)
+
+## [2026-05-06] — OrderQueuePanel refactored + coverage restored to 93.67%
+
+### Changed — `apps/web/src/components/consultations/OrderQueuePanel.tsx`
+
+- Replaced internal `SectionLabel` helper with `Overline` from ui primitives
+- All 6 saved/queue group card surfaces now use `GroupSectionCard` (overline + bordered surface + header strip + footer)
+- All 13 raw `<button>` elements replaced:
+  - 6 trash buttons → `IconButton tone="danger"`
+  - 4 X-remove buttons → `IconButton tone="muted"`
+  - 3 add-group buttons → `DashedButton tone="subtle"`
+  - 1 "+ Añadir medicamento" → `DashedButton tone="neutral"`
+- Form inputs in `AddMedicationForm` now use `Input` from ui (was raw `<input>` with shared className constant)
+- Tab triggers now use `<Chip tone="primarySolid">` for count badges (was inline mono span)
+- Urgency labels (Stat / Urgente / Rutina) extracted into local `UrgencyChip` helper that composes `<Chip>` with `URGENCY_TONES` map (danger / warning / neutral)
+- "Guardada" status pill extracted into local `SavedChip` helper that composes `<Chip tone="success">`
+- All caption-style mono/italic secondary text now uses `<Caption>` from ui
+
+### Tests
+
+- New `hooks/consultations/__tests__/use-protocol-suggestions.test.ts` — 6 tests covering enabled/disabled toggle, max-4 cap, isLoading propagation, filter args
+- Extended `hooks/__tests__/use-consultations.test.ts` with 9 new test cases covering `useResumableForPatient` (2), `useSwitchProtocolUsage` (1), `useSkipStep` (2), `useAddOffProtocolNote` (4)
+- New visual preview `apps/web/src/pages/_preview/OrderQueuePreview.tsx` at `/_preview/order-queue` — verified rendering matches the original pre-refactor visual contract
+
+### Coverage (now restored above 90% across the board)
+
+- `packages/shared`: 96.25%
+- `apps/api`: 93.92%
+- `apps/web`: 93.67% (was 90.84% before this pass; new hook tests pulled `hooks/consultations` from 66.75% → 91.42%)
+- 1,802/1,802 tests pass (281 + 858 + 663) · zero lint · zero typecheck
+
 ## [2026-05-06] — Centralized UI primitives (Tailwind only inside /components/ui/)
 
 ### New `apps/web/src/components/ui/` components (each with stories + tests)

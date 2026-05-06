@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
-import { Button } from '@/components/ui'
+import {
+  Button,
+  Field,
+  Input,
+  Row,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Stack,
+  Textarea,
+} from '@/components/ui'
 
 type Severity = 'info' | 'warning' | 'danger' | 'success'
 
@@ -51,61 +63,48 @@ export function AlertBlockEditor({
   }
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      {/* Severity */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_ALERT_SEVERITY_LABEL}
-        </label>
-        <select
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 transition-all duration-[100ms] bg-n-0"
-          value={draftSeverity}
-          onChange={(e) => setDraftSeverity(e.target.value as Severity)}
-        >
-          {SEVERITY_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
+    <Stack gap={3} className="p-4">
+      <Field label={strings.EDITOR_ALERT_SEVERITY_LABEL}>
+        <Select value={draftSeverity} onValueChange={(v) => setDraftSeverity(v as Severity)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SEVERITY_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
 
-      {/* Title (optional) */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_ALERT_TITLE_LABEL}
-        </label>
-        <input
-          type="text"
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 transition-all duration-[100ms]"
+      <Field label={strings.EDITOR_ALERT_TITLE_LABEL}>
+        <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           placeholder={strings.EDITOR_ALERT_TITLE_PLACEHOLDER}
         />
-      </div>
+      </Field>
 
-      {/* Content */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
-          {strings.EDITOR_ALERT_CONTENT_LABEL}
-        </label>
-        <textarea
-          className="w-full min-h-[80px] px-3 py-2 text-[13px] font-sans text-n-700 border border-n-300 rounded-sm resize-vertical focus:outline-none focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)] transition-all duration-[100ms]"
+      <Field label={strings.EDITOR_ALERT_CONTENT_LABEL}>
+        <Textarea
+          rows={3}
           value={draftContent}
           onChange={(e) => setDraftContent(e.target.value)}
           placeholder={strings.EDITOR_ALERT_CONTENT_PLACEHOLDER}
           autoFocus
         />
-      </div>
+      </Field>
 
-      <div className="flex items-center gap-2 justify-end">
+      <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
           {strings.EDITOR_BLOCK_CANCEL}
         </Button>
         <Button variant="primary" size="sm" onClick={commit}>
           {strings.EDITOR_BLOCK_APPLY}
         </Button>
-      </div>
-    </div>
+      </Row>
+    </Stack>
   )
 }

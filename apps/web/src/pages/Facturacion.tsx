@@ -10,7 +10,17 @@ import { usePatients } from '@/hooks/patients/use-patients'
 import { useLocations } from '@/hooks/locations/use-locations'
 import type { InvoiceWithDetails, InvoiceStatus } from '@rezeta/shared'
 import type { Location as ClinicLocation } from '@rezeta/shared'
-import { Badge, Button, Card, Callout, EmptyState, Input } from '@/components/ui'
+import {
+  Badge,
+  Button,
+  Card,
+  Callout,
+  EmptyState,
+  IconButton,
+  Input,
+  Row,
+  TextLink,
+} from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/Modal'
 import { apiClient, triggerDownload } from '@/lib/api-client'
@@ -241,18 +251,14 @@ function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): JSX.Elem
               <label className="text-[12.5px] font-medium text-n-700">Moneda</label>
               <div className="flex gap-2">
                 {(['DOP', 'USD'] as const).map((c) => (
-                  <button
+                  <Button
                     key={c}
-                    type="button"
+                    variant={currency === c ? 'primary' : 'secondary'}
+                    size="sm"
                     onClick={() => setCurrency(c)}
-                    className={`px-4 py-2 rounded-sm text-[12px] font-mono font-medium border transition-colors ${
-                      currency === c
-                        ? 'bg-p-500 text-white border-p-500'
-                        : 'bg-n-0 text-n-600 border-n-300 hover:bg-n-50'
-                    }`}
                   >
                     {c}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -317,14 +323,13 @@ function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): JSX.Elem
                         </td>
                         <td className="px-2 py-1.5 text-center">
                           {items.length > 1 && (
-                            <button
-                              type="button"
+                            <IconButton
+                              icon="ph ph-x"
+                              aria-label="Eliminar ítem"
+                              tone="danger"
+                              size="sm"
                               onClick={() => removeItem(idx)}
-                              className="text-n-400 hover:text-danger-solid transition-colors"
-                              title="Eliminar ítem"
-                            >
-                              <i className="ph ph-x text-[13px]" />
-                            </button>
+                            />
                           )}
                         </td>
                       </tr>
@@ -332,13 +337,9 @@ function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): JSX.Elem
                   </tbody>
                 </table>
               </div>
-              <button
-                type="button"
-                onClick={addItem}
-                className="self-start text-[12px] text-p-700 hover:text-p-900 flex items-center gap-1 transition-colors"
-              >
+              <TextLink tone="primary" size="md" onClick={addItem} className="self-start">
                 <i className="ph ph-plus text-[13px]" /> Añadir ítem
-              </button>
+              </TextLink>
             </div>
 
             {/* Commission preview */}
@@ -456,26 +457,26 @@ function StatusAction({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element
 
   if (invoice.status === 'draft') {
     return (
-      <button
-        type="button"
+      <TextLink
+        tone="primary"
+        size="sm"
         disabled={updateStatus.isPending}
         onClick={() => void updateStatus.mutateAsync({ status: 'issued' })}
-        className="text-[11.5px] font-sans text-p-700 hover:text-p-900 transition-colors disabled:opacity-50"
       >
         Emitir
-      </button>
+      </TextLink>
     )
   }
   if (invoice.status === 'issued') {
     return (
-      <button
-        type="button"
+      <TextLink
+        tone="primary"
+        size="sm"
         disabled={updateStatus.isPending}
         onClick={() => void updateStatus.mutateAsync({ status: 'paid', paymentMethod: 'cash' })}
-        className="text-[11.5px] font-sans text-p-700 hover:text-p-900 transition-colors disabled:opacity-50"
       >
         Marcar pagada
-      </button>
+      </TextLink>
     )
   }
   return null
@@ -530,40 +531,35 @@ function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.Element
         )}
       </td>
       <td className="px-4 py-3 border-b border-n-100 text-right">
-        <div className="flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => void handleDownloadPdf()}
+        <Row gap={3} justify="end">
+          <IconButton
+            icon={downloading ? 'ph ph-spinner animate-spin' : 'ph ph-file-pdf'}
+            aria-label="Descargar PDF"
+            tone="neutral"
+            size="sm"
             disabled={downloading}
-            className="text-[11.5px] font-sans text-n-500 hover:text-n-800 transition-colors disabled:opacity-40 flex items-center gap-1"
-            title="Descargar PDF"
-          >
-            <i
-              className={`ph ${downloading ? 'ph-spinner animate-spin' : 'ph-file-pdf'} text-[14px]`}
-            />
-          </button>
+            onClick={() => void handleDownloadPdf()}
+          />
           {isDraft && (
             <>
-              <button
-                type="button"
+              <IconButton
+                icon="ph ph-pencil-simple"
+                aria-label="Editar factura"
+                tone="neutral"
+                size="sm"
                 onClick={() => onEdit(invoice)}
-                className="text-n-400 hover:text-n-700 transition-colors"
-                title="Editar factura"
-              >
-                <i className="ph ph-pencil-simple text-[14px]" />
-              </button>
-              <button
-                type="button"
+              />
+              <IconButton
+                icon="ph ph-trash"
+                aria-label="Eliminar factura"
+                tone="danger"
+                size="sm"
                 onClick={() => onDelete(invoice)}
-                className="text-n-400 hover:text-danger-solid transition-colors"
-                title="Eliminar factura"
-              >
-                <i className="ph ph-trash text-[14px]" />
-              </button>
+              />
             </>
           )}
           <StatusAction invoice={invoice} />
-        </div>
+        </Row>
       </td>
     </tr>
   )
@@ -654,18 +650,14 @@ export function Facturacion(): JSX.Element {
         {/* Filter bar */}
         <div className="flex items-center gap-2 p-4 border-b border-n-100">
           {STATUS_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt.value}
-              type="button"
+              variant={statusFilter === opt.value ? 'primary' : 'ghost'}
+              size="sm"
               onClick={() => setStatusFilter(opt.value)}
-              className={`px-3 py-2 rounded-sm text-[12px] font-sans transition-colors ${
-                statusFilter === opt.value
-                  ? 'bg-p-500 text-white'
-                  : 'bg-n-50 text-n-600 hover:bg-n-100'
-              }`}
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
 

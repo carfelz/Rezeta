@@ -127,7 +127,14 @@
       "Bash(pkill -f \"vite\")",
       "Bash(tee /tmp/devserver2.log)",
       "Bash(tee /tmp/devserver3.log)",
-      "Bash(tee /tmp/devserver4.log)"
+      "Bash(tee /tmp/devserver4.log)",
+      "Bash(awk -F'|' '$2 < 90 {print $0}')",
+      "Bash(awk '/^---/,/^$/')",
+      "Bash(awk -F'|' '{stmts=$2+0; if \\(stmts < 90\\) print $0}')",
+      "Bash(tee /tmp/devserver5.log)",
+      "Bash(sort -t: -k2 -nr)",
+      "Bash(awk -F: '$2 > 0 {print $0}')",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }

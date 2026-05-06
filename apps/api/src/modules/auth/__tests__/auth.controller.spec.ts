@@ -93,6 +93,37 @@ describe('AuthController', () => {
       expect(mockService.toAuthUser).toHaveBeenCalledWith(baseUser)
       expect(result).toEqual(authUser)
     })
+
+    it('forwards user-agent and x-request-id headers when present', async () => {
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      const req = {
+        ip: '127.0.0.1',
+        headers: { 'user-agent': 'Mozilla/5.0', 'x-request-id': 'req-123' },
+      } as never
+      await controller.provision(decoded, req)
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, {
+        ip: '127.0.0.1',
+        userAgent: 'Mozilla/5.0',
+        requestId: 'req-123',
+      })
+    })
+
+    it('omits ip/userAgent/requestId when absent', async () => {
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      const req = { headers: {} } as never
+      await controller.provision(decoded, req)
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, {})
+    })
+
+    it('omits user-agent when header is non-string array', async () => {
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      const req = {
+        ip: '127.0.0.1',
+        headers: { 'user-agent': ['a', 'b'], 'x-request-id': ['x', 'y'] },
+      } as never
+      await controller.provision(decoded, req)
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, { ip: '127.0.0.1' })
+    })
   })
 
   // ── me ─────────────────────────────────────────────────────────────────────

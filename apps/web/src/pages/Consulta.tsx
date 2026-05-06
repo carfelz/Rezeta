@@ -25,6 +25,8 @@ import {
   ModalClose,
   Textarea,
   Field,
+  Row,
+  TextLink,
 } from '@/components/ui'
 import { OrderQueuePanel } from '@/components/consultations/OrderQueuePanel'
 import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
@@ -307,6 +309,7 @@ function DiagnosesSection({
               type="button"
               onClick={() => removeDiagnosis(d)}
               className="ml-1 text-p-500 hover:text-p-900 leading-none"
+              aria-label={`Quitar ${d}`}
             >
               <i className="ph ph-x text-[11px]" />
             </button>
@@ -329,13 +332,9 @@ function DiagnosesSection({
             className="h-[30px] px-3 text-[12.5px] font-sans border border-dashed border-n-300 rounded-sm bg-n-0 placeholder:text-n-300 text-n-700 focus:outline-none focus:border-p-500 w-[200px]"
           />
           {input.trim() && (
-            <button
-              type="button"
-              onClick={addDiagnosis}
-              className="text-[11.5px] text-p-700 hover:text-p-900 font-medium"
-            >
+            <TextLink tone="primary" size="sm" weight="medium" onClick={addDiagnosis}>
               Añadir
-            </button>
+            </TextLink>
           )}
         </div>
       )}
@@ -944,16 +943,12 @@ export function Consulta(): JSX.Element {
 
       {/* ── Off-protocol note trigger (visible when a protocol is active) ───── */}
       {activeUsage && !isSigned && (
-        <div className="flex justify-end mb-3">
-          <button
-            type="button"
-            onClick={() => setShowOffProtocolNote(true)}
-            className="flex items-center gap-2 px-3 py-2 text-[12px] text-n-600 bg-transparent border border-dashed border-n-300 rounded-sm hover:bg-warning-bg hover:border-warning-border hover:text-warning-text transition-colors"
-          >
+        <Row justify="end" className="mb-3">
+          <Button variant="secondary" size="sm" onClick={() => setShowOffProtocolNote(true)}>
             <i className="ph ph-pencil-simple text-[12px]" />
             Añadir nota fuera de protocolo
-          </button>
-        </div>
+          </Button>
+        </Row>
       )}
 
       {/* ── Missing fields panel ─────────────────────────────────────────────── */}
@@ -1091,14 +1086,10 @@ export function Consulta(): JSX.Element {
                     Protocolos
                   </span>
                   {!isSigned && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPicker(true)}
-                      className="flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-sans text-n-500 hover:text-n-800 border border-n-200 rounded-sm hover:border-n-400 transition-colors bg-n-0"
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => setShowPicker(true)}>
                       <i className="ph ph-plus text-[12px]" />
                       Agregar
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="flex flex-col items-center gap-2 py-6 border border-dashed border-n-200 rounded-md text-center">

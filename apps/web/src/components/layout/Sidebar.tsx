@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -42,9 +43,9 @@ interface NavGroupProps {
 function NavGroup({ label, items }: NavGroupProps): JSX.Element {
   return (
     <div className="mb-4">
-      <span className="block px-5 mb-1 text-[10px] font-mono uppercase tracking-[0.12em] text-n-400">
+      <Overline tone="neutral" size="sm" className="block px-5 mb-1">
         {label}
-      </span>
+      </Overline>
       {items.map(({ to, icon, label: itemLabel, count }) => (
         <NavLink
           key={to}
@@ -58,7 +59,7 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
             )
           }
         >
-          {({ isActive }) => (
+          {({ isActive }): JSX.Element => (
             <>
               <i
                 className={cn(
@@ -85,7 +86,6 @@ export function Sidebar(): JSX.Element {
 
   return (
     <nav className="fixed left-0 top-0 w-sidebar h-screen bg-n-25 border-r border-n-200 flex flex-col overflow-y-auto z-40">
-      {/* Brand */}
       <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
         <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
           R
@@ -95,25 +95,23 @@ export function Sidebar(): JSX.Element {
         </span>
       </div>
 
-      {/* Nav groups */}
       <div className="flex-1 pt-4">
         <NavGroup label="Hoy" items={NAV_HOY} />
         <NavGroup label="Trabajo Clínico" items={NAV_CLINICO} />
         <NavGroup label="Administración" items={NAV_ADMIN} />
       </div>
 
-      {/* Footer */}
       {user && (
         <div className="shrink-0 border-t border-n-100 py-3">
           <div className="flex items-center gap-3 px-5 py-2 hover:bg-n-50 transition-colors duration-[100ms] cursor-pointer">
-            <div className="w-[30px] h-[30px] rounded-full bg-p-50 text-p-700 flex items-center justify-center text-[11px] font-semibold shrink-0">
-              {initials(user.fullName)}
-            </div>
+            <Avatar initials={initials(user.fullName)} size="sm" />
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-sans font-semibold text-n-800 truncate">
                 {user.fullName}
               </div>
-              <div className="text-[11px] font-sans text-n-500">{user.specialty ?? 'Médico'}</div>
+              <Caption tone="neutral" size="xs" as="div">
+                {user.specialty ?? 'Médico'}
+              </Caption>
             </div>
           </div>
         </div>
