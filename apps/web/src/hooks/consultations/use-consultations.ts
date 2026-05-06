@@ -16,6 +16,7 @@ import type {
   CreatePrescriptionGroupDto,
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
+  ResumableConsultation,
 } from '@rezeta/shared'
 
 const QK = 'consultations'
@@ -183,6 +184,137 @@ export function useUpdateProtocolUsage(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
         dto,
       ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+/**
+ * Returns the most recent in-progress (draft) consultation for a patient,
+ * eligible for the resume banner. Endpoint returns null when no eligible
+ * consultation exists.
+ */
+export function useResumableForPatient(
+  patientId: string | null,
+): UseQueryResult<ResumableConsultation | null, Error> {
+  return useQuery({
+    queryKey: [QK, 'resumable', patientId],
+    queryFn: () =>
+      apiClient.get<ResumableConsultation | null>(
+        `/v1/patients/${patientId}/in-progress-consultation`,
+      ),
+    enabled: Boolean(patientId),
+  })
+}
+
+/**
+ * Append a `steps_skipped` event with reason to a protocol usage's modifications.
+ * Server merges into existing array; client-side passes the entire next array
+ * to keep the existing PATCH endpoint contract (overwrite modifications).
+ */
+export function useSkipStep(
+  consultationId: string,
+  usageId: string,
+): UseMutationResult<
+  ConsultationProtocolUsage,
+  Error,
+  {
+    stepId: string
+    reason: string
+    existingSkipped?: { step_id: string; timestamp: string; reason?: string }[]
+  }
+> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ stepId, reason, existingSkipped = [] }) => {
+      const next = [
+        ...existingSkipped,
+        { step_id: stepId, timestamp: new Date().toISOString(), reason },
+      ]
+      return apiClient.patch<ConsultationProtocolUsage>(
+        `/v1/consultations/${consultationId}/protocols/${usageId}`,
+        { modifications: { steps_skipped: next } },
+      )
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+/**
+ * Append an `off_protocol_notes` event to a protocol usage's modifications.
+ * If `promoteTo` is set, also append the note text to the corresponding SOAP
+ * field via a separate consultation update.
+ */
+export function useAddOffProtocolNote(
+  consultationId: string,
+  usageId: string,
+): UseMutationResult<
+  ConsultationProtocolUsage,
+  Error,
+  {
+    title?: string
+    note: string
+    promoteTo?: 'subjective' | 'objective' | 'assessment' | 'plan' | null
+    existingNotes?: {
+      timestamp: string
+      title?: string
+      note: string
+      promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
+    }[]
+    existingSoapValue?: string
+  }
+> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ title, note, promoteTo, existingNotes = [], existingSoapValue = '' }) => {
+      const event: {
+        timestamp: string
+        title?: string
+        note: string
+        promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
+      } = { timestamp: new Date().toISOString(), note }
+      if (title) event.title = title
+      if (promoteTo) event.promoted_to_soap_field = promoteTo
+      const updated = await apiClient.patch<ConsultationProtocolUsage>(
+        `/v1/consultations/${consultationId}/protocols/${usageId}`,
+        { modifications: { off_protocol_notes: [...existingNotes, event] } },
+      )
+      if (promoteTo) {
+        const appended = existingSoapValue
+          ? `${existingSoapValue}\n\n${title ? `[${title}] ` : ''}${note}`
+          : `${title ? `[${title}] ` : ''}${note}`
+        await apiClient.patch(`/v1/consultations/${consultationId}`, {
+          [promoteTo]: appended,
+        })
+      }
+      return updated
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    },
+  })
+}
+
+export function useSwitchProtocolUsage(
+  consultationId: string,
+): UseMutationResult<ConsultationProtocolUsage, Error, { usageId: string; newProtocolId: string }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ usageId, newProtocolId }: { usageId: string; newProtocolId: string }) =>
+      apiClient
+        .patch<ConsultationProtocolUsage>(
+          `/v1/consultations/${consultationId}/protocols/${usageId}`,
+          { status: 'switched' as const },
+        )
+        .then(() =>
+          apiClient.post<ConsultationProtocolUsage>(
+            `/v1/consultations/${consultationId}/protocols`,
+            { protocolId: newProtocolId },
+          ),
+        ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
     },

@@ -26,8 +26,17 @@ import { Signup } from '@/pages/Signup'
 import { Bienvenido } from '@/pages/Bienvenido'
 import { BienvenidoPersonalizar } from '@/pages/BienvenidoPersonalizar'
 import { BienvenidoGate } from '@/components/auth/BienvenidoGate'
+import { GatePreview } from '@/pages/_preview/GatePreview'
+import { StripPreview } from '@/pages/_preview/StripPreview'
+import { EdgePreview } from '@/pages/_preview/EdgePreview'
+import { CanvasPreview } from '@/pages/_preview/CanvasPreview'
 
 const router = createBrowserRouter([
+  // ── Dev-only auth-free previews ────────────────────────────────────────────
+  { path: '/_preview/gate', element: <GatePreview /> },
+  { path: '/_preview/strip', element: <StripPreview /> },
+  { path: '/_preview/edge', element: <EdgePreview /> },
+  { path: '/_preview/canvas', element: <CanvasPreview /> },
   // ── Public-only routes (redirect authenticated users away) ────────────────
   {
     path: '/login',

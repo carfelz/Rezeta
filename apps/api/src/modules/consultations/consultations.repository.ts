@@ -234,6 +234,33 @@ export class ConsultationsRepository {
     )
   }
 
+  /**
+   * Returns the most recent draft (in-progress) consultation for a patient
+   * within the eligibility window. The caller decides whether to surface a
+   * resume banner based on `elapsedMinutes`.
+   */
+  async findResumableForPatient(
+    tenantId: string,
+    userId: string,
+    patientId: string,
+    maxAgeDays: number,
+  ): Promise<ConsultationWithDetails | null> {
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000)
+    const row = await this.prisma.consultation.findFirst({
+      where: {
+        tenantId,
+        userId,
+        patientId,
+        deletedAt: null,
+        status: 'draft',
+        updatedAt: { gte: cutoff },
+      },
+      include: RELATIONS_INCLUDE,
+      orderBy: { updatedAt: 'desc' },
+    })
+    return row ? toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations) : null
+  }
+
   async findById(id: string, tenantId: string): Promise<ConsultationWithDetails | null> {
     const row = await this.prisma.consultation.findFirst({
       where: { id, tenantId, deletedAt: null },

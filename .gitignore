@@ -42,3 +42,4 @@ coverage/
 
 #firebase
 .firebase/
+.preview-snapshots/

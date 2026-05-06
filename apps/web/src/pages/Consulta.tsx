@@ -3,16 +3,18 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   useConsultation,
   useUpdateConsultation,
+  useUpdateCheckedState,
   useSignConsultation,
   useAmendConsultation,
   useAddProtocolUsage,
-  useUpdateCheckedState,
-  useRemoveProtocolUsage,
   usePatientConsultations,
+  useSkipStep,
+  useAddOffProtocolNote,
 } from '@/hooks/consultations/use-consultations'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import type { ConsultationProtocolUsage, Vitals } from '@rezeta/shared'
+import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
+import type { Vitals } from '@rezeta/shared'
 import {
   Button,
   Modal,
@@ -24,9 +26,31 @@ import {
   Textarea,
   Field,
 } from '@/components/ui'
-import { BlockRendererRunMode } from '@/components/protocols/BlockRendererRunMode'
-import type { RunModeProps } from '@/components/protocols/BlockRendererRunMode'
 import { OrderQueuePanel } from '@/components/consultations/OrderQueuePanel'
+import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
+import { ProtocolPills } from '@/components/consultations/ProtocolPills'
+import { CanvasView } from '@/components/consultations/CanvasView'
+import type { ConsultationProtocolUsage, ProtocolBlock } from '@rezeta/shared'
+
+function collectUsageCheckableIds(usage: ConsultationProtocolUsage): string[] {
+  const ids: string[] = []
+  function walk(blocks: ProtocolBlock[]): void {
+    for (const block of blocks) {
+      if (block.type === 'section') walk(block.blocks)
+      else if (block.type === 'checklist') for (const it of block.items) ids.push(it.id)
+      else if (block.type === 'steps') for (const st of block.steps) ids.push(st.id)
+    }
+  }
+  walk(usage.content?.blocks ?? [])
+  return ids
+}
+import { SwitchProtocolDialog } from '@/components/consultations/SwitchProtocolDialog'
+import { SkipStepDialog } from '@/components/consultations/SkipStepDialog'
+import { OffProtocolNote } from '@/components/consultations/OffProtocolNote'
+import {
+  MissingFieldsPanel,
+  computeMissingFields,
+} from '@/components/consultations/MissingFieldsPanel'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -377,218 +401,6 @@ function SoapTextarea({
   )
 }
 
-// ─── Protocol run card ─────────────────────────────────────────────────────────
-
-interface ProtocolRunCardProps {
-  usage: ConsultationProtocolUsage
-  allUsages: ConsultationProtocolUsage[]
-  consultationId: string
-  isSigned: boolean
-  onAppendToSoap: (field: 'objective' | 'assessment' | 'plan', text: string) => void
-}
-
-function ProtocolRunCard({
-  usage,
-  allUsages,
-  consultationId,
-  isSigned,
-  onAppendToSoap,
-}: ProtocolRunCardProps): JSX.Element {
-  const updateCheckedState = useUpdateCheckedState(consultationId, usage.id)
-  const removeUsage = useRemoveProtocolUsage(consultationId)
-  const addLinkedUsage = useAddProtocolUsage(consultationId)
-
-  const localKey = `prun-${consultationId}-${usage.id}`
-
-  const [checkedState, setCheckedState] = useState<Record<string, boolean>>(() => {
-    try {
-      const stored = localStorage.getItem(localKey)
-      if (stored) {
-        return { ...usage.checkedState, ...(JSON.parse(stored) as Record<string, boolean>) }
-      }
-    } catch {
-      // ignore parse errors
-    }
-    return usage.checkedState
-  })
-
-  const [isRestored, setIsRestored] = useState(() => {
-    try {
-      return !!localStorage.getItem(localKey)
-    } catch {
-      return false
-    }
-  })
-
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const initialMount = useRef(true)
-
-  // Debounced server sync
-  useEffect(() => {
-    if (initialMount.current) {
-      initialMount.current = false
-      return
-    }
-    if (isSigned) return
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      updateCheckedState.mutate(
-        { checkedState },
-        {
-          onSuccess: () => {
-            try {
-              localStorage.removeItem(localKey)
-            } catch {
-              // ignore
-            }
-          },
-        },
-      )
-    }, 800)
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
-  }, [checkedState]) // intentional: only watch checkedState
-
-  // 30s localStorage auto-save
-  useEffect(() => {
-    if (isSigned) return
-    const interval = setInterval(() => {
-      try {
-        localStorage.setItem(localKey, JSON.stringify(checkedState))
-      } catch {
-        // ignore storage errors
-      }
-    }, 30_000)
-    return () => clearInterval(interval)
-  }, [isSigned, localKey, checkedState])
-
-  // Build ancestor breadcrumb chain
-  const ancestors: ConsultationProtocolUsage[] = []
-  let current = usage
-  while (current.parentUsageId) {
-    const parent = allUsages.find((u) => u.id === current.parentUsageId)
-    if (!parent) break
-    ancestors.unshift(parent)
-    current = parent
-  }
-
-  const handleCheck = useCallback(
-    (id: string, checked: boolean) => {
-      if (isSigned) return
-      setCheckedState((prev) => ({ ...prev, [id]: checked }))
-    },
-    [isSigned],
-  )
-
-  const handleLaunchLinkedProtocol = useCallback(
-    (protocolId: string, triggerBlockId: string) => {
-      if (isSigned) return
-      addLinkedUsage.mutate({ protocolId, parentUsageId: usage.id, triggerBlockId })
-    },
-    [isSigned, addLinkedUsage, usage.id],
-  )
-
-  const runMode: RunModeProps = {
-    checkedState,
-    onCheck: handleCheck,
-    onLaunchLinkedProtocol: handleLaunchLinkedProtocol,
-    ...(isSigned ? {} : { onAutoPopulate: onAppendToSoap }),
-  }
-  const blocks = usage.content?.blocks ?? []
-  const completedCount = Object.values(checkedState).filter(Boolean).length
-  const isChild = usage.depth > 0
-
-  return (
-    <div
-      className={cn(
-        'bg-n-0 border border-n-200 rounded-md overflow-hidden mb-4',
-        isChild && 'ml-4 border-l-2 border-l-p-100',
-      )}
-    >
-      {/* Breadcrumb chain for child protocols */}
-      {ancestors.length > 0 && (
-        <div className="flex items-center gap-1 px-5 pt-3 pb-0">
-          {ancestors.map((a, i) => (
-            <span key={a.id} className="flex items-center gap-1">
-              <span className="text-[11px] font-mono text-n-400 truncate max-w-[120px]">
-                {a.protocolTitle}
-              </span>
-              {i < ancestors.length - 1 && (
-                <i className="ph ph-caret-right text-[10px] text-n-300" />
-              )}
-            </span>
-          ))}
-          <i className="ph ph-caret-right text-[10px] text-n-300" />
-        </div>
-      )}
-
-      {/* Restore notice */}
-      {isRestored && (
-        <div className="flex items-center justify-between px-5 py-2 bg-info-bg border-b border-info-border">
-          <span className="text-[11.5px] font-sans text-info-text">
-            Estado recuperado del almacenamiento local
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsRestored(false)}
-            className="text-[11px] font-mono text-info-text hover:text-n-700 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      <div className="flex items-center gap-3 px-5 py-3 bg-n-25 border-b border-n-100">
-        <div className="flex-1 min-w-0">
-          <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-p-700 mb-1">
-            {usage.protocolTypeName}
-          </div>
-          <div className="text-[17px] font-serif font-medium text-n-900 truncate leading-tight">
-            {usage.protocolTitle}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {completedCount > 0 && (
-            <span className="text-[11px] font-mono text-success-text bg-success-bg border border-success-border rounded px-2 py-1">
-              {completedCount} completado{completedCount !== 1 ? 's' : ''}
-            </span>
-          )}
-          <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-2 py-1">
-            v{usage.versionNumber}
-          </span>
-          {!isSigned && (
-            <button
-              type="button"
-              onClick={() => removeUsage.mutate(usage.id)}
-              className="w-btn-sm h-btn-sm flex items-center justify-center rounded hover:bg-n-100 text-n-400 hover:text-n-700 transition-colors"
-              title="Quitar protocolo"
-            >
-              <i className="ph ph-x text-[14px]" />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="px-5 py-4">
-        {blocks.length === 0 ? (
-          <p className="text-[13px] text-n-400 py-2">Sin bloques.</p>
-        ) : (
-          <div className="flex flex-col gap-0">
-            {blocks.map((block) => (
-              <BlockRendererRunMode key={block.id} block={block} runMode={runMode} />
-            ))}
-          </div>
-        )}
-      </div>
-      {updateCheckedState.isPending && (
-        <div className="px-5 py-2 border-t border-n-100 text-[11px] font-mono text-n-400 flex items-center gap-1">
-          <i className="ph ph-spinner animate-spin text-[11px]" /> Guardando…
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── Protocol picker modal ─────────────────────────────────────────────────────
 
 function ProtocolPickerModal({
@@ -859,16 +671,6 @@ export function Consulta(): JSX.Element {
     }, 1500)
   }, [consultation, buildPayload, updateMutation])
 
-  // ── Protocol SOAP auto-populate ──
-  const handleAppendToSoap = useCallback(
-    (field: 'objective' | 'assessment' | 'plan', text: string) => {
-      if (field === 'objective') setObjective((prev) => (prev ? `${prev}\n${text}` : text))
-      if (field === 'assessment') setAssessment((prev) => (prev ? `${prev}\n${text}` : text))
-      if (field === 'plan') setPlan((prev) => (prev ? `${prev}\n${text}` : text))
-    },
-    [],
-  )
-
   // ── Explicit save (button) ──
   function saveNow(): void {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -895,10 +697,88 @@ export function Consulta(): JSX.Element {
     }
   }, [chiefComplaint, subjective, objective, assessment, plan, vitals, diagnoses, triggerAutoSave])
 
+  // ── View mode ──
+  const hasProtocol = Boolean(consultation?.protocolUsages?.length)
+  const { viewMode, setViewMode } = useConsultationViewMode(hasProtocol)
+
+  // ── Active usage (defaults to first; user can switch via pills) ──
+  const [activeUsageId, setActiveUsageId] = useState<string | null>(null)
+  const activeUsage =
+    (activeUsageId && consultation?.protocolUsages?.find((u) => u.id === activeUsageId)) ||
+    consultation?.protocolUsages?.[0]
+  const updateCheckedState = useUpdateCheckedState(id!, activeUsage?.id ?? '')
+
+  function handleToggleStep(stepId: string, checked: boolean): void {
+    if (!activeUsage) return
+    const next = { ...activeUsage.checkedState, [stepId]: checked }
+    updateCheckedState.mutate({ checkedState: next })
+  }
+
+  // ── Missing fields ──
+  const [showMissingFields, setShowMissingFields] = useState(false)
+  const missingFields = computeMissingFields({
+    chiefComplaint,
+    subjective,
+    objective,
+    assessment,
+    plan,
+    diagnoses,
+  })
+
+  function handleSignClick(): void {
+    if (missingFields.length > 0) {
+      setShowMissingFields(true)
+      return
+    }
+    setShowSign(true)
+  }
+
   // ── Modal state ──
   const [showSign, setShowSign] = useState(false)
   const [showAmend, setShowAmend] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [showSwitch, setShowSwitch] = useState(false)
+  const [skipStepTarget, setSkipStepTarget] = useState<{ id: string; title: string } | null>(null)
+  const [showOffProtocolNote, setShowOffProtocolNote] = useState(false)
+
+  const skipStepMutation = useSkipStep(id ?? '', activeUsage?.id ?? '')
+  const offProtocolNoteMutation = useAddOffProtocolNote(id ?? '', activeUsage?.id ?? '')
+
+  function handleConfirmSkipStep(reason: string): void {
+    if (!skipStepTarget || !activeUsage) return
+    skipStepMutation.mutate(
+      {
+        stepId: skipStepTarget.id,
+        reason,
+        existingSkipped: activeUsage.modifications?.steps_skipped ?? [],
+      },
+      { onSuccess: () => setSkipStepTarget(null) },
+    )
+  }
+
+  function handleSaveOffProtocolNote(args: {
+    title: string
+    body: string
+    promoteTo: 'subjective' | 'objective' | 'assessment' | 'plan' | null
+  }): void {
+    if (!activeUsage) return
+    const fieldMap = {
+      subjective,
+      objective,
+      assessment,
+      plan,
+    } as const
+    offProtocolNoteMutation.mutate(
+      {
+        ...(args.title ? { title: args.title } : {}),
+        note: args.body,
+        ...(args.promoteTo ? { promoteTo: args.promoteTo } : {}),
+        existingNotes: activeUsage.modifications?.off_protocol_notes ?? [],
+        existingSoapValue: args.promoteTo ? (fieldMap[args.promoteTo] ?? '') : '',
+      },
+      { onSuccess: () => setShowOffProtocolNote(false) },
+    )
+  }
 
   // ── Loading / error ──
   if (isLoading) {
@@ -984,7 +864,7 @@ export function Consulta(): JSX.Element {
               >
                 Guardar borrador
               </Button>
-              <Button variant="primary" size="sm" onClick={() => setShowSign(true)}>
+              <Button variant="primary" size="sm" onClick={handleSignClick}>
                 <i className="ph ph-check mr-1" />
                 Firmar y cerrar
               </Button>
@@ -1017,171 +897,249 @@ export function Consulta(): JSX.Element {
         </div>
       )}
 
-      {/* ── Two-column layout ─────────────────────────────────────────────────── */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 360px' }}>
-        {/* ── LEFT: clinical sections ─────────────────────────────────────────── */}
-        <div>
-          <SectionBlock title="Motivo de consulta">
-            <SoapTextarea
-              value={chiefComplaint}
-              onChange={setChiefComplaint}
-              placeholder="Seguimiento trimestral, motivo de consulta, síntomas principales…"
-              rows={2}
-              disabled={isSigned}
-            />
-          </SectionBlock>
-
-          <SectionBlock title="Signos vitales">
-            <VitalsSection vitals={vitals} onChange={setVitals} disabled={isSigned} />
-          </SectionBlock>
-
-          <SectionBlock title="Subjetivo">
-            <SoapTextarea
-              value={subjective}
-              onChange={setSubjective}
-              placeholder="Historia del paciente, síntomas, antecedentes relevantes, contexto clínico…"
-              rows={4}
-              disabled={isSigned}
-            />
-          </SectionBlock>
-
-          <SectionBlock title="Examen físico">
-            <SoapTextarea
-              value={objective}
-              onChange={setObjective}
-              placeholder="Hallazgos del examen físico, signos clínicos, datos objetivos…"
-              rows={4}
-              disabled={isSigned}
-            />
-          </SectionBlock>
-
-          <SectionBlock title="Evaluación">
-            <SoapTextarea
-              value={assessment}
-              onChange={setAssessment}
-              placeholder="Impresión diagnóstica, diagnóstico diferencial…"
-              rows={3}
-              disabled={isSigned}
-            />
-          </SectionBlock>
-
-          <SectionBlock title="Plan">
-            <SoapTextarea
-              value={plan}
-              onChange={setPlan}
-              placeholder="Tratamiento, indicaciones, estudios solicitados, seguimiento…"
-              rows={4}
-              disabled={isSigned}
-            />
-          </SectionBlock>
-
-          <SectionBlock title="Diagnósticos">
-            <DiagnosesSection diagnoses={diagnoses} onChange={setDiagnoses} disabled={isSigned} />
-          </SectionBlock>
+      {/* ── Protocol pills (multi) ───────────────────────────────────────────── */}
+      {consultation.protocolUsages.length > 1 && activeUsage && (
+        <div className="-mx-12">
+          <ProtocolPills
+            pills={consultation.protocolUsages.map((u) => {
+              const ids = collectUsageCheckableIds(u)
+              const checked = ids.filter((cid) => (u.checkedState ?? {})[cid]).length
+              return {
+                id: u.id,
+                title: u.protocolTitle,
+                completed: checked,
+                total: ids.length,
+                isActive: u.id === activeUsage.id,
+              }
+            })}
+            onSelect={setActiveUsageId}
+            onAdd={() => setShowPicker(true)}
+            showAdd={!isSigned}
+          />
         </div>
+      )}
 
-        {/* ── RIGHT: sidebar ──────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4">
-          {/* Patient alerts */}
-          {patient && (patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
-            <AsideCard title="Alertas del paciente">
-              <div className="flex flex-col gap-2">
-                {patient.allergies.map((a) => (
-                  <div
-                    key={a}
-                    className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-[12.5px] text-danger-text leading-[1.4]"
-                  >
-                    <i className="ph ph-x-circle text-[16px] shrink-0 mt-1" />
-                    <div>
-                      <strong>Alergia</strong> · {a}
-                    </div>
-                  </div>
-                ))}
-                {patient.chronicConditions.map((c) => (
-                  <div
-                    key={c}
-                    className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-[12.5px] text-warning-text leading-[1.4]"
-                  >
-                    <i className="ph ph-warning-circle text-[16px] shrink-0 mt-1" />
-                    <div>{c}</div>
-                  </div>
-                ))}
-              </div>
-            </AsideCard>
+      {/* ── Protocol strip (full-bleed) ──────────────────────────────────────── */}
+      {activeUsage && (
+        <div className="-mx-12 mb-5">
+          {!isSigned ? (
+            <ProtocolStrip
+              key={activeUsage.id}
+              usage={activeUsage}
+              isSigned={isSigned}
+              onChangePicker={() => setShowSwitch(true)}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+          ) : (
+            <ProtocolStrip
+              key={activeUsage.id}
+              usage={activeUsage}
+              isSigned={isSigned}
+              onChangePicker={() => setShowSwitch(true)}
+            />
           )}
+        </div>
+      )}
 
-          {/* Protocols panel */}
+      {/* ── Off-protocol note trigger (visible when a protocol is active) ───── */}
+      {activeUsage && !isSigned && (
+        <div className="flex justify-end mb-3">
+          <button
+            type="button"
+            onClick={() => setShowOffProtocolNote(true)}
+            className="flex items-center gap-2 px-3 py-2 text-[12px] text-n-600 bg-transparent border border-dashed border-n-300 rounded-sm hover:bg-warning-bg hover:border-warning-border hover:text-warning-text transition-colors"
+          >
+            <i className="ph ph-pencil-simple text-[12px]" />
+            Añadir nota fuera de protocolo
+          </button>
+        </div>
+      )}
+
+      {/* ── Missing fields panel ─────────────────────────────────────────────── */}
+      {showMissingFields && (
+        <div className="mb-5">
+          <MissingFieldsPanel
+            fields={missingFields}
+            onFieldClick={(fieldId) => {
+              setShowMissingFields(false)
+              document.getElementById(`field-${fieldId}`)?.scrollIntoView({ behavior: 'smooth' })
+            }}
+            onDismiss={() => setShowMissingFields(false)}
+          />
+        </div>
+      )}
+
+      {/* ── Canvas view ──────────────────────────────────────────────────────── */}
+      {viewMode === 'canvas' && activeUsage ? (
+        <CanvasView
+          usage={activeUsage}
+          soap={{ chiefComplaint, subjective, objective, assessment, plan }}
+          onSoapChange={(field, value) => {
+            const setters: Record<string, (v: string) => void> = {
+              chiefComplaint: setChiefComplaint,
+              subjective: setSubjective,
+              objective: setObjective,
+              assessment: setAssessment,
+              plan: setPlan,
+            }
+            setters[field]?.(value)
+          }}
+          onToggleStep={handleToggleStep}
+          onSkipStep={(step) => setSkipStepTarget(step)}
+          isSigned={isSigned}
+        />
+      ) : (
+        /* ── Two-column layout ─────────────────────────────────────────────────── */
+        <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 360px' }}>
+          {/* ── LEFT: clinical sections ─────────────────────────────────────────── */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400">
-                Protocolos
-                {consultation.protocolUsages.length > 0 && (
-                  <span className="ml-2 text-n-500">· {consultation.protocolUsages.length}</span>
-                )}
-              </span>
-              {!isSigned && (
-                <button
-                  type="button"
-                  onClick={() => setShowPicker(true)}
-                  className="flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-sans text-n-500 hover:text-n-800 border border-n-200 rounded-sm hover:border-n-400 transition-colors bg-n-0"
-                >
-                  <i className="ph ph-plus text-[12px]" />
-                  Agregar
-                </button>
-              )}
-            </div>
-            {consultation.protocolUsages.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-6 border border-dashed border-n-200 rounded-md text-center">
-                <i className="ph ph-stack text-[22px] text-n-400" />
-                <p className="text-[12.5px] text-n-400">
-                  {isSigned
-                    ? 'Sin protocolos aplicados.'
-                    : 'Agrega un protocolo para guiar esta consulta.'}
-                </p>
-              </div>
-            ) : (
-              <div>
-                {consultation.protocolUsages.map((usage) => (
-                  <ProtocolRunCard
-                    key={usage.id}
-                    usage={usage}
-                    allUsages={consultation.protocolUsages}
-                    consultationId={consultation.id}
-                    isSigned={isSigned}
-                    onAppendToSoap={handleAppendToSoap}
-                  />
-                ))}
-              </div>
-            )}
+            <SectionBlock title="Motivo de consulta">
+              <SoapTextarea
+                value={chiefComplaint}
+                onChange={setChiefComplaint}
+                placeholder="Seguimiento trimestral, motivo de consulta, síntomas principales…"
+                rows={2}
+                disabled={isSigned}
+              />
+            </SectionBlock>
+
+            <SectionBlock title="Signos vitales">
+              <VitalsSection vitals={vitals} onChange={setVitals} disabled={isSigned} />
+            </SectionBlock>
+
+            <SectionBlock title="Subjetivo">
+              <SoapTextarea
+                value={subjective}
+                onChange={setSubjective}
+                placeholder="Historia del paciente, síntomas, antecedentes relevantes, contexto clínico…"
+                rows={4}
+                disabled={isSigned}
+              />
+            </SectionBlock>
+
+            <SectionBlock title="Examen físico">
+              <SoapTextarea
+                value={objective}
+                onChange={setObjective}
+                placeholder="Hallazgos del examen físico, signos clínicos, datos objetivos…"
+                rows={4}
+                disabled={isSigned}
+              />
+            </SectionBlock>
+
+            <SectionBlock title="Evaluación">
+              <SoapTextarea
+                value={assessment}
+                onChange={setAssessment}
+                placeholder="Impresión diagnóstica, diagnóstico diferencial…"
+                rows={3}
+                disabled={isSigned}
+              />
+            </SectionBlock>
+
+            <SectionBlock title="Plan">
+              <SoapTextarea
+                value={plan}
+                onChange={setPlan}
+                placeholder="Tratamiento, indicaciones, estudios solicitados, seguimiento…"
+                rows={4}
+                disabled={isSigned}
+              />
+            </SectionBlock>
+
+            <SectionBlock title="Diagnósticos">
+              <DiagnosesSection diagnoses={diagnoses} onChange={setDiagnoses} disabled={isSigned} />
+            </SectionBlock>
           </div>
 
-          {/* Previous consultations */}
-          {prevList.length > 0 && (
-            <AsideCard title="Consultas previas">
-              <div className="flex flex-col gap-1">
-                {prevList.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => void navigate(`/consultas/${c.id}`)}
-                    className="flex items-center justify-between w-full text-left py-2 text-[12.5px] group"
-                  >
-                    <span className="text-n-700 group-hover:text-n-900 transition-colors truncate flex-1 text-left">
-                      {c.chiefComplaint ?? 'Sin motivo'}
-                    </span>
-                    <span className="font-mono text-n-400 text-[11px] shrink-0 ml-2">
-                      {formatDate(c.consultedAt)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </AsideCard>
-          )}
+          {/* ── RIGHT: sidebar ──────────────────────────────────────────────────── */}
+          <div className="flex flex-col gap-4">
+            {/* Patient alerts */}
+            {patient && (patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
+              <AsideCard title="Alertas del paciente">
+                <div className="flex flex-col gap-2">
+                  {patient.allergies.map((a) => (
+                    <div
+                      key={a}
+                      className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-[12.5px] text-danger-text leading-[1.4]"
+                    >
+                      <i className="ph ph-x-circle text-[16px] shrink-0 mt-1" />
+                      <div>
+                        <strong>Alergia</strong> · {a}
+                      </div>
+                    </div>
+                  ))}
+                  {patient.chronicConditions.map((c) => (
+                    <div
+                      key={c}
+                      className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-[12.5px] text-warning-text leading-[1.4]"
+                    >
+                      <i className="ph ph-warning-circle text-[16px] shrink-0 mt-1" />
+                      <div>{c}</div>
+                    </div>
+                  ))}
+                </div>
+              </AsideCard>
+            )}
 
-          {/* Order queue panel */}
-          <OrderQueuePanel consultationId={consultation.id} isSigned={isSigned} />
+            {/* Protocols panel — empty state only; strip handles active protocol */}
+            {consultation.protocolUsages.length === 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400">
+                    Protocolos
+                  </span>
+                  {!isSigned && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPicker(true)}
+                      className="flex items-center gap-1.5 px-2 py-1 text-[11.5px] font-sans text-n-500 hover:text-n-800 border border-n-200 rounded-sm hover:border-n-400 transition-colors bg-n-0"
+                    >
+                      <i className="ph ph-plus text-[12px]" />
+                      Agregar
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-col items-center gap-2 py-6 border border-dashed border-n-200 rounded-md text-center">
+                  <i className="ph ph-stack text-[22px] text-n-400" />
+                  <p className="text-[12.5px] text-n-400">
+                    {isSigned
+                      ? 'Sin protocolos aplicados.'
+                      : 'Agrega un protocolo para guiar esta consulta.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Previous consultations */}
+            {prevList.length > 0 && (
+              <AsideCard title="Consultas previas">
+                <div className="flex flex-col gap-1">
+                  {prevList.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => void navigate(`/consultas/${c.id}`)}
+                      className="flex items-center justify-between w-full text-left py-2 text-[12.5px] group"
+                    >
+                      <span className="text-n-700 group-hover:text-n-900 transition-colors truncate flex-1 text-left">
+                        {c.chiefComplaint ?? 'Sin motivo'}
+                      </span>
+                      <span className="font-mono text-n-400 text-[11px] shrink-0 ml-2">
+                        {formatDate(c.consultedAt)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </AsideCard>
+            )}
+
+            {/* Order queue panel */}
+            <OrderQueuePanel consultationId={consultation.id} isSigned={isSigned} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
       <Modal open={showSign} onOpenChange={setShowSign}>
@@ -1200,6 +1158,43 @@ export function Consulta(): JSX.Element {
             consultationId={consultation.id}
             existingProtocolIds={protocolIds}
             onClose={() => setShowPicker(false)}
+          />
+        )}
+      </Modal>
+      <Modal open={showSwitch} onOpenChange={setShowSwitch}>
+        {showSwitch && activeUsage && (
+          <SwitchProtocolDialog
+            consultationId={consultation.id}
+            currentUsageId={activeUsage.id}
+            currentProtocolId={activeUsage.protocolId}
+            currentProtocolTitle={activeUsage.protocolTitle}
+            completedSteps={0}
+            totalSteps={0}
+            onClose={() => setShowSwitch(false)}
+          />
+        )}
+      </Modal>
+      <Modal
+        open={skipStepTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) setSkipStepTarget(null)
+        }}
+      >
+        {skipStepTarget && (
+          <SkipStepDialog
+            stepTitle={skipStepTarget.title}
+            onConfirm={handleConfirmSkipStep}
+            onClose={() => setSkipStepTarget(null)}
+            isPending={skipStepMutation.isPending}
+          />
+        )}
+      </Modal>
+      <Modal open={showOffProtocolNote} onOpenChange={setShowOffProtocolNote}>
+        {showOffProtocolNote && activeUsage && (
+          <OffProtocolNote
+            onSave={handleSaveOffProtocolNote}
+            onCancel={() => setShowOffProtocolNote(false)}
+            isPending={offProtocolNoteMutation.isPending}
           />
         )}
       </Modal>

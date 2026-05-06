@@ -106,6 +106,7 @@ export interface MedicationRemoved {
 export interface StepEvent {
   step_id: string
   timestamp: string
+  reason?: string
 }
 
 export interface ChecklistItemEvent {
@@ -168,6 +169,20 @@ export interface TextBlockEdited {
   timestamp: string
 }
 
+export interface OffProtocolNoteEvent {
+  timestamp: string
+  title?: string
+  note: string
+  promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
+}
+
+export interface ConditionalStepActivated {
+  block_id: string
+  condition: string
+  branch_label: string
+  timestamp: string
+}
+
 export interface ProtocolUsageModifications {
   medication_changes?: MedicationChange[]
   medications_added?: MedicationAdded[]
@@ -183,6 +198,8 @@ export interface ProtocolUsageModifications {
   lab_orders_modified?: LabOrderModified[]
   lab_orders_removed?: LabOrderRemoved[]
   text_blocks_edited?: TextBlockEdited[]
+  off_protocol_notes?: OffProtocolNoteEvent[]
+  conditional_steps_activated?: ConditionalStepActivated[]
 }
 
 export interface PrescriptionItemDto {
@@ -243,4 +260,27 @@ export interface ConsultationWithDetails extends Consultation {
   doctorName: string
   amendments: ConsultationAmendment[]
   protocolUsages: ConsultationProtocolUsage[]
+}
+
+/**
+ * Resume-banner payload — surfaces an in-progress consultation a doctor left
+ * mid-edit. Returned by `GET /v1/patients/:id/in-progress-consultation`.
+ *
+ * `elapsedMinutes` is computed server-side at request time from `updatedAt`.
+ * The endpoint returns 204 No Content (or null) when no eligible consultation
+ * exists. Eligibility: status='draft', elapsedMinutes ≥ 10, age ≤ 7 days.
+ */
+export interface ResumableConsultation {
+  consultationId: string
+  patientId: string
+  patientName: string
+  patientAge: number | null
+  protocolUsage: ConsultationProtocolUsage | null
+  currentStepNumber: number | null
+  currentStepTitle: string | null
+  totalSteps: number | null
+  completedSteps: number | null
+  lastEditField: string | null
+  lastEditTime: string
+  elapsedMinutes: number
 }

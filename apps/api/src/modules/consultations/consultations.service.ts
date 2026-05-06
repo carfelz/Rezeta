@@ -6,7 +6,12 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { createHash } from 'crypto'
-import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
+import type {
+  ConsultationWithDetails,
+  ConsultationProtocolUsage,
+  ResumableConsultation,
+  ProtocolBlock,
+} from '@rezeta/shared'
 import type {
   CreateConsultationDto,
   UpdateConsultationDto,
@@ -15,7 +20,8 @@ import type {
   UpdateCheckedStateDto,
   UpdateProtocolUsageDto,
 } from '@rezeta/shared'
-import { ErrorCode } from '@rezeta/shared'
+import { ErrorCode, computeMissingRequiredFields, evaluateConditionalRule } from '@rezeta/shared'
+import type { ConditionalStepActivated } from '@rezeta/shared'
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
@@ -30,6 +36,43 @@ export class ConsultationsService {
 
   list(params: ConsultationListParams): Promise<ConsultationWithDetails[]> {
     return this.repo.findMany(params)
+  }
+
+  /**
+   * Resume-banner data for a patient. Returns null when no in-progress
+   * consultation exists or the latest one is younger than minElapsedMinutes
+   * (avoids nagging the doctor right after they save).
+   *
+   * Window: status='draft', age ≤ 7 days. Eligibility: elapsed ≥ 10 minutes.
+   */
+  async getResumableForPatient(
+    tenantId: string,
+    userId: string,
+    patientId: string,
+  ): Promise<ResumableConsultation | null> {
+    const c = await this.repo.findResumableForPatient(tenantId, userId, patientId, 7)
+    if (!c) return null
+    const elapsedMs = Date.now() - new Date(c.updatedAt).getTime()
+    const elapsedMinutes = Math.floor(elapsedMs / 60_000)
+    if (elapsedMinutes < 10) return null
+
+    const usage = c.protocolUsages[0] ?? null
+    const ages = computeStepProgress(usage)
+    const ageYears = c.patientName ? null : null // placeholder — patient age not on this DTO; client can compute
+    return {
+      consultationId: c.id,
+      patientId: c.patientId,
+      patientName: c.patientName,
+      patientAge: ageYears,
+      protocolUsage: usage,
+      currentStepNumber: ages.currentStepNumber,
+      currentStepTitle: ages.currentStepTitle,
+      totalSteps: ages.totalSteps,
+      completedSteps: ages.completedSteps,
+      lastEditField: inferLastEditField(c),
+      lastEditTime: c.updatedAt,
+      elapsedMinutes,
+    }
   }
 
   async getById(id: string, tenantId: string): Promise<ConsultationWithDetails> {
@@ -63,7 +106,70 @@ export class ConsultationsService {
         message: 'Cannot edit a signed consultation — use amend instead',
       })
     }
-    return this.repo.update(id, tenantId, dto)
+    const updated = await this.repo.update(id, tenantId, dto)
+    return this.applyConditionalRules(updated, tenantId)
+  }
+
+  /**
+   * Walks every in-progress protocol usage on this consultation, evaluates the
+   * `conditional_rule` on each block against current vitals/SOAP, and appends
+   * any newly-matched rules to `modifications.conditional_steps_activated[]`.
+   *
+   * Activations stay in the audit trail forever (per product decision); we
+   * only ever append, never remove. If a block is already activated we don't
+   * re-add it.
+   */
+  private async applyConditionalRules(
+    c: ConsultationWithDetails,
+    tenantId: string,
+  ): Promise<ConsultationWithDetails> {
+    const ctx = {
+      vitals: c.vitals,
+      chiefComplaint: c.chiefComplaint,
+      subjective: c.subjective,
+      objective: c.objective,
+      assessment: c.assessment,
+      plan: c.plan,
+    }
+    const updatedUsages: ConsultationProtocolUsage[] = []
+    let anyChanged = false
+    for (const usage of c.protocolUsages) {
+      if (usage.status !== 'in_progress') {
+        updatedUsages.push(usage)
+        continue
+      }
+      const blocks = usage.content?.blocks ?? []
+      const existing = usage.modifications?.conditional_steps_activated ?? []
+      const seen = new Set(existing.map((e) => e.block_id))
+      const newActivations: ConditionalStepActivated[] = []
+      walkConditionalBlocks(blocks, (block) => {
+        if (seen.has(block.id)) return
+        if (!block.conditional_rule) return
+        if (!evaluateConditionalRule(block.conditional_rule, ctx)) return
+        newActivations.push({
+          block_id: block.id,
+          condition: JSON.stringify(block.conditional_rule),
+          branch_label: block.conditional_label ?? '',
+          timestamp: new Date().toISOString(),
+        })
+        seen.add(block.id)
+      })
+      if (newActivations.length === 0) {
+        updatedUsages.push(usage)
+        continue
+      }
+      const nextMods = {
+        ...usage.modifications,
+        conditional_steps_activated: [...existing, ...newActivations],
+      }
+      const written = await this.repo.updateProtocolUsage(usage.id, tenantId, {
+        modifications: nextMods as unknown as UpdateProtocolUsageDto['modifications'],
+      })
+      updatedUsages.push(written)
+      anyChanged = true
+    }
+    if (!anyChanged) return c
+    return { ...c, protocolUsages: updatedUsages }
   }
 
   async sign(id: string, tenantId: string, userId: string): Promise<ConsultationWithDetails> {
@@ -74,6 +180,24 @@ export class ConsultationsService {
         message: 'Consultation is already signed',
       })
     }
+
+    // ── Required-fields validation (SOAP + protocol-required blocks) ──────
+    const missing = computeMissingRequiredFields(
+      {
+        chiefComplaint: c.chiefComplaint,
+        assessment: c.assessment,
+        diagnoses: c.diagnoses,
+      },
+      c.protocolUsages,
+    )
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        code: ErrorCode.CONSULTATION_MISSING_REQUIRED_FIELDS,
+        message: `Faltan ${missing.length} campo(s) requerido(s) antes de firmar`,
+        details: { missing },
+      })
+    }
+
     const contentHash = createHash('sha256')
       .update(
         JSON.stringify({
@@ -270,4 +394,81 @@ export class ConsultationsService {
     }
     await this.repo.removeProtocolUsage(usageId, tenantId)
   }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+interface StepProgress {
+  currentStepNumber: number | null
+  currentStepTitle: string | null
+  totalSteps: number | null
+  completedSteps: number | null
+}
+
+function computeStepProgress(usage: ConsultationProtocolUsage | null): StepProgress {
+  if (!usage) {
+    return {
+      currentStepNumber: null,
+      currentStepTitle: null,
+      totalSteps: null,
+      completedSteps: null,
+    }
+  }
+  const steps = collectStepsFromBlocks(usage.content?.blocks ?? [])
+  const checkedState = usage.checkedState ?? {}
+  const totalSteps = steps.length
+  const completedSteps = steps.filter((s) => checkedState[s.id]).length
+  const currentIndex = steps.findIndex((s) => !checkedState[s.id])
+  if (currentIndex === -1) {
+    return { currentStepNumber: totalSteps, currentStepTitle: null, totalSteps, completedSteps }
+  }
+  const current = steps[currentIndex]
+  return {
+    currentStepNumber: currentIndex + 1,
+    currentStepTitle: current?.title ?? null,
+    totalSteps,
+    completedSteps,
+  }
+}
+
+function collectStepsFromBlocks(blocks: ProtocolBlock[]): { id: string; title: string }[] {
+  const out: { id: string; title: string }[] = []
+  function walk(arr: ProtocolBlock[]): void {
+    for (const block of arr) {
+      if (block.type === 'section') walk(block.blocks)
+      else if (block.type === 'checklist')
+        for (const it of block.items) out.push({ id: it.id, title: it.text })
+      else if (block.type === 'steps')
+        for (const st of block.steps) out.push({ id: st.id, title: st.title })
+    }
+  }
+  walk(blocks)
+  return out
+}
+
+/**
+ * Depth-first walk of a block tree. Calls `visit` on each non-section block
+ * (sections themselves are containers and are not directly conditional).
+ */
+function walkConditionalBlocks(
+  blocks: ProtocolBlock[],
+  visit: (block: ProtocolBlock) => void,
+): void {
+  for (const block of blocks) {
+    if (block.type === 'section') {
+      walkConditionalBlocks(block.blocks, visit)
+      continue
+    }
+    visit(block)
+  }
+}
+
+function inferLastEditField(c: ConsultationWithDetails): string | null {
+  // Heuristic: pick first non-empty SOAP field by priority.
+  if (c.objective?.trim()) return 'Examen físico'
+  if (c.assessment?.trim()) return 'Evaluación'
+  if (c.plan?.trim()) return 'Plan'
+  if (c.subjective?.trim()) return 'Subjetivo'
+  if (c.chiefComplaint?.trim()) return 'Motivo de consulta'
+  return null
 }

@@ -117,7 +117,17 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__get_network_request",
       "Bash(echo \"API PID: $!\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('data',{}\\).get\\('token',''\\) or d.get\\('token',''\\) or str\\(d\\)[:200]\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('data',{}\\).get\\('token',''\\) or d.get\\('token',''\\) or str\\(d\\)[:200]\\)\")",
+      "Bash(cp \"/Users/carlosfeliz/.claude/projects/-Users-carlosfeliz-code-medical-app/f0cedc69-a00b-43e3-a6a0-d3ac32dda564/tool-results/webfetch-1778020750758-kevjc3.bin\" design.tar.gz)",
+      "Bash(tar -tzf design.tar.gz)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(tee /tmp/devserver.log)",
+      "Bash(echo \"PID=$!\")",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__resize_page",
+      "Bash(pkill -f \"vite\")",
+      "Bash(tee /tmp/devserver2.log)",
+      "Bash(tee /tmp/devserver3.log)",
+      "Bash(tee /tmp/devserver4.log)"
     ]
   }
 }

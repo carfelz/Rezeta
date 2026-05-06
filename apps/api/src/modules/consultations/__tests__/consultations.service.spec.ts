@@ -184,8 +184,19 @@ describe('ConsultationsService', () => {
   // ── sign ───────────────────────────────────────────────────────────────────
 
   describe('sign', () => {
+    const signableConsult = (
+      overrides: Parameters<typeof mockConsultation>[0] = {},
+    ): ReturnType<typeof mockConsultation> =>
+      mockConsultation({
+        status: 'draft',
+        chiefComplaint: 'Cefaleas',
+        assessment: 'Migraña',
+        diagnoses: ['Migraña'],
+        ...overrides,
+      })
+
     it('signs a draft consultation and computes contentHash', async () => {
-      const draft = mockConsultation({ status: 'draft', assessment: 'Migraña' })
+      const draft = signableConsult()
       const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
@@ -194,6 +205,32 @@ describe('ConsultationsService', () => {
       // Verify that sign is called with a hex hash string
       const signCall = vi.mocked(repo.sign).mock.calls[0]
       expect(signCall?.[3]).toMatch(/^[a-f0-9]{64}$/)
+    })
+
+    it('throws when SOAP required fields are missing', async () => {
+      const draft = mockConsultation({ status: 'draft' }) // chiefComplaint/assessment empty
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      await expect(service.sign('consult-1', 'tenant-1', 'user-1')).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'CONSULTATION_MISSING_REQUIRED_FIELDS',
+        }),
+      })
+      expect(repo.sign).not.toHaveBeenCalled()
+    })
+
+    it('error response includes missing fields list', async () => {
+      const draft = mockConsultation({ status: 'draft' })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      try {
+        await service.sign('consult-1', 'tenant-1', 'user-1')
+        throw new Error('expected to throw')
+      } catch (e) {
+        const resp = (e as { response: { details: { missing: { id: string }[] } } }).response
+        const ids = resp.details.missing.map((m) => m.id)
+        expect(ids).toContain('chiefComplaint')
+        expect(ids).toContain('assessment')
+        expect(ids).toContain('diagnoses')
+      }
     })
 
     it('throws ConflictException when already signed', async () => {
@@ -210,7 +247,7 @@ describe('ConsultationsService', () => {
     })
 
     it('triggers auto-invoice creation after signing', async () => {
-      const draft = mockConsultation({ status: 'draft' })
+      const draft = signableConsult()
       const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
@@ -227,7 +264,7 @@ describe('ConsultationsService', () => {
     })
 
     it('sign succeeds even when auto-invoice creation fails', async () => {
-      const draft = mockConsultation({ status: 'draft' })
+      const draft = signableConsult()
       const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)

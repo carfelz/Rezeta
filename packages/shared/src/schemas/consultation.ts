@@ -59,12 +59,33 @@ const ProtocolContentSchema = z.object({
   blocks: z.array(z.record(z.string(), z.unknown())),
 })
 
+// ── Modifications: typed entries we care about ─────────────────────────────
+const StepEventSchema = z.object({
+  step_id: z.string().min(1).max(200),
+  timestamp: z.string().datetime(),
+  reason: z.string().min(1).max(500).optional(),
+})
+
+const OffProtocolNoteEventSchema = z.object({
+  timestamp: z.string().datetime(),
+  title: z.string().max(200).optional(),
+  note: z.string().min(1).max(2000),
+  promoted_to_soap_field: z.enum(['subjective', 'objective', 'assessment', 'plan']).optional(),
+})
+
+const ConditionalStepActivatedSchema = z.object({
+  block_id: z.string().min(1).max(200),
+  condition: z.string().max(500),
+  branch_label: z.string().max(200),
+  timestamp: z.string().datetime(),
+})
+
 const ModificationsSchema = z.object({
   medication_changes: z.array(z.record(z.string(), z.unknown())).optional(),
   medications_added: z.array(z.record(z.string(), z.unknown())).optional(),
   medications_removed: z.array(z.record(z.string(), z.unknown())).optional(),
-  steps_completed: z.array(z.record(z.string(), z.unknown())).optional(),
-  steps_skipped: z.array(z.record(z.string(), z.unknown())).optional(),
+  steps_completed: z.array(StepEventSchema).optional(),
+  steps_skipped: z.array(StepEventSchema).optional(),
   checklist_items: z.array(z.record(z.string(), z.unknown())).optional(),
   decision_branches: z.array(z.record(z.string(), z.unknown())).optional(),
   imaging_orders_queued: z.array(z.record(z.string(), z.unknown())).optional(),
@@ -74,7 +95,16 @@ const ModificationsSchema = z.object({
   lab_orders_modified: z.array(z.record(z.string(), z.unknown())).optional(),
   lab_orders_removed: z.array(z.record(z.string(), z.unknown())).optional(),
   text_blocks_edited: z.array(z.record(z.string(), z.unknown())).optional(),
+  off_protocol_notes: z.array(OffProtocolNoteEventSchema).optional(),
+  conditional_steps_activated: z.array(ConditionalStepActivatedSchema).optional(),
 })
+
+export {
+  StepEventSchema,
+  OffProtocolNoteEventSchema,
+  ConditionalStepActivatedSchema,
+  ModificationsSchema,
+}
 
 export const UpdateProtocolUsageSchema = z.object({
   content: ProtocolContentSchema.optional(),

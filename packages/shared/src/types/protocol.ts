@@ -1,5 +1,24 @@
 export type ProtocolStatus = 'draft' | 'active' | 'archived'
-export type ProtocolUsageStatus = 'in_progress' | 'completed' | 'abandoned'
+export type ProtocolUsageStatus = 'in_progress' | 'completed' | 'abandoned' | 'switched'
+
+/**
+ * Patient-history-based protocol recommendation, used to rank cards on the
+ * consultation gate. Sources: prior usages of this protocol with the same
+ * patient (recency + frequency) and the doctor's overall usage frequency.
+ */
+export interface ProtocolRecommendation {
+  protocolId: string
+  title: string
+  typeId: string
+  typeName: string
+  currentVersionNumber: number | null
+  /** ISO timestamp of the most recent prior usage with this patient, or null. */
+  lastUsedAt: string | null
+  /** Number of prior usages with this patient. */
+  usageCount: number
+  /** Highest-ranked recommendation in the response. */
+  isMostProbable: boolean
+}
 export type BlockType =
   | 'section'
   | 'text'
@@ -65,23 +84,36 @@ export interface LabOrderItem {
   special_instructions?: string
 }
 
+export type ComparisonOp = '<' | '<=' | '>' | '>=' | '==' | '!='
+
+export type ConditionalRule =
+  | { kind: 'cmp'; field: string; op: ComparisonOp; value: number | string | boolean }
+  | { kind: 'and'; rules: ConditionalRule[] }
+  | { kind: 'or'; rules: ConditionalRule[] }
+  | { kind: 'not'; rule: ConditionalRule }
+
+interface BlockBase {
+  id: string
+  conditional_rule?: ConditionalRule
+  conditional_label?: string
+}
+
 export type ProtocolBlock =
-  | {
-      id: string
+  | (BlockBase & {
       type: 'section'
       title: string
       description?: string
       collapsed_by_default?: boolean
       blocks: ProtocolBlock[]
-    }
-  | { id: string; type: 'text'; content: string }
-  | { id: string; type: 'checklist'; title?: string; items: ChecklistItem[] }
-  | { id: string; type: 'steps'; title?: string; steps: Step[] }
-  | { id: string; type: 'decision'; condition: string; branches: DecisionBranch[] }
-  | { id: string; type: 'dosage_table'; title?: string; columns: string[]; rows: DosageRow[] }
-  | { id: string; type: 'alert'; severity: AlertSeverity; title?: string; content: string }
-  | { id: string; type: 'imaging_order'; title?: string; orders: ImagingOrderItem[] }
-  | { id: string; type: 'lab_order'; title?: string; orders: LabOrderItem[] }
+    })
+  | (BlockBase & { type: 'text'; content: string })
+  | (BlockBase & { type: 'checklist'; title?: string; items: ChecklistItem[] })
+  | (BlockBase & { type: 'steps'; title?: string; steps: Step[] })
+  | (BlockBase & { type: 'decision'; condition: string; branches: DecisionBranch[] })
+  | (BlockBase & { type: 'dosage_table'; title?: string; columns: string[]; rows: DosageRow[] })
+  | (BlockBase & { type: 'alert'; severity: AlertSeverity; title?: string; content: string })
+  | (BlockBase & { type: 'imaging_order'; title?: string; orders: ImagingOrderItem[] })
+  | (BlockBase & { type: 'lab_order'; title?: string; orders: LabOrderItem[] })
 
 export interface ProtocolContent {
   version: string

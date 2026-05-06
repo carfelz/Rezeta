@@ -22,7 +22,12 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
-import type { ConsultationWithDetails, ConsultationProtocolUsage, AuthUser } from '@rezeta/shared'
+import type {
+  ConsultationWithDetails,
+  ConsultationProtocolUsage,
+  AuthUser,
+  ResumableConsultation,
+} from '@rezeta/shared'
 import {
   CreateConsultationSchema,
   UpdateConsultationSchema,
@@ -234,5 +239,27 @@ export class ConsultationsController {
     @Param('usageId', ParseUUIDPipe) usageId: string,
   ): Promise<void> {
     await this.svc.removeProtocolUsage(id, usageId, tenantId)
+  }
+}
+
+@ApiTags('Consultations')
+@ApiBearerAuth('firebase-jwt')
+@ApiSecurity('firebase-oauth2')
+@Controller('v1/patients/:patientId')
+export class PatientConsultationsController {
+  constructor(@Inject(ConsultationsService) private svc: ConsultationsService) {}
+
+  @Get('in-progress-consultation')
+  @ApiOperation({
+    summary: 'Most recent in-progress (draft) consultation for a patient — for resume banner',
+  })
+  @ApiParam({ name: 'patientId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Returns ResumableConsultation or null' })
+  getResumable(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ResumableConsultation | null> {
+    return this.svc.getResumableForPatient(tenantId, user.id, patientId)
   }
 }

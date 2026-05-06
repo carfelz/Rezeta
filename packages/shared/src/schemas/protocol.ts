@@ -66,9 +66,46 @@ const FixedDosageColumnsSchema = z.tuple([
   z.literal('notes'),
 ])
 
+// ─── Conditional rule expression tree (for blocks that activate conditionally) ──
+// Field paths supported in v1: vitals.bloodPressureSystolic, vitals.bloodPressureDiastolic,
+// vitals.heartRate, vitals.respiratoryRate, vitals.temperatureCelsius, vitals.oxygenSaturation,
+// vitals.weightKg, vitals.heightCm. Future: SOAP fields (text contains).
+
+export const ComparisonOpSchema = z.enum(['<', '<=', '>', '>=', '==', '!='])
+
+export const ConditionalRuleSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.discriminatedUnion('kind', [
+    z.object({
+      kind: z.literal('cmp'),
+      field: z.string().min(1).max(100),
+      op: ComparisonOpSchema,
+      value: z.union([z.number(), z.string(), z.boolean()]),
+    }),
+    z.object({
+      kind: z.literal('and'),
+      rules: z.array(ConditionalRuleSchema).min(1).max(10),
+    }),
+    z.object({
+      kind: z.literal('or'),
+      rules: z.array(ConditionalRuleSchema).min(1).max(10),
+    }),
+    z.object({
+      kind: z.literal('not'),
+      rule: ConditionalRuleSchema,
+    }),
+  ]),
+)
+
+// Types `ComparisonOp` and `ConditionalRule` are exported from `types/protocol.ts`
+// (single source of truth). This schema validates the same shape.
+
 // ─── Protocol Instance Schema (Strict Content) ─────────────────────────────
 
-const BaseBlockSchema = z.object({ id: z.string() })
+const BaseBlockSchema = z.object({
+  id: z.string(),
+  conditional_rule: ConditionalRuleSchema.optional(),
+  conditional_label: z.string().max(200).optional(),
+})
 
 export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
   z.discriminatedUnion('type', [

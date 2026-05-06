@@ -44,6 +44,13 @@ const buttonVariants = cva(
           'focus-visible:shadow-focus-danger',
           'disabled:bg-n-200 disabled:border-n-200 disabled:text-n-400 disabled:cursor-not-allowed',
         ],
+        warning: [
+          'bg-warning-text text-n-0 border-warning-text',
+          'hover:opacity-90',
+          'active:opacity-80',
+          'focus-visible:shadow-focus',
+          'disabled:bg-n-200 disabled:border-n-200 disabled:text-n-400 disabled:cursor-not-allowed',
+        ],
       },
       size: {
         sm: 'h-btn-sm text-[12.5px] px-[10px]',

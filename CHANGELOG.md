@@ -4,6 +4,233 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-06] — Centralized UI primitives (Tailwind only inside /components/ui/)
+
+### New `apps/web/src/components/ui/` components (each with stories + tests)
+
+- `Overline.tsx` — mono UPPERCASE label with `tone` (neutral/muted/primary/warning/danger/success), `size` (xs/sm/md/lg), `weight`, `case` (upper/normal). Replaces ~30 inline `text-[10.5px] font-mono uppercase tracking-...` blocks
+- `Caption.tsx` — small sentence-case secondary text with `tone`, `size`, `weight`. Sister to `Overline` for non-mono captions (subtitles, helper text, last-edit info)
+- `Chip.tsx` — small status pill with `tone` (primary/primarySolid/warning/danger/success/neutral), `size`, `format` (uppercase/sentence), `asButton`. Replaces inline EN CURSO / NUEVO / MÁS PROBABLE / FUERA DE PROTOCOLO / "Ver pasos" pill button
+- `IconButton.tsx` — round-rect ghost icon button with `tone` (neutral/danger/muted/warning), `size`. Required `aria-label`
+- `TextLink.tsx` — text-as-button affordance for inline "Editar" / "Saltar" / "Cambiar" / "Reanudar" links. `tone`, `size`, `weight`, `underline` props
+- `StepCircle.tsx` — round step indicator with `status` (done/active/pending), `size`, optional `number`. Renders check icon for done, zero-padded number for active, blank for pending
+- `SearchInput.tsx` — search input with magnifying-glass icon prefix. `size` (sm/md)
+- `SegmentedControl.tsx` — generic N-option segmented chip toggle (replaces ViewModeToggle's custom JSX)
+- `SelectableCard.tsx` — clickable card with `density` (compact/standard/large) and `state` (default/selected/primary)
+- `RadioCard.tsx` — radio-row card with filled-dot indicator + selected styling
+- `DashedButton.tsx` — full-width dashed-border CTA with `tone` (neutral/subtle/warning) and `size`
+- `TabRail.tsx` + `TabRailItem` + `TabRailAdd` — horizontal tab strip with active-underline indicator
+- `GroupSectionCard.tsx` — overline + bordered surface + optional header strip + body + footer. `tone` (neutral/danger/warning), `compact` mode. Replaces ~8 inline section-card definitions across RightRail, OrderQueuePanel, etc.
+- `DialogCard.tsx` — overline + serif h2 + description + body + footer card frame. `width` (sm/md/lg/xl), `elevation` (none/raised/floating), `overlineTone`. Replaces dialog frames in Skip/Switch/Resume/OffProtocol
+
+### Component extensions
+
+- `Button.tsx` — added `warning` variant (amber bg, white text)
+- `Callout.tsx` — added `density` (standard/compact), `compact` shorthand, `tone` alias for `variant`, accepts string Phosphor icon class as `icon`
+
+### Infrastructure
+
+- `apps/web/src/lib/utils.ts` — `cn()` now uses `extendTailwindMerge` to register the project's custom `font-weight` tokens (regular/medium/semibold) so `font-sans` and `font-medium` no longer get merged into the same group and stripped
+
+### Refactored consultation components (Tailwind classes moved into ui/ primitives)
+
+- `ViewModeToggle.tsx` — now a 7-line wrapper around `SegmentedControl`
+- `ProtocolPills.tsx` — now uses `TabRail` + `TabRailItem` + `TabRailAdd`
+- `RightRail.tsx` — uses `GroupSectionCard` + `Callout` (compact)
+- `MissingFieldsPanel.tsx` — `MissingFieldsCallout` uses `Callout` + `TextLink` + `Button`; `MissingFieldsPanel` uses `GroupSectionCard` + `IconButton`; `RequiredBadge` uses `Chip`
+- `SkipStepDialog.tsx` — `DialogCard` + `RadioCard` + `Button variant="warning"`
+- `SwitchProtocolDialog.tsx` — `DialogCard` + `SearchInput` + `SelectableCard` + `Button`
+- `OffProtocolNote.tsx` — `Chip` + `Button` + `TextLink`
+- `ResumeBanner.tsx` — `DialogCard` + `Avatar` + `Button`
+- `CanvasView.tsx` — `StepCircle` + `Caption` + `Chip` + `TextLink` (active step's "Saltar" link, done step's "Editar" link)
+- `ProtocolStrip.tsx` — `Chip` (sentence format) for "Ver pasos", `TextLink` for "Cambiar", `Overline` for "Vista" label, `StepCircle` inside the popover, `Caption` for hint text
+- `ConsultationGate.tsx` — `Overline` + `Caption` + `SearchInput` + `SelectableCard` + `DashedButton` + `Chip` + `Button`
+- `ConsultaNueva.tsx` — `Button` for "Saltar y abrir consulta vacía"
+
+### Verification
+
+- 1,787/1,787 tests pass (281 shared + 858 api + 648 web — added 159 ui-primitive tests)
+- Zero lint errors · zero typecheck errors
+- Visually verified at `/_preview/gate`, `/_preview/canvas`, `/_preview/edge` — match handoff frames pixel-for-pixel
+- Storybook stories shipped for all 14 new components
+
+### Pending — large structural refactors deferred to next pass
+
+- `OrderQueuePanel.tsx` (1085 LOC) — 13 raw buttons + many Tailwind classes. Each prescription/order group is a candidate for `GroupSectionCard`; trash buttons → `IconButton`; add buttons → `DashedButton`. Skipped in this pass to keep PR scoped — refactor in dedicated PR with same patterns.
+- `Consulta.tsx` (1100+ LOC) — large page-level Tailwind. Most usages already use ui primitives; remaining inline classes are page-shell layout (grid templates, sticky positioning) that are page-specific and small. Acceptable residual.
+
+## [2026-05-06] — Wired skip/off-protocol/conditional UI + server triggers
+
+### Added — `apps/api`
+
+- `consultations.service.ts`:
+  - Server-side conditional rule trigger: every successful `update()` now calls `applyConditionalRules` which walks active in-progress protocol usages, evaluates each block's `conditional_rule` against current vitals/SOAP via `evaluateConditionalRule`, and append-onlys new matches to `modifications.conditional_steps_activated[]`. Already-activated blocks are skipped (de-duped by `block_id`); rules are never removed (audit-trail-stays-forever per product decision).
+  - `walkConditionalBlocks` helper: depth-first block tree walk that descends into sections.
+  - 5 unit tests for conditional flow (activate on match, no-op on no-match, no-dup, skip non-in-progress usages, walks into sections).
+
+### Added — `apps/web`
+
+- `pages/Consulta.tsx`:
+  - Wires `useSkipStep` and `useAddOffProtocolNote` hooks
+  - `skipStepTarget` state + `SkipStepDialog` modal triggered from per-step "Saltar" link in canvas view
+  - `showOffProtocolNote` state + `OffProtocolNote` modal triggered from new "Añadir nota fuera de protocolo" dashed button (rendered above the body when a protocol is active and consultation not signed)
+  - `handleConfirmSkipStep` builds the `existingSkipped` merge from `usage.modifications.steps_skipped`
+  - `handleSaveOffProtocolNote` builds `existingNotes` + `existingSoapValue` so promoting to a SOAP field appends rather than replaces
+- `components/consultations/CanvasView.tsx`: optional `onSkipStep` prop; per-step "Saltar" affordance rendered top-right of active step (parallels "Editar" on done steps)
+
+### Tests
+
+- 1,628/1,628 pass (281 shared + 858 api + 489 web) · zero lint · zero typecheck
+
+## [2026-05-06] — Backend: sign validation, conditional rules, recommendations, resume
+
+### Added — `packages/shared`
+
+- `protocol/conditional-rule-evaluator.ts`: expression-tree evaluator (`cmp`/`and`/`or`/`not`) with `resolveField` for dotted vitals/SOAP paths; 21 unit tests covering field resolution, all 6 comparison ops, type-mismatch handling, nested boolean composition
+- `protocol/sign-validation.ts`: `computeMissingRequiredFields(soap, protocolUsages)` — single source of truth for SOAP-required (chiefComplaint/assessment/diagnoses) **and** protocol-required block completion; `isBlockCompleted` walks checklist/steps/decision/dosage_table/imaging_order/lab_order semantics; recurses through sections; 14 unit tests
+- `types/protocol.ts`: `ConditionalRule`, `ComparisonOp`, `ProtocolRecommendation` exports; `ProtocolBlock.conditional_rule` + `conditional_label` optional fields
+- `types/consultation.ts`: `ResumableConsultation` interface; `StepEvent.reason?`; `OffProtocolNoteEvent.title?`
+- `schemas/consultation.ts`: typed `StepEventSchema`, `OffProtocolNoteEventSchema`, `ConditionalStepActivatedSchema` replacing the previous `z.record` placeholders; new `ModificationsSchema` entries `off_protocol_notes`, `conditional_steps_activated`
+- `schemas/protocol.ts`: `ConditionalRuleSchema` lazy discriminated union (`cmp`/`and`/`or`/`not`) on `BaseBlockSchema`; `ComparisonOpSchema`
+- `errors.ts`: `CONSULTATION_MISSING_REQUIRED_FIELDS`
+
+### Added — `apps/api`
+
+- New module `protocol-recommendations` (under `apps/api/src/modules/protocol-recommendations/`):
+  - `protocol-recommendations.repository.ts`: 3-tier ranked query (per-patient history → doctor's overall most-used → tenant fallback) using `$queryRawUnsafe<RankedCandidate[]>` for grouped counts/MAX(appliedAt); marks first entry `isMostProbable=true` only when `usageCount > 0`
+  - `protocol-recommendations.service.ts`: in-memory `Map`-backed cache, key=`(tenant:doctor:patient:limit)`, TTL=60s; `invalidate()` and `clearCache()` exposed for testing
+  - `protocol-recommendations.controller.ts`: `GET /v1/patients/:patientId/protocol-suggestions?limit=N`, clamps limit to `[1, 20]`, default 6
+  - 13 service + controller unit tests
+  - Registered in `app.module.ts`
+- `consultations` module:
+  - Repository: `findResumableForPatient(tenantId, userId, patientId, maxAgeDays)` — most recent draft within window
+  - Service: `getResumableForPatient` — applies 10-min minimum-elapsed threshold, builds `ResumableConsultation` with current-step inference, last-edit-field heuristic
+  - Helpers: `computeStepProgress`, `collectStepsFromBlocks`, `inferLastEditField`
+  - New controller `PatientConsultationsController` mounted at `/v1/patients/:patientId` with `GET in-progress-consultation`
+  - Service: server-side sign validation now calls `computeMissingRequiredFields` and throws `BadRequestException` with code `CONSULTATION_MISSING_REQUIRED_FIELDS` and `details.missing[]`
+  - 6 new resumable-flow service tests, 2 new sign-validation tests
+
+### Added — `apps/web`
+
+- `hooks/consultations/use-consultations.ts`:
+  - `useResumableForPatient(patientId)` — query for resume-banner data, gated on `patientId`
+  - `useSkipStep(consultationId, usageId)` — appends `steps_skipped` event with reason via existing PATCH endpoint; takes `existingSkipped` so caller controls merge
+  - `useAddOffProtocolNote(consultationId, usageId)` — appends `off_protocol_notes` event; if `promoteTo` set, also patches the corresponding SOAP field with appended text
+- `pages/ConsultaNueva.tsx`: when patient + location set, fetches resumable; renders `ResumeBanner` between header and `ConsultationGate` when eligible (≥10 min elapsed, has protocol usage); `Empezar nueva` dismisses, `Continuar` navigates to existing consultation
+
+### Tests
+
+- 1,623/1,623 pass (281 shared + 853 api + 489 web) · zero lint · zero typecheck
+- Coverage maintained ≥90% on shared and api
+
+### Still pending (UI-side wiring of remaining hooks)
+
+- Wire `useSkipStep` from the `SkipStepDialog` invocation site inside `Consulta.tsx` (currently dialog calls `onConfirm(reason)` which has no consumer)
+- Wire `useAddOffProtocolNote` from an `OffProtocolNote` invocation site
+- Conditional-rule evaluator integration: server-side hook that runs on `PATCH /v1/consultations/:id` and `…/checked-state` to mutate `modifications.conditional_steps_activated[]` (evaluator built; not yet hooked into the update path)
+
+## [2026-05-06] — Hybrid consultation: pixel-match polish + multi-protocol wiring
+
+### Added
+
+- `.preview-snapshots/` (gitignored): folder for chrome-devtools side-by-side screenshots used for picture-perfect comparison against `handoff/frames/*.png`
+
+### Changed
+
+- `apps/web/src/components/consultations/ConsultationGate.tsx` `RecentProtocolCard`: subtitle now formats as "Última: hace N meses · vN" (or "Sin protocolo guía" when no version) — matches design `01-hybrid.png` exactly
+- `apps/web/src/components/consultations/CanvasView.tsx` ProtoStep active state: replaced full 2px border with anchor-rule pattern (2px teal vertical bar on left edge, top-3/bottom-3 inset, rounded); active circle now displays the step number ("05") in mono inside hollow teal-bordered circle — matches design `04-hybrid.png`/`04-edge.png`
+- `apps/web/src/pages/Consulta.tsx`: wired multi-protocol pills via `ProtocolPills` when `usages.length > 1`; `activeUsageId` state lets user switch active protocol; pills compute progress per usage from `checkedState`; `+ Añadir protocolo` opens existing `ProtocolPickerModal`; non-pills path uses single active strip
+- `apps/web/src/pages/_preview/GatePreview.tsx`: mock dates set to `monthsAgo(3)` and `monthsAgo(6)` so card subtitles render the "hace N meses" format; third card has `currentVersionNumber: null` to show "Sin protocolo guía"
+
+### Verified
+
+- Side-by-side chrome-devtools screenshots vs `01-hybrid.png`, `03-hybrid.png`, `04-hybrid.png`, `04-edge.png`, `06-edge.png`, `07-edge.png` — all match
+- 489/489 tests pass · zero lint · zero typecheck
+
+## [2026-05-06] — Hybrid consultation: canvas spine + multi-protocol + empty state
+
+### Added
+
+- `apps/web/src/components/consultations/ProtocolPills.tsx` — multi-protocol tab row matching `04-edge.png`: pills with title + `X/Y` mono progress + 2px teal underline for active + `+ Añadir protocolo` tab
+- `apps/web/src/components/consultations/CanvasView.tsx` ProtoStep card design: round circle indicator (filled teal+check when done, hollow w/ ring when active, gray when pending), 2px teal left rule on active card, mono step number, serif title, sectionTitle subtitle, body content, "EN CURSO" badge, "Editar" link top-right on done, optional "NUEVO" amber badge for conditional steps via `step.isNew`
+- `apps/web/src/pages/_preview/CanvasPreview.tsx` — combined preview of pills + strip + canvas + right rail at `/_preview/canvas`
+- `apps/web/src/components/consultations/__tests__/ProtocolPills.test.tsx` — 6 tests
+
+### Changed
+
+- `apps/web/src/components/consultations/ConsultationGate.tsx`: empty state matching `08-edge.png` — when `allProtocols.length === 0`, renders dashed card w/ illustration circle, serif h2 "Sin protocolos configurados", body text, two buttons "Explorar biblioteca de protocolos" (primary teal) + "Crear protocolo nuevo" (secondary)
+- `apps/web/src/components/consultations/CanvasView.tsx`: removed inline SOAP rail (now rendered at page level via `RightRail`); single-column ProtoStep card spine
+- `apps/web/src/pages/Consulta.tsx`: `ProtocolStrip` rendered full-bleed via `-mx-12`; view toggle now lives inside the strip via `viewMode`/`onViewModeChange` props instead of floating absolute; removed standalone `ViewModeToggle` import
+
+### Tests
+
+- 489/489 pass · zero lint · zero typecheck errors
+
+## [2026-05-06] — Hybrid consultation: design-faithful rebuild
+
+### Added
+
+- `apps/web/src/components/consultations/ConsultHeader.tsx` — page header w/ breadcrumbs, mono datetime overline, serif h1, subtitle, right-slot button
+- `apps/web/src/components/consultations/RightRail.tsx` — `Alertas` chips, `Pasos del protocolo` numbered list, `Órdenes` count card
+- `apps/web/src/pages/_preview/{GatePreview,StripPreview,EdgePreview}.tsx` — auth-free preview routes for pixel-comparison against design source
+
+### Changed
+
+- `apps/web/src/components/consultations/ConsultationGate.tsx`: complete rewrite to match design — `Paso 1 de 2` overline, serif h2 `Comencemos con el motivo`, recent-consultations 3-card row with "MÁS PROBABLE" badge on top match, search input, 2-col specialty buckets w/ Phosphor type icons + counts, dashed footer callout w/ "Continuar sin protocolo"
+- `apps/web/src/components/consultations/ProtocolStrip.tsx`: rewrite to match design — bg-p-50 strip, ph-list-checks icon, title + version chip, 3px progress bar w/ "X / N" mono counter, "Ver pasos"/"Cambiar" subtle p-100 buttons, mono "VISTA" label + segmented toggle on right
+- `apps/web/src/components/consultations/ViewModeToggle.tsx`: redesigned to match — mono UPPERCASE `SOAP`/`PROTOCOLO` labels in p-100 chip; active = white bg + p-700 semibold; inactive = transparent + p-700 opacity-60 regular
+- `apps/web/src/components/consultations/SkipStepDialog.tsx`: rewrite — mono "SALTAR PASO" overline, serif h2, 4 preset radio reasons (Paciente no cooperaba / No clínicamente relevante hoy / Paso ya documentado en visita reciente / Otro…) with optional textarea when "Otro…" selected; warning amber confirm button
+- `apps/web/src/components/consultations/SwitchProtocolDialog.tsx`: rewrite — mono "CAMBIO DE PROTOCOLO" overline, serif h2 `Cambiar X → Y`, body w/ completed-step counts, impact card w/ 3 sections (preserved/moved-to-fuera-de-protocolo/discarded), "Conservar borrador 24h" checkbox
+- `apps/web/src/components/consultations/OffProtocolNote.tsx`: rewrite as card — amber "FUERA DE PROTOCOLO" chip, serif h2 title input, body textarea, footer w/ "Convertir en paso", "Mover a SOAP" dropdown, "Cancelar", `HH:mm · Dr. García` timestamp
+- `apps/web/src/components/consultations/ResumeBanner.tsx`: rewrite as centered card — mono "CONSULTA EN PROGRESO" overline, serif h2 "Bienvenido de vuelta", elapsed-time body, inner patient card w/ avatar + name+age + protocol step + step pills + last-edit info, "Continuar en paso N · [step]" + "Empezar nueva" buttons, "El borrador se conserva 7 días"
+- `apps/web/src/components/consultations/MissingFieldsPanel.tsx`: split into `MissingFieldsCallout` (pink in-body "No puedes firmar todavía / Faltan N campos requeridos. Saltar al primero ↓" + "Ver faltantes" button) + `MissingFieldsPanel` (right-rail "FALTANTES (N)" w/ clickable rows) + `RequiredBadge` (inline on field labels)
+- `apps/web/src/pages/ConsultaNueva.tsx`: when patient + location both set, renders `ConsultHeader` + new gate w/ breadcrumbs, mono datetime in `SÁBADO, 2 DE MAYO DE 2026 · HH:MM · LOCATION` form, top-right "Saltar y abrir consulta vacía" button
+- `apps/web/src/pages/Consulta.tsx`: pass `currentProtocolTitle`, `completedSteps`, `totalSteps` to `SwitchProtocolDialog`
+
+### Removed
+
+- Dropped `text-overline`/`text-caption` token rounding in favor of exact design pixel sizes (`text-[10.5px]`, `text-[11.5px]`, `text-[12.5px]`, `text-[13.5px]`) — Tailwind config doesn't restrict arbitrary fontSize values
+
+## [2026-05-05] — Slices 2–5: Hybrid Consultation Redesign
+
+### Added
+
+- `packages/shared/src/types/protocol.ts`: extended `ProtocolUsageStatus` with `'switched'` value
+- `packages/shared/src/types/consultation.ts`: added `OffProtocolNoteEvent`, `ConditionalStepActivated` interfaces; added `off_protocol_notes` and `conditional_steps_activated` fields to `ProtocolUsageModifications`
+- `apps/web/src/store/ui.store.ts`: added `ConsultationViewMode` type, `viewMode` state (`'soap' | 'canvas'`), `setViewMode` action, `missingFieldsPanelOpen` state, and `setMissingFieldsPanelOpen` action
+- `apps/web/src/hooks/consultations/use-consultation-view-mode.ts`: hook persisting view mode to `localStorage` under key `rezeta:consultation-view-mode`; resets to `'soap'` when `hasProtocol` is false; handles storage read/write errors gracefully
+- `apps/web/src/hooks/consultations/use-protocol-suggestions.ts`: hook returning top 4 active protocols sorted by `updatedAt_desc` as suggestions for the gate screen
+- `apps/web/src/hooks/consultations/use-consultations.ts`: added `useSwitchProtocolUsage` hook that chains PATCH usage (status=`switched`) then POST new protocol usage
+- `apps/web/src/components/consultations/ViewModeToggle.tsx`: segmented SOAP ↔ Protocolo toggle with `aria-pressed` on each button
+- `apps/web/src/components/consultations/ConsultationGate.tsx`: flow-F gate screen — shows suggested protocol cards, search input, "Continuar sin protocolo" link, and confirm button; calls `onSelect(protocolId | null)`
+- `apps/web/src/components/consultations/CanvasView.tsx`: flow-E canvas — two-column layout with protocol steps spine (left) and compact SOAP rail (right); collects checkable items from all section blocks; disabled when signed
+- `apps/web/src/components/consultations/SwitchProtocolDialog.tsx`: modal for switching the active protocol mid-consultation; uses `useSwitchProtocolUsage`
+- `apps/web/src/components/consultations/SkipStepDialog.tsx`: modal for recording a reason when skipping a protocol step; confirm disabled until reason entered
+- `apps/web/src/components/consultations/OffProtocolNote.tsx`: inline note editor with optional SOAP-field promotion chips
+- `apps/web/src/components/consultations/ResumeBanner.tsx`: banner for resuming an in-progress protocol from a prior session
+- `apps/web/src/components/consultations/MissingFieldsPanel.tsx`: dismissible panel listing incomplete fields before signing; `computeMissingFields()` helper checks `chiefComplaint`, `assessment`, and `diagnoses`
+- Unit tests: `SkipStepDialog.test.tsx`, `OffProtocolNote.test.tsx`, `ResumeBanner.test.tsx`, `CanvasView.test.tsx`, `ConsultationGate.test.tsx`, `ViewModeToggle.test.tsx`, `MissingFieldsPanel.test.tsx`, `use-consultation-view-mode.test.ts`, `protocol-usage-status.test.ts`; updated `ui.store.test.ts`
+
+### Changed
+
+- `apps/web/src/pages/ConsultaNueva.tsx`: when both `patientId` and `locationId` are pre-populated, shows `ConsultationGate` instead of auto-creating the consultation; gate's `onSelect` creates the consultation then optionally attaches a protocol usage via `apiClient` directly (not hooks) to avoid hook-call-in-callback violations
+- `apps/web/src/pages/Consulta.tsx`: integrated `ViewModeToggle` above the SOAP form; `CanvasView` rendered when `viewMode === 'canvas'`; `MissingFieldsPanel` shown when `missingFieldsPanelOpen`; `SwitchProtocolDialog` wired to "Cambiar" in `ProtocolStrip`; sign button pre-validates missing fields and opens panel instead of signing when fields are incomplete
+
+## [2026-05-05] — Slice 1: Protocol Strip (visual lift)
+
+### Added
+
+- `apps/web/src/components/consultations/ProtocolStrip.tsx` — full-width protocol context band rendered under the consultation header when a protocol usage is active. Shows protocol type overline, title, version chip, progress indicator (completed/total items + progress bar), "Ver pasos" popover listing all sections/steps with completion status, and "Cambiar" button to open the protocol picker.
+- `apps/web/src/components/consultations/ProtocolStrip.stories.tsx` — Storybook stories: `Single`, `WithProgress`, `WithCompletedSteps`, `Signed`.
+
+### Changed
+
+- `apps/web/src/pages/Consulta.tsx`: renders `ProtocolStrip` above the two-column body when `protocolUsages.length > 0`; removes the right-rail `ProtocolRunCard` block renderer and its container when a protocol is active; right-rail "Protocolos" section (with dashed empty-state card + "Agregar" button) is shown only when there are 0 usages; "Cambiar" in the strip reuses the existing `showPicker` state to open the protocol picker.
+
+### Removed
+
+- Inline `ProtocolRunCard` component from `Consulta.tsx` (replaced by `ProtocolStrip`); `handleAppendToSoap` callback (was only used by `ProtocolRunCard`).
+
 ## [2026-05-02] — Protocol dosage_table run mode: add medications to prescription queue
 
 ### Added
