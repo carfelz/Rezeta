@@ -19,14 +19,15 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { AuditLogItem, AuditLogListResponse } from '@rezeta/shared'
 import { TenantId } from '../decorators/tenant-id.decorator.js'
 import { AuditLogService } from './audit-log.service.js'
 import type { AuditLogFilters } from './audit-log.types.js'
 
 @ApiTags('Audit Logs')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/audit-logs')
 export class AuditLogController {
   constructor(@Inject(AuditLogService) private readonly svc: AuditLogService) {}

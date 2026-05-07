@@ -98,4 +98,11 @@ describe('HttpExceptionFilter', () => {
     filter.catch('some string error', host)
     expect(statusFn).toHaveBeenCalledWith(500)
   })
+
+  it('falls back to exception.message when body is object without code field', () => {
+    const exception = new HttpException({ unrelated: 'info' }, HttpStatus.BAD_REQUEST)
+    filter.catch(exception, host)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { message: string } }
+    expect(arg.error.message).toBe(exception.message)
+  })
 })

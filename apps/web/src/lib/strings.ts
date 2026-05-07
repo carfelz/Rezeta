@@ -64,6 +64,7 @@ export const strings = {
       .replace(/^Dr\.\s*/i, '')
       .trim()
       .split(' ')
+    /* v8 ignore next -- defensive nullish chain, .split always returns ≥1 element */
     const lastName = parts[parts.length - 1] ?? parts[0] ?? fullName
     return `${salutation}, Dr. ${lastName}.`
   },

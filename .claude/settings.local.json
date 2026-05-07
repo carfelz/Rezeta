@@ -139,7 +139,19 @@
       "Bash(rm check_col.mjs)",
       "Bash(rm /tmp/check_col.mjs)",
       "Bash(DATABASE_URL=\"postgresql://rezeta:rezeta@localhost:5432/rezeta_shadow\" pnpm prisma migrate deploy --schema prisma/schema.prisma)",
-      "Bash(echo \"---exit: $?---\")"
+      "Bash(echo \"---exit: $?---\")",
+      "Bash(awk -F'|' '$2+0 < 95 || $3+0 < 90 || $4+0 < 90 {print}')",
+      "Bash(grep -E \"^.{1,40}\\\\|\\\\s+\\\\d+\\\\..*\\\\|\")",
+      "Bash(awk -F'|' '$3+0 < 80 {print}')",
+      "Bash(grep -v \":0$\")",
+      "Bash(awk '/^model / {model=$2} /tenantId.*@map/ {has[model]=1} END {for \\(m in has\\) print \" has:\", m}' packages/db/prisma/schema.prisma)",
+      "Bash(awk '/^model / {if \\(model && !has\\) print \"  \", model; model=$2; has=0} /tenantId.*@map/ {has=1} END {if \\(model && !has\\) print \"  \", model}' packages/db/prisma/schema.prisma)",
+      "Bash(awk '/^model / {if \\(model && !has\\) print \"  \", model; model=$2; has=0} /deletedAt.*@map/ {has=1} END {if \\(model && !has\\) print \"  \", model}' packages/db/prisma/schema.prisma)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes reset it\" pnpm prisma migrate reset --force --skip-seed)",
+      "Bash(awk '/conditional-rule-evaluator\\\\.ts/')",
+      "Bash(awk '/filters/')",
+      "Bash(awk '/auth\\\\/firebase|provider\\\\.ts/' /tmp/cov.txt)"
     ]
   }
 }

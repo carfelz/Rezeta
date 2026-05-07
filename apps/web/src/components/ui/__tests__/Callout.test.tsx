@@ -45,4 +45,29 @@ describe('Callout', () => {
     const iconSpan = container.querySelector('.text-\\[18px\\]')
     expect(iconSpan).not.toBeInTheDocument()
   })
+
+  it('uses tone prop as fallback when variant unset', () => {
+    const { container } = render(<Callout tone="warning">Content</Callout>)
+    expect(container.firstChild).toHaveClass('bg-warning-bg')
+  })
+
+  it('switches to compact density when compact prop set', () => {
+    const { container } = render(
+      <Callout compact icon={<span data-testid="icon">!</span>}>
+        Content
+      </Callout>,
+    )
+    const iconSpan = container.querySelector('.text-\\[13px\\]')
+    expect(iconSpan).toBeInTheDocument()
+  })
+
+  it('explicit density overrides compact prop', () => {
+    const { container } = render(
+      <Callout density="standard" compact icon={<span data-testid="icon">!</span>}>
+        Content
+      </Callout>,
+    )
+    const iconSpan = container.querySelector('.text-\\[18px\\]')
+    expect(iconSpan).toBeInTheDocument()
+  })
 })

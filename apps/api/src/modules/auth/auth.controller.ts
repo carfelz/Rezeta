@@ -24,7 +24,7 @@ import { ProvisionRoute } from '../../common/decorators/provision-route.decorato
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { Public } from '../../common/decorators/public.decorator.js'
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard.js'
-import type { VerifiedToken } from '../../lib/auth/index.js'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME, type VerifiedToken } from '../../lib/auth/index.js'
 import { AuthService, type DevTokenResponse } from './auth.service.js'
 
 const VerifiedTokenParam = createParamDecorator(
@@ -42,7 +42,7 @@ export class AuthController {
   /**
    * POST /v1/auth/dev/token
    *
-   * Dev-only Firebase token exchange. Accepts both JSON and application/x-www-form-urlencoded
+   * Dev-only token exchange. Accepts both JSON and application/x-www-form-urlencoded
    * (the latter enables Swagger UI's OAuth2 password flow to work directly from the
    * Authorize dialog without any external tooling).
    */
@@ -50,15 +50,15 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Dev only: get a Firebase ID token',
+    summary: 'Dev only: get a bearer token',
     description:
-      'Exchanges email + password for a Firebase ID token. **Non-production only.**\n\n' +
+      'Exchanges email + password for a bearer JWT. **Non-production only.**\n\n' +
       'Accepts `application/json` (`{ email, password }`) **and** ' +
       '`application/x-www-form-urlencoded` (`username`, `password`) — the latter is what ' +
       "Swagger UI's OAuth2 password flow sends when you click **Authorize**.",
   })
   @ApiBody({
-    description: 'Firebase credentials',
+    description: 'Login credentials',
     schema: {
       type: 'object',
       required: ['email', 'password'],
@@ -70,11 +70,11 @@ export class AuthController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Firebase ID token in OAuth2-compatible envelope.',
+    description: 'Bearer token in OAuth2-compatible envelope.',
     schema: {
       type: 'object',
       properties: {
-        access_token: { type: 'string', description: 'Firebase ID token (JWT)' },
+        access_token: { type: 'string', description: 'Bearer JWT' },
         token_type: { type: 'string', example: 'bearer' },
         expires_in: { type: 'number', example: 3600 },
       },
@@ -101,8 +101,8 @@ export class AuthController {
   @Post('provision')
   @ProvisionRoute()
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('firebase-jwt')
-  @ApiSecurity('firebase-oauth2')
+  @ApiBearerAuth(AUTH_BEARER_SCHEME)
+  @ApiSecurity(AUTH_OAUTH2_SCHEME)
   @ApiOperation({
     summary: 'Provision user + tenant',
     description:
@@ -137,8 +137,8 @@ export class AuthController {
    * Returns the currently authenticated user's profile.
    */
   @Get('me')
-  @ApiBearerAuth('firebase-jwt')
-  @ApiSecurity('firebase-oauth2')
+  @ApiBearerAuth(AUTH_BEARER_SCHEME)
+  @ApiSecurity(AUTH_OAUTH2_SCHEME)
   @ApiOperation({
     summary: 'Get current user',
     description: 'Returns the authenticated user profile.',
@@ -150,7 +150,7 @@ export class AuthController {
       type: 'object',
       properties: {
         id: { type: 'string', format: 'uuid', example: '018e3f2a-0000-7000-8000-000000000001' },
-        externalUid: { type: 'string', example: 'abc123firebaseuid' },
+        externalUid: { type: 'string', example: 'abc123externaluid' },
         tenantId: {
           type: 'string',
           format: 'uuid',
@@ -165,7 +165,7 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Missing or invalid Firebase token.' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid bearer token.' })
   me(@CurrentUser() user: AuthUser): AuthUser {
     return user
   }

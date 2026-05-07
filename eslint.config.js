@@ -11,6 +11,7 @@ export default [
       '**/build/**',
       '**/coverage/**',
       'packages/db/generated/**',
+      'packages/db/prisma.config.ts',
       'design-system/**',
       '**/*.js.map',
       'tools/**',
@@ -53,6 +54,12 @@ export default [
 
       // Consistent type imports
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
+
+      // No TODO/FIXME/HACK/XXX in source — fix it now or open a ticket
+      'no-warning-comments': [
+        'error',
+        { terms: ['todo', 'fixme', 'hack', 'xxx'], location: 'anywhere' },
+      ],
     },
   },
 

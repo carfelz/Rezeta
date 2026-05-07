@@ -9,6 +9,13 @@ const mockRepo = {
 
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 
+const mockAuthProvider = {
+  verifyToken: vi.fn(),
+  signInWithPassword: vi.fn(),
+  revokeUserSessions: vi.fn(),
+  deleteUser: vi.fn(),
+}
+
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
   get: vi.fn((key: string) => {
     if (key === 'nodeEnv') return nodeEnv
@@ -29,6 +36,15 @@ const baseUser = {
   tenant: { seededAt: new Date('2026-01-01') },
 }
 
+function makeService(nodeEnv = 'development') {
+  return new AuthService(
+    mockRepo as never,
+    makeConfig(nodeEnv) as never,
+    mockAuditLog as never,
+    mockAuthProvider as never,
+  )
+}
+
 describe('AuthService', () => {
   let service: AuthService
 
@@ -41,25 +57,21 @@ describe('AuthService', () => {
 
   describe('provision', () => {
     beforeEach(() => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development') as never,
-        mockAuditLog as never,
-      )
+      service = makeService()
     })
 
     it('delegates to repository.provisionUser', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
-      const result = await service.provision(decoded)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const result = await service.provision(verified)
       expect(result).toEqual(baseUser)
-      expect(mockRepo.provisionUser).toHaveBeenCalledWith(decoded)
+      expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified)
     })
 
     it('records login audit event after successful provision', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
-      await service.provision(decoded, {
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified, {
         ip: '192.168.1.1',
         userAgent: 'TestBrowser/1.0',
         requestId: 'req-abc',
@@ -81,8 +93,8 @@ describe('AuthService', () => {
 
     it('records login audit event without meta when meta is not provided', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
-      await service.provision(decoded)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
       expect(mockAuditLog.record).toHaveBeenCalledWith(
         expect.objectContaining({ category: 'auth', action: 'login' }),
       )
@@ -93,11 +105,7 @@ describe('AuthService', () => {
 
   describe('toAuthUser', () => {
     beforeEach(() => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development') as never,
-        mockAuditLog as never,
-      )
+      service = makeService()
     })
 
     it('maps user fields correctly', () => {
@@ -126,65 +134,29 @@ describe('AuthService', () => {
 
   describe('devGetToken', () => {
     it('throws ForbiddenException in production', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('production') as never,
-        mockAuditLog as never,
-      )
+      service = makeService('production')
       await expect(service.devGetToken('dr@test.com', 'pass')).rejects.toThrow(ForbiddenException)
+      expect(mockAuthProvider.signInWithPassword).not.toHaveBeenCalled()
     })
 
-    it('calls Firebase REST API with real endpoint', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development') as never,
-        mockAuditLog as never,
-      )
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ idToken: 'tok-123', expiresIn: '3600' }),
+    it('delegates to authProvider.signInWithPassword and maps response', async () => {
+      service = makeService('development')
+      mockAuthProvider.signInWithPassword.mockResolvedValue({
+        accessToken: 'tok-123',
+        expiresIn: 3600,
       })
-      vi.stubGlobal('fetch', mockFetch)
-
       const result = await service.devGetToken('dr@test.com', 'pass')
       expect(result).toEqual({ access_token: 'tok-123', token_type: 'bearer', expires_in: 3600 })
-      expect(mockFetch.mock.calls[0][0]).toContain('identitytoolkit.googleapis.com')
-      expect(mockFetch.mock.calls[0][0]).toContain('key-123')
+      expect(mockAuthProvider.signInWithPassword).toHaveBeenCalledWith('dr@test.com', 'pass')
     })
 
-    it('throws UnauthorizedException when Firebase returns error', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development') as never,
-        mockAuditLog as never,
-      )
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: false,
-          json: () => Promise.resolve({ error: { message: 'INVALID_PASSWORD' } }),
-        }),
+    it('propagates UnauthorizedException from provider', async () => {
+      service = makeService('development')
+      mockAuthProvider.signInWithPassword.mockRejectedValue(
+        new UnauthorizedException('INVALID_PASSWORD'),
       )
       await expect(service.devGetToken('dr@test.com', 'wrong')).rejects.toThrow(
         UnauthorizedException,
-      )
-    })
-
-    it('throws UnauthorizedException with fallback message when no error message', async () => {
-      service = new AuthService(
-        mockRepo as never,
-        makeConfig('development') as never,
-        mockAuditLog as never,
-      )
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: false,
-          json: () => Promise.resolve({}),
-        }),
-      )
-      await expect(service.devGetToken('dr@test.com', 'wrong')).rejects.toThrow(
-        'Invalid credentials',
       )
     })
   })

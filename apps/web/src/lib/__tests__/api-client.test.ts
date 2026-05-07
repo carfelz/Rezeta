@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-vi.mock('@/lib/firebase', () => ({
-  auth: {
-    currentUser: null,
+vi.mock('@/lib/auth', () => ({
+  authClient: {
+    getToken: vi.fn().mockResolvedValue(null),
+    signOut: vi.fn().mockResolvedValue(undefined),
+    onAuthStateChanged: vi.fn(),
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    errorCodeToMessage: vi.fn((c: string) => c),
   },
 }))
 
-import { apiClient, ApiRequestError } from '../api-client'
-import { auth } from '@/lib/firebase'
+import { apiClient, ApiRequestError, triggerDownload } from '../api-client'
+import { authClient } from '@/lib/auth'
 
-const mockAuth = auth as { currentUser: null | { getIdToken: () => Promise<string> } }
-
-function _makeFetchMock(status: number, body: unknown) {
-  return vi.fn().mockResolvedValue({
-    status,
-    ok: status >= 200 && status < 300,
-    json: vi.fn().mockResolvedValue(body),
-  })
+const mockAuth = authClient as unknown as {
+  getToken: ReturnType<typeof vi.fn>
+  signOut: ReturnType<typeof vi.fn>
 }
 
 describe('ApiRequestError', () => {
@@ -39,7 +39,8 @@ describe('apiClient', () => {
   beforeEach(() => {
     fetchMock = vi.fn()
     globalThis.fetch = fetchMock
-    mockAuth.currentUser = null
+    mockAuth.getToken.mockResolvedValue(null)
+    mockAuth.signOut.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -62,9 +63,7 @@ describe('apiClient', () => {
     })
 
     it('includes Authorization header when user is authenticated', async () => {
-      mockAuth.currentUser = {
-        getIdToken: vi.fn().mockResolvedValue('my-token'),
-      }
+      mockAuth.getToken.mockResolvedValue('my-token')
       fetchMock.mockResolvedValue({
         status: 200,
         ok: true,
@@ -158,6 +157,88 @@ describe('apiClient', () => {
       })
       const result = await apiClient.delete('/v1/patients/2')
       expect(result).toBeUndefined()
+    })
+  })
+
+  describe('download', () => {
+    it('returns blob on 200', async () => {
+      const blob = new Blob(['data'])
+      fetchMock.mockResolvedValue({
+        status: 200,
+        ok: true,
+        blob: vi.fn().mockResolvedValue(blob),
+      })
+      const result = await apiClient.download('/v1/exports/x')
+      expect(result).toBe(blob)
+    })
+
+    it('attaches Authorization header when token present', async () => {
+      mockAuth.getToken.mockResolvedValue('dl-token')
+      fetchMock.mockResolvedValue({
+        status: 200,
+        ok: true,
+        blob: vi.fn().mockResolvedValue(new Blob([])),
+      })
+      await apiClient.download('/v1/exports/x')
+      const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit]
+      expect((opts.headers as Record<string, string>)['Authorization']).toBe('Bearer dl-token')
+    })
+
+    it('signs out and throws ApiRequestError on 401', async () => {
+      fetchMock.mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: { code: 'UNAUTHORIZED', message: 'expired' } }),
+      })
+      await expect(apiClient.download('/v1/exports/x')).rejects.toBeInstanceOf(ApiRequestError)
+      expect(mockAuth.signOut).toHaveBeenCalled()
+    })
+
+    it('throws ApiRequestError on non-200 with error body', async () => {
+      fetchMock.mockResolvedValue({
+        status: 500,
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: { code: 'INTERNAL', message: 'oops' } }),
+      })
+      await expect(apiClient.download('/v1/exports/x')).rejects.toMatchObject({
+        error: { code: 'INTERNAL' },
+      })
+    })
+  })
+
+  describe('request 401 handling', () => {
+    it('signs out on 401 and throws ApiRequestError', async () => {
+      fetchMock.mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: { code: 'UNAUTHORIZED', message: 'expired' } }),
+      })
+      await expect(apiClient.get('/v1/me')).rejects.toBeInstanceOf(ApiRequestError)
+      expect(mockAuth.signOut).toHaveBeenCalled()
+    })
+  })
+
+  describe('triggerDownload', () => {
+    it('creates anchor, clicks, and revokes object URL', () => {
+      const createObjectURL = vi.fn().mockReturnValue('blob:fake')
+      const revokeObjectURL = vi.fn()
+      Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+      Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true })
+      const clickSpy = vi.fn()
+      const realCreate = document.createElement.bind(document)
+      vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        if (tag === 'a') {
+          return { click: clickSpy, href: '', download: '' } as unknown as HTMLAnchorElement
+        }
+        return realCreate(tag)
+      })
+
+      const blob = new Blob(['x'])
+      triggerDownload(blob, 'file.csv')
+
+      expect(createObjectURL).toHaveBeenCalledWith(blob)
+      expect(clickSpy).toHaveBeenCalled()
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake')
     })
   })
 })

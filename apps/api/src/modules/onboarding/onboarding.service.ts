@@ -7,7 +7,7 @@ import {
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 import { TenantSeedingService } from '../tenant-seeding/tenant-seeding.service.js'
 import { AuthService } from '../auth/auth.service.js'
-import { AuthRepository } from '../auth/auth.repository.js'
+import { UsersRepository } from '../users/users.repository.js'
 import { getStarterFixtures } from '../../lib/starter-fixtures/index.js'
 
 export interface StarterCandidate {
@@ -22,7 +22,7 @@ export class OnboardingService {
   constructor(
     @Inject(TenantSeedingService) private seeder: TenantSeedingService,
     @Inject(AuthService) private authService: AuthService,
-    @Inject(AuthRepository) private authRepository: AuthRepository,
+    @Inject(UsersRepository) private users: UsersRepository,
   ) {}
 
   getStarters(locale: 'es' | 'en' = 'es'): StarterCandidate[] {
@@ -34,16 +34,12 @@ export class OnboardingService {
     }))
   }
 
-  async seedDefault(
-    userId: string,
-    externalUid: string,
-    locale: 'es' | 'en' = 'es',
-  ): Promise<AuthUser> {
+  async seedDefault(externalUid: string, locale: 'es' | 'en' = 'es'): Promise<AuthUser> {
     // Resolve tenantId from the authenticated user's tenant
-    const user = await this.authRepository.findByExternalUid(externalUid)
+    const user = await this.users.findByExternalUid(externalUid)
     if (!user) throw new InternalServerErrorException('User not found after auth')
     await this.seeder.seedDefault(user.tenantId, locale)
-    const refreshed = await this.authRepository.findByExternalUid(externalUid)
+    const refreshed = await this.users.findByExternalUid(externalUid)
     if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
     return this.authService.toAuthUser(refreshed)
   }
@@ -60,7 +56,7 @@ export class OnboardingService {
       }
     }
 
-    const user = await this.authRepository.findByExternalUid(externalUid)
+    const user = await this.users.findByExternalUid(externalUid)
     if (!user) throw new InternalServerErrorException('User not found after auth')
     await this.seeder.seedCustom(
       user.tenantId,
@@ -72,7 +68,7 @@ export class OnboardingService {
       })),
       input.types,
     )
-    const refreshed = await this.authRepository.findByExternalUid(externalUid)
+    const refreshed = await this.users.findByExternalUid(externalUid)
     if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
     return this.authService.toAuthUser(refreshed)
   }

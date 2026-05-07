@@ -16,7 +16,7 @@ const mockAuthService = {
   toAuthUser: vi.fn(),
 }
 
-const mockAuthRepository = {
+const mockUsersRepo = {
   findByExternalUid: vi.fn(),
 }
 
@@ -52,9 +52,9 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
     service = new OnboardingService(
       mockSeeder as never,
       mockAuthService as never,
-      mockAuthRepository as never,
+      mockUsersRepo as never,
     )
-    mockAuthRepository.findByExternalUid.mockResolvedValue(dbUser)
+    mockUsersRepo.findByExternalUid.mockResolvedValue(dbUser)
     mockAuthService.toAuthUser.mockReturnValue(authUser)
     mockSeeder.seedDefault.mockResolvedValue(undefined)
     mockSeeder.seedCustom.mockResolvedValue(undefined)
@@ -64,7 +64,7 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
 
   describe('seedDefault', () => {
     it('returns AuthUser with truthy tenantSeededAt', async () => {
-      const result = await service.seedDefault('u1', 'fb1')
+      const result = await service.seedDefault('fb1')
       expect(result.tenantSeededAt).toBeTruthy()
       expect(typeof result.tenantSeededAt).toBe('string')
       expect(result.tenantId).toBe('t1')
@@ -74,8 +74,8 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
       mockSeeder.seedDefault.mockRejectedValue(
         new ConflictException({ code: 'TENANT_ALREADY_SEEDED' }),
       )
-      await expect(service.seedDefault('u1', 'fb1')).rejects.toThrow(ConflictException)
-      await expect(service.seedDefault('u1', 'fb1')).rejects.toMatchObject({
+      await expect(service.seedDefault('fb1')).rejects.toThrow(ConflictException)
+      await expect(service.seedDefault('fb1')).rejects.toMatchObject({
         response: { code: 'TENANT_ALREADY_SEEDED' },
       })
     })

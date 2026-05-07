@@ -3,6 +3,8 @@ import {
   ProtocolBlockSchema,
   TemplateBlockSchema,
   ProtocolTemplateSchemaContent,
+  ConditionalRuleSchema,
+  ComparisonOpSchema,
 } from '../src/schemas/protocol'
 
 describe('ProtocolBlockSchema', () => {
@@ -98,5 +100,53 @@ describe('ProtocolTemplateSchemaContent', () => {
       ],
     }
     expect(() => ProtocolTemplateSchemaContent.parse(template)).not.toThrow()
+  })
+})
+
+describe('ConditionalRuleSchema', () => {
+  it('validates conditional cmp rule', () => {
+    const rule = { kind: 'cmp', field: 'vitals.heartRate', op: '>', value: 100 }
+    expect(() => ConditionalRuleSchema.parse(rule)).not.toThrow()
+  })
+
+  it('validates conditional and rule with nested cmp', () => {
+    const rule = {
+      kind: 'and',
+      rules: [
+        { kind: 'cmp', field: 'vitals.heartRate', op: '>', value: 100 },
+        { kind: 'cmp', field: 'vitals.bloodPressureSystolic', op: '<', value: 90 },
+      ],
+    }
+    expect(() => ConditionalRuleSchema.parse(rule)).not.toThrow()
+  })
+
+  it('validates conditional or rule', () => {
+    const rule = {
+      kind: 'or',
+      rules: [{ kind: 'cmp', field: 'vitals.heartRate', op: '>', value: 100 }],
+    }
+    expect(() => ConditionalRuleSchema.parse(rule)).not.toThrow()
+  })
+
+  it('validates conditional not rule', () => {
+    const rule = {
+      kind: 'not',
+      rule: { kind: 'cmp', field: 'vitals.heartRate', op: '>', value: 100 },
+    }
+    expect(() => ConditionalRuleSchema.parse(rule)).not.toThrow()
+  })
+
+  it('rejects unknown kind', () => {
+    expect(() => ConditionalRuleSchema.parse({ kind: 'xor' })).toThrow()
+  })
+
+  it('validates each comparison operator', () => {
+    for (const op of ['<', '<=', '>', '>=', '==', '!='] as const) {
+      expect(() => ComparisonOpSchema.parse(op)).not.toThrow()
+    }
+  })
+
+  it('rejects unknown comparison operator', () => {
+    expect(() => ComparisonOpSchema.parse('~~')).toThrow()
   })
 })

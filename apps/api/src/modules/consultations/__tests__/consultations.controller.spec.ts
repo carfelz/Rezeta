@@ -4,7 +4,12 @@ import { ConsultationsController } from '../consultations.controller.js'
 import type { ConsultationsService } from '../consultations.service.js'
 import type { AuthUser, ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
 
-const mockUser: AuthUser = { id: 'user-1', tenantId: 'tenant-1', email: 'doc@test.com', role: 'owner' }
+const mockUser: AuthUser = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'doc@test.com',
+  role: 'owner',
+}
 const tenantId = 'tenant-1'
 
 function makeConsultation(id = 'c1'): ConsultationWithDetails {
@@ -78,6 +83,7 @@ describe('ConsultationsController', () => {
       updateProtocolUsage: vi.fn(),
       updateCheckedState: vi.fn(),
       removeProtocolUsage: vi.fn(),
+      getResumableForPatient: vi.fn(),
     } as unknown as ConsultationsService
     controller = new ConsultationsController(svc)
   })
@@ -169,5 +175,15 @@ describe('ConsultationsController', () => {
     vi.mocked(svc.removeProtocolUsage).mockResolvedValue(undefined)
     await controller.removeProtocol(tenantId, 'c1', 'usage-1')
     expect(svc.removeProtocolUsage).toHaveBeenCalledWith('c1', 'usage-1', tenantId)
+  })
+
+  it('PatientConsultationsController.getResumable delegates to svc', async () => {
+    const { PatientConsultationsController } = await import('../consultations.controller.js')
+    const mock = vi.fn().mockResolvedValue(null)
+    const subSvc = { getResumableForPatient: mock } as unknown as ConsultationsService
+    const sub = new PatientConsultationsController(subSvc)
+    const result = await sub.getResumable(tenantId, mockUser, 'pat-1')
+    expect(mock).toHaveBeenCalledWith(tenantId, 'user-1', 'pat-1')
+    expect(result).toBeNull()
   })
 })

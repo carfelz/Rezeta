@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SignUpSchema, type SignUpDto } from '@rezeta/shared'
 import { useAuthStore } from '@/store/auth.store'
-import { strings, firebaseErrorToSpanish } from '@/lib/strings'
+import { strings } from '@/lib/strings'
+import { authClient } from '@/lib/auth'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
 function isSafeRedirect(path: string | null): path is string {
@@ -38,7 +39,7 @@ export function Signup(): JSX.Element {
       void navigate(destination, { replace: true })
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ''
-      setServerError(firebaseErrorToSpanish(code))
+      setServerError(authClient.errorCodeToMessage(code))
     }
   }
 

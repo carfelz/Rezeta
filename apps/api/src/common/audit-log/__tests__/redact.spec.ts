@@ -8,6 +8,29 @@ describe('redactForAudit', () => {
     expect(result['age']).toBe(42)
   })
 
+  it('masks non-string entity-rule field with [REDACTED]', () => {
+    const result = redactForAudit('Patient', { cedula: 12345, passport: null })
+    expect(result['cedula']).toBe('[REDACTED]')
+    expect(result['passport']).toBe('[REDACTED]')
+  })
+
+  it('masks short string entity-rule field (≤4 chars) with [REDACTED]', () => {
+    const result = redactForAudit('Patient', { cedula: '123' })
+    expect(result['cedula']).toBe('[REDACTED]')
+  })
+
+  it('shows last 4 chars of long string entity-rule field', () => {
+    const result = redactForAudit('Patient', { cedula: '001-1234567-8' })
+    expect(result['cedula']).toBe('**** 67-8')
+  })
+
+  it('returns empty object for unknown entity type', () => {
+    const result = redactChangesForAudit('UnknownEntity', {
+      foo: { before: 'a', after: 'b' },
+    })
+    expect(result['foo']).toEqual({ before: 'a', after: 'b' })
+  })
+
   it('redacts globally blocked fields: password', () => {
     const result = redactForAudit('User', { email: 'a@b.com', password: 'secret123' })
     expect(result['email']).toBe('a@b.com')

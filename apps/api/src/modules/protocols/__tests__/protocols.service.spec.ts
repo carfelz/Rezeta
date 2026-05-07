@@ -60,8 +60,17 @@ describe('ProtocolsService', () => {
 
   describe('create', () => {
     it('creates protocol from type and returns formatted response', async () => {
-      const version = { id: 'ver1', versionNumber: 1, content: minimalContent, changeSummary: null, createdAt: now }
-      mockRepo.create.mockResolvedValue({ protocol: { ...protocolRow, type: protocolType }, version })
+      const version = {
+        id: 'ver1',
+        versionNumber: 1,
+        content: minimalContent,
+        changeSummary: null,
+        createdAt: now,
+      }
+      mockRepo.create.mockResolvedValue({
+        protocol: { ...protocolRow, type: protocolType },
+        version,
+      })
       const result = await service.create('t1', 'u1', { typeId: 'type1', title: 'Anaphylaxis' })
       expect(result.id).toBe('proto1')
       expect(result.typeName).toBe('Emergencia')
@@ -70,7 +79,9 @@ describe('ProtocolsService', () => {
 
     it('throws NotFoundException when type not found', async () => {
       mockTypesRepo.findByIdWithTemplate.mockResolvedValue(null)
-      await expect(service.create('t1', 'u1', { typeId: 'bad', title: 'Test' })).rejects.toThrow(NotFoundException)
+      await expect(service.create('t1', 'u1', { typeId: 'bad', title: 'Test' })).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 
@@ -111,13 +122,34 @@ describe('ProtocolsService', () => {
 
     it('passes query filters through to repo', async () => {
       mockRepo.list.mockResolvedValue([])
-      await service.list('t1', { favoritesOnly: true, search: 'anaphylaxis', typeId: 'type1', status: 'active' })
-      expect(mockRepo.list).toHaveBeenCalledWith('t1', expect.objectContaining({
+      await service.list('t1', {
         favoritesOnly: true,
         search: 'anaphylaxis',
         typeId: 'type1',
         status: 'active',
-      }))
+      })
+      expect(mockRepo.list).toHaveBeenCalledWith(
+        't1',
+        expect.objectContaining({
+          favoritesOnly: true,
+          search: 'anaphylaxis',
+          typeId: 'type1',
+          status: 'active',
+        }),
+      )
+    })
+
+    it('passes sort filter alone', async () => {
+      mockRepo.list.mockResolvedValue([])
+      await service.list('t1', { favoritesOnly: false, sort: 'title' })
+      expect(mockRepo.list).toHaveBeenCalledWith('t1', expect.objectContaining({ sort: 'title' }))
+    })
+
+    it('omits favoritesOnly when false', async () => {
+      mockRepo.list.mockResolvedValue([])
+      await service.list('t1', { favoritesOnly: false })
+      const args = mockRepo.list.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(args.favoritesOnly).toBeUndefined()
     })
   })
 
@@ -312,15 +344,23 @@ describe('ProtocolsService', () => {
 
     it('throws NotFoundException when version not found', async () => {
       mockRepo.getVersion.mockResolvedValue(null)
-      await expect(service.restoreVersion('proto1', 'bad', 't1', 'u1')).rejects.toThrow(NotFoundException)
+      await expect(service.restoreVersion('proto1', 'bad', 't1', 'u1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
 
     it('throws NotFoundException when saveVersion returns null', async () => {
       mockRepo.getVersion.mockResolvedValue({
-        id: 'ver1', versionNumber: 1, content: minimalContent, changeSummary: null, createdAt: now,
+        id: 'ver1',
+        versionNumber: 1,
+        content: minimalContent,
+        changeSummary: null,
+        createdAt: now,
       })
       mockRepo.saveVersion.mockResolvedValue(null)
-      await expect(service.restoreVersion('proto1', 'ver1', 't1', 'u1')).rejects.toThrow(NotFoundException)
+      await expect(service.restoreVersion('proto1', 'ver1', 't1', 'u1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 })

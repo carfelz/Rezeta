@@ -21,6 +21,7 @@ import {
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { Prescription, ImagingOrder, LabOrder } from '@rezeta/shared'
 import {
   CreatePrescriptionGroupSchema,
@@ -39,8 +40,8 @@ import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { OrdersService, type GenerateAllOrdersResult } from './orders.service.js'
 
 @ApiTags('Orders')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/consultations/:consultationId')
 export class OrdersController {
   constructor(@Inject(OrdersService) private svc: OrdersService) {}

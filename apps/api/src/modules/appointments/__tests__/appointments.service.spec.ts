@@ -173,6 +173,28 @@ describe('AppointmentsService', () => {
       expect(repo.update).toHaveBeenCalledOnce()
       expect(result).toBeDefined()
     })
+
+    it('uses existing endsAt when only startsAt provided in update', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+      const result = await service.update('appt-1', 'tenant-1', 'user-1', {
+        startsAt: STARTS,
+      })
+      expect(repo.update).toHaveBeenCalledOnce()
+      expect(result).toBeDefined()
+    })
+
+    it('uses existing startsAt when only endsAt provided in update', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+      const result = await service.update('appt-1', 'tenant-1', 'user-1', {
+        endsAt: ENDS,
+      })
+      expect(repo.update).toHaveBeenCalledOnce()
+      expect(result).toBeDefined()
+    })
   })
 
   // ── updateStatus ─────────────────────────────────────────────────────────────

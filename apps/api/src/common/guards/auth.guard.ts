@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
 import { ErrorCode } from '@rezeta/shared'
 import type { AuthUser } from '@rezeta/shared'
-import { PrismaService } from '../../lib/prisma.service.js'
+import { UsersRepository } from '../../modules/users/users.repository.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { AuditLogService } from '../audit-log/audit-log.service.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
@@ -29,7 +29,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     @Inject(Reflector) private reflector: Reflector,
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
-    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(UsersRepository) private users: UsersRepository,
     @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
@@ -78,10 +78,7 @@ export class AuthGuard implements CanActivate {
       return true
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { externalUid: verified.externalUid, deletedAt: null },
-      include: { tenant: { select: { seededAt: true, plan: true } } },
-    })
+    const user = await this.users.findByExternalUid(verified.externalUid)
 
     if (!user) {
       throw new UnauthorizedException({

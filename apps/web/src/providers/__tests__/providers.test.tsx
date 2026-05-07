@@ -3,26 +3,25 @@ import { render, screen, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
 const mocks = vi.hoisted(() => ({
-  firebaseAuth: null as null | object,
-  onAuthStateChangedCb: null as null | ((user: unknown) => void),
+  onAuthStateChangedCb: null as null | ((session: unknown) => void),
   signOut: vi.fn().mockResolvedValue(undefined),
   apiPost: vi.fn(),
 }))
 
-vi.mock('@/lib/firebase', () => ({
-  get auth() {
-    return mocks.firebaseAuth
+vi.mock('@/lib/auth', () => ({
+  authClient: {
+    onAuthStateChanged: (cb: (session: unknown) => void) => {
+      mocks.onAuthStateChangedCb = cb
+      return () => {
+        mocks.onAuthStateChangedCb = null
+      }
+    },
+    signOut: mocks.signOut,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    getToken: vi.fn().mockResolvedValue(null),
+    errorCodeToMessage: vi.fn((c: string) => c),
   },
-}))
-
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: (_auth: unknown, cb: (user: unknown) => void) => {
-    mocks.onAuthStateChangedCb = cb
-    return () => {
-      mocks.onAuthStateChangedCb = null
-    }
-  },
-  signOut: mocks.signOut,
 }))
 
 vi.mock('@/lib/api-client', () => ({
@@ -53,35 +52,14 @@ describe('QueryProvider', () => {
   })
 })
 
-describe('AuthProvider — auth=null (no Firebase)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mocks.firebaseAuth = null
-    mocks.onAuthStateChangedCb = null
-  })
-
-  it('renders children when auth is null', async () => {
-    const { AuthProvider } = await import('../AuthProvider')
-    await act(async () => {
-      render(
-        <AuthProvider>
-          <span>app</span>
-        </AuthProvider>,
-      )
-    })
-    expect(screen.getByText('app')).toBeInTheDocument()
-  })
-})
-
 describe('AuthProvider — onAuthStateChanged callbacks', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.firebaseAuth = { currentUser: null }
     mocks.onAuthStateChangedCb = null
     mocks.signOut.mockResolvedValue(undefined)
   })
 
-  it('handles firebaseUser=null (unauthenticated)', async () => {
+  it('handles session=null (unauthenticated)', async () => {
     const { AuthProvider } = await import('../AuthProvider')
     await act(async () => {
       render(
@@ -96,7 +74,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     expect(screen.getByText('nouser')).toBeInTheDocument()
   })
 
-  it('handles firebaseUser present with successful provision', async () => {
+  it('handles session present with successful provision', async () => {
     const mockProvisionedUser = {
       id: 'user-1',
       tenantId: 'tenant-1',
@@ -110,7 +88,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     }
     mocks.apiPost.mockResolvedValue(mockProvisionedUser)
 
-    const firebaseUser = { getIdToken: vi.fn().mockResolvedValue('token') }
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
     const { AuthProvider } = await import('../AuthProvider')
     await act(async () => {
       render(
@@ -120,7 +98,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       )
     })
     await act(async () => {
-      mocks.onAuthStateChangedCb?.(firebaseUser)
+      mocks.onAuthStateChangedCb?.(session)
       await Promise.resolve()
     })
     await waitFor(() => expect(screen.getByText('withuser')).toBeInTheDocument())
@@ -129,7 +107,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
   it('signs out when provision fails', async () => {
     mocks.apiPost.mockRejectedValue(new Error('provision failed'))
 
-    const firebaseUser = { getIdToken: vi.fn().mockResolvedValue('token') }
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
     const { AuthProvider } = await import('../AuthProvider')
     await act(async () => {
       render(
@@ -139,10 +117,11 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       )
     })
     await act(async () => {
-      mocks.onAuthStateChangedCb?.(firebaseUser)
+      mocks.onAuthStateChangedCb?.(session)
       await Promise.resolve()
     })
     await waitFor(() => expect(screen.getByText('failcase')).toBeInTheDocument())
+    expect(mocks.signOut).toHaveBeenCalled()
   })
 })
 

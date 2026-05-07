@@ -55,6 +55,8 @@ These apply to every decision. If a proposed change violates one, flag it.
 
 ## Design System
 
+When implementing a design from a handoff bundle, match the visual exactly. Use the exact spacing, colors, and component structure from the bundle. Do not refactor, improve, or simplify. If a deviation is necessary (e.g., a referenced component doesn't exist or there's an accessibility issue), state it explicitly before making the change.
+
 The frontend uses **React + Tailwind CSS + Radix UI + CVA** (shadcn-style). Design tokens live in `apps/web/src/index.css` as CSS custom properties; Tailwind consumes them via `tailwind.config.ts`.
 
 **Key files:**
@@ -140,6 +142,10 @@ Work now targets **v1.5** features (see `specs/full-scope.md` Phase 2). If asked
 - Lint: `pnpm lint`
 - Lint (auto-fix): `pnpm lint:fix`
 - Dev server: `pnpm dev`
+
+## No TODO Markers
+
+Don't leave `TODO`, `FIXME`, `HACK`, or `XXX` comments in source. Either fix the issue now or capture it in the ticket tracker. ESLint rule `no-warning-comments` enforces this and will fail CI.
 
 ## Code Quality Rule
 

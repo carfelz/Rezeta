@@ -23,6 +23,7 @@ import {
   ApiBody,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { AppointmentWithDetails, AuthUser } from '@rezeta/shared'
 import {
   CreateAppointmentSchema,
@@ -38,8 +39,8 @@ import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { AppointmentsService } from './appointments.service.js'
 
 @ApiTags('Appointments')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/appointments')
 export class AppointmentsController {
   constructor(@Inject(AppointmentsService) private svc: AppointmentsService) {}

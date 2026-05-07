@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateExtension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -7,12 +10,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- CreateTable
 CREATE TABLE "tenants" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "name" VARCHAR(200) NOT NULL,
+    "name" VARCHAR(200),
     "type" VARCHAR(50) NOT NULL DEFAULT 'solo',
     "plan" VARCHAR(50) NOT NULL DEFAULT 'free',
     "country" VARCHAR(10) NOT NULL DEFAULT 'DO',
     "language" VARCHAR(10) NOT NULL DEFAULT 'es',
     "timezone" VARCHAR(60) NOT NULL DEFAULT 'America/Santo_Domingo',
+    "seeded_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -23,10 +27,10 @@ CREATE TABLE "tenants" (
 CREATE TABLE "users" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "tenant_id" UUID NOT NULL,
-    "firebase_uid" VARCHAR(128) NOT NULL,
+    "external_uid" VARCHAR(128) NOT NULL,
     "email" VARCHAR(320) NOT NULL,
-    "full_name" VARCHAR(200) NOT NULL,
-    "role" VARCHAR(50) NOT NULL DEFAULT 'doctor',
+    "full_name" VARCHAR(200),
+    "role" VARCHAR(50) NOT NULL DEFAULT 'owner',
     "specialty" VARCHAR(100),
     "license_number" VARCHAR(100),
     "is_active" BOOLEAN NOT NULL DEFAULT true,
@@ -160,6 +164,7 @@ CREATE TABLE "consultations" (
     "plan" TEXT,
     "vitals" JSONB,
     "diagnoses" JSONB NOT NULL DEFAULT '[]',
+    "protocols_applied" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "consulted_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -189,6 +194,8 @@ CREATE TABLE "prescriptions" (
     "consultation_id" UUID,
     "patient_id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
+    "group_title" VARCHAR(200),
+    "group_order" INTEGER NOT NULL DEFAULT 1,
     "items" JSONB NOT NULL,
     "status" VARCHAR(20) NOT NULL DEFAULT 'draft',
     "signed_at" TIMESTAMP(3),
@@ -199,6 +206,23 @@ CREATE TABLE "prescriptions" (
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "prescriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "prescription_items" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "prescription_id" UUID NOT NULL,
+    "drug" VARCHAR(300) NOT NULL,
+    "dose" VARCHAR(200) NOT NULL,
+    "route" VARCHAR(100) NOT NULL,
+    "frequency" VARCHAR(200) NOT NULL,
+    "duration" VARCHAR(200) NOT NULL,
+    "notes" TEXT,
+    "source" VARCHAR(200),
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "prescription_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -245,16 +269,14 @@ CREATE TABLE "invoice_items" (
 -- CreateTable
 CREATE TABLE "protocol_templates" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "tenant_id" UUID,
-    "template_key" VARCHAR(100) NOT NULL,
-    "locale" VARCHAR(10) NOT NULL DEFAULT 'es',
+    "tenant_id" UUID NOT NULL,
+    "template_key" VARCHAR(100),
     "name" VARCHAR(300) NOT NULL,
     "description" TEXT,
     "suggested_specialty" VARCHAR(100),
-    "category" VARCHAR(100),
-    "icon" VARCHAR(100),
-    "schema" JSONB NOT NULL,
     "is_system" BOOLEAN NOT NULL DEFAULT false,
+    "schema" JSONB NOT NULL,
+    "is_seeded" BOOLEAN NOT NULL DEFAULT false,
     "created_by" UUID,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -264,18 +286,33 @@ CREATE TABLE "protocol_templates" (
 );
 
 -- CreateTable
+CREATE TABLE "protocol_types" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenant_id" UUID NOT NULL,
+    "template_id" UUID NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
+    "is_seeded" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "protocol_types_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "protocols" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "tenant_id" UUID NOT NULL,
-    "template_id" UUID,
-    "original_protocol_id" UUID,
+    "type_id" UUID NOT NULL,
     "title" VARCHAR(300) NOT NULL,
+    "description" TEXT,
     "specialty" VARCHAR(100),
     "tags" JSONB NOT NULL DEFAULT '[]',
-    "visibility" VARCHAR(20) NOT NULL DEFAULT 'private',
     "status" VARCHAR(20) NOT NULL DEFAULT 'draft',
+    "visibility" VARCHAR(20) NOT NULL DEFAULT 'private',
     "current_version_id" UUID,
     "is_favorite" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB,
     "created_by" UUID NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -311,6 +348,15 @@ CREATE TABLE "protocol_usages" (
     "user_id" UUID NOT NULL,
     "patient_id" UUID,
     "consultation_id" UUID,
+    "content" JSONB NOT NULL DEFAULT '{}',
+    "modifications" JSONB NOT NULL DEFAULT '{}',
+    "modification_summary" VARCHAR(500),
+    "parent_usage_id" UUID,
+    "trigger_block_id" VARCHAR(100),
+    "depth" INTEGER NOT NULL DEFAULT 0,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'in_progress',
+    "checked_state" JSONB NOT NULL DEFAULT '{}',
+    "completed_at" TIMESTAMP(3),
     "applied_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "notes" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -321,16 +367,98 @@ CREATE TABLE "protocol_usages" (
 );
 
 -- CreateTable
-CREATE TABLE "audit_logs" (
+CREATE TABLE "protocol_suggestions" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "tenant_id" UUID NOT NULL,
-    "user_id" UUID,
-    "entity_type" VARCHAR(100) NOT NULL,
-    "entity_id" UUID NOT NULL,
+    "protocol_id" UUID NOT NULL,
+    "protocol_version_id" UUID NOT NULL,
+    "pattern_type" VARCHAR(100) NOT NULL,
+    "pattern_data" JSONB NOT NULL,
+    "suggested_changes" JSONB NOT NULL,
+    "impact_summary" VARCHAR(500) NOT NULL,
+    "occurrence_count" INTEGER NOT NULL,
+    "total_uses" INTEGER NOT NULL,
+    "occurrence_percentage" DECIMAL(5,2) NOT NULL,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
+    "applied_at" TIMESTAMP(3),
+    "dismissed_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "protocol_suggestions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "imaging_orders" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenant_id" UUID NOT NULL,
+    "consultation_id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "group_title" VARCHAR(200),
+    "group_order" INTEGER NOT NULL DEFAULT 1,
+    "study_type" VARCHAR(300) NOT NULL,
+    "indication" VARCHAR(500) NOT NULL,
+    "urgency" VARCHAR(20) NOT NULL DEFAULT 'routine',
+    "contrast" BOOLEAN NOT NULL DEFAULT false,
+    "fasting_required" BOOLEAN NOT NULL DEFAULT false,
+    "special_instructions" TEXT,
+    "source" VARCHAR(200),
+    "status" VARCHAR(20) NOT NULL DEFAULT 'draft',
+    "signed_at" TIMESTAMP(3),
+    "pdf_url" VARCHAR(2048),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "imaging_orders_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "lab_orders" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenant_id" UUID NOT NULL,
+    "consultation_id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "group_title" VARCHAR(200),
+    "group_order" INTEGER NOT NULL DEFAULT 1,
+    "test_name" VARCHAR(300) NOT NULL,
+    "test_code" VARCHAR(50),
+    "indication" VARCHAR(500) NOT NULL,
+    "urgency" VARCHAR(20) NOT NULL DEFAULT 'routine',
+    "fasting_required" BOOLEAN NOT NULL DEFAULT false,
+    "sample_type" VARCHAR(50) NOT NULL,
+    "special_instructions" TEXT,
+    "source" VARCHAR(200),
+    "status" VARCHAR(20) NOT NULL DEFAULT 'draft',
+    "signed_at" TIMESTAMP(3),
+    "pdf_url" VARCHAR(2048),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "lab_orders_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "audit_logs" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenant_id" UUID,
+    "actor_user_id" UUID,
+    "actor_type" VARCHAR(20) NOT NULL,
+    "on_behalf_of_id" UUID,
+    "category" VARCHAR(20) NOT NULL,
     "action" VARCHAR(50) NOT NULL,
+    "entity_type" VARCHAR(100),
+    "entity_id" UUID,
     "changes" JSONB,
+    "metadata" JSONB,
+    "request_id" VARCHAR(128),
     "ip_address" VARCHAR(45),
-    "user_agent" VARCHAR(500),
+    "user_agent" TEXT,
+    "status" VARCHAR(10) NOT NULL DEFAULT 'success',
+    "error_code" VARCHAR(100),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
@@ -353,13 +481,13 @@ CREATE TABLE "attachments" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_firebase_uid_key" ON "users"("firebase_uid");
+CREATE UNIQUE INDEX "users_external_uid_key" ON "users"("external_uid");
 
 -- CreateIndex
 CREATE INDEX "users_tenant_id_idx" ON "users"("tenant_id");
 
 -- CreateIndex
-CREATE INDEX "users_firebase_uid_idx" ON "users"("firebase_uid");
+CREATE INDEX "users_external_uid_idx" ON "users"("external_uid");
 
 -- CreateIndex
 CREATE INDEX "users_tenant_id_deleted_at_idx" ON "users"("tenant_id", "deleted_at");
@@ -440,7 +568,13 @@ CREATE INDEX "prescriptions_tenant_id_idx" ON "prescriptions"("tenant_id");
 CREATE INDEX "prescriptions_tenant_id_patient_id_idx" ON "prescriptions"("tenant_id", "patient_id");
 
 -- CreateIndex
+CREATE INDEX "prescriptions_consultation_id_group_order_idx" ON "prescriptions"("consultation_id", "group_order");
+
+-- CreateIndex
 CREATE INDEX "prescriptions_tenant_id_deleted_at_idx" ON "prescriptions"("tenant_id", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "prescription_items_prescription_id_idx" ON "prescription_items"("prescription_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "invoices_consultation_id_key" ON "invoices"("consultation_id");
@@ -467,13 +601,25 @@ CREATE INDEX "invoice_items_invoice_id_idx" ON "invoice_items"("invoice_id");
 CREATE INDEX "protocol_templates_tenant_id_idx" ON "protocol_templates"("tenant_id");
 
 -- CreateIndex
-CREATE INDEX "protocol_templates_is_system_idx" ON "protocol_templates"("is_system");
+CREATE INDEX "protocol_templates_tenant_id_deleted_at_idx" ON "protocol_templates"("tenant_id", "deleted_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "protocol_templates_template_key_locale_key" ON "protocol_templates"("template_key", "locale");
+CREATE INDEX "protocol_types_tenant_id_idx" ON "protocol_types"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "protocol_types_tenant_id_template_id_idx" ON "protocol_types"("tenant_id", "template_id");
+
+-- CreateIndex
+CREATE INDEX "protocol_types_tenant_id_deleted_at_idx" ON "protocol_types"("tenant_id", "deleted_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "protocol_types_tenant_id_name_key" ON "protocol_types"("tenant_id", "name");
 
 -- CreateIndex
 CREATE INDEX "protocols_tenant_id_idx" ON "protocols"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "protocols_tenant_id_type_id_idx" ON "protocols"("tenant_id", "type_id");
 
 -- CreateIndex
 CREATE INDEX "protocols_tenant_id_created_by_idx" ON "protocols"("tenant_id", "created_by");
@@ -500,19 +646,64 @@ CREATE UNIQUE INDEX "protocol_versions_protocol_id_version_number_key" ON "proto
 CREATE INDEX "protocol_usages_tenant_id_idx" ON "protocol_usages"("tenant_id");
 
 -- CreateIndex
+CREATE INDEX "protocol_usages_tenant_id_deleted_at_idx" ON "protocol_usages"("tenant_id", "deleted_at");
+
+-- CreateIndex
 CREATE INDEX "protocol_usages_protocol_id_idx" ON "protocol_usages"("protocol_id");
 
 -- CreateIndex
 CREATE INDEX "protocol_usages_user_id_idx" ON "protocol_usages"("user_id");
 
 -- CreateIndex
+CREATE INDEX "protocol_usages_consultation_id_idx" ON "protocol_usages"("consultation_id");
+
+-- CreateIndex
+CREATE INDEX "protocol_usages_parent_usage_id_idx" ON "protocol_usages"("parent_usage_id");
+
+-- CreateIndex
+CREATE INDEX "protocol_usages_status_idx" ON "protocol_usages"("status");
+
+-- CreateIndex
+CREATE INDEX "protocol_usages_created_at_idx" ON "protocol_usages"("created_at");
+
+-- CreateIndex
+CREATE INDEX "protocol_suggestions_protocol_id_status_idx" ON "protocol_suggestions"("protocol_id", "status");
+
+-- CreateIndex
+CREATE INDEX "protocol_suggestions_tenant_id_idx" ON "protocol_suggestions"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "protocol_suggestions_created_at_idx" ON "protocol_suggestions"("created_at");
+
+-- CreateIndex
+CREATE INDEX "imaging_orders_consultation_id_group_order_idx" ON "imaging_orders"("consultation_id", "group_order");
+
+-- CreateIndex
+CREATE INDEX "imaging_orders_tenant_id_idx" ON "imaging_orders"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "imaging_orders_tenant_id_deleted_at_idx" ON "imaging_orders"("tenant_id", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "lab_orders_consultation_id_group_order_idx" ON "lab_orders"("consultation_id", "group_order");
+
+-- CreateIndex
+CREATE INDEX "lab_orders_tenant_id_idx" ON "lab_orders"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "lab_orders_tenant_id_deleted_at_idx" ON "lab_orders"("tenant_id", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_tenant_id_created_at_idx" ON "audit_logs"("tenant_id", "created_at" DESC);
+
+-- CreateIndex
 CREATE INDEX "audit_logs_tenant_id_entity_type_entity_id_idx" ON "audit_logs"("tenant_id", "entity_type", "entity_id");
 
 -- CreateIndex
-CREATE INDEX "audit_logs_tenant_id_user_id_idx" ON "audit_logs"("tenant_id", "user_id");
+CREATE INDEX "audit_logs_tenant_id_actor_user_id_created_at_idx" ON "audit_logs"("tenant_id", "actor_user_id", "created_at" DESC);
 
 -- CreateIndex
-CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs"("created_at");
+CREATE INDEX "audit_logs_action_created_at_idx" ON "audit_logs"("action", "created_at" DESC);
 
 -- CreateIndex
 CREATE INDEX "attachments_tenant_id_entity_type_entity_id_idx" ON "attachments"("tenant_id", "entity_type", "entity_id");
@@ -596,6 +787,9 @@ ALTER TABLE "prescriptions" ADD CONSTRAINT "prescriptions_patient_id_fkey" FOREI
 ALTER TABLE "prescriptions" ADD CONSTRAINT "prescriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "prescription_items" ADD CONSTRAINT "prescription_items_prescription_id_fkey" FOREIGN KEY ("prescription_id") REFERENCES "prescriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -614,19 +808,22 @@ ALTER TABLE "invoices" ADD CONSTRAINT "invoices_user_id_fkey" FOREIGN KEY ("user
 ALTER TABLE "invoice_items" ADD CONSTRAINT "invoice_items_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "protocol_templates" ADD CONSTRAINT "protocol_templates_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "protocol_templates" ADD CONSTRAINT "protocol_templates_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "protocol_templates" ADD CONSTRAINT "protocol_templates_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "protocol_types" ADD CONSTRAINT "protocol_types_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "protocol_types" ADD CONSTRAINT "protocol_types_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "protocol_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "protocols" ADD CONSTRAINT "protocols_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "protocols" ADD CONSTRAINT "protocols_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "protocol_templates"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "protocols" ADD CONSTRAINT "protocols_original_protocol_id_fkey" FOREIGN KEY ("original_protocol_id") REFERENCES "protocols"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "protocols" ADD CONSTRAINT "protocols_type_id_fkey" FOREIGN KEY ("type_id") REFERENCES "protocol_types"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "protocols" ADD CONSTRAINT "protocols_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -662,13 +859,47 @@ ALTER TABLE "protocol_usages" ADD CONSTRAINT "protocol_usages_patient_id_fkey" F
 ALTER TABLE "protocol_usages" ADD CONSTRAINT "protocol_usages_consultation_id_fkey" FOREIGN KEY ("consultation_id") REFERENCES "consultations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "protocol_usages" ADD CONSTRAINT "protocol_usages_parent_usage_id_fkey" FOREIGN KEY ("parent_usage_id") REFERENCES "protocol_usages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "protocol_suggestions" ADD CONSTRAINT "protocol_suggestions_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "protocol_suggestions" ADD CONSTRAINT "protocol_suggestions_protocol_id_fkey" FOREIGN KEY ("protocol_id") REFERENCES "protocols"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "imaging_orders" ADD CONSTRAINT "imaging_orders_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "imaging_orders" ADD CONSTRAINT "imaging_orders_consultation_id_fkey" FOREIGN KEY ("consultation_id") REFERENCES "consultations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "imaging_orders" ADD CONSTRAINT "imaging_orders_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "imaging_orders" ADD CONSTRAINT "imaging_orders_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "lab_orders" ADD CONSTRAINT "lab_orders_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "lab_orders" ADD CONSTRAINT "lab_orders_consultation_id_fkey" FOREIGN KEY ("consultation_id") REFERENCES "consultations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "lab_orders" ADD CONSTRAINT "lab_orders_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "lab_orders" ADD CONSTRAINT "lab_orders_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actor_user_id_fkey" FOREIGN KEY ("actor_user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_uploaded_by_fkey" FOREIGN KEY ("uploaded_by") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+

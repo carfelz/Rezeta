@@ -23,6 +23,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import {
   CreateProtocolSchema,
   UpdateProtocolTitleSchema,
@@ -48,8 +49,8 @@ const TYPE_ID = '018e3f2a-3333-7000-8000-000000000001'
 const VERSION_ID = '018e3f2a-4444-7000-8000-000000000001'
 
 @ApiTags('Protocols')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/protocols')
 export class ProtocolsController {
   constructor(@Inject(ProtocolsService) private service: ProtocolsService) {}

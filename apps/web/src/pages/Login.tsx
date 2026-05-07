@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { strings, firebaseErrorToSpanish } from '@/lib/strings'
+import { strings } from '@/lib/strings'
+import { authClient } from '@/lib/auth'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
 function isSafeRedirect(path: string | null): path is string {
@@ -33,7 +34,7 @@ export function Login(): JSX.Element {
     } catch (err: unknown) {
       console.log(err)
       const code = (err as { code?: string }).code ?? ''
-      setError(firebaseErrorToSpanish(code))
+      setError(authClient.errorCodeToMessage(code))
     } finally {
       setIsLoading(false)
     }

@@ -17,14 +17,15 @@ import {
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ProtocolSuggestion, AuthUser } from '@rezeta/shared'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ProtocolSuggestionsService } from './protocol-suggestions.service.js'
 
 @ApiTags('Protocol Suggestions')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/protocols/:protocolId/suggestions')
 export class ProtocolSuggestionsController {
   constructor(@Inject(ProtocolSuggestionsService) private svc: ProtocolSuggestionsService) {}

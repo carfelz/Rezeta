@@ -21,6 +21,7 @@ import {
   ApiBody,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { Location, AuthUser } from '@rezeta/shared'
 import { CreateLocationSchema, UpdateLocationSchema } from '@rezeta/shared'
 import type { CreateLocationDto, UpdateLocationDto } from '@rezeta/shared'
@@ -30,8 +31,8 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { LocationsService } from './locations.service.js'
 
 @ApiTags('Locations')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/locations')
 export class LocationsController {
   constructor(@Inject(LocationsService) private service: LocationsService) {}

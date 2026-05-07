@@ -22,6 +22,7 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
@@ -48,8 +49,8 @@ import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ConsultationsService } from './consultations.service.js'
 
 @ApiTags('Consultations')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/consultations')
 export class ConsultationsController {
   constructor(@Inject(ConsultationsService) private svc: ConsultationsService) {}
@@ -243,8 +244,8 @@ export class ConsultationsController {
 }
 
 @ApiTags('Consultations')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/patients/:patientId')
 export class PatientConsultationsController {
   constructor(@Inject(ConsultationsService) private svc: ConsultationsService) {}

@@ -117,4 +117,16 @@ describe('Modal', () => {
     )
     expect(screen.queryByText('Cerrar')).not.toBeInTheDocument()
   })
+
+  it('ModalContent renders large size variant', () => {
+    render(
+      <Modal open>
+        <ModalContent size="lg">
+          <ModalHeader title="Large" showClose={false} />
+          <ModalBody>large body</ModalBody>
+        </ModalContent>
+      </Modal>,
+    )
+    expect(document.querySelector('.w-\\[560px\\]')).toBeInTheDocument()
+  })
 })

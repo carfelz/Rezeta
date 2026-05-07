@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core'
 import { Logger } from '@nestjs/common'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { AppModule } from './app.module.js'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from './lib/auth/index.js'
 
 // Load .env before NestJS initializes — path is relative to this file so it's
 // reliable regardless of the cwd pnpm uses when running the script.
@@ -44,15 +45,15 @@ async function bootstrap() {
       {
         type: 'http',
         scheme: 'bearer',
-        bearerFormat: 'Firebase ID Token',
-        description: 'Firebase ID Token. Obtén uno con POST /v1/auth/dev/token.',
+        bearerFormat: 'JWT',
+        description: 'Bearer JWT. Obtén uno con POST /v1/auth/dev/token.',
       },
-      'firebase-jwt',
+      AUTH_BEARER_SCHEME,
     )
     .addOAuth2(
       {
         type: 'oauth2',
-        description: 'Inicia sesión directamente con credenciales de Firebase.',
+        description: 'Inicia sesión con email + password (flujo password OAuth2).',
         flows: {
           password: {
             tokenUrl: '/v1/auth/dev/token',
@@ -60,7 +61,7 @@ async function bootstrap() {
           },
         },
       },
-      'firebase-oauth2',
+      AUTH_OAUTH2_SCHEME,
     )
     .build()
 

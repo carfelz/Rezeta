@@ -8,6 +8,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type {
   ProtocolTemplateDto,
   AuthUser,
@@ -56,8 +57,8 @@ const TEMPLATE_SCHEMA_EXAMPLE = {
 }
 
 @ApiTags('Protocol Templates')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/protocol-templates')
 export class ProtocolTemplatesController {
   constructor(

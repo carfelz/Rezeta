@@ -68,7 +68,7 @@ async function seedUser(dev: DevUser) {
 
   const uid = await getOrCreateFirebaseUser(dev.email, dev.password)
 
-  const existingUser = await prisma.user.findUnique({ where: { firebaseUid: uid } })
+  const existingUser = await prisma.user.findUnique({ where: { externalUid: uid } })
 
   if (existingUser) {
     await prisma.user.update({
@@ -98,7 +98,7 @@ async function seedUser(dev: DevUser) {
     return tx.user.create({
       data: {
         tenantId: tenant.id,
-        firebaseUid: uid,
+        externalUid: uid,
         email: dev.email,
         fullName: dev.fullName,
         specialty: dev.specialty,

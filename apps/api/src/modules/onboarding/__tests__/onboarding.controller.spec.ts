@@ -56,10 +56,10 @@ describe('OnboardingController', () => {
 
   // ── seedDefault ───────────────────────────────────────────────────────────
 
-  it('seedDefault: delegates to service.seedDefault with user.id and user.externalUid', async () => {
+  it('seedDefault: delegates to service.seedDefault with user.externalUid', async () => {
     mockService.seedDefault.mockResolvedValue(authUser)
     const result = await controller.seedDefault(user)
-    expect(mockService.seedDefault).toHaveBeenCalledWith(user.id, user.externalUid)
+    expect(mockService.seedDefault).toHaveBeenCalledWith(user.externalUid)
     expect(result).toEqual(authUser)
   })
 

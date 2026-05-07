@@ -1,10 +1,10 @@
-import { Injectable, Inject, UnauthorizedException, ForbiddenException } from '@nestjs/common'
+import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { AuthUser } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
-import type { VerifiedToken } from '../../lib/auth/index.js'
-import { AuthRepository, type UserWithTenant } from './auth.repository.js'
+import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
+import { UsersRepository, type UserWithTenant } from '../users/users.repository.js'
 
 export interface ProvisionMeta {
   ip?: string
@@ -21,9 +21,10 @@ export interface DevTokenResponse {
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(AuthRepository) private repository: AuthRepository,
+    @Inject(UsersRepository) private repository: UsersRepository,
     @Inject(ConfigService) private config: ConfigService<AppConfig, true>,
     @Inject(AuditLogService) private auditLog: AuditLogService,
+    @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
   ) {}
 
   /**
@@ -47,38 +48,18 @@ export class AuthService {
   }
 
   /**
-   * Dev-only: exchange email + password for a Firebase ID token.
-   * Calls Firebase REST Identity Toolkit. Blocked in production.
-   *
-   * NOTE: this remains Firebase-specific because it's the dev login flow.
-   * Uses only the public REST endpoint with the web API key (no admin SDK).
+   * Dev-only: exchange email + password for a bearer token via the auth provider.
+   * Blocked in production.
    */
   async devGetToken(email: string, password: string): Promise<DevTokenResponse> {
     if (this.config.get('nodeEnv', { infer: true }) === 'production') {
       throw new ForbiddenException('Not available in production')
     }
-
-    const webApiKey = this.config.get('firebase', { infer: true }).webApiKey
-
-    const res = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(webApiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      },
-    )
-
-    if (!res.ok) {
-      const body = (await res.json()) as { error?: { message?: string } }
-      throw new UnauthorizedException(body.error?.message ?? 'Invalid credentials')
-    }
-
-    const data = (await res.json()) as { idToken: string; expiresIn: string }
+    const signed = await this.authProvider.signInWithPassword(email, password)
     return {
-      access_token: data.idToken,
+      access_token: signed.accessToken,
       token_type: 'bearer',
-      expires_in: parseInt(data.expiresIn, 10),
+      expires_in: signed.expiresIn,
     }
   }
 

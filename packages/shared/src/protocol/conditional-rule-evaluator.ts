@@ -60,10 +60,12 @@ function compare(
       return left === right
     case '!=':
       return left !== right
+    /* v8 ignore start -- exhaustiveness check, statically unreachable */
     default: {
       const _exhaustive: never = op
       return _exhaustive
     }
+    /* v8 ignore stop */
   }
 }
 
@@ -84,9 +86,11 @@ export function evaluateConditionalRule(
       return rule.rules.some((r: ConditionalRule) => evaluateConditionalRule(r, ctx))
     case 'not':
       return !evaluateConditionalRule(rule.rule, ctx)
+    /* v8 ignore start -- exhaustiveness check, statically unreachable */
     default: {
       const _exhaustive: never = rule
       return _exhaustive
     }
+    /* v8 ignore stop */
   }
 }

@@ -95,14 +95,28 @@ export function buildSchema(state: TemplateEditorState): TemplateSchema {
 
 // ─── State from existing template ─────────────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-function parseBlocks(raw: unknown[]): TemplateBlock[] {
+interface RawBlock {
+  id?: unknown
+  type?: unknown
+  title?: unknown
+  description?: unknown
+  placeholder?: unknown
+  required?: unknown
+  collapsed_by_default?: unknown
+  placeholder_blocks?: unknown
+  blocks?: unknown
+}
+
+function isRecord(value: unknown): value is RawBlock {
+  return typeof value === 'object' && value !== null
+}
+
+function parseBlocks(raw: unknown): TemplateBlock[] {
   if (!Array.isArray(raw)) return []
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return raw.map((b: any) => {
+  return raw.filter(isRecord).map((b) => {
     const block: TemplateBlock = {
       id: typeof b.id === 'string' ? b.id : genId('blk'),
-      type: (b.type as BlockType) ?? 'text',
+      type: (typeof b.type === 'string' ? b.type : 'text') as BlockType,
     }
     if (typeof b.title === 'string') block.title = b.title
     if (typeof b.description === 'string') block.description = b.description
@@ -122,7 +136,6 @@ function parseBlocks(raw: unknown[]): TemplateBlock[] {
     return block
   })
 }
-/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 
 export function stateFromTemplate(template: ProtocolTemplateDto): TemplateEditorState {
   const schema = template.schema as { blocks?: unknown[] } | null

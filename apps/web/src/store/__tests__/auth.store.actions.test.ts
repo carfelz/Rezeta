@@ -2,21 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
-  signInWithEmailAndPassword: vi.fn(),
-  createUserWithEmailAndPassword: vi.fn(),
+  signIn: vi.fn(),
+  signUp: vi.fn(),
   signOut: vi.fn(),
-  firebaseAuth: { currentUser: null } as any,
 }))
 
-vi.mock('firebase/auth', () => ({
-  signInWithEmailAndPassword: mocks.signInWithEmailAndPassword,
-  createUserWithEmailAndPassword: mocks.createUserWithEmailAndPassword,
-  signOut: mocks.signOut,
-}))
-
-vi.mock('@/lib/firebase', () => ({
-  get auth() {
-    return mocks.firebaseAuth
+vi.mock('@/lib/auth', () => ({
+  authClient: {
+    signIn: mocks.signIn,
+    signUp: mocks.signUp,
+    signOut: mocks.signOut,
+    onAuthStateChanged: vi.fn(),
+    getToken: vi.fn().mockResolvedValue(null),
+    errorCodeToMessage: vi.fn((c: string) => c),
   },
 }))
 
@@ -26,7 +24,7 @@ function resetStore() {
   const { result } = renderHook(() => useAuthStore())
   act(() => {
     result.current._setUser(null)
-    result.current._setFirebaseUser(null)
+    result.current._setSession(null)
     result.current._setStatus('loading')
   })
 }
@@ -34,32 +32,26 @@ function resetStore() {
 describe('useAuthStore — signIn', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.firebaseAuth = { currentUser: null }
-    mocks.signInWithEmailAndPassword.mockResolvedValue({ user: {} })
+    mocks.signIn.mockResolvedValue(undefined)
     resetStore()
   })
 
-  it('calls signInWithEmailAndPassword with credentials', async () => {
+  it('delegates to authClient.signIn with credentials', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signIn('doc@rezeta.app', 'mypassword'))
-    expect(mocks.signInWithEmailAndPassword).toHaveBeenCalledWith(
-      mocks.firebaseAuth,
-      'doc@rezeta.app',
-      'mypassword',
-    )
+    expect(mocks.signIn).toHaveBeenCalledWith('doc@rezeta.app', 'mypassword')
   })
 
-  it('propagates FirebaseError with code intact', async () => {
-    const { FirebaseError } = await import('firebase/app')
-    const firebaseErr = new FirebaseError('auth/user-not-found', 'User not found')
-    mocks.signInWithEmailAndPassword.mockRejectedValue(firebaseErr)
+  it('propagates error with code intact', async () => {
+    const err = Object.assign(new Error('User not found'), { code: 'auth/user-not-found' })
+    mocks.signIn.mockRejectedValue(err)
 
     const { result } = renderHook(() => useAuthStore())
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow('User not found')
   })
 
   it('propagates generic Error', async () => {
-    mocks.signInWithEmailAndPassword.mockRejectedValue(new Error('network failure'))
+    mocks.signIn.mockRejectedValue(new Error('network failure'))
     const { result } = renderHook(() => useAuthStore())
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow(
       'network failure',
@@ -70,31 +62,25 @@ describe('useAuthStore — signIn', () => {
 describe('useAuthStore — signUp', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.firebaseAuth = { currentUser: null }
-    mocks.createUserWithEmailAndPassword.mockResolvedValue({ user: {} })
+    mocks.signUp.mockResolvedValue(undefined)
     resetStore()
   })
 
-  it('calls createUserWithEmailAndPassword', async () => {
+  it('delegates to authClient.signUp', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signUp('doc@rezeta.app', 'securepass'))
-    expect(mocks.createUserWithEmailAndPassword).toHaveBeenCalledWith(
-      mocks.firebaseAuth,
-      'doc@rezeta.app',
-      'securepass',
-    )
+    expect(mocks.signUp).toHaveBeenCalledWith('doc@rezeta.app', 'securepass')
   })
 })
 
 describe('useAuthStore — signOut', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.firebaseAuth = { currentUser: null }
     mocks.signOut.mockResolvedValue(undefined)
     resetStore()
   })
 
-  it('calls Firebase signOut', async () => {
+  it('delegates to authClient.signOut', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signOut())
     expect(mocks.signOut).toHaveBeenCalled()

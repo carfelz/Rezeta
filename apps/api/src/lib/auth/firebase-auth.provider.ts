@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config'
 import * as admin from 'firebase-admin'
 import { ErrorCode } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
-import type { IAuthProvider, VerifiedToken } from './auth-provider.interface.js'
+import type { IAuthProvider, VerifiedToken, SignedInToken } from './auth-provider.interface.js'
 
 @Injectable()
 export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
@@ -88,6 +88,33 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       email: decoded.email ?? '',
       rawClaims: decoded as unknown as Record<string, unknown>,
     }
+  }
+
+  async signInWithPassword(email: string, password: string): Promise<SignedInToken> {
+    const webApiKey = this.config.get('firebase', { infer: true }).webApiKey
+    if (!webApiKey) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider missing web API key',
+      })
+    }
+
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(webApiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      },
+    )
+
+    if (!res.ok) {
+      const body = (await res.json()) as { error?: { message?: string } }
+      throw new UnauthorizedException(body.error?.message ?? 'Invalid credentials')
+    }
+
+    const data = (await res.json()) as { idToken: string; expiresIn: string }
+    return { accessToken: data.idToken, expiresIn: parseInt(data.expiresIn, 10) }
   }
 
   async revokeUserSessions(externalUid: string): Promise<void> {

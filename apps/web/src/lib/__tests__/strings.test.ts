@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { strings, firebaseErrorToSpanish } from '../strings'
 
 describe('strings', () => {
@@ -60,6 +60,30 @@ describe('strings', () => {
   it('DASHBOARD_GREETING works without Dr. prefix', () => {
     const result = strings.DASHBOARD_GREETING('Ana López')
     expect(result).toContain('López')
+  })
+
+  describe('DASHBOARD_GREETING time-of-day branches', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('uses Buenos días when hour < 12', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-07T08:00:00'))
+      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenos días')
+    })
+
+    it('uses Buenas tardes when 12 <= hour < 19', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-07T15:00:00'))
+      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenas tardes')
+    })
+
+    it('uses Buenas noches when hour >= 19', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-07T22:00:00'))
+      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenas noches')
+    })
   })
 
   it('PROTOCOLS_LIST_VERSION returns version string', () => {

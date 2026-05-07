@@ -16,9 +16,10 @@ import { PrismaClient } from '../packages/db/generated/index.js'
 
 const prisma = new PrismaClient()
 
-const firebaseUid = process.argv
-  .find((a) => a.startsWith('--firebase-uid='))
-  ?.split('=')[1] ?? 'demo-firebase-uid-replace-me'
+const externalUid =
+  process.argv
+    .find((a) => a.startsWith('--external-uid=') || a.startsWith('--firebase-uid='))
+    ?.split('=')[1] ?? 'demo-external-uid-replace-me'
 
 async function main() {
   console.log('Creating demo tenant…')
@@ -40,7 +41,7 @@ async function main() {
   const user = await prisma.user.create({
     data: {
       tenantId: tenant.id,
-      firebaseUid,
+      externalUid,
       email: 'demo@rezeta.app',
       fullName: 'Dr. Juan García',
       role: 'owner',
@@ -49,7 +50,7 @@ async function main() {
     },
   })
 
-  console.log(`✓ User created: ${user.id} (firebaseUid: ${firebaseUid})`)
+  console.log(`✓ User created: ${user.id} (externalUid: ${externalUid})`)
 
   // ── Locations ──────────────────────────────────────────────────────────────
   const [loc1, loc2] = await Promise.all([
@@ -169,7 +170,7 @@ async function main() {
   console.log('\nDemo data ready. Summary:')
   console.log(`  Tenant ID : ${tenant.id}`)
   console.log(`  User ID   : ${user.id}`)
-  console.log(`  Firebase  : ${firebaseUid}`)
+  console.log(`  External  : ${externalUid}`)
   console.log(`  Locations : ${loc1.id}, ${loc2.id}`)
 }
 

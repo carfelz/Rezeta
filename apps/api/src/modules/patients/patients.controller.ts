@@ -23,6 +23,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { Patient } from '@rezeta/db'
 import {
   CreatePatientSchema,
@@ -54,8 +55,8 @@ const PATIENT_EXAMPLE = {
 }
 
 @ApiTags('Patients')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/patients')
 export class PatientsController {
   constructor(@Inject(PatientsService) private service: PatientsService) {}

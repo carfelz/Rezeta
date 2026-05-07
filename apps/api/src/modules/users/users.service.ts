@@ -7,10 +7,6 @@ import { UsersRepository } from './users.repository.js'
 export class UsersService {
   constructor(@Inject(UsersRepository) private repository: UsersRepository) {}
 
-  async getByExternalUid(externalUid: string): Promise<User | null> {
-    return this.repository.findByExternalUid(externalUid)
-  }
-
   async getById(id: string, tenantId: string): Promise<User> {
     const user = await this.repository.findById(id, tenantId)
     if (!user) {

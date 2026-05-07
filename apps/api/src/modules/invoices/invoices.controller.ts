@@ -24,6 +24,7 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import {
   CreateInvoiceSchema,
   UpdateInvoiceSchema,
@@ -46,8 +47,8 @@ interface InvoiceListResult {
 }
 
 @ApiTags('Invoices')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/invoices')
 export class InvoicesController {
   constructor(@Inject(InvoicesService) private svc: InvoicesService) {}

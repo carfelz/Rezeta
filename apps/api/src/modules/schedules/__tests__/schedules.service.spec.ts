@@ -309,6 +309,24 @@ describe('SchedulesService', () => {
         service.updateException('exc-1', 'user-1', { startTime: '16:00:00' }),
       ).rejects.toThrow(BadRequestException)
     })
+
+    it('throws TIME_INVALID when only startTime provided and existing endTime is null', async () => {
+      const noEndExisting = makeException({ startTime: null, endTime: null })
+      vi.mocked(repo.findExceptionById).mockResolvedValue(noEndExisting)
+
+      await expect(
+        service.updateException('exc-1', 'user-1', { startTime: '08:00:00' }),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('allows update with both startTime and endTime null (full-day)', async () => {
+      const noTimeExisting = makeException({ startTime: null, endTime: null })
+      vi.mocked(repo.findExceptionById).mockResolvedValue(noTimeExisting)
+      vi.mocked(repo.updateException).mockResolvedValue(noTimeExisting)
+
+      const result = await service.updateException('exc-1', 'user-1', { reason: 'Vacación' })
+      expect(result).toEqual(noTimeExisting)
+    })
   })
 
   describe('deleteException', () => {

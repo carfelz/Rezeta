@@ -9,7 +9,7 @@ const mockAuthProvider = {
   revokeUserSessions: vi.fn(),
   deleteUser: vi.fn(),
 }
-const mockPrisma = { user: { findUnique: vi.fn() } }
+const mockUsers = { findByExternalUid: vi.fn() }
 const mockReflector = { getAllAndOverride: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 
@@ -63,7 +63,7 @@ describe('AuthGuard', () => {
     guard = new AuthGuard(
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
-      mockPrisma as never,
+      mockUsers as never,
       mockAuditLog as never,
     )
   })
@@ -129,27 +129,27 @@ describe('AuthGuard', () => {
     mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' }, isProvision: true })
     expect(await guard.canActivate(ctx as never)).toBe(true)
-    expect(mockPrisma.user.findUnique).not.toHaveBeenCalled()
+    expect(mockUsers.findByExternalUid).not.toHaveBeenCalled()
     expect(ctx._req.verifiedToken).toBe(verifiedToken)
   })
 
   it('throws UnauthorizedException when user not found in DB', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
-    mockPrisma.user.findUnique.mockResolvedValue(null)
+    mockUsers.findByExternalUid.mockResolvedValue(null)
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
   })
 
   it('throws UnauthorizedException when user is inactive', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
-    mockPrisma.user.findUnique.mockResolvedValue({ ...validUser, isActive: false })
+    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
   })
 
   it('populates req.user and returns true for valid authenticated request', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
-    mockPrisma.user.findUnique.mockResolvedValue(validUser)
+    mockUsers.findByExternalUid.mockResolvedValue(validUser)
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     expect(await guard.canActivate(ctx as never)).toBe(true)
     const req = ctx._req
@@ -160,7 +160,7 @@ describe('AuthGuard', () => {
 
   it('sets tenantSeededAt to null when seededAt is null', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
-    mockPrisma.user.findUnique.mockResolvedValue({
+    mockUsers.findByExternalUid.mockResolvedValue({
       ...validUser,
       tenant: { seededAt: null, plan: 'free' },
     })

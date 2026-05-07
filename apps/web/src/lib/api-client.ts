@@ -1,5 +1,4 @@
-import { signOut } from 'firebase/auth'
-import { auth } from './firebase'
+import { authClient } from './auth'
 import type { ApiError } from '@rezeta/shared'
 
 const API_BASE = (import.meta.env['VITE_API_URL'] as string | undefined) ?? ''
@@ -11,13 +10,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-async function getToken(): Promise<string | null> {
-  const user = auth.currentUser
-  return user ? user.getIdToken() : null
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await getToken()
+  const token = await authClient.getToken()
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -30,7 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (response.status === 204) return undefined as T
 
   if (response.status === 401) {
-    await signOut(auth).catch(() => {})
+    await authClient.signOut()
   }
 
   const body = (await response.json()) as Record<string, unknown>
@@ -43,13 +37,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 async function downloadBlob(path: string): Promise<Blob> {
-  const token = await getToken()
+  const token = await authClient.getToken()
   const headers: Record<string, string> = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
   const response = await fetch(`${API_BASE}${path}`, { headers })
   if (response.status === 401) {
-    await signOut(auth).catch(() => {})
+    await authClient.signOut()
   }
   if (!response.ok) {
     const body = (await response.json()) as Record<string, unknown>

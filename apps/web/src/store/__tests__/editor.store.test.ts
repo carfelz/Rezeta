@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import {
   useEditorStore,
@@ -366,5 +366,18 @@ describe('Local draft helpers', () => {
     saveLocalDraft('protocol-1', [])
     clearLocalDraft('protocol-1')
     expect(loadLocalDraft('protocol-1')).toBeNull()
+  })
+
+  it('saveLocalDraft swallows storage errors silently', () => {
+    const setSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota exceeded')
+    })
+    expect(() => saveLocalDraft('protocol-x', [])).not.toThrow()
+    setSpy.mockRestore()
+  })
+
+  it('loadLocalDraft returns null on JSON parse error', () => {
+    localStorage.setItem('protocol-draft-bad', '{invalid json')
+    expect(loadLocalDraft('bad')).toBeNull()
   })
 })

@@ -7,6 +7,13 @@ export interface VerifiedToken {
   rawClaims: Record<string, unknown>
 }
 
+export interface SignedInToken {
+  /** Bearer token clients send back on subsequent requests. */
+  accessToken: string
+  /** Seconds until the token expires. */
+  expiresIn: number
+}
+
 export interface IAuthProvider {
   /**
    * Verify a raw bearer token string.
@@ -14,6 +21,12 @@ export interface IAuthProvider {
    * Returns a VerifiedToken if valid.
    */
   verifyToken(token: string): Promise<VerifiedToken>
+
+  /**
+   * Exchange email + password for a bearer token (dev/test login flow).
+   * Implementations MAY no-op or throw in production — callers must gate by env.
+   */
+  signInWithPassword(email: string, password: string): Promise<SignedInToken>
 
   /**
    * Revoke all active sessions for a given external UID.

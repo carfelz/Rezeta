@@ -1,23 +1,22 @@
 import { useEffect, type ReactNode } from 'react'
-import { onAuthStateChanged, signOut as fbSignOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { authClient } from '@/lib/auth'
 import { useAuthStore } from '@/store/auth.store'
 import type { AuthUser } from '@rezeta/shared'
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
-  const { _setUser, _setFirebaseUser, _setStatus } = useAuthStore()
+  const { _setUser, _setSession, _setStatus } = useAuthStore()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = authClient.onAuthStateChanged((session) => {
       void (async () => {
-        if (!firebaseUser) {
+        if (!session) {
           _setUser(null)
-          _setFirebaseUser(null)
+          _setSession(null)
           _setStatus('unauthenticated')
           return
         }
 
-        _setFirebaseUser(firebaseUser)
+        _setSession(session)
         _setStatus('loading')
 
         try {
@@ -27,16 +26,16 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           _setStatus('authenticated')
         } catch (err) {
           console.error('[AuthProvider] Provision failed:', err)
-          await fbSignOut(auth)
+          await authClient.signOut()
           _setUser(null)
-          _setFirebaseUser(null)
+          _setSession(null)
           _setStatus('unauthenticated')
         }
       })()
     })
 
     return unsubscribe
-  }, [_setUser, _setFirebaseUser, _setStatus])
+  }, [_setUser, _setSession, _setStatus])
 
   return <>{children}</>
 }

@@ -22,6 +22,7 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ScheduleBlock, ScheduleException, AuthUser } from '@rezeta/shared'
 import {
   CreateScheduleBlockSchema,
@@ -38,8 +39,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { SchedulesService } from './schedules.service.js'
 
 @ApiTags('Schedules')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/schedules')
 export class SchedulesController {
   constructor(@Inject(SchedulesService) private svc: SchedulesService) {}

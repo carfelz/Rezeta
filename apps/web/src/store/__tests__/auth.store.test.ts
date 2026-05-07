@@ -7,7 +7,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     act(() => {
       result.current._setUser(null)
-      result.current._setFirebaseUser(null)
+      result.current._setSession(null)
       result.current._setStatus('loading')
     })
   })
@@ -15,7 +15,7 @@ describe('useAuthStore — internal setters', () => {
   it('initial state has null user and loading status', () => {
     const { result } = renderHook(() => useAuthStore())
     expect(result.current.user).toBeNull()
-    expect(result.current.firebaseUser).toBeNull()
+    expect(result.current.session).toBeNull()
     expect(result.current.status).toBe('loading')
   })
 
@@ -68,11 +68,11 @@ describe('useAuthStore — internal setters', () => {
     expect(result.current.status).toBe('unauthenticated')
   })
 
-  it('_setFirebaseUser stores firebase user reference', () => {
+  it('_setSession stores session reference', () => {
     const { result } = renderHook(() => useAuthStore())
-    const fakeUser = { uid: 'fb-123', email: 'doc@test.com' } as never
-    act(() => result.current._setFirebaseUser(fakeUser))
-    expect(result.current.firebaseUser).toBe(fakeUser)
+    const fakeSession = { uid: 'fb-123', email: 'doc@test.com' }
+    act(() => result.current._setSession(fakeSession))
+    expect(result.current.session).toBe(fakeSession)
   })
 
   it('status transitions: loading → authenticated → unauthenticated', () => {

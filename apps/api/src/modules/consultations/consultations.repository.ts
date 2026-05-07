@@ -51,42 +51,6 @@ type PrismaAmendment = {
   signedAt: Date | null
 }
 
-type PrismaProtocolUsage = {
-  id: string
-  tenantId: string
-  consultationId: string | null
-  protocolId: string
-  protocolVersionId: string
-  content: unknown
-  modifications: unknown
-  modificationSummary: string | null
-  parentUsageId: string | null
-  triggerBlockId: string | null
-  depth: number
-  status: string
-  checkedState: unknown
-  completedAt: Date | null
-  notes: string | null
-  appliedAt: Date
-  protocol: { title: string; type: { name: string } }
-  protocolVersion: { versionNumber: number }
-  childUsages?: Array<{
-    id: string
-    protocolId: string
-    depth: number
-    status: string
-    protocol: { title: string }
-  }>
-}
-
-type PrismaConsultationWithRelations = PrismaConsultation & {
-  patient: { firstName: string; lastName: string }
-  location: { name: string }
-  doctor: { fullName: string | null }
-  amendments: PrismaAmendment[]
-  protocolUsages: PrismaProtocolUsage[]
-}
-
 function toConsultation(row: PrismaConsultation): Consultation {
   return {
     id: row.id,
@@ -125,21 +89,21 @@ function toAmendment(row: PrismaAmendment): ConsultationAmendment {
   }
 }
 
-function toProtocolUsage(row: PrismaProtocolUsage): ConsultationProtocolUsage {
+function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocolUsage {
   return {
     id: row.id,
     tenantId: row.tenantId,
     consultationId: row.consultationId ?? '',
     protocolId: row.protocolId,
     protocolVersionId: row.protocolVersionId,
-    content: (row.content ?? { version: '1.0', blocks: [] }) as ProtocolContent,
-    modifications: (row.modifications ?? {}) as ProtocolUsageModifications,
+    content: (row.content ?? { version: '1.0', blocks: [] }) as unknown as ProtocolContent,
+    modifications: (row.modifications ?? {}) as unknown as ProtocolUsageModifications,
     modificationSummary: row.modificationSummary,
     parentUsageId: row.parentUsageId,
     triggerBlockId: row.triggerBlockId,
     depth: row.depth,
     status: row.status as ConsultationProtocolUsage['status'],
-    checkedState: (row.checkedState ?? {}) as Record<string, boolean>,
+    checkedState: (row.checkedState ?? {}) as unknown as Record<string, boolean>,
     completedAt: row.completedAt?.toISOString() ?? null,
     notes: row.notes,
     appliedAt: row.appliedAt.toISOString(),
@@ -157,7 +121,7 @@ function toProtocolUsage(row: PrismaProtocolUsage): ConsultationProtocolUsage {
   }
 }
 
-function toConsultationWithDetails(row: PrismaConsultationWithRelations): ConsultationWithDetails {
+function toConsultationWithDetails(row: PrismaConsultationWithRels): ConsultationWithDetails {
   return {
     ...toConsultation(row),
     patientName: `${row.patient.firstName} ${row.patient.lastName}`.trim(),
@@ -168,7 +132,7 @@ function toConsultationWithDetails(row: PrismaConsultationWithRelations): Consul
   }
 }
 
-const PROTOCOL_USAGE_INCLUDE = {
+const PROTOCOL_USAGE_INCLUDE = Prisma.validator<Prisma.ProtocolUsageInclude>()({
   protocol: { select: { title: true, type: { select: { name: true } } } },
   protocolVersion: { select: { versionNumber: true } },
   childUsages: {
@@ -180,21 +144,29 @@ const PROTOCOL_USAGE_INCLUDE = {
       status: true,
       protocol: { select: { title: true } },
     },
-    orderBy: { createdAt: 'asc' as const },
+    orderBy: { createdAt: 'asc' },
   },
-}
+})
 
-const RELATIONS_INCLUDE = {
+const RELATIONS_INCLUDE = Prisma.validator<Prisma.ConsultationInclude>()({
   patient: { select: { firstName: true, lastName: true } },
   location: { select: { name: true } },
   doctor: { select: { fullName: true } },
-  amendments: { orderBy: { amendmentNumber: 'asc' as const } },
+  amendments: { orderBy: { amendmentNumber: 'asc' } },
   protocolUsages: {
     where: { deletedAt: null },
     include: PROTOCOL_USAGE_INCLUDE,
-    orderBy: { appliedAt: 'asc' as const },
+    orderBy: { appliedAt: 'asc' },
   },
-}
+})
+
+type PrismaConsultationWithRels = Prisma.ConsultationGetPayload<{
+  include: typeof RELATIONS_INCLUDE
+}>
+
+type PrismaProtocolUsageWithRels = Prisma.ProtocolUsageGetPayload<{
+  include: typeof PROTOCOL_USAGE_INCLUDE
+}>
 
 export interface ConsultationListParams {
   tenantId: string
@@ -229,9 +201,7 @@ export class ConsultationsRepository {
       include: RELATIONS_INCLUDE,
       orderBy: { consultedAt: 'desc' },
     })
-    return rows.map((r) =>
-      toConsultationWithDetails(r as unknown as PrismaConsultationWithRelations),
-    )
+    return rows.map((r) => toConsultationWithDetails(r))
   }
 
   /**
@@ -258,7 +228,7 @@ export class ConsultationsRepository {
       include: RELATIONS_INCLUDE,
       orderBy: { updatedAt: 'desc' },
     })
-    return row ? toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations) : null
+    return row ? toConsultationWithDetails(row) : null
   }
 
   async findById(id: string, tenantId: string): Promise<ConsultationWithDetails | null> {
@@ -266,7 +236,7 @@ export class ConsultationsRepository {
       where: { id, tenantId, deletedAt: null },
       include: RELATIONS_INCLUDE,
     })
-    return row ? toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations) : null
+    return row ? toConsultationWithDetails(row) : null
   }
 
   async create(
@@ -292,7 +262,7 @@ export class ConsultationsRepository {
       },
       include: RELATIONS_INCLUDE,
     })
-    return toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations)
+    return toConsultationWithDetails(row)
   }
 
   async update(
@@ -317,7 +287,7 @@ export class ConsultationsRepository {
       },
       include: RELATIONS_INCLUDE,
     })
-    return toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations)
+    return toConsultationWithDetails(row)
   }
 
   async sign(
@@ -331,7 +301,7 @@ export class ConsultationsRepository {
       data: { status: 'signed', signedAt: new Date(), signedBy: userId, contentHash },
       include: RELATIONS_INCLUDE,
     })
-    return toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations)
+    return toConsultationWithDetails(row)
   }
 
   async createAmendment(
@@ -370,7 +340,7 @@ export class ConsultationsRepository {
       where: { id: consultationId, tenantId, deletedAt: null },
       include: RELATIONS_INCLUDE,
     })
-    return toConsultationWithDetails(row as unknown as PrismaConsultationWithRelations)
+    return toConsultationWithDetails(row)
   }
 
   async softDelete(id: string, tenantId: string): Promise<void> {
@@ -408,7 +378,7 @@ export class ConsultationsRepository {
       },
       include: PROTOCOL_USAGE_INCLUDE,
     })
-    return toProtocolUsage(row as unknown as PrismaProtocolUsage)
+    return toProtocolUsage(row)
   }
 
   async updateProtocolUsage(
@@ -458,7 +428,7 @@ export class ConsultationsRepository {
       data,
       include: PROTOCOL_USAGE_INCLUDE,
     })
-    return toProtocolUsage(row as unknown as PrismaProtocolUsage)
+    return toProtocolUsage(row)
   }
 
   async updateCheckedState(
@@ -477,7 +447,7 @@ export class ConsultationsRepository {
       },
       include: PROTOCOL_USAGE_INCLUDE,
     })
-    return toProtocolUsage(row as unknown as PrismaProtocolUsage)
+    return toProtocolUsage(row)
   }
 
   async removeProtocolUsage(usageId: string, tenantId: string): Promise<void> {
@@ -495,7 +465,7 @@ export class ConsultationsRepository {
       where: { id: usageId, tenantId, deletedAt: null },
       include: PROTOCOL_USAGE_INCLUDE,
     })
-    return row ? toProtocolUsage(row as unknown as PrismaProtocolUsage) : null
+    return row ? toProtocolUsage(row) : null
   }
 
   async getUsageDepth(parentUsageId: string, tenantId: string): Promise<number> {

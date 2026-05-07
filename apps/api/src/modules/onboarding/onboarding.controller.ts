@@ -7,6 +7,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { OnboardingCustomSchema } from '@rezeta/shared'
@@ -14,8 +15,8 @@ import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 import { OnboardingService, type StarterCandidate } from './onboarding.service.js'
 
 @ApiTags('Onboarding')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/onboarding')
 export class OnboardingController {
   constructor(@Inject(OnboardingService) private service: OnboardingService) {}
@@ -47,7 +48,7 @@ export class OnboardingController {
   })
   @ApiResponse({ status: 409, description: 'Tenant already seeded.' })
   async seedDefault(@CurrentUser() user: AuthUser): Promise<AuthUser> {
-    return this.service.seedDefault(user.id, user.externalUid)
+    return this.service.seedDefault(user.externalUid)
   }
 
   @Post('custom')

@@ -456,9 +456,12 @@ const STARTER_TEMPLATES = [
 const OWNER_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 const OWNER_USER_ID = '00000000-0000-0000-0000-000000000002'
 
-// Replace with the Firebase UID from the Firebase console
-// (Authentication → Users → User UID column) before logging in.
-const OWNER_FIREBASE_UID = process.env['OWNER_FIREBASE_UID'] ?? 'REPLACE_WITH_FIREBASE_UID'
+// Provider-issued external UID (e.g. Firebase UID from console → Authentication → Users).
+// Set OWNER_EXTERNAL_UID; legacy OWNER_FIREBASE_UID accepted as fallback.
+const OWNER_EXTERNAL_UID =
+  process.env['OWNER_EXTERNAL_UID'] ??
+  process.env['OWNER_FIREBASE_UID'] ??
+  'REPLACE_WITH_EXTERNAL_UID'
 
 async function seedOwnerAccount() {
   await prisma.tenant.upsert({
@@ -482,7 +485,7 @@ async function seedOwnerAccount() {
     create: {
       id: OWNER_USER_ID,
       tenantId: OWNER_TENANT_ID,
-      externalUid: OWNER_FIREBASE_UID,
+      externalUid: OWNER_EXTERNAL_UID,
       email: 'carlos.felizmedina@thryv.com',
       fullName: 'Dr. Carlos Feliz',
       role: 'owner',

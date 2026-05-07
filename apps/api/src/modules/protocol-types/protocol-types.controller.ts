@@ -8,6 +8,7 @@ import {
   ApiBearerAuth,
   ApiSecurity,
 } from '@nestjs/swagger'
+import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
 import { CreateProtocolTypeSchema, UpdateProtocolTypeSchema } from '@rezeta/shared'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
@@ -18,8 +19,8 @@ const TYPE_ID = '018e3f2a-3333-7000-8000-000000000001'
 const TEMPLATE_ID = '018e3f2a-5555-7000-8000-000000000001'
 
 @ApiTags('Protocol Types')
-@ApiBearerAuth('firebase-jwt')
-@ApiSecurity('firebase-oauth2')
+@ApiBearerAuth(AUTH_BEARER_SCHEME)
+@ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/protocol-types')
 export class ProtocolTypesController {
   constructor(@Inject(ProtocolTypesService) private readonly service: ProtocolTypesService) {}

@@ -144,6 +144,67 @@ describe('AuditLogRepository', () => {
       const args = mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>
       expect(args['take']).toBe(51)
     })
+
+    it('applies entityType filter alone', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      await repo.findByTenant({ tenantId: 'tenant-1', entityType: 'Patient' })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      expect(where['entityType']).toBe('Patient')
+      expect(where['entityId']).toBeUndefined()
+    })
+
+    it('applies entityId filter alone', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      await repo.findByTenant({ tenantId: 'tenant-1', entityId: 'pat-1' })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      expect(where['entityId']).toBe('pat-1')
+    })
+
+    it('applies status filter alone', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      await repo.findByTenant({ tenantId: 'tenant-1', status: 'failed' })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      expect(where['status']).toBe('failed')
+    })
+
+    it('applies fromDate without toDate', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      const from = new Date('2026-03-01')
+      await repo.findByTenant({ tenantId: 'tenant-1', fromDate: from })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      const createdAt = where['createdAt'] as Record<string, unknown>
+      expect(createdAt['gte']).toBe(from)
+      expect(createdAt['lte']).toBeUndefined()
+    })
+
+    it('applies toDate without fromDate', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      const to = new Date('2026-04-01')
+      await repo.findByTenant({ tenantId: 'tenant-1', toDate: to })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      const createdAt = where['createdAt'] as Record<string, unknown>
+      expect(createdAt['lte']).toBe(to)
+      expect(createdAt['gte']).toBeUndefined()
+    })
+
+    it('omits createdAt clause when neither fromDate nor toDate provided', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      await repo.findByTenant({ tenantId: 'tenant-1' })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      expect(where['createdAt']).toBeUndefined()
+    })
   })
 
   describe('findById', () => {
@@ -185,6 +246,28 @@ describe('AuditLogRepository', () => {
       const createdAt = where['createdAt'] as Record<string, unknown>
       expect(createdAt['gte']).toBe(from)
       expect(createdAt['lte']).toBe(to)
+    })
+
+    it('applies all individual filter branches', async () => {
+      mockPrisma.auditLog.findMany.mockResolvedValue([])
+      await repo.findForExport({
+        tenantId: 'tenant-1',
+        actorUserId: 'u1',
+        category: 'entity',
+        action: 'create',
+        entityType: 'Patient',
+        entityId: 'pat-1',
+        status: 'success',
+      })
+      const where = (mockPrisma.auditLog.findMany.mock.calls[0]?.[0] as Record<string, unknown>)[
+        'where'
+      ] as Record<string, unknown>
+      expect(where['actorUserId']).toBe('u1')
+      expect(where['category']).toBe('entity')
+      expect(where['action']).toBe('create')
+      expect(where['entityType']).toBe('Patient')
+      expect(where['entityId']).toBe('pat-1')
+      expect(where['status']).toBe('success')
     })
   })
 
