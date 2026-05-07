@@ -1,13 +1,13 @@
 import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import type { AuthenticatedRequest } from './firebase-auth.guard.js'
+import type { AuthenticatedRequest } from './auth.guard.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
 
 /**
- * TenantGuard — runs after FirebaseAuthGuard.
+ * TenantGuard — runs after AuthGuard.
  *
- * Reads tenantId from the authenticated user (set by FirebaseAuthGuard) and
+ * Reads tenantId from the authenticated user (set by AuthGuard) and
  * makes it available on req.tenantId, which the @TenantId() decorator reads.
  *
  * Skipped for @Public() and @ProvisionRoute() endpoints since those don't
@@ -33,7 +33,7 @@ export class TenantGuard implements CanActivate {
     if (isProvisionRoute) return true
 
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
-    // req.user is guaranteed to be set by FirebaseAuthGuard at this point
+    // req.user is guaranteed to be set by AuthGuard at this point
     request.tenantId = request.user.tenantId
     return true
   }

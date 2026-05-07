@@ -22,7 +22,7 @@ import {
 
 const mockUser = {
   id: 'user-1',
-  firebaseUid: 'fb-uid',
+  externalUid: 'fb-uid',
   tenantId: 'tenant-1',
   email: 'doctor@rezeta.app',
   fullName: 'Dr. Juan García',

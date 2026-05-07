@@ -36,7 +36,7 @@ export const TenantApiSchema = z.object({
 
 export const UserApiSchema = z.object({
   id: z.string().uuid(),
-  firebaseUid: z.string(),
+  externalUid: z.string(),
   tenantId: z.string().uuid(),
   email: z.string().email(),
   fullName: z.string().nullable(),

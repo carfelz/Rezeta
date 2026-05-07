@@ -1,9 +1,9 @@
 import { Injectable, Inject, UnauthorizedException, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { AuthUser } from '@rezeta/shared'
-import type { DecodedIdToken } from 'firebase-admin/auth'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import type { VerifiedToken } from '../../lib/auth/index.js'
 import { AuthRepository, type UserWithTenant } from './auth.repository.js'
 
 export interface ProvisionMeta {
@@ -30,8 +30,8 @@ export class AuthService {
    * Idempotent provision: called by POST /v1/auth/provision.
    * Returns the User row (existing or newly created) with tenant data.
    */
-  async provision(decoded: DecodedIdToken, meta?: ProvisionMeta): Promise<UserWithTenant> {
-    const user = await this.repository.provisionUser(decoded)
+  async provision(verified: VerifiedToken, meta?: ProvisionMeta): Promise<UserWithTenant> {
+    const user = await this.repository.provisionUser(verified)
     void this.auditLog.record({
       tenantId: user.tenantId,
       actorUserId: user.id,
@@ -48,7 +48,10 @@ export class AuthService {
 
   /**
    * Dev-only: exchange email + password for a Firebase ID token.
-   * Calls Firebase REST Identity Toolkit (or emulator). Blocked in production.
+   * Calls Firebase REST Identity Toolkit. Blocked in production.
+   *
+   * NOTE: this remains Firebase-specific because it's the dev login flow.
+   * Uses only the public REST endpoint with the web API key (no admin SDK).
    */
   async devGetToken(email: string, password: string): Promise<DevTokenResponse> {
     if (this.config.get('nodeEnv', { infer: true }) === 'production') {
@@ -85,7 +88,7 @@ export class AuthService {
   toAuthUser(user: UserWithTenant): AuthUser {
     return {
       id: user.id,
-      firebaseUid: user.firebaseUid,
+      externalUid: user.externalUid,
       tenantId: user.tenantId,
       email: user.email,
       fullName: user.fullName,

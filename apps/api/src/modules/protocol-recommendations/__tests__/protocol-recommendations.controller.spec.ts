@@ -6,7 +6,7 @@ import type { AuthUser } from '@rezeta/shared'
 const user: AuthUser = {
   id: 'doc-1',
   tenantId: 'tenant-1',
-  firebaseUid: 'fb-1',
+  externalUid: 'fb-1',
   email: 'doc@example.com',
   fullName: 'Dr. Test',
   role: 'doctor',

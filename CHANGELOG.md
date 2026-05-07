@@ -4,6 +4,40 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-06] — Auth provider abstraction (Firebase wrapper)
+
+### Added
+
+- `apps/api/src/lib/auth/auth-provider.interface.ts`: `IAuthProvider` contract with `verifyToken`, `revokeUserSessions`, `deleteUser`; `VerifiedToken` value type (`externalUid`, `email`, `rawClaims`).
+- `apps/api/src/lib/auth/firebase-auth.provider.ts`: sole file allowed to import `firebase-admin`. Owns Firebase Admin init and maps `DecodedIdToken` → `VerifiedToken`. Re-throws as NestJS `UnauthorizedException` / `InternalServerErrorException`.
+- `apps/api/src/lib/auth/auth.module.ts`: `@Global()` module exporting `AUTH_PROVIDER` injection token bound to `FirebaseAuthProvider`.
+- `apps/api/src/lib/auth/index.ts`: barrel exporting `IAuthProvider`, `VerifiedToken`, `AUTH_PROVIDER`, `AuthModule` (no `FirebaseAuthProvider` export).
+- `apps/api/src/common/guards/auth.guard.ts`: provider-agnostic `AuthGuard` injecting `AUTH_PROVIDER`. Replaces `FirebaseAuthGuard`.
+- `apps/api/src/common/guards/__tests__/auth.guard.spec.ts`: 12 tests covering public-route bypass, missing/malformed bearer, provider verify failure (with audit), provision-route token attach, missing/inactive user, populated `req.user`, null `tenantSeededAt`, and undefined-`request.ip` audit branch.
+- `packages/db/prisma/migrations/20260506000000_rename_firebase_uid_to_external_uid/migration.sql`: column rename via `ALTER TABLE ... RENAME COLUMN` (no drop/recreate); renames `users_firebase_uid_key` and `users_firebase_uid_idx` indexes.
+
+### Changed
+
+- `packages/db/prisma/schema.prisma`: `User.firebaseUid` → `externalUid` (column `firebase_uid` → `external_uid`); index renamed.
+- `packages/shared/src/types/auth.ts`, `packages/shared/src/schemas/auth.ts`: `AuthUser.firebaseUid` → `externalUid`; `UserApiSchema.firebaseUid` → `externalUid`.
+- `apps/api/src/app.module.ts`: registers global `AuthModule` from `lib/auth`; aliases feature `AuthModule` from `modules/auth` as `AuthFeatureModule`; `FirebaseAuthGuard` → `AuthGuard`.
+- `apps/api/src/modules/auth/auth.{controller,service,repository}.ts`: replaced `DecodedIdToken` with `VerifiedToken`; `findByFirebaseUid` → `findByExternalUid`; provision route reads `req.verifiedToken`; controller param decorator renamed `FirebaseToken` → `VerifiedTokenParam`.
+- `apps/api/src/modules/users/users.{repository,service}.ts`: `findByFirebaseUid` / `getByFirebaseUid` → `findByExternalUid` / `getByExternalUid`.
+- `apps/api/src/modules/onboarding/onboarding.{controller,service}.ts`: `firebaseUid` → `externalUid`; `findByFirebaseUid` → `findByExternalUid`.
+- `apps/api/src/common/guards/tenant.guard.ts`, `apps/api/src/common/decorators/provision-route.decorator.ts`, `apps/api/src/common/audit-log/redact.ts`: doc + redact-rule updates from `firebaseUid` → `externalUid`.
+- `packages/db/src/seed.ts`: seeded user uses `externalUid`.
+- `apps/api/vitest.config.ts`: coverage exclude swapped from `lib/firebase.service.ts` to `lib/auth/firebase-auth.provider.ts` + `lib/auth/auth-provider.interface.ts`.
+
+### Removed
+
+- `apps/api/src/lib/firebase.service.ts`: superseded by `FirebaseAuthProvider`.
+- `apps/api/src/common/guards/firebase-auth.guard.ts` and its spec: superseded by `AuthGuard`.
+
+### Tests
+
+- 1,573/1,573 pass (api 862, web 711). Zero lint, zero typecheck. Coverage api 93.94%/90.06%, web 93.9%/95.38%.
+- Constraint check: `grep -r "firebase-admin" apps/api/src --include="*.ts" | grep -v firebase-auth.provider` returns nothing.
+
 ## [2026-05-06] — Lift test coverage above 90% threshold
 
 ### Fixed

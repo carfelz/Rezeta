@@ -5,9 +5,9 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core'
 import { resolve } from 'path'
 import { configuration } from './config/configuration.js'
 import { PrismaService } from './lib/prisma.service.js'
-import { FirebaseService } from './lib/firebase.service.js'
+import { AuthModule } from './lib/auth/index.js'
 import { PdfService } from './lib/pdf.service.js'
-import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard.js'
+import { AuthGuard } from './common/guards/auth.guard.js'
 import { TenantGuard } from './common/guards/tenant.guard.js'
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js'
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor.js'
@@ -16,7 +16,7 @@ import { PatientsModule } from './modules/patients/index.js'
 import { LocationsModule } from './modules/locations/index.js'
 import { ProtocolTemplatesModule } from './modules/protocol-templates/index.js'
 import { ProtocolsModule } from './modules/protocols/index.js'
-import { AuthModule } from './modules/auth/index.js'
+import { AuthModule as AuthFeatureModule } from './modules/auth/index.js'
 import { UsersModule } from './modules/users/index.js'
 import { TenantSeedingModule } from './modules/tenant-seeding/index.js'
 import { ProtocolTypesModule } from './modules/protocol-types/index.js'
@@ -52,6 +52,7 @@ class AppController {
     ScheduleModule.forRoot(),
     AuditLogModule,
     AuthModule,
+    AuthFeatureModule,
     UsersModule,
     PatientsModule,
     LocationsModule,
@@ -71,9 +72,8 @@ class AppController {
   controllers: [AppController],
   providers: [
     PrismaService,
-    FirebaseService,
-    // Global guards — order matters: FirebaseAuthGuard runs first, then TenantGuard
-    { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+    // Global guards — order matters: AuthGuard runs first, then TenantGuard
+    { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: TenantGuard },
     // Global interceptors
     { provide: APP_INTERCEPTOR, useClass: ResponseEnvelopeInterceptor },
@@ -83,6 +83,6 @@ class AppController {
     // Shared services
     PdfService,
   ],
-  exports: [PrismaService, FirebaseService, PdfService],
+  exports: [PrismaService, PdfService],
 })
 export class AppModule {}

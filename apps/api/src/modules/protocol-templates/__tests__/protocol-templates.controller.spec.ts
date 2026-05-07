@@ -15,7 +15,7 @@ const mockService = {
 
 const user = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: TENANT_ID,
   email: 'dr@test.com',
   fullName: 'Dr. Test',

@@ -103,7 +103,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       email: 'doc@test.com',
       fullName: 'Dr. Test',
       role: 'owner',
-      firebaseUid: 'fb-uid',
+      externalUid: 'fb-uid',
       specialty: null,
       licenseNumber: null,
       tenantSeededAt: null,

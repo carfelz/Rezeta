@@ -15,11 +15,11 @@ const mockPrisma = {
   $transaction: vi.fn((cb: (tx: typeof mockTx) => unknown) => cb(mockTx)),
 }
 
-const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
 
 const existingUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   tenant: { seededAt },
@@ -38,7 +38,7 @@ describe('AuthRepository', () => {
   describe('provisionUser', () => {
     it('returns existing user without creating new records (fast path)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(existingUser)
-      const result = await repo.provisionUser(decoded)
+      const result = await repo.provisionUser(verified)
       expect(result).toEqual(existingUser)
       expect(mockPrisma.$transaction).not.toHaveBeenCalled()
     })
@@ -50,14 +50,18 @@ describe('AuthRepository', () => {
       mockTx.tenant.create.mockResolvedValue(tenant)
       mockTx.user.create.mockResolvedValue(newUser)
 
-      const result = await repo.provisionUser(decoded)
+      const result = await repo.provisionUser(verified)
       expect(result).toEqual(newUser)
       expect(mockTx.tenant.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ type: 'solo', plan: 'free' }) }),
       )
       expect(mockTx.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ firebaseUid: 'fb1', email: 'dr@test.com', role: 'owner' }),
+          data: expect.objectContaining({
+            externalUid: 'fb1',
+            email: 'dr@test.com',
+            role: 'owner',
+          }),
         }),
       )
     })
@@ -68,7 +72,11 @@ describe('AuthRepository', () => {
       mockTx.tenant.create.mockResolvedValue({ id: 't1' })
       mockTx.user.create.mockResolvedValue(newUser)
 
-      const result = await repo.provisionUser({ uid: 'fb2', email: undefined } as never)
+      const result = await repo.provisionUser({
+        externalUid: 'fb2',
+        email: '',
+        rawClaims: {},
+      } as never)
       expect(mockTx.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ email: '' }),
@@ -85,7 +93,7 @@ describe('AuthRepository', () => {
       const p2002Error = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
       mockPrisma.$transaction.mockRejectedValueOnce(p2002Error)
 
-      const result = await repo.provisionUser(decoded)
+      const result = await repo.provisionUser(verified)
       expect(result).toEqual(existingUser)
       expect(mockPrisma.user.findUnique).toHaveBeenCalledTimes(2)
     })
@@ -93,38 +101,36 @@ describe('AuthRepository', () => {
     it('re-throws non-P2002 errors', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null)
       mockPrisma.$transaction.mockRejectedValueOnce(new Error('DB connection lost'))
-      await expect(repo.provisionUser(decoded)).rejects.toThrow('DB connection lost')
+      await expect(repo.provisionUser(verified)).rejects.toThrow('DB connection lost')
     })
 
     it('re-throws P2002 if re-fetch returns null (extreme edge case)', async () => {
-      mockPrisma.user.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null)
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
 
       const p2002Error = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
       mockPrisma.$transaction.mockRejectedValueOnce(p2002Error)
 
-      await expect(repo.provisionUser(decoded)).rejects.toThrow(p2002Error)
+      await expect(repo.provisionUser(verified)).rejects.toThrow(p2002Error)
     })
   })
 
-  // ── findByFirebaseUid ──────────────────────────────────────────────────────
+  // ── findByExternalUid ──────────────────────────────────────────────────────
 
-  describe('findByFirebaseUid', () => {
+  describe('findByExternalUid', () => {
     it('returns user when found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(existingUser)
-      const result = await repo.findByFirebaseUid('fb1')
+      const result = await repo.findByExternalUid('fb1')
       expect(result).toEqual(existingUser)
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { firebaseUid: 'fb1', deletedAt: null },
+          where: { externalUid: 'fb1', deletedAt: null },
         }),
       )
     })
 
     it('returns null when not found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null)
-      expect(await repo.findByFirebaseUid('none')).toBeNull()
+      expect(await repo.findByExternalUid('none')).toBeNull()
     })
   })
 })

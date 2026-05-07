@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common'
 import { PrismaService } from '../../lib/prisma.service.js'
 import type { User } from '@rezeta/db'
-import type { DecodedIdToken } from 'firebase-admin/auth'
+import type { VerifiedToken } from '../../lib/auth/index.js'
 
 export type UserWithTenant = User & { tenant: { seededAt: Date | null; plan: string } }
 
@@ -15,28 +15,28 @@ export class AuthRepository {
 
   /**
    * Idempotent provision:
-   * - If a User already exists for this firebaseUid → return it (no DB writes)
+   * - If a User already exists for this externalUid → return it (no DB writes)
    * - If not → create Tenant + User atomically in a single transaction
    *
    * This is the ONLY write path for tenant/user creation.
    * A race condition between two simultaneous provision calls is handled by
-   * catching the unique constraint violation on firebaseUid and re-fetching.
+   * catching the unique constraint violation on externalUid and re-fetching.
    */
-  async provisionUser(decoded: DecodedIdToken): Promise<UserWithTenant> {
-    const { uid, email } = decoded
+  async provisionUser(verified: VerifiedToken): Promise<UserWithTenant> {
+    const { externalUid, email } = verified
 
     // Fast-path: user already exists (the common case after first provision)
     const existing = await this.prisma.user.findUnique({
-      where: { firebaseUid: uid },
+      where: { externalUid },
       include: TENANT_SELECT,
     })
     if (existing) {
-      this.logger.debug(`Provision: user already exists for uid=${uid}`)
+      this.logger.debug(`Provision: user already exists for externalUid=${externalUid}`)
       return existing
     }
 
     // Slow-path: first-time provision — create Tenant + User atomically
-    this.logger.log(`Provision: creating new tenant+user for uid=${uid}`)
+    this.logger.log(`Provision: creating new tenant+user for externalUid=${externalUid}`)
 
     try {
       const user = await this.prisma.$transaction(async (tx) => {
@@ -54,7 +54,7 @@ export class AuthRepository {
         return tx.user.create({
           data: {
             tenantId: tenant.id,
-            firebaseUid: uid,
+            externalUid,
             email: email ?? '',
             // fullName is null until onboarding is complete
             role: 'owner',
@@ -73,9 +73,11 @@ export class AuthRepository {
         (err as { code: string }).code === 'P2002'
 
       if (isUniqueViolation) {
-        this.logger.warn(`Provision race condition for uid=${uid} — re-fetching existing user`)
+        this.logger.warn(
+          `Provision race condition for externalUid=${externalUid} — re-fetching existing user`,
+        )
         const refetched = await this.prisma.user.findUnique({
-          where: { firebaseUid: uid },
+          where: { externalUid },
           include: TENANT_SELECT,
         })
         if (refetched) return refetched
@@ -85,9 +87,9 @@ export class AuthRepository {
     }
   }
 
-  async findByFirebaseUid(uid: string): Promise<UserWithTenant | null> {
+  async findByExternalUid(externalUid: string): Promise<UserWithTenant | null> {
     return this.prisma.user.findUnique({
-      where: { firebaseUid: uid, deletedAt: null },
+      where: { externalUid, deletedAt: null },
       include: TENANT_SELECT,
     })
   }

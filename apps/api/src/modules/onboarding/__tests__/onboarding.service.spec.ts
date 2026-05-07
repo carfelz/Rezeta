@@ -12,12 +12,12 @@ const mockAuthService = {
 }
 
 const mockAuthRepository = {
-  findByFirebaseUid: vi.fn(),
+  findByExternalUid: vi.fn(),
 }
 
 const dbUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -29,7 +29,7 @@ const dbUser = {
 
 const authUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -49,7 +49,7 @@ describe('OnboardingService', () => {
       mockAuthService as never,
       mockAuthRepository as never,
     )
-    mockAuthRepository.findByFirebaseUid.mockResolvedValue(dbUser)
+    mockAuthRepository.findByExternalUid.mockResolvedValue(dbUser)
     mockAuthService.toAuthUser.mockReturnValue(authUser)
     mockSeeder.seedDefault.mockResolvedValue(undefined)
     mockSeeder.seedCustom.mockResolvedValue(undefined)
@@ -88,20 +88,20 @@ describe('OnboardingService', () => {
   // ── seedDefault ────────────────────────────────────────────────────────────
 
   describe('seedDefault', () => {
-    it('looks up user by firebaseUid, seeds, then refreshes', async () => {
+    it('looks up user by externalUid, seeds, then refreshes', async () => {
       const result = await service.seedDefault('u1', 'fb1')
-      expect(mockAuthRepository.findByFirebaseUid).toHaveBeenCalledWith('fb1')
+      expect(mockAuthRepository.findByExternalUid).toHaveBeenCalledWith('fb1')
       expect(mockSeeder.seedDefault).toHaveBeenCalledWith('t1', 'es')
       expect(result).toEqual(authUser)
     })
 
     it('throws InternalServerErrorException when user not found initially', async () => {
-      mockAuthRepository.findByFirebaseUid.mockResolvedValueOnce(null)
+      mockAuthRepository.findByExternalUid.mockResolvedValueOnce(null)
       await expect(service.seedDefault('u1', 'fb1')).rejects.toThrow(InternalServerErrorException)
     })
 
     it('throws InternalServerErrorException when user not found after seeding', async () => {
-      mockAuthRepository.findByFirebaseUid.mockResolvedValueOnce(dbUser).mockResolvedValueOnce(null)
+      mockAuthRepository.findByExternalUid.mockResolvedValueOnce(dbUser).mockResolvedValueOnce(null)
       await expect(service.seedDefault('u1', 'fb1')).rejects.toThrow(InternalServerErrorException)
     })
 
@@ -139,14 +139,14 @@ describe('OnboardingService', () => {
     })
 
     it('throws InternalServerErrorException when user not found initially', async () => {
-      mockAuthRepository.findByFirebaseUid.mockResolvedValueOnce(null)
+      mockAuthRepository.findByExternalUid.mockResolvedValueOnce(null)
       await expect(service.seedCustom('fb1', validInput)).rejects.toThrow(
         InternalServerErrorException,
       )
     })
 
     it('throws InternalServerErrorException when user not found after seeding', async () => {
-      mockAuthRepository.findByFirebaseUid.mockResolvedValueOnce(dbUser).mockResolvedValueOnce(null)
+      mockAuthRepository.findByExternalUid.mockResolvedValueOnce(dbUser).mockResolvedValueOnce(null)
       await expect(service.seedCustom('fb1', validInput)).rejects.toThrow(
         InternalServerErrorException,
       )

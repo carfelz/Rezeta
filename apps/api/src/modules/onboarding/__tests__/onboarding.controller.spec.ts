@@ -9,7 +9,7 @@ const mockService = {
 
 const user = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -56,10 +56,10 @@ describe('OnboardingController', () => {
 
   // ── seedDefault ───────────────────────────────────────────────────────────
 
-  it('seedDefault: delegates to service.seedDefault with user.id and user.firebaseUid', async () => {
+  it('seedDefault: delegates to service.seedDefault with user.id and user.externalUid', async () => {
     mockService.seedDefault.mockResolvedValue(authUser)
     const result = await controller.seedDefault(user)
-    expect(mockService.seedDefault).toHaveBeenCalledWith(user.id, user.firebaseUid)
+    expect(mockService.seedDefault).toHaveBeenCalledWith(user.id, user.externalUid)
     expect(result).toEqual(authUser)
   })
 
@@ -76,14 +76,14 @@ describe('OnboardingController', () => {
 
   // ── seedCustom ────────────────────────────────────────────────────────────
 
-  it('seedCustom: delegates to service.seedCustom with firebaseUid and body', async () => {
+  it('seedCustom: delegates to service.seedCustom with externalUid and body', async () => {
     mockService.seedCustom.mockResolvedValue(authUser)
     const body = {
       templates: [{ clientId: 'c1', name: 'My Template', schema: { version: '1.0', blocks: [] } }],
       types: [{ name: 'My Type', templateClientId: 'c1' }],
     }
     const result = await controller.seedCustom(user, body)
-    expect(mockService.seedCustom).toHaveBeenCalledWith(user.firebaseUid, body)
+    expect(mockService.seedCustom).toHaveBeenCalledWith(user.externalUid, body)
     expect(result).toEqual(authUser)
   })
 

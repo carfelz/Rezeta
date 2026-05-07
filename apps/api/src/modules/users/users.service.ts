@@ -7,8 +7,8 @@ import { UsersRepository } from './users.repository.js'
 export class UsersService {
   constructor(@Inject(UsersRepository) private repository: UsersRepository) {}
 
-  async getByFirebaseUid(firebaseUid: string): Promise<User | null> {
-    return this.repository.findByFirebaseUid(firebaseUid)
+  async getByExternalUid(externalUid: string): Promise<User | null> {
+    return this.repository.findByExternalUid(externalUid)
   }
 
   async getById(id: string, tenantId: string): Promise<User> {

@@ -4,7 +4,7 @@ import { AuthService } from '../auth.service.js'
 
 const mockRepo = {
   provisionUser: vi.fn(),
-  findByFirebaseUid: vi.fn(),
+  findByExternalUid: vi.fn(),
 }
 
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
@@ -19,7 +19,7 @@ const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
 
 const baseUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -104,7 +104,7 @@ describe('AuthService', () => {
       const auth = service.toAuthUser(baseUser as never)
       expect(auth).toMatchObject({
         id: 'u1',
-        firebaseUid: 'fb1',
+        externalUid: 'fb1',
         tenantId: 't1',
         email: 'dr@test.com',
         fullName: 'Dr. Test',

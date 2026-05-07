@@ -6,9 +6,9 @@ import type { User } from '@rezeta/db'
 export class UsersRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+  async findByExternalUid(externalUid: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { firebaseUid, deletedAt: null },
+      where: { externalUid, deletedAt: null },
     })
   }
 

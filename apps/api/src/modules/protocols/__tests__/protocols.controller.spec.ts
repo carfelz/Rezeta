@@ -17,7 +17,7 @@ const now = new Date('2026-01-01T00:00:00Z')
 
 const user = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',

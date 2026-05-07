@@ -18,19 +18,19 @@ import {
   ApiSecurity,
 } from '@nestjs/swagger'
 import type { Request } from 'express'
-import type { DecodedIdToken } from 'firebase-admin/auth'
 import type { AuthUser } from '@rezeta/shared'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { ProvisionRoute } from '../../common/decorators/provision-route.decorator.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { Public } from '../../common/decorators/public.decorator.js'
-import type { AuthenticatedRequest } from '../../common/guards/firebase-auth.guard.js'
+import type { AuthenticatedRequest } from '../../common/guards/auth.guard.js'
+import type { VerifiedToken } from '../../lib/auth/index.js'
 import { AuthService, type DevTokenResponse } from './auth.service.js'
 
-const FirebaseToken = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): DecodedIdToken => {
+const VerifiedTokenParam = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): VerifiedToken => {
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
-    return request.firebaseToken as DecodedIdToken
+    return request.verifiedToken as VerifiedToken
   },
 )
 
@@ -115,7 +115,7 @@ export class AuthController {
     schema: { $ref: '#/components/schemas/AuthUser' },
   })
   async provision(
-    @FirebaseToken() decoded: DecodedIdToken,
+    @VerifiedTokenParam() verified: VerifiedToken,
     @Req() req: Request,
   ): Promise<AuthUser> {
     const meta = {
@@ -127,7 +127,7 @@ export class AuthController {
         ? { requestId: req.headers['x-request-id'] }
         : {}),
     }
-    const user = await this.service.provision(decoded, meta)
+    const user = await this.service.provision(verified, meta)
     return this.service.toAuthUser(user)
   }
 
@@ -150,7 +150,7 @@ export class AuthController {
       type: 'object',
       properties: {
         id: { type: 'string', format: 'uuid', example: '018e3f2a-0000-7000-8000-000000000001' },
-        firebaseUid: { type: 'string', example: 'abc123firebaseuid' },
+        externalUid: { type: 'string', example: 'abc123firebaseuid' },
         tenantId: {
           type: 'string',
           format: 'uuid',

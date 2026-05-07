@@ -16,20 +16,20 @@ describe('UsersRepository', () => {
     repo = new UsersRepository(mockPrisma as never)
   })
 
-  describe('findByFirebaseUid', () => {
-    it('queries by firebaseUid with deletedAt null', async () => {
-      const user = { id: 'u1', firebaseUid: 'fb1' }
+  describe('findByExternalUid', () => {
+    it('queries by externalUid with deletedAt null', async () => {
+      const user = { id: 'u1', externalUid: 'fb1' }
       mockPrisma.user.findUnique.mockResolvedValue(user)
-      const result = await repo.findByFirebaseUid('fb1')
+      const result = await repo.findByExternalUid('fb1')
       expect(result).toEqual(user)
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-        where: { firebaseUid: 'fb1', deletedAt: null },
+        where: { externalUid: 'fb1', deletedAt: null },
       })
     })
 
     it('returns null when not found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null)
-      expect(await repo.findByFirebaseUid('none')).toBeNull()
+      expect(await repo.findByExternalUid('none')).toBeNull()
     })
   })
 

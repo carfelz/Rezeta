@@ -3,9 +3,9 @@ import { SetMetadata, type CustomDecorator } from '@nestjs/common'
 /**
  * Mark an endpoint as a provisioning route.
  *
- * The Firebase ID token is still verified (we need the uid), but the guard
+ * The bearer token is still verified (we need the externalUid), but the guard
  * does NOT require a matching User row in the database. The controller reads
- * req.firebaseToken and performs the DB creation itself.
+ * req.verifiedToken and performs the DB creation itself.
  *
  * Used exclusively by POST /v1/auth/provision.
  */

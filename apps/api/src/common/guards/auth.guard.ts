@@ -8,11 +8,10 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
-import type { DecodedIdToken } from 'firebase-admin/auth'
 import { ErrorCode } from '@rezeta/shared'
 import type { AuthUser } from '@rezeta/shared'
-import { FirebaseService } from '../../lib/firebase.service.js'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { AuditLogService } from '../audit-log/audit-log.service.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
@@ -20,16 +19,16 @@ import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.
 export interface AuthenticatedRequest extends Request {
   user: AuthUser
   tenantId: string
-  firebaseToken?: DecodedIdToken // only populated on provision route
+  verifiedToken?: VerifiedToken // only populated on provision route
 }
 
 @Injectable()
-export class FirebaseAuthGuard implements CanActivate {
-  private readonly logger = new Logger(FirebaseAuthGuard.name)
+export class AuthGuard implements CanActivate {
+  private readonly logger = new Logger(AuthGuard.name)
 
   constructor(
     @Inject(Reflector) private reflector: Reflector,
-    @Inject(FirebaseService) private firebase: FirebaseService,
+    @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
@@ -38,13 +37,11 @@ export class FirebaseAuthGuard implements CanActivate {
     const handler = ctx.getHandler()
     const classRef = ctx.getClass()
 
-    // 1. @Public() — skip all auth
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [handler, classRef])
     if (isPublic) return true
 
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
 
-    // 3. Extract Bearer token
     const token = this.extractToken(request)
     if (!token) {
       throw new UnauthorizedException({
@@ -53,10 +50,9 @@ export class FirebaseAuthGuard implements CanActivate {
       })
     }
 
-    // 4. Verify Firebase ID token
-    let decoded: DecodedIdToken
+    let verified: VerifiedToken
     try {
-      decoded = await this.firebase.verifyIdToken(token)
+      verified = await this.authProvider.verifyToken(token)
     } catch (err) {
       this.logger.debug(`Token verification failed: ${(err as Error).message}`)
       void this.auditLog.record({
@@ -70,25 +66,20 @@ export class FirebaseAuthGuard implements CanActivate {
         status: 'failed',
         errorCode: ErrorCode.TOKEN_INVALID,
       })
-      throw new UnauthorizedException({
-        code: ErrorCode.TOKEN_INVALID,
-        message: 'Firebase ID token is invalid or expired',
-      })
+      throw err
     }
 
-    // 5. @ProvisionRoute() — token verified, skip DB user lookup
     const isProvisionRoute = this.reflector.getAllAndOverride<boolean>(IS_PROVISION_ROUTE_KEY, [
       handler,
       classRef,
     ])
     if (isProvisionRoute) {
-      request.firebaseToken = decoded
+      request.verifiedToken = verified
       return true
     }
 
-    // 6. Normal route — require a DB User row (with tenant for seededAt)
     const user = await this.prisma.user.findUnique({
-      where: { firebaseUid: decoded.uid, deletedAt: null },
+      where: { externalUid: verified.externalUid, deletedAt: null },
       include: { tenant: { select: { seededAt: true, plan: true } } },
     })
 
@@ -108,7 +99,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
     request.user = {
       id: user.id,
-      firebaseUid: user.firebaseUid,
+      externalUid: user.externalUid,
       tenantId: user.tenantId,
       email: user.email,
       fullName: user.fullName,

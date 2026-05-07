@@ -51,7 +51,7 @@ model Tenant {
 model User {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String    @map("tenant_id") @db.Uuid
-  firebaseUid   String    @unique @map("firebase_uid") @db.VarChar(128)
+  externalUid   String    @unique @map("external_uid") @db.VarChar(128)
   email         String    @db.VarChar(320)
   fullName      String?   @map("full_name") @db.VarChar(200)
   role          String    @default("owner") @db.VarChar(50) // owner | doctor
@@ -84,7 +84,7 @@ model User {
   uploadedAttachments   Attachment[]
 
   @@index([tenantId])
-  @@index([firebaseUid])
+  @@index([externalUid])
   @@index([tenantId, deletedAt])
   @@map("users")
 }

@@ -2,7 +2,7 @@ export type UserRole = 'owner' | 'doctor'
 
 export interface AuthUser {
   id: string
-  firebaseUid: string
+  externalUid: string
   tenantId: string
   email: string
   fullName: string | null // nullable until onboarding is complete

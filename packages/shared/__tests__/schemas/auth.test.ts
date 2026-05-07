@@ -36,9 +36,7 @@ describe('SignUpSchema', () => {
   })
 
   it('rejects mismatched passwords', () => {
-    expect(() =>
-      SignUpSchema.parse({ ...valid, confirmPassword: 'DifferentPass1!' }),
-    ).toThrow()
+    expect(() => SignUpSchema.parse({ ...valid, confirmPassword: 'DifferentPass1!' })).toThrow()
   })
 
   it('rejects missing email', () => {
@@ -101,7 +99,7 @@ describe('TenantApiSchema', () => {
 describe('UserApiSchema', () => {
   const valid = {
     id: '00000000-0000-0000-0000-000000000001',
-    firebaseUid: 'firebase-uid-abc',
+    externalUid: 'firebase-uid-abc',
     tenantId: '00000000-0000-0000-0000-000000000002',
     email: 'doctor@rezeta.app',
     fullName: 'Dr. Juan García',
@@ -118,7 +116,12 @@ describe('UserApiSchema', () => {
   })
 
   it('accepts null optional fields', () => {
-    const result = UserApiSchema.parse({ ...valid, fullName: null, specialty: null, licenseNumber: null })
+    const result = UserApiSchema.parse({
+      ...valid,
+      fullName: null,
+      specialty: null,
+      licenseNumber: null,
+    })
     expect(result.fullName).toBeNull()
   })
 

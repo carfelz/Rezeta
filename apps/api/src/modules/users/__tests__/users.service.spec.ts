@@ -3,7 +3,7 @@ import { NotFoundException } from '@nestjs/common'
 import { UsersService } from '../users.service.js'
 
 const mockRepo = {
-  findByFirebaseUid: vi.fn(),
+  findByExternalUid: vi.fn(),
   findById: vi.fn(),
 }
 
@@ -15,18 +15,18 @@ describe('UsersService', () => {
     service = new UsersService(mockRepo as never)
   })
 
-  describe('getByFirebaseUid', () => {
+  describe('getByExternalUid', () => {
     it('returns user when found', async () => {
-      const user = { id: 'u1', firebaseUid: 'fb1' }
-      mockRepo.findByFirebaseUid.mockResolvedValue(user)
-      const result = await service.getByFirebaseUid('fb1')
+      const user = { id: 'u1', externalUid: 'fb1' }
+      mockRepo.findByExternalUid.mockResolvedValue(user)
+      const result = await service.getByExternalUid('fb1')
       expect(result).toEqual(user)
-      expect(mockRepo.findByFirebaseUid).toHaveBeenCalledWith('fb1')
+      expect(mockRepo.findByExternalUid).toHaveBeenCalledWith('fb1')
     })
 
     it('returns null when not found', async () => {
-      mockRepo.findByFirebaseUid.mockResolvedValue(null)
-      const result = await service.getByFirebaseUid('not-exist')
+      mockRepo.findByExternalUid.mockResolvedValue(null)
+      const result = await service.getByExternalUid('not-exist')
       expect(result).toBeNull()
     })
   })

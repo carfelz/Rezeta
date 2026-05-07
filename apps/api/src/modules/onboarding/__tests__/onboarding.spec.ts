@@ -17,12 +17,12 @@ const mockAuthService = {
 }
 
 const mockAuthRepository = {
-  findByFirebaseUid: vi.fn(),
+  findByExternalUid: vi.fn(),
 }
 
 const dbUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -34,7 +34,7 @@ const dbUser = {
 
 const authUser = {
   id: 'u1',
-  firebaseUid: 'fb1',
+  externalUid: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -54,7 +54,7 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
       mockAuthService as never,
       mockAuthRepository as never,
     )
-    mockAuthRepository.findByFirebaseUid.mockResolvedValue(dbUser)
+    mockAuthRepository.findByExternalUid.mockResolvedValue(dbUser)
     mockAuthService.toAuthUser.mockReturnValue(authUser)
     mockSeeder.seedDefault.mockResolvedValue(undefined)
     mockSeeder.seedCustom.mockResolvedValue(undefined)

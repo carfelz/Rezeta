@@ -134,7 +134,12 @@
       "Bash(tee /tmp/devserver5.log)",
       "Bash(sort -t: -k2 -nr)",
       "Bash(awk -F: '$2 > 0 {print $0}')",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(cat)",
+      "Bash(rm check_col.mjs)",
+      "Bash(rm /tmp/check_col.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://rezeta:rezeta@localhost:5432/rezeta_shadow\" pnpm prisma migrate deploy --schema prisma/schema.prisma)",
+      "Bash(echo \"---exit: $?---\")"
     ]
   }
 }

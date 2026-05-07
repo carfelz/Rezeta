@@ -482,7 +482,7 @@ async function seedOwnerAccount() {
     create: {
       id: OWNER_USER_ID,
       tenantId: OWNER_TENANT_ID,
-      firebaseUid: OWNER_FIREBASE_UID,
+      externalUid: OWNER_FIREBASE_UID,
       email: 'carlos.felizmedina@thryv.com',
       fullName: 'Dr. Carlos Feliz',
       role: 'owner',

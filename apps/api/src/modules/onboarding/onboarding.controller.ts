@@ -47,7 +47,7 @@ export class OnboardingController {
   })
   @ApiResponse({ status: 409, description: 'Tenant already seeded.' })
   async seedDefault(@CurrentUser() user: AuthUser): Promise<AuthUser> {
-    return this.service.seedDefault(user.id, user.firebaseUid)
+    return this.service.seedDefault(user.id, user.externalUid)
   }
 
   @Post('custom')
@@ -110,6 +110,6 @@ export class OnboardingController {
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(OnboardingCustomSchema)) body: OnboardingCustomInput,
   ): Promise<AuthUser> {
-    return this.service.seedCustom(user.firebaseUid, body)
+    return this.service.seedCustom(user.externalUid, body)
   }
 }

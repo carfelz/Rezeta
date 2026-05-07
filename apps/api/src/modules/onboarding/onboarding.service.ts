@@ -1,4 +1,9 @@
-import { Injectable, Inject, InternalServerErrorException, BadRequestException } from '@nestjs/common'
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common'
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 import { TenantSeedingService } from '../tenant-seeding/tenant-seeding.service.js'
 import { AuthService } from '../auth/auth.service.js'
@@ -29,17 +34,21 @@ export class OnboardingService {
     }))
   }
 
-  async seedDefault(userId: string, firebaseUid: string, locale: 'es' | 'en' = 'es'): Promise<AuthUser> {
+  async seedDefault(
+    userId: string,
+    externalUid: string,
+    locale: 'es' | 'en' = 'es',
+  ): Promise<AuthUser> {
     // Resolve tenantId from the authenticated user's tenant
-    const user = await this.authRepository.findByFirebaseUid(firebaseUid)
+    const user = await this.authRepository.findByExternalUid(externalUid)
     if (!user) throw new InternalServerErrorException('User not found after auth')
     await this.seeder.seedDefault(user.tenantId, locale)
-    const refreshed = await this.authRepository.findByFirebaseUid(firebaseUid)
+    const refreshed = await this.authRepository.findByExternalUid(externalUid)
     if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
     return this.authService.toAuthUser(refreshed)
   }
 
-  async seedCustom(firebaseUid: string, input: OnboardingCustomInput): Promise<AuthUser> {
+  async seedCustom(externalUid: string, input: OnboardingCustomInput): Promise<AuthUser> {
     // Validate cross-references before hitting the DB
     const templateClientIds = new Set(input.templates.map((t) => t.clientId))
     for (const type of input.types) {
@@ -51,7 +60,7 @@ export class OnboardingService {
       }
     }
 
-    const user = await this.authRepository.findByFirebaseUid(firebaseUid)
+    const user = await this.authRepository.findByExternalUid(externalUid)
     if (!user) throw new InternalServerErrorException('User not found after auth')
     await this.seeder.seedCustom(
       user.tenantId,
@@ -63,7 +72,7 @@ export class OnboardingService {
       })),
       input.types,
     )
-    const refreshed = await this.authRepository.findByFirebaseUid(firebaseUid)
+    const refreshed = await this.authRepository.findByExternalUid(externalUid)
     if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
     return this.authService.toAuthUser(refreshed)
   }

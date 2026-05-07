@@ -23,7 +23,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const mockUser = {
       id: 'user-1',
-      firebaseUid: 'fb-uid',
+      externalUid: 'fb-uid',
       tenantId: 'tenant-1',
       email: 'doctor@rezeta.app',
       fullName: 'Dr. Juan García',
@@ -39,7 +39,19 @@ describe('useAuthStore — internal setters', () => {
 
   it('_setUser can clear the user with null', () => {
     const { result } = renderHook(() => useAuthStore())
-    act(() => result.current._setUser({ id: 'u', firebaseUid: 'f', tenantId: 't', email: 'e@e.com', fullName: null, role: 'owner', specialty: null, licenseNumber: null, tenantSeededAt: null }))
+    act(() =>
+      result.current._setUser({
+        id: 'u',
+        externalUid: 'f',
+        tenantId: 't',
+        email: 'e@e.com',
+        fullName: null,
+        role: 'owner',
+        specialty: null,
+        licenseNumber: null,
+        tenantSeededAt: null,
+      }),
+    )
     act(() => result.current._setUser(null))
     expect(result.current.user).toBeNull()
   })

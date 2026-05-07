@@ -1,5 +1,5 @@
 const FIELD_REDACT_RULES: Record<string, Set<string>> = {
-  User: new Set(['passwordHash', 'password', 'firebaseUid']),
+  User: new Set(['passwordHash', 'password', 'externalUid']),
   Patient: new Set(['cedula', 'rnc', 'passport', 'ssn', 'nationalId']),
   Tenant: new Set(['stripeCustomerId', 'stripeSubscriptionId']),
 }
