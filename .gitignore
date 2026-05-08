@@ -43,3 +43,6 @@ coverage/
 #firebase
 .firebase/
 .preview-snapshots/
+
+#tmp design system
+/design-system-02/

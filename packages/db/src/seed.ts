@@ -453,23 +453,282 @@ const STARTER_TEMPLATES = [
   },
 ]
 
-const OWNER_TENANT_ID = '00000000-0000-0000-0000-000000000001'
-const OWNER_USER_ID = '00000000-0000-0000-0000-000000000002'
+// ─────────────────────────────────────────────────────────────────────────────
+// Dev accounts — Firebase UIDs from the dev project's Authentication console.
+// Each account gets its own tenant, locations, patients, and appointments.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Provider-issued external UID (e.g. Firebase UID from console → Authentication → Users).
-// Set OWNER_EXTERNAL_UID; legacy OWNER_FIREBASE_UID accepted as fallback.
-const OWNER_EXTERNAL_UID =
-  process.env['OWNER_EXTERNAL_UID'] ??
-  process.env['OWNER_FIREBASE_UID'] ??
-  'REPLACE_WITH_EXTERNAL_UID'
+interface DevAccount {
+  index: number
+  externalUid: string
+  email: string
+  fullName: string
+  specialty: string
+  licenseNumber: string
+  practiceName: string
+  locations: Array<{
+    name: string
+    address: string
+    city: string
+    phone: string
+    isOwned: boolean
+    commissionPercent: number
+    consultationFee: number
+  }>
+  patients: Array<{
+    documentType: 'cedula' | 'passport' | 'rnc'
+    documentNumber: string
+    firstName: string
+    lastName: string
+    dateOfBirth: string // YYYY-MM-DD
+    sex: 'male' | 'female'
+    phone: string
+    email?: string
+    bloodType?: string
+    allergies?: string[]
+    chronicConditions?: string[]
+  }>
+}
 
-async function seedOwnerAccount() {
+const DEV_ACCOUNTS: DevAccount[] = [
+  {
+    index: 1,
+    externalUid: 'j6RK1lLW6AY8OvoygMQvejQLwXj1',
+    email: 'test@test.com',
+    fullName: 'Dr. Carlos Feliz',
+    specialty: 'Cardiología',
+    licenseNumber: 'CMD-12345',
+    practiceName: 'Consultorio Dr. Carlos Feliz',
+    locations: [
+      {
+        name: 'Centro Médico Real',
+        address: 'Av. Abraham Lincoln 304, Piantini',
+        city: 'Santo Domingo',
+        phone: '809-555-0101',
+        isOwned: false,
+        commissionPercent: 30,
+        consultationFee: 2500,
+      },
+      {
+        name: 'Consultorio Privado',
+        address: 'Av. Anacaona 17, Mirador Sur',
+        city: 'Santo Domingo',
+        phone: '809-555-0102',
+        isOwned: true,
+        commissionPercent: 0,
+        consultationFee: 3500,
+      },
+    ],
+    patients: [
+      {
+        documentType: 'cedula',
+        documentNumber: '001-1234567-8',
+        firstName: 'Ana María',
+        lastName: 'Reyes',
+        dateOfBirth: '1982-03-14',
+        sex: 'female',
+        phone: '809-555-1001',
+        email: 'ana.reyes@example.com',
+        bloodType: 'O+',
+        allergies: ['Penicilina'],
+        chronicConditions: ['Hipertensión'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '001-2345678-9',
+        firstName: 'José Luis',
+        lastName: 'Martínez',
+        dateOfBirth: '1965-11-02',
+        sex: 'male',
+        phone: '809-555-1002',
+        bloodType: 'A+',
+        chronicConditions: ['Diabetes tipo 2', 'Dislipidemia'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '402-3456789-0',
+        firstName: 'Carmen',
+        lastName: 'Pérez',
+        dateOfBirth: '1978-07-22',
+        sex: 'female',
+        phone: '809-555-1003',
+      },
+      {
+        documentType: 'passport',
+        documentNumber: 'P12345678',
+        firstName: 'Roberto',
+        lastName: 'Castro',
+        dateOfBirth: '1990-01-08',
+        sex: 'male',
+        phone: '809-555-1004',
+      },
+    ],
+  },
+  {
+    index: 2,
+    externalUid: 'qXpawgupDOTZolTIHNqtD1FvDjf1',
+    email: 'dev@example.com',
+    fullName: 'Dra. María Pérez',
+    specialty: 'Pediatría',
+    licenseNumber: 'CMD-23456',
+    practiceName: 'Pediatría Dra. María Pérez',
+    locations: [
+      {
+        name: 'Hospital Infantil Robert Reid',
+        address: 'Av. Independencia, La Feria',
+        city: 'Santo Domingo',
+        phone: '809-555-0201',
+        isOwned: false,
+        commissionPercent: 25,
+        consultationFee: 1800,
+      },
+      {
+        name: 'Centro Pediátrico Naco',
+        address: 'C/ Erick Leonard Ekman 13, Naco',
+        city: 'Santo Domingo',
+        phone: '809-555-0202',
+        isOwned: false,
+        commissionPercent: 35,
+        consultationFee: 2200,
+      },
+    ],
+    patients: [
+      {
+        documentType: 'cedula',
+        documentNumber: '001-3456789-1',
+        firstName: 'Sofía',
+        lastName: 'Rodríguez',
+        dateOfBirth: '2018-05-10',
+        sex: 'female',
+        phone: '809-555-1101',
+        bloodType: 'B+',
+        allergies: ['Maní'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '001-4567890-2',
+        firstName: 'Mateo',
+        lastName: 'González',
+        dateOfBirth: '2020-09-18',
+        sex: 'male',
+        phone: '809-555-1102',
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '001-5678901-3',
+        firstName: 'Valentina',
+        lastName: 'Hernández',
+        dateOfBirth: '2015-12-03',
+        sex: 'female',
+        phone: '809-555-1103',
+        chronicConditions: ['Asma'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '001-6789012-4',
+        firstName: 'Diego',
+        lastName: 'Mejía',
+        dateOfBirth: '2019-02-25',
+        sex: 'male',
+        phone: '809-555-1104',
+      },
+    ],
+  },
+  {
+    index: 3,
+    externalUid: '6G7FMPoWWtRhTpCrpqCDwDBjcAB3',
+    email: 'test@rezeta.com',
+    fullName: 'Dr. Juan García',
+    specialty: 'Fisioterapia',
+    licenseNumber: 'CMD-34567',
+    practiceName: 'Rehabilitación Dr. Juan García',
+    locations: [
+      {
+        name: 'Centro de Rehabilitación Bella Vista',
+        address: 'Av. Sarasota 27, Bella Vista',
+        city: 'Santo Domingo',
+        phone: '809-555-0301',
+        isOwned: false,
+        commissionPercent: 40,
+        consultationFee: 1500,
+      },
+      {
+        name: 'Clínica Deportiva Santiago',
+        address: 'C/ del Sol 86, Centro de la Ciudad',
+        city: 'Santiago',
+        phone: '809-555-0302',
+        isOwned: true,
+        commissionPercent: 0,
+        consultationFee: 2000,
+      },
+    ],
+    patients: [
+      {
+        documentType: 'cedula',
+        documentNumber: '031-7890123-5',
+        firstName: 'Pedro',
+        lastName: 'Almonte',
+        dateOfBirth: '1988-04-12',
+        sex: 'male',
+        phone: '829-555-1201',
+        chronicConditions: ['Lesión de LCA — post quirúrgico'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '031-8901234-6',
+        firstName: 'Lucía',
+        lastName: 'Vásquez',
+        dateOfBirth: '1972-08-30',
+        sex: 'female',
+        phone: '829-555-1202',
+        chronicConditions: ['Lumbalgia crónica'],
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '031-9012345-7',
+        firstName: 'Andrés',
+        lastName: 'Cruz',
+        dateOfBirth: '1995-06-15',
+        sex: 'male',
+        phone: '829-555-1203',
+      },
+      {
+        documentType: 'cedula',
+        documentNumber: '031-0123456-8',
+        firstName: 'Patricia',
+        lastName: 'Núñez',
+        dateOfBirth: '1980-10-21',
+        sex: 'female',
+        phone: '829-555-1204',
+        chronicConditions: ['Hombro congelado bilateral'],
+      },
+    ],
+  },
+]
+
+function uuid(prefix: string, accountIdx: number, rowIdx: number): string {
+  // Deterministic UUIDs so repeated runs upsert cleanly. Format 8-4-4-4-12.
+  const a = String(accountIdx).padStart(2, '0')
+  const r = String(rowIdx).padStart(4, '0')
+  return `00000000-0000-0000-${prefix}-${a}000000${r}`
+}
+
+const tenantId = (i: number): string => uuid('a000', i, 0)
+const userId = (i: number): string => uuid('a001', i, 0)
+const locationId = (i: number, j: number): string => uuid('a002', i, j)
+const patientId = (i: number, j: number): string => uuid('a003', i, j)
+const appointmentId = (i: number, j: number): string => uuid('a004', i, j)
+
+async function seedDevAccount(acc: DevAccount): Promise<void> {
+  const tId = tenantId(acc.index)
+  const uId = userId(acc.index)
+
   await prisma.tenant.upsert({
-    where: { id: OWNER_TENANT_ID },
-    update: { seededAt: new Date() },
+    where: { id: tId },
+    update: { seededAt: new Date(), name: acc.practiceName },
     create: {
-      id: OWNER_TENANT_ID,
-      name: 'Consultorio Dr. Carlos Feliz',
+      id: tId,
+      name: acc.practiceName,
       type: 'solo',
       plan: 'free',
       country: 'DO',
@@ -480,19 +739,156 @@ async function seedOwnerAccount() {
   })
 
   await prisma.user.upsert({
-    where: { id: OWNER_USER_ID },
-    update: {},
+    where: { id: uId },
+    update: {
+      externalUid: acc.externalUid,
+      email: acc.email,
+      fullName: acc.fullName,
+      specialty: acc.specialty,
+      licenseNumber: acc.licenseNumber,
+    },
     create: {
-      id: OWNER_USER_ID,
-      tenantId: OWNER_TENANT_ID,
-      externalUid: OWNER_EXTERNAL_UID,
-      email: 'carlos.felizmedina@thryv.com',
-      fullName: 'Dr. Carlos Feliz',
+      id: uId,
+      tenantId: tId,
+      externalUid: acc.externalUid,
+      email: acc.email,
+      fullName: acc.fullName,
+      specialty: acc.specialty,
+      licenseNumber: acc.licenseNumber,
       role: 'owner',
     },
   })
 
-  console.log('✓ Seeded owner account')
+  console.log(`✓ Tenant + user: ${acc.fullName} (uid=${acc.externalUid})`)
+
+  // Locations + doctor-location links
+  for (let j = 0; j < acc.locations.length; j++) {
+    const loc = acc.locations[j]!
+    const lId = locationId(acc.index, j + 1)
+    await prisma.location.upsert({
+      where: { id: lId },
+      update: {
+        name: loc.name,
+        address: loc.address,
+        city: loc.city,
+        phone: loc.phone,
+        isOwned: loc.isOwned,
+        commissionPercent: loc.commissionPercent,
+      },
+      create: {
+        id: lId,
+        tenantId: tId,
+        name: loc.name,
+        address: loc.address,
+        city: loc.city,
+        phone: loc.phone,
+        isOwned: loc.isOwned,
+        commissionPercent: loc.commissionPercent,
+      },
+    })
+    await prisma.doctorLocation.upsert({
+      where: { userId_locationId: { userId: uId, locationId: lId } },
+      update: { consultationFee: loc.consultationFee, commissionPct: loc.commissionPercent },
+      create: {
+        userId: uId,
+        locationId: lId,
+        consultationFee: loc.consultationFee,
+        commissionPct: loc.commissionPercent,
+      },
+    })
+  }
+  console.log(`  ${acc.locations.length} locations linked`)
+
+  // Patients
+  for (let j = 0; j < acc.patients.length; j++) {
+    const p = acc.patients[j]!
+    const pId = patientId(acc.index, j + 1)
+    await prisma.patient.upsert({
+      where: { id: pId },
+      update: {
+        firstName: p.firstName,
+        lastName: p.lastName,
+        documentType: p.documentType,
+        documentNumber: p.documentNumber,
+        dateOfBirth: new Date(p.dateOfBirth),
+        sex: p.sex,
+        phone: p.phone,
+        email: p.email ?? null,
+        bloodType: p.bloodType ?? null,
+        allergies: p.allergies ?? [],
+        chronicConditions: p.chronicConditions ?? [],
+      },
+      create: {
+        id: pId,
+        tenantId: tId,
+        ownerUserId: uId,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        documentType: p.documentType,
+        documentNumber: p.documentNumber,
+        dateOfBirth: new Date(p.dateOfBirth),
+        sex: p.sex,
+        phone: p.phone,
+        email: p.email ?? null,
+        bloodType: p.bloodType ?? null,
+        allergies: p.allergies ?? [],
+        chronicConditions: p.chronicConditions ?? [],
+      },
+    })
+  }
+  console.log(`  ${acc.patients.length} patients`)
+
+  // Sample appointments — 2 upcoming (tomorrow, day-after) at primary location
+  const primaryLoc = locationId(acc.index, 1)
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(9, 0, 0, 0)
+  const dayAfter = new Date()
+  dayAfter.setDate(dayAfter.getDate() + 2)
+  dayAfter.setHours(14, 30, 0, 0)
+
+  const appointments = [
+    {
+      patientIdx: 1,
+      startsAt: tomorrow,
+      endsAt: new Date(tomorrow.getTime() + 30 * 60 * 1000),
+      reason: 'Consulta de seguimiento',
+    },
+    {
+      patientIdx: 2,
+      startsAt: dayAfter,
+      endsAt: new Date(dayAfter.getTime() + 30 * 60 * 1000),
+      reason: 'Primera consulta',
+    },
+  ]
+
+  for (let j = 0; j < appointments.length; j++) {
+    const a = appointments[j]!
+    const aId = appointmentId(acc.index, j + 1)
+    await prisma.appointment.upsert({
+      where: { id: aId },
+      update: {
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        reason: a.reason,
+        status: 'scheduled',
+      },
+      create: {
+        id: aId,
+        tenantId: tId,
+        patientId: patientId(acc.index, a.patientIdx),
+        userId: uId,
+        locationId: primaryLoc,
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        status: 'scheduled',
+        reason: a.reason,
+      },
+    })
+  }
+  console.log(`  ${appointments.length} upcoming appointments`)
+
+  await seedTenantTemplatesAndTypes(tId, uId)
 }
 
 async function seedTenantTemplatesAndTypes(tenantId: string, createdBy: string | null) {
@@ -537,8 +933,9 @@ async function seedTenantTemplatesAndTypes(tenantId: string, createdBy: string |
 
 async function main() {
   console.log('Seeding database…')
-  await seedOwnerAccount()
-  await seedTenantTemplatesAndTypes(OWNER_TENANT_ID, OWNER_USER_ID)
+  for (const acc of DEV_ACCOUNTS) {
+    await seedDevAccount(acc)
+  }
   console.log('Done.')
 }
 

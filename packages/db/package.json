@@ -18,7 +18,7 @@
     "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
     "migrate:reset": "prisma migrate reset --schema=prisma/schema.prisma",
     "studio": "prisma studio --schema=prisma/schema.prisma",
-    "seed": "tsx src/seed.ts",
+    "seed": "tsx --env-file=../../.env src/seed.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
