@@ -127,9 +127,9 @@ export function GatePreview(): JSX.Element {
               { label: 'Isabel Cristina Cruz', to: '/pacientes/p1' },
               { label: 'Consulta · 2 may de 2026' },
             ]}
-            datetimeOverline="SÁBADO, 2 DE MAYO DE 2026 · 02:29 A.M. · CONSULTORIO PRIVADO DR. GARCÍA"
+            datetimeOverline="SÁBADO, 2 DE MAYO DE 2026 · 02:29 A.M. · CONSULTORIO PRIVADO"
             title="Nueva consulta"
-            subtitle="Isabel Cristina Cruz · Dr. Test García"
+            subtitle="Isabel Cristina Cruz · Dr. Demo"
             rightSlot={
               <button
                 type="button"

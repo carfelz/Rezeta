@@ -22,21 +22,21 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/protocol-editor-ux.md
 @./specs/template-editor-ux.md
 @./specs/onboarding-flow.md
-
-<!-- Slice already done -->
-<!-- @./specs/protocol-in-consultation-spec.md -->
-
-<!-- Slice already done -->
-<!-- @./specs/protocol-engine-slices.md -->
-
+@./specs/protocol-in-consultation-spec.md
+@./specs/protocol-engine-slices.md
+@./specs/remaining-mvp-slices.md
 @./specs/design-system/tokens.md
 @./specs/design-system/components.md
 @./specs/design-system/principles.md
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
+@./specs/audit-log-spec.md
+@./specs/audit-log-implementation-prompt.md
 
-<!-- @./specs/audit-log-spec.md -->
-<!-- @./specs/audit-log-implementation-prompt.md -->
+@./specs/01-rezeta-live-audit.md
+@./specs/02-claude-code-handoffs.md
+@./specs/03-claude-design-handoff.md
+@./specs/04-rezeta-improvements.md
 
 The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).
 
@@ -123,7 +123,9 @@ Key design decisions:
 | Protocol engine (full)                | ✅ Done |
 | Audit log                             | ✅ Done |
 
-Work now targets **v1.5** features (see `specs/full-scope.md` Phase 2). If asked to add a feature, check `specs/full-scope.md` for its target phase before starting. Features explicitly deferred: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing, protocol-to-consultation integration.
+**In progress (Hybrid redesign per `specs/protocol-in-consultation-spec.md`):** consultation gate, protocol strip, view-mode toggle, multi-protocol canvas. See `specs/protocol-in-consultation-spec.md` and the `_preview/*` routes for component previews.
+
+Work now targets **v1.5** features (see `specs/full-scope.md` Phase 2). If asked to add a feature, check `specs/full-scope.md` for its target phase before starting. Features explicitly deferred: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing.
 
 ## Code Conventions
 

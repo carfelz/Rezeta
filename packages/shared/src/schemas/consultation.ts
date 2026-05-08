@@ -22,9 +22,12 @@ export const CreateConsultationSchema = z.object({
   plan: z.string().max(5000).nullable().optional(),
   vitals: VitalsSchema.nullable().optional(),
   diagnoses: z.array(z.string().max(200)).default([]),
+  protocolId: z.string().uuid().optional(),
 })
 
-export const UpdateConsultationSchema = CreateConsultationSchema.partial()
+export const UpdateConsultationSchema = CreateConsultationSchema.partial().omit({
+  protocolId: true,
+})
 
 export const AmendConsultationSchema = z.object({
   reason: z.string().min(10).max(1000),

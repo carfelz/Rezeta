@@ -66,9 +66,9 @@ describe('OffProtocolNote', () => {
     expect(onCancel).toHaveBeenCalled()
   })
 
-  it('renders timestamp footer', () => {
+  it('renders timestamp footer with doctor name fallback when user is anonymous', () => {
     render(<OffProtocolNote onSave={vi.fn()} onCancel={vi.fn()} />)
-    expect(screen.getByText(/Dr\. García/)).toBeInTheDocument()
+    expect(screen.getByText(/Doctor\(a\)/)).toBeInTheDocument()
   })
 
   it('disables actions when isPending is true', () => {

@@ -1,6 +1,7 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import type { AuthUser } from '@rezeta/shared'
+import type { AuthUser, UserPreferences } from '@rezeta/shared'
+import { UserPreferencesSchema } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
@@ -78,6 +79,12 @@ export class AuthService {
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
+      preferences: parsePreferences(user.preferences),
     }
   }
+}
+
+function parsePreferences(raw: unknown): UserPreferences {
+  const parsed = UserPreferencesSchema.safeParse(raw ?? {})
+  return parsed.success ? parsed.data : {}
 }

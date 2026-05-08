@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
-import { ErrorCode } from '@rezeta/shared'
-import type { AuthUser } from '@rezeta/shared'
+import { ErrorCode, UserPreferencesSchema } from '@rezeta/shared'
+import type { AuthUser, UserPreferences } from '@rezeta/shared'
 import { UsersRepository } from '../../modules/users/users.repository.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { AuditLogService } from '../audit-log/audit-log.service.js'
@@ -105,6 +105,7 @@ export class AuthGuard implements CanActivate {
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
+      preferences: parseUserPreferences(user.preferences),
     }
 
     return true
@@ -116,4 +117,9 @@ export class AuthGuard implements CanActivate {
     const [type, token] = authHeader.split(' ')
     return type === 'Bearer' && token ? token : null
   }
+}
+
+function parseUserPreferences(raw: unknown): UserPreferences {
+  const parsed = UserPreferencesSchema.safeParse(raw ?? {})
+  return parsed.success ? parsed.data : {}
 }

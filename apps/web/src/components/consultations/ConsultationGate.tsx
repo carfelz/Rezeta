@@ -11,7 +11,7 @@ import {
   SelectableCard,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import type { ProtocolListItem } from '@rezeta/shared'
+import type { ProtocolRecommendation } from '@rezeta/shared'
 
 export interface ConsultationGateProps {
   patientId: string
@@ -19,6 +19,8 @@ export interface ConsultationGateProps {
   locationId: string
   onSelect: (protocolId: string | null) => void
   isCreating: boolean
+  /** When true, all selection actions are blocked (e.g. patient/location not yet picked). */
+  disabled?: boolean
 }
 
 const TYPE_ICON_MAP: Record<string, string> = {
@@ -50,17 +52,18 @@ export function ConsultationGate({
   locationId,
   onSelect,
   isCreating,
+  disabled = false,
 }: ConsultationGateProps): JSX.Element {
+  const blocked = isCreating || disabled
   const [search, setSearch] = useState('')
 
-  const { suggestions, isLoading: loadingSuggestions } = useProtocolSuggestions(true)
+  const { suggestions, isLoading: loadingSuggestions } = useProtocolSuggestions(patientId, true)
   const { useGetProtocols } = useProtocols()
   const { data: allProtocols = [], isLoading: loadingAll } = useGetProtocols({
     status: 'active',
     sort: 'title_asc',
   })
 
-  void patientId
   void locationId
 
   const recent = suggestions.slice(0, 3)
@@ -99,7 +102,7 @@ export function ConsultationGate({
 
       <Caption tone="neutral" size="lg" as="p" className="max-w-[580px] mb-6 block">
         {allProtocols.length === 0
-          ? 'Aún no tienes protocolos configurados para tu clínica. Puedes empezar sin protocolo o instalar uno desde la biblioteca.'
+          ? 'Todavía no tienes protocolos en tu biblioteca. Puedes iniciar la consulta sin guía o instalar uno desde la biblioteca de plantillas.'
           : 'Elige un motivo o protocolo. La consulta se abrirá pre-armada y los campos SOAP se llenarán automáticamente. Tarda 2 segundos.'}
       </Caption>
 
@@ -121,13 +124,13 @@ export function ConsultationGate({
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
-              {recent.map((p, idx) => (
+              {recent.map((p) => (
                 <RecentProtocolCard
-                  key={p.id}
+                  key={p.protocolId}
                   protocol={p}
-                  primary={idx === 0}
-                  isCreating={isCreating}
-                  onSelect={() => onSelect(p.id)}
+                  primary={p.isMostProbable}
+                  isCreating={blocked}
+                  onSelect={() => onSelect(p.protocolId)}
                 />
               ))}
             </div>
@@ -159,7 +162,7 @@ export function ConsultationGate({
                 <SelectableCard
                   key={p.id}
                   density="compact"
-                  disabled={isCreating}
+                  disabled={blocked}
                   onClick={() => onSelect(p.id)}
                 >
                   <i
@@ -189,7 +192,7 @@ export function ConsultationGate({
                 <SelectableCard
                   key={b.name}
                   density="compact"
-                  disabled={isCreating}
+                  disabled={blocked}
                   onClick={() => setSearch(b.name)}
                 >
                   <i className={cn('ph text-[14px] text-n-500', iconForType(b.name))} />
@@ -205,7 +208,7 @@ export function ConsultationGate({
       <DashedButton
         tone="neutral"
         size="md"
-        disabled={isCreating}
+        disabled={blocked}
         onClick={() => onSelect(null)}
         className="!justify-between !gap-3 !px-4"
       >
@@ -232,7 +235,7 @@ function RecentProtocolCard({
   isCreating,
   onSelect,
 }: {
-  protocol: ProtocolListItem
+  protocol: ProtocolRecommendation
   primary: boolean
   isCreating: boolean
   onSelect: () => void
@@ -269,13 +272,17 @@ function RecentProtocolCard({
   )
 }
 
-function formatRecentSubtitle(protocol: ProtocolListItem): string {
-  if (protocol.currentVersionNumber == null) return 'Sin protocolo guía'
-  const updated = new Date(protocol.updatedAt)
-  const monthsAgo = Math.floor((Date.now() - updated.getTime()) / (30 * 24 * 60 * 60 * 1000))
+function formatRecentSubtitle(protocol: ProtocolRecommendation): string {
+  const versionLabel =
+    protocol.currentVersionNumber != null ? ` · v${protocol.currentVersionNumber}` : ''
+  if (!protocol.lastUsedAt || protocol.usageCount === 0) {
+    return `Sin uso previo${versionLabel}`
+  }
+  const last = new Date(protocol.lastUsedAt)
+  const monthsAgo = Math.floor((Date.now() - last.getTime()) / (30 * 24 * 60 * 60 * 1000))
   const ago =
     monthsAgo < 1 ? 'reciente' : monthsAgo === 1 ? 'hace 1 mes' : `hace ${monthsAgo} meses`
-  return `Última: ${ago} · v${protocol.currentVersionNumber}`
+  return `Última: ${ago}${versionLabel}`
 }
 
 function EmptyProtocolsCard(): JSX.Element {
@@ -291,8 +298,7 @@ function EmptyProtocolsCard(): JSX.Element {
         as="p"
         className="max-w-[420px] mx-auto leading-snug mb-4 block"
       >
-        Los protocolos guían tus consultas paso a paso y aceleran la documentación. Dr. García usa
-        2.1 protocolos por paciente en promedio.
+        Los protocolos guían tus consultas paso a paso y aceleran la documentación.
       </Caption>
       <div className="flex items-center justify-center gap-2">
         <Button asChild variant="primary" size="sm">

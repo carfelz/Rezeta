@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AuthUser } from '@rezeta/shared'
+import type { AuthUser, UserPreferences } from '@rezeta/shared'
 import type { AuthSession } from '@/lib/auth'
 import { authClient } from '@/lib/auth'
 
@@ -22,6 +22,8 @@ interface AuthState {
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  /** Replace the cached preferences object on the in-memory user. */
+  setPreferences: (preferences: UserPreferences) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -44,4 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     await authClient.signOut()
   },
+
+  setPreferences: (preferences) =>
+    set((state) => (state.user ? { user: { ...state.user, preferences } } : {})),
 }))

@@ -56,4 +56,16 @@ describe('GroupSectionCard', () => {
     const { container } = render(<GroupSectionCard compact>x</GroupSectionCard>)
     expect(container.querySelector('.px-3.py-2')).toBeInTheDocument()
   })
+
+  it('renders ReactNode title (non-string) as-is', () => {
+    render(
+      <GroupSectionCard title={<em data-testid="custom-title">Custom</em>}>x</GroupSectionCard>,
+    )
+    expect(screen.getByTestId('custom-title')).toBeInTheDocument()
+  })
+
+  it('renders header with only headerActions and no title', () => {
+    render(<GroupSectionCard headerActions={<button>Close</button>}>x</GroupSectionCard>)
+    expect(screen.getByText('Close')).toBeInTheDocument()
+  })
 })

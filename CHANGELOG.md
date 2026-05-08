@@ -4,6 +4,75 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-08] — Page-component splits
+
+### Changed
+
+Each page over 300 lines moved into its own folder with extracted sub-components and helpers. Routes still resolve via `index.tsx` re-exports — `App.tsx` imports unchanged.
+
+- **`apps/web/src/pages/Pacientes/`** (was 735 LOC). Split: `index.tsx` (177), `PatientModal.tsx`, `DeleteConfirmModal.tsx`, `PatientRow.tsx`, `ClinicalHistory.tsx`, `ConsultationListItem.tsx`, `ReadField.tsx`, `helpers.ts`.
+- **`apps/web/src/pages/ProtocolEditor/`** (was 784 LOC). Split: `index.tsx` (337), `EditorHeader.tsx`, `EditorTOC.tsx`, `EditorPalette.tsx`, `HistoryDrawer.tsx`, `PublishModal.tsx`, `DraftBanner.tsx`, `block-factory.ts`, `helpers.ts`.
+- **`apps/web/src/pages/Facturacion/`** (was 733 LOC). Split: `index.tsx` (115), `InvoiceFormModal.tsx`, `InvoiceRow.tsx`, `DeleteConfirmModal.tsx`, `StatusAction.tsx`, `SummaryCards.tsx`, `helpers.ts`.
+- **`apps/web/src/pages/Agenda/`** (was 685 LOC). Split: `index.tsx` (152), `AppointmentFormModal.tsx`, `AppointmentCard.tsx`, `AppointmentCardWithMutation.tsx`, `DeleteConfirmModal.tsx`, `DateNavigation.tsx`, `PatientCombobox.tsx`, `helpers.ts`.
+- **`apps/web/src/pages/Dashboard/`** (was 617 LOC). Split: `index.tsx` (153), `PageHeader.tsx`, `KpiCard.tsx`, `UpcomingAppointments.tsx`, `UpcomingRow.tsx`, `RecentPatients.tsx`, `RecentProtocols.tsx`, `ActivityFeed.tsx`, `ActivityItem.tsx`, `helpers.ts`.
+- **`apps/web/src/pages/Consulta/`** (was 558 LOC). Split: `index.tsx` (312), `Breadcrumb.tsx`, `PageHeader.tsx`, `SignedBanner.tsx`, `AmendmentsBanner.tsx`, `ProtocolBar.tsx`, `ConsultaModals.tsx`, `use-soap-state.ts` (custom hook bundling SOAP form state + autosave), `helpers.ts`.
+- **`apps/web/src/pages/PacienteDetalle/`** (was 454 LOC). Split: `index.tsx` (54), `PageHeader.tsx`, `DemographicsBlock.tsx`, `MedicalInfoBlock.tsx`, `EditModal.tsx`. Reuses `ReadField`, `ClinicalHistory`, `helpers` from `pages/Pacientes/`.
+- **`apps/web/src/pages/BienvenidoPersonalizar/`** (was 314 LOC). Split: `index.tsx` (89), `StepTemplates.tsx`, `StepTypes.tsx`, `StepDots.tsx`, `types.ts`.
+
+No functional changes — every split preserves prior visual + behavior. Helpers extracted to colocated `helpers.ts` files when shared across sub-components in the same folder.
+
+### Tests
+
+- All existing page tests pass unchanged — splits preserved component boundaries that tests were written against.
+- Coverage: 100% per-file across web, ≥95% per-file across API. No threshold regressions.
+
+## [2026-05-08] — Audit handoff prompts 1–10 (consultation gate, refactor, preferences)
+
+### Added
+
+- `packages/shared/src/schemas/user-preferences.ts`: `UserPreferencesSchema` + `UpdateUserPreferencesSchema` Zod definitions; `consultationViewMode: 'soap' | 'canvas'` is the first key.
+- `packages/db/prisma/migrations/20260508000000_add_user_preferences/migration.sql`: adds `users.preferences JSONB DEFAULT '{}'`.
+- `apps/api/src/modules/users/users.controller.ts`: new `GET /v1/users/me/preferences` and `PATCH /v1/users/me/preferences` endpoints (cross-device sync). Auth-guarded; tenant-scoped at the service layer.
+- `apps/api/src/modules/users/users.service.ts`: `getPreferences` and `updatePreferences` (partial-merge semantics).
+- `apps/web/src/lib/format/dates.ts`: centralized Spanish date formatters (`formatDateLong`, `formatBreadcrumbDate`, `formatConsultationOverline`, `formatTimeShort`). Replaces inline `SPANISH_DAYS` / `SPANISH_MONTHS` constants in `ConsultaNueva.tsx` and the `capitalize` Tailwind misuse in `Agenda.tsx` (audit L15 — wrong "De Mayo De" casing).
+- `apps/web/src/lib/consultation/{vitals,usage}.ts`: pure helpers extracted from `Consulta.tsx`.
+- `apps/web/src/components/consultations/`: extracted sub-components — `SaveBadge`, `SectionBlock`, `SoapTextarea`, `VitalInput`, `VitalsSection`, `DiagnosesSection`, `AsideCard`, `SignModal`, `AmendmentModal`, `SoapView`, `ConsultationSidebar`. Each has a colocated test in `__tests__/`.
+- `apps/web/src/lib/strings.ts`: `PROTOCOL_STATUS_LABELS` map + `protocolStatusLabel` helper. Replaces inline English `active` rendering in `Protocolos.tsx` (audit L6).
+
+### Changed
+
+- **Prompt 1 — Gate routing.** `apps/web/src/pages/ConsultaNueva.tsx`: deleted the legacy patient+location picker form; the gate is now the only entry surface. Inline `<Field>` pickers appear above the gate when `patientId`/`locationId` is missing in the URL. Default location auto-resolves to the doctor's first owned location.
+- **Prompt 2 — Atomic consultation creation.** `packages/shared/src/schemas/consultation.ts` adds optional `protocolId` to `CreateConsultationSchema` (omitted from `UpdateConsultationSchema`). `apps/api/src/modules/consultations/consultations.service.ts:create` now wraps consultation insert + `protocolUsage` insert in `prisma.$transaction` when `protocolId` is provided. `apps/web/src/pages/ConsultaNueva.tsx` swaps the two-step `apiClient.post` chain for a single `useCreateConsultation` mutation.
+- **Prompt 2 — Real protocol suggestions.** `apps/web/src/hooks/consultations/use-protocol-suggestions.ts` rewritten to call `GET /v1/patients/:patientId/protocol-suggestions` (the existing `ProtocolRecommendationsModule`) instead of returning generic `useGetProtocols` results. The "Más probable" badge now reads `isMostProbable` from the backend, and "Última: hace N meses" now reads `lastUsedAt` rather than `updatedAt`.
+- **Prompt 3 — Hardcoded names removed.** `ConsultationGate.tsx` empty-state line (`Dr. García usa 2.1 protocolos por paciente en promedio.`) deleted (fake stat). `OffProtocolNote.tsx` reads doctor name from `useAuth()` with a `Doctor(a)` fallback. `_preview/GatePreview.tsx` placeholder updated to `Dr. Demo`.
+- **Prompt 4 — Sticky right rail.** `Consulta.tsx` page-level layout now hosts a sticky `<aside className="sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto">` containing the new `ConsultationSidebar`. The rail renders alongside both `<SoapView>` and `<CanvasView>` — fixes audit L7 (rail disappears on scroll) and L8 (rail vanishes in canvas mode).
+- **Prompt 5 — Sub-component extraction.** `Consulta.tsx` shrinks from 1207 → ~545 lines. The duplicate inline `ProtocolPickerModal` is gone; the standalone `apps/web/src/components/protocols/ProtocolPickerModal.tsx` gains optional `excludeIds` and `isPending` props and is now the only implementation.
+- **Prompt 6 — User preferences.** Schema gains `User.preferences JSONB`. `AuthUser` (in `packages/shared/src/types/auth.ts`) carries `preferences: UserPreferences`; `auth.guard.ts` and `auth.service.toAuthUser` populate it. `apps/web/src/store/auth.store.ts` gains `setPreferences` action. `apps/web/src/hooks/consultations/use-consultation-view-mode.ts` reads `user.preferences.consultationViewMode` first, falls back to localStorage during initial render, and PATCHes through to `/v1/users/me/preferences` on change.
+- **Prompt 7 — CLAUDE.md.** Removed "protocol-to-consultation integration" from the deferred-features list. Added an "In progress (Hybrid redesign)" line referencing `protocol-in-consultation-spec.md`. Imported `specs/remaining-mvp-slices.md` in the imports section.
+- **Prompt 8 — Status i18n.** `Protocolos.tsx` renders `protocolStatusLabel(protocol.status)` (returns `activo`/`borrador`/`archivado`).
+- **Prompt 9 — Publish v1.** `ProtocolEditor.tsx`: button reads `Publicar v1` for protocols with `status === 'draft'` (never published) instead of the misleading `Publicar v2`. Once `status === 'active'` the label resumes `Publicar v(N+1)`.
+- **Prompt 10A — MissingFieldsPanel.** Empty header strip artifact fixed by passing a `title` along with `headerActions` (close ×).
+- **Prompt 10C — Patient row click.** `Pacientes.tsx` `<tr>` now responds to clicks/Enter/Space and navigates to the patient detail; explicit Ver/Editar/Eliminar action icons keep their handlers via event-target check.
+- **Prompt 10E — Sidebar nav highlight.** `Sidebar.tsx` `NavItem` gains `alsoActiveOn: string[]`. `/pacientes` is now also active when the route starts with `/consultas`.
+- **Prompt 10F — Date formatting.** `Agenda.tsx` `formatDate` delegates to `formatDateLong` and capitalizes only the first letter (proper Spanish convention; fixes "Jueves, 7 De Mayo De 2026" → "Jueves, 7 de mayo de 2026").
+- **Prompt 10G — Empty-state copy.** Gate empty state rewritten: "Todavía no tienes protocolos en tu biblioteca. Puedes iniciar la consulta sin guía o instalar uno desde la biblioteca de plantillas."
+
+### Tests
+
+- API `apps/api/src/modules/consultations/__tests__/consultations.service.spec.ts`: atomic-create describe block — happy path runs `$transaction`, rollback test (protocol-usage insert throws → no `findById`), `PROTOCOL_NOT_FOUND` and `PROTOCOL_HAS_NO_ACTIVE_VERSION` rejection branches.
+- API `apps/api/src/modules/users/__tests__/users.{service,controller}.spec.ts`: `getPreferences`/`updatePreferences` happy paths, malformed-preferences fallback, missing/null preferences fallback, controller delegations.
+- Web hook tests rewritten: `use-protocol-suggestions.test.ts` covers the new endpoint, `MAX_SUGGESTIONS` cap, disabled/null-patient skips fetch, per-patient query independence. `use-consultation-view-mode.test.ts` adds server-preference reconciliation, PATCH-on-set with user, no-PATCH without user.
+- Component tests: `SaveBadge`, `SoapTextarea`, `DiagnosesSection`, `VitalInput`, `VitalsSection`, `AsideCard`, `SectionBlock`. `OffProtocolNote.test.tsx` updated for `Doctor(a)` fallback name.
+- Date helpers: `apps/web/src/lib/format/__tests__/dates.test.ts` covers all Spanish formatters incl. midnight/noon and AM/PM edges.
+- `apps/web/src/lib/consultation/__tests__/{vitals,usage}.test.ts`: pure-helper coverage including null-content branch.
+- Store: `auth.store.test.ts` adds `setPreferences` covering both with-user and null-user branches.
+- Strings: `apps/web/src/lib/__tests__/strings.test.ts` adds `protocolStatusLabel` map + fallback.
+- GroupSectionCard: tests for ReactNode title and headerActions-only header path.
+
+### Coverage
+
+- All packages remain ≥95% per-file across statements/branches/functions/lines.
+
 ## [2026-05-07] — Phase 8 follow-ups (C1 squash, M5 sequel, H6 raise, L3 enforce)
 
 ### Added

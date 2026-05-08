@@ -52,11 +52,19 @@ export function MissingFieldsPanel({
     <GroupSectionCard
       label={`Faltantes (${fields.length})`}
       tone="danger"
-      headerActions={
-        onDismiss ? (
-          <IconButton icon="ph ph-x" aria-label="Cerrar panel" tone="neutral" onClick={onDismiss} />
-        ) : undefined
-      }
+      {...(onDismiss
+        ? {
+            title: 'Campos requeridos',
+            headerActions: (
+              <IconButton
+                icon="ph ph-x"
+                aria-label="Cerrar panel"
+                tone="neutral"
+                onClick={onDismiss}
+              />
+            ),
+          }
+        : {})}
     >
       <div className="divide-y divide-n-100">
         {fields.map((field) => (

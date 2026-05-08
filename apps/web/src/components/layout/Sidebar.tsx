@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
@@ -8,6 +8,8 @@ interface NavItem {
   icon: string
   label: string
   count?: number
+  /** Extra path prefixes that should also mark this item active. */
+  alsoActiveOn?: string[]
 }
 
 const NAV_HOY: NavItem[] = [
@@ -16,7 +18,7 @@ const NAV_HOY: NavItem[] = [
 ]
 
 const NAV_CLINICO: NavItem[] = [
-  { to: '/pacientes', icon: 'user', label: 'Pacientes' },
+  { to: '/pacientes', icon: 'user', label: 'Pacientes', alsoActiveOn: ['/consultas'] },
   { to: '/protocolos', icon: 'stack', label: 'Protocolos' },
 ]
 
@@ -41,42 +43,50 @@ interface NavGroupProps {
 }
 
 function NavGroup({ label, items }: NavGroupProps): JSX.Element {
+  const { pathname } = useLocation()
   return (
     <div className="mb-4">
       <Overline tone="neutral" size="sm" className="block px-5 mb-1">
         {label}
       </Overline>
-      {items.map(({ to, icon, label: itemLabel, count }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) =>
-            cn(
-              'relative flex items-center gap-3 px-5 py-[7px] text-[13px] font-sans transition-colors duration-[100ms]',
-              isActive
-                ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-[2px] before:bg-p-500 before:rounded-sm'
-                : 'text-n-600 hover:bg-n-50 hover:text-n-800',
-            )
-          }
-        >
-          {({ isActive }): JSX.Element => (
-            <>
-              <i
-                className={cn(
-                  isActive ? 'ph-fill' : 'ph',
-                  `ph-${icon}`,
-                  'text-[16px] shrink-0',
-                  isActive ? 'text-p-500' : 'text-n-500',
-                )}
-              />
-              <span className="flex-1">{itemLabel}</span>
-              {count !== undefined && (
-                <span className="text-[11px] font-mono text-n-400">{count}</span>
-              )}
-            </>
-          )}
-        </NavLink>
-      ))}
+      {items.map(({ to, icon, label: itemLabel, count, alsoActiveOn }) => {
+        const matchesExtraRoute = (alsoActiveOn ?? []).some((prefix) => pathname.startsWith(prefix))
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => {
+              const active = isActive || matchesExtraRoute
+              return cn(
+                'relative flex items-center gap-3 px-5 py-[7px] text-[13px] font-sans transition-colors duration-[100ms]',
+                active
+                  ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-[2px] before:bg-p-500 before:rounded-sm'
+                  : 'text-n-600 hover:bg-n-50 hover:text-n-800',
+              )
+            }}
+          >
+            {({ isActive }): JSX.Element => {
+              const active = isActive || matchesExtraRoute
+              return (
+                <>
+                  <i
+                    className={cn(
+                      active ? 'ph-fill' : 'ph',
+                      `ph-${icon}`,
+                      'text-[16px] shrink-0',
+                      active ? 'text-p-500' : 'text-n-500',
+                    )}
+                  />
+                  <span className="flex-1">{itemLabel}</span>
+                  {count !== undefined && (
+                    <span className="text-[11px] font-mono text-n-400">{count}</span>
+                  )}
+                </>
+              )
+            }}
+          </NavLink>
+        )
+      })}
     </div>
   )
 }

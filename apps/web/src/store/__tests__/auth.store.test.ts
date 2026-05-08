@@ -83,4 +83,31 @@ describe('useAuthStore — internal setters', () => {
     act(() => result.current._setStatus('unauthenticated'))
     expect(result.current.status).toBe('unauthenticated')
   })
+
+  it('setPreferences updates preferences when user exists', () => {
+    const { result } = renderHook(() => useAuthStore())
+    act(() =>
+      result.current._setUser({
+        id: 'u',
+        externalUid: 'f',
+        tenantId: 't',
+        email: 'e@e.com',
+        fullName: null,
+        role: 'owner',
+        specialty: null,
+        licenseNumber: null,
+        tenantSeededAt: null,
+        preferences: {},
+      }),
+    )
+    act(() => result.current.setPreferences({ consultationViewMode: 'canvas' }))
+    expect(result.current.user?.preferences.consultationViewMode).toBe('canvas')
+  })
+
+  it('setPreferences is a no-op when user is null', () => {
+    const { result } = renderHook(() => useAuthStore())
+    act(() => result.current._setUser(null))
+    act(() => result.current.setPreferences({ consultationViewMode: 'canvas' }))
+    expect(result.current.user).toBeNull()
+  })
 })

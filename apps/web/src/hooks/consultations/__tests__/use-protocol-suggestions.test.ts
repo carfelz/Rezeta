@@ -1,67 +1,82 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+import { createElement } from 'react'
 
-const mockUseGetProtocols = vi.fn()
-
-vi.mock('@/hooks/protocols/use-protocols', () => ({
-  useProtocols: () => ({
-    useGetProtocols: mockUseGetProtocols,
-  }),
+const mockGet = vi.fn()
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    get: (url: string) => mockGet(url),
+  },
 }))
 
 import { useProtocolSuggestions } from '../use-protocol-suggestions'
+import type { ProtocolRecommendation } from '@rezeta/shared'
 
-const FIVE_PROTOCOLS = Array.from({ length: 5 }).map((_, i) => ({
-  id: `p-${i}`,
-  title: `Protocolo ${i}`,
-  typeId: 't',
-  typeName: 'Diag',
-  status: 'active',
-  isFavorite: false,
-  updatedAt: new Date().toISOString(),
-  currentVersionNumber: 1,
-}))
+function makeRec(overrides: Partial<ProtocolRecommendation> = {}): ProtocolRecommendation {
+  return {
+    protocolId: 'proto-1',
+    title: 'HTA — Seguimiento',
+    typeId: 'type-1',
+    typeName: 'Cardiovascular',
+    currentVersionNumber: 2,
+    lastUsedAt: new Date().toISOString(),
+    usageCount: 1,
+    isMostProbable: false,
+    ...overrides,
+  }
+}
+
+function wrapper(): { wrapper: ({ children }: { children: ReactNode }) => JSX.Element } {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return {
+    wrapper: ({ children }) => createElement(QueryClientProvider, { client: qc }, children),
+  }
+}
 
 describe('useProtocolSuggestions', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns up to 4 suggestions when enabled', () => {
-    mockUseGetProtocols.mockReturnValue({ data: FIVE_PROTOCOLS, isLoading: false })
-    const { result } = renderHook(() => useProtocolSuggestions(true))
+  it('calls /v1/patients/:patientId/protocol-suggestions when enabled with a patientId', async () => {
+    mockGet.mockResolvedValue([makeRec({ protocolId: 'p-1' }), makeRec({ protocolId: 'p-2' })])
+    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', true), wrapper())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(mockGet).toHaveBeenCalledWith('/v1/patients/patient-abc/protocol-suggestions?limit=4')
+    expect(result.current.suggestions).toHaveLength(2)
+  })
+
+  it('returns at most MAX_SUGGESTIONS (4)', async () => {
+    mockGet.mockResolvedValue(
+      Array.from({ length: 6 }).map((_, i) => makeRec({ protocolId: `p-${i}` })),
+    )
+    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', true), wrapper())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.suggestions).toHaveLength(4)
-    expect(result.current.suggestions[0]?.id).toBe('p-0')
   })
 
-  it('returns empty when disabled', () => {
-    mockUseGetProtocols.mockReturnValue({ data: FIVE_PROTOCOLS, isLoading: false })
-    const { result } = renderHook(() => useProtocolSuggestions(false))
+  it('returns empty when disabled', async () => {
+    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', false), wrapper())
     expect(result.current.suggestions).toEqual([])
+    expect(mockGet).not.toHaveBeenCalled()
   })
 
-  it('isLoading=true while fetch in flight when enabled', () => {
-    mockUseGetProtocols.mockReturnValue({ data: [], isLoading: true })
-    const { result } = renderHook(() => useProtocolSuggestions(true))
-    expect(result.current.isLoading).toBe(true)
+  it('returns empty and skips fetch when patientId is null', () => {
+    const { result } = renderHook(() => useProtocolSuggestions(null, true), wrapper())
+    expect(result.current.suggestions).toEqual([])
+    expect(mockGet).not.toHaveBeenCalled()
   })
 
-  it('isLoading=false when disabled even if hook reports loading', () => {
-    mockUseGetProtocols.mockReturnValue({ data: [], isLoading: true })
-    const { result } = renderHook(() => useProtocolSuggestions(false))
-    expect(result.current.isLoading).toBe(false)
-  })
-
-  it('passes status=active and sort=updatedAt_desc filters', () => {
-    mockUseGetProtocols.mockReturnValue({ data: [], isLoading: false })
-    renderHook(() => useProtocolSuggestions(true))
-    expect(mockUseGetProtocols).toHaveBeenCalledWith({
-      status: 'active',
-      sort: 'updatedAt_desc',
+  it('different patientIds produce independent queries', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('patient-A')) return Promise.resolve([makeRec({ protocolId: 'A1' })])
+      return Promise.resolve([makeRec({ protocolId: 'B1' })])
     })
-  })
-
-  it('returns fewer than 4 when only fewer protocols exist', () => {
-    mockUseGetProtocols.mockReturnValue({ data: [FIVE_PROTOCOLS[0]], isLoading: false })
-    const { result } = renderHook(() => useProtocolSuggestions(true))
-    expect(result.current.suggestions).toHaveLength(1)
+    const { result: rA } = renderHook(() => useProtocolSuggestions('patient-A', true), wrapper())
+    const { result: rB } = renderHook(() => useProtocolSuggestions('patient-B', true), wrapper())
+    await waitFor(() => expect(rA.current.isLoading).toBe(false))
+    await waitFor(() => expect(rB.current.isLoading).toBe(false))
+    expect(rA.current.suggestions[0]?.protocolId).toBe('A1')
+    expect(rB.current.suggestions[0]?.protocolId).toBe('B1')
   })
 })

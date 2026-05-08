@@ -1,0 +1,341 @@
+import { useState, useRef, useEffect } from 'react'
+import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
+import { AddBlockButton } from '@/components/ui'
+import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
+import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
+import { useProtocols } from '@/hooks/protocols/use-protocols'
+import { strings } from '@/lib/strings'
+import {
+  useEditorStore,
+  extractRequiredBlockIds,
+  saveLocalDraft,
+  loadLocalDraft,
+  clearLocalDraft,
+} from '@/store/editor.store'
+import { makeBlock, makeSectionBlock } from './block-factory'
+import { countBlockStats } from './helpers'
+import { DraftBanner } from './DraftBanner'
+import { EditorHeader } from './EditorHeader'
+import { EditorTOC } from './EditorTOC'
+import { EditorPalette } from './EditorPalette'
+import { HistoryDrawer } from './HistoryDrawer'
+import { PublishModal } from './PublishModal'
+
+export function ProtocolEditor(): JSX.Element {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+
+  const {
+    useGetProtocol,
+    useRenameProtocol,
+    useSaveVersion,
+    useGetVersionHistory,
+    useGetVersion,
+    useRestoreVersion,
+  } = useProtocols()
+  const { data: protocol, isLoading, error } = useGetProtocol(id ?? '')
+  const { mutate: rename, isPending: isRenaming } = useRenameProtocol(id ?? '')
+  const { mutate: saveVersion, isPending: isSaving } = useSaveVersion(id ?? '')
+
+  const { blocks, isDirty, initEditor, insertBlock, markSaved, resetEditor } = useEditorStore()
+  const selectedBlockId = useEditorStore((s) => s.selectedBlockId)
+
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
+  const [publishModalOpen, setPublishModalOpen] = useState(false)
+  const [changeSummary, setChangeSummary] = useState('')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [draftBanner, setDraftBanner] = useState<{
+    blocks: ProtocolBlock[]
+    savedAt: number
+  } | null>(null)
+
+  const { data: versionHistory, isLoading: historyLoading } = useGetVersionHistory(id ?? '')
+  const { data: selectedVersion, isLoading: versionPreviewLoading } = useGetVersion(
+    id ?? '',
+    selectedVersionId,
+  )
+  const { mutate: restoreVersion, isPending: isRestoring } = useRestoreVersion(id ?? '')
+
+  // ── Initialize editor ───────────────────────────────────────────────────
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (!protocol || initialized.current) return
+    initialized.current = true
+
+    const serverBlocks = (protocol.currentVersion?.content?.blocks ?? []) as ProtocolBlock[]
+    const requiredIds = extractRequiredBlockIds(protocol.templateSchema)
+
+    const draft = id ? loadLocalDraft(id) : null
+    if (draft) setDraftBanner(draft)
+    initEditor(id!, serverBlocks, requiredIds)
+
+    return () => {
+      resetEditor()
+      initialized.current = false
+    }
+  }, [protocol?.id])
+
+  // ── Autosave ────────────────────────────────────────────────────────────
+  const blocksRef = useRef(blocks)
+  blocksRef.current = blocks
+  const isDirtyRef = useRef(isDirty)
+  isDirtyRef.current = isDirty
+
+  useEffect(() => {
+    if (!id) return
+    const interval = setInterval(() => {
+      if (isDirtyRef.current) saveLocalDraft(id, blocksRef.current)
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [id])
+
+  // ── Navigation guard ────────────────────────────────────────────────────
+  const blocker = useBlocker(isDirty)
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      if (window.confirm(strings.EDITOR_NAVIGATE_AWAY)) blocker.proceed()
+      else blocker.reset()
+    }
+  }, [blocker])
+
+  if (!id) {
+    void navigate('/protocolos', { replace: true })
+    return <></>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[256px]">
+        <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
+      </div>
+    )
+  }
+
+  if (error || !protocol) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
+        <p className="text-[14px] font-sans text-n-600">{strings.VIEWER_NOT_FOUND}</p>
+        <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
+          ← {strings.EDITOR_BACK}
+        </Link>
+      </div>
+    )
+  }
+
+  const protocolTitle = protocol.title
+  const protocolTemplateSchema: unknown = protocol.templateSchema
+  const versionNumber = protocol.currentVersion?.versionNumber ?? 1
+  const hasBeenPublished = protocol.status === 'active'
+  const nextPublishVersion = hasBeenPublished ? versionNumber + 1 : 1
+  const { total: totalBlocks, sections: sectionCount } = countBlockStats(blocks)
+  const topLevelSections = blocks.filter(
+    (b): b is Extract<ProtocolBlock, { type: 'section' }> => b.type === 'section',
+  )
+
+  // ── Title editing ───────────────────────────────────────────────────────
+  const startEditing = (): void => {
+    setTitleDraft(protocolTitle)
+    setEditingTitle(true)
+  }
+  const commitTitle = (): void => {
+    const trimmed = titleDraft.trim()
+    if (trimmed.length >= 2 && trimmed !== protocolTitle) rename({ title: trimmed })
+    setEditingTitle(false)
+  }
+
+  // ── Save helpers ────────────────────────────────────────────────────────
+  const buildContent = (): {
+    version: string
+    template_version: string
+    blocks: ProtocolBlock[]
+  } => ({
+    version: '1.0',
+    template_version: '1.0',
+    blocks,
+  })
+
+  const handleSaveDraft = (): void => {
+    saveVersion(
+      { content: buildContent(), changeSummary: null, publish: false },
+      {
+        onSuccess: () => {
+          markSaved()
+          if (id) clearLocalDraft(id)
+        },
+      },
+    )
+  }
+
+  const handlePublishConfirm = (): void => {
+    saveVersion(
+      { content: buildContent(), changeSummary: changeSummary.trim() || null, publish: true },
+      {
+        onSuccess: () => {
+          setPublishModalOpen(false)
+          setChangeSummary('')
+          markSaved()
+          if (id) clearLocalDraft(id)
+        },
+      },
+    )
+  }
+
+  // ── Draft banner ────────────────────────────────────────────────────────
+  const applyDraft = (): void => {
+    if (!draftBanner || !id) return
+    const requiredIds = extractRequiredBlockIds(protocolTemplateSchema)
+    initEditor(id, draftBanner.blocks, requiredIds)
+    setDraftBanner(null)
+  }
+
+  const discardDraft = (): void => {
+    if (id) clearLocalDraft(id)
+    setDraftBanner(null)
+  }
+
+  // ── Palette click ───────────────────────────────────────────────────────
+  const handlePaletteClick = (type: string): void => {
+    if (type === 'section') {
+      const sectionBlock = makeSectionBlock()
+      const topLevelMatch = blocks.findIndex((b) => b.id === selectedBlockId)
+      if (topLevelMatch !== -1) {
+        insertBlock(sectionBlock, selectedBlockId)
+      } else {
+        let parentSectionId: string | null = null
+        for (const b of blocks) {
+          if (b.type === 'section' && b.blocks.some((child) => child.id === selectedBlockId)) {
+            parentSectionId = b.id
+            break
+          }
+        }
+        insertBlock(sectionBlock, parentSectionId)
+      }
+      return
+    }
+    const newBlock = makeBlock(type)
+    if (!newBlock) return
+    insertBlock(newBlock, selectedBlockId)
+  }
+
+  const scrollToSection = (sectionId: string): void => {
+    const el = document.getElementById(`section-${sectionId}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleRestore = (): void => {
+    if (!selectedVersionId) return
+    restoreVersion(selectedVersionId, {
+      onSuccess: () => {
+        setHistoryOpen(false)
+        setSelectedVersionId(null)
+      },
+    })
+  }
+
+  return (
+    <div>
+      {draftBanner && <DraftBanner onUse={applyDraft} onDiscard={discardDraft} />}
+
+      <div className="flex items-center gap-2 text-[13px] font-sans text-n-500 mb-5">
+        <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-[100ms]">
+          {strings.EDITOR_BACK}
+        </Link>
+        <i className="ph ph-caret-right text-[11px] text-n-300" />
+        <span className="text-n-700 font-medium truncate">{protocol.title}</span>
+        <span className="font-mono text-n-400 shrink-0">
+          · {strings.EDITOR_VERSION(versionNumber)}
+        </span>
+      </div>
+
+      <EditorHeader
+        title={protocol.title}
+        typeName={protocol.typeName}
+        updatedAt={protocol.updatedAt}
+        totalBlocks={totalBlocks}
+        sectionCount={sectionCount}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        isRenaming={isRenaming}
+        editingTitle={editingTitle}
+        titleDraft={titleDraft}
+        onTitleDraftChange={setTitleDraft}
+        onStartEditing={startEditing}
+        onCommitTitle={commitTitle}
+        onCancelTitleEdit={() => setEditingTitle(false)}
+        nextPublishVersion={nextPublishVersion}
+        onPreview={() => void navigate(`/protocolos/${id}`)}
+        onSaveDraft={handleSaveDraft}
+        onPublishClick={() => setPublishModalOpen(true)}
+      />
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '220px 1fr 260px',
+          gap: '20px',
+          alignItems: 'start',
+        }}
+      >
+        <EditorTOC sections={topLevelSections} onSectionClick={scrollToSection} />
+
+        <div>
+          {blocks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <i className="ph ph-file-text text-[36px] text-n-300" />
+              <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
+                {strings.VIEWER_NO_CONTENT}
+              </p>
+            </div>
+          ) : (
+            blocks.map((block, idx) => (
+              <EditorBlockRenderer
+                key={block.id}
+                block={block}
+                isFirst={idx === 0}
+                isLast={idx === blocks.length - 1}
+              />
+            ))
+          )}
+
+          <AddBlockButton
+            onClick={() => handlePaletteClick('section')}
+            label={strings.EDITOR_ADD_BLOCK_FOOTER}
+          />
+        </div>
+
+        <EditorPalette
+          onPaletteClick={handlePaletteClick}
+          versionHistory={versionHistory}
+          historyLoading={historyLoading}
+          onShowFullHistory={() => setHistoryOpen(true)}
+        />
+      </div>
+
+      {historyOpen && (
+        <HistoryDrawer
+          versionHistory={versionHistory}
+          historyLoading={historyLoading}
+          selectedVersionId={selectedVersionId}
+          selectedVersion={selectedVersion}
+          versionPreviewLoading={versionPreviewLoading}
+          onSelectVersion={setSelectedVersionId}
+          onClose={() => setHistoryOpen(false)}
+          onRestore={handleRestore}
+          isRestoring={isRestoring}
+        />
+      )}
+
+      <PublishModal
+        open={publishModalOpen}
+        changeSummary={changeSummary}
+        onChangeSummary={setChangeSummary}
+        onClose={() => setPublishModalOpen(false)}
+        onConfirm={handlePublishConfirm}
+        isSaving={isSaving}
+        nextPublishVersion={nextPublishVersion}
+      />
+    </div>
+  )
+}

@@ -151,7 +151,8 @@
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes reset it\" pnpm prisma migrate reset --force --skip-seed)",
       "Bash(awk '/conditional-rule-evaluator\\\\.ts/')",
       "Bash(awk '/filters/')",
-      "Bash(awk '/auth\\\\/firebase|provider\\\\.ts/' /tmp/cov.txt)"
+      "Bash(awk '/auth\\\\/firebase|provider\\\\.ts/' /tmp/cov.txt)",
+      "Bash(xargs -n1 basename)"
     ]
   }
 }

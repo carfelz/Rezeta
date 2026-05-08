@@ -16,21 +16,29 @@ interface ProtocolPickerModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (protocol: ProtocolListItem) => void
+  /** Optional protocol IDs to exclude from the picker (e.g. already attached). */
+  excludeIds?: string[]
+  isPending?: boolean
 }
 
 export function ProtocolPickerModal({
   open,
   onOpenChange,
   onSelect,
+  excludeIds = [],
+  isPending = false,
 }: ProtocolPickerModalProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { useGetProtocols } = useProtocols()
   const { data: protocols = [], isLoading } = useGetProtocols({ status: 'active' })
 
-  const filtered = search.trim()
-    ? protocols.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
+  const visible = excludeIds.length
+    ? protocols.filter((p) => !excludeIds.includes(p.id))
     : protocols
+  const filtered = search.trim()
+    ? visible.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
+    : visible
 
   const selectedProtocol = filtered.find((p) => p.id === selectedId) ?? null
 
@@ -110,8 +118,13 @@ export function ProtocolPickerModal({
           <Button variant="secondary" size="md" onClick={() => handleOpenChange(false)}>
             Cancelar
           </Button>
-          <Button variant="primary" size="md" disabled={!selectedProtocol} onClick={handleConfirm}>
-            Aplicar protocolo
+          <Button
+            variant="primary"
+            size="md"
+            disabled={!selectedProtocol || isPending}
+            onClick={handleConfirm}
+          >
+            {isPending ? 'Aplicando…' : 'Aplicar protocolo'}
           </Button>
         </Row>
       </ModalContent>

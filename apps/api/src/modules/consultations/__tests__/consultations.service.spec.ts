@@ -96,6 +96,7 @@ describe('ConsultationsService', () => {
       protocol: { findFirst: vi.fn() },
       protocolVersion: { findFirst: vi.fn() },
       auditLog: { create: vi.fn() },
+      $transaction: vi.fn(),
     } as unknown as PrismaService
 
     invoicesSvc = {
@@ -141,7 +142,7 @@ describe('ConsultationsService', () => {
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    it('delegates to repository', async () => {
+    it('delegates to repository when no protocolId', async () => {
       const c = mockConsultation()
       vi.mocked(repo.create).mockResolvedValue(c)
       const result = await service.create('tenant-1', 'user-1', {
@@ -150,6 +151,101 @@ describe('ConsultationsService', () => {
         diagnoses: [],
       })
       expect(result).toEqual(c)
+      expect(repo.create).toHaveBeenCalledTimes(1)
+    })
+
+    describe('with protocolId (atomic)', () => {
+      function setProtocolValid(): void {
+        vi.mocked(prisma.protocol.findFirst).mockResolvedValue({
+          currentVersionId: 'version-1',
+        } as never)
+        vi.mocked(prisma.protocolVersion.findFirst).mockResolvedValue({
+          id: 'version-1',
+          content: { version: '1.0', blocks: [] },
+        } as never)
+      }
+
+      it('runs consultation insert + protocol-usage insert inside a single transaction', async () => {
+        setProtocolValid()
+        const txClient = {
+          consultation: { create: vi.fn().mockResolvedValue({ id: 'consult-1' }) },
+          protocolUsage: { create: vi.fn().mockResolvedValue({ id: 'usage-1' }) },
+        }
+        vi.mocked(prisma.$transaction).mockImplementation(async (cb: unknown) =>
+          (cb as (tx: typeof txClient) => Promise<string>)(txClient),
+        )
+        const c = mockConsultation()
+        vi.mocked(repo.findById).mockResolvedValue(c)
+
+        const result = await service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          diagnoses: [],
+          protocolId: '00000000-0000-0000-0000-000000000001',
+        })
+
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(txClient.consultation.create).toHaveBeenCalledTimes(1)
+        expect(txClient.protocolUsage.create).toHaveBeenCalledTimes(1)
+        expect(result).toEqual(c)
+      })
+
+      it('rolls back when protocol-usage insert fails — returns no result, no findById', async () => {
+        setProtocolValid()
+        const txClient = {
+          consultation: { create: vi.fn().mockResolvedValue({ id: 'consult-1' }) },
+          protocolUsage: {
+            create: vi.fn().mockRejectedValue(new Error('FK violation')),
+          },
+        }
+        vi.mocked(prisma.$transaction).mockImplementation(async (cb: unknown) =>
+          (cb as (tx: typeof txClient) => Promise<string>)(txClient),
+        )
+
+        await expect(
+          service.create('tenant-1', 'user-1', {
+            patientId: 'p-1',
+            locationId: 'l-1',
+            diagnoses: [],
+            protocolId: '00000000-0000-0000-0000-000000000001',
+          }),
+        ).rejects.toThrow('FK violation')
+        expect(repo.findById).not.toHaveBeenCalled()
+      })
+
+      it('throws PROTOCOL_NOT_FOUND when protocol missing', async () => {
+        vi.mocked(prisma.protocol.findFirst).mockResolvedValue(null as never)
+        await expect(
+          service.create('tenant-1', 'user-1', {
+            patientId: 'p-1',
+            locationId: 'l-1',
+            diagnoses: [],
+            protocolId: '00000000-0000-0000-0000-000000000001',
+          }),
+        ).rejects.toMatchObject({
+          response: expect.objectContaining({ code: ErrorCode.PROTOCOL_NOT_FOUND }),
+        })
+        expect(prisma.$transaction).not.toHaveBeenCalled()
+      })
+
+      it('throws PROTOCOL_HAS_NO_ACTIVE_VERSION when currentVersionId is null', async () => {
+        vi.mocked(prisma.protocol.findFirst).mockResolvedValue({
+          currentVersionId: null,
+        } as never)
+        await expect(
+          service.create('tenant-1', 'user-1', {
+            patientId: 'p-1',
+            locationId: 'l-1',
+            diagnoses: [],
+            protocolId: '00000000-0000-0000-0000-000000000001',
+          }),
+        ).rejects.toMatchObject({
+          response: expect.objectContaining({
+            code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
+          }),
+        })
+        expect(prisma.$transaction).not.toHaveBeenCalled()
+      })
     })
   })
 

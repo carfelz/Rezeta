@@ -1,3 +1,5 @@
+import type { UserPreferences } from '../schemas/user-preferences.js'
+
 export type UserRole = 'owner' | 'doctor'
 
 export interface AuthUser {
@@ -11,6 +13,7 @@ export interface AuthUser {
   licenseNumber: string | null
   tenantSeededAt: string | null // ISO string; null means onboarding not yet complete
   tenantPlan?: string
+  preferences: UserPreferences
 }
 
 export interface Tenant {

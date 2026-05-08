@@ -94,6 +94,9 @@ export const strings = {
   PROTOCOLS_SORT_TITLE_DESC: 'Z → A',
   PROTOCOLS_FAVORITE_ADD: 'Añadir a favoritos',
   PROTOCOLS_FAVORITE_REMOVE: 'Quitar de favoritos',
+  PROTOCOLS_STATUS_ACTIVE: 'activo',
+  PROTOCOLS_STATUS_DRAFT: 'borrador',
+  PROTOCOLS_STATUS_ARCHIVED: 'archivado',
 
   // ── Protocols — Type Picker ───────────────────────────────────────────────
   TYPE_PICKER_TITLE: 'Nuevo protocolo',
@@ -384,6 +387,23 @@ export const strings = {
   VIEWER_LOADING: 'Cargando protocolo...',
   VIEWER_NOT_FOUND: 'Protocolo no encontrado.',
 } as const
+
+/**
+ * Spanish labels for protocol status values. Single source of truth — every
+ * surface that renders a status string should look it up here.
+ */
+export const PROTOCOL_STATUS_LABELS: Record<'active' | 'draft' | 'archived', string> = {
+  active: strings.PROTOCOLS_STATUS_ACTIVE,
+  draft: strings.PROTOCOLS_STATUS_DRAFT,
+  archived: strings.PROTOCOLS_STATUS_ARCHIVED,
+}
+
+export function protocolStatusLabel(status: string): string {
+  if (status === 'active' || status === 'draft' || status === 'archived') {
+    return PROTOCOL_STATUS_LABELS[status]
+  }
+  return status
+}
 
 /**
  * Map a Firebase error code to a human-readable Spanish message.

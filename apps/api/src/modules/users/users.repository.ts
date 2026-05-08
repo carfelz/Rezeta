@@ -1,6 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common'
-import { PrismaService } from '../../lib/prisma.service.js'
+import { Prisma } from '@rezeta/db'
 import type { User } from '@rezeta/db'
+import type { UserPreferences } from '@rezeta/shared'
+import { PrismaService } from '../../lib/prisma.service.js'
 import type { VerifiedToken } from '../../lib/auth/index.js'
 
 export type UserWithTenant = User & { tenant: { seededAt: Date | null; plan: string } }
@@ -16,6 +18,19 @@ export class UsersRepository {
   async findById(id: string, tenantId: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: { id, tenantId, deletedAt: null },
+    })
+  }
+
+  async updatePreferences(
+    id: string,
+    tenantId: string,
+    preferences: UserPreferences,
+  ): Promise<void> {
+    // Tenant filter on updateMany guards against cross-tenant writes — even
+    // though the service has already verified ownership.
+    await this.prisma.user.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data: { preferences: preferences as Prisma.InputJsonValue },
     })
   }
 

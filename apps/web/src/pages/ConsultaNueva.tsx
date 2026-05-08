@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useCreateConsultation,
@@ -6,10 +6,10 @@ import {
 } from '@/hooks/consultations/use-consultations'
 import { useLocations } from '@/hooks/locations/use-locations'
 import { usePatients } from '@/hooks/patients/use-patients'
+import { useAuth } from '@/hooks/use-auth'
 import { ConsultHeader } from '@/components/consultations/ConsultHeader'
 import { ConsultationGate } from '@/components/consultations/ConsultationGate'
 import { ResumeBanner } from '@/components/consultations/ResumeBanner'
-import { apiClient } from '@/lib/api-client'
 import {
   Button,
   Field,
@@ -19,53 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui'
-
-const SPANISH_DAYS = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO']
-const SPANISH_MONTHS = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-]
-const SPANISH_MONTHS_SHORT = [
-  'ene',
-  'feb',
-  'mar',
-  'abr',
-  'may',
-  'jun',
-  'jul',
-  'ago',
-  'sep',
-  'oct',
-  'nov',
-  'dic',
-]
-
-function formatHeader(now: Date, locationName: string): string {
-  const day = SPANISH_DAYS[now.getDay()] ?? ''
-  const date = now.getDate()
-  const month = (SPANISH_MONTHS[now.getMonth()] ?? '').toUpperCase()
-  const year = now.getFullYear()
-  let h = now.getHours()
-  const min = now.getMinutes()
-  const isPm = h >= 12
-  h = h % 12 || 12
-  const time = `${h}:${min.toString().padStart(2, '0')} ${isPm ? 'P.M.' : 'A.M.'}`
-  return `${day}, ${date} DE ${month} DE ${year} · ${time} · ${locationName.toUpperCase()}`
-}
-
-function formatBreadcrumbDate(now: Date): string {
-  return `${now.getDate()} ${SPANISH_MONTHS_SHORT[now.getMonth()] ?? ''} de ${now.getFullYear()}`
-}
+import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
 
 export function ConsultaNueva(): JSX.Element {
   const navigate = useNavigate()
@@ -73,6 +27,7 @@ export function ConsultaNueva(): JSX.Element {
   const preselectedPatientId = searchParams.get('patientId') ?? ''
   const preselectedLocationId = searchParams.get('locationId') ?? ''
 
+  const { user } = useAuth()
   const { data: patientsData } = usePatients()
   const patients = patientsData?.items ?? []
   const { data: locations = [] } = useLocations()
@@ -82,31 +37,44 @@ export function ConsultaNueva(): JSX.Element {
   const [locationId, setLocationId] = useState(preselectedLocationId)
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-
-  // ── Gate mode: both patient + location are known ──────────────────────────────
-  const showGate = Boolean(patientId && locationId)
-  const patient = patients.find((p) => p.id === patientId)
-  const location = locations.find((l) => l.id === locationId)
-  const now = new Date()
   const [resumeDismissed, setResumeDismissed] = useState(false)
-  const { data: resumable } = useResumableForPatient(showGate ? patientId : null)
+
+  // Auto-default location to first owned location (or first location) when not
+  // pre-filled from URL. Doctors typically have one primary working location.
+  const defaultLocationId = useMemo(() => {
+    if (locations.length === 0) return ''
+    const owned = locations.find((l) => l.isOwned)
+    return (owned ?? locations[0])?.id ?? ''
+  }, [locations])
+
+  useEffect(() => {
+    if (!locationId && defaultLocationId) {
+      setLocationId(defaultLocationId)
+    }
+  }, [defaultLocationId, locationId])
+
+  const patient = patients.find((p) => p.id === patientId) ?? null
+  const location = locations.find((l) => l.id === locationId) ?? null
+  const ready = Boolean(patientId && locationId)
+  const now = new Date()
+  const { data: resumable } = useResumableForPatient(ready ? patientId : null)
+
+  const doctorDisplayName = user?.fullName?.trim() ? `Dr. ${user.fullName}` : 'Doctor(a)'
 
   async function handleGateSelect(protocolId: string | null): Promise<void> {
+    if (!ready) {
+      setError('Selecciona paciente y ubicación antes de continuar.')
+      return
+    }
     setError(null)
     setIsCreating(true)
     try {
-      const consultation = await apiClient.post<{ id: string }>('/v1/consultations', {
+      const consultation = await createMutation.mutateAsync({
         patientId,
         locationId,
         diagnoses: [],
+        ...(protocolId ? { protocolId } : {}),
       })
-      if (protocolId) {
-        try {
-          await apiClient.post(`/v1/consultations/${consultation.id}/protocols`, { protocolId })
-        } catch {
-          // Non-fatal: consultation was created; protocol can be added from inside
-        }
-      }
       void navigate(`/consultas/${consultation.id}`, { replace: true })
     } catch {
       setError('No se pudo crear la consulta. Inténtalo de nuevo.')
@@ -115,168 +83,144 @@ export function ConsultaNueva(): JSX.Element {
     }
   }
 
-  function handleCreate(): void {
-    if (!patientId || !locationId) return
-    setError(null)
-    createMutation.mutate(
-      { patientId, locationId, diagnoses: [] },
-      {
-        onSuccess: (consultation) => {
-          void navigate(`/consultas/${consultation.id}`, { replace: true })
-        },
-        onError: () => {
-          setError('No se pudo crear la consulta. Inténtalo de nuevo.')
-        },
-      },
-    )
-  }
+  const patientFullName = patient ? `${patient.firstName} ${patient.lastName}`.trim() : null
+  const breadcrumbs = patient
+    ? [
+        { label: 'Pacientes', to: '/pacientes' },
+        { label: patientFullName ?? '', to: `/pacientes/${patient.id}` },
+        { label: `Consulta · ${formatBreadcrumbDate(now)}` },
+      ]
+    : [
+        { label: 'Pacientes', to: '/pacientes' },
+        { label: `Nueva consulta · ${formatBreadcrumbDate(now)}` },
+      ]
 
-  // Show gate when both patient + location are present
-  if (showGate && patient && location) {
-    const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
-    const datetimeOverline = formatHeader(now, location.name)
+  const datetimeOverline = location
+    ? formatConsultationOverline(now, location.name)
+    : formatConsultationOverline(now, '')
 
-    return (
-      <div>
-        <ConsultHeader
-          breadcrumbs={[
-            { label: 'Pacientes', to: '/pacientes' },
-            { label: patientFullName, to: `/pacientes/${patient.id}` },
-            { label: `Consulta · ${formatBreadcrumbDate(now)}` },
-          ]}
-          datetimeOverline={datetimeOverline}
-          title="Nueva consulta"
-          subtitle={`${patientFullName} · Dr. Test García`}
-          rightSlot={
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={isCreating}
-              onClick={() => void handleGateSelect(null)}
-            >
-              Saltar y abrir consulta vacía
-            </Button>
-          }
-        />
-        {error && (
-          <div className="mx-auto max-w-[880px] mt-6">
-            <div className="text-[12.5px] text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
-              {error}
-            </div>
-          </div>
-        )}
-        {resumable && !resumeDismissed && resumable.protocolUsage && (
-          <div className="mx-auto mt-8">
-            <ResumeBanner
-              usage={resumable.protocolUsage}
-              patientName={resumable.patientName}
-              {...(resumable.patientAge != null ? { patientAge: resumable.patientAge } : {})}
-              {...(resumable.currentStepNumber != null && resumable.currentStepTitle
-                ? {
-                    currentStep: {
-                      number: resumable.currentStepNumber,
-                      title: resumable.currentStepTitle,
-                    },
-                  }
-                : {})}
-              {...(resumable.totalSteps != null ? { totalSteps: resumable.totalSteps } : {})}
-              {...(resumable.completedSteps != null
-                ? { completedSteps: resumable.completedSteps }
-                : {})}
-              {...(resumable.lastEditField ? { lastEditField: resumable.lastEditField } : {})}
-              lastEditTime={new Date(resumable.lastEditTime).toLocaleTimeString('es-DO', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-              elapsedMinutes={resumable.elapsedMinutes}
-              onResume={() =>
-                void navigate(`/consultas/${resumable.consultationId}`, { replace: true })
-              }
-              onStartNew={() => setResumeDismissed(true)}
-            />
-          </div>
-        )}
-        <ConsultationGate
-          patientId={patientId}
-          patientFirstName={patient.firstName}
-          locationId={locationId}
-          onSelect={(id) => void handleGateSelect(id)}
-          isCreating={isCreating}
-        />
-      </div>
-    )
-  }
+  const subtitle = patient ? `${patientFullName} · ${doctorDisplayName}` : doctorDisplayName
 
-  // ── Fallback: pick patient + location ─────────────────────────────────────────
+  const showInlinePickers = !patient || !location
+
   return (
-    <div className="max-w-md mx-auto mt-12">
-      <div className="bg-n-0 border border-n-200 rounded-md p-6">
-        <h1 className="text-[20px] font-serif font-medium text-n-900 mb-1">Nueva consulta</h1>
-        <p className="text-[13px] text-n-500 mb-6">Selecciona el paciente y la ubicación.</p>
+    <div>
+      <ConsultHeader
+        breadcrumbs={breadcrumbs}
+        datetimeOverline={datetimeOverline}
+        title="Nueva consulta"
+        subtitle={subtitle}
+        rightSlot={
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={isCreating || !ready}
+            onClick={() => void handleGateSelect(null)}
+          >
+            Saltar y abrir consulta vacía
+          </Button>
+        }
+      />
 
-        {error && (
-          <div className="mb-4 text-[12.5px] text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
+      {error && (
+        <div className="mx-auto max-w-[880px] mt-6">
+          <div className="text-[12.5px] text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
             {error}
           </div>
-        )}
-
-        <div className="flex flex-col gap-4">
-          <Field label="Paciente">
-            <Select
-              value={patientId}
-              onValueChange={(v) => {
-                setPatientId(v)
-                setError(null)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar paciente…" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.firstName} {p.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Ubicación">
-            <Select
-              value={locationId}
-              onValueChange={(v) => {
-                setLocationId(v)
-                setError(null)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar ubicación…" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
         </div>
+      )}
 
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={() => void navigate(-1)}>
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            disabled={!patientId || !locationId || createMutation.isPending}
-            onClick={handleCreate}
-          >
-            {createMutation.isPending ? 'Creando…' : 'Crear consulta'}
-          </Button>
+      {showInlinePickers && (
+        <div className="max-w-[880px] mx-auto mt-6 px-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {!patient && (
+              <Field label="Paciente">
+                <Select
+                  value={patientId}
+                  onValueChange={(v) => {
+                    setPatientId(v)
+                    setError(null)
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar paciente…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.firstName} {p.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+            {!location && (
+              <Field label="Ubicación">
+                <Select
+                  value={locationId}
+                  onValueChange={(v) => {
+                    setLocationId(v)
+                    setError(null)
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar ubicación…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {ready && resumable && !resumeDismissed && resumable.protocolUsage && (
+        <div className="mx-auto mt-8">
+          <ResumeBanner
+            usage={resumable.protocolUsage}
+            patientName={resumable.patientName}
+            {...(resumable.patientAge != null ? { patientAge: resumable.patientAge } : {})}
+            {...(resumable.currentStepNumber != null && resumable.currentStepTitle
+              ? {
+                  currentStep: {
+                    number: resumable.currentStepNumber,
+                    title: resumable.currentStepTitle,
+                  },
+                }
+              : {})}
+            {...(resumable.totalSteps != null ? { totalSteps: resumable.totalSteps } : {})}
+            {...(resumable.completedSteps != null
+              ? { completedSteps: resumable.completedSteps }
+              : {})}
+            {...(resumable.lastEditField ? { lastEditField: resumable.lastEditField } : {})}
+            lastEditTime={new Date(resumable.lastEditTime).toLocaleTimeString('es-DO', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            elapsedMinutes={resumable.elapsedMinutes}
+            onResume={() =>
+              void navigate(`/consultas/${resumable.consultationId}`, { replace: true })
+            }
+            onStartNew={() => setResumeDismissed(true)}
+          />
+        </div>
+      )}
+
+      <ConsultationGate
+        patientId={patientId}
+        {...(patient?.firstName ? { patientFirstName: patient.firstName } : {})}
+        locationId={locationId}
+        onSelect={(id) => void handleGateSelect(id)}
+        isCreating={isCreating}
+        disabled={!ready}
+      />
     </div>
   )
 }

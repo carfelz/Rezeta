@@ -18,7 +18,7 @@ import { TemplatePickerModal } from '@/components/protocols/TemplatePickerModal'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ProtocolListFilters } from '@/hooks/protocols/use-protocols'
 import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
-import { strings } from '@/lib/strings'
+import { strings, protocolStatusLabel } from '@/lib/strings'
 import { cn } from '@/lib/utils'
 import type { ProtocolListItem } from '@rezeta/shared'
 
@@ -65,7 +65,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
         </Row>
         <Row gap={3} className="mt-1">
           <Badge variant={statusVariant(protocol.status)} showDot>
-            {protocol.status === 'draft' ? strings.EDITOR_STATUS_DRAFT : protocol.status}
+            {protocolStatusLabel(protocol.status)}
           </Badge>
           {protocol.currentVersionNumber !== null && (
             <Caption tone="muted" size="sm" className="font-mono">

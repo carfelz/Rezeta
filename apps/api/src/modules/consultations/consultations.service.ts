@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { createHash } from 'crypto'
+import { Prisma } from '@rezeta/db'
 import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
@@ -86,12 +87,86 @@ export class ConsultationsService {
     return c
   }
 
-  create(
+  async create(
     tenantId: string,
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
-    return this.repo.create(tenantId, userId, dto)
+    if (!dto.protocolId) {
+      return this.repo.create(tenantId, userId, dto)
+    }
+
+    // Validate protocol + resolve version content before opening transaction.
+    const protocol = await this.prisma.protocol.findFirst({
+      where: { id: dto.protocolId, tenantId, deletedAt: null },
+      select: { currentVersionId: true },
+    })
+    if (!protocol) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+    if (!protocol.currentVersionId) {
+      throw new BadRequestException({
+        code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
+        message: 'Protocol has no published version',
+      })
+    }
+    const version = await this.prisma.protocolVersion.findFirst({
+      where: { id: protocol.currentVersionId, tenantId },
+    })
+    if (!version) {
+      throw new BadRequestException({
+        code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
+        message: 'Protocol version not found',
+      })
+    }
+
+    const consultationId = await this.prisma.$transaction(async (tx) => {
+      const consultation = await tx.consultation.create({
+        data: {
+          tenantId,
+          userId,
+          patientId: dto.patientId,
+          locationId: dto.locationId,
+          ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
+          ...(dto.chiefComplaint != null ? { chiefComplaint: dto.chiefComplaint } : {}),
+          ...(dto.subjective != null ? { subjective: dto.subjective } : {}),
+          ...(dto.objective != null ? { objective: dto.objective } : {}),
+          ...(dto.assessment != null ? { assessment: dto.assessment } : {}),
+          ...(dto.plan != null ? { plan: dto.plan } : {}),
+          vitals: dto.vitals != null ? (dto.vitals as Prisma.InputJsonValue) : Prisma.JsonNull,
+          diagnoses: (dto.diagnoses ?? []) as Prisma.InputJsonValue,
+          status: 'draft',
+        },
+        select: { id: true },
+      })
+      await tx.protocolUsage.create({
+        data: {
+          tenantId,
+          consultationId: consultation.id,
+          protocolId: dto.protocolId!,
+          protocolVersionId: protocol.currentVersionId!,
+          userId,
+          content: version.content as Prisma.InputJsonValue,
+          modifications: {} as Prisma.InputJsonValue,
+          checkedState: {} as Prisma.InputJsonValue,
+          status: 'in_progress',
+          depth: 0,
+        },
+      })
+      return consultation.id
+    })
+
+    const result = await this.repo.findById(consultationId, tenantId)
+    if (!result) {
+      throw new NotFoundException({
+        code: ErrorCode.CONSULTATION_NOT_FOUND,
+        message: 'Consultation not found after creation',
+      })
+    }
+    return result
   }
 
   async update(

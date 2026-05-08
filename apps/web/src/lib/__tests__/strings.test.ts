@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { strings, firebaseErrorToSpanish } from '../strings'
+import {
+  strings,
+  firebaseErrorToSpanish,
+  protocolStatusLabel,
+  PROTOCOL_STATUS_LABELS,
+} from '../strings'
 
 describe('strings', () => {
   it('exports APP_NAME', () => {
@@ -208,5 +213,23 @@ describe('firebaseErrorToSpanish', () => {
 
   it('returns UNKNOWN for unrecognized codes', () => {
     expect(firebaseErrorToSpanish('auth/some-unknown-code')).toBe(strings.FIREBASE_ERROR_UNKNOWN)
+  })
+})
+
+describe('protocolStatusLabel', () => {
+  it('maps active to Spanish', () => {
+    expect(protocolStatusLabel('active')).toBe(PROTOCOL_STATUS_LABELS.active)
+  })
+
+  it('maps draft to Spanish', () => {
+    expect(protocolStatusLabel('draft')).toBe(PROTOCOL_STATUS_LABELS.draft)
+  })
+
+  it('maps archived to Spanish', () => {
+    expect(protocolStatusLabel('archived')).toBe(PROTOCOL_STATUS_LABELS.archived)
+  })
+
+  it('returns the input string for unrecognized status', () => {
+    expect(protocolStatusLabel('weird')).toBe('weird')
   })
 })

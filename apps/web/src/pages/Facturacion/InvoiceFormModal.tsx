@@ -1,0 +1,319 @@
+import { useState } from 'react'
+import {
+  Button,
+  Callout,
+  IconButton,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  TextLink,
+} from '@/components/ui'
+import { useCreateInvoice, useUpdateInvoice } from '@/hooks/invoices/use-invoices'
+import { useLocations } from '@/hooks/locations/use-locations'
+import { usePatients } from '@/hooks/patients/use-patients'
+import type { InvoiceWithDetails, Location as ClinicLocation } from '@rezeta/shared'
+import { calcTotal, defaultItem, formatCurrency, type ItemRow } from './helpers'
+
+export interface InvoiceFormModalProps {
+  invoice?: InvoiceWithDetails
+  onClose: () => void
+}
+
+export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): JSX.Element {
+  const isEdit = Boolean(invoice)
+  const createMutation = useCreateInvoice()
+  const updateMutation = useUpdateInvoice(invoice?.id ?? '')
+  const isPending = createMutation.isPending || updateMutation.isPending
+
+  const { data: patientsData } = usePatients()
+  const { data: locations } = useLocations()
+
+  const [patientId, setPatientId] = useState(invoice?.patientId ?? '')
+  const [locationId, setLocationId] = useState(invoice?.locationId ?? '')
+  const [currency, setCurrency] = useState<'DOP' | 'USD'>(
+    (invoice?.currency as 'DOP' | 'USD') ?? 'DOP',
+  )
+  const [notes, setNotes] = useState(invoice?.notes ?? '')
+  const [items, setItems] = useState<ItemRow[]>(
+    invoice?.items.length
+      ? invoice.items.map((it) => ({
+          description: it.description,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+        }))
+      : [defaultItem()],
+  )
+  const [error, setError] = useState<string | null>(null)
+
+  const selectedLocation: ClinicLocation | undefined = locations?.find((l) => l.id === locationId)
+  const commissionPct = selectedLocation ? Number(selectedLocation.commissionPercent) : 0
+  const subtotal = items.reduce((sum, it) => sum + calcTotal(it), 0)
+  const commissionAmount = Number(((subtotal * commissionPct) / 100).toFixed(2))
+  const netToDoctor = Number((subtotal - commissionAmount).toFixed(2))
+
+  const canSubmit =
+    patientId.length > 0 &&
+    locationId.length > 0 &&
+    items.length > 0 &&
+    items.every((it) => it.description.trim().length > 0 && it.unitPrice >= 0 && it.quantity >= 1)
+
+  function updateItem(index: number, field: keyof ItemRow, raw: string): void {
+    setItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== index) return it
+        if (field === 'description') return { ...it, description: raw }
+        if (field === 'quantity') return { ...it, quantity: Math.max(1, parseInt(raw) || 1) }
+        if (field === 'unitPrice') return { ...it, unitPrice: parseFloat(raw) || 0 }
+        return it
+      }),
+    )
+  }
+
+  function addItem(): void {
+    setItems((prev) => [...prev, defaultItem()])
+  }
+
+  function removeItem(index: number): void {
+    setItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
+    e.preventDefault()
+    setError(null)
+    const dto = {
+      patientId,
+      locationId,
+      currency,
+      notes: notes.trim() || null,
+      items: items.map((it) => ({
+        description: it.description.trim(),
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        total: calcTotal(it),
+      })),
+    }
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({
+          currency: dto.currency,
+          items: dto.items,
+          notes: dto.notes,
+        })
+      } else {
+        await createMutation.mutateAsync(dto)
+      }
+      onClose()
+    } catch {
+      setError(
+        isEdit
+          ? 'No se pudo actualizar la factura. Intenta de nuevo.'
+          : 'No se pudo crear la factura. Intenta de nuevo.',
+      )
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <ModalContent size="lg">
+        <ModalHeader title={isEdit ? 'Editar factura' : 'Nueva factura'} />
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e)
+          }}
+        >
+          <ModalBody className="flex flex-col gap-5">
+            {error && (
+              <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
+                {error}
+              </Callout>
+            )}
+
+            {!isEdit && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12.5px] font-medium text-n-700">
+                    Paciente <span className="text-danger-solid">*</span>
+                  </label>
+                  <select
+                    required
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                    className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
+                  >
+                    <option value="">Seleccionar paciente</option>
+                    {patientsData?.items.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.firstName} {p.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12.5px] font-medium text-n-700">
+                    Ubicación <span className="text-danger-solid">*</span>
+                  </label>
+                  <select
+                    required
+                    value={locationId}
+                    onChange={(e) => setLocationId(e.target.value)}
+                    className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
+                  >
+                    <option value="">Seleccionar ubicación</option>
+                    {locations?.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[12.5px] font-medium text-n-700">Moneda</label>
+              <div className="flex gap-2">
+                {(['DOP', 'USD'] as const).map((c) => (
+                  <Button
+                    key={c}
+                    variant={currency === c ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => setCurrency(c)}
+                  >
+                    {c}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[12.5px] font-medium text-n-700">
+                Ítems <span className="text-danger-solid">*</span>
+              </label>
+              <div className="border border-n-200 rounded-sm overflow-hidden">
+                <table className="w-full text-[12px]">
+                  <thead>
+                    <tr className="bg-n-50 text-n-600 text-left">
+                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[50%]">
+                        Descripción
+                      </th>
+                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[15%]">
+                        Cant.
+                      </th>
+                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[25%]">
+                        Precio unit.
+                      </th>
+                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] text-right w-[10%]">
+                        Total
+                      </th>
+                      <th className="w-[32px]" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, idx) => (
+                      <tr key={idx} className="border-t border-n-100">
+                        <td className="px-2 py-1.5">
+                          <Input
+                            value={item.description}
+                            onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                            placeholder="Descripción del servicio"
+                            required
+                            className="text-[12px]"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.quantity}
+                            onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
+                            className="text-[12px]"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={item.unitPrice}
+                            onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
+                            className="text-[12px]"
+                          />
+                        </td>
+                        <td className="px-3 py-1.5 text-right font-mono text-n-700 whitespace-nowrap">
+                          {formatCurrency(calcTotal(item), currency)}
+                        </td>
+                        <td className="px-2 py-1.5 text-center">
+                          {items.length > 1 && (
+                            <IconButton
+                              icon="ph ph-x"
+                              aria-label="Eliminar ítem"
+                              tone="danger"
+                              size="sm"
+                              onClick={() => removeItem(idx)}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <TextLink tone="primary" size="md" onClick={addItem} className="self-start">
+                <i className="ph ph-plus text-[13px]" /> Añadir ítem
+              </TextLink>
+            </div>
+
+            {(commissionPct > 0 || isEdit) && (
+              <div className="bg-n-50 border border-n-200 rounded-sm p-3 flex flex-col gap-1 text-[12px] font-mono">
+                <div className="flex justify-between text-n-600">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(subtotal, currency)}</span>
+                </div>
+                {commissionPct > 0 && (
+                  <div className="flex justify-between text-n-500">
+                    <span>Comisión ({commissionPct}%)</span>
+                    <span>− {formatCurrency(commissionAmount, currency)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-n-800 border-t border-n-200 mt-1 pt-1">
+                  <span>Neto al médico</span>
+                  <span>
+                    {formatCurrency(commissionPct > 0 ? netToDoctor : subtotal, currency)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[12.5px] font-medium text-n-700">Notas</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Opcional"
+                maxLength={2000}
+                className="w-full border border-n-300 rounded-sm px-3 py-2 text-[13px] text-n-700 bg-n-0 resize-none focus:outline-none focus:border-p-500"
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
+              {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear factura'}
+            </Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </Modal>
+  )
+}

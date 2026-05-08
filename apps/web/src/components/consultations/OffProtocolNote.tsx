@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button, Chip, TextLink } from '@/components/ui'
+import { useAuth } from '@/hooks/use-auth'
 
 export type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
 
@@ -24,9 +25,11 @@ export function OffProtocolNote({
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [promoteTo, setPromoteTo] = useState<SoapField | null>(null)
+  const { user } = useAuth()
 
   const now = new Date()
   const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+  const doctorName = user?.fullName?.trim() ? `Dr. ${user.fullName}` : 'Doctor(a)'
 
   return (
     <div className="bg-n-0 border border-warning-border rounded-md overflow-hidden">
@@ -77,7 +80,9 @@ export function OffProtocolNote({
           Cancelar
         </TextLink>
 
-        <span className="text-[11.5px] text-n-400 ml-auto">{time} · Dr. García</span>
+        <span className="text-[11.5px] text-n-400 ml-auto">
+          {time} · {doctorName}
+        </span>
       </div>
     </div>
   )

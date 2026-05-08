@@ -2,39 +2,53 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConsultationGate } from '../ConsultationGate'
 
-const mockProtocols = [
+const mockRecommendations = [
   {
-    id: 'proto-1',
+    protocolId: 'proto-1',
     title: 'Protocolo HTA',
+    typeId: 'type-1',
     typeName: 'Cardiovascular',
-    status: 'active',
-    isFavorite: false,
     currentVersionNumber: 2,
-    updatedAt: '',
+    lastUsedAt: new Date().toISOString(),
+    usageCount: 3,
+    isMostProbable: true,
   },
   {
-    id: 'proto-2',
+    protocolId: 'proto-2',
     title: 'Analgesia básica',
+    typeId: 'type-2',
     typeName: 'Medicación',
-    status: 'active',
-    isFavorite: false,
     currentVersionNumber: 1,
-    updatedAt: '',
+    lastUsedAt: null,
+    usageCount: 0,
+    isMostProbable: false,
   },
   {
-    id: 'proto-3',
+    protocolId: 'proto-3',
     title: 'Fisioterapia lumbar',
+    typeId: 'type-3',
     typeName: 'Fisioterapia',
-    status: 'active',
-    isFavorite: false,
     currentVersionNumber: 1,
-    updatedAt: '',
+    lastUsedAt: null,
+    usageCount: 0,
+    isMostProbable: false,
   },
 ]
 
+const mockProtocols = mockRecommendations.map((r) => ({
+  id: r.protocolId,
+  title: r.title,
+  typeId: r.typeId,
+  typeName: r.typeName,
+  status: 'active',
+  isFavorite: false,
+  currentVersionNumber: r.currentVersionNumber,
+  updatedAt: '',
+}))
+
 vi.mock('@/hooks/consultations/use-protocol-suggestions', () => ({
   useProtocolSuggestions: () => ({
-    suggestions: mockProtocols,
+    suggestions: mockRecommendations,
     isLoading: false,
   }),
 }))

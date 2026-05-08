@@ -1,15 +1,34 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useConsultationViewMode } from '../use-consultation-view-mode'
 import { useUiStore } from '@/store/ui.store'
+import { useAuthStore } from '@/store/auth.store'
+import { apiClient } from '@/lib/api-client'
+import type { AuthUser, UserPreferences } from '@rezeta/shared'
 
 const STORAGE_KEY = 'rezeta:consultation-view-mode'
+
+function makeUser(preferences: UserPreferences = {}): AuthUser {
+  return {
+    id: 'user-1',
+    externalUid: 'ext-1',
+    tenantId: 'tenant-1',
+    email: 'doctor@test',
+    fullName: 'Test Doctor',
+    role: 'owner',
+    specialty: null,
+    licenseNumber: null,
+    tenantSeededAt: null,
+    preferences,
+  }
+}
 
 describe('useConsultationViewMode', () => {
   beforeEach(() => {
     localStorage.clear()
     act(() => {
       useUiStore.setState({ viewMode: 'soap' })
+      useAuthStore.setState({ user: null })
     })
   })
 
@@ -81,5 +100,39 @@ describe('useConsultationViewMode', () => {
       })
     }).not.toThrow()
     vi.restoreAllMocks()
+  })
+
+  it('reconciles to server preference when user has consultationViewMode set', async () => {
+    act(() => {
+      useAuthStore.setState({ user: makeUser({ consultationViewMode: 'canvas' }) })
+    })
+    const { result } = renderHook(() => useConsultationViewMode(true))
+    await waitFor(() => expect(result.current.viewMode).toBe('canvas'))
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('canvas')
+  })
+
+  it('PATCH /v1/users/me/preferences when setViewMode is called with a user', () => {
+    const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+    act(() => {
+      useAuthStore.setState({ user: makeUser({}) })
+    })
+    const { result } = renderHook(() => useConsultationViewMode(true))
+    act(() => {
+      result.current.setViewMode('canvas')
+    })
+    expect(patchSpy).toHaveBeenCalledWith('/v1/users/me/preferences', {
+      consultationViewMode: 'canvas',
+    })
+    patchSpy.mockRestore()
+  })
+
+  it('skips PATCH when no user is set', () => {
+    const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+    const { result } = renderHook(() => useConsultationViewMode(true))
+    act(() => {
+      result.current.setViewMode('canvas')
+    })
+    expect(patchSpy).not.toHaveBeenCalled()
+    patchSpy.mockRestore()
   })
 })
