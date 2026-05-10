@@ -26,6 +26,10 @@ export class ProtocolRecommendationsRepository {
    * The returned array is at most `limit` entries. The first entry is marked
    * `isMostProbable=true` only if it has prior usage with this patient
    * (`usageCount > 0`); otherwise no entry gets the badge.
+   *
+   * Note: physical tables/columns are snake_case (Prisma `@@map` / `@map`);
+   * column aliases stay double-quoted so Postgres preserves the camelCase JS
+   * keys in the result rows.
    */
   async findRecommendations(
     tenantId: string,
@@ -39,23 +43,23 @@ export class ProtocolRecommendationsRepository {
       SELECT
         p.id AS "protocolId",
         p.title AS "title",
-        p."typeId" AS "typeId",
+        p.type_id AS "typeId",
         pt.name AS "typeName",
-        pv."versionNumber" AS "currentVersionNumber",
-        MAX(pu."appliedAt") AS "lastUsedAt",
+        pv.version_number AS "currentVersionNumber",
+        MAX(pu.applied_at) AS "lastUsedAt",
         COUNT(*)::int AS "usageCount"
-      FROM "ProtocolUsage" pu
-      JOIN "Consultation" c ON c.id = pu."consultationId"
-      JOIN "Protocol" p ON p.id = pu."protocolId"
-      JOIN "ProtocolType" pt ON pt.id = p."typeId"
-      LEFT JOIN "ProtocolVersion" pv ON pv.id = p."currentVersionId"
-      WHERE pu."tenantId" = $1
-        AND c."patientId" = $2
-        AND c."doctorUserId" = $3
-        AND p."deletedAt" IS NULL
+      FROM protocol_usages pu
+      JOIN consultations c ON c.id = pu.consultation_id
+      JOIN protocols p ON p.id = pu.protocol_id
+      JOIN protocol_types pt ON pt.id = p.type_id
+      LEFT JOIN protocol_versions pv ON pv.id = p.current_version_id
+      WHERE pu.tenant_id = $1::uuid
+        AND c.patient_id = $2::uuid
+        AND c.user_id = $3::uuid
+        AND p.deleted_at IS NULL
         AND p.status = 'active'
-      GROUP BY p.id, p.title, p."typeId", pt.name, pv."versionNumber"
-      ORDER BY MAX(pu."appliedAt") DESC, COUNT(*) DESC
+      GROUP BY p.id, p.title, p.type_id, pt.name, pv.version_number
+      ORDER BY MAX(pu.applied_at) DESC, COUNT(*) DESC
       LIMIT $4
       `,
       tenantId,
@@ -75,23 +79,23 @@ export class ProtocolRecommendationsRepository {
         SELECT
           p.id AS "protocolId",
           p.title AS "title",
-          p."typeId" AS "typeId",
+          p.type_id AS "typeId",
           pt.name AS "typeName",
-          pv."versionNumber" AS "currentVersionNumber",
-          MAX(pu."appliedAt") AS "lastUsedAt",
+          pv.version_number AS "currentVersionNumber",
+          MAX(pu.applied_at) AS "lastUsedAt",
           COUNT(*)::int AS "usageCount"
-        FROM "ProtocolUsage" pu
-        JOIN "Consultation" c ON c.id = pu."consultationId"
-        JOIN "Protocol" p ON p.id = pu."protocolId"
-        JOIN "ProtocolType" pt ON pt.id = p."typeId"
-        LEFT JOIN "ProtocolVersion" pv ON pv.id = p."currentVersionId"
-        WHERE pu."tenantId" = $1
-          AND c."doctorUserId" = $2
-          AND p."deletedAt" IS NULL
+        FROM protocol_usages pu
+        JOIN consultations c ON c.id = pu.consultation_id
+        JOIN protocols p ON p.id = pu.protocol_id
+        JOIN protocol_types pt ON pt.id = p.type_id
+        LEFT JOIN protocol_versions pv ON pv.id = p.current_version_id
+        WHERE pu.tenant_id = $1::uuid
+          AND c.user_id = $2::uuid
+          AND p.deleted_at IS NULL
           AND p.status = 'active'
           AND p.id <> ALL($3::uuid[])
-        GROUP BY p.id, p.title, p."typeId", pt.name, pv."versionNumber"
-        ORDER BY COUNT(*) DESC, MAX(pu."appliedAt") DESC
+        GROUP BY p.id, p.title, p.type_id, pt.name, pv.version_number
+        ORDER BY COUNT(*) DESC, MAX(pu.applied_at) DESC
         LIMIT $4
         `,
         tenantId,
@@ -111,19 +115,19 @@ export class ProtocolRecommendationsRepository {
         SELECT
           p.id AS "protocolId",
           p.title AS "title",
-          p."typeId" AS "typeId",
+          p.type_id AS "typeId",
           pt.name AS "typeName",
-          pv."versionNumber" AS "currentVersionNumber",
+          pv.version_number AS "currentVersionNumber",
           NULL::timestamp AS "lastUsedAt",
           0::int AS "usageCount"
-        FROM "Protocol" p
-        JOIN "ProtocolType" pt ON pt.id = p."typeId"
-        LEFT JOIN "ProtocolVersion" pv ON pv.id = p."currentVersionId"
-        WHERE p."tenantId" = $1
-          AND p."deletedAt" IS NULL
+        FROM protocols p
+        JOIN protocol_types pt ON pt.id = p.type_id
+        LEFT JOIN protocol_versions pv ON pv.id = p.current_version_id
+        WHERE p.tenant_id = $1::uuid
+          AND p.deleted_at IS NULL
           AND p.status = 'active'
           AND p.id <> ALL($2::uuid[])
-        ORDER BY p."updatedAt" DESC
+        ORDER BY p.updated_at DESC
         LIMIT $3
         `,
         tenantId,
