@@ -2,6 +2,16 @@ export type ProtocolStatus = 'draft' | 'active' | 'archived'
 export type ProtocolUsageStatus = 'in_progress' | 'completed' | 'abandoned' | 'switched'
 
 /**
+ * Where a recommendation came from. Surfaced to the UI so per-patient claims
+ * (e.g. "Última: hace 3 meses", "MÁS PROBABLE") only render when the entry
+ * actually has prior use with the current patient.
+ *  - 'patient-history': prior usage with this specific patient
+ *  - 'doctor-history':  doctor's overall usage frequency, no per-patient signal
+ *  - 'fallback':        tenant-active protocols, no usage signal at all
+ */
+export type ProtocolRecommendationSource = 'patient-history' | 'doctor-history' | 'fallback'
+
+/**
  * Patient-history-based protocol recommendation, used to rank cards on the
  * consultation gate. Sources: prior usages of this protocol with the same
  * patient (recency + frequency) and the doctor's overall usage frequency.
@@ -12,12 +22,15 @@ export interface ProtocolRecommendation {
   typeId: string
   typeName: string
   currentVersionNumber: number | null
-  /** ISO timestamp of the most recent prior usage with this patient, or null. */
+  /** ISO timestamp of the most recent prior usage with this patient. Null
+   * unless `source === 'patient-history'`. */
   lastUsedAt: string | null
-  /** Number of prior usages with this patient. */
+  /** Number of prior usages with this patient. Zero unless
+   * `source === 'patient-history'`. */
   usageCount: number
-  /** Highest-ranked recommendation in the response. */
+  /** True only for the top entry when its `source === 'patient-history'`. */
   isMostProbable: boolean
+  source: ProtocolRecommendationSource
 }
 export type BlockType =
   | 'section'

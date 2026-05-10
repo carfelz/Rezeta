@@ -12,6 +12,7 @@ const mockRecommendations = [
     lastUsedAt: new Date().toISOString(),
     usageCount: 3,
     isMostProbable: true,
+    source: 'patient-history' as const,
   },
   {
     protocolId: 'proto-2',
@@ -22,6 +23,7 @@ const mockRecommendations = [
     lastUsedAt: null,
     usageCount: 0,
     isMostProbable: false,
+    source: 'patient-history' as const,
   },
   {
     protocolId: 'proto-3',
@@ -32,6 +34,7 @@ const mockRecommendations = [
     lastUsedAt: null,
     usageCount: 0,
     isMostProbable: false,
+    source: 'patient-history' as const,
   },
 ]
 

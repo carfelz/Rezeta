@@ -68,6 +68,11 @@ export function ConsultationGate({
 
   const recent = suggestions.slice(0, 3)
   const recentEmpty = !loadingSuggestions && recent.length === 0
+  // Section heading honesty: "sus consultas anteriores" only when ALL visible
+  // recommendations actually come from this patient's history. Otherwise the
+  // bucket mixes doctor-wide / fallback rows and the patient claim is false.
+  const recentAllPatientHistory =
+    recent.length > 0 && recent.every((p) => p.source === 'patient-history')
 
   // Empty/draft protocols are filtered from suggestion buckets — they shouldn't
   // be offered as starting points — but they remain searchable by name below.
@@ -119,7 +124,9 @@ export function ConsultationGate({
       {allProtocols.length > 0 && !recentEmpty && (
         <div className="mb-6">
           <Overline tone="neutral" size="sm" className="mb-3">
-            {patientFirstName ? `Para ${patientFirstName} · ` : ''}sus consultas anteriores
+            {recentAllPatientHistory && patientFirstName
+              ? `Para ${patientFirstName} · sus consultas anteriores`
+              : 'Protocolos sugeridos'}
           </Overline>
           {loadingSuggestions ? (
             <div className="grid grid-cols-3 gap-3">
@@ -289,14 +296,19 @@ function RecentProtocolCard({
 function formatRecentSubtitle(protocol: ProtocolRecommendation): string {
   const versionLabel =
     protocol.currentVersionNumber != null ? ` · v${protocol.currentVersionNumber}` : ''
-  if (!protocol.lastUsedAt || protocol.usageCount === 0) {
-    return `Sin uso previo${versionLabel}`
+  // Per-patient claim only for patient-history rows. Doctor-history rows show
+  // a "favorite" framing; fallback rows show only the version.
+  if (protocol.source === 'patient-history' && protocol.lastUsedAt && protocol.usageCount > 0) {
+    const last = new Date(protocol.lastUsedAt)
+    const monthsAgo = Math.floor((Date.now() - last.getTime()) / (30 * 24 * 60 * 60 * 1000))
+    const ago =
+      monthsAgo < 1 ? 'reciente' : monthsAgo === 1 ? 'hace 1 mes' : `hace ${monthsAgo} meses`
+    return `Última: ${ago}${versionLabel}`
   }
-  const last = new Date(protocol.lastUsedAt)
-  const monthsAgo = Math.floor((Date.now() - last.getTime()) / (30 * 24 * 60 * 60 * 1000))
-  const ago =
-    monthsAgo < 1 ? 'reciente' : monthsAgo === 1 ? 'hace 1 mes' : `hace ${monthsAgo} meses`
-  return `Última: ${ago}${versionLabel}`
+  if (protocol.source === 'doctor-history') {
+    return `Tu favorito${versionLabel}`
+  }
+  return versionLabel.replace(/^ · /, '') || 'Sin versión'
 }
 
 function EmptyProtocolsCard(): JSX.Element {

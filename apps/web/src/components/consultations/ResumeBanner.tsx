@@ -1,5 +1,6 @@
 import { Avatar, Button, DialogCard } from '@/components/ui'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
+import { formatRelativeMinutes } from '@/lib/format/dates'
 
 export interface ResumeBannerProps {
   usage: ConsultationProtocolUsage
@@ -45,8 +46,8 @@ export function ResumeBanner({
       title="Bienvenido de vuelta"
       description={
         <>
-          Dejaste una consulta de {patientName} a medias hace {elapsedMinutes} minutos. ¿Quieres
-          continuar donde la dejaste?
+          Dejaste una consulta de {patientName} a medias {formatRelativeMinutes(elapsedMinutes)}.
+          ¿Quieres continuar donde la dejaste?
         </>
       }
       footer={

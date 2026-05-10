@@ -55,9 +55,15 @@ describe('ResumeBanner', () => {
     expect(screen.getByText('Bienvenido de vuelta')).toBeInTheDocument()
   })
 
-  it('renders patient name with age and elapsed time in body', () => {
+  it('renders patient name with humanized elapsed time in body', () => {
     renderBanner()
     expect(screen.getByText(/Isabel Cristina Cruz a medias hace 47 minutos/)).toBeInTheDocument()
+  })
+
+  it('humanizes long elapsed spans into days, not raw minutes', () => {
+    renderBanner({ elapsedMinutes: 4226 })
+    expect(screen.getByText(/a medias hace 3 días/)).toBeInTheDocument()
+    expect(screen.queryByText(/4226 minutos/)).not.toBeInTheDocument()
   })
 
   it('renders patient header inside inner card', () => {

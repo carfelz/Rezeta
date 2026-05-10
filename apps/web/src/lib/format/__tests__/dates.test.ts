@@ -4,6 +4,7 @@ import {
   formatBreadcrumbDate,
   formatConsultationOverline,
   formatDateNumeric,
+  formatRelativeMinutes,
   formatTimeShort,
 } from '../dates'
 
@@ -79,5 +80,28 @@ describe('formatDateNumeric', () => {
 
   it('preserves two-digit day and month', () => {
     expect(formatDateNumeric(new Date(2026, 11, 25))).toBe('25/12/2026')
+  })
+})
+
+describe('formatRelativeMinutes', () => {
+  it('formats minutes when under an hour', () => {
+    expect(formatRelativeMinutes(35)).toMatch(/35 minutos/)
+  })
+
+  it('formats hours when under a day', () => {
+    expect(formatRelativeMinutes(120)).toMatch(/2 horas/)
+  })
+
+  it('formats days for multi-day spans (audit case: 4226 min ≈ 3 días)', () => {
+    expect(formatRelativeMinutes(4226)).toMatch(/3 días/)
+  })
+
+  it('rounds large hour spans up to days', () => {
+    expect(formatRelativeMinutes(60 * 24)).toMatch(/(1 día|ayer)/)
+  })
+
+  it('clamps negative values to zero', () => {
+    // Intl.RelativeTimeFormat with numeric:auto renders 0 minutes as "este minuto" in es-DO.
+    expect(formatRelativeMinutes(-5)).toMatch(/(este minuto|0 minutos|ahora)/)
   })
 })

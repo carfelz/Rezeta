@@ -155,7 +155,8 @@
       "Bash(xargs -n1 basename)",
       "Bash(grep -v \"consultas/$\")",
       "Bash(grep -rn \"Publicar v\\\\|Publicar v\\\\${\\\\|Publicar nueva\" /Users/carlosfeliz/code/medical_app/apps/web/src --include=\"*.tsx\" --include=\"*.ts\")",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep -rn \"Dr\\\\\\\\. \\\\${\" /Users/carlosfeliz/code/medical_app/apps/web/src/)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, Chip, TextLink } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
+import { formatDoctorName } from '@/lib/format/names'
 
 export type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
 
@@ -29,7 +30,7 @@ export function OffProtocolNote({
 
   const now = new Date()
   const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
-  const doctorName = user?.fullName?.trim() ? `Dr. ${user.fullName}` : 'Doctor(a)'
+  const doctorName = formatDoctorName(user?.fullName)
 
   return (
     <div className="bg-n-0 border border-warning-border rounded-md overflow-hidden">

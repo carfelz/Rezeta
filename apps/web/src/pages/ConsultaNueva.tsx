@@ -13,6 +13,7 @@ import { ConsultationGate } from '@/components/consultations/ConsultationGate'
 import { ResumeBanner } from '@/components/consultations/ResumeBanner'
 import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
+import { formatDoctorName } from '@/lib/format/names'
 
 export function ConsultaNueva(): JSX.Element {
   const navigate = useNavigate()
@@ -75,7 +76,7 @@ export function ConsultaNueva(): JSX.Element {
   const now = new Date()
   const { data: resumable } = useResumableForPatient(ready ? patientId : null)
 
-  const doctorDisplayName = user?.fullName?.trim() ? `Dr. ${user.fullName}` : 'Doctor(a)'
+  const doctorDisplayName = formatDoctorName(user?.fullName)
 
   async function handleGateSelect(protocolId: string | null): Promise<void> {
     if (!ready) {

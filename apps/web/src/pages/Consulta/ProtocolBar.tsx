@@ -52,7 +52,7 @@ export function ProtocolBar({
       )}
 
       {activeUsage && (
-        <div className="-mx-12 mb-5">
+        <div className="-mx-12 mb-5 sticky top-topbar z-20 bg-n-25 border-b border-n-100">
           {!isSigned ? (
             <ProtocolStrip
               key={activeUsage.id}

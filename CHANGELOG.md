@@ -4,6 +4,25 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-10] — Round-2 fixes (R1–R6)
+
+### Fixed
+
+- **R1** Patient-leak in protocol recommendations. `apps/api/src/modules/protocol-recommendations/protocol-recommendations.repository.ts` now tags each `RankedCandidate` with `source` (`patient-history` | `doctor-history` | `fallback`); `lastUsedAt`, `usageCount`, and `isMostProbable` are zeroed for non-patient-history rows so doctor-wide signals no longer render as patient-specific. `packages/shared/src/types/protocol.ts` exposes `ProtocolRecommendationSource` and adds `source` to `ProtocolRecommendation`. `apps/web/src/components/consultations/ConsultationGate.tsx` switches the section heading to "Protocolos sugeridos" unless every visible row is `patient-history`, and renders the subtitle by source ("Última: …", "Tu favorito", or version-only).
+- **R2** "Dr. Dr." duplicate honorific. New `apps/web/src/lib/format/names.ts` exports `formatDoctorName()` that strips a leading honorific before re-prefixing. Used in `ConsultaNueva.tsx` and `OffProtocolNote.tsx`.
+- **R3** English `active` badge on protocol detail. `apps/web/src/pages/ProtocolViewer.tsx` now uses `protocolStatusLabel` + a `statusVariant` helper so the detail badge matches the localized list page.
+- **R4** Protocol strip not sticky. `apps/web/src/pages/Consulta/ProtocolBar.tsx` strip wrapper made `sticky top-topbar z-20`; `apps/web/src/pages/Consulta/index.tsx` right-rail offset bumped to `top-[120px]` so it clears the sticky strip.
+- **R5** Consulta H1 stuck at "Nueva consulta". `apps/web/src/pages/Consulta/index.tsx` derives `hasContent` from the server consultation (with live SOAP state as fallback) so the title reflects state on first render, not after soap hydration.
+- **R6** ResumeBanner read "hace 4226 minutos". New `formatRelativeMinutes()` in `apps/web/src/lib/format/dates.ts` (uses `Intl.RelativeTimeFormat` es-DO with auto numeric); `apps/web/src/components/consultations/ResumeBanner.tsx` switched to it.
+
+### Added
+
+- `apps/api/src/modules/protocol-recommendations/__tests__/protocol-recommendations.repository.spec.ts` — tests source-tag distinction across the three ranking steps.
+- `apps/web/src/components/consultations/__tests__/ConsultationGate.source.test.tsx` — covers the doctor-history source case.
+- `apps/web/src/lib/format/__tests__/names.test.ts` — 12 cases for `formatDoctorName()`.
+- New `formatRelativeMinutes` test cases in `apps/web/src/lib/format/__tests__/dates.test.ts`.
+- New "humanizes long elapsed spans" case in `apps/web/src/components/consultations/__tests__/ResumeBanner.test.tsx`.
+
 ## [2026-05-08] — Page-component splits
 
 ### Changed

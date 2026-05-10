@@ -146,8 +146,18 @@ export function Consulta(): JSX.Element {
 
   const isSigned = consultation.status === 'signed'
   const protocolIds = consultation.protocolUsages.map((u) => u.protocolId)
+  // Derive from the server record, not soap state, so the title reflects
+  // state on first render (soap state hydrates one tick later via useEffect).
+  // Live edits also update via soap state once initialized — fall back to
+  // either source so the title stays current as the doctor types.
+  const liveChief = soap.chiefComplaint.trim() || (consultation.chiefComplaint ?? '').trim()
   const hasContent = Boolean(
-    soap.chiefComplaint.trim() ||
+    liveChief ||
+    (consultation.subjective ?? '').trim() ||
+    (consultation.objective ?? '').trim() ||
+    (consultation.assessment ?? '').trim() ||
+    (consultation.plan ?? '').trim() ||
+    consultation.diagnoses.length > 0 ||
     soap.subjective.trim() ||
     soap.objective.trim() ||
     soap.assessment.trim() ||
@@ -158,7 +168,7 @@ export function Consulta(): JSX.Element {
   const pageTitle = isSigned
     ? `Consulta del ${dateShort} · firmada`
     : hasContent
-      ? soap.chiefComplaint.trim() || `Consulta del ${dateShort}`
+      ? liveChief || `Consulta del ${dateShort}`
       : 'Nueva consulta'
 
   return (
@@ -271,7 +281,7 @@ export function Consulta(): JSX.Element {
         </div>
 
         <aside
-          className="self-start sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto"
+          className="self-start sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto"
           aria-label="Información complementaria"
         >
           <ConsultationSidebar

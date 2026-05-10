@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { ProtocolRecommendation } from '@rezeta/shared'
+import type { ProtocolRecommendation, ProtocolRecommendationSource } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
 interface RankedCandidate {
@@ -10,6 +10,7 @@ interface RankedCandidate {
   currentVersionNumber: number | null
   lastUsedAt: Date | null
   usageCount: number
+  source: ProtocolRecommendationSource
 }
 
 @Injectable()
@@ -23,9 +24,10 @@ export class ProtocolRecommendationsRepository {
    *   2. Doctor's most-used active protocols (excludes already-listed in step 1)
    *   3. Other tenant active protocols ordered by updatedAt DESC (fallback)
    *
-   * The returned array is at most `limit` entries. The first entry is marked
-   * `isMostProbable=true` only if it has prior usage with this patient
-   * (`usageCount > 0`); otherwise no entry gets the badge.
+   * `source` distinguishes step 1 from steps 2/3. Per-patient signals
+   * (`isMostProbable`, `lastUsedAt`, `usageCount`) are surfaced only when
+   * `source === 'patient-history'` — otherwise they'd carry doctor-wide data
+   * but be displayed as patient-specific.
    *
    * Note: physical tables/columns are snake_case (Prisma `@@map` / `@map`);
    * column aliases stay double-quoted so Postgres preserves the camelCase JS
@@ -41,7 +43,7 @@ export class ProtocolRecommendationsRepository {
     // Filters out empty protocols (no current version, or current version's
     // content has zero top-level blocks). Empty protocols stay searchable
     // by name elsewhere but should never appear as a suggestion.
-    const perPatient = await this.prisma.$queryRawUnsafe<RankedCandidate[]>(
+    const perPatientRaw = await this.prisma.$queryRawUnsafe<Omit<RankedCandidate, 'source'>[]>(
       `
       SELECT
         p.id AS "protocolId",
@@ -72,6 +74,10 @@ export class ProtocolRecommendationsRepository {
       doctorUserId,
       limit,
     )
+    const perPatient: RankedCandidate[] = perPatientRaw.map((r) => ({
+      ...r,
+      source: 'patient-history' as const,
+    }))
 
     const taken = new Set(perPatient.map((r) => r.protocolId))
     const remaining = Math.max(0, limit - perPatient.length)
@@ -79,7 +85,7 @@ export class ProtocolRecommendationsRepository {
     // ── Step 2: doctor's most-used active protocols overall ──
     let doctorTop: RankedCandidate[] = []
     if (remaining > 0) {
-      doctorTop = await this.prisma.$queryRawUnsafe<RankedCandidate[]>(
+      const doctorTopRaw = await this.prisma.$queryRawUnsafe<Omit<RankedCandidate, 'source'>[]>(
         `
         SELECT
           p.id AS "protocolId",
@@ -110,6 +116,7 @@ export class ProtocolRecommendationsRepository {
         Array.from(taken),
         remaining,
       )
+      doctorTop = doctorTopRaw.map((r) => ({ ...r, source: 'doctor-history' as const }))
       doctorTop.forEach((r) => taken.add(r.protocolId))
     }
 
@@ -117,7 +124,7 @@ export class ProtocolRecommendationsRepository {
     const stillRemaining = Math.max(0, limit - perPatient.length - doctorTop.length)
     let fallback: RankedCandidate[] = []
     if (stillRemaining > 0) {
-      fallback = await this.prisma.$queryRawUnsafe<RankedCandidate[]>(
+      const fallbackRaw = await this.prisma.$queryRawUnsafe<Omit<RankedCandidate, 'source'>[]>(
         `
         SELECT
           p.id AS "protocolId",
@@ -143,18 +150,26 @@ export class ProtocolRecommendationsRepository {
         Array.from(taken),
         stillRemaining,
       )
+      fallback = fallbackRaw.map((r) => ({ ...r, source: 'fallback' as const }))
     }
 
     const all = [...perPatient, ...doctorTop, ...fallback]
-    return all.map((r, idx) => ({
-      protocolId: r.protocolId,
-      title: r.title,
-      typeId: r.typeId,
-      typeName: r.typeName,
-      currentVersionNumber: r.currentVersionNumber,
-      lastUsedAt: r.lastUsedAt ? new Date(r.lastUsedAt).toISOString() : null,
-      usageCount: r.usageCount,
-      isMostProbable: idx === 0 && r.usageCount > 0,
-    }))
+    return all.map((r, idx) => {
+      const isPatientHistory = r.source === 'patient-history'
+      return {
+        protocolId: r.protocolId,
+        title: r.title,
+        typeId: r.typeId,
+        typeName: r.typeName,
+        currentVersionNumber: r.currentVersionNumber,
+        // Only surface lastUsedAt + usageCount for genuinely patient-scoped entries.
+        // Doctor-history rows carry doctor-wide values that would mislead the UI.
+        lastUsedAt: isPatientHistory && r.lastUsedAt ? new Date(r.lastUsedAt).toISOString() : null,
+        usageCount: isPatientHistory ? r.usageCount : 0,
+        // "MÁS PROBABLE" requires actual prior use with this patient.
+        isMostProbable: idx === 0 && isPatientHistory && r.usageCount > 0,
+        source: r.source,
+      }
+    })
   }
 }

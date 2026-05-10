@@ -100,3 +100,25 @@ export function formatDateNumeric(date: Date): string {
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
   return `${day}/${month}/${date.getFullYear()}`
 }
+
+/**
+ * Humanized relative time from a minute count, in es-DO. Picks the largest
+ * sensible unit so "4226 minutos" reads as "hace 3 días", not a literal
+ * minute count.
+ *   < 60 min  → "hace N minutos"
+ *   < 24 h    → "hace N horas"
+ *   otherwise → "hace N días"
+ *
+ * Uses Intl.RelativeTimeFormat with `numeric: 'auto'` so values that map to
+ * idiomatic words (1 → "ayer", 0 → "ahora") render naturally.
+ */
+const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('es-DO', { numeric: 'auto' })
+
+export function formatRelativeMinutes(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes))
+  if (m < 60) return RELATIVE_TIME_FORMATTER.format(-m, 'minute')
+  const hours = Math.round(m / 60)
+  if (hours < 24) return RELATIVE_TIME_FORMATTER.format(-hours, 'hour')
+  const days = Math.round(m / (24 * 60))
+  return RELATIVE_TIME_FORMATTER.format(-days, 'day')
+}

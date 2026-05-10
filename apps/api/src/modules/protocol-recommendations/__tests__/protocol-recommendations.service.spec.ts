@@ -13,6 +13,7 @@ const sample: ProtocolRecommendation[] = [
     lastUsedAt: '2026-04-01T10:00:00.000Z',
     usageCount: 3,
     isMostProbable: true,
+    source: 'patient-history',
   },
 ]
 

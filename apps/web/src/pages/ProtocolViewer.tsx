@@ -5,7 +5,13 @@ import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { SuggestionBanner } from '@/components/protocols/SuggestionBanner'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import { strings } from '@/lib/strings'
+import { protocolStatusLabel, strings } from '@/lib/strings'
+
+function statusVariant(status: string): 'draft' | 'active' | 'archived' {
+  if (status === 'active') return 'active'
+  if (status === 'archived') return 'archived'
+  return 'draft'
+}
 
 export function ProtocolViewer(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -75,7 +81,11 @@ export function ProtocolViewer(): JSX.Element {
         {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
         title={protocol.title}
         meta={`${strings.VIEWER_UPDATED} ${updatedDate} · ${strings.VIEWER_VERSION(versionNumber)}`}
-        badge={<Badge variant="draft">{protocol.status}</Badge>}
+        badge={
+          <Badge variant={statusVariant(protocol.status)} showDot>
+            {protocolStatusLabel(protocol.status)}
+          </Badge>
+        }
       >
         {blocks.length === 0 ? (
           <div className="flex flex-col items-center py-8 gap-2 text-center">
