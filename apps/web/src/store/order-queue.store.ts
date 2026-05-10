@@ -82,7 +82,7 @@ function makeId(): string {
   return Math.random().toString(36).slice(2)
 }
 
-const defaultMedicationGroup: OrderGroup = { id: 'default-rx', title: 'Receta 1', order: 1 }
+const defaultMedicationGroup: OrderGroup = { id: 'default-rx', title: 'Receta', order: 1 }
 const defaultImagingGroup: OrderGroup = { id: 'default-img', title: 'Orden 1', order: 1 }
 const defaultLabGroup: OrderGroup = { id: 'default-lab', title: 'Laboratorio 1', order: 1 }
 

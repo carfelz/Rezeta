@@ -328,6 +328,13 @@ export const ProtocolListItemSchema = z.object({
   isFavorite: z.boolean(),
   updatedAt: z.string().datetime(),
   currentVersionNumber: z.number().int().nullable(),
+  /**
+   * Top-level block count of the current version's content. 0 means the
+   * protocol is structurally empty (no sections, no blocks). Used by the gate
+   * to filter empty/draft protocols out of suggestion buckets while keeping
+   * them searchable by name.
+   */
+  blockCount: z.number().int().nonnegative(),
 })
 
 export const ProtocolVersionSummarySchema = z.object({

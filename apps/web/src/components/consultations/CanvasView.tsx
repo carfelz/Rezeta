@@ -1,4 +1,4 @@
-import { Caption, Chip, StepCircle, TextLink } from '@/components/ui'
+import { Button, Caption, Chip, Overline, StepCircle, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { ConsultationProtocolUsage, ProtocolBlock } from '@rezeta/shared'
 
@@ -75,6 +75,16 @@ export interface CanvasViewProps {
   onToggleStep: (stepId: string, checked: boolean) => void
   onSkipStep?: (step: { id: string; title: string }) => void
   isSigned: boolean
+  /**
+   * Invoked from the empty-protocol card when the doctor chooses to drop the
+   * protocol and continue the consultation without a guide.
+   */
+  onContinueWithoutProtocol?: () => void
+  /**
+   * Invoked from the empty-protocol card when the doctor wants to add blocks
+   * to the protocol now.
+   */
+  onEditProtocol?: () => void
 }
 
 export function CanvasView({
@@ -84,6 +94,8 @@ export function CanvasView({
   onToggleStep,
   onSkipStep,
   isSigned,
+  onContinueWithoutProtocol,
+  onEditProtocol,
 }: CanvasViewProps): JSX.Element {
   const blocks = usage.content?.blocks ?? []
   const steps = collectSteps(blocks)
@@ -96,8 +108,31 @@ export function CanvasView({
 
   if (steps.length === 0) {
     return (
-      <div className="px-5 py-12 text-center text-[13px] text-n-400 bg-n-0 border border-n-200 rounded-md">
-        Este protocolo no tiene pasos interactivos.
+      <div className="bg-n-0 border border-dashed border-n-200 rounded-md px-8 py-12 text-center flex flex-col items-center gap-3">
+        <Overline tone="warning" size="md">
+          Protocolo sin pasos
+        </Overline>
+        <h2 className="font-serif font-medium text-[24px] text-n-900 leading-tight tracking-[-0.01em] m-0">
+          Este protocolo todavía no tiene pasos.
+        </h2>
+        <p className="text-[13px] text-n-500 max-w-[440px] leading-snug">
+          Sus secciones existen (Motivo, Ruta de decisión) pero aún no contienen bloques. Puedes
+          editarlo ahora o seguir con la consulta en blanco.
+        </p>
+        {(onContinueWithoutProtocol || onEditProtocol) && (
+          <div className="flex items-center gap-2 mt-2">
+            {onContinueWithoutProtocol && (
+              <Button variant="ghost" size="sm" onClick={onContinueWithoutProtocol}>
+                Continuar sin protocolo
+              </Button>
+            )}
+            {onEditProtocol && (
+              <Button variant="primary" size="sm" onClick={onEditProtocol}>
+                Editar protocolo
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     )
   }

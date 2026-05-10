@@ -26,7 +26,7 @@ export function PageHeader({ now, greeting, subtitle }: PageHeaderProps): JSX.El
           <i className="ph ph-calendar-blank text-[15px]" />
           Ver agenda
         </Button>
-        <Button variant="primary" size="md" onClick={() => void navigate('/consultas/nueva')}>
+        <Button variant="primary" size="md" onClick={() => void navigate('/pacientes')}>
           <i className="ph ph-plus text-[15px]" />
           Nueva consulta
         </Button>

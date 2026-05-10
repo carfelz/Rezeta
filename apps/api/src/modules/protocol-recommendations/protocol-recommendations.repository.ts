@@ -38,6 +38,9 @@ export class ProtocolRecommendationsRepository {
     limit: number,
   ): Promise<ProtocolRecommendation[]> {
     // ── Step 1: per-patient history ──
+    // Filters out empty protocols (no current version, or current version's
+    // content has zero top-level blocks). Empty protocols stay searchable
+    // by name elsewhere but should never appear as a suggestion.
     const perPatient = await this.prisma.$queryRawUnsafe<RankedCandidate[]>(
       `
       SELECT
@@ -58,6 +61,8 @@ export class ProtocolRecommendationsRepository {
         AND c.user_id = $3::uuid
         AND p.deleted_at IS NULL
         AND p.status = 'active'
+        AND pv.id IS NOT NULL
+        AND jsonb_array_length(COALESCE(pv.content -> 'blocks', '[]'::jsonb)) > 0
       GROUP BY p.id, p.title, p.type_id, pt.name, pv.version_number
       ORDER BY MAX(pu.applied_at) DESC, COUNT(*) DESC
       LIMIT $4
@@ -94,6 +99,8 @@ export class ProtocolRecommendationsRepository {
           AND p.deleted_at IS NULL
           AND p.status = 'active'
           AND p.id <> ALL($3::uuid[])
+          AND pv.id IS NOT NULL
+          AND jsonb_array_length(COALESCE(pv.content -> 'blocks', '[]'::jsonb)) > 0
         GROUP BY p.id, p.title, p.type_id, pt.name, pv.version_number
         ORDER BY COUNT(*) DESC, MAX(pu.applied_at) DESC
         LIMIT $4
@@ -127,6 +134,8 @@ export class ProtocolRecommendationsRepository {
           AND p.deleted_at IS NULL
           AND p.status = 'active'
           AND p.id <> ALL($2::uuid[])
+          AND pv.id IS NOT NULL
+          AND jsonb_array_length(COALESCE(pv.content -> 'blocks', '[]'::jsonb)) > 0
         ORDER BY p.updated_at DESC
         LIMIT $3
         `,

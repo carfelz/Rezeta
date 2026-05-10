@@ -95,8 +95,9 @@ describe('strings', () => {
     expect(strings.PROTOCOLS_LIST_VERSION(3)).toBe('v3')
   })
 
-  it('EDITOR_PUBLICAR returns publish label', () => {
-    expect(strings.EDITOR_PUBLICAR(2)).toBe('Publicar v2')
+  it('EDITOR_PUBLICAR returns publish label without version number', () => {
+    expect(strings.EDITOR_PUBLICAR(1)).toBe('Publicar')
+    expect(strings.EDITOR_PUBLICAR(2)).toBe('Publicar')
   })
 
   it('EDITOR_VERSION returns version label', () => {

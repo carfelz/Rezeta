@@ -90,3 +90,13 @@ export function formatConsultationOverline(date: Date, locationName: string): st
 export function formatTimeShort(date: Date): string {
   return ampm(date.getHours(), date.getMinutes())
 }
+
+/**
+ * Numeric-only form for exports and prescription printouts. Example:
+ *   "07/05/2026"
+ */
+export function formatDateNumeric(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  return `${day}/${month}/${date.getFullYear()}`
+}

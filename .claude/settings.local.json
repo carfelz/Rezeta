@@ -152,7 +152,10 @@
       "Bash(awk '/conditional-rule-evaluator\\\\.ts/')",
       "Bash(awk '/filters/')",
       "Bash(awk '/auth\\\\/firebase|provider\\\\.ts/' /tmp/cov.txt)",
-      "Bash(xargs -n1 basename)"
+      "Bash(xargs -n1 basename)",
+      "Bash(grep -v \"consultas/$\")",
+      "Bash(grep -rn \"Publicar v\\\\|Publicar v\\\\${\\\\|Publicar nueva\" /Users/carlosfeliz/code/medical_app/apps/web/src --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }

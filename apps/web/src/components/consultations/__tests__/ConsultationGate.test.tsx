@@ -44,6 +44,7 @@ const mockProtocols = mockRecommendations.map((r) => ({
   isFavorite: false,
   currentVersionNumber: r.currentVersionNumber,
   updatedAt: '',
+  blockCount: 3,
 }))
 
 vi.mock('@/hooks/consultations/use-protocol-suggestions', () => ({

@@ -118,6 +118,49 @@ describe('ProtocolsService', () => {
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
       expect(result[0].currentVersionNumber).toBeNull()
+      expect(result[0].blockCount).toBe(0)
+    })
+
+    it('computes blockCount from latest version content blocks array', async () => {
+      const listRow = {
+        id: 'proto-with-blocks',
+        title: 'Populated',
+        status: 'active',
+        isFavorite: false,
+        updatedAt: now,
+        type: { id: 'type1', name: 'Emergencia' },
+        versions: [
+          {
+            versionNumber: 3,
+            content: {
+              version: '1.0',
+              blocks: [
+                { id: 'sec_1', type: 'section' },
+                { id: 'blk_1', type: 'text' },
+              ],
+            },
+          },
+        ],
+      }
+      mockRepo.list.mockResolvedValue([listRow])
+      const result = await service.list('t1')
+      expect(result[0].blockCount).toBe(2)
+      expect(result[0].currentVersionNumber).toBe(3)
+    })
+
+    it('returns blockCount=0 when latest version content lacks a blocks array', async () => {
+      const listRow = {
+        id: 'proto-no-blocks',
+        title: 'Empty content shape',
+        status: 'draft',
+        isFavorite: false,
+        updatedAt: now,
+        type: { id: 'type1', name: 'Emergencia' },
+        versions: [{ versionNumber: 1, content: { version: '1.0' } }],
+      }
+      mockRepo.list.mockResolvedValue([listRow])
+      const result = await service.list('t1')
+      expect(result[0].blockCount).toBe(0)
     })
 
     it('passes query filters through to repo', async () => {

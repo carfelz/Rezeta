@@ -69,16 +69,24 @@ export function ConsultationGate({
   const recent = suggestions.slice(0, 3)
   const recentEmpty = !loadingSuggestions && recent.length === 0
 
+  // Empty/draft protocols are filtered from suggestion buckets — they shouldn't
+  // be offered as starting points — but they remain searchable by name below.
+  const populatedProtocols = useMemo(
+    () => allProtocols.filter((p) => p.blockCount > 0),
+    [allProtocols],
+  )
+  const emptyProtocolCount = allProtocols.length - populatedProtocols.length
+
   const buckets = useMemo(() => {
     const map = new Map<string, number>()
-    for (const p of allProtocols) {
+    for (const p of populatedProtocols) {
       map.set(p.typeName, (map.get(p.typeName) ?? 0) + 1)
     }
     return Array.from(map.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6)
-  }, [allProtocols])
+  }, [populatedProtocols])
 
   const searchResults = useMemo(() => {
     if (search.trim().length < 2) return []
@@ -149,6 +157,12 @@ export function ConsultationGate({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {emptyProtocolCount > 0 && (
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-n-400 mt-2">
+              + {emptyProtocolCount} protocolo{emptyProtocolCount === 1 ? '' : 's'} en borrador no
+              se sugieren. Búscalos por nombre.
+            </p>
+          )}
         </div>
 
         {showSearchResults ? (

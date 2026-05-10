@@ -66,16 +66,22 @@ export class ProtocolsService {
       ...(query.favoritesOnly ? { favoritesOnly: true } : {}),
       ...(query.sort !== undefined ? { sort: query.sort } : {}),
     })
-    return protocols.map((p) => ({
-      id: p.id,
-      title: p.title,
-      typeId: p.type.id,
-      typeName: p.type.name,
-      status: p.status,
-      isFavorite: p.isFavorite,
-      updatedAt: p.updatedAt.toISOString(),
-      currentVersionNumber: p.versions[0]?.versionNumber ?? null,
-    }))
+    return protocols.map((p) => {
+      const latestVersion = p.versions[0] as { versionNumber: number; content: unknown } | undefined
+      const content = (latestVersion?.content ?? null) as { blocks?: unknown[] } | null
+      const blockCount = Array.isArray(content?.blocks) ? content.blocks.length : 0
+      return {
+        id: p.id,
+        title: p.title,
+        typeId: p.type.id,
+        typeName: p.type.name,
+        status: p.status,
+        isFavorite: p.isFavorite,
+        updatedAt: p.updatedAt.toISOString(),
+        currentVersionNumber: latestVersion?.versionNumber ?? null,
+        blockCount,
+      }
+    })
   }
 
   async setFavorite(id: string, tenantId: string, isFavorite: boolean): Promise<void> {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Badge,
   Button,
@@ -19,6 +19,8 @@ import {
 } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
 import { useCreatePatient, useUpdatePatient } from '@/hooks/patients/use-patients'
+import { useLocations } from '@/hooks/locations/use-locations'
+import { useUiStore } from '@/store/ui.store'
 import { ClinicalHistory } from './ClinicalHistory'
 import { ReadField } from './ReadField'
 import { DOC_LABELS, SEX_LABELS, formatAge, formatDate } from './helpers'
@@ -35,6 +37,16 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
   const createMutation = useCreatePatient()
   const updateMutation = useUpdatePatient(patient?.id ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
+  const { data: locations = [] } = useLocations()
+  const activeLocationId = useUiStore((s) => s.activeLocationId)
+  const primaryLocationId = useMemo(() => {
+    if (locations.length === 0) return undefined
+    if (activeLocationId && locations.some((l) => l.id === activeLocationId)) {
+      return activeLocationId
+    }
+    const owned = locations.find((l) => l.isOwned)
+    return (owned ?? locations[0])?.id
+  }, [locations, activeLocationId])
 
   const isView = mode === 'view'
   const isEdit = mode === 'edit'
@@ -163,7 +175,10 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
               </div>
             )}
 
-            <ClinicalHistory patientId={patient.id} />
+            <ClinicalHistory
+              patientId={patient.id}
+              {...(primaryLocationId ? { locationId: primaryLocationId } : {})}
+            />
           </ModalBody>
         ) : (
           <form

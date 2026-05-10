@@ -12,7 +12,7 @@ type ProtocolFullResult = Protocol & {
 }
 type ProtocolListEntry = Protocol & {
   type: { id: string; name: string }
-  versions: { versionNumber: number }[]
+  versions: { versionNumber: number; content: unknown }[]
 }
 
 @Injectable()
@@ -120,7 +120,7 @@ export class ProtocolsRepository {
           where: { deletedAt: null },
           orderBy: { versionNumber: 'desc' },
           take: 1,
-          select: { versionNumber: true },
+          select: { versionNumber: true, content: true },
         },
       },
     }) as unknown as Promise<ProtocolListEntry[]>

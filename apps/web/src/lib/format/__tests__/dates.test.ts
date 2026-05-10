@@ -3,6 +3,7 @@ import {
   formatDateLong,
   formatBreadcrumbDate,
   formatConsultationOverline,
+  formatDateNumeric,
   formatTimeShort,
 } from '../dates'
 
@@ -68,5 +69,15 @@ describe('formatConsultationOverline', () => {
 describe('formatTimeShort', () => {
   it('returns 12-hour Spanish time', () => {
     expect(formatTimeShort(D)).toBe('2:40 P.M.')
+  })
+})
+
+describe('formatDateNumeric', () => {
+  it('pads single-digit day and month with leading zeros', () => {
+    expect(formatDateNumeric(new Date(2026, 4, 7))).toBe('07/05/2026')
+  })
+
+  it('preserves two-digit day and month', () => {
+    expect(formatDateNumeric(new Date(2026, 11, 25))).toBe('25/12/2026')
   })
 })

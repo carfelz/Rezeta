@@ -177,6 +177,6 @@ describe('CanvasView', () => {
         isSigned={false}
       />,
     )
-    expect(screen.getByText(/no tiene pasos interactivos/)).toBeInTheDocument()
+    expect(screen.getByText(/Este protocolo todavía no tiene pasos\./)).toBeInTheDocument()
   })
 })

@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import { Badge, IconButton, Row } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
-import { formatAge } from './helpers'
+import { DOC_LABELS_UPPER, formatAge, resolveDocumentType } from './helpers'
 
 export interface PatientRowProps {
   patient: Patient
@@ -44,8 +44,23 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
           </div>
         </div>
       </td>
-      <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-[12px] text-n-600">
-        {patient.documentNumber ?? '—'}
+      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+        {patient.documentNumber ? (
+          <div className="flex flex-col leading-tight">
+            <span className="font-mono text-[12px] text-n-600">{patient.documentNumber}</span>
+            {(() => {
+              const docType = resolveDocumentType(patient.documentType, patient.documentNumber)
+              if (!docType) return null
+              return (
+                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-n-400 mt-0.5">
+                  {DOC_LABELS_UPPER[docType]}
+                </span>
+              )
+            })()}
+          </div>
+        ) : (
+          <span className="font-mono text-[12px] text-n-600">—</span>
+        )}
       </td>
       <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-600">
         {formatAge(patient.dateOfBirth)}

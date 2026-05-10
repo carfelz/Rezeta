@@ -26,3 +26,29 @@ export const DOC_LABELS: Record<string, string> = {
   passport: 'Pasaporte',
   rnc: 'RNC',
 }
+
+/**
+ * Returns the canonical document type for a patient. If the patient row has
+ * a stored documentType we trust it; otherwise infer from the document number
+ * shape (DR conventions: cédula 11 digits with hyphenated layout, RNC starts
+ * with the digit 4, passport starts with a letter).
+ */
+export function resolveDocumentType(
+  documentType: string | null | undefined,
+  documentNumber: string | null | undefined,
+): 'cedula' | 'passport' | 'rnc' | null {
+  if (documentType === 'cedula' || documentType === 'passport' || documentType === 'rnc') {
+    return documentType
+  }
+  if (!documentNumber) return null
+  const trimmed = documentNumber.trim()
+  if (/^[A-Za-z]/.test(trimmed)) return 'passport'
+  if (trimmed.startsWith('4')) return 'rnc'
+  return 'cedula'
+}
+
+export const DOC_LABELS_UPPER: Record<'cedula' | 'passport' | 'rnc', string> = {
+  cedula: 'CÉDULA',
+  passport: 'PASAPORTE',
+  rnc: 'RNC',
+}

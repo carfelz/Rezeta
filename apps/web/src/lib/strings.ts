@@ -112,7 +112,7 @@ export const strings = {
   // ── Protocols — Editor ─────────────────────────────────────────────────────
   EDITOR_SAVE_BUTTON: 'Guardar versión',
   EDITOR_GUARDAR: 'Guardar',
-  EDITOR_PUBLICAR: (n: number) => `Publicar v${n}`,
+  EDITOR_PUBLICAR: (_n: number) => 'Publicar',
   EDITOR_VISTA_PREVIA: 'Vista previa',
   EDITOR_UNSAVED: 'Cambios sin guardar',
   EDITOR_UNSAVED_CHANGES: 'Cambios sin publicar',
@@ -131,7 +131,7 @@ export const strings = {
   EDITOR_SAVE_MODAL_SAVE_DRAFT: 'Guardar como borrador',
   EDITOR_SAVE_MODAL_PUBLISH: 'Guardar y publicar',
   EDITOR_SAVE_MODAL_CANCEL: 'Cancelar',
-  EDITOR_PUBLISH_MODAL_TITLE: 'Publicar nueva versión',
+  EDITOR_PUBLISH_MODAL_TITLE: 'Publicar protocolo',
   EDITOR_PUBLISH_MODAL_SUBTITLE: 'Añade un resumen del cambio (opcional).',
   EDITOR_PUBLISH_MODAL_LABEL: 'Resumen del cambio',
   EDITOR_PUBLISH_MODAL_PLACEHOLDER: 'Ej. Actualicé las dosis de primera línea',

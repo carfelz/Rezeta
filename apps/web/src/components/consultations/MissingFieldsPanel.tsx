@@ -1,8 +1,12 @@
-import { Button, Callout, GroupSectionCard, IconButton, TextLink, Chip } from '@/components/ui'
+import { Button, Callout, Chip, IconButton, TextLink } from '@/components/ui'
 
 export interface MissingField {
   id: string
   label: string
+  /**
+   * Optional path-style breadcrumb shown under the label in mono caption,
+   * e.g. `Vitales · Temperatura`.
+   */
   description?: string
 }
 
@@ -33,53 +37,89 @@ export function MissingFieldsCallout({
   )
 }
 
-// ─── Right-rail panel ──────────────────────────────────────────────────────────
+// ─── Page-level panel ──────────────────────────────────────────────────────────
 
 export interface MissingFieldsPanelProps {
   fields: MissingField[]
   onFieldClick: (fieldId: string) => void
   onDismiss?: () => void
+  /**
+   * When true, the panel renders nothing — signed consultations don't surface
+   * the missing-fields workflow.
+   */
+  isSigned?: boolean
+  /**
+   * Optional handler that triggers the sign flow. When provided and no fields
+   * are missing on a non-signed consultation, the panel renders a green
+   * "Listo" callout with a primary "Firmar y cerrar" button.
+   */
+  onSign?: () => void
 }
 
 export function MissingFieldsPanel({
   fields,
   onFieldClick,
   onDismiss,
+  isSigned = false,
+  onSign,
 }: MissingFieldsPanelProps): JSX.Element | null {
-  if (fields.length === 0) return null
+  if (isSigned) return null
+
+  if (fields.length === 0) {
+    if (!onSign) return null
+    return (
+      <div className="flex items-center justify-between gap-3 px-4 py-3 bg-success-bg border border-success-border rounded-md">
+        <div className="flex items-center gap-2 text-success-text">
+          <i className="ph ph-check-circle text-[16px]" aria-hidden />
+          <p className="text-[12.5px] font-medium leading-tight">
+            Listo · todos los campos requeridos están completos.
+          </p>
+        </div>
+        <Button variant="primary" size="sm" onClick={onSign}>
+          Firmar y cerrar
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <GroupSectionCard
-      label={`Faltantes (${fields.length})`}
-      tone="danger"
-      {...(onDismiss
-        ? {
-            title: 'Campos requeridos',
-            headerActions: (
-              <IconButton
-                icon="ph ph-x"
-                aria-label="Cerrar panel"
-                tone="neutral"
-                onClick={onDismiss}
-              />
-            ),
-          }
-        : {})}
-    >
-      <div className="divide-y divide-n-100">
+    <div className="bg-n-0 border border-danger-border rounded-md overflow-hidden">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-danger-text">
+          Faltantes ({fields.length})
+        </span>
+        {onDismiss && (
+          <IconButton icon="ph ph-x" aria-label="Cerrar panel" tone="neutral" onClick={onDismiss} />
+        )}
+      </div>
+      <p className="px-4 pb-3 text-[12px] text-n-500 leading-snug">
+        No puedes firmar hasta completarlos. Toca uno para ir directo.
+      </p>
+      <div className="flex flex-col gap-2 px-3 pb-3">
         {fields.map((field) => (
           <button
             key={field.id}
             type="button"
             onClick={() => onFieldClick(field.id)}
-            className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-danger-bg transition-colors group"
+            className="flex items-center gap-3 w-full text-left px-3 py-2 bg-danger-bg border border-danger-border rounded-sm hover:bg-[color:var(--color-danger-bg)] hover:opacity-95 transition-colors group"
           >
-            <span className="text-[12.5px] text-danger-text">{field.label}</span>
-            <i className="ph ph-arrow-right text-[11px] text-danger-text ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex-1 min-w-0">
+              <div className="text-[12.5px] font-semibold text-danger-text truncate">
+                {field.label}
+              </div>
+              {field.description && (
+                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-danger-text/70 mt-0.5 truncate">
+                  {field.description}
+                </div>
+              )}
+            </div>
+            <span className="text-[12px] text-danger-text font-medium shrink-0 group-hover:translate-x-0.5 transition-transform">
+              Ir →
+            </span>
           </button>
         ))}
       </div>
-    </GroupSectionCard>
+    </div>
   )
 }
 

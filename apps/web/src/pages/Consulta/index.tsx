@@ -5,6 +5,7 @@ import {
   useAddProtocolUsage,
   useConsultation,
   usePatientConsultations,
+  useRemoveProtocolUsage,
   useSkipStep,
   useUpdateCheckedState,
   useUpdateConsultation,
@@ -34,6 +35,7 @@ export function Consulta(): JSX.Element {
   const { data: consultation, isLoading, isError } = useConsultation(id!)
   const updateMutation = useUpdateConsultation(id!)
   const addUsageMutation = useAddProtocolUsage(id ?? '')
+  const removeUsageMutation = useRemoveProtocolUsage(id ?? '')
 
   const soap = useSoapState(consultation, updateMutation)
 
@@ -199,11 +201,16 @@ export function Consulta(): JSX.Element {
         <div className="mb-5">
           <MissingFieldsPanel
             fields={missingFields}
+            isSigned={isSigned}
             onFieldClick={(fieldId) => {
               setShowMissingFields(false)
               document.getElementById(`field-${fieldId}`)?.scrollIntoView({ behavior: 'smooth' })
             }}
             onDismiss={() => setShowMissingFields(false)}
+            onSign={() => {
+              setShowMissingFields(false)
+              setShowSign(true)
+            }}
           />
         </div>
       )}
@@ -233,6 +240,14 @@ export function Consulta(): JSX.Element {
               onToggleStep={handleToggleStep}
               onSkipStep={(step) => setSkipStepTarget(step)}
               isSigned={isSigned}
+              onContinueWithoutProtocol={() => {
+                if (activeUsage) {
+                  removeUsageMutation.mutate(activeUsage.id, {
+                    onSuccess: () => setActiveUsageId(null),
+                  })
+                }
+              }}
+              onEditProtocol={() => void navigate(`/protocolos/${activeUsage.protocolId}/edit`)}
             />
           ) : (
             <SoapView
@@ -272,6 +287,7 @@ export function Consulta(): JSX.Element {
             onAddProtocol={() => setShowPicker(true)}
             onPrevClick={(prevId) => void navigate(`/consultas/${prevId}`)}
             formatDate={formatDate}
+            viewMode={viewMode}
           />
         </aside>
       </div>

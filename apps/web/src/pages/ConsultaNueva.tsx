@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useCreateConsultation,
@@ -7,18 +7,11 @@ import {
 import { useLocations } from '@/hooks/locations/use-locations'
 import { usePatients } from '@/hooks/patients/use-patients'
 import { useAuth } from '@/hooks/use-auth'
+import { useUiStore } from '@/store/ui.store'
 import { ConsultHeader } from '@/components/consultations/ConsultHeader'
 import { ConsultationGate } from '@/components/consultations/ConsultationGate'
 import { ResumeBanner } from '@/components/consultations/ResumeBanner'
-import {
-  Button,
-  Field,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui'
+import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
 
 export function ConsultaNueva(): JSX.Element {
@@ -31,27 +24,50 @@ export function ConsultaNueva(): JSX.Element {
   const { data: patientsData } = usePatients()
   const patients = patientsData?.items ?? []
   const { data: locations = [] } = useLocations()
+  const activeLocationId = useUiStore((s) => s.activeLocationId)
   const createMutation = useCreateConsultation()
 
-  const [patientId, setPatientId] = useState(preselectedPatientId)
-  const [locationId, setLocationId] = useState(preselectedLocationId)
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [resumeDismissed, setResumeDismissed] = useState(false)
 
-  // Auto-default location to first owned location (or first location) when not
-  // pre-filled from URL. Doctors typically have one primary working location.
-  const defaultLocationId = useMemo(() => {
+  // Direction B: gate requires both patientId and locationId. If patientId is
+  // missing, the user is redirected to /pacientes. If locationId is missing,
+  // we fall back to the active or primary owned location and emit a telemetry
+  // log so any unfixed entry point is discoverable.
+  const fallbackLocationId = useMemo(() => {
     if (locations.length === 0) return ''
+    if (activeLocationId && locations.some((l) => l.id === activeLocationId)) {
+      return activeLocationId
+    }
     const owned = locations.find((l) => l.isOwned)
     return (owned ?? locations[0])?.id ?? ''
-  }, [locations])
+  }, [locations, activeLocationId])
 
+  const patientId = preselectedPatientId
+  const locationId = preselectedLocationId || fallbackLocationId
+
+  // Redirect to /pacientes if the URL lacks patientId.
   useEffect(() => {
-    if (!locationId && defaultLocationId) {
-      setLocationId(defaultLocationId)
+    if (!preselectedPatientId) {
+      void navigate('/pacientes', { replace: true })
     }
-  }, [defaultLocationId, locationId])
+  }, [preselectedPatientId, navigate])
+
+  // Telemetry: emit once when an entry point lands on the gate without
+  // locationId in the URL and we substitute a fallback.
+  const telemetryEmittedRef = useRef(false)
+  useEffect(() => {
+    if (!preselectedLocationId && fallbackLocationId && !telemetryEmittedRef.current) {
+      telemetryEmittedRef.current = true
+      console.warn('[telemetry] gate_location_fallback', {
+        patientId: preselectedPatientId,
+        fallbackLocationId,
+        path:
+          typeof window !== 'undefined' ? window.location.pathname + window.location.search : '',
+      })
+    }
+  }, [preselectedLocationId, fallbackLocationId, preselectedPatientId])
 
   const patient = patients.find((p) => p.id === patientId) ?? null
   const location = locations.find((l) => l.id === locationId) ?? null
@@ -101,8 +117,6 @@ export function ConsultaNueva(): JSX.Element {
 
   const subtitle = patient ? `${patientFullName} · ${doctorDisplayName}` : doctorDisplayName
 
-  const showInlinePickers = !patient || !location
-
   return (
     <div>
       <ConsultHeader
@@ -126,57 +140,6 @@ export function ConsultaNueva(): JSX.Element {
         <div className="mx-auto max-w-[880px] mt-6">
           <div className="text-[12.5px] text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
             {error}
-          </div>
-        </div>
-      )}
-
-      {showInlinePickers && (
-        <div className="max-w-[880px] mx-auto mt-6 px-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {!patient && (
-              <Field label="Paciente">
-                <Select
-                  value={patientId}
-                  onValueChange={(v) => {
-                    setPatientId(v)
-                    setError(null)
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar paciente…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.firstName} {p.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-            {!location && (
-              <Field label="Ubicación">
-                <Select
-                  value={locationId}
-                  onValueChange={(v) => {
-                    setLocationId(v)
-                    setError(null)
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar ubicación…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
           </div>
         </div>
       )}

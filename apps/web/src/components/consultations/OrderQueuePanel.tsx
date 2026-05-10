@@ -358,10 +358,15 @@ function MedicationGroup({
     )
   }
 
+  // D8: flat medication list — display "Medicamentos N" instead of the group's
+  // stored title (e.g. "Receta"). The group's title persists as the receta's
+  // PDF title; multi-receta UI is removed but the data model is unchanged.
+  const displayTitle = isOnlyGroup ? `Medicamentos ${medications.length}` : group.title
+
   return (
     <div className="mb-3">
       <GroupSectionCard
-        title={group.title}
+        title={displayTitle}
         headerActions={
           !isOnlyGroup ? (
             <IconButton
@@ -837,7 +842,6 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     imagingOrders,
     labGroups,
     labOrders,
-    addMedicationGroup,
     removeMedicationGroup,
     queueMedication,
     removeMedication,
@@ -955,10 +959,6 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
               ))}
               <div className="flex flex-col gap-2 mt-1">
                 <AddMedicationForm groups={medicationGroups} onAdd={queueMedication} />
-                <DashedButton tone="subtle" size="sm" onClick={() => addMedicationGroup()}>
-                  <i className="ph ph-plus text-[11px]" />
-                  Nueva receta
-                </DashedButton>
               </div>
             </>
           )}
