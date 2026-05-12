@@ -4,6 +4,46 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-11] — R5 carryover: Consulta H1 reflects state
+
+### Fixed
+
+- **R5** `apps/web/src/pages/Consulta/index.tsx` page title now resolves to:
+  - `Consulta del 10 may de 2026 · firmada` for signed consultations,
+  - `Consulta del 10 may de 2026` for drafts with any SOAP content (chief complaint, subjective, objective, assessment, plan, or diagnoses on either the server record or live soap state),
+  - `Nueva consulta` only for truly empty drafts.
+    Stops surfacing the chief complaint as the title (previously `liveChief || \`Consulta del …\``) and switches the date helper from the local `formatDate`(which produced`10 may 2026`) to `formatBreadcrumbDate`from`apps/web/src/lib/format/dates.ts` so the title matches the rest of the date system.
+
+## [2026-05-11] — R8 follow-up: recommendation cache invalidation
+
+### Fixed
+
+- **R8** Investigated `/v1/patients/:id/protocol-suggestions` allegedly omitting `source` and leaking patient-history values across patients. Not reproducible on current branch: live API returns `source: 'doctor-history'` with `lastUsedAt: null`, `usageCount: 0`, `isMostProbable: false` for Ana María (no prior consultations) and `source: 'patient-history'` with full per-patient signals for Roberto. Audit symptoms were the 60s in-memory cache serving pre-R1 data immediately after the file was edited.
+
+### Changed
+
+- `apps/api/src/modules/consultations/consultations.service.ts` — invalidates `ProtocolRecommendationsService` cache after consultation create (with `protocolId`) and after `addProtocolUsage`, so next gate load reflects the new `ProtocolUsage` row within the 60s TTL window.
+- `apps/api/src/modules/consultations/consultations.module.ts` — imports `ProtocolRecommendationsModule` for the above injection.
+
+### Added
+
+- `apps/api/src/modules/consultations/__tests__/consultations.service.spec.ts` — assertion that `recommendationsSvc.invalidate(tenantId, userId, patientId)` is called in the atomic create-with-protocol path.
+
+## [2026-05-11] — R7 follow-up: unmask dev errors + audit error details
+
+### Fixed
+
+- **R7** Investigated `POST /v1/consultations` returning 500 INTERNAL_ERROR. Not reproducible on current branch. Audit doc's curl test used non-existent location ID `00000000-0000-0000-a002-000000000001`; actual seeded IDs are `00000000-0000-0000-a002-010000000001` / `010000000002`. Wrong IDs triggered a Prisma FK violation that surfaced as generic 500. Verified `POST /v1/consultations` (with and without `protocolId`) returns 201 against a real auth token and seeded IDs.
+
+### Changed
+
+- `apps/api/src/common/filters/http-exception.filter.ts` — non-`HttpException` errors now surface the real `err.message` and a truncated stack via `error.details` when `NODE_ENV !== 'production'`. Production still masks to "Internal server error".
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts` — failed mutation rows now populate `errorCode` (from `err.response.code` or `err.code`) and `metadata.errorMessage`, so audit history identifies the failure cause without re-running the request.
+
+### Added
+
+- `apps/api/src/common/filters/__tests__/http-exception.filter.spec.ts` — covers prod-mask vs dev-unmask paths for non-`HttpException` errors.
+
 ## [2026-05-10] — Round-2 fixes (R1–R6)
 
 ### Fixed

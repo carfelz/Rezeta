@@ -5,6 +5,7 @@ import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
+import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
 
@@ -74,6 +75,7 @@ describe('ConsultationsService', () => {
   let prisma: PrismaService
   let invoicesSvc: InvoicesService
   let service: ConsultationsService
+  let recommendationsSvc: { invalidate: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     repo = {
@@ -103,7 +105,13 @@ describe('ConsultationsService', () => {
       createFromConsultation: vi.fn().mockResolvedValue(undefined),
     } as unknown as InvoicesService
 
-    service = new ConsultationsService(repo, prisma, invoicesSvc)
+    recommendationsSvc = { invalidate: vi.fn() }
+    service = new ConsultationsService(
+      repo,
+      prisma,
+      invoicesSvc,
+      recommendationsSvc as unknown as ProtocolRecommendationsService,
+    )
   })
 
   // ── list / getById ─────────────────────────────────────────────────────────
@@ -188,6 +196,7 @@ describe('ConsultationsService', () => {
         expect(txClient.consultation.create).toHaveBeenCalledTimes(1)
         expect(txClient.protocolUsage.create).toHaveBeenCalledTimes(1)
         expect(result).toEqual(c)
+        expect(recommendationsSvc.invalidate).toHaveBeenCalledWith('tenant-1', 'user-1', 'p-1')
       })
 
       it('rolls back when protocol-usage insert fails — returns no result, no findById', async () => {

@@ -34,11 +34,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR
-      error = { code: ErrorCode.INTERNAL_ERROR, message: 'Internal server error' }
-      this.logger.error(
-        'Unhandled exception',
-        exception instanceof Error ? exception.stack : exception,
-      )
+      const isProd = process.env.NODE_ENV === 'production'
+      const err = exception instanceof Error ? exception : null
+      error = {
+        code: ErrorCode.INTERNAL_ERROR,
+        message: isProd ? 'Internal server error' : (err?.message ?? 'Internal server error'),
+        ...(isProd
+          ? {}
+          : {
+              details: {
+                exception: err?.name ?? typeof exception,
+                stack: err?.stack?.split('\n').slice(0, 8).join('\n'),
+              },
+            }),
+      }
+      this.logger.error('Unhandled exception', err?.stack ?? String(exception))
     }
 
     response.status(status).json({ error })

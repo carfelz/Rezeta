@@ -28,6 +28,7 @@ import { ProtocolBar } from './ProtocolBar'
 import { ConsultaModals } from './ConsultaModals'
 import { useSoapState } from './use-soap-state'
 import { formatDate } from './helpers'
+import { formatBreadcrumbDate } from '@/lib/format/dates'
 
 export function Consulta(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -146,13 +147,11 @@ export function Consulta(): JSX.Element {
 
   const isSigned = consultation.status === 'signed'
   const protocolIds = consultation.protocolUsages.map((u) => u.protocolId)
-  // Derive from the server record, not soap state, so the title reflects
-  // state on first render (soap state hydrates one tick later via useEffect).
-  // Live edits also update via soap state once initialized — fall back to
-  // either source so the title stays current as the doctor types.
-  const liveChief = soap.chiefComplaint.trim() || (consultation.chiefComplaint ?? '').trim()
+  // Derive from server record + live soap state. Server values cover first
+  // render (soap state hydrates one tick later); soap values cover live edits.
   const hasContent = Boolean(
-    liveChief ||
+    soap.chiefComplaint.trim() ||
+    (consultation.chiefComplaint ?? '').trim() ||
     (consultation.subjective ?? '').trim() ||
     (consultation.objective ?? '').trim() ||
     (consultation.assessment ?? '').trim() ||
@@ -164,11 +163,11 @@ export function Consulta(): JSX.Element {
     soap.plan.trim() ||
     soap.diagnoses.length > 0,
   )
-  const dateShort = formatDate(consultation.consultedAt)
+  const dateShort = formatBreadcrumbDate(new Date(consultation.consultedAt))
   const pageTitle = isSigned
     ? `Consulta del ${dateShort} · firmada`
     : hasContent
-      ? liveChief || `Consulta del ${dateShort}`
+      ? `Consulta del ${dateShort}`
       : 'Nueva consulta'
 
   return (

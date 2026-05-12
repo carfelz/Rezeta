@@ -26,6 +26,7 @@ import type { ConditionalStepActivated } from '@rezeta/shared'
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
+import { ProtocolRecommendationsService } from '../protocol-recommendations/protocol-recommendations.service.js'
 
 @Injectable()
 export class ConsultationsService {
@@ -33,6 +34,8 @@ export class ConsultationsService {
     @Inject(ConsultationsRepository) private repo: ConsultationsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(InvoicesService) private invoicesSvc: InvoicesService,
+    @Inject(ProtocolRecommendationsService)
+    private recommendationsSvc: ProtocolRecommendationsService,
   ) {}
 
   list(params: ConsultationListParams): Promise<ConsultationWithDetails[]> {
@@ -166,6 +169,7 @@ export class ConsultationsService {
         message: 'Consultation not found after creation',
       })
     }
+    this.recommendationsSvc.invalidate(tenantId, userId, dto.patientId)
     return result
   }
 
@@ -338,7 +342,7 @@ export class ConsultationsService {
     userId: string,
     dto: AddProtocolUsageDto,
   ): Promise<ConsultationProtocolUsage> {
-    await this.getById(consultationId, tenantId)
+    const consultation = await this.getById(consultationId, tenantId)
 
     const protocol = await this.prisma.protocol.findFirst({
       where: { id: dto.protocolId, tenantId, deletedAt: null },
@@ -385,7 +389,7 @@ export class ConsultationsService {
     // Compute chain depth
     const depth = dto.parentUsageId ? await this.repo.getUsageDepth(dto.parentUsageId, tenantId) : 0
 
-    return this.repo.launchProtocolUsage({
+    const usage = await this.repo.launchProtocolUsage({
       consultationId,
       tenantId,
       userId,
@@ -396,6 +400,8 @@ export class ConsultationsService {
       ...(dto.triggerBlockId !== undefined && { triggerBlockId: dto.triggerBlockId }),
       depth,
     })
+    this.recommendationsSvc.invalidate(tenantId, userId, consultation.patientId)
+    return usage
   }
 
   async updateProtocolUsage(

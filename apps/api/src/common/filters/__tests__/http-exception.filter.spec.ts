@@ -79,13 +79,38 @@ describe('HttpExceptionFilter', () => {
     expect(arg.error.code).toBe(ErrorCode.INTERNAL_ERROR)
   })
 
-  it('handles non-HttpException as 500 INTERNAL_ERROR', () => {
-    const exception = new Error('Unexpected crash')
-    filter.catch(exception, host)
-    expect(statusFn).toHaveBeenCalledWith(500)
-    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string; message: string } }
-    expect(arg.error.code).toBe(ErrorCode.INTERNAL_ERROR)
-    expect(arg.error.message).toBe('Internal server error')
+  it('handles non-HttpException as 500 INTERNAL_ERROR (prod masks message)', () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const exception = new Error('Unexpected crash')
+      filter.catch(exception, host)
+      expect(statusFn).toHaveBeenCalledWith(500)
+      const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string; message: string } }
+      expect(arg.error.code).toBe(ErrorCode.INTERNAL_ERROR)
+      expect(arg.error.message).toBe('Internal server error')
+    } finally {
+      process.env.NODE_ENV = prev
+    }
+  })
+
+  it('surfaces real exception message + stack in non-prod', () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    try {
+      const exception = new Error('Unexpected crash')
+      filter.catch(exception, host)
+      expect(statusFn).toHaveBeenCalledWith(500)
+      const arg = jsonFn.mock.calls[0]?.[0] as {
+        error: { code: string; message: string; details?: { exception?: string; stack?: string } }
+      }
+      expect(arg.error.code).toBe(ErrorCode.INTERNAL_ERROR)
+      expect(arg.error.message).toBe('Unexpected crash')
+      expect(arg.error.details?.exception).toBe('Error')
+      expect(arg.error.details?.stack).toContain('Error')
+    } finally {
+      process.env.NODE_ENV = prev
+    }
   })
 
   it('logs error for non-HttpException', () => {

@@ -55,19 +55,32 @@ export class AuditLogInterceptor implements NestInterceptor {
       ...(typeof ua === 'string' ? { userAgent: ua } : {}),
     }
 
-    const buildRecord = (status: 'success' | 'failed') => ({
-      tenantId,
-      actorUserId: user.id,
-      actorType: 'user' as const,
-      category: 'entity' as const,
-      action,
-      ...(entityType !== undefined ? { entityType } : {}),
-      ...(entityId !== undefined ? { entityId } : {}),
-      ...(ip !== undefined ? { ipAddress: ip } : {}),
-      ...(typeof ua === 'string' ? { userAgent: ua } : {}),
-      ...(typeof rid === 'string' ? { requestId: rid } : {}),
-      status,
-    })
+    const buildRecord = (status: 'success' | 'failed', err?: unknown) => {
+      let errorCode: string | undefined
+      let errorMessage: string | undefined
+      if (status === 'failed' && err != null) {
+        const e = err as { code?: unknown; message?: unknown; response?: { code?: unknown } }
+        const respCode = e.response && typeof e.response === 'object' ? e.response.code : undefined
+        if (typeof respCode === 'string') errorCode = respCode
+        else if (typeof e.code === 'string') errorCode = e.code
+        if (typeof e.message === 'string') errorMessage = e.message
+      }
+      return {
+        tenantId,
+        actorUserId: user.id,
+        actorType: 'user' as const,
+        category: 'entity' as const,
+        action,
+        ...(entityType !== undefined ? { entityType } : {}),
+        ...(entityId !== undefined ? { entityId } : {}),
+        ...(ip !== undefined ? { ipAddress: ip } : {}),
+        ...(typeof ua === 'string' ? { userAgent: ua } : {}),
+        ...(typeof rid === 'string' ? { requestId: rid } : {}),
+        ...(errorCode !== undefined ? { errorCode } : {}),
+        ...(errorMessage !== undefined ? { metadata: { errorMessage } } : {}),
+        status,
+      }
+    }
 
     // Wrap subscription inside the async context so Prisma's $use backstop
     // sees the store and skips writing its own audit row.
@@ -80,7 +93,7 @@ export class AuditLogInterceptor implements NestInterceptor {
               void this.auditLog.record(buildRecord('success'))
             }),
             catchError((err: unknown) => {
-              void this.auditLog.record(buildRecord('failed'))
+              void this.auditLog.record(buildRecord('failed', err))
               return throwError(() => err)
             }),
           )

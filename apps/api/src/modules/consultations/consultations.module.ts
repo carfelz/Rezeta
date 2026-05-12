@@ -6,9 +6,10 @@ import {
 import { ConsultationsService } from './consultations.service.js'
 import { ConsultationsRepository } from './consultations.repository.js'
 import { InvoicesModule } from '../invoices/index.js'
+import { ProtocolRecommendationsModule } from '../protocol-recommendations/index.js'
 
 @Module({
-  imports: [InvoicesModule],
+  imports: [InvoicesModule, ProtocolRecommendationsModule],
   controllers: [ConsultationsController, PatientConsultationsController],
   providers: [ConsultationsService, ConsultationsRepository],
   exports: [ConsultationsService],

@@ -156,7 +156,10 @@
       "Bash(grep -v \"consultas/$\")",
       "Bash(grep -rn \"Publicar v\\\\|Publicar v\\\\${\\\\|Publicar nueva\" /Users/carlosfeliz/code/medical_app/apps/web/src --include=\"*.tsx\" --include=\"*.ts\")",
       "Bash(echo \"exit=$?\")",
-      "Bash(grep -rn \"Dr\\\\\\\\. \\\\${\" /Users/carlosfeliz/code/medical_app/apps/web/src/)"
+      "Bash(grep -rn \"Dr\\\\\\\\. \\\\${\" /Users/carlosfeliz/code/medical_app/apps/web/src/)",
+      "Bash(lsof -iTCP:3000 -sTCP:LISTEN -n -P)",
+      "Bash(lsof -iTCP:5173 -sTCP:LISTEN -n -P)",
+      "Bash(grep -rn '$use\\\\|$extends\\\\|prismaAuditExtension\\\\|setupAuditExtension\\\\|httpAuditContextStore' /Users/carlosfeliz/code/medical_app/apps/api/src/ /Users/carlosfeliz/code/medical_app/packages/db/src/)"
     ]
   }
 }
