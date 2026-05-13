@@ -259,7 +259,6 @@ model Consultation {
   plan          String?   @db.Text
   vitals        Json?
   diagnoses     Json      @default("[]")
-  protocolsApplied String[]  @default([]) @map("protocols_applied")
   consultedAt      DateTime  @default(now()) @map("consulted_at")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")

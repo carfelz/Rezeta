@@ -4,6 +4,34 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-13] — Drop legacy `Consultation.protocolsApplied` column
+
+### Changed
+
+- `packages/db/prisma/schema.prisma` — removed legacy `Consultation.protocolsApplied String[]` field. Zero application consumers; canonical data already lives in the `protocolUsages` relation.
+
+### Added
+
+- `packages/db/prisma/migrations/20260513000000_drop_protocols_applied/migration.sql` — drops the `protocols_applied` column from `consultations`. Logs (via `RAISE NOTICE`) the count of any rows with non-empty values before dropping.
+
+## [2026-05-11] — Branded 404 / route ErrorBoundary
+
+### Added
+
+- `apps/web/src/pages/NotFound.tsx` — branded recovery page with `Volver al inicio` (→ `/dashboard`) and `Ir a pacientes` (→ `/pacientes`) CTAs. Uses `useRouteError` + `isRouteErrorResponse`: thrown 5xx responses or unknown errors render `Algo salió mal`; everything else (catch-all `*` route, thrown 4xx) renders `No encontramos esta página`.
+- `apps/web/src/pages/__tests__/NotFound.test.tsx` — covers unmatched-route 404, absence of React Router's `Hey developer 👋` developer message, and 5xx throw path.
+
+### Changed
+
+- `apps/web/src/App.tsx` — registered `NotFound` as `errorElement` on the onboarding (`AuthGate + BienvenidoGate`) and protected (`AuthGate + AppLayout`) route groups, plus a top-level catch-all `{ path: '*', element: <NotFound /> }`. End users no longer see React Router's default `Unexpected Application Error!` UI on stale bookmarks or mistyped URLs.
+- `apps/web/src/lib/strings.ts` — added `NOT_FOUND_TITLE`, `NOT_FOUND_DESCRIPTION`, `ERROR_BOUNDARY_TITLE`, `ERROR_BOUNDARY_DESCRIPTION`, `NOT_FOUND_GO_HOME`, `NOT_FOUND_GO_PATIENTS`.
+
+## [2026-05-11] — Dashboard greeting reflects time of day
+
+### Fixed
+
+- `apps/web/src/pages/Dashboard/index.tsx` — replaced hardcoded `Buenos días, Dr. {lastName}.` with `strings.DASHBOARD_GREETING(user?.fullName ?? null)` from `apps/web/src/lib/strings.ts`. The helper already exists with full test coverage and derives `Buenos días` / `Buenas tardes` / `Buenas noches` from `new Date().getHours()` (cutoffs at 12 and 19). Doctors logging notes in the evening no longer see a "good morning" greeting.
+
 ## [2026-05-11] — R5 carryover: Consulta H1 reflects state
 
 ### Fixed
