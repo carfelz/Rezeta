@@ -71,6 +71,15 @@ export const strings = {
   DASHBOARD_UNDER_CONSTRUCTION: 'Panel en construcción',
   DASHBOARD_UNDER_CONSTRUCTION_DESCRIPTION: 'El resumen de actividad del día aparecerá aquí.',
 
+  // ── Not Found / Error Boundary ─────────────────────────────────────────────
+  NOT_FOUND_TITLE: 'No encontramos esta página',
+  NOT_FOUND_DESCRIPTION: 'Es posible que el enlace esté roto o que la página ya no exista.',
+  ERROR_BOUNDARY_TITLE: 'Algo salió mal',
+  ERROR_BOUNDARY_DESCRIPTION:
+    'Ocurrió un error inesperado. Vuelve al inicio o intenta de nuevo más tarde.',
+  NOT_FOUND_GO_HOME: 'Volver al inicio',
+  NOT_FOUND_GO_PATIENTS: 'Ir a pacientes',
+
   // ── Auth Gate ──────────────────────────────────────────────────────────────
   AUTH_GATE_LOADING: 'Cargando...',
 

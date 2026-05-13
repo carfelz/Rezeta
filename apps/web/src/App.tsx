@@ -22,6 +22,7 @@ import { Horarios } from '@/pages/ajustes/Horarios'
 import { AppPrototype } from '@/pages/ajustes/AppPrototype'
 import { DesignSystemReference } from '@/pages/ajustes/DesignSystemReference'
 import { Login } from '@/pages/Login'
+import { NotFound } from '@/pages/NotFound'
 import { Signup } from '@/pages/Signup'
 import { Bienvenido } from '@/pages/Bienvenido'
 import { BienvenidoPersonalizar } from '@/pages/BienvenidoPersonalizar'
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
         <BienvenidoGate />
       </AuthGate>
     ),
+    errorElement: <NotFound />,
     children: [
       { path: 'bienvenido', element: <Bienvenido /> },
       { path: 'bienvenido/personalizar', element: <BienvenidoPersonalizar /> },
@@ -77,6 +79,7 @@ const router = createBrowserRouter([
         <AppLayout />
       </AuthGate>
     ),
+    errorElement: <NotFound />,
     children: [
       // Root redirect
       {
@@ -105,6 +108,9 @@ const router = createBrowserRouter([
       { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],
   },
+
+  // ── Catch-all 404 ──────────────────────────────────────────────────────────
+  { path: '*', element: <NotFound /> },
 ])
 
 export function App(): JSX.Element {
