@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PROTOCOL_USAGE_STATUSES } from '../types/protocol.js'
 
 export const VitalsSchema = z.object({
   bloodPressureSystolic: z.number().int().min(0).max(300).optional(),
@@ -113,7 +114,7 @@ export const UpdateProtocolUsageSchema = z.object({
   content: ProtocolContentSchema.optional(),
   modifications: ModificationsSchema.optional(),
   modificationSummary: z.string().max(500).nullable().optional(),
-  status: z.enum(['in_progress', 'completed', 'abandoned']).optional(),
+  status: z.enum(PROTOCOL_USAGE_STATUSES).optional(),
   checkedState: z.record(z.string(), z.boolean()).optional(),
   completedAt: z.string().datetime().nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),

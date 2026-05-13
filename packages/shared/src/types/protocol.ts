@@ -1,5 +1,12 @@
 export type ProtocolStatus = 'draft' | 'active' | 'archived'
-export type ProtocolUsageStatus = 'in_progress' | 'completed' | 'abandoned' | 'switched'
+
+export const PROTOCOL_USAGE_STATUSES = [
+  'in_progress',
+  'completed',
+  'abandoned',
+  'switched',
+] as const
+export type ProtocolUsageStatus = (typeof PROTOCOL_USAGE_STATUSES)[number]
 
 /**
  * Where a recommendation came from. Surfaced to the UI so per-patient claims

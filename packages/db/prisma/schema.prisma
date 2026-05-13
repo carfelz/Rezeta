@@ -535,7 +535,7 @@ model ProtocolUsage {
   parentUsageId       String?   @map("parent_usage_id") @db.Uuid
   triggerBlockId      String?   @map("trigger_block_id") @db.VarChar(100)
   depth               Int       @default(0)
-  status              String    @default("in_progress") @db.VarChar(20) // in_progress | completed | abandoned
+  status              String    @default("in_progress") @db.VarChar(20) // in_progress | completed | abandoned | switched
   // Legacy field kept for backward compat with existing code
   checkedState        Json      @default("{}") @map("checked_state")
   completedAt         DateTime? @map("completed_at")

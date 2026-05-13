@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-13] — Align `ProtocolUsage.status` enum across schema, types, and DB
+
+### Changed
+
+- `packages/db/prisma/schema.prisma` — updated `ProtocolUsage.status` schema comment to include all four valid values (`in_progress | completed | abandoned | switched`). Previously the comment listed only three even though `switched` is actively written by `apps/web/src/hooks/consultations/use-consultations.ts`.
+- `packages/shared/src/types/protocol.ts` — introduced `PROTOCOL_USAGE_STATUSES` const (`as const` tuple) and derived `ProtocolUsageStatus` from it. Single source of truth for the four valid statuses.
+- `packages/shared/src/schemas/consultation.ts` — `UpdateProtocolUsageSchema.status` now uses `z.enum(PROTOCOL_USAGE_STATUSES)` instead of a hardcoded three-value list, closing a real gap that would have rejected `status: 'switched'` on update.
+- `packages/shared/__tests__/protocol-usage-status.test.ts` — assertion now references the exported const rather than re-declaring the list inline.
+
+### Added
+
+- `packages/db/prisma/migrations/20260513000001_add_protocol_usage_status_check/migration.sql` — adds DB-level `CHECK` constraint enforcing `protocol_usages.status IN ('in_progress', 'completed', 'abandoned', 'switched')`.
+
 ## [2026-05-13] — Drop legacy `Consultation.protocolsApplied` column
 
 ### Changed

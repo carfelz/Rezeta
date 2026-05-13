@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ProtocolUsageStatus } from '../src/types/protocol'
+import { PROTOCOL_USAGE_STATUSES, type ProtocolUsageStatus } from '../src/types/protocol'
 import type {
   ProtocolUsageModifications,
   OffProtocolNoteEvent,
@@ -7,9 +7,8 @@ import type {
 } from '../src/types/consultation'
 
 describe('ProtocolUsageStatus', () => {
-  it('accepts all valid status values', () => {
-    const statuses: ProtocolUsageStatus[] = ['in_progress', 'completed', 'abandoned', 'switched']
-    expect(statuses).toHaveLength(4)
+  it('exports the canonical list of four statuses', () => {
+    expect(PROTOCOL_USAGE_STATUSES).toEqual(['in_progress', 'completed', 'abandoned', 'switched'])
   })
 
   it('switched is a valid status', () => {
