@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
+import { useUiStore } from '@/store/ui.store'
 import { ClinicalHistory } from '@/pages/Pacientes/ClinicalHistory'
 import { DemographicsBlock } from './DemographicsBlock'
 import { EditModal } from './EditModal'
@@ -9,6 +10,7 @@ import { PageHeader } from './PageHeader'
 
 export function PacienteDetalle(): JSX.Element {
   const { id } = useParams<{ id: string }>()
+  const activeLocationId = useUiStore((s) => s.activeLocationId)
   const navigate = useNavigate()
   const [showEdit, setShowEdit] = useState(false)
 
@@ -47,7 +49,10 @@ export function PacienteDetalle(): JSX.Element {
       <MedicalInfoBlock patient={patient} />
 
       <div className="border border-n-200 rounded-md bg-n-0 p-5">
-        <ClinicalHistory patientId={patient.id} />
+        <ClinicalHistory
+          patientId={patient.id}
+          {...(activeLocationId ? { locationId: activeLocationId } : {})}
+        />
       </div>
     </div>
   )
