@@ -29,6 +29,9 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
 @./specs/audit-log-implementation-prompt.md
+@./specs/audit-log-spec.md
+@./specs/protocol-in-consultation-spec.md
+@./specs/protocol-engine-slices.md
 
 @./specs/01-rezeta-live-audit.md
 @./specs/02-claude-code-handoffs.md

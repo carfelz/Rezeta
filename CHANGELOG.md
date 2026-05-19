@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Add missing spec @imports to CLAUDE.md
+
+### Changed
+
+- `CLAUDE.md`: added `@imports` for `specs/audit-log-spec.md`, `specs/protocol-in-consultation-spec.md`, and `specs/protocol-engine-slices.md` — these were referenced in prose but not loaded into session context
+
 ## [2026-05-19] — Fix gate routing: pass locationId from patient detail to new consultation
 
 ### Fixed
