@@ -25,6 +25,7 @@ interface SoapState {
   diagnoses: string[]
   setDiagnoses: (d: string[]) => void
   saveStatus: SaveStatus
+  savedAt: Date | undefined
   saveNow: () => void
 }
 
@@ -45,6 +46,7 @@ export function useSoapState(
   const [vitals, setVitals] = useState<LocalVitals>(EMPTY_LOCAL_VITALS)
   const [diagnoses, setDiagnoses] = useState<string[]>([])
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [savedAt, setSavedAt] = useState<Date | undefined>(undefined)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialized = useRef(false)
@@ -83,10 +85,12 @@ export function useSoapState(
       setSaveStatus('saving')
       updateMutation.mutate(buildPayload(), {
         onSuccess: () => {
+          const now = new Date()
+          setSavedAt(now)
           setSaveStatus('saved')
           setTimeout(() => setSaveStatus('idle'), 2500)
         },
-        onError: () => setSaveStatus('dirty'),
+        onError: () => setSaveStatus('error'),
       })
     }, 1500)
   }, [consultation, buildPayload, updateMutation])
@@ -96,10 +100,12 @@ export function useSoapState(
     setSaveStatus('saving')
     updateMutation.mutate(buildPayload(), {
       onSuccess: () => {
+        const now = new Date()
+        setSavedAt(now)
         setSaveStatus('saved')
         setTimeout(() => setSaveStatus('idle'), 2500)
       },
-      onError: () => setSaveStatus('dirty'),
+      onError: () => setSaveStatus('error'),
     })
   }
 
@@ -131,6 +137,7 @@ export function useSoapState(
     diagnoses,
     setDiagnoses,
     saveStatus,
+    savedAt,
     saveNow,
   }
 }

@@ -181,10 +181,10 @@ export function Consulta(): JSX.Element {
         doctorName={consultation.doctorName}
         pageTitle={pageTitle}
         saveStatus={soap.saveStatus}
+        {...(soap.savedAt !== undefined ? { savedAt: soap.savedAt } : {})}
         isSigned={isSigned}
-        isSaving={updateMutation.isPending}
         onAmend={() => setShowAmend(true)}
-        onSaveDraft={soap.saveNow}
+        onRetry={soap.saveNow}
         onSignClick={handleSignClick}
       />
 

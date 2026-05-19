@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-18] — Audit fixes: block counter, autosave UX, verbose button copy
+
+### Changed
+
+- `apps/web/src/pages/ProtocolEditor/helpers.ts` — `countBlockStats`: sections no longer increment `total`; only leaf blocks count. An empty 2-section protocol now correctly shows "0 bloques · 2 secciones" instead of "2 bloques · 2 secciones" (audit L13).
+- `apps/web/src/components/consultations/SaveBadge.tsx` — added `error` save state with warning icon and optional "Reintentar" button; `saved` state now accepts `savedAt: Date` and shows elapsed time ("Guardado · hace 12s"); `SaveStatus` union extended with `'error'`.
+- `apps/web/src/pages/Consulta/use-soap-state.ts` — autosave and `saveNow` now set status `'error'` on failure (was `'dirty'`); track `savedAt: Date` on successful save; expose `savedAt` from hook return.
+- `apps/web/src/pages/Consulta/PageHeader.tsx` — removed `onSaveDraft` / `isSaving` props and "Guardar borrador" button; autosave makes the manual button redundant. Added `savedAt` and `onRetry` props forwarded to `SaveBadge` (audit L17 / improvement #11).
+- `apps/web/src/pages/ConsultaNueva.tsx` — "Saltar y abrir consulta vacía" → "Abrir consulta vacía" (shorter, less verbose — audit L19).
+- `apps/web/src/pages/ajustes/PlantillaEditor.tsx` — migrated from deprecated Radix `Toast` / `ToastProvider` / `ToastViewport` / `ToastDescription` to Sonner `toast.success()`.
+
+### Added
+
+- `apps/web/src/pages/ProtocolEditor/__tests__/helpers.test.ts` — 10 tests covering `countBlockStats` (sections excluded from total, nested blocks, empty protocol) and `formatRelativeTime` (all time bands).
+- `apps/web/src/pages/Consulta/__tests__/PageHeader.test.tsx` — 9 tests covering render, sign flow, amend flow, no "Guardar borrador" button, `savedAt` elapsed time, error state retry.
+- `apps/web/src/components/consultations/__tests__/SaveBadge.test.tsx` — extended from 4 to 8 tests: `error` state, retry button click, `savedAt` elapsed display, no retry button when `onRetry` omitted.
+
 ## [2026-05-18] — Migrate toast system to Sonner; replace window.confirm with ConfirmDialog
 
 ### Added

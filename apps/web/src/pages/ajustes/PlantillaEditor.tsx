@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   useProtocolTemplate,
@@ -11,14 +11,8 @@ import {
   type TemplateSchema,
 } from '@/components/template/TemplateEditor'
 import { strings } from '@/lib/strings'
-import {
-  Button,
-  Callout,
-  ToastProvider,
-  ToastViewport,
-  Toast,
-  ToastDescription,
-} from '@/components/ui'
+import { Button, Callout } from '@/components/ui'
+import { toast } from 'sonner'
 
 // ─── New template wrapper ─────────────────────────────────────────────────────
 
@@ -74,15 +68,6 @@ export function PlantillaEditor(): JSX.Element {
   const navigate = useNavigate()
   const { data: template, isLoading, isError } = useProtocolTemplate(id ?? '')
   const updateMutation = useUpdateProtocolTemplate(id ?? '')
-  const [savedToast, setSavedToast] = useState(false)
-
-  useEffect(() => {
-    if (updateMutation.isSuccess) {
-      setSavedToast(true)
-      const t = setTimeout(() => setSavedToast(false), 2500)
-      return () => clearTimeout(t)
-    }
-  }, [updateMutation.isSuccess])
 
   if (isLoading) {
     return (
@@ -110,38 +95,28 @@ export function PlantillaEditor(): JSX.Element {
       suggestedSpecialty: suggestedSpecialty || null,
       schema,
     })
+    toast.success(strings.TEMPLATE_EDITOR_SAVED)
   }
 
   return (
-    <ToastProvider>
-      <div className="p-8 px-6">
-        <nav className="mb-4">
-          <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
-            <i className="ph ph-arrow-left mr-1" />
-            {strings.TEMPLATES_PAGE_TITLE}
-          </Button>
-        </nav>
-        <TemplateEditor
-          key={template.id}
-          initialState={initialState}
-          isLocked={template.isLocked}
-          blockingTypeIds={template.blockingTypeIds}
-          isSaving={updateMutation.isPending}
-          onSave={(name, specialty, schema) => {
-            void handleSave(name, specialty, schema)
-          }}
-          onCancel={() => void navigate('/ajustes/plantillas')}
-        />
-      </div>
-      <Toast
-        open={savedToast}
-        onOpenChange={setSavedToast}
-        variant="success"
-        icon={<i className="ph ph-check-circle" />}
-      >
-        <ToastDescription>{strings.TEMPLATE_EDITOR_SAVED}</ToastDescription>
-      </Toast>
-      <ToastViewport />
-    </ToastProvider>
+    <div className="p-8 px-6">
+      <nav className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
+          <i className="ph ph-arrow-left mr-1" />
+          {strings.TEMPLATES_PAGE_TITLE}
+        </Button>
+      </nav>
+      <TemplateEditor
+        key={template.id}
+        initialState={initialState}
+        isLocked={template.isLocked}
+        blockingTypeIds={template.blockingTypeIds}
+        isSaving={updateMutation.isPending}
+        onSave={(name, specialty, schema) => {
+          void handleSave(name, specialty, schema)
+        }}
+        onCancel={() => void navigate('/ajustes/plantillas')}
+      />
+    </div>
   )
 }

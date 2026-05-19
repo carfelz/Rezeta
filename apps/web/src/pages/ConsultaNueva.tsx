@@ -132,7 +132,7 @@ export function ConsultaNueva(): JSX.Element {
             disabled={isCreating || !ready}
             onClick={() => void handleGateSelect(null)}
           >
-            Saltar y abrir consulta vacía
+            Abrir consulta vacía
           </Button>
         }
       />

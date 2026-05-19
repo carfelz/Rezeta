@@ -10,10 +10,10 @@ export interface PageHeaderProps {
   doctorName: string
   pageTitle: string
   saveStatus: SaveStatus
+  savedAt?: Date
   isSigned: boolean
-  isSaving: boolean
   onAmend: () => void
-  onSaveDraft: () => void
+  onRetry: () => void
   onSignClick: () => void
 }
 
@@ -24,10 +24,10 @@ export function PageHeader({
   doctorName,
   pageTitle,
   saveStatus,
+  savedAt,
   isSigned,
-  isSaving,
   onAmend,
-  onSaveDraft,
+  onRetry,
   onSignClick,
 }: PageHeaderProps): JSX.Element {
   return (
@@ -50,22 +50,21 @@ export function PageHeader({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 pt-1">
-        <SaveBadge status={saveStatus} />
+        <SaveBadge
+          status={saveStatus}
+          {...(savedAt !== undefined ? { savedAt } : {})}
+          onRetry={onRetry}
+        />
         {isSigned ? (
           <Button variant="secondary" size="sm" onClick={onAmend}>
             <i className="ph ph-pencil-simple mr-1" />
             Enmienda
           </Button>
         ) : (
-          <>
-            <Button variant="secondary" size="sm" onClick={onSaveDraft} disabled={isSaving}>
-              Guardar borrador
-            </Button>
-            <Button variant="primary" size="sm" onClick={onSignClick}>
-              <i className="ph ph-check mr-1" />
-              Firmar y cerrar
-            </Button>
-          </>
+          <Button variant="primary" size="sm" onClick={onSignClick}>
+            <i className="ph ph-check mr-1" />
+            Firmar y cerrar
+          </Button>
         )}
       </div>
     </div>

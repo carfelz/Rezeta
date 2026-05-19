@@ -16,11 +16,12 @@ export function countBlockStats(blocks: ProtocolBlock[]): { total: number; secti
   let total = 0
   let sections = 0
   for (const block of blocks) {
-    total++
     if (block.type === 'section') {
       sections++
       const inner = countBlockStats(block.blocks)
       total += inner.total
+    } else {
+      total++
     }
   }
   return { total, sections }
