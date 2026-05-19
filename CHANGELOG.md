@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-18] — CI: migrations run before deploy to prevent bad-migration outages
+
+### Changed
+
+- `.github/workflows/deploy-dev.yml` — moved "Run Database Migrations" step before "Build/Push/Deploy to Cloud Run" in the `deploy-api` job; a failed migration now aborts the pipeline before any container is pushed, leaving the running service on the correct schema.
+- `.github/workflows/deploy-dev.yml` — added "Generate Prisma client" step before migrations (the prisma CLI requires the generated client).
+- `.github/workflows/deploy-dev.yml` — corrected CI coverage label from "≥90%" to "≥95%" to match the actual vitest threshold.
+
+---
+
 ## [2026-05-18] — Audit fixes: block counter, autosave UX, verbose button copy
 
 ### Changed
