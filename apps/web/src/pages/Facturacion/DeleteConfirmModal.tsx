@@ -44,13 +44,13 @@ export function DeleteConfirmModal({ invoice, onClose }: DeleteConfirmModalProps
           icon={<i className="ph ph-trash" />}
           iconVariant="danger"
         />
-        <ModalBody>
-          {error && (
+        {error && (
+          <ModalBody>
             <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
               {error}
             </Callout>
-          )}
-        </ModalBody>
+          </ModalBody>
+        )}
         <ModalFooter>
           <Button variant="secondary" onClick={onClose} disabled={deleteMutation.isPending}>
             Cancelar

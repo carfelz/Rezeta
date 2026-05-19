@@ -187,7 +187,9 @@
       "Bash(sed -n '68,76p' /Users/carlosfeliz/code/medical_app/apps/api/src/modules/schedules/schedules.service.ts)",
       "Bash(sed -n '153,160p' /Users/carlosfeliz/code/medical_app/apps/api/src/modules/schedules/schedules.service.ts)",
       "Bash(grep -n 'protocolId\\\\|transaction\\\\|prisma\\\\.$transaction\\\\|createProtocolUsage\\\\|in_progress' /Users/carlosfeliz/code/medical_app/apps/api/src/modules/consultations/consultations.service.ts)",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Bash(python3 *)",
+      "Bash(xargs -I{} sh -c 'echo \"==={}===\"; cat {} | python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\(p.get\\(\\\\\"types\\\\\",\\\\\"\\\\\"\\), p.get\\(\\\\\"main\\\\\",\\\\\"\\\\\"\\)\\)\"')"
     ]
   }
 }

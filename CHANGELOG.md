@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Add dev-only JSX debug attributes via Babel plugin
+
+### Added
+
+- `apps/web/vite.config.ts`: dev-only Babel plugin (`addComponentDebugAttrs`) that injects `data-component` and `data-file` HTML attributes onto every JSX opening element when running in `mode === 'development'`. Zero production impact — plugin is excluded from builds. Inspecting any DOM node in browser DevTools now shows the owning React component name and source file path.
+
 ## [2026-05-19] — Add missing spec @imports to CLAUDE.md
 
 ### Changed
