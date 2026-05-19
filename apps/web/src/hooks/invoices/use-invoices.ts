@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import type {
   InvoiceWithDetails,
   CreateInvoiceDto,
@@ -53,7 +55,13 @@ export function useCreateInvoice(): UseMutationResult<InvoiceWithDetails, Error,
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: CreateInvoiceDto) => apiClient.post<InvoiceWithDetails>('/v1/invoices', dto),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_INVOICE_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_INVOICE_CREATE)
+    },
   })
 }
 
@@ -64,7 +72,13 @@ export function useUpdateInvoice(
   return useMutation({
     mutationFn: (dto: UpdateInvoiceDto) =>
       apiClient.patch<InvoiceWithDetails>(`/v1/invoices/${id}`, dto),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_INVOICE_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_INVOICE_UPDATE)
+    },
   })
 }
 
@@ -75,7 +89,13 @@ export function useUpdateInvoiceStatus(
   return useMutation({
     mutationFn: (dto: UpdateInvoiceStatusDto) =>
       apiClient.patch<InvoiceWithDetails>(`/v1/invoices/${id}/status`, dto),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_INVOICE_STATUS_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_INVOICE_UPDATE)
+    },
   })
 }
 
@@ -83,6 +103,12 @@ export function useDeleteInvoice(): UseMutationResult<void, Error, string> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/v1/invoices/${id}`),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_INVOICE_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_INVOICE_DELETE)
+    },
   })
 }

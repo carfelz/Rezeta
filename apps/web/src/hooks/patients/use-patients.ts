@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import type { Patient } from '@rezeta/shared'
 import type { CreatePatientDto, UpdatePatientDto } from '@rezeta/shared'
 
@@ -17,7 +19,9 @@ interface PatientListParams {
 
 const PATIENTS_KEY = 'patients'
 
-export function usePatients(params?: PatientListParams): UseQueryResult<PatientListResponse, Error> {
+export function usePatients(
+  params?: PatientListParams,
+): UseQueryResult<PatientListResponse, Error> {
   const searchParams = new URLSearchParams()
   if (params?.search) searchParams.set('search', params.search)
   if (params?.cursor) searchParams.set('cursor', params.cursor)
@@ -41,7 +45,13 @@ export function useCreatePatient(): UseMutationResult<Patient, Error, CreatePati
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: CreatePatientDto) => apiClient.post<Patient>('/v1/patients', dto),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PATIENTS_KEY] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
+      toast.success(strings.TOAST_PATIENT_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PATIENT_CREATE)
+    },
   })
 }
 
@@ -49,7 +59,13 @@ export function useUpdatePatient(id: string): UseMutationResult<Patient, Error, 
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (dto: UpdatePatientDto) => apiClient.patch<Patient>(`/v1/patients/${id}`, dto),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PATIENTS_KEY] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
+      toast.success(strings.TOAST_PATIENT_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PATIENT_UPDATE)
+    },
   })
 }
 
@@ -57,6 +73,12 @@ export function useDeletePatient(): UseMutationResult<void, Error, string> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/v1/patients/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PATIENTS_KEY] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
+      toast.success(strings.TOAST_PATIENT_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PATIENT_DELETE)
+    },
   })
 }

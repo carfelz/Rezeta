@@ -395,6 +395,98 @@ export const strings = {
   VIEWER_NO_CONTENT: 'Este protocolo no tiene contenido todavía.',
   VIEWER_LOADING: 'Cargando protocolo...',
   VIEWER_NOT_FOUND: 'Protocolo no encontrado.',
+
+  // ── Toast — Success ─────────────────────────────────────────────────────────
+  TOAST_PATIENT_CREATED: 'Paciente registrado',
+  TOAST_PATIENT_UPDATED: 'Datos del paciente actualizados',
+  TOAST_PATIENT_DELETED: 'Paciente eliminado',
+
+  TOAST_CONSULTATION_CREATED: 'Consulta creada',
+  TOAST_CONSULTATION_UPDATED: 'Consulta actualizada',
+  TOAST_CONSULTATION_SIGNED: 'Consulta firmada exitosamente',
+  TOAST_CONSULTATION_DRAFT_SAVED: 'Borrador guardado',
+  TOAST_CONSULTATION_DELETED: 'Consulta eliminada',
+  TOAST_AMENDMENT_CREATED: 'Enmienda registrada',
+  TOAST_STEP_SKIPPED: 'Paso omitido',
+  TOAST_OFF_PROTOCOL_NOTE_ADDED: 'Nota agregada',
+
+  TOAST_PRESCRIPTION_CREATED: 'Receta generada',
+  TOAST_PRESCRIPTION_UPDATED: 'Receta actualizada',
+  TOAST_PRESCRIPTION_DELETED: 'Receta eliminada',
+  TOAST_IMAGING_ORDER_CREATED: 'Orden de imagen creada',
+  TOAST_IMAGING_ORDER_DELETED: 'Orden de imagen eliminada',
+  TOAST_LAB_ORDER_CREATED: 'Orden de laboratorio creada',
+  TOAST_LAB_ORDER_DELETED: 'Orden de laboratorio eliminada',
+
+  TOAST_INVOICE_CREATED: 'Factura creada',
+  TOAST_INVOICE_UPDATED: 'Factura actualizada',
+  TOAST_INVOICE_DELETED: 'Factura eliminada',
+  TOAST_INVOICE_STATUS_UPDATED: 'Estado de factura actualizado',
+
+  TOAST_APPOINTMENT_CREATED: 'Cita agendada',
+  TOAST_APPOINTMENT_UPDATED: 'Cita actualizada',
+  TOAST_APPOINTMENT_DELETED: 'Cita cancelada',
+
+  TOAST_LOCATION_CREATED: 'Ubicación agregada',
+  TOAST_LOCATION_UPDATED: 'Ubicación actualizada',
+  TOAST_LOCATION_DELETED: 'Ubicación eliminada',
+
+  TOAST_PROTOCOL_CREATED: 'Protocolo creado',
+  TOAST_PROTOCOL_UPDATED: 'Protocolo actualizado',
+  TOAST_PROTOCOL_DELETED: 'Protocolo eliminado',
+  TOAST_PROTOCOL_VERSION_PUBLISHED: 'Nueva versión publicada',
+
+  TOAST_PROTOCOL_TYPE_CREATED: 'Tipo de protocolo creado',
+  TOAST_PROTOCOL_TYPE_UPDATED: 'Tipo actualizado',
+  TOAST_PROTOCOL_TYPE_DELETED: 'Tipo eliminado',
+
+  TOAST_TEMPLATE_CREATED: 'Plantilla creada',
+  TOAST_TEMPLATE_UPDATED: 'Plantilla actualizada',
+  TOAST_TEMPLATE_DELETED: 'Plantilla eliminada',
+
+  TOAST_SCHEDULE_UPDATED: 'Horario actualizado',
+  TOAST_SCHEDULE_EXCEPTION_CREATED: 'Excepción de horario creada',
+  TOAST_SCHEDULE_EXCEPTION_DELETED: 'Excepción eliminada',
+
+  TOAST_PREFERENCES_UPDATED: 'Preferencias guardadas',
+  TOAST_ONBOARDING_COMPLETE: 'Configuración completada',
+
+  TOAST_PROTOCOL_USAGE_ADDED: 'Protocolo aplicado a la consulta',
+  TOAST_PROTOCOL_USAGE_REMOVED: 'Protocolo removido de la consulta',
+  TOAST_PROTOCOL_SWITCHED: 'Protocolo cambiado',
+
+  TOAST_SUGGESTION_APPLIED: 'Sugerencia aplicada',
+  TOAST_SUGGESTION_VARIANT_CREATED: 'Variante creada',
+  TOAST_SUGGESTION_DISMISSED: 'Sugerencia descartada',
+
+  // ── Toast — Errors ──────────────────────────────────────────────────────────
+  TOAST_ERROR_GENERIC: 'Ocurrió un error. Intenta de nuevo.',
+  TOAST_ERROR_PATIENT_CREATE: 'No se pudo registrar el paciente.',
+  TOAST_ERROR_PATIENT_UPDATE: 'No se pudo actualizar el paciente.',
+  TOAST_ERROR_PATIENT_DELETE: 'No se pudo eliminar el paciente.',
+  TOAST_ERROR_CONSULTATION_CREATE: 'No se pudo crear la consulta.',
+  TOAST_ERROR_CONSULTATION_UPDATE: 'No se pudo actualizar la consulta.',
+  TOAST_ERROR_CONSULTATION_SIGN: 'No se pudo firmar la consulta.',
+  TOAST_ERROR_CONSULTATION_DELETE: 'No se pudo eliminar la consulta.',
+  TOAST_ERROR_AMENDMENT_CREATE: 'No se pudo registrar la enmienda.',
+  TOAST_ERROR_PRESCRIPTION_SAVE: 'No se pudo guardar la receta.',
+  TOAST_ERROR_ORDER_SAVE: 'No se pudo guardar la orden.',
+  TOAST_ERROR_PROTOCOL_USAGE: 'No se pudo actualizar el protocolo de la consulta.',
+  TOAST_ERROR_INVOICE_CREATE: 'No se pudo crear la factura.',
+  TOAST_ERROR_INVOICE_UPDATE: 'No se pudo actualizar la factura.',
+  TOAST_ERROR_INVOICE_DELETE: 'No se pudo eliminar la factura.',
+  TOAST_ERROR_APPOINTMENT_CREATE: 'No se pudo agendar la cita.',
+  TOAST_ERROR_APPOINTMENT_UPDATE: 'No se pudo actualizar la cita.',
+  TOAST_ERROR_APPOINTMENT_DELETE: 'No se pudo cancelar la cita.',
+  TOAST_ERROR_LOCATION_CREATE: 'No se pudo agregar la ubicación.',
+  TOAST_ERROR_LOCATION_UPDATE: 'No se pudo actualizar la ubicación.',
+  TOAST_ERROR_LOCATION_DELETE: 'No se pudo eliminar la ubicación.',
+  TOAST_ERROR_PROTOCOL_SAVE: 'No se pudo guardar el protocolo.',
+  TOAST_ERROR_PROTOCOL_TYPE_SAVE: 'No se pudo guardar el tipo de protocolo.',
+  TOAST_ERROR_TEMPLATE_SAVE: 'No se pudo guardar la plantilla.',
+  TOAST_ERROR_SCHEDULE_UPDATE: 'No se pudo actualizar el horario.',
+  TOAST_ERROR_ONBOARDING: 'No se pudo completar la configuración.',
+  TOAST_ERROR_NETWORK: 'Error de conexión. Verifica tu red.',
 } as const
 
 /**

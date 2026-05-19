@@ -22,15 +22,12 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/protocol-editor-ux.md
 @./specs/template-editor-ux.md
 @./specs/onboarding-flow.md
-@./specs/protocol-in-consultation-spec.md
-@./specs/protocol-engine-slices.md
 @./specs/remaining-mvp-slices.md
 @./specs/design-system/tokens.md
 @./specs/design-system/components.md
 @./specs/design-system/principles.md
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
-@./specs/audit-log-spec.md
 @./specs/audit-log-implementation-prompt.md
 
 @./specs/01-rezeta-live-audit.md
@@ -52,6 +49,12 @@ These apply to every decision. If a proposed change violates one, flag it.
 6. **UUIDs for all primary keys** — never auto-increment integers.
 7. **Audit trail on everything** — every create/update/delete logged with who, when, what changed.
 8. **Protocols as first-class citizens** — not an afterthought. Templates define structure, Protocols are instances, ProtocolVersions track every edit.
+
+## Specs
+
+- Protocol consultation spec: see `specs/protocol-in-consultation-spec.md`
+- Engine slices spec: see `specs/protocol-engine-slices.md`
+- Audit log spec: see `specs/audit-log-spec.md`
 
 ## Design System
 

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import { useAuthStore } from '@/store/auth.store'
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 
@@ -28,6 +30,10 @@ export function useOnboardingDefault(): UseMutationResult<AuthUser, Error, void>
     onSuccess: (updatedUser) => {
       _setUser(updatedUser)
       void qc.invalidateQueries()
+      toast.success(strings.TOAST_ONBOARDING_COMPLETE)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ONBOARDING)
     },
   })
 }
@@ -42,6 +48,10 @@ export function useOnboardingCustom(): UseMutationResult<AuthUser, Error, Onboar
     onSuccess: (updatedUser) => {
       _setUser(updatedUser)
       void qc.invalidateQueries()
+      toast.success(strings.TOAST_ONBOARDING_COMPLETE)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ONBOARDING)
     },
   })
 }

@@ -6,7 +6,7 @@
  * One save action (no versioning, no autosave).
  */
 
-import { useReducer, useCallback, useRef, useEffect } from 'react'
+import { useReducer, useCallback, useRef, useEffect, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -23,9 +23,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { toast } from 'sonner'
 import { strings } from '@/lib/strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
-import { Button, Badge, Callout, Field, Input, AddBlockButton } from '@/components/ui'
+import {
+  Button,
+  Badge,
+  Callout,
+  Field,
+  Input,
+  AddBlockButton,
+  ConfirmDialog,
+} from '@/components/ui'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -383,6 +392,7 @@ function BlockRow({
   const isSection = block.type === 'section'
   const displayTitle = block.title ?? block.placeholder ?? strings.TEMPLATE_EDITOR_NO_TITLE
   const isRequired = block.required ?? false
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   return (
     <div
@@ -404,6 +414,21 @@ function BlockRow({
             }),
       }}
     >
+      <ConfirmDialog
+        open={confirmOpen}
+        title={strings.TEMPLATE_EDITOR_DELETE}
+        description={strings.TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM(
+          block.title ?? '—',
+          block.blocks?.length ?? 0,
+        )}
+        confirmLabel={strings.TEMPLATE_EDITOR_DELETE}
+        variant="danger"
+        onConfirm={() => {
+          onDelete(block.id, parentId)
+          setConfirmOpen(false)
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
       {/* Collapsed row */}
       <div
         style={{
@@ -543,16 +568,8 @@ function BlockRow({
               disabled={isRequired}
               onClick={() => {
                 if (isRequired) return
-                if (
-                  isSection &&
-                  (block.blocks?.length ?? 0) > 0 &&
-                  !window.confirm(
-                    strings.TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM(
-                      block.title ?? '—',
-                      block.blocks?.length ?? 0,
-                    ),
-                  )
-                ) {
+                if (isSection && (block.blocks?.length ?? 0) > 0) {
+                  setConfirmOpen(true)
                   return
                 }
                 onDelete(block.id, parentId)
@@ -803,7 +820,7 @@ export function TemplateEditor({
     }
     const sections = state.blocks.filter((b) => b.type === 'section')
     if (sections.length === 0) {
-      alert(strings.TEMPLATE_EDITOR_NEEDS_SECTION)
+      toast.warning(strings.TEMPLATE_EDITOR_NEEDS_SECTION)
       return
     }
     const last = sections[sections.length - 1]!

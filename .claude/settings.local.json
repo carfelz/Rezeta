@@ -159,7 +159,11 @@
       "Bash(grep -rn \"Dr\\\\\\\\. \\\\${\" /Users/carlosfeliz/code/medical_app/apps/web/src/)",
       "Bash(lsof -iTCP:3000 -sTCP:LISTEN -n -P)",
       "Bash(lsof -iTCP:5173 -sTCP:LISTEN -n -P)",
-      "Bash(grep -rn '$use\\\\|$extends\\\\|prismaAuditExtension\\\\|setupAuditExtension\\\\|httpAuditContextStore' /Users/carlosfeliz/code/medical_app/apps/api/src/ /Users/carlosfeliz/code/medical_app/packages/db/src/)"
+      "Bash(grep -rn '$use\\\\|$extends\\\\|prismaAuditExtension\\\\|setupAuditExtension\\\\|httpAuditContextStore' /Users/carlosfeliz/code/medical_app/apps/api/src/ /Users/carlosfeliz/code/medical_app/packages/db/src/)",
+      "Bash(git push *)",
+      "Bash(grep -n \"^} as const\\\\|^}$\\\\|PROTOCOL_STATUS_LABELS\\\\|^export const strings\" src/lib/strings.ts)",
+      "Bash(sed -n '193,212p' src/pages/ajustes/Tipos.tsx)",
+      "Bash(sed -n '1,32p' src/pages/ajustes/Plantillas.tsx)"
     ]
   }
 }

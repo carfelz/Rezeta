@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import type {
   AppointmentWithDetails,
   CreateAppointmentDto,
@@ -61,6 +63,10 @@ export function useCreateAppointment(): UseMutationResult<
       apiClient.post<AppointmentWithDetails>('/v1/appointments', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_APPOINTMENT_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_APPOINTMENT_CREATE)
     },
   })
 }
@@ -74,6 +80,10 @@ export function useUpdateAppointment(
       apiClient.patch<AppointmentWithDetails>(`/v1/appointments/${id}`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_APPOINTMENT_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_APPOINTMENT_UPDATE)
     },
   })
 }
@@ -87,6 +97,10 @@ export function useUpdateAppointmentStatus(
       apiClient.patch<AppointmentWithDetails>(`/v1/appointments/${id}/status`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_APPOINTMENT_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_APPOINTMENT_UPDATE)
     },
   })
 }
@@ -97,6 +111,10 @@ export function useDeleteAppointment(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/appointments/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_APPOINTMENT_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_APPOINTMENT_DELETE)
     },
   })
 }

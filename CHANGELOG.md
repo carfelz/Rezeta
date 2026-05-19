@@ -4,6 +4,51 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-18] — Migrate toast system to Sonner; replace window.confirm with ConfirmDialog
+
+### Added
+
+- `apps/web/src/components/ui/SonnerToaster.tsx` — `AppToaster` wrapper around Sonner's `<Toaster>`. Applies design-system classNames (neutral surface, 1px border `border-n-200`, `shadow-floating`, Phosphor icons per severity, IBM Plex Sans).
+- `apps/web/src/components/ui/ConfirmDialog.tsx` — async, state-driven `<ConfirmDialog>` built on the existing `Modal` + `ModalHeader` pattern. Accepts `variant` (`danger` | `primary`), `loading` (disables both buttons and blocks escape-to-close), and custom `confirmLabel` / `cancelLabel`.
+- `apps/web/src/lib/strings.ts` — `TOAST_*` section: ~50 success-message keys and ~20 error-message keys covering all domains (patients, consultations, prescriptions, appointments, invoices, locations, protocols, types, templates, schedules, onboarding, protocol-usage actions).
+
+### Changed
+
+- `apps/web/src/providers/index.tsx` — mounted `<AppToaster />` inside `AuthProvider` so toasts are available app-wide.
+- `apps/web/src/components/ui/index.ts` — removed Radix Toast exports (`Toast`, `Toaster`, `ToastProvider`, etc.); added `AppToaster` and `ConfirmDialog`.
+- All mutation hooks wired with `toast.success` / `toast.error` via `onSuccess` / `onError` callbacks:
+  - `apps/web/src/hooks/appointments/use-appointments.ts` — create, update, status update, delete
+  - `apps/web/src/hooks/consultations/use-consultations.ts` — create, sign, amend, delete, add/remove protocol usage, skip step, off-protocol note, switch protocol. Update and `useUpdateCheckedState` left silent (inline autosave indicator / checkbox state carry that feedback).
+  - `apps/web/src/hooks/invoices/use-invoices.ts` — create, update, status update, delete
+  - `apps/web/src/hooks/locations/use-locations.ts` — create, update, delete
+  - `apps/web/src/hooks/onboarding/use-onboarding.ts` — default-path and custom-path completion
+  - `apps/web/src/hooks/patients/use-patients.ts` — create, update, delete
+  - `apps/web/src/hooks/protocol-templates/use-protocol-templates.ts` — create, update, delete
+  - `apps/web/src/hooks/protocol-types/use-protocol-types.ts` — create, update, delete
+  - `apps/web/src/hooks/protocols/use-protocols.ts` — create, update, delete, publish version
+  - `apps/web/src/hooks/schedules/use-schedules.ts` — update, exception create/delete
+- `apps/web/src/components/protocols/EditorBlockRenderer.tsx` — replaced `window.confirm()` on section and leaf block delete with `<ConfirmDialog>` (state-driven, danger variant).
+- `apps/web/src/components/template/TemplateEditor.tsx` — replaced `window.confirm()` on block row delete with `<ConfirmDialog>`; replaced `alert()` for missing-section validation with `toast.warning()`.
+- `apps/web/src/pages/ajustes/Plantillas.tsx` — replaced `window.confirm()` template delete with `<ConfirmDialog>` (supports `loading` state); replaced `alert()` for locked-template error with `toast.error()`.
+- `apps/web/src/pages/ajustes/Tipos.tsx` — same pattern as Plantillas: `<ConfirmDialog>` for delete, `toast.error()` for locked-type error.
+
+### Removed
+
+- `apps/web/src/components/ui/Toast.tsx` — Radix UI toast primitives, replaced by Sonner.
+- `apps/web/src/components/ui/Toaster.tsx` — custom Radix toaster, replaced by `SonnerToaster.tsx`.
+- `apps/web/src/hooks/use-toast.ts` — custom `useToast` hook, no longer needed; call `toast.*` from `sonner` directly.
+
+## [2026-05-18] — Replace stale Toast tests; add tests for ConfirmDialog and SonnerToaster
+
+### Added
+
+- `apps/web/src/components/ui/__tests__/ConfirmDialog.test.tsx` — 10 tests covering open/closed rendering, confirm/cancel callbacks, custom labels, loading state (disables both buttons, blocks escape-to-close), and primary/danger variants.
+- `apps/web/src/components/ui/__tests__/SonnerToaster.test.tsx` — 2 smoke tests verifying `AppToaster` mounts without crashing.
+
+### Fixed
+
+- `apps/web/src/components/ui/__tests__/Toast.test.tsx` — deleted. File tested `Toast.tsx` and `Toaster.tsx`, both of which were removed when the project migrated to Sonner. Stale import caused the entire test suite to fail with a module-resolution error.
+
 ## [2026-05-13] — Align `ProtocolUsage.status` enum across schema, types, and DB
 
 ### Changed

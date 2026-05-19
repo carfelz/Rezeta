@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   useProtocolTypes,
   useCreateProtocolType,
@@ -14,6 +15,7 @@ import {
   Badge,
   EmptyState,
   Callout,
+  ConfirmDialog,
   Field,
   Input,
   Modal,
@@ -194,25 +196,39 @@ export function Tipos(): JSX.Element {
   const [showCreate, setShowCreate] = useState(false)
   const [renaming, setRenaming] = useState<ProtocolTypeDto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ProtocolTypeDto | null>(null)
 
-  async function handleDelete(t: ProtocolTypeDto) {
+  function handleDelete(t: ProtocolTypeDto) {
     if (t.isLocked) {
-      alert(strings.TYPES_DELETE_LOCKED)
+      toast.error(strings.TYPES_DELETE_LOCKED)
       return
     }
-    if (!window.confirm(strings.TYPES_LIST_DELETE_CONFIRM(t.name))) return
-    setDeletingId(t.id)
-    try {
-      await deleteMutation.mutateAsync(t.id)
-    } finally {
+    setDeleteTarget(t)
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return
+    setDeletingId(deleteTarget.id)
+    void deleteMutation.mutateAsync(deleteTarget.id).finally(() => {
       setDeletingId(null)
-    }
+      setDeleteTarget(null)
+    })
   }
 
   return (
     <div>
       {showCreate && <CreateTypeModal onClose={() => setShowCreate(false)} />}
       {renaming && <RenameTypeModal type={renaming} onClose={() => setRenaming(null)} />}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={strings.TYPES_LIST_DELETE}
+        description={strings.TYPES_LIST_DELETE_CONFIRM(deleteTarget?.name ?? '')}
+        confirmLabel={strings.TYPES_LIST_DELETE}
+        variant="danger"
+        loading={deleteMutation.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-h1 m-0">{strings.TYPES_PAGE_TITLE}</h1>
@@ -305,7 +321,7 @@ export function Tipos(): JSX.Element {
                         className="w-[28px] px-0"
                         title={strings.TYPES_LIST_DELETE}
                         disabled={t.isLocked || deletingId === t.id}
-                        onClick={() => void handleDelete(t)}
+                        onClick={() => handleDelete(t)}
                       >
                         <i
                           className="ph ph-trash text-[15px]"

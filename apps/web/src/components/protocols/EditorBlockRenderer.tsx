@@ -11,7 +11,7 @@ import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
 import { useEditorStore } from '@/store/editor.store'
 import { strings } from '@/lib/strings'
-import { Button, IconButton, Row, TextLink } from '@/components/ui'
+import { Button, IconButton, Row, TextLink, ConfirmDialog } from '@/components/ui'
 import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
 type SectionBlock = Extract<ProtocolBlock, { type: 'section' }>
@@ -60,6 +60,7 @@ function SectionEditor({
   nested: boolean
 }): JSX.Element {
   const [titleDraft, setTitleDraft] = useState(block.title)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const requiredBlockIds = useEditorStore((s) => s.requiredBlockIds)
   const updateBlock = useEditorStore((s) => s.updateBlock)
@@ -100,9 +101,7 @@ function SectionEditor({
 
   const handleDelete = () => {
     if (isRequired) return
-    if (window.confirm(strings.EDITOR_SECTION_DELETE_CONFIRM(block.blocks.length))) {
-      deleteBlock(block.id)
-    }
+    setConfirmOpen(true)
   }
 
   return (
@@ -110,6 +109,18 @@ function SectionEditor({
       id={`section-${block.id}`}
       className={cn('bg-n-0 border border-n-200 rounded mb-3', nested && 'ml-6')}
     >
+      <ConfirmDialog
+        open={confirmOpen}
+        title={strings.EDITOR_SECTION_DELETE}
+        description={strings.EDITOR_SECTION_DELETE_CONFIRM(block.blocks.length)}
+        confirmLabel={strings.EDITOR_BLOCK_CTX_DELETE}
+        variant="danger"
+        onConfirm={() => {
+          deleteBlock(block.id)
+          setConfirmOpen(false)
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
       {/* Section header with 2px teal left rule */}
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
@@ -190,6 +201,7 @@ function LeafBlockEditor({
   isFirst: boolean
   isLast: boolean
 }): JSX.Element {
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId)
   const requiredBlockIds = useEditorStore((s) => s.requiredBlockIds)
   const selectBlock = useEditorStore((s) => s.selectBlock)
@@ -203,9 +215,7 @@ function LeafBlockEditor({
 
   const handleDelete = () => {
     if (isRequired) return
-    if (window.confirm(strings.EDITOR_BLOCK_DELETE_CONFIRM)) {
-      deleteBlock(block.id)
-    }
+    setConfirmOpen(true)
   }
 
   return (
@@ -215,6 +225,18 @@ function LeafBlockEditor({
         isSelected && 'border-p-500 shadow-[0_0_0_2px_rgba(45,87,96,0.12)]',
       )}
     >
+      <ConfirmDialog
+        open={confirmOpen}
+        title={strings.EDITOR_BLOCK_DELETE}
+        description={strings.EDITOR_BLOCK_DELETE_CONFIRM}
+        confirmLabel={strings.EDITOR_BLOCK_CTX_DELETE}
+        variant="danger"
+        onConfirm={() => {
+          deleteBlock(block.id)
+          setConfirmOpen(false)
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
       {/* Block header with 2px teal left rule */}
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />

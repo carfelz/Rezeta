@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
@@ -75,6 +77,10 @@ export function useCreateConsultation(): UseMutationResult<
       apiClient.post<ConsultationWithDetails>('/v1/consultations', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_CONSULTATION_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_CONSULTATION_CREATE)
     },
   })
 }
@@ -84,6 +90,8 @@ export function useUpdateConsultation(
 ): UseMutationResult<ConsultationWithDetails, Error, UpdateConsultationDto> {
   const qc = useQueryClient()
   return useMutation({
+    // Silent — driven by the SOAP-state autosave debounce; feedback handled by
+    // the inline save-status indicator, not a toast.
     mutationFn: (dto: UpdateConsultationDto) =>
       apiClient.patch<ConsultationWithDetails>(`/v1/consultations/${id}`, dto),
     onSuccess: () => {
@@ -100,6 +108,10 @@ export function useSignConsultation(
     mutationFn: () => apiClient.post<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_CONSULTATION_SIGNED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_CONSULTATION_SIGN)
     },
   })
 }
@@ -113,6 +125,10 @@ export function useAmendConsultation(
       apiClient.post<ConsultationWithDetails>(`/v1/consultations/${id}/amend`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_AMENDMENT_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_AMENDMENT_CREATE)
     },
   })
 }
@@ -123,6 +139,10 @@ export function useDeleteConsultation(): UseMutationResult<void, Error, string> 
     mutationFn: (id: string) => apiClient.delete(`/v1/consultations/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_CONSULTATION_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_CONSULTATION_DELETE)
     },
   })
 }
@@ -139,6 +159,10 @@ export function useAddProtocolUsage(
       ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_PROTOCOL_USAGE_ADDED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PROTOCOL_USAGE)
     },
   })
 }
@@ -149,6 +173,8 @@ export function useUpdateCheckedState(
 ): UseMutationResult<ConsultationProtocolUsage, Error, UpdateCheckedStateDto> {
   const qc = useQueryClient()
   return useMutation({
+    // Silent — fires on every protocol step toggle; feedback handled by the
+    // inline checkbox state, not a toast.
     mutationFn: (dto: UpdateCheckedStateDto) =>
       apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
@@ -169,6 +195,10 @@ export function useRemoveProtocolUsage(
       apiClient.delete(`/v1/consultations/${consultationId}/protocols/${usageId}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_PROTOCOL_USAGE_REMOVED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PROTOCOL_USAGE)
     },
   })
 }
@@ -179,6 +209,9 @@ export function useUpdateProtocolUsage(
 ): UseMutationResult<ConsultationProtocolUsage, Error, UpdateProtocolUsageDto> {
   const qc = useQueryClient()
   return useMutation({
+    // Silent — low-level protocol-usage PATCH primitive. Meaningful user actions
+    // (switch, skip step, off-protocol note) use their own dedicated mutations
+    // below, which carry their own toasts.
     mutationFn: (dto: UpdateProtocolUsageDto) =>
       apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
@@ -239,6 +272,10 @@ export function useSkipStep(
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_STEP_SKIPPED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PROTOCOL_USAGE)
     },
   })
 }
@@ -294,6 +331,10 @@ export function useAddOffProtocolNote(
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_OFF_PROTOCOL_NOTE_ADDED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PROTOCOL_USAGE)
     },
   })
 }
@@ -317,6 +358,10 @@ export function useSwitchProtocolUsage(
         ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_PROTOCOL_SWITCHED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PROTOCOL_USAGE)
     },
   })
 }
@@ -330,6 +375,10 @@ export function useCreatePrescription(
       apiClient.post<Prescription>(`/v1/consultations/${consultationId}/prescriptions`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_PRESCRIPTION_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_PRESCRIPTION_SAVE)
     },
   })
 }
@@ -354,6 +403,10 @@ export function useCreateImagingOrder(
       apiClient.post<ImagingOrder[]>(`/v1/consultations/${consultationId}/imaging-orders`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_IMAGING_ORDER_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ORDER_SAVE)
     },
   })
 }
@@ -378,6 +431,10 @@ export function useCreateLabOrder(
       apiClient.post<LabOrder[]>(`/v1/consultations/${consultationId}/lab-orders`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      toast.success(strings.TOAST_LAB_ORDER_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ORDER_SAVE)
     },
   })
 }
@@ -399,6 +456,10 @@ export function useDeletePrescription(
       apiClient.delete(`/v1/consultations/${consultationId}/prescriptions/${prescriptionId}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId, 'prescriptions'] })
+      toast.success(strings.TOAST_PRESCRIPTION_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ORDER_SAVE)
     },
   })
 }
@@ -412,6 +473,10 @@ export function useDeleteImagingOrder(
       apiClient.delete(`/v1/consultations/${consultationId}/imaging-orders/${orderId}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId, 'imaging-orders'] })
+      toast.success(strings.TOAST_IMAGING_ORDER_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ORDER_SAVE)
     },
   })
 }
@@ -423,6 +488,10 @@ export function useDeleteLabOrder(consultationId: string): UseMutationResult<voi
       apiClient.delete(`/v1/consultations/${consultationId}/lab-orders/${orderId}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId, 'lab-orders'] })
+      toast.success(strings.TOAST_LAB_ORDER_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_ORDER_SAVE)
     },
   })
 }

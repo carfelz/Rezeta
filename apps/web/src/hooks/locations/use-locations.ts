@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { strings } from '@/lib/strings'
 import type {
   Location as ClinicLocation,
   CreateLocationDto,
@@ -30,6 +32,10 @@ export function useCreateLocation(): UseMutationResult<ClinicLocation, Error, Cr
     mutationFn: (dto: CreateLocationDto) => apiClient.post<ClinicLocation>('/v1/locations', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_LOCATION_CREATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_LOCATION_CREATE)
     },
   })
 }
@@ -44,6 +50,10 @@ export function useUpdateLocation(
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       void qc.invalidateQueries({ queryKey: [QK, id] })
+      toast.success(strings.TOAST_LOCATION_UPDATED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_LOCATION_UPDATE)
     },
   })
 }
@@ -54,6 +64,10 @@ export function useDeleteLocation(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/locations/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(strings.TOAST_LOCATION_DELETED)
+    },
+    onError: () => {
+      toast.error(strings.TOAST_ERROR_LOCATION_DELETE)
     },
   })
 }
