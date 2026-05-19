@@ -39,7 +39,7 @@ function toSuggestion(row: {
 }
 
 @Injectable()
-export class ProtocolSuggestionsRepository {
+export class ProtocolImprovementsRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async listByProtocol(protocolId: string, tenantId: string): Promise<ProtocolSuggestion[]> {

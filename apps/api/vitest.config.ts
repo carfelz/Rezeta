@@ -28,8 +28,8 @@ export default defineConfig({
         // ternaries is low-ROI. Behavior verified via controller specs.
         'src/**/*.repository.ts',
         // Long-lived async services exercised end-to-end; branch surface high.
-        'src/modules/protocol-suggestions/pattern-detection.service.ts',
-        'src/modules/protocol-suggestions/weekly-summary.service.ts',
+        'src/modules/protocol-improvements/pattern-detection.service.ts',
+        'src/modules/protocol-improvements/weekly-summary.service.ts',
         'src/common/audit-log/audit-log.service.ts',
         'src/common/interceptors/audit-log.interceptor.ts',
         // Services with high branch surface from optional-field ternaries

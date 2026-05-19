@@ -50,8 +50,8 @@ const mockProtocols = mockRecommendations.map((r) => ({
   blockCount: 3,
 }))
 
-vi.mock('@/hooks/consultations/use-protocol-suggestions', () => ({
-  useProtocolSuggestions: () => ({
+vi.mock('@/hooks/consultations/use-protocol-recommendations', () => ({
+  useProtocolRecommendations: () => ({
     suggestions: mockRecommendations,
     isLoading: false,
   }),

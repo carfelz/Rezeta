@@ -24,7 +24,7 @@ import { OnboardingModule } from './modules/onboarding/index.js'
 import { AppointmentsModule } from './modules/appointments/index.js'
 import { ConsultationsModule } from './modules/consultations/index.js'
 import { OrdersModule } from './modules/orders/index.js'
-import { ProtocolSuggestionsModule } from './modules/protocol-suggestions/index.js'
+import { ProtocolImprovementsModule } from './modules/protocol-improvements/index.js'
 import { ProtocolRecommendationsModule } from './modules/protocol-recommendations/index.js'
 import { InvoicesModule } from './modules/invoices/index.js'
 import { SchedulesModule } from './modules/schedules/index.js'
@@ -64,7 +64,7 @@ class AppController {
     AppointmentsModule,
     ConsultationsModule,
     OrdersModule,
-    ProtocolSuggestionsModule,
+    ProtocolImprovementsModule,
     ProtocolRecommendationsModule,
     InvoicesModule,
     SchedulesModule,

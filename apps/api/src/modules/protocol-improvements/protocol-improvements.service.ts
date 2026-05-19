@@ -2,12 +2,12 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common'
 import type { ProtocolSuggestion } from '@rezeta/shared'
 import { ErrorCode } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
-import { ProtocolSuggestionsRepository } from './protocol-suggestions.repository.js'
+import { ProtocolImprovementsRepository } from './protocol-improvements.repository.js'
 
 @Injectable()
-export class ProtocolSuggestionsService {
+export class ProtocolImprovementsService {
   constructor(
-    @Inject(ProtocolSuggestionsRepository) private repo: ProtocolSuggestionsRepository,
+    @Inject(ProtocolImprovementsRepository) private repo: ProtocolImprovementsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
   ) {}
 

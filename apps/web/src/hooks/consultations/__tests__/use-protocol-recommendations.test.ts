@@ -11,7 +11,7 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
-import { useProtocolSuggestions } from '../use-protocol-suggestions'
+import { useProtocolRecommendations } from '../use-protocol-recommendations'
 import type { ProtocolRecommendation } from '@rezeta/shared'
 
 function makeRec(overrides: Partial<ProtocolRecommendation> = {}): ProtocolRecommendation {
@@ -35,14 +35,16 @@ function wrapper(): { wrapper: ({ children }: { children: ReactNode }) => JSX.El
   }
 }
 
-describe('useProtocolSuggestions', () => {
+describe('useProtocolRecommendations', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('calls /v1/patients/:patientId/protocol-suggestions when enabled with a patientId', async () => {
+  it('calls /v1/patients/:patientId/protocol-recommendations when enabled with a patientId', async () => {
     mockGet.mockResolvedValue([makeRec({ protocolId: 'p-1' }), makeRec({ protocolId: 'p-2' })])
-    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', true), wrapper())
+    const { result } = renderHook(() => useProtocolRecommendations('patient-abc', true), wrapper())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(mockGet).toHaveBeenCalledWith('/v1/patients/patient-abc/protocol-suggestions?limit=4')
+    expect(mockGet).toHaveBeenCalledWith(
+      '/v1/patients/patient-abc/protocol-recommendations?limit=4',
+    )
     expect(result.current.suggestions).toHaveLength(2)
   })
 
@@ -50,19 +52,19 @@ describe('useProtocolSuggestions', () => {
     mockGet.mockResolvedValue(
       Array.from({ length: 6 }).map((_, i) => makeRec({ protocolId: `p-${i}` })),
     )
-    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', true), wrapper())
+    const { result } = renderHook(() => useProtocolRecommendations('patient-abc', true), wrapper())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.suggestions).toHaveLength(4)
   })
 
   it('returns empty when disabled', async () => {
-    const { result } = renderHook(() => useProtocolSuggestions('patient-abc', false), wrapper())
+    const { result } = renderHook(() => useProtocolRecommendations('patient-abc', false), wrapper())
     expect(result.current.suggestions).toEqual([])
     expect(mockGet).not.toHaveBeenCalled()
   })
 
   it('returns empty and skips fetch when patientId is null', () => {
-    const { result } = renderHook(() => useProtocolSuggestions(null, true), wrapper())
+    const { result } = renderHook(() => useProtocolRecommendations(null, true), wrapper())
     expect(result.current.suggestions).toEqual([])
     expect(mockGet).not.toHaveBeenCalled()
   })
@@ -72,8 +74,14 @@ describe('useProtocolSuggestions', () => {
       if (url.includes('patient-A')) return Promise.resolve([makeRec({ protocolId: 'A1' })])
       return Promise.resolve([makeRec({ protocolId: 'B1' })])
     })
-    const { result: rA } = renderHook(() => useProtocolSuggestions('patient-A', true), wrapper())
-    const { result: rB } = renderHook(() => useProtocolSuggestions('patient-B', true), wrapper())
+    const { result: rA } = renderHook(
+      () => useProtocolRecommendations('patient-A', true),
+      wrapper(),
+    )
+    const { result: rB } = renderHook(
+      () => useProtocolRecommendations('patient-B', true),
+      wrapper(),
+    )
     await waitFor(() => expect(rA.current.isLoading).toBe(false))
     await waitFor(() => expect(rB.current.isLoading).toBe(false))
     expect(rA.current.suggestions[0]?.protocolId).toBe('A1')

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotFoundException } from '@nestjs/common'
-import { ProtocolSuggestionsService } from '../protocol-suggestions.service.js'
+import { ProtocolImprovementsService } from '../protocol-improvements.service.js'
 
 const mockRepo = {
   listByProtocol: vi.fn(),
@@ -37,12 +37,12 @@ const suggestion = {
   tenantId: 't1',
 }
 
-describe('ProtocolSuggestionsService', () => {
-  let service: ProtocolSuggestionsService
+describe('ProtocolImprovementsService', () => {
+  let service: ProtocolImprovementsService
 
   beforeEach(() => {
     vi.clearAllMocks()
-    service = new ProtocolSuggestionsService(mockRepo as never, mockPrisma as never)
+    service = new ProtocolImprovementsService(mockRepo as never, mockPrisma as never)
     // Default: protocol exists
     mockPrisma.protocol.findFirst.mockResolvedValue({ id: 'proto1' })
   })
@@ -146,7 +146,9 @@ describe('ProtocolSuggestionsService', () => {
 
     it('throws NotFoundException when protocol not found', async () => {
       mockPrisma.protocol.findFirst.mockResolvedValue(null)
-      await expect(service.createVariant('bad', 'sug1', 't1', 'u1')).rejects.toThrow(NotFoundException)
+      await expect(service.createVariant('bad', 'sug1', 't1', 'u1')).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 

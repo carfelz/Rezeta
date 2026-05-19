@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common'
 import type { ProtocolUsageModifications } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
-import { ProtocolSuggestionsRepository } from './protocol-suggestions.repository.js'
+import { ProtocolImprovementsRepository } from './protocol-improvements.repository.js'
 
 interface DetectedPattern {
   patternType: string
@@ -19,7 +19,7 @@ export class PatternDetectionService {
 
   constructor(
     @Inject(PrismaService) private prisma: PrismaService,
-    @Inject(ProtocolSuggestionsRepository) private suggestionsRepo: ProtocolSuggestionsRepository,
+    @Inject(ProtocolImprovementsRepository) private suggestionsRepo: ProtocolImprovementsRepository,
   ) {}
 
   async runWeeklyDetection(): Promise<void> {

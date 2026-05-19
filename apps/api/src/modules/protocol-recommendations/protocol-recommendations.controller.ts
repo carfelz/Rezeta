@@ -17,7 +17,7 @@ import { ProtocolRecommendationsService } from './protocol-recommendations.servi
 @ApiTags('Protocol Recommendations')
 @ApiBearerAuth(AUTH_BEARER_SCHEME)
 @ApiSecurity(AUTH_OAUTH2_SCHEME)
-@Controller('v1/patients/:patientId/protocol-suggestions')
+@Controller('v1/patients/:patientId/protocol-recommendations')
 export class ProtocolRecommendationsController {
   constructor(
     @Inject(ProtocolRecommendationsService)

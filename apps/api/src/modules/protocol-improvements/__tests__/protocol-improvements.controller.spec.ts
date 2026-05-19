@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ProtocolSuggestionsController } from '../protocol-suggestions.controller.js'
-import type { ProtocolSuggestionsService } from '../protocol-suggestions.service.js'
+import { ProtocolImprovementsController } from '../protocol-improvements.controller.js'
+import type { ProtocolImprovementsService } from '../protocol-improvements.service.js'
 import type { AuthUser, ProtocolSuggestion } from '@rezeta/shared'
 
-const mockUser: AuthUser = { id: 'user-1', tenantId: 'tenant-1', email: 'doc@test.com', role: 'owner' }
+const mockUser: AuthUser = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'doc@test.com',
+  role: 'owner',
+}
 const tenantId = 'tenant-1'
 const protocolId = 'proto-1'
 const suggestionId = 'sug-1'
@@ -27,9 +32,9 @@ const mockSuggestion: ProtocolSuggestion = {
   createdAt: '2026-01-01T00:00:00Z',
 }
 
-describe('ProtocolSuggestionsController', () => {
-  let controller: ProtocolSuggestionsController
-  let svc: ProtocolSuggestionsService
+describe('ProtocolImprovementsController', () => {
+  let controller: ProtocolImprovementsController
+  let svc: ProtocolImprovementsService
 
   beforeEach(() => {
     svc = {
@@ -37,8 +42,8 @@ describe('ProtocolSuggestionsController', () => {
       apply: vi.fn(),
       createVariant: vi.fn(),
       dismiss: vi.fn(),
-    } as unknown as ProtocolSuggestionsService
-    controller = new ProtocolSuggestionsController(svc)
+    } as unknown as ProtocolImprovementsService
+    controller = new ProtocolImprovementsController(svc)
   })
 
   it('list delegates to service', async () => {

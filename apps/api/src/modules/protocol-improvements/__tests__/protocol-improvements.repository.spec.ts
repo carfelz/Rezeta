@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ProtocolSuggestionsRepository } from '../protocol-suggestions.repository.js'
+import { ProtocolImprovementsRepository } from '../protocol-improvements.repository.js'
 
 const now = new Date('2026-01-01')
 
@@ -33,12 +33,12 @@ const mockPrisma = {
   },
 }
 
-describe('ProtocolSuggestionsRepository', () => {
-  let repo: ProtocolSuggestionsRepository
+describe('ProtocolImprovementsRepository', () => {
+  let repo: ProtocolImprovementsRepository
 
   beforeEach(() => {
     vi.clearAllMocks()
-    repo = new ProtocolSuggestionsRepository(mockPrisma as never)
+    repo = new ProtocolImprovementsRepository(mockPrisma as never)
   })
 
   describe('listByProtocol', () => {
@@ -117,7 +117,10 @@ describe('ProtocolSuggestionsRepository', () => {
 
   describe('listPendingForTenant', () => {
     it('returns all pending suggestions for a tenant', async () => {
-      mockPrisma.protocolSuggestion.findMany.mockResolvedValue([makeSuggestionRow(), makeSuggestionRow({ id: 'sug2' })])
+      mockPrisma.protocolSuggestion.findMany.mockResolvedValue([
+        makeSuggestionRow(),
+        makeSuggestionRow({ id: 'sug2' }),
+      ])
       const result = await repo.listPendingForTenant('t1')
       expect(result).toHaveLength(2)
     })

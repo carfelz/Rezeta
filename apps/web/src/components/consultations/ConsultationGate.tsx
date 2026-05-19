@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useProtocolSuggestions } from '@/hooks/consultations/use-protocol-suggestions'
+import { useProtocolRecommendations } from '@/hooks/consultations/use-protocol-recommendations'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import {
   Button,
@@ -57,7 +57,7 @@ export function ConsultationGate({
   const blocked = isCreating || disabled
   const [search, setSearch] = useState('')
 
-  const { suggestions, isLoading: loadingSuggestions } = useProtocolSuggestions(patientId, true)
+  const { suggestions, isLoading: loadingSuggestions } = useProtocolRecommendations(patientId, true)
   const { useGetProtocols } = useProtocols()
   const { data: allProtocols = [], isLoading: loadingAll } = useGetProtocols({
     status: 'active',

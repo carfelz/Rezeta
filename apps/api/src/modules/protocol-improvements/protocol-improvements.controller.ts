@@ -21,14 +21,14 @@ import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ProtocolSuggestion, AuthUser } from '@rezeta/shared'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
-import { ProtocolSuggestionsService } from './protocol-suggestions.service.js'
+import { ProtocolImprovementsService } from './protocol-improvements.service.js'
 
-@ApiTags('Protocol Suggestions')
+@ApiTags('Protocol Improvements')
 @ApiBearerAuth(AUTH_BEARER_SCHEME)
 @ApiSecurity(AUTH_OAUTH2_SCHEME)
-@Controller('v1/protocols/:protocolId/suggestions')
-export class ProtocolSuggestionsController {
-  constructor(@Inject(ProtocolSuggestionsService) private svc: ProtocolSuggestionsService) {}
+@Controller('v1/protocols/:protocolId/improvements')
+export class ProtocolImprovementsController {
+  constructor(@Inject(ProtocolImprovementsService) private svc: ProtocolImprovementsService) {}
 
   @Get()
   @ApiOperation({ summary: 'List pending suggestions for a protocol' })
