@@ -183,7 +183,9 @@
       "Bash(HUSKY=2 git commit -m \"test\" --dry-run)",
       "Bash(sh -e .husky/pre-commit)",
       "Bash(gh run *)",
-      "Bash(echo \"FINAL EXIT: $?\")"
+      "Bash(echo \"FINAL EXIT: $?\")",
+      "Bash(sed -n '68,76p' /Users/carlosfeliz/code/medical_app/apps/api/src/modules/schedules/schedules.service.ts)",
+      "Bash(sed -n '153,160p' /Users/carlosfeliz/code/medical_app/apps/api/src/modules/schedules/schedules.service.ts)"
     ]
   }
 }
