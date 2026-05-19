@@ -6,7 +6,7 @@ import {
   useUpdateProtocolTemplate,
 } from '@/hooks/protocol-templates/use-protocol-templates'
 import {
-  TemplateEditor,
+  TemplateEditor as TemplateEditorWidget,
   stateFromTemplate,
   type TemplateSchema,
 } from '@/components/template/TemplateEditor'
@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 
 // ─── New template wrapper ─────────────────────────────────────────────────────
 
-export function PlantillaEditorNew(): JSX.Element {
+export function TemplateEditorNew(): JSX.Element {
   const navigate = useNavigate()
   const createMutation = useCreateProtocolTemplate()
 
@@ -48,7 +48,7 @@ export function PlantillaEditorNew(): JSX.Element {
           {strings.TEMPLATES_PAGE_TITLE}
         </Button>
       </nav>
-      <TemplateEditor
+      <TemplateEditorWidget
         initialState={initialState}
         isLocked={false}
         isSaving={createMutation.isPending}
@@ -63,7 +63,7 @@ export function PlantillaEditorNew(): JSX.Element {
 
 // ─── Existing template editor ─────────────────────────────────────────────────
 
-export function PlantillaEditor(): JSX.Element {
+export function TemplateEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: template, isLoading, isError } = useProtocolTemplate(id ?? '')
@@ -106,7 +106,7 @@ export function PlantillaEditor(): JSX.Element {
           {strings.TEMPLATES_PAGE_TITLE}
         </Button>
       </nav>
-      <TemplateEditor
+      <TemplateEditorWidget
         key={template.id}
         initialState={initialState}
         isLocked={template.isLocked}

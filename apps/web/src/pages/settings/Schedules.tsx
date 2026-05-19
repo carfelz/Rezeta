@@ -346,7 +346,7 @@ function ExceptionRow({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function Horarios(): JSX.Element {
+export function Schedules(): JSX.Element {
   const { data: locations } = useLocations()
   const [locationId, setLocationId] = useState<string | undefined>(undefined)
   const [showBlockModal, setShowBlockModal] = useState(false)

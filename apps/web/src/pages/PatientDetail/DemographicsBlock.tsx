@@ -1,5 +1,5 @@
-import { ReadField } from '@/pages/Pacientes/ReadField'
-import { SEX_LABELS, formatAge, formatDate } from '@/pages/Pacientes/helpers'
+import { ReadField } from '@/pages/Patients/ReadField'
+import { SEX_LABELS, formatAge, formatDate } from '@/pages/Patients/helpers'
 import type { Patient } from '@rezeta/shared'
 
 export function DemographicsBlock({ patient }: { patient: Patient }): JSX.Element {

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
-import { DOC_LABELS, formatAge } from '@/pages/Pacientes/helpers'
+import { DOC_LABELS, formatAge } from '@/pages/Patients/helpers'
 
 export interface PageHeaderProps {
   patient: Patient

@@ -246,7 +246,7 @@ function DeleteConfirmModal({ location, onConfirm, onClose, isDeleting }: Delete
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function Ubicaciones(): JSX.Element {
+export function Locations(): JSX.Element {
   const { data: locations, isLoading, isError } = useLocations()
   const deleteMutation = useDeleteLocation()
 

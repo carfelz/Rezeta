@@ -19,7 +19,7 @@ vi.mock('@/lib/api-client', () => ({
   triggerDownload: mocks.triggerDownload,
 }))
 
-import { Registros } from '../Registros'
+import { AuditLog } from '../AuditLog'
 
 const emptyResponse: AuditLogListResponse = {
   data: [],
@@ -52,7 +52,7 @@ function setup(plan = 'free') {
   })
 }
 
-describe('Registros', () => {
+describe('AuditLog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setup()
@@ -64,52 +64,52 @@ describe('Registros', () => {
   })
 
   it('renders page title', () => {
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText('Registros de actividad')).toBeInTheDocument()
   })
 
   it('shows plan banner for free plan', () => {
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText(/últimos 30 días/)).toBeInTheDocument()
   })
 
   it('shows plan banner for pro plan with 365 days', () => {
     setup('pro')
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText(/últimos 365 días/)).toBeInTheDocument()
   })
 
   it('does not show plan banner for clinic plan', () => {
     setup('clinic')
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.queryByText(/últimos \d+ días/)).not.toBeInTheDocument()
   })
 
   it('shows CSV export button for clinic plan', () => {
     setup('clinic')
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByRole('button', { name: /Exportar CSV/ })).toBeInTheDocument()
   })
 
   it('does not show CSV export button for free plan', () => {
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.queryByRole('button', { name: /Exportar CSV/ })).not.toBeInTheDocument()
   })
 
   it('shows loading state', () => {
     mocks.useAuditLogs.mockReturnValue({ data: undefined, isLoading: true, isError: false })
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText('Cargando registros...')).toBeInTheDocument()
   })
 
   it('shows error state', () => {
     mocks.useAuditLogs.mockReturnValue({ data: undefined, isLoading: false, isError: true })
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText(/No se pudieron cargar/)).toBeInTheDocument()
   })
 
   it('shows empty state when no records', () => {
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText('Aún no hay actividad registrada')).toBeInTheDocument()
   })
 
@@ -122,7 +122,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByText('Ana García')).toBeInTheDocument()
     expect(screen.getByText('Inicio de sesión')).toBeInTheDocument()
   })
@@ -136,7 +136,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     fireEvent.click(screen.getAllByRole('row')[1])
     expect(screen.getByLabelText('Cerrar')).toBeInTheDocument()
   })
@@ -150,7 +150,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     // open drawer
     fireEvent.click(screen.getAllByRole('row')[1])
     // close via X button
@@ -167,7 +167,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     expect(screen.getByRole('button', { name: /Siguiente/ })).toBeInTheDocument()
   })
 
@@ -180,7 +180,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     // "Fallido" appears in both the status dropdown option and the table cell
     expect(screen.getAllByText('Fallido').length).toBeGreaterThanOrEqual(1)
   })
@@ -201,7 +201,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     fireEvent.click(screen.getAllByRole('row')[1])
     expect(screen.getByText('fullName')).toBeInTheDocument()
     expect(screen.getByText('Old Name')).toBeInTheDocument()
@@ -217,7 +217,7 @@ describe('Registros', () => {
       isLoading: false,
       isError: false,
     })
-    render(<Registros />)
+    render(<AuditLog />)
     // "Sistema" appears in both the category dropdown option and the actor column
     expect(screen.getAllByText('Sistema').length).toBeGreaterThanOrEqual(1)
   })
@@ -227,7 +227,7 @@ describe('Registros', () => {
     const blob = new Blob(['csv'], { type: 'text/csv' })
     mocks.downloadAuditLogCsv.mockResolvedValue(blob)
     mocks.useAuditLogs.mockReturnValue({ data: emptyResponse, isLoading: false, isError: false })
-    render(<Registros />)
+    render(<AuditLog />)
     fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }))
     await vi.waitFor(() => expect(mocks.downloadAuditLogCsv).toHaveBeenCalledTimes(1))
     expect(mocks.triggerDownload).toHaveBeenCalledWith(blob, expect.stringContaining('audit-log-'))

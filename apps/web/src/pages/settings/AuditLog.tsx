@@ -337,7 +337,7 @@ function PlanBanner({ plan }: { plan: string }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function Registros(): JSX.Element {
+export function AuditLog(): JSX.Element {
   const { user } = useAuth()
   const tenantPlan = user?.tenantPlan ?? 'free'
   const isClinic = tenantPlan === 'clinic'

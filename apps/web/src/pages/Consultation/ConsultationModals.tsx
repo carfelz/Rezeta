@@ -9,7 +9,7 @@ import type { ConsultationProtocolUsage } from '@rezeta/shared'
 
 type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
 
-export interface ConsultaModalsProps {
+export interface ConsultationModalsProps {
   consultationId: string
   activeUsage: ConsultationProtocolUsage | undefined
   protocolIds: string[]
@@ -37,7 +37,7 @@ export interface ConsultaModalsProps {
   }) => void
 }
 
-export function ConsultaModals({
+export function ConsultationModals({
   consultationId,
   activeUsage,
   protocolIds,
@@ -59,7 +59,7 @@ export function ConsultaModals({
   onAddProtocol,
   onConfirmSkipStep,
   onSaveOffProtocolNote,
-}: ConsultaModalsProps): JSX.Element {
+}: ConsultationModalsProps): JSX.Element {
   return (
     <>
       <Modal open={showSign} onOpenChange={onShowSignChange}>

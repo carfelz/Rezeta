@@ -9,7 +9,7 @@ import { DateNavigation } from './DateNavigation'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { toDateInputValue } from './helpers'
 
-export function Agenda(): JSX.Element {
+export function Schedule(): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showCreate, setShowCreate] = useState(false)

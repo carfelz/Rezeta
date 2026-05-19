@@ -25,12 +25,12 @@ import { PageHeader } from './PageHeader'
 import { SignedBanner } from './SignedBanner'
 import { AmendmentsBanner } from './AmendmentsBanner'
 import { ProtocolBar } from './ProtocolBar'
-import { ConsultaModals } from './ConsultaModals'
+import { ConsultationModals } from './ConsultationModals'
 import { useSoapState } from './use-soap-state'
 import { formatDate } from './helpers'
 import { formatBreadcrumbDate } from '@/lib/format/dates'
 
-export function Consulta(): JSX.Element {
+export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: consultation, isLoading, isError } = useConsultation(id!)
@@ -301,7 +301,7 @@ export function Consulta(): JSX.Element {
         </aside>
       </div>
 
-      <ConsultaModals
+      <ConsultationModals
         consultationId={consultation.id}
         activeUsage={activeUsage}
         protocolIds={protocolIds}

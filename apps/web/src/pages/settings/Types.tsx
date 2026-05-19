@@ -189,7 +189,7 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function Tipos(): JSX.Element {
+export function Types(): JSX.Element {
   const { data: types, isLoading, isError } = useProtocolTypes()
   const deleteMutation = useDeleteProtocolType()
   const navigate = useNavigate()

@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/auth.store'
  * If loading or unauthenticated, the outer AuthGate handles it.
  * Otherwise renders the matched child route via <Outlet />.
  */
-export function BienvenidoGate(): JSX.Element {
+export function OnboardingGate(): JSX.Element {
   const user = useAuthStore((s) => s.user)
 
   if (user && user.tenantSeededAt !== null) {

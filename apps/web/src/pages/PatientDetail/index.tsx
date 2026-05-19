@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useUiStore } from '@/store/ui.store'
-import { ClinicalHistory } from '@/pages/Pacientes/ClinicalHistory'
+import { ClinicalHistory } from '@/pages/Patients/ClinicalHistory'
 import { DemographicsBlock } from './DemographicsBlock'
 import { EditModal } from './EditModal'
 import { MedicalInfoBlock } from './MedicalInfoBlock'
 import { PageHeader } from './PageHeader'
 
-export function PacienteDetalle(): JSX.Element {
+export function PatientDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const navigate = useNavigate()

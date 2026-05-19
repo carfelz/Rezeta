@@ -3,30 +3,30 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthGate } from '@/components/auth/AuthGate'
 import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
 import { Dashboard } from '@/pages/Dashboard'
-import { Agenda } from '@/pages/Agenda'
-import { Pacientes } from '@/pages/Pacientes'
-import { PacienteDetalle } from '@/pages/PacienteDetalle'
-import { Consulta } from '@/pages/Consulta'
-import { ConsultaNueva } from '@/pages/ConsultaNueva'
-import { Protocolos } from '@/pages/Protocolos'
+import { Schedule } from '@/pages/Schedule'
+import { Patients } from '@/pages/Patients'
+import { PatientDetail } from '@/pages/PatientDetail'
+import { Consultation } from '@/pages/Consultation'
+import { NewConsultation } from '@/pages/NewConsultation'
+import { Protocols } from '@/pages/Protocols'
 import { ProtocolViewer } from '@/pages/ProtocolViewer'
 import { ProtocolEditor } from '@/pages/ProtocolEditor'
-import { Facturacion } from '@/pages/Facturacion'
-import { Ajustes } from '@/pages/Ajustes'
-import { Plantillas } from '@/pages/ajustes/Plantillas'
-import { PlantillaEditor, PlantillaEditorNew } from '@/pages/ajustes/PlantillaEditor'
-import { Tipos } from '@/pages/ajustes/Tipos'
-import { Ubicaciones } from '@/pages/ajustes/Ubicaciones'
-import { Registros } from '@/pages/ajustes/Registros'
-import { Horarios } from '@/pages/ajustes/Horarios'
-import { AppPrototype } from '@/pages/ajustes/AppPrototype'
-import { DesignSystemReference } from '@/pages/ajustes/DesignSystemReference'
+import { Billing } from '@/pages/Billing'
+import { Settings } from '@/pages/Settings'
+import { Templates } from '@/pages/settings/Templates'
+import { TemplateEditor, TemplateEditorNew } from '@/pages/settings/TemplateEditor'
+import { Types } from '@/pages/settings/Types'
+import { Locations } from '@/pages/settings/Locations'
+import { AuditLog } from '@/pages/settings/AuditLog'
+import { Schedules } from '@/pages/settings/Schedules'
+import { AppPrototype } from '@/pages/settings/AppPrototype'
+import { DesignSystemReference } from '@/pages/settings/DesignSystemReference'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
 import { Signup } from '@/pages/Signup'
-import { Bienvenido } from '@/pages/Bienvenido'
-import { BienvenidoPersonalizar } from '@/pages/BienvenidoPersonalizar'
-import { BienvenidoGate } from '@/components/auth/BienvenidoGate'
+import { Onboarding } from '@/pages/Onboarding'
+import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
+import { OnboardingGate } from '@/components/auth/OnboardingGate'
 import { GatePreview } from '@/pages/_preview/GatePreview'
 import { StripPreview } from '@/pages/_preview/StripPreview'
 import { EdgePreview } from '@/pages/_preview/EdgePreview'
@@ -62,13 +62,13 @@ const router = createBrowserRouter([
   {
     element: (
       <AuthGate>
-        <BienvenidoGate />
+        <OnboardingGate />
       </AuthGate>
     ),
     errorElement: <NotFound />,
     children: [
-      { path: 'bienvenido', element: <Bienvenido /> },
-      { path: 'bienvenido/personalizar', element: <BienvenidoPersonalizar /> },
+      { path: 'bienvenido', element: <Onboarding /> },
+      { path: 'bienvenido/personalizar', element: <OnboardingCustomize /> },
     ],
   },
 
@@ -87,23 +87,23 @@ const router = createBrowserRouter([
         element: <Navigate to="/dashboard" replace />,
       },
       { path: 'dashboard', element: <Dashboard /> },
-      { path: 'agenda', element: <Agenda /> },
-      { path: 'pacientes', element: <Pacientes /> },
-      { path: 'pacientes/:id', element: <PacienteDetalle /> },
-      { path: 'consultas/nueva', element: <ConsultaNueva /> },
-      { path: 'consultas/:id', element: <Consulta /> },
-      { path: 'protocolos', element: <Protocolos /> },
+      { path: 'agenda', element: <Schedule /> },
+      { path: 'pacientes', element: <Patients /> },
+      { path: 'pacientes/:id', element: <PatientDetail /> },
+      { path: 'consultas/nueva', element: <NewConsultation /> },
+      { path: 'consultas/:id', element: <Consultation /> },
+      { path: 'protocolos', element: <Protocols /> },
       { path: 'protocolos/:id', element: <ProtocolViewer /> },
       { path: 'protocolos/:id/edit', element: <ProtocolEditor /> },
-      { path: 'facturacion', element: <Facturacion /> },
-      { path: 'ajustes', element: <Ajustes /> },
-      { path: 'ajustes/plantillas', element: <Plantillas /> },
-      { path: 'ajustes/plantillas/new', element: <PlantillaEditorNew /> },
-      { path: 'ajustes/plantillas/:id/edit', element: <PlantillaEditor /> },
-      { path: 'ajustes/tipos', element: <Tipos /> },
-      { path: 'ajustes/ubicaciones', element: <Ubicaciones /> },
-      { path: 'ajustes/registros', element: <Registros /> },
-      { path: 'ajustes/horarios', element: <Horarios /> },
+      { path: 'facturacion', element: <Billing /> },
+      { path: 'ajustes', element: <Settings /> },
+      { path: 'ajustes/plantillas', element: <Templates /> },
+      { path: 'ajustes/plantillas/new', element: <TemplateEditorNew /> },
+      { path: 'ajustes/plantillas/:id/edit', element: <TemplateEditor /> },
+      { path: 'ajustes/tipos', element: <Types /> },
+      { path: 'ajustes/ubicaciones', element: <Locations /> },
+      { path: 'ajustes/registros', element: <AuditLog /> },
+      { path: 'ajustes/horarios', element: <Schedules /> },
       { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
       { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],

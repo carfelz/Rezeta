@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { strings } from '@/lib/strings'
 import { Button, Card, CardTitle } from '@/components/ui'
 
-export function Ajustes(): JSX.Element {
+export function Settings(): JSX.Element {
   const { user } = useAuth()
   const { signOut } = useAuthStore()
   const navigate = useNavigate()

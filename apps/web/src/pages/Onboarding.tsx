@@ -4,7 +4,7 @@ import { useOnboardingDefault } from '@/hooks/onboarding/use-onboarding'
 import { strings } from '@/lib/strings'
 import { Button, Callout } from '@/components/ui'
 
-export function Bienvenido(): JSX.Element {
+export function Onboarding(): JSX.Element {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
   const defaultMutation = useOnboardingDefault()

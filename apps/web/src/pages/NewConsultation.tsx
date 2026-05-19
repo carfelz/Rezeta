@@ -15,7 +15,7 @@ import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
 import { formatDoctorName } from '@/lib/format/names'
 
-export function ConsultaNueva(): JSX.Element {
+export function NewConsultation(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const preselectedPatientId = searchParams.get('patientId') ?? ''

@@ -112,7 +112,7 @@ const SORT_OPTIONS: Array<{ value: NonNullable<ProtocolListFilters['sort']>; lab
   { value: 'title_desc', label: strings.PROTOCOLS_SORT_TITLE_DESC },
 ]
 
-export function Protocolos(): JSX.Element {
+export function Protocols(): JSX.Element {
   const navigate = useNavigate()
   const [pickerOpen, setPickerOpen] = useState(false)
 

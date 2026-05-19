@@ -9,7 +9,7 @@ import { strings } from '@/lib/strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
 import { Button, Badge, EmptyState, Callout, ConfirmDialog } from '@/components/ui'
 
-export function Plantillas(): JSX.Element {
+export function Templates(): JSX.Element {
   const { data: templates, isLoading, isError } = useProtocolTemplates()
   const deleteMutation = useDeleteProtocolTemplate()
   const navigate = useNavigate()

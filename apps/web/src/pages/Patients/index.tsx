@@ -7,7 +7,7 @@ import { PatientModal, type PatientModalMode } from './PatientModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { PatientRow } from './PatientRow'
 
-export function Pacientes(): JSX.Element {
+export function Patients(): JSX.Element {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')

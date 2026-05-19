@@ -7,7 +7,7 @@ import { InvoiceRow } from './InvoiceRow'
 import { SummaryCards } from './SummaryCards'
 import { STATUS_OPTIONS, type ActiveModal } from './helpers'
 
-export function Facturacion(): JSX.Element {
+export function Billing(): JSX.Element {
   const [statusFilter, setStatusFilter] = useState('')
   const [activeModal, setActiveModal] = useState<ActiveModal>(null)
 

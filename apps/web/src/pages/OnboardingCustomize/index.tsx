@@ -7,7 +7,7 @@ import { StepTemplates } from './StepTemplates'
 import { StepTypes } from './StepTypes'
 import type { TemplateCandidate, TypeCandidate } from './types'
 
-export function BienvenidoPersonalizar(): JSX.Element {
+export function OnboardingCustomize(): JSX.Element {
   const navigate = useNavigate()
   const { data: starters, isLoading } = useOnboardingStarters()
   const customMutation = useOnboardingCustom()
