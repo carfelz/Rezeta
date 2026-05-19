@@ -18,13 +18,13 @@ export function PageHeader({ patient, onEdit }: PageHeaderProps): JSX.Element {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <Link
-          to="/pacientes"
-          className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors"
-        >
-          <i className="ph ph-arrow-left text-[14px]" />
-          Pacientes
-        </Link>
+        <div className="flex items-center gap-2 text-[12.5px] font-sans text-n-500">
+          <Link to="/pacientes" className="hover:text-n-800 transition-colors">
+            Pacientes
+          </Link>
+          <i className="ph ph-caret-right text-[11px] text-n-300" />
+          <span className="text-n-800 font-medium">{fullName}</span>
+        </div>
         <Button variant="secondary" size="sm" onClick={onEdit}>
           <i className="ph ph-pencil-simple mr-2 text-[14px]" />
           Editar

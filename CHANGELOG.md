@@ -4,6 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-18] — Audit fixes: empty medication card, patient detail breadcrumb
+
+### Fixed
+
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx` — medication tab no longer shows an empty "Medicamentos 0" card on first open; the default single group is hidden until the first medication is added (audit L14).
+- `apps/web/src/pages/PacienteDetalle/PageHeader.tsx` — replaced `← Pacientes` back-link with `Pacientes › {name}` breadcrumb using `ph-caret-right` separator, matching the consultation page breadcrumb pattern (audit L21).
+
+---
+
 ## [2026-05-18] — CI: migrations run before deploy to prevent bad-migration outages
 
 ### Changed

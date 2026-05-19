@@ -946,17 +946,23 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                   En cola
                 </Overline>
               )}
-              {medicationGroups.map((group) => (
-                <MedicationGroup
-                  key={group.id}
-                  group={group}
-                  medications={medications.filter((m) => m.groupId === group.id)}
-                  consultationId={consultationId}
-                  onRemoveMedication={removeMedication}
-                  onRemoveGroup={removeMedicationGroup}
-                  isOnlyGroup={medicationGroups.length === 1}
-                />
-              ))}
+              {medicationGroups.map((group) => {
+                const groupMeds = medications.filter((m) => m.groupId === group.id)
+                const isOnlyGroup = medicationGroups.length === 1
+                // hide the empty single-group card so the tab starts clean
+                if (isOnlyGroup && groupMeds.length === 0) return null
+                return (
+                  <MedicationGroup
+                    key={group.id}
+                    group={group}
+                    medications={groupMeds}
+                    consultationId={consultationId}
+                    onRemoveMedication={removeMedication}
+                    onRemoveGroup={removeMedicationGroup}
+                    isOnlyGroup={isOnlyGroup}
+                  />
+                )
+              })}
               <div className="flex flex-col gap-2 mt-1">
                 <AddMedicationForm groups={medicationGroups} onAdd={queueMedication} />
               </div>
