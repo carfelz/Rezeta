@@ -163,7 +163,13 @@
       "Bash(git push *)",
       "Bash(grep -n \"^} as const\\\\|^}$\\\\|PROTOCOL_STATUS_LABELS\\\\|^export const strings\" src/lib/strings.ts)",
       "Bash(sed -n '193,212p' src/pages/ajustes/Tipos.tsx)",
-      "Bash(sed -n '1,32p' src/pages/ajustes/Plantillas.tsx)"
+      "Bash(sed -n '1,32p' src/pages/ajustes/Plantillas.tsx)",
+      "Bash(git -C /Users/carlosfeliz/code/medical_app diff HEAD -- apps/web/src/hooks/appointments/use-appointments.ts apps/web/src/hooks/consultations/use-consultations.ts apps/web/src/hooks/invoices/use-invoices.ts apps/web/src/hooks/locations/use-locations.ts apps/web/src/hooks/patients/use-patients.ts apps/web/src/hooks/protocols/use-protocols.ts apps/web/src/hooks/protocol-templates/use-protocol-templates.ts apps/web/src/hooks/protocol-types/use-protocol-types.ts apps/web/src/hooks/schedules/use-schedules.ts apps/web/src/hooks/onboarding/use-onboarding.ts)",
+      "Bash(git -C /Users/carlosfeliz/code/medical_app diff HEAD -- apps/web/src/components/protocols/EditorBlockRenderer.tsx apps/web/src/components/template/TemplateEditor.tsx apps/web/src/pages/ajustes/Plantillas.tsx apps/web/src/pages/ajustes/Tipos.tsx apps/web/src/providers/index.tsx apps/web/src/lib/strings.ts apps/web/src/components/ui/index.ts)",
+      "Bash(git -C /Users/carlosfeliz/code/medical_app diff HEAD -- apps/web/src/hooks/invoices/use-invoices.ts apps/web/src/hooks/locations/use-locations.ts apps/web/src/hooks/patients/use-patients.ts apps/web/src/hooks/protocol-templates/use-protocol-templates.ts apps/web/src/hooks/protocol-types/use-protocol-types.ts apps/web/src/hooks/onboarding/use-onboarding.ts apps/web/src/hooks/schedules/use-schedules.ts)",
+      "Bash(git -C /Users/carlosfeliz/code/medical_app diff HEAD -- apps/web/src/pages/ajustes/Plantillas.tsx apps/web/src/pages/ajustes/Tipos.tsx apps/web/src/providers/index.tsx apps/web/src/lib/strings.ts)",
+      "Bash(git -C /Users/carlosfeliz/code/medical_app diff HEAD -- apps/web/src/pages/ajustes/Plantillas.tsx apps/web/src/pages/ajustes/Tipos.tsx apps/web/src/providers/index.tsx)",
+      "Bash(git *)"
     ]
   }
 }
