@@ -44,7 +44,7 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test with coverage (≥90% threshold)
+      - name: Test with coverage (≥95% threshold)
         run: pnpm test:coverage
 
   deploy-api:
@@ -74,6 +74,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @rezeta/db generate
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -81,6 +84,15 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+
+      # Migrations run BEFORE Cloud Run deploy so a bad migration aborts
+      # the deployment and leaves the running service on the correct schema.
+      - name: Run Database Migrations
+        run: |
+          DATABASE_URL=$(gcloud secrets versions access latest --secret=database_url)
+          DIRECT_URL=$(gcloud secrets versions access latest --secret=direct_url)
+          export DATABASE_URL DIRECT_URL
+          pnpm --filter @rezeta/db exec prisma migrate deploy
 
       - name: Configure Docker for Artifact Registry
         run: |
@@ -121,13 +133,6 @@ jobs:
             --region ${{ env.REGION }} \
             --format 'value(status.url)')
           echo "url=$URL" >> $GITHUB_OUTPUT
-
-      - name: Run Database Migrations
-        run: |
-          DATABASE_URL=$(gcloud secrets versions access latest --secret=database_url)
-          DIRECT_URL=$(gcloud secrets versions access latest --secret=direct_url)
-          export DATABASE_URL DIRECT_URL
-          pnpm --filter @rezeta/db exec prisma migrate deploy
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -172,6 +177,6 @@ jobs:
 
       - name: Output URLs
         run: |
-          echo "🚀 Deployment complete!"
+          echo "Deployment complete!"
           echo "Frontend: https://rezeta-dev.web.app"
           echo "API: ${{ needs.deploy-api.outputs.url }}"
