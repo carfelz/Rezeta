@@ -46,8 +46,6 @@ const SOAP_RULES: { id: string; label: string; check: (s: SoapSnapshot) => boole
  */
 function isBlockCompleted(block: ProtocolBlock, checkedState: Record<string, boolean>): boolean {
   switch (block.type) {
-    case 'section':
-      return block.blocks.every((b) => !blockIsRequired(b) || isBlockCompleted(b, checkedState))
     case 'checklist':
       return block.items.every((it) => checkedState[it.id] === true)
     case 'steps':

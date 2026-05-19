@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Fix branch coverage gaps to hold 95% per-file threshold
+
+### Fixed
+
+- `apps/api/src/modules/auth/__tests__/auth.service.spec.ts`: added test for `toAuthUser` when `user.preferences` holds invalid data, covering the `parsePreferences` fallback branch (`return {}`) that was leaving `auth.service.ts` at exactly 95% branches
+- `apps/api/src/modules/schedules/__tests__/schedules.service.spec.ts`: added `updateBlock` test that omits `endTime` (exercises `dto.endTime ?? existing.endTime` fallback, line 71); added `updateException` test that provides `endTime` (exercises the true branch of `dto.endTime !== undefined` ternary, line 156)
+- `packages/shared/src/protocol/sign-validation.ts`: removed unreachable `section` case from `isBlockCompleted`; `walkRequired` always recurses into sections via `continue` without calling `isBlockCompleted` on them, so the case was dead code reducing branch coverage
+
 ## [2026-05-18] — Module rename, preferences, checkedState deriving function, login cleanup
 
 ### Added

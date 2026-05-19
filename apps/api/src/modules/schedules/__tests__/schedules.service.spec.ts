@@ -180,6 +180,20 @@ describe('SchedulesService', () => {
       await expect(service.updateBlock('block-1', 'user-1', dto)).rejects.toThrow(ConflictException)
       expect(repo.updateBlock).not.toHaveBeenCalled()
     })
+
+    it('falls back to existing endTime when dto omits endTime', async () => {
+      vi.mocked(repo.findBlockById).mockResolvedValue(existing)
+      vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([])
+      const updated = makeBlock({ startTime: '07:00:00' })
+      vi.mocked(repo.updateBlock).mockResolvedValue(updated)
+
+      const result = await service.updateBlock('block-1', 'user-1', { startTime: '07:00:00' })
+
+      expect(repo.findOverlappingBlocks).toHaveBeenCalledWith(
+        expect.objectContaining({ startTime: '07:00:00', endTime: existing.endTime }),
+      )
+      expect(result).toEqual(updated)
+    })
   })
 
   describe('deleteBlock', () => {
@@ -326,6 +340,17 @@ describe('SchedulesService', () => {
 
       const result = await service.updateException('exc-1', 'user-1', { reason: 'Vacación' })
       expect(result).toEqual(noTimeExisting)
+    })
+
+    it('uses dto endTime when provided', async () => {
+      vi.mocked(repo.findExceptionById).mockResolvedValue(existing)
+      const updated = makeException({ startTime: '08:00:00', endTime: '14:00:00' })
+      vi.mocked(repo.updateException).mockResolvedValue(updated)
+
+      const result = await service.updateException('exc-1', 'user-1', { endTime: '14:00:00' })
+
+      expect(repo.updateException).toHaveBeenCalledWith('exc-1', 'user-1', { endTime: '14:00:00' })
+      expect(result).toEqual(updated)
     })
   })
 

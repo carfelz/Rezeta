@@ -128,6 +128,12 @@ describe('AuthService', () => {
       const auth = service.toAuthUser(user as never)
       expect(auth.tenantSeededAt).toBeNull()
     })
+
+    it('returns empty preferences when stored preferences fail schema validation', () => {
+      const user = { ...baseUser, preferences: { consultationViewMode: 'invalid_value' } }
+      const auth = service.toAuthUser(user as never)
+      expect(auth.preferences).toEqual({})
+    })
   })
 
   // ── devGetToken ────────────────────────────────────────────────────────────

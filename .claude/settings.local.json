@@ -177,7 +177,13 @@
       "Bash(echo \"HOOK EXIT: $?\")",
       "Bash(npx --no-install commitlint)",
       "Bash(sed -i '' -e 's|use-protocol-suggestions|use-protocol-recommendations|g' -e 's|useProtocolSuggestions|useProtocolRecommendations|g' -e 's|protocol-suggestions|protocol-recommendations|g' apps/web/src/hooks/consultations/__tests__/use-protocol-recommendations.test.ts)",
-      "Bash(sed -i '' -e 's|use-protocol-suggestions|use-protocol-recommendations|g' -e 's|useProtocolSuggestions|useProtocolRecommendations|g' apps/web/src/components/consultations/__tests__/ConsultationGate.test.tsx apps/web/src/components/consultations/__tests__/ConsultationGate.source.test.tsx)"
+      "Bash(sed -i '' -e 's|use-protocol-suggestions|use-protocol-recommendations|g' -e 's|useProtocolSuggestions|useProtocolRecommendations|g' apps/web/src/components/consultations/__tests__/ConsultationGate.test.tsx apps/web/src/components/consultations/__tests__/ConsultationGate.source.test.tsx)",
+      "Bash(echo \"COMBINED_EXIT: $?\")",
+      "Bash(xxd /Users/carlosfeliz/code/medical_app/.husky/pre-commit)",
+      "Bash(HUSKY=2 git commit -m \"test\" --dry-run)",
+      "Bash(sh -e .husky/pre-commit)",
+      "Bash(gh run *)",
+      "Bash(echo \"FINAL EXIT: $?\")"
     ]
   }
 }
