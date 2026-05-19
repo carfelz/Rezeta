@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Fix gate routing: pass locationId from patient detail to new consultation
+
+### Fixed
+
+- `apps/web/src/pages/PacienteDetalle/index.tsx`: pass `activeLocationId` from Zustand store to `ClinicalHistory`, so the "Nueva consulta" link includes `?locationId=X` in the URL; previously only `?patientId=X` was passed, relying on `ConsultaNueva`'s fallback logic rather than supplying the value directly
+
 ## [2026-05-19] — Fix branch coverage gaps to hold 95% per-file threshold
 
 ### Fixed
