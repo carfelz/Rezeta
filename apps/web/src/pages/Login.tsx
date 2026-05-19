@@ -32,7 +32,6 @@ export function Login(): JSX.Element {
       const destination = isSafeRedirect(redirectTo) ? redirectTo : '/dashboard'
       void navigate(destination, { replace: true })
     } catch (err: unknown) {
-      console.log(err)
       const code = (err as { code?: string }).code ?? ''
       setError(authClient.errorCodeToMessage(code))
     } finally {

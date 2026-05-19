@@ -36,14 +36,18 @@ export function ConsultaNueva(): JSX.Element {
   // missing, the user is redirected to /pacientes. If locationId is missing,
   // we fall back to the active or primary owned location and emit a telemetry
   // log so any unfixed entry point is discoverable.
+  const primaryLocationId = user?.preferences?.primaryLocationId
   const fallbackLocationId = useMemo(() => {
     if (locations.length === 0) return ''
     if (activeLocationId && locations.some((l) => l.id === activeLocationId)) {
       return activeLocationId
     }
+    if (primaryLocationId && locations.some((l) => l.id === primaryLocationId)) {
+      return primaryLocationId
+    }
     const owned = locations.find((l) => l.isOwned)
     return (owned ?? locations[0])?.id ?? ''
-  }, [locations, activeLocationId])
+  }, [locations, activeLocationId, primaryLocationId])
 
   const patientId = preselectedPatientId
   const locationId = preselectedLocationId || fallbackLocationId

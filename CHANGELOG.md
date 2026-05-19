@@ -4,6 +4,24 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-18] — Module rename, preferences, checkedState deriving function, login cleanup
+
+### Added
+
+- `packages/shared/src/protocol/checked-state.ts` — `getCheckedStateFromModifications()` derives a `Record<string, boolean>` from `ProtocolUsageModifications` (Phase 1 of dual-storage cleanup, audit #5).
+- `packages/shared/src/schemas/user-preferences.ts` — `primaryLocationId` field added to `UserPreferences`; `ConsultaNueva` now uses it as a fallback location after `activeLocationId` and before `isOwned` location (audit #4).
+
+### Changed
+
+- `apps/api/src/modules/protocol-suggestions/` renamed to `protocol-improvements/`; all classes, routes, and ApiTags updated (`/v1/protocols/:protocolId/improvements`). Previously named "protocol-suggestions" collided with the patient-recommendations concept (audit #1).
+- `apps/api/src/modules/protocol-recommendations/protocol-recommendations.controller.ts` — route corrected from `/protocol-suggestions` to `/protocol-recommendations`.
+- `apps/web/src/hooks/consultations/use-protocol-suggestions.ts` renamed to `use-protocol-recommendations.ts`; calls `/v1/patients/:patientId/protocol-recommendations` with patient context (audit #1, L2).
+- `apps/web/src/components/consultations/ConsultationGate.tsx` — updated hook import.
+
+### Fixed
+
+- `apps/web/src/pages/Login.tsx` — removed `console.log(err)` debug line from catch block (audit L23).
+
 ## [2026-05-18] — Audit fixes: empty medication card, patient detail breadcrumb
 
 ### Fixed

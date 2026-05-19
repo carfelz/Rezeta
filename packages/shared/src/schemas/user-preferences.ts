@@ -6,6 +6,7 @@ import { z } from 'zod'
  */
 export const UserPreferencesSchema = z.object({
   consultationViewMode: z.enum(['soap', 'canvas']).optional(),
+  primaryLocationId: z.string().uuid().optional(),
 })
 
 export const UpdateUserPreferencesSchema = UserPreferencesSchema
