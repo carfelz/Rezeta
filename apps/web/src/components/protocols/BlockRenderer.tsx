@@ -7,7 +7,7 @@ import {
   ProtocolAlert,
 } from '@/components/ui/ProtocolBlock'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
-import { strings } from '@/lib/strings'
+import { blockTypeStrings } from './strings'
 
 // Typed shapes matching ProtocolContentSchema (read from Zod types)
 interface BaseBlock {
@@ -82,19 +82,19 @@ export type ProtocolBlock =
   | LabOrderBlock
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
-  section: strings.BLOCK_TYPE_SECTION,
-  text: strings.BLOCK_TYPE_TEXT,
-  checklist: strings.BLOCK_TYPE_CHECKLIST,
-  steps: strings.BLOCK_TYPE_STEPS,
-  decision: strings.BLOCK_TYPE_DECISION,
-  dosage_table: strings.BLOCK_TYPE_DOSAGE_TABLE,
-  alert: strings.BLOCK_TYPE_ALERT,
-  imaging_order: strings.BLOCK_TYPE_IMAGING_ORDER,
-  lab_order: strings.BLOCK_TYPE_LAB_ORDER,
+  section: blockTypeStrings.section,
+  text: blockTypeStrings.text,
+  checklist: blockTypeStrings.checklist,
+  steps: blockTypeStrings.steps,
+  decision: blockTypeStrings.decision,
+  dosage_table: blockTypeStrings.dosageTable,
+  alert: blockTypeStrings.alert,
+  imaging_order: blockTypeStrings.imagingOrder,
+  lab_order: blockTypeStrings.labOrder,
 }
 
 function typeLabel(type: string): string {
-  return BLOCK_TYPE_LABELS[type] ?? strings.BLOCK_TYPE_UNKNOWN
+  return BLOCK_TYPE_LABELS[type] ?? blockTypeStrings.unknown
 }
 
 interface BlockRendererProps {
@@ -121,7 +121,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
 
     case 'text':
       return (
-        <ProtocolBlock type={typeLabel('text')} title={strings.BLOCK_TYPE_TEXT} nested={nested}>
+        <ProtocolBlock type={typeLabel('text')} title={blockTypeStrings.text} nested={nested}>
           <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
             {b.content}
           </p>
@@ -132,7 +132,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('checklist')}
-          title={b.title ?? strings.BLOCK_TYPE_CHECKLIST}
+          title={b.title ?? blockTypeStrings.checklist}
           nested={nested}
         >
           <ProtocolChecklist items={b.items} />
@@ -143,7 +143,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('steps')}
-          title={b.title ?? strings.BLOCK_TYPE_STEPS}
+          title={b.title ?? blockTypeStrings.steps}
           nested={nested}
         >
           <ProtocolSteps steps={b.steps} />
@@ -154,7 +154,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('decision')}
-          title={b.condition || strings.BLOCK_TYPE_DECISION}
+          title={b.condition || blockTypeStrings.decision}
           nested={nested}
         >
           <ProtocolDecision condition={b.condition} branches={b.branches} />
@@ -165,7 +165,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('dosage_table')}
-          title={b.title ?? strings.BLOCK_TYPE_DOSAGE_TABLE}
+          title={b.title ?? blockTypeStrings.dosageTable}
           nested={nested}
         >
           <ProtocolDosageTable rows={b.rows} {...(b.title ? { title: b.title } : {})} />
@@ -176,7 +176,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('alert')}
-          title={b.title ?? strings.BLOCK_TYPE_ALERT}
+          title={b.title ?? blockTypeStrings.alert}
           nested={nested}
         >
           <ProtocolAlert
@@ -191,7 +191,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('imaging_order')}
-          title={b.title ?? strings.BLOCK_TYPE_IMAGING_ORDER}
+          title={b.title ?? blockTypeStrings.imagingOrder}
           nested={nested}
         >
           <div className="flex flex-col gap-2">
@@ -209,7 +209,7 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
       return (
         <ProtocolBlock
           type={typeLabel('lab_order')}
-          title={b.title ?? strings.BLOCK_TYPE_LAB_ORDER}
+          title={b.title ?? blockTypeStrings.labOrder}
           nested={nested}
         >
           <div className="flex flex-col gap-2">

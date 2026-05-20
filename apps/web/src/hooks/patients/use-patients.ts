@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type { Patient } from '@rezeta/shared'
 import type { CreatePatientDto, UpdatePatientDto } from '@rezeta/shared'
 
@@ -47,10 +47,10 @@ export function useCreatePatient(): UseMutationResult<Patient, Error, CreatePati
     mutationFn: (dto: CreatePatientDto) => apiClient.post<Patient>('/v1/patients', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
-      toast.success(strings.TOAST_PATIENT_CREATED)
+      toast.success(toastStrings.patientCreated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PATIENT_CREATE)
+      toast.error(toastStrings.errorPatientCreate)
     },
   })
 }
@@ -61,10 +61,10 @@ export function useUpdatePatient(id: string): UseMutationResult<Patient, Error, 
     mutationFn: (dto: UpdatePatientDto) => apiClient.patch<Patient>(`/v1/patients/${id}`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
-      toast.success(strings.TOAST_PATIENT_UPDATED)
+      toast.success(toastStrings.patientUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PATIENT_UPDATE)
+      toast.error(toastStrings.errorPatientUpdate)
     },
   })
 }
@@ -75,10 +75,10 @@ export function useDeletePatient(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/patients/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [PATIENTS_KEY] })
-      toast.success(strings.TOAST_PATIENT_DELETED)
+      toast.success(toastStrings.patientDeleted)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PATIENT_DELETE)
+      toast.error(toastStrings.errorPatientDelete)
     },
   })
 }

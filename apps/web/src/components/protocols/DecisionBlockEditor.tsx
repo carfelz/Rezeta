@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import {
   Button,
   Field,
@@ -68,33 +68,33 @@ export function DecisionBlockEditor({
 
   return (
     <Stack gap={3} className="p-4">
-      <Field label={strings.EDITOR_DECISION_CONDITION_LABEL}>
+      <Field label={blockEditorStrings.decisionConditionLabel}>
         <Textarea
           rows={3}
           value={draftCondition}
           onChange={(e) => setDraftCondition(e.target.value)}
-          placeholder={strings.EDITOR_DECISION_CONDITION_PLACEHOLDER}
+          placeholder={blockEditorStrings.decisionConditionPlaceholder}
           autoFocus
         />
       </Field>
 
-      <Field label={strings.EDITOR_DECISION_BRANCHES_LABEL}>
+      <Field label={blockEditorStrings.decisionBranchesLabel}>
         <Stack gap={2}>
           {draftBranches.map((branch, idx) => (
             <Stack key={branch.id} gap={2} className="border border-n-200 rounded-sm p-3 bg-n-25">
               <Row gap={2}>
                 <Overline tone="neutral" size="sm" className="shrink-0 tracking-[0.05em]">
-                  {strings.EDITOR_DECISION_BRANCH_LABEL} {idx + 1}
+                  {blockEditorStrings.decisionBranchLabel} {idx + 1}
                 </Overline>
                 <Input
                   className="flex-1"
                   value={branch.label}
                   onChange={(e) => updateBranch(branch.id, { label: e.target.value })}
-                  placeholder={strings.EDITOR_DECISION_BRANCH_LABEL_PLACEHOLDER}
+                  placeholder={blockEditorStrings.decisionBranchLabelPlaceholder}
                 />
                 <IconButton
                   icon="ph ph-x"
-                  aria-label={strings.EDITOR_DECISION_REMOVE_BRANCH}
+                  aria-label={blockEditorStrings.decisionRemoveBranch}
                   tone="danger"
                   size="sm"
                   disabled={draftBranches.length <= 2}
@@ -105,22 +105,22 @@ export function DecisionBlockEditor({
                 rows={2}
                 value={branch.action}
                 onChange={(e) => updateBranch(branch.id, { action: e.target.value })}
-                placeholder={strings.EDITOR_DECISION_BRANCH_ACTION_PLACEHOLDER}
+                placeholder={blockEditorStrings.decisionBranchActionPlaceholder}
               />
             </Stack>
           ))}
         </Stack>
         <TextLink tone="primary" size="md" onClick={addBranch} className="mt-1 self-start">
-          {strings.EDITOR_DECISION_ADD_BRANCH}
+          {blockEditorStrings.decisionAddBranch}
         </TextLink>
       </Field>
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={!isValid}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

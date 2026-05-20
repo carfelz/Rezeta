@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type {
   ProtocolTemplateDto,
   CreateProtocolTemplateDto,
@@ -37,10 +37,10 @@ export function useCreateProtocolTemplate(): UseMutationResult<
       apiClient.post<ProtocolTemplateDto>('/v1/protocol-templates', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_TEMPLATE_CREATED)
+      toast.success(toastStrings.templateCreated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_TEMPLATE_SAVE)
+      toast.error(toastStrings.errorTemplateSave)
     },
   })
 }
@@ -55,10 +55,10 @@ export function useUpdateProtocolTemplate(
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       void qc.invalidateQueries({ queryKey: [QK, id] })
-      toast.success(strings.TOAST_TEMPLATE_UPDATED)
+      toast.success(toastStrings.templateUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_TEMPLATE_SAVE)
+      toast.error(toastStrings.errorTemplateSave)
     },
   })
 }
@@ -69,10 +69,10 @@ export function useDeleteProtocolTemplate(): UseMutationResult<void, Error, stri
     mutationFn: (id: string) => apiClient.delete(`/v1/protocol-templates/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_TEMPLATE_DELETED)
+      toast.success(toastStrings.templateDeleted)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_TEMPLATE_SAVE)
+      toast.error(toastStrings.errorTemplateSave)
     },
   })
 }

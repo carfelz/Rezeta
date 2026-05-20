@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { strings } from '@/lib/strings'
+import { loginStrings } from './strings'
 import { authClient } from '@/lib/auth'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
@@ -46,8 +46,8 @@ export function Login(): JSX.Element {
           <div className="w-[44px] h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mx-auto mb-4">
             R
           </div>
-          <h1 className="text-h2">{strings.LOGIN_TITLE}</h1>
-          <p className="text-body-sm mt-1">{strings.LOGIN_SUBTITLE}</p>
+          <h1 className="text-h2">{loginStrings.title}</h1>
+          <p className="text-body-sm mt-1">{loginStrings.subtitle}</p>
         </div>
 
         <form
@@ -56,25 +56,25 @@ export function Login(): JSX.Element {
           }}
           className="flex flex-col gap-4"
         >
-          <Field label={strings.LOGIN_FIELD_EMAIL}>
+          <Field label={loginStrings.fieldEmail}>
             <Input
               id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={strings.LOGIN_FIELD_EMAIL_PLACEHOLDER}
+              placeholder={loginStrings.fieldEmailPlaceholder}
               autoComplete="email"
               required
             />
           </Field>
 
-          <Field label={strings.LOGIN_FIELD_PASSWORD}>
+          <Field label={loginStrings.fieldPassword}>
             <Input
               id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={strings.LOGIN_FIELD_PASSWORD_PLACEHOLDER}
+              placeholder={loginStrings.fieldPasswordPlaceholder}
               autoComplete="current-password"
               required
             />
@@ -93,16 +93,16 @@ export function Login(): JSX.Element {
             disabled={isLoading}
             className="w-full justify-center text-n-0"
           >
-            {isLoading ? strings.LOGIN_SUBMITTING : strings.LOGIN_SUBMIT}
+            {isLoading ? loginStrings.submitting : loginStrings.submit}
           </Button>
 
           <p className="text-body-sm text-center mt-2">
-            {strings.LOGIN_NO_ACCOUNT}{' '}
+            {loginStrings.noAccount}{' '}
             <Link
               to="/signup"
               className="text-p-500 font-medium hover:text-p-700 transition-colors duration-[100ms]"
             >
-              {strings.LOGIN_SIGNUP_LINK}
+              {loginStrings.signupLink}
             </Link>
           </p>
         </form>

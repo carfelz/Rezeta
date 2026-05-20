@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type {
   ScheduleBlock,
   ScheduleException,
@@ -30,10 +30,10 @@ export function useCreateBlock(): UseMutationResult<ScheduleBlock, Error, Create
       apiClient.post<ScheduleBlock>('/v1/schedules/blocks', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_BLOCKS] })
-      toast.success(strings.TOAST_SCHEDULE_UPDATED)
+      toast.success(toastStrings.scheduleUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }
@@ -47,10 +47,10 @@ export function useUpdateBlock(
       apiClient.patch<ScheduleBlock>(`/v1/schedules/blocks/${id}`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_BLOCKS] })
-      toast.success(strings.TOAST_SCHEDULE_UPDATED)
+      toast.success(toastStrings.scheduleUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }
@@ -61,10 +61,10 @@ export function useDeleteBlock(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/schedules/blocks/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_BLOCKS] })
-      toast.success(strings.TOAST_SCHEDULE_UPDATED)
+      toast.success(toastStrings.scheduleUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }
@@ -101,10 +101,10 @@ export function useCreateException(): UseMutationResult<
       apiClient.post<ScheduleException>('/v1/schedules/exceptions', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_EXCEPTIONS] })
-      toast.success(strings.TOAST_SCHEDULE_EXCEPTION_CREATED)
+      toast.success(toastStrings.scheduleExceptionCreated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }
@@ -118,10 +118,10 @@ export function useUpdateException(
       apiClient.patch<ScheduleException>(`/v1/schedules/exceptions/${id}`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_EXCEPTIONS] })
-      toast.success(strings.TOAST_SCHEDULE_UPDATED)
+      toast.success(toastStrings.scheduleUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }
@@ -132,10 +132,10 @@ export function useDeleteException(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/schedules/exceptions/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK_EXCEPTIONS] })
-      toast.success(strings.TOAST_SCHEDULE_EXCEPTION_DELETED)
+      toast.success(toastStrings.scheduleExceptionDeleted)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_SCHEDULE_UPDATE)
+      toast.error(toastStrings.errorScheduleUpdate)
     },
   })
 }

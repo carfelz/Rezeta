@@ -4,7 +4,7 @@ import { AddBlockButton } from '@/components/ui'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import { strings } from '@/lib/strings'
+import { protocolEditorStrings } from './strings'
 import {
   useEditorStore,
   extractRequiredBlockIds,
@@ -95,7 +95,7 @@ export function ProtocolEditor(): JSX.Element {
   const blocker = useBlocker(isDirty)
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      if (window.confirm(strings.EDITOR_NAVIGATE_AWAY)) blocker.proceed()
+      if (window.confirm(protocolEditorStrings.navigateAway)) blocker.proceed()
       else blocker.reset()
     }
   }, [blocker])
@@ -116,9 +116,9 @@ export function ProtocolEditor(): JSX.Element {
   if (error || !protocol) {
     return (
       <div className="flex flex-col items-center justify-center h-[256px] gap-4">
-        <p className="text-[14px] font-sans text-n-600">{strings.VIEWER_NOT_FOUND}</p>
+        <p className="text-[14px] font-sans text-n-600">{protocolEditorStrings.notFound}</p>
         <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
-          ← {strings.EDITOR_BACK}
+          ← {protocolEditorStrings.back}
         </Link>
       </div>
     )
@@ -240,12 +240,12 @@ export function ProtocolEditor(): JSX.Element {
 
       <div className="flex items-center gap-2 text-[13px] font-sans text-n-500 mb-5">
         <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-[100ms]">
-          {strings.EDITOR_BACK}
+          {protocolEditorStrings.back}
         </Link>
         <i className="ph ph-caret-right text-[11px] text-n-300" />
         <span className="text-n-700 font-medium truncate">{protocol.title}</span>
         <span className="font-mono text-n-400 shrink-0">
-          · {strings.EDITOR_VERSION(versionNumber)}
+          · {protocolEditorStrings.version(versionNumber)}
         </span>
       </div>
 
@@ -285,7 +285,7 @@ export function ProtocolEditor(): JSX.Element {
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <i className="ph ph-file-text text-[36px] text-n-300" />
               <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
-                {strings.VIEWER_NO_CONTENT}
+                {protocolEditorStrings.noContent}
               </p>
             </div>
           ) : (
@@ -301,7 +301,7 @@ export function ProtocolEditor(): JSX.Element {
 
           <AddBlockButton
             onClick={() => handlePaletteClick('section')}
-            label={strings.EDITOR_ADD_BLOCK_FOOTER}
+            label={protocolEditorStrings.addBlockFooter}
           />
         </div>
 

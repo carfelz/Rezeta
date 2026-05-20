@@ -10,7 +10,7 @@ import { PageHeader } from './PageHeader'
 import { RecentPatients } from './RecentPatients'
 import { RecentProtocols } from './RecentProtocols'
 import { UpcomingAppointments } from './UpcomingAppointments'
-import { strings } from '@/lib/strings'
+import { dashboardStrings } from './strings'
 import { MONTHS_ES, minutesUntil } from './helpers'
 
 export function Dashboard(): JSX.Element {
@@ -78,7 +78,7 @@ export function Dashboard(): JSX.Element {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
   }).length
 
-  const greeting = strings.DASHBOARD_GREETING(user?.fullName ?? null)
+  const greeting = dashboardStrings.greeting(user?.fullName ?? null)
 
   let subtitle = 'Bienvenido a Rezeta.'
   if (!apptLoading) {

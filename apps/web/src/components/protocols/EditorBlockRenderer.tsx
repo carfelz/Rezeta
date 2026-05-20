@@ -10,7 +10,7 @@ import { StepsBlockEditor } from './StepsBlockEditor'
 import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings, blockTypeStrings } from './strings'
 import { Button, IconButton, Row, TextLink, ConfirmDialog } from '@/components/ui'
 import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
@@ -73,7 +73,7 @@ function SectionEditor({
 
   const commitTitle = () => {
     const trimmed = titleDraft.trim()
-    const title = trimmed || strings.EDITOR_SECTION_DEFAULT_TITLE
+    const title = trimmed || blockEditorStrings.sectionDefaultTitle
     updateBlock(block.id, (b) => {
       if (b.type !== 'section') return b
       return { ...b, title }
@@ -86,7 +86,7 @@ function SectionEditor({
       e.currentTarget.blur()
     }
     if (e.key === 'Escape') {
-      setTitleDraft(block.title || strings.EDITOR_SECTION_DEFAULT_TITLE)
+      setTitleDraft(block.title || blockEditorStrings.sectionDefaultTitle)
       e.currentTarget.blur()
     }
   }
@@ -111,9 +111,9 @@ function SectionEditor({
     >
       <ConfirmDialog
         open={confirmOpen}
-        title={strings.EDITOR_SECTION_DELETE}
-        description={strings.EDITOR_SECTION_DELETE_CONFIRM(block.blocks.length)}
-        confirmLabel={strings.EDITOR_BLOCK_CTX_DELETE}
+        title={blockEditorStrings.sectionDelete}
+        description={blockEditorStrings.sectionDeleteConfirm(block.blocks.length)}
+        confirmLabel={blockEditorStrings.blockCtxDelete}
         variant="danger"
         onConfirm={() => {
           deleteBlock(block.id)
@@ -125,7 +125,7 @@ function SectionEditor({
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
         <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
-          {strings.BLOCK_TYPE_SECTION}
+          {blockTypeStrings.section}
         </span>
 
         {/* Title — editable inline */}
@@ -135,19 +135,19 @@ function SectionEditor({
           onBlur={commitTitle}
           onKeyDown={handleTitleKeyDown}
           className="flex-1 min-w-0 font-serif text-[17px] font-medium text-n-900 bg-transparent border-none outline-none focus:border-b focus:border-p-500 pb-px"
-          placeholder={strings.EDITOR_SECTION_TITLE_PLACEHOLDER}
+          placeholder={blockEditorStrings.sectionTitlePlaceholder}
         />
 
         {isRequired && (
           <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
-            {strings.EDITOR_BLOCK_REQUIRED_LABEL}
+            {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
 
         {/* Add block to section */}
         <IconButton
           icon="ph ph-plus"
-          aria-label={strings.EDITOR_SECTION_ADD_BLOCK}
+          aria-label={blockEditorStrings.sectionAddBlock}
           tone="neutral"
           size="sm"
           onClick={handleAddBlock}
@@ -180,7 +180,7 @@ function SectionEditor({
           </div>
         ) : (
           <p className="text-[12.5px] font-sans text-n-400 italic text-center py-3">
-            {strings.EDITOR_SECTION_EMPTY}
+            {blockEditorStrings.sectionEmpty}
           </p>
         )}
       </div>
@@ -227,9 +227,9 @@ function LeafBlockEditor({
     >
       <ConfirmDialog
         open={confirmOpen}
-        title={strings.EDITOR_BLOCK_DELETE}
-        description={strings.EDITOR_BLOCK_DELETE_CONFIRM}
-        confirmLabel={strings.EDITOR_BLOCK_CTX_DELETE}
+        title={blockEditorStrings.blockDelete}
+        description={blockEditorStrings.blockDeleteConfirm}
+        confirmLabel={blockEditorStrings.blockCtxDelete}
         variant="danger"
         onConfirm={() => {
           deleteBlock(block.id)
@@ -248,7 +248,7 @@ function LeafBlockEditor({
         </span>
         {isRequired && (
           <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
-            {strings.EDITOR_BLOCK_REQUIRED_LABEL}
+            {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
 
@@ -275,7 +275,7 @@ function LeafBlockEditor({
             isEditable && 'cursor-pointer hover:bg-n-25 transition-colors duration-[100ms]',
           )}
           onClick={() => isEditable && !isSelected && selectBlock(block.id)}
-          title={isEditable && !isSelected ? strings.EDITOR_BLOCK_EDIT : undefined}
+          title={isEditable && !isSelected ? blockEditorStrings.blockEdit : undefined}
         >
           <BlockRenderer block={block} nested={nested} />
         </div>
@@ -335,7 +335,7 @@ function BlockContextMenu({
               className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
             >
               <i className="ph ph-pencil-simple text-[13px] text-n-400" />
-              {strings.EDITOR_BLOCK_CTX_EDIT}
+              {blockEditorStrings.blockCtxEdit}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item
@@ -344,7 +344,7 @@ function BlockContextMenu({
             className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-arrow-up text-[13px] text-n-400" />
-            {strings.EDITOR_BLOCK_CTX_MOVE_UP}
+            {blockEditorStrings.blockCtxMoveUp}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onSelect={onMoveDown}
@@ -352,14 +352,14 @@ function BlockContextMenu({
             className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-arrow-down text-[13px] text-n-400" />
-            {strings.EDITOR_BLOCK_CTX_MOVE_DOWN}
+            {blockEditorStrings.blockCtxMoveDown}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onSelect={onDuplicate}
             className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
           >
             <i className="ph ph-copy text-[13px] text-n-400" />
-            {strings.EDITOR_BLOCK_CTX_DUPLICATE}
+            {blockEditorStrings.blockCtxDuplicate}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="h-px bg-n-100 my-1" />
           <DropdownMenu.Item
@@ -368,7 +368,7 @@ function BlockContextMenu({
             className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-trash text-[13px]" />
-            {strings.EDITOR_BLOCK_CTX_DELETE}
+            {blockEditorStrings.blockCtxDelete}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -553,10 +553,10 @@ function ImagingOrderBlockEditor({
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={() => selectBlock(null)}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftOrders.length === 0}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </div>
@@ -704,10 +704,10 @@ function LabOrderBlockEditor({
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={() => selectBlock(null)}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftOrders.length === 0}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </div>
@@ -718,17 +718,17 @@ function LabOrderBlockEditor({
 
 function blockTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    text: strings.BLOCK_TYPE_TEXT,
-    checklist: strings.BLOCK_TYPE_CHECKLIST,
-    steps: strings.BLOCK_TYPE_STEPS,
-    decision: strings.BLOCK_TYPE_DECISION,
-    dosage_table: strings.BLOCK_TYPE_DOSAGE_TABLE,
-    alert: strings.BLOCK_TYPE_ALERT,
-    section: strings.BLOCK_TYPE_SECTION,
-    imaging_order: strings.BLOCK_TYPE_IMAGING_ORDER,
-    lab_order: strings.BLOCK_TYPE_LAB_ORDER,
+    text: blockTypeStrings.text,
+    checklist: blockTypeStrings.checklist,
+    steps: blockTypeStrings.steps,
+    decision: blockTypeStrings.decision,
+    dosage_table: blockTypeStrings.dosageTable,
+    alert: blockTypeStrings.alert,
+    section: blockTypeStrings.section,
+    imaging_order: blockTypeStrings.imagingOrder,
+    lab_order: blockTypeStrings.labOrder,
   }
-  return labels[type] ?? strings.BLOCK_TYPE_UNKNOWN
+  return labels[type] ?? blockTypeStrings.unknown
 }
 
 function blockDisplayTitle(block: ProtocolBlock): string {
@@ -736,17 +736,17 @@ function blockDisplayTitle(block: ProtocolBlock): string {
     case 'text':
       return block.content
         ? block.content.slice(0, 60) + (block.content.length > 60 ? '…' : '')
-        : strings.EDITOR_BLOCK_EMPTY_TEXT
+        : blockEditorStrings.blockEmptyText
     case 'alert':
-      return block.title ?? (block.content.slice(0, 60) || strings.BLOCK_TYPE_ALERT)
+      return block.title ?? (block.content.slice(0, 60) || blockTypeStrings.alert)
     case 'checklist':
-      return block.title ?? strings.BLOCK_TYPE_CHECKLIST
+      return block.title ?? blockTypeStrings.checklist
     case 'steps':
-      return block.title ?? strings.BLOCK_TYPE_STEPS
+      return block.title ?? blockTypeStrings.steps
     case 'decision':
-      return block.condition || strings.BLOCK_TYPE_DECISION
+      return block.condition || blockTypeStrings.decision
     case 'dosage_table':
-      return block.title ?? strings.BLOCK_TYPE_DOSAGE_TABLE
+      return block.title ?? blockTypeStrings.dosageTable
     case 'section':
       return block.title
     case 'imaging_order':
@@ -760,6 +760,6 @@ function blockDisplayTitle(block: ProtocolBlock): string {
         `${block.orders.length} prueba${block.orders.length !== 1 ? 's' : ''} de laboratorio`
       )
     default:
-      return strings.BLOCK_TYPE_UNKNOWN
+      return blockTypeStrings.unknown
   }
 }

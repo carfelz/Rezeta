@@ -5,7 +5,7 @@ import {
   useProtocolTemplates,
   useDeleteProtocolTemplate,
 } from '@/hooks/protocol-templates/use-protocol-templates'
-import { strings } from '@/lib/strings'
+import { templatesStrings } from './strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
 import { Button, Badge, EmptyState, Callout, ConfirmDialog } from '@/components/ui'
 
@@ -18,7 +18,7 @@ export function Templates(): JSX.Element {
 
   function handleDelete(t: ProtocolTemplateDto) {
     if (t.isLocked) {
-      toast.error(strings.TEMPLATES_DELETE_LOCKED)
+      toast.error(templatesStrings.deleteLocked)
       return
     }
     setDeleteTarget(t)
@@ -37,38 +37,38 @@ export function Templates(): JSX.Element {
     <div>
       <ConfirmDialog
         open={!!deleteTarget}
-        title={strings.TEMPLATES_LIST_DELETE}
-        description={strings.TEMPLATES_LIST_DELETE_CONFIRM(deleteTarget?.name ?? '')}
-        confirmLabel={strings.TEMPLATES_LIST_DELETE}
+        title={templatesStrings.listDelete}
+        description={templatesStrings.listDeleteConfirm(deleteTarget?.name ?? '')}
+        confirmLabel={templatesStrings.listDelete}
         variant="danger"
         loading={deleteMutation.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-h1 m-0">{strings.TEMPLATES_PAGE_TITLE}</h1>
+        <h1 className="text-h1 m-0">{templatesStrings.pageTitle}</h1>
         <Button variant="primary" onClick={() => void navigate('/ajustes/plantillas/new')}>
           <i className="ph ph-plus mr-2" />
-          {strings.TEMPLATES_NEW_BUTTON}
+          {templatesStrings.newButton}
         </Button>
       </div>
 
-      {isLoading && <p className="text-body text-n-500">{strings.TEMPLATES_LOADING}</p>}
+      {isLoading && <p className="text-body text-n-500">{templatesStrings.loading}</p>}
 
       {isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          {strings.TEMPLATES_ERROR}
+          {templatesStrings.error}
         </Callout>
       )}
 
       {!isLoading && !isError && templates?.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-file-text" />}
-          title={strings.TEMPLATES_EMPTY_TITLE}
-          description={strings.TEMPLATES_EMPTY_DESCRIPTION}
+          title={templatesStrings.emptyTitle}
+          description={templatesStrings.emptyDescription}
           action={
             <Button variant="primary" onClick={() => void navigate('/ajustes/plantillas/new')}>
-              {strings.TEMPLATES_NEW_BUTTON}
+              {templatesStrings.newButton}
             </Button>
           }
         />
@@ -101,7 +101,7 @@ export function Templates(): JSX.Element {
                     {t.name}
                     {t.isSeeded && (
                       <span className="ml-2 text-[11px] font-mono text-n-400 uppercase tracking-[0.06em]">
-                        {strings.TEMPLATES_LIST_SEEDED}
+                        {templatesStrings.listSeeded}
                       </span>
                     )}
                   </td>
@@ -111,7 +111,7 @@ export function Templates(): JSX.Element {
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isLocked ? (
                       <Badge variant="review">
-                        {strings.TEMPLATES_LIST_BLOCKED_BY(t.blockingTypeIds?.length ?? 0)}
+                        {templatesStrings.listBlockedBy(t.blockingTypeIds?.length ?? 0)}
                       </Badge>
                     ) : (
                       <Badge variant="active">Activa</Badge>
@@ -131,13 +131,13 @@ export function Templates(): JSX.Element {
                         size="sm"
                         onClick={() => void navigate(`/ajustes/plantillas/${t.id}/edit`)}
                       >
-                        {t.isLocked ? 'Ver' : strings.TEMPLATES_LIST_EDIT}
+                        {t.isLocked ? 'Ver' : templatesStrings.listEdit}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title={strings.TEMPLATES_LIST_DELETE}
+                        title={templatesStrings.listDelete}
                         disabled={t.isLocked || deletingId === t.id}
                         onClick={() => handleDelete(t)}
                       >

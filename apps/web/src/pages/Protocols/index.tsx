@@ -18,7 +18,8 @@ import { TemplatePickerModal } from '@/components/protocols/TemplatePickerModal'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ProtocolListFilters } from '@/hooks/protocols/use-protocols'
 import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
-import { strings, protocolStatusLabel } from '@/lib/strings'
+import { protocolStatusLabel } from '@/lib/protocol-status'
+import { protocolsStrings } from './strings'
 import { cn } from '@/lib/utils'
 import type { ProtocolListItem } from '@rezeta/shared'
 
@@ -69,7 +70,7 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
           </Badge>
           {protocol.currentVersionNumber !== null && (
             <Caption tone="muted" size="sm" className="font-mono">
-              {strings.PROTOCOLS_LIST_VERSION(protocol.currentVersionNumber)}
+              {protocolsStrings.listVersion(protocol.currentVersionNumber)}
             </Caption>
           )}
         </Row>
@@ -84,12 +85,10 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
           e.stopPropagation()
           onToggleFavorite(protocol.id, protocol.isFavorite)
         }}
-        title={
-          protocol.isFavorite ? strings.PROTOCOLS_FAVORITE_REMOVE : strings.PROTOCOLS_FAVORITE_ADD
-        }
+        title={protocol.isFavorite ? protocolsStrings.favoriteRemove : protocolsStrings.favoriteAdd}
         className="w-btn-sm h-btn-sm flex items-center justify-center rounded text-n-300 hover:text-warning-text transition-colors shrink-0"
         aria-label={
-          protocol.isFavorite ? strings.PROTOCOLS_FAVORITE_REMOVE : strings.PROTOCOLS_FAVORITE_ADD
+          protocol.isFavorite ? protocolsStrings.favoriteRemove : protocolsStrings.favoriteAdd
         }
       >
         <i
@@ -106,10 +105,10 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
 }
 
 const SORT_OPTIONS: Array<{ value: NonNullable<ProtocolListFilters['sort']>; label: string }> = [
-  { value: 'updatedAt_desc', label: strings.PROTOCOLS_SORT_UPDATED_DESC },
-  { value: 'updatedAt_asc', label: strings.PROTOCOLS_SORT_UPDATED_ASC },
-  { value: 'title_asc', label: strings.PROTOCOLS_SORT_TITLE_ASC },
-  { value: 'title_desc', label: strings.PROTOCOLS_SORT_TITLE_DESC },
+  { value: 'updatedAt_desc', label: protocolsStrings.sortUpdatedDesc },
+  { value: 'updatedAt_asc', label: protocolsStrings.sortUpdatedAsc },
+  { value: 'title_asc', label: protocolsStrings.sortTitleAsc },
+  { value: 'title_desc', label: protocolsStrings.sortTitleDesc },
 ]
 
 export function Protocols(): JSX.Element {
@@ -136,11 +135,11 @@ export function Protocols(): JSX.Element {
     <div>
       <Row justify="between" align="center" className="mb-6">
         <h1 className="text-[28px] font-serif font-medium text-n-900 leading-tight">
-          {strings.PROTOCOLS_PAGE_TITLE}
+          {protocolsStrings.pageTitle}
         </h1>
         <Button variant="primary" onClick={() => setPickerOpen(true)}>
           <i className="ph ph-plus mr-2" />
-          {strings.PROTOCOLS_NEW_BUTTON}
+          {protocolsStrings.newButton}
         </Button>
       </Row>
 
@@ -150,13 +149,13 @@ export function Protocols(): JSX.Element {
             size="sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={strings.PROTOCOLS_SEARCH_PLACEHOLDER}
+            placeholder={protocolsStrings.searchPlaceholder}
           />
         </div>
 
         <Row gap={2} wrap>
           <FilterChip active={!typeId} onClick={() => setTypeId(undefined)}>
-            {strings.PROTOCOLS_FILTER_ALL_TYPES}
+            {protocolsStrings.filterAllTypes}
           </FilterChip>
           {types?.map((t) => (
             <FilterChip
@@ -174,10 +173,10 @@ export function Protocols(): JSX.Element {
             variant={favoritesOnly ? 'warning' : 'secondary'}
             size="sm"
             onClick={() => setFavoritesOnly(!favoritesOnly)}
-            title={strings.PROTOCOLS_FILTER_FAVORITES}
+            title={protocolsStrings.filterFavorites}
           >
             <i className={cn(favoritesOnly ? 'ph-fill ph-star' : 'ph ph-star', 'text-[13px]')} />
-            {strings.PROTOCOLS_FILTER_FAVORITES}
+            {protocolsStrings.filterFavorites}
           </Button>
 
           <Select
@@ -206,7 +205,7 @@ export function Protocols(): JSX.Element {
         <EmptyState
           icon={<i className="ph ph-warning-circle text-danger-solid" />}
           title="Error al cargar protocolos"
-          description={strings.PROTOCOLS_ERROR}
+          description={protocolsStrings.error}
           action={
             <Button variant="secondary" onClick={() => window.location.reload()}>
               Reintentar
@@ -228,17 +227,17 @@ export function Protocols(): JSX.Element {
           icon={<i className="ph ph-stack" />}
           title={
             search || typeId || favoritesOnly
-              ? strings.PROTOCOLS_EMPTY_SEARCH
-              : strings.PROTOCOLS_EMPTY_TITLE
+              ? protocolsStrings.emptySearch
+              : protocolsStrings.emptyTitle
           }
           {...(!(search || typeId || favoritesOnly)
-            ? { description: strings.PROTOCOLS_EMPTY_DESCRIPTION }
+            ? { description: protocolsStrings.emptyDescription }
             : {})}
           {...(!search && !typeId && !favoritesOnly
             ? {
                 action: (
                   <Button variant="primary" onClick={() => setPickerOpen(true)}>
-                    {strings.PROTOCOLS_EMPTY_CTA}
+                    {protocolsStrings.emptyCta}
                   </Button>
                 ),
               }

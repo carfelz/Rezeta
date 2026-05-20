@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
 
 const QK = 'protocol-types'
@@ -33,10 +33,10 @@ export function useCreateProtocolType(): UseMutationResult<
       apiClient.post<ProtocolTypeDto>('/v1/protocol-types', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_PROTOCOL_TYPE_CREATED)
+      toast.success(toastStrings.protocolTypeCreated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PROTOCOL_TYPE_SAVE)
+      toast.error(toastStrings.errorProtocolTypeSave)
     },
   })
 }
@@ -51,10 +51,10 @@ export function useUpdateProtocolType(
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       void qc.invalidateQueries({ queryKey: [QK, id] })
-      toast.success(strings.TOAST_PROTOCOL_TYPE_UPDATED)
+      toast.success(toastStrings.protocolTypeUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PROTOCOL_TYPE_SAVE)
+      toast.error(toastStrings.errorProtocolTypeSave)
     },
   })
 }
@@ -65,10 +65,10 @@ export function useDeleteProtocolType(): UseMutationResult<void, Error, string> 
     mutationFn: (id: string) => apiClient.delete(`/v1/protocol-types/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_PROTOCOL_TYPE_DELETED)
+      toast.success(toastStrings.protocolTypeDeleted)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_PROTOCOL_TYPE_SAVE)
+      toast.error(toastStrings.errorProtocolTypeSave)
     },
   })
 }

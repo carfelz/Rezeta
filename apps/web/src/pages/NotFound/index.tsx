@@ -1,5 +1,5 @@
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router-dom'
-import { strings } from '@/lib/strings'
+import { notFoundStrings } from './strings'
 import { Button, Card } from '@/components/ui'
 
 export function NotFound(): JSX.Element {
@@ -10,10 +10,10 @@ export function NotFound(): JSX.Element {
   const isServerError = isRouteErrorResponse(error) && error.status >= 500
   const isUnknownError = error != null && !isRouteErrorResponse(error)
   const showGenericError = isServerError || isUnknownError
-  const title = showGenericError ? strings.ERROR_BOUNDARY_TITLE : strings.NOT_FOUND_TITLE
+  const title = showGenericError ? notFoundStrings.errorBoundaryTitle : notFoundStrings.title
   const description = showGenericError
-    ? strings.ERROR_BOUNDARY_DESCRIPTION
-    : strings.NOT_FOUND_DESCRIPTION
+    ? notFoundStrings.errorBoundaryDescription
+    : notFoundStrings.description
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
@@ -27,10 +27,10 @@ export function NotFound(): JSX.Element {
         </p>
         <div className="flex items-center justify-center gap-3">
           <Button asChild variant="primary">
-            <Link to="/dashboard">{strings.NOT_FOUND_GO_HOME}</Link>
+            <Link to="/dashboard">{notFoundStrings.goHome}</Link>
           </Button>
           <Button asChild variant="secondary">
-            <Link to="/pacientes">{strings.NOT_FOUND_GO_PATIENTS}</Link>
+            <Link to="/pacientes">{notFoundStrings.goPatients}</Link>
           </Button>
         </div>
       </Card>

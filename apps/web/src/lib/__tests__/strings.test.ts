@@ -1,73 +1,84 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import {
-  strings,
-  firebaseErrorToSpanish,
-  protocolStatusLabel,
-  PROTOCOL_STATUS_LABELS,
-} from '../strings'
+import { loginStrings } from '@/pages/Login/strings'
+import { signupStrings } from '@/pages/Signup/strings'
+import { protocolsStrings } from '@/pages/Protocols/strings'
+import { onboardingStrings } from '@/pages/Onboarding/strings'
+import { dashboardStrings } from '@/pages/Dashboard/strings'
+import { protocolEditorStrings } from '@/pages/ProtocolEditor/strings'
+import { templatesStrings, templateEditorStrings, typesStrings } from '@/pages/settings/strings'
+import { protocolViewerStrings } from '@/pages/ProtocolViewer/strings'
+import { blockEditorStrings } from '@/components/protocols/strings'
+import { firebaseErrorToSpanish, firebaseErrorStrings } from '@/lib/toasts'
+import { protocolStatusLabel, PROTOCOL_STATUS_LABELS } from '@/lib/protocol-status'
 
-describe('strings', () => {
-  it('exports APP_NAME', () => {
-    expect(strings.APP_NAME).toBe('Rezeta')
+describe('loginStrings', () => {
+  it('exports appName', () => {
+    expect(loginStrings.appName).toBe('Rezeta')
+  })
+})
+
+describe('signupStrings', () => {
+  it('exports title', () => {
+    expect(signupStrings.title).toBeDefined()
+    expect(typeof signupStrings.title).toBe('string')
   })
 
-  it('exports APP_TAGLINE', () => {
-    expect(strings.APP_TAGLINE).toBeDefined()
-    expect(typeof strings.APP_TAGLINE).toBe('string')
+  it('exports submit', () => {
+    expect(signupStrings.submit).toBeDefined()
+  })
+})
+
+describe('loginStrings', () => {
+  it('exports title', () => {
+    expect(loginStrings.title).toBeDefined()
   })
 
-  it('has non-empty string or function values for all keys', () => {
-    for (const [key, value] of Object.entries(strings)) {
-      const t = typeof value
-      expect(['string', 'function'], `strings.${key} should be string or function`).toContain(t)
-      if (t === 'string') {
-        expect((value as string).length, `strings.${key} should not be empty`).toBeGreaterThan(0)
-      }
-    }
+  it('exports submit', () => {
+    expect(loginStrings.submit).toBeDefined()
+  })
+})
+
+describe('protocolsStrings', () => {
+  it('exports emptyTitle', () => {
+    expect(protocolsStrings.emptyTitle).toBe('Sin protocolos todavía')
   })
 
-  it('exports login strings', () => {
-    expect(strings.LOGIN_TITLE).toBeDefined()
-    expect(strings.LOGIN_SUBMIT).toBeDefined()
+  it('listVersion returns version string', () => {
+    expect(protocolsStrings.listVersion(3)).toBe('v3')
   })
+})
 
-  it('exports signup strings', () => {
-    expect(strings.SIGNUP_TITLE).toBeDefined()
-    expect(strings.SIGNUP_SUBMIT).toBeDefined()
-  })
-
-  it('exports protocol empty title', () => {
-    expect(strings.PROTOCOLS_EMPTY_TITLE).toBe('Sin protocolos todavía')
-  })
-
-  it('ONBOARDING_WELCOME_HEADING handles null name', () => {
-    const heading = strings.ONBOARDING_WELCOME_HEADING(null)
+describe('onboardingStrings', () => {
+  it('welcomeHeading handles null name', () => {
+    const heading = onboardingStrings.welcomeHeading(null)
     expect(typeof heading).toBe('string')
     expect(heading.length).toBeGreaterThan(0)
   })
 
-  it('ONBOARDING_WELCOME_HEADING includes name when provided', () => {
-    const heading = strings.ONBOARDING_WELCOME_HEADING('Dr. García')
+  it('welcomeHeading includes name when provided', () => {
+    const heading = onboardingStrings.welcomeHeading('Dr. García')
     expect(heading).toContain('Dr. García')
   })
+})
 
-  it('DASHBOARD_GREETING returns a string for null name', () => {
-    const result = strings.DASHBOARD_GREETING(null)
+describe('dashboardStrings', () => {
+  it('greeting returns a string for null name', () => {
+    const result = dashboardStrings.greeting(null)
     expect(typeof result).toBe('string')
     expect(result.length).toBeGreaterThan(0)
   })
 
-  it('DASHBOARD_GREETING includes extracted last name', () => {
-    const result = strings.DASHBOARD_GREETING('Dr. Carlos Feliz')
+  it('greeting includes extracted last name', () => {
+    const result = dashboardStrings.greeting('Dr. Carlos Feliz')
     expect(result).toContain('Feliz')
   })
 
-  it('DASHBOARD_GREETING works without Dr. prefix', () => {
-    const result = strings.DASHBOARD_GREETING('Ana López')
+  it('greeting works without Dr. prefix', () => {
+    const result = dashboardStrings.greeting('Ana López')
     expect(result).toContain('López')
   })
 
-  describe('DASHBOARD_GREETING time-of-day branches', () => {
+  describe('greeting time-of-day branches', () => {
     afterEach(() => {
       vi.useRealTimers()
     })
@@ -75,145 +86,149 @@ describe('strings', () => {
     it('uses Buenos días when hour < 12', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2026-05-07T08:00:00'))
-      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenos días')
+      expect(dashboardStrings.greeting('Carlos')).toContain('Buenos días')
     })
 
     it('uses Buenas tardes when 12 <= hour < 19', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2026-05-07T15:00:00'))
-      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenas tardes')
+      expect(dashboardStrings.greeting('Carlos')).toContain('Buenas tardes')
     })
 
     it('uses Buenas noches when hour >= 19', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2026-05-07T22:00:00'))
-      expect(strings.DASHBOARD_GREETING('Carlos')).toContain('Buenas noches')
+      expect(dashboardStrings.greeting('Carlos')).toContain('Buenas noches')
     })
   })
+})
 
-  it('PROTOCOLS_LIST_VERSION returns version string', () => {
-    expect(strings.PROTOCOLS_LIST_VERSION(3)).toBe('v3')
+describe('protocolEditorStrings', () => {
+  it('publish returns label without version number', () => {
+    expect(protocolEditorStrings.publish(1)).toBe('Publicar')
+    expect(protocolEditorStrings.publish(2)).toBe('Publicar')
   })
 
-  it('EDITOR_PUBLICAR returns publish label without version number', () => {
-    expect(strings.EDITOR_PUBLICAR(1)).toBe('Publicar')
-    expect(strings.EDITOR_PUBLICAR(2)).toBe('Publicar')
+  it('version returns version label', () => {
+    expect(protocolEditorStrings.version(1)).toBe('v1')
   })
+})
 
-  it('EDITOR_VERSION returns version label', () => {
-    expect(strings.EDITOR_VERSION(1)).toBe('v1')
-  })
-
-  it('EDITOR_SECTION_DELETE_CONFIRM with children', () => {
-    const msg = strings.EDITOR_SECTION_DELETE_CONFIRM(3)
+describe('blockEditorStrings', () => {
+  it('sectionDeleteConfirm with children', () => {
+    const msg = blockEditorStrings.sectionDeleteConfirm(3)
     expect(msg).toContain('3')
     expect(msg).toContain('bloques')
   })
 
-  it('EDITOR_SECTION_DELETE_CONFIRM with 1 child (singular)', () => {
-    const msg = strings.EDITOR_SECTION_DELETE_CONFIRM(1)
+  it('sectionDeleteConfirm with 1 child (singular)', () => {
+    const msg = blockEditorStrings.sectionDeleteConfirm(1)
     expect(msg).toContain('1')
     expect(msg).toContain('bloque')
     expect(msg).not.toContain('bloques')
   })
 
-  it('EDITOR_SECTION_DELETE_CONFIRM with no children', () => {
-    const msg = strings.EDITOR_SECTION_DELETE_CONFIRM(0)
+  it('sectionDeleteConfirm with no children', () => {
+    const msg = blockEditorStrings.sectionDeleteConfirm(0)
     expect(typeof msg).toBe('string')
     expect(msg.length).toBeGreaterThan(0)
   })
+})
 
-  it('TEMPLATES_LIST_BLOCKED_BY singular', () => {
-    expect(strings.TEMPLATES_LIST_BLOCKED_BY(1)).toContain('tipo')
-    expect(strings.TEMPLATES_LIST_BLOCKED_BY(1)).not.toContain('tipos')
+describe('templatesStrings', () => {
+  it('listBlockedBy singular', () => {
+    expect(templatesStrings.listBlockedBy(1)).toContain('tipo')
+    expect(templatesStrings.listBlockedBy(1)).not.toContain('tipos')
   })
 
-  it('TEMPLATES_LIST_BLOCKED_BY plural', () => {
-    expect(strings.TEMPLATES_LIST_BLOCKED_BY(3)).toContain('tipos')
+  it('listBlockedBy plural', () => {
+    expect(templatesStrings.listBlockedBy(3)).toContain('tipos')
   })
 
-  it('TEMPLATES_LIST_DELETE_CONFIRM includes name', () => {
-    const msg = strings.TEMPLATES_LIST_DELETE_CONFIRM('Mi plantilla')
+  it('listDeleteConfirm includes name', () => {
+    const msg = templatesStrings.listDeleteConfirm('Mi plantilla')
     expect(msg).toContain('Mi plantilla')
   })
+})
 
-  it('TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM singular', () => {
-    const msg = strings.TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM('Mi sección', 1)
+describe('templateEditorStrings', () => {
+  it('deleteSectionConfirm singular', () => {
+    const msg = templateEditorStrings.deleteSectionConfirm('Mi sección', 1)
     expect(msg).toContain('Mi sección')
     expect(msg).toContain('1')
   })
 
-  it('TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM plural', () => {
-    const msg = strings.TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM('Mi sección', 3)
+  it('deleteSectionConfirm plural', () => {
+    const msg = templateEditorStrings.deleteSectionConfirm('Mi sección', 3)
     expect(msg).toContain('bloques')
     expect(msg).toContain('hijos')
   })
+})
 
-  it('TYPES_LIST_DELETE_CONFIRM includes name', () => {
-    const msg = strings.TYPES_LIST_DELETE_CONFIRM('Emergencia')
+describe('typesStrings', () => {
+  it('listDeleteConfirm includes name', () => {
+    const msg = typesStrings.listDeleteConfirm('Emergencia')
     expect(msg).toContain('Emergencia')
   })
 
-  it('TYPES_LOCKED_BADGE singular', () => {
-    expect(strings.TYPES_LOCKED_BADGE(1)).toContain('protocolo')
-    expect(strings.TYPES_LOCKED_BADGE(1)).not.toContain('protocolos')
+  it('lockedBadge singular', () => {
+    expect(typesStrings.lockedBadge(1)).toContain('protocolo')
+    expect(typesStrings.lockedBadge(1)).not.toContain('protocolos')
   })
 
-  it('TYPES_LOCKED_BADGE plural', () => {
-    expect(strings.TYPES_LOCKED_BADGE(5)).toContain('protocolos')
+  it('lockedBadge plural', () => {
+    expect(typesStrings.lockedBadge(5)).toContain('protocolos')
   })
+})
 
-  it('VIEWER_VERSION returns version label', () => {
-    expect(strings.VIEWER_VERSION(7)).toBe('v7')
+describe('protocolViewerStrings', () => {
+  it('version returns version label', () => {
+    expect(protocolViewerStrings.version(7)).toBe('v7')
   })
 })
 
 describe('firebaseErrorToSpanish', () => {
   it('maps auth/email-already-in-use', () => {
     const msg = firebaseErrorToSpanish('auth/email-already-in-use')
-    expect(msg).toBe(strings.FIREBASE_ERROR_EMAIL_ALREADY_IN_USE)
+    expect(msg).toBe(firebaseErrorStrings.emailAlreadyInUse)
   })
 
   it('maps auth/invalid-email', () => {
-    expect(firebaseErrorToSpanish('auth/invalid-email')).toBe(strings.FIREBASE_ERROR_INVALID_EMAIL)
+    expect(firebaseErrorToSpanish('auth/invalid-email')).toBe(firebaseErrorStrings.invalidEmail)
   })
 
   it('maps auth/weak-password', () => {
-    expect(firebaseErrorToSpanish('auth/weak-password')).toBe(strings.FIREBASE_ERROR_WEAK_PASSWORD)
+    expect(firebaseErrorToSpanish('auth/weak-password')).toBe(firebaseErrorStrings.weakPassword)
   })
 
   it('maps auth/user-not-found', () => {
-    expect(firebaseErrorToSpanish('auth/user-not-found')).toBe(
-      strings.FIREBASE_ERROR_USER_NOT_FOUND,
-    )
+    expect(firebaseErrorToSpanish('auth/user-not-found')).toBe(firebaseErrorStrings.userNotFound)
   })
 
   it('maps auth/wrong-password', () => {
-    expect(firebaseErrorToSpanish('auth/wrong-password')).toBe(
-      strings.FIREBASE_ERROR_WRONG_PASSWORD,
-    )
+    expect(firebaseErrorToSpanish('auth/wrong-password')).toBe(firebaseErrorStrings.wrongPassword)
   })
 
   it('maps auth/invalid-credential', () => {
     expect(firebaseErrorToSpanish('auth/invalid-credential')).toBe(
-      strings.FIREBASE_ERROR_INVALID_CREDENTIAL,
+      firebaseErrorStrings.invalidCredential,
     )
   })
 
   it('maps auth/network-request-failed', () => {
     expect(firebaseErrorToSpanish('auth/network-request-failed')).toBe(
-      strings.FIREBASE_ERROR_NETWORK_REQUEST_FAILED,
+      firebaseErrorStrings.networkRequestFailed,
     )
   })
 
   it('maps auth/too-many-requests', () => {
     expect(firebaseErrorToSpanish('auth/too-many-requests')).toBe(
-      strings.FIREBASE_ERROR_TOO_MANY_REQUESTS,
+      firebaseErrorStrings.tooManyRequests,
     )
   })
 
   it('returns UNKNOWN for unrecognized codes', () => {
-    expect(firebaseErrorToSpanish('auth/some-unknown-code')).toBe(strings.FIREBASE_ERROR_UNKNOWN)
+    expect(firebaseErrorToSpanish('auth/some-unknown-code')).toBe(firebaseErrorStrings.unknown)
   })
 })
 

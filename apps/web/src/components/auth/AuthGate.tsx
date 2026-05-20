@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { strings } from '@/lib/strings'
+import { authGateStrings } from './strings'
 
 interface AuthGateProps {
   children: ReactNode
@@ -52,7 +52,7 @@ export function AuthGate({ children }: AuthGateProps): JSX.Element {
           R
         </div>
         <p className="text-body-sm" style={{ color: 'var(--color-n-500)' }}>
-          {strings.AUTH_GATE_LOADING}
+          {authGateStrings.loading}
         </p>
       </div>
     )

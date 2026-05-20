@@ -10,7 +10,7 @@ import {
   stateFromTemplate,
   type TemplateSchema,
 } from '@/components/template/TemplateEditor'
-import { strings } from '@/lib/strings'
+import { templatesStrings, templateEditorStrings } from './strings'
 import { Button, Callout } from '@/components/ui'
 import { toast } from 'sonner'
 
@@ -45,7 +45,7 @@ export function TemplateEditorNew(): JSX.Element {
       <nav className="mb-4">
         <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
           <i className="ph ph-arrow-left mr-1" />
-          {strings.TEMPLATES_PAGE_TITLE}
+          {templatesStrings.pageTitle}
         </Button>
       </nav>
       <TemplateEditorWidget
@@ -72,7 +72,7 @@ export function TemplateEditor(): JSX.Element {
   if (isLoading) {
     return (
       <div className="p-8">
-        <p className="text-body text-n-500">{strings.TEMPLATES_LOADING}</p>
+        <p className="text-body text-n-500">{templatesStrings.loading}</p>
       </div>
     )
   }
@@ -81,7 +81,7 @@ export function TemplateEditor(): JSX.Element {
     return (
       <div className="p-8">
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          {strings.TEMPLATES_ERROR}
+          {templatesStrings.error}
         </Callout>
       </div>
     )
@@ -95,7 +95,7 @@ export function TemplateEditor(): JSX.Element {
       suggestedSpecialty: suggestedSpecialty || null,
       schema,
     })
-    toast.success(strings.TEMPLATE_EDITOR_SAVED)
+    toast.success(templateEditorStrings.saved)
   }
 
   return (
@@ -103,7 +103,7 @@ export function TemplateEditor(): JSX.Element {
       <nav className="mb-4">
         <Button variant="ghost" size="sm" onClick={() => void navigate('/ajustes/plantillas')}>
           <i className="ph ph-arrow-left mr-1" />
-          {strings.TEMPLATES_PAGE_TITLE}
+          {templatesStrings.pageTitle}
         </Button>
       </nav>
       <TemplateEditorWidget

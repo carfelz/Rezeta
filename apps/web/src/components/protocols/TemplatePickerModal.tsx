@@ -15,7 +15,7 @@ import {
 } from '@/components/ui'
 import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import type { ProtocolTypeDto } from '@rezeta/shared'
 
 interface TemplatePickerModalProps {
@@ -86,7 +86,10 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
   return (
     <Modal open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <ModalContent size="lg">
-        <ModalHeader title={strings.TYPE_PICKER_TITLE} subtitle={strings.TYPE_PICKER_SUBTITLE} />
+        <ModalHeader
+          title={blockEditorStrings.typePickerTitle}
+          subtitle={blockEditorStrings.typePickerSubtitle}
+        />
 
         <ModalBody>
           {typesLoading ? (
@@ -97,14 +100,14 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
             <Stack gap={3} align="center" className="py-8 text-center">
               <i className="ph ph-stack text-[32px] text-n-300" />
               <Caption tone="neutral" size="lg" as="p">
-                {strings.TYPE_PICKER_NO_TYPES}
+                {blockEditorStrings.typePickerNoTypes}
               </Caption>
               <Link
                 to="/ajustes/tipos"
                 onClick={handleClose}
                 className="text-[13px] text-p-500 hover:text-p-700 transition-colors"
               >
-                {strings.TYPE_PICKER_NO_TYPES_CTA} →
+                {blockEditorStrings.typePickerNoTypesCta} →
               </Link>
             </Stack>
           ) : (
@@ -119,9 +122,9 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                   />
                 ))}
               </div>
-              <Field label={strings.TYPE_PICKER_NAME_LABEL} required>
+              <Field label={blockEditorStrings.typePickerNameLabel} required>
                 <Input
-                  placeholder={strings.TYPE_PICKER_NAME_PLACEHOLDER}
+                  placeholder={blockEditorStrings.typePickerNamePlaceholder}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -135,17 +138,17 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
 
         <ModalFooter>
           <Button variant="secondary" onClick={handleClose} disabled={isPending}>
-            {strings.TYPE_PICKER_CANCEL}
+            {blockEditorStrings.typePickerCancel}
           </Button>
           {!hasNoTypes && (
             <Button variant="primary" onClick={handleCreate} disabled={!canSubmit}>
               {isPending ? (
                 <>
                   <i className="ph ph-spinner animate-spin mr-2" />
-                  {strings.TYPE_PICKER_CREATING}
+                  {blockEditorStrings.typePickerCreating}
                 </>
               ) : (
-                strings.TYPE_PICKER_SUBMIT
+                blockEditorStrings.typePickerSubmit
               )}
             </Button>
           )}

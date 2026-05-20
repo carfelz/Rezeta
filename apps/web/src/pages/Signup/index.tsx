@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SignUpSchema, type SignUpDto } from '@rezeta/shared'
 import { useAuthStore } from '@/store/auth.store'
-import { strings } from '@/lib/strings'
+import { signupStrings } from './strings'
 import { authClient } from '@/lib/auth'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
@@ -50,8 +50,8 @@ export function Signup(): JSX.Element {
           <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mx-auto mb-4">
             R
           </div>
-          <h1 className="text-h2">{strings.SIGNUP_TITLE}</h1>
-          <p className="text-body-sm mt-1">{strings.SIGNUP_SUBTITLE}</p>
+          <h1 className="text-h2">{signupStrings.title}</h1>
+          <p className="text-body-sm mt-1">{signupStrings.subtitle}</p>
         </div>
 
         <form
@@ -61,37 +61,34 @@ export function Signup(): JSX.Element {
           className="flex flex-col gap-4"
           noValidate
         >
-          <Field label={strings.SIGNUP_FIELD_EMAIL} error={errors.email?.message}>
+          <Field label={signupStrings.fieldEmail} error={errors.email?.message}>
             <Input
               id="signup-email"
               type="email"
               error={!!errors.email}
-              placeholder={strings.SIGNUP_FIELD_EMAIL_PLACEHOLDER}
+              placeholder={signupStrings.fieldEmailPlaceholder}
               autoComplete="email"
               {...register('email')}
             />
           </Field>
 
-          <Field label={strings.SIGNUP_FIELD_PASSWORD} error={errors.password?.message}>
+          <Field label={signupStrings.fieldPassword} error={errors.password?.message}>
             <Input
               id="signup-password"
               type="password"
               error={!!errors.password}
-              placeholder={strings.SIGNUP_FIELD_PASSWORD_PLACEHOLDER}
+              placeholder={signupStrings.fieldPasswordPlaceholder}
               autoComplete="new-password"
               {...register('password')}
             />
           </Field>
 
-          <Field
-            label={strings.SIGNUP_FIELD_CONFIRM_PASSWORD}
-            error={errors.confirmPassword?.message}
-          >
+          <Field label={signupStrings.fieldConfirmPassword} error={errors.confirmPassword?.message}>
             <Input
               id="signup-confirm"
               type="password"
               error={!!errors.confirmPassword}
-              placeholder={strings.SIGNUP_FIELD_CONFIRM_PASSWORD_PLACEHOLDER}
+              placeholder={signupStrings.fieldConfirmPasswordPlaceholder}
               autoComplete="new-password"
               {...register('confirmPassword')}
             />
@@ -110,16 +107,16 @@ export function Signup(): JSX.Element {
             disabled={isSubmitting}
             className="w-full justify-center"
           >
-            {isSubmitting ? strings.SIGNUP_SUBMITTING : strings.SIGNUP_SUBMIT}
+            {isSubmitting ? signupStrings.submitting : signupStrings.submit}
           </Button>
 
           <p className="text-body-sm text-center mt-2">
-            {strings.SIGNUP_HAVE_ACCOUNT}{' '}
+            {signupStrings.haveAccount}{' '}
             <Link
               to="/login"
               className="text-p-500 font-medium hover:text-p-700 transition-colors duration-[100ms]"
             >
-              {strings.SIGNUP_LOGIN_LINK}
+              {signupStrings.loginLink}
             </Link>
           </p>
         </form>

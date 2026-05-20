@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { useOnboardingDefault } from '@/hooks/onboarding/use-onboarding'
-import { strings } from '@/lib/strings'
+import { onboardingStrings } from './strings'
 import { Button, Callout } from '@/components/ui'
 
 export function Onboarding(): JSX.Element {
@@ -21,10 +21,8 @@ export function Onboarding(): JSX.Element {
           R
         </div>
 
-        <h1 className="text-h1 mb-4">
-          {strings.ONBOARDING_WELCOME_HEADING(user?.fullName ?? null)}
-        </h1>
-        <p className="text-body text-n-600 mb-8">{strings.ONBOARDING_WELCOME_LEAD}</p>
+        <h1 className="text-h1 mb-4">{onboardingStrings.welcomeHeading(user?.fullName ?? null)}</h1>
+        <p className="text-body text-n-600 mb-8">{onboardingStrings.welcomeLead}</p>
 
         {defaultMutation.isError && (
           <div className="mb-6">
@@ -32,7 +30,7 @@ export function Onboarding(): JSX.Element {
               variant="danger"
               icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}
             >
-              {strings.ONBOARDING_ERROR}
+              {onboardingStrings.error}
             </Callout>
           </div>
         )}
@@ -46,11 +44,11 @@ export function Onboarding(): JSX.Element {
             void handleDefault()
           }}
         >
-          {defaultMutation.isPending ? strings.ONBOARDING_LOADING : strings.ONBOARDING_DEFAULT_CTA}
+          {defaultMutation.isPending ? onboardingStrings.loading : onboardingStrings.defaultCta}
         </Button>
 
         <p className="text-caption text-n-500 text-center mb-8">
-          {strings.ONBOARDING_DEFAULT_HELPER}
+          {onboardingStrings.defaultHelper}
         </p>
 
         <div className="text-center">
@@ -59,7 +57,7 @@ export function Onboarding(): JSX.Element {
             className="text-n-600 text-[13px]"
             onClick={() => void navigate('/bienvenido/personalizar')}
           >
-            {strings.ONBOARDING_CUSTOMIZE_LINK}
+            {onboardingStrings.customizeLink}
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 interface Step {
@@ -68,15 +68,15 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
 
   return (
     <Stack gap={3} className="p-4">
-      <Field label={strings.EDITOR_STEPS_TITLE_LABEL}>
+      <Field label={blockEditorStrings.stepsTitleLabel}>
         <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder={strings.EDITOR_STEPS_TITLE_PLACEHOLDER}
+          placeholder={blockEditorStrings.stepsTitlePlaceholder}
         />
       </Field>
 
-      <Field label={strings.EDITOR_STEPS_ITEMS_LABEL}>
+      <Field label={blockEditorStrings.stepsItemsLabel}>
         <Stack gap={2}>
           {draftSteps.map((step, idx) => (
             <Row key={step.id} gap={2} align="start">
@@ -87,7 +87,7 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
                 <Input
                   value={step.title}
                   onChange={(e) => updateStep(step.id, { title: e.target.value })}
-                  placeholder={strings.EDITOR_STEPS_STEP_TITLE_PLACEHOLDER}
+                  placeholder={blockEditorStrings.stepsStepTitlePlaceholder}
                   autoFocus={idx === draftSteps.length - 1 && step.title === ''}
                 />
                 <Input
@@ -107,13 +107,13 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
                       )
                     }
                   }}
-                  placeholder={strings.EDITOR_STEPS_STEP_DETAIL_PLACEHOLDER}
+                  placeholder={blockEditorStrings.stepsStepDetailPlaceholder}
                 />
               </Stack>
               <Stack gap={1} className="shrink-0 mt-1">
                 <IconButton
                   icon="ph ph-arrow-up"
-                  aria-label={strings.TEMPLATE_EDITOR_MOVE_UP}
+                  aria-label={blockEditorStrings.stepsMoveUp}
                   tone="neutral"
                   size="sm"
                   disabled={idx === 0}
@@ -121,7 +121,7 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
                 />
                 <IconButton
                   icon="ph ph-arrow-down"
-                  aria-label={strings.TEMPLATE_EDITOR_MOVE_DOWN}
+                  aria-label={blockEditorStrings.stepsMoveDown}
                   tone="neutral"
                   size="sm"
                   disabled={idx === draftSteps.length - 1}
@@ -129,7 +129,7 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
                 />
                 <IconButton
                   icon="ph ph-x"
-                  aria-label={strings.EDITOR_STEPS_REMOVE_STEP}
+                  aria-label={blockEditorStrings.stepsRemoveStep}
                   tone="danger"
                   size="sm"
                   disabled={draftSteps.length === 1}
@@ -140,16 +140,16 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
           ))}
         </Stack>
         <TextLink tone="primary" size="md" onClick={addStep} className="mt-1 self-start">
-          {strings.EDITOR_STEPS_ADD_STEP}
+          {blockEditorStrings.stepsAddStep}
         </TextLink>
       </Field>
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftSteps.length === 0}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

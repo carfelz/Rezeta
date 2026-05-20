@@ -1,5 +1,5 @@
 import { TextLink } from '@/components/ui'
-import { strings } from '@/lib/strings'
+import { protocolEditorStrings } from './strings'
 import type { VersionListItem } from '@rezeta/shared'
 import { PALETTE_ITEMS } from './block-factory'
 
@@ -26,7 +26,7 @@ export function EditorPalette({
       }}
     >
       <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
-        {strings.EDITOR_PALETTE_HEADER}
+        {protocolEditorStrings.paletteHeader}
       </h4>
       <div className="flex flex-col gap-2 mb-6">
         {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
@@ -42,7 +42,7 @@ export function EditorPalette({
           ) : (
             <div
               key={type}
-              title={strings.EDITOR_PALETTE_DISABLED_TOOLTIP}
+              title={protocolEditorStrings.paletteDisabledTooltip}
               className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-50 text-[12.5px] font-sans text-n-400 cursor-not-allowed"
             >
               <i className={`ph ${icon} text-n-300 text-[16px] shrink-0`} />
@@ -53,20 +53,22 @@ export function EditorPalette({
       </div>
 
       <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
-        {strings.EDITOR_HISTORY_BUTTON}
+        {protocolEditorStrings.historyButton}
       </h4>
       {historyLoading ? (
         <div className="flex justify-center py-3">
           <i className="ph ph-spinner animate-spin text-[18px] text-n-400" />
         </div>
       ) : !versionHistory || versionHistory.length === 0 ? (
-        <p className="text-[12px] font-sans text-n-400 italic">{strings.EDITOR_HISTORY_EMPTY}</p>
+        <p className="text-[12px] font-sans text-n-400 italic">
+          {protocolEditorStrings.historyEmpty}
+        </p>
       ) : (
         <div className="flex flex-col gap-2">
           {versionHistory.slice(0, 3).map((v) => (
             <div key={v.id} className="text-[12px] font-sans text-n-500">
               <span className="font-semibold text-n-800">
-                {strings.EDITOR_VERSION(v.versionNumber)}
+                {protocolEditorStrings.version(v.versionNumber)}
               </span>
               {' · '}
               {new Date(v.createdAt).toLocaleDateString('es-DO', {
@@ -79,7 +81,7 @@ export function EditorPalette({
             </div>
           ))}
           <TextLink tone="primary" size="md" onClick={onShowFullHistory} className="mt-1">
-            {strings.EDITOR_HISTORY_VIEW_ALL}
+            {protocolEditorStrings.historyViewAll}
           </TextLink>
         </div>
       )}

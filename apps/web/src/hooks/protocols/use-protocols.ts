@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type {
   CreateProtocolDto,
   UpdateProtocolTitleDto,
@@ -88,10 +88,10 @@ export function useProtocols(): UseProtocolsReturn {
         apiClient.post<ProtocolResponse>('/v1/protocols', dto),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols'] })
-        toast.success(strings.TOAST_PROTOCOL_CREATED)
+        toast.success(toastStrings.protocolCreated)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -103,10 +103,10 @@ export function useProtocols(): UseProtocolsReturn {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols'] })
         void queryClient.invalidateQueries({ queryKey: ['protocols', id] })
-        toast.success(strings.TOAST_PROTOCOL_UPDATED)
+        toast.success(toastStrings.protocolUpdated)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -118,10 +118,10 @@ export function useProtocols(): UseProtocolsReturn {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
         void queryClient.invalidateQueries({ queryKey: ['protocols'] })
-        toast.success(strings.TOAST_PROTOCOL_VERSION_PUBLISHED)
+        toast.success(toastStrings.protocolVersionPublished)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -168,10 +168,10 @@ export function useProtocols(): UseProtocolsReturn {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
         void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId, 'versions'] })
-        toast.success(strings.TOAST_PROTOCOL_VERSION_PUBLISHED)
+        toast.success(toastStrings.protocolVersionPublished)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -193,10 +193,10 @@ export function useProtocols(): UseProtocolsReturn {
         void queryClient.invalidateQueries({
           queryKey: ['protocols', protocolId, 'suggestions'],
         })
-        toast.success(strings.TOAST_SUGGESTION_APPLIED)
+        toast.success(toastStrings.suggestionApplied)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -213,10 +213,10 @@ export function useProtocols(): UseProtocolsReturn {
         void queryClient.invalidateQueries({
           queryKey: ['protocols', protocolId, 'suggestions'],
         })
-        toast.success(strings.TOAST_SUGGESTION_VARIANT_CREATED)
+        toast.success(toastStrings.suggestionVariantCreated)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_PROTOCOL_SAVE)
+        toast.error(toastStrings.errorProtocolSave)
       },
     })
   }
@@ -229,10 +229,10 @@ export function useProtocols(): UseProtocolsReturn {
         void queryClient.invalidateQueries({
           queryKey: ['protocols', protocolId, 'suggestions'],
         })
-        toast.success(strings.TOAST_SUGGESTION_DISMISSED)
+        toast.success(toastStrings.suggestionDismissed)
       },
       onError: () => {
-        toast.error(strings.TOAST_ERROR_GENERIC)
+        toast.error(toastStrings.errorGeneric)
       },
     })
   }

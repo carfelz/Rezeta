@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 const COLUMNS = ['drug', 'dose', 'route', 'frequency', 'notes'] as const
@@ -74,15 +74,15 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
 
   return (
     <Stack gap={3} className="p-4">
-      <Field label={strings.EDITOR_DOSAGE_TITLE_LABEL}>
+      <Field label={blockEditorStrings.dosageTitleLabel}>
         <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder={strings.EDITOR_DOSAGE_TITLE_PLACEHOLDER}
+          placeholder={blockEditorStrings.dosageTitlePlaceholder}
         />
       </Field>
 
-      <Field label={strings.EDITOR_DOSAGE_ROWS_LABEL}>
+      <Field label={blockEditorStrings.dosageRowsLabel}>
         <div className="overflow-x-auto rounded-sm border border-n-200">
           <table className="w-full text-[12px] font-sans">
             <thead>
@@ -116,7 +116,7 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
                   <td className="px-1 py-1 text-center">
                     <IconButton
                       icon="ph ph-x"
-                      aria-label={strings.EDITOR_DOSAGE_REMOVE_ROW}
+                      aria-label={blockEditorStrings.dosageRemoveRow}
                       tone="danger"
                       size="sm"
                       disabled={draftRows.length === 1}
@@ -130,16 +130,16 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
           </table>
         </div>
         <TextLink tone="primary" size="md" onClick={addRow} className="mt-1 self-start">
-          {strings.EDITOR_DOSAGE_ADD_ROW}
+          {blockEditorStrings.dosageAddRow}
         </TextLink>
       </Field>
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftRows.length === 0}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

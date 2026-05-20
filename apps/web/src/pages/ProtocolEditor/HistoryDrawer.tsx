@@ -1,6 +1,6 @@
 import { Button, IconButton } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
-import { strings } from '@/lib/strings'
+import { protocolEditorStrings } from './strings'
 import type { VersionDetailResponse, VersionListItem } from '@rezeta/shared'
 
 export interface HistoryDrawerProps {
@@ -35,7 +35,7 @@ export function HistoryDrawer({
     >
       <div className="flex items-center justify-between px-5 py-3 border-b border-n-200 shrink-0">
         <span className="text-[13.5px] font-sans font-semibold text-n-800">
-          {strings.EDITOR_HISTORY_TITLE}
+          {protocolEditorStrings.historyTitle}
         </span>
         <IconButton
           icon="ph ph-x"
@@ -53,7 +53,7 @@ export function HistoryDrawer({
           </div>
         ) : !versionHistory || versionHistory.length === 0 ? (
           <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
-            {strings.EDITOR_HISTORY_EMPTY}
+            {protocolEditorStrings.historyEmpty}
           </p>
         ) : (
           versionHistory.map((v) => (
@@ -65,15 +65,15 @@ export function HistoryDrawer({
               }`}
             >
               <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
-                {strings.EDITOR_VERSION(v.versionNumber)}
+                {protocolEditorStrings.version(v.versionNumber)}
               </span>
               {v.isCurrent && (
                 <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
-                  {strings.EDITOR_HISTORY_CURRENT}
+                  {protocolEditorStrings.historyCurrent}
                 </span>
               )}
               <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
-                {v.changeSummary ?? strings.EDITOR_HISTORY_NO_SUMMARY}
+                {v.changeSummary ?? protocolEditorStrings.historyNoSummary}
               </span>
               <span className="text-[11px] font-mono text-n-400 shrink-0">
                 {new Date(v.createdAt).toLocaleDateString('es-DO', {
@@ -90,7 +90,7 @@ export function HistoryDrawer({
         {!selectedVersionId ? (
           <div className="flex items-center justify-center h-full p-6">
             <p className="text-[12.5px] font-sans text-n-400 text-center">
-              {strings.EDITOR_HISTORY_SELECT_PROMPT}
+              {protocolEditorStrings.historySelectPrompt}
             </p>
           </div>
         ) : versionPreviewLoading ? (
@@ -100,7 +100,7 @@ export function HistoryDrawer({
         ) : (
           <div className="p-4 flex flex-col gap-2">
             <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
-              {strings.EDITOR_HISTORY_PREVIEW_TITLE}
+              {protocolEditorStrings.historyPreviewTitle}
             </div>
             {selectedVersion?.content.blocks.map((block) => (
               <BlockRenderer key={block.id} block={block} />
@@ -121,12 +121,12 @@ export function HistoryDrawer({
               {isRestoring ? (
                 <>
                   <i className="ph ph-spinner animate-spin mr-2" />
-                  {strings.EDITOR_HISTORY_RESTORING}
+                  {protocolEditorStrings.historyRestoring}
                 </>
               ) : (
                 <>
                   <i className="ph ph-clock-counter-clockwise mr-2" />
-                  {strings.EDITOR_HISTORY_RESTORE}
+                  {protocolEditorStrings.historyRestore}
                 </>
               )}
             </Button>

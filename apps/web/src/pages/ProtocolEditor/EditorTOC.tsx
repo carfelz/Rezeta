@@ -1,4 +1,4 @@
-import { strings } from '@/lib/strings'
+import { protocolEditorStrings } from './strings'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 
 type SectionBlock = Extract<ProtocolBlock, { type: 'section' }>
@@ -20,7 +20,7 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
     >
       {sections.length === 0 ? (
         <p className="text-[12px] font-sans text-n-400 italic px-2 py-3">
-          {strings.EDITOR_TOC_EMPTY_SECTIONS}
+          {protocolEditorStrings.tocEmptySections}
         </p>
       ) : (
         sections.map((section, idx) => (
@@ -33,7 +33,7 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
               {idx + 1}
             </span>
             <span className="truncate">
-              {section.title || strings.EDITOR_SECTION_DEFAULT_TITLE}
+              {section.title || protocolEditorStrings.sectionDefaultTitle}
             </span>
           </button>
         ))

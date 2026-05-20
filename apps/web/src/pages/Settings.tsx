@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuthStore } from '@/store/auth.store'
-import { strings } from '@/lib/strings'
+import { settingsStrings, templatesStrings, typesStrings } from './settings/strings'
 import { Button, Card, CardTitle } from '@/components/ui'
 
 export function Settings(): JSX.Element {
@@ -66,7 +66,7 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-file-text text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{strings.TEMPLATES_PAGE_TITLE}</div>
+            <div className="text-[13px] font-semibold">{templatesStrings.pageTitle}</div>
             <div className="text-[12px] text-n-500">
               Gestiona las plantillas de protocolos de tu práctica
             </div>
@@ -79,7 +79,7 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-tag text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{strings.TYPES_PAGE_TITLE}</div>
+            <div className="text-[13px] font-semibold">{typesStrings.pageTitle}</div>
             <div className="text-[12px] text-n-500">Categorías que agrupan tus protocolos</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
@@ -116,9 +116,11 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-monitor text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{strings.DESIGN_SYSTEM_PROTOTYPE_TITLE}</div>
+            <div className="text-[13px] font-semibold">
+              {settingsStrings.designSystemPrototypeTitle}
+            </div>
             <div className="text-[12px] text-n-500">
-              {strings.DESIGN_SYSTEM_PROTOTYPE_DESCRIPTION}
+              {settingsStrings.designSystemPrototypeDescription}
             </div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
@@ -129,9 +131,11 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-squares-four text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{strings.DESIGN_SYSTEM_REFERENCE_TITLE}</div>
+            <div className="text-[13px] font-semibold">
+              {settingsStrings.designSystemReferenceTitle}
+            </div>
             <div className="text-[12px] text-n-500">
-              {strings.DESIGN_SYSTEM_REFERENCE_DESCRIPTION}
+              {settingsStrings.designSystemReferenceDescription}
             </div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
@@ -145,7 +149,7 @@ export function Settings(): JSX.Element {
         }}
       >
         <i className="ph ph-sign-out mr-2" />
-        {strings.AUTH_SIGN_OUT}
+        {settingsStrings.authSignOut}
       </Button>
     </div>
   )

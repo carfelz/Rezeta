@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 interface ChecklistItem {
@@ -49,15 +49,15 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
 
   return (
     <Stack gap={3} className="p-4">
-      <Field label={strings.EDITOR_CHECKLIST_TITLE_LABEL}>
+      <Field label={blockEditorStrings.checklistTitleLabel}>
         <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder={strings.EDITOR_CHECKLIST_TITLE_PLACEHOLDER}
+          placeholder={blockEditorStrings.checklistTitlePlaceholder}
         />
       </Field>
 
-      <Field label={strings.EDITOR_CHECKLIST_ITEMS_LABEL}>
+      <Field label={blockEditorStrings.checklistItemsLabel}>
         <Stack gap={2}>
           {draftItems.map((item, idx) => (
             <Row key={item.id} gap={2}>
@@ -68,7 +68,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                 className="flex-1"
                 value={item.text}
                 onChange={(e) => updateItem(item.id, { text: e.target.value })}
-                placeholder={strings.EDITOR_CHECKLIST_ITEM_PLACEHOLDER}
+                placeholder={blockEditorStrings.checklistItemPlaceholder}
                 autoFocus={idx === draftItems.length - 1 && item.text === ''}
               />
               <Row gap={1} as="label" className="shrink-0 cursor-pointer select-none">
@@ -79,12 +79,12 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                   className="w-4 h-4 accent-danger-text"
                 />
                 <span className="text-[11px] font-mono text-n-500 uppercase tracking-[0.05em]">
-                  {strings.EDITOR_CHECKLIST_CRITICAL_LABEL}
+                  {blockEditorStrings.checklistCriticalLabel}
                 </span>
               </Row>
               <IconButton
                 icon="ph ph-x"
-                aria-label={strings.EDITOR_CHECKLIST_REMOVE_ITEM}
+                aria-label={blockEditorStrings.checklistRemoveItem}
                 tone="danger"
                 size="sm"
                 disabled={draftItems.length === 1}
@@ -94,16 +94,16 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
           ))}
         </Stack>
         <TextLink tone="primary" size="md" onClick={addItem} className="mt-1 self-start">
-          {strings.EDITOR_CHECKLIST_ADD_ITEM}
+          {blockEditorStrings.checklistAddItem}
         </TextLink>
       </Field>
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={draftItems.length === 0}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

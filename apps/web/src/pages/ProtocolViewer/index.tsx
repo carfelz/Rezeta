@@ -5,7 +5,8 @@ import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { SuggestionBanner } from '@/components/protocols/SuggestionBanner'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import { protocolStatusLabel, strings } from '@/lib/strings'
+import { protocolStatusLabel } from '@/lib/protocol-status'
+import { protocolViewerStrings } from './strings'
 
 function statusVariant(status: string): 'draft' | 'active' | 'archived' {
   if (status === 'active') return 'active'
@@ -35,9 +36,9 @@ export function ProtocolViewer(): JSX.Element {
   if (error || !protocol) {
     return (
       <div className="flex flex-col items-center justify-center h-[256px] gap-4">
-        <p className="text-[14px] font-sans text-n-600">{strings.VIEWER_NOT_FOUND}</p>
+        <p className="text-[14px] font-sans text-n-600">{protocolViewerStrings.notFound}</p>
         <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
-          ← {strings.VIEWER_BACK}
+          ← {protocolViewerStrings.back}
         </Link>
       </div>
     )
@@ -61,7 +62,7 @@ export function ProtocolViewer(): JSX.Element {
           className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
         >
           <i className="ph ph-arrow-left text-[14px]" />
-          {strings.VIEWER_BACK}
+          {protocolViewerStrings.back}
         </Link>
         <Button
           variant="secondary"
@@ -71,7 +72,7 @@ export function ProtocolViewer(): JSX.Element {
           }}
         >
           <i className="ph ph-pencil-simple mr-2 text-[14px]" />
-          {strings.VIEWER_EDIT_BUTTON}
+          {protocolViewerStrings.editButton}
         </Button>
       </div>
 
@@ -80,7 +81,7 @@ export function ProtocolViewer(): JSX.Element {
       <ProtocolContainer
         {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
         title={protocol.title}
-        meta={`${strings.VIEWER_UPDATED} ${updatedDate} · ${strings.VIEWER_VERSION(versionNumber)}`}
+        meta={`${protocolViewerStrings.updated} ${updatedDate} · ${protocolViewerStrings.version(versionNumber)}`}
         badge={
           <Badge variant={statusVariant(protocol.status)} showDot>
             {protocolStatusLabel(protocol.status)}
@@ -90,7 +91,7 @@ export function ProtocolViewer(): JSX.Element {
         {blocks.length === 0 ? (
           <div className="flex flex-col items-center py-8 gap-2 text-center">
             <i className="ph ph-file-text text-[32px] text-n-300" />
-            <p className="text-[13px] font-sans text-n-400">{strings.VIEWER_NO_CONTENT}</p>
+            <p className="text-[13px] font-sans text-n-400">{protocolViewerStrings.noContent}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3 mt-4">

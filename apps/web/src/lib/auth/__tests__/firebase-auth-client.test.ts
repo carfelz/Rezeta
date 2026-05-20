@@ -32,7 +32,7 @@ vi.mock('firebase/app', () => ({
   getApps: m.getApps,
 }))
 
-vi.mock('../../strings', () => ({
+vi.mock('../../toasts', () => ({
   firebaseErrorToSpanish: vi.fn((code: string) => `mapped:${code}`),
 }))
 

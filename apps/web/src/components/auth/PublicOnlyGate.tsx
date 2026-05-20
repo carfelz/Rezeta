@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { strings } from '@/lib/strings'
+import { authGateStrings } from './strings'
 
 interface PublicOnlyGateProps {
   children: ReactNode
@@ -57,7 +57,7 @@ export function PublicOnlyGate({ children }: PublicOnlyGateProps): JSX.Element {
           R
         </div>
         <p className="text-body-sm" style={{ color: 'var(--color-n-500)' }}>
-          {strings.AUTH_GATE_LOADING}
+          {authGateStrings.loading}
         </p>
       </div>
     )

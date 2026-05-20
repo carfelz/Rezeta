@@ -24,7 +24,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'sonner'
-import { strings } from '@/lib/strings'
+import { templateEditorWidgetStrings } from './strings'
 import type { ProtocolTemplateDto } from '@rezeta/shared'
 import {
   Button,
@@ -390,7 +390,7 @@ function BlockRow({
   dragRef,
 }: BlockRowProps) {
   const isSection = block.type === 'section'
-  const displayTitle = block.title ?? block.placeholder ?? strings.TEMPLATE_EDITOR_NO_TITLE
+  const displayTitle = block.title ?? block.placeholder ?? templateEditorWidgetStrings.noTitle
   const isRequired = block.required ?? false
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -416,12 +416,12 @@ function BlockRow({
     >
       <ConfirmDialog
         open={confirmOpen}
-        title={strings.TEMPLATE_EDITOR_DELETE}
-        description={strings.TEMPLATE_EDITOR_DELETE_SECTION_CONFIRM(
+        title={templateEditorWidgetStrings.delete}
+        description={templateEditorWidgetStrings.deleteSectionConfirm(
           block.title ?? '—',
           block.blocks?.length ?? 0,
         )}
-        confirmLabel={strings.TEMPLATE_EDITOR_DELETE}
+        confirmLabel={templateEditorWidgetStrings.delete}
         variant="danger"
         onConfirm={() => {
           onDelete(block.id, parentId)
@@ -526,8 +526,8 @@ function BlockRow({
               }}
             >
               {isSection
-                ? strings.TEMPLATE_EDITOR_REQUIRED_SECTION_LABEL
-                : strings.TEMPLATE_EDITOR_REQUIRED_LABEL}
+                ? templateEditorWidgetStrings.requiredSectionLabel
+                : templateEditorWidgetStrings.requiredLabel}
             </span>
           </label>
         )}
@@ -542,7 +542,7 @@ function BlockRow({
               variant="ghost"
               size="sm"
               className="w-[28px] px-0"
-              title={strings.TEMPLATE_EDITOR_MOVE_UP}
+              title={templateEditorWidgetStrings.moveUp}
               onClick={() => onMove(block.id, 'up', parentId)}
             >
               <i className="ph ph-caret-up text-[14px]" />
@@ -551,7 +551,7 @@ function BlockRow({
               variant="ghost"
               size="sm"
               className="w-[28px] px-0"
-              title={strings.TEMPLATE_EDITOR_MOVE_DOWN}
+              title={templateEditorWidgetStrings.moveDown}
               onClick={() => onMove(block.id, 'down', parentId)}
             >
               <i className="ph ph-caret-down text-[14px]" />
@@ -562,8 +562,8 @@ function BlockRow({
               className="w-[28px] px-0"
               title={
                 isRequired
-                  ? strings.TEMPLATE_EDITOR_REQUIRED_TOOLTIP
-                  : strings.TEMPLATE_EDITOR_DELETE
+                  ? templateEditorWidgetStrings.requiredTooltip
+                  : templateEditorWidgetStrings.delete
               }
               disabled={isRequired}
               onClick={() => {
@@ -598,7 +598,7 @@ function BlockRow({
         >
           {isSection ? (
             <>
-              <Field label={strings.TEMPLATE_EDITOR_SECTION_TITLE_LABEL}>
+              <Field label={templateEditorWidgetStrings.sectionTitleLabel}>
                 <Input
                   value={block.title ?? ''}
                   disabled={isLocked}
@@ -608,7 +608,7 @@ function BlockRow({
                   placeholder="Ej. Indicaciones"
                 />
               </Field>
-              <Field label={strings.TEMPLATE_EDITOR_SECTION_DESC_LABEL}>
+              <Field label={templateEditorWidgetStrings.sectionDescLabel}>
                 <Input
                   value={block.description ?? ''}
                   disabled={isLocked}
@@ -631,7 +631,7 @@ function BlockRow({
                   placeholder={`Ej. ${TYPE_LABELS[block.type]}`}
                 />
               </Field>
-              <Field label={strings.TEMPLATE_EDITOR_PLACEHOLDER_HINT}>
+              <Field label={templateEditorWidgetStrings.placeholderHint}>
                 <textarea
                   className="w-full px-3 py-3 text-[13px] font-sans bg-n-0 text-n-700 placeholder:text-n-400 border border-n-300 rounded-sm outline-none resize-y transition-[border-color,box-shadow] duration-[100ms] focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)] disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed"
                   value={block.placeholder ?? ''}
@@ -820,7 +820,7 @@ export function TemplateEditor({
     }
     const sections = state.blocks.filter((b) => b.type === 'section')
     if (sections.length === 0) {
-      toast.warning(strings.TEMPLATE_EDITOR_NEEDS_SECTION)
+      toast.warning(templateEditorWidgetStrings.needsSection)
       return
     }
     const last = sections[sections.length - 1]!
@@ -829,25 +829,25 @@ export function TemplateEditor({
 
   const isNewTemplate = !initialState.name
   const statusLabel = isLocked
-    ? strings.TEMPLATE_EDITOR_STATUS_LOCKED
+    ? templateEditorWidgetStrings.statusLocked
     : isNewTemplate
-      ? strings.TEMPLATE_EDITOR_STATUS_NEW
+      ? templateEditorWidgetStrings.statusNew
       : state.isDirty
-        ? strings.TEMPLATE_EDITOR_STATUS_EDITED
+        ? templateEditorWidgetStrings.statusEdited
         : undefined
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <h1 className="text-h2 flex-1 m-0">{state.name || strings.TEMPLATE_EDITOR_NEW_TITLE}</h1>
+        <h1 className="text-h2 flex-1 m-0">{state.name || templateEditorWidgetStrings.newTitle}</h1>
         {statusLabel && <Badge variant={isLocked ? 'review' : 'draft'}>{statusLabel}</Badge>}
         {state.isDirty && !isLocked && (
-          <span className="text-[12px] text-n-500">{strings.TEMPLATE_EDITOR_UNSAVED}</span>
+          <span className="text-[12px] text-n-500">{templateEditorWidgetStrings.unsaved}</span>
         )}
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={onCancel}>
-            {strings.TEMPLATE_EDITOR_CANCEL}
+            {templateEditorWidgetStrings.cancel}
           </Button>
           {!isLocked && (
             <Button
@@ -856,7 +856,7 @@ export function TemplateEditor({
               onClick={handleSave}
               disabled={isSaving || !state.name.trim()}
             >
-              {isSaving ? strings.TEMPLATE_EDITOR_SAVING : strings.TEMPLATE_EDITOR_SAVE}
+              {isSaving ? templateEditorWidgetStrings.saving : templateEditorWidgetStrings.save}
             </Button>
           )}
         </div>
@@ -868,12 +868,12 @@ export function TemplateEditor({
           <Callout
             variant="warning"
             icon={<i className="ph ph-lock" style={{ fontSize: 18 }} />}
-            title={strings.TEMPLATE_EDITOR_STATUS_LOCKED}
+            title={templateEditorWidgetStrings.statusLocked}
           >
-            {strings.TEMPLATE_EDITOR_LOCKED_BANNER}
+            {templateEditorWidgetStrings.lockedBanner}
             {blockingTypeIds.length > 0 && (
               <div className="mt-1 text-[12px] text-warning-text">
-                {strings.TEMPLATE_EDITOR_LOCKED_TYPES_PREFIX}{' '}
+                {templateEditorWidgetStrings.lockedTypesPrefix}{' '}
                 {blockingTypeIds.map((id) => (
                   <a
                     key={id}
@@ -891,21 +891,21 @@ export function TemplateEditor({
 
       {/* Name + Specialty */}
       <div className="flex flex-col gap-4 mb-6">
-        <Field label={strings.TEMPLATE_EDITOR_FIELD_NAME} required>
+        <Field label={templateEditorWidgetStrings.fieldName} required>
           <Input
             ref={nameRef}
             value={state.name}
             disabled={isLocked}
             onChange={(e) => dispatch({ type: 'SET_NAME', value: e.target.value })}
-            placeholder={strings.TEMPLATE_EDITOR_FIELD_NAME_PLACEHOLDER}
+            placeholder={templateEditorWidgetStrings.fieldNamePlaceholder}
           />
         </Field>
-        <Field label={strings.TEMPLATE_EDITOR_FIELD_SPECIALTY}>
+        <Field label={templateEditorWidgetStrings.fieldSpecialty}>
           <Input
             value={state.suggestedSpecialty}
             disabled={isLocked}
             onChange={(e) => dispatch({ type: 'SET_SPECIALTY', value: e.target.value })}
-            placeholder={strings.TEMPLATE_EDITOR_FIELD_SPECIALTY_PLACEHOLDER}
+            placeholder={templateEditorWidgetStrings.fieldSpecialtyPlaceholder}
           />
         </Field>
       </div>
@@ -947,13 +947,13 @@ export function TemplateEditor({
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-n-100">
           {(
             [
-              ['section', strings.TEMPLATE_EDITOR_ADD_SECTION],
-              ['text', strings.TEMPLATE_EDITOR_ADD_TEXT],
-              ['checklist', strings.TEMPLATE_EDITOR_ADD_CHECKLIST],
-              ['steps', strings.TEMPLATE_EDITOR_ADD_STEPS],
-              ['decision', strings.TEMPLATE_EDITOR_ADD_DECISION],
-              ['dosage_table', strings.TEMPLATE_EDITOR_ADD_DOSAGE],
-              ['alert', strings.TEMPLATE_EDITOR_ADD_ALERT],
+              ['section', templateEditorWidgetStrings.addSection],
+              ['text', templateEditorWidgetStrings.addText],
+              ['checklist', templateEditorWidgetStrings.addChecklist],
+              ['steps', templateEditorWidgetStrings.addSteps],
+              ['decision', templateEditorWidgetStrings.addDecision],
+              ['dosage_table', templateEditorWidgetStrings.addDosage],
+              ['alert', templateEditorWidgetStrings.addAlert],
             ] as [BlockType, string][]
           ).map(([blockType, label]) => (
             <Button

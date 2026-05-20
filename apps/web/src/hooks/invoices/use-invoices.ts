@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { strings } from '@/lib/strings'
+import { toastStrings } from '@/lib/toasts'
 import type {
   InvoiceWithDetails,
   CreateInvoiceDto,
@@ -57,10 +57,10 @@ export function useCreateInvoice(): UseMutationResult<InvoiceWithDetails, Error,
     mutationFn: (dto: CreateInvoiceDto) => apiClient.post<InvoiceWithDetails>('/v1/invoices', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_INVOICE_CREATED)
+      toast.success(toastStrings.invoiceCreated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_INVOICE_CREATE)
+      toast.error(toastStrings.errorInvoiceCreate)
     },
   })
 }
@@ -74,10 +74,10 @@ export function useUpdateInvoice(
       apiClient.patch<InvoiceWithDetails>(`/v1/invoices/${id}`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_INVOICE_UPDATED)
+      toast.success(toastStrings.invoiceUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_INVOICE_UPDATE)
+      toast.error(toastStrings.errorInvoiceUpdate)
     },
   })
 }
@@ -91,10 +91,10 @@ export function useUpdateInvoiceStatus(
       apiClient.patch<InvoiceWithDetails>(`/v1/invoices/${id}/status`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_INVOICE_STATUS_UPDATED)
+      toast.success(toastStrings.invoiceStatusUpdated)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_INVOICE_UPDATE)
+      toast.error(toastStrings.errorInvoiceUpdate)
     },
   })
 }
@@ -105,10 +105,10 @@ export function useDeleteInvoice(): UseMutationResult<void, Error, string> {
     mutationFn: (id: string) => apiClient.delete(`/v1/invoices/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
-      toast.success(strings.TOAST_INVOICE_DELETED)
+      toast.success(toastStrings.invoiceDeleted)
     },
     onError: () => {
-      toast.error(strings.TOAST_ERROR_INVOICE_DELETE)
+      toast.error(toastStrings.errorInvoiceDelete)
     },
   })
 }

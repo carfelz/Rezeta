@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Callout } from '@/components/ui'
-import { strings } from '@/lib/strings'
+import { onboardingCustomizeStrings } from './strings'
 import type { TemplateCandidate, TypeCandidate } from './types'
 
 export interface StepTypesProps {
@@ -44,13 +44,13 @@ export function StepTypes({
 
   return (
     <div>
-      <h2 className="text-h2 mb-2">{strings.ONBOARDING_STEP2_TITLE}</h2>
-      <p className="text-body text-n-600 mb-6">{strings.ONBOARDING_STEP2_DESC}</p>
+      <h2 className="text-h2 mb-2">{onboardingCustomizeStrings.step2Title}</h2>
+      <p className="text-body text-n-600 mb-6">{onboardingCustomizeStrings.step2Desc}</p>
 
       {error && (
         <div className="mb-4">
           <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-            {strings.ONBOARDING_ERROR}
+            {onboardingCustomizeStrings.error}
           </Callout>
         </div>
       )}
@@ -93,23 +93,27 @@ export function StepTypes({
       </div>
 
       {local.length === 0 && (
-        <p className="text-caption text-warning-text mb-4">{strings.ONBOARDING_STEP2_EMPTY}</p>
+        <p className="text-caption text-warning-text mb-4">
+          {onboardingCustomizeStrings.step2Empty}
+        </p>
       )}
 
       <Button variant="ghost" size="sm" onClick={addBlank} className="mb-8">
-        {strings.ONBOARDING_STEP2_ADD}
+        {onboardingCustomizeStrings.step2Add}
       </Button>
 
       <div className="flex justify-between items-center">
         <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>
-          {strings.ONBOARDING_STEP2_BACK}
+          {onboardingCustomizeStrings.step2Back}
         </Button>
         <Button
           variant="primary"
           disabled={!canFinish || isSubmitting}
           onClick={() => onFinish(local)}
         >
-          {isSubmitting ? strings.ONBOARDING_LOADING : strings.ONBOARDING_STEP2_FINISH}
+          {isSubmitting
+            ? onboardingCustomizeStrings.loading
+            : onboardingCustomizeStrings.step2Finish}
         </Button>
       </div>
     </div>

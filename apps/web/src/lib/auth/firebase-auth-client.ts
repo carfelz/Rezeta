@@ -8,7 +8,7 @@ import {
   signOut,
   type Auth,
 } from 'firebase/auth'
-import { firebaseErrorToSpanish } from '../strings'
+import { firebaseErrorToSpanish } from '../toasts'
 import type { AuthSession, IAuthClient } from './auth-client.interface'
 
 function initApp(): FirebaseApp {

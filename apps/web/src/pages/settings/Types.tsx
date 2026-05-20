@@ -8,7 +8,7 @@ import {
   useDeleteProtocolType,
 } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
-import { strings } from '@/lib/strings'
+import { typesStrings } from './strings'
 import type { ProtocolTypeDto } from '@rezeta/shared'
 import {
   Button,
@@ -56,30 +56,30 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
       }}
     >
       <ModalContent>
-        <ModalHeader title={strings.TYPES_CREATE_TITLE} showClose={false} />
+        <ModalHeader title={typesStrings.createTitle} showClose={false} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
         >
           <ModalBody className="flex flex-col gap-4">
-            <Field label={strings.TYPES_CREATE_FIELD_NAME} required>
+            <Field label={typesStrings.createFieldName} required>
               <Input
                 type="text"
-                placeholder={strings.TYPES_CREATE_FIELD_NAME_PLACEHOLDER}
+                placeholder={typesStrings.createFieldNamePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
             </Field>
-            <Field label={strings.TYPES_CREATE_FIELD_TEMPLATE} required>
+            <Field label={typesStrings.createFieldTemplate} required>
               <select
                 className="w-full h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none transition-[border-color] duration-[100ms] focus:border-p-500 disabled:bg-n-50 disabled:text-n-400 disabled:cursor-not-allowed"
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
                 disabled={templatesLoading}
               >
-                <option value="">{strings.TYPES_CREATE_FIELD_TEMPLATE_PLACEHOLDER}</option>
+                <option value="">{typesStrings.createFieldTemplatePlaceholder}</option>
                 {templates?.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -98,16 +98,14 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              {strings.TYPES_CREATE_CANCEL}
+              {typesStrings.createCancel}
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={!canSubmit || createMutation.isPending}
             >
-              {createMutation.isPending
-                ? strings.TYPES_CREATE_SUBMITTING
-                : strings.TYPES_CREATE_SUBMIT}
+              {createMutation.isPending ? typesStrings.createSubmitting : typesStrings.createSubmit}
             </Button>
           </ModalFooter>
         </form>
@@ -146,14 +144,14 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
       }}
     >
       <ModalContent>
-        <ModalHeader title={strings.TYPES_RENAME_TITLE} showClose={false} />
+        <ModalHeader title={typesStrings.renameTitle} showClose={false} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
         >
           <ModalBody>
-            <Field label={strings.TYPES_RENAME_FIELD}>
+            <Field label={typesStrings.renameField}>
               <Input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
             </Field>
             {error && (
@@ -169,16 +167,14 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              {strings.TYPES_RENAME_CANCEL}
+              {typesStrings.renameCancel}
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={name.trim().length === 0 || updateMutation.isPending}
             >
-              {updateMutation.isPending
-                ? strings.TYPES_RENAME_SUBMITTING
-                : strings.TYPES_RENAME_SUBMIT}
+              {updateMutation.isPending ? typesStrings.renameSubmitting : typesStrings.renameSubmit}
             </Button>
           </ModalFooter>
         </form>
@@ -200,7 +196,7 @@ export function Types(): JSX.Element {
 
   function handleDelete(t: ProtocolTypeDto) {
     if (t.isLocked) {
-      toast.error(strings.TYPES_DELETE_LOCKED)
+      toast.error(typesStrings.deleteLocked)
       return
     }
     setDeleteTarget(t)
@@ -221,9 +217,9 @@ export function Types(): JSX.Element {
       {renaming && <RenameTypeModal type={renaming} onClose={() => setRenaming(null)} />}
       <ConfirmDialog
         open={!!deleteTarget}
-        title={strings.TYPES_LIST_DELETE}
-        description={strings.TYPES_LIST_DELETE_CONFIRM(deleteTarget?.name ?? '')}
-        confirmLabel={strings.TYPES_LIST_DELETE}
+        title={typesStrings.listDelete}
+        description={typesStrings.listDeleteConfirm(deleteTarget?.name ?? '')}
+        confirmLabel={typesStrings.listDelete}
         variant="danger"
         loading={deleteMutation.isPending}
         onConfirm={confirmDelete}
@@ -231,29 +227,29 @@ export function Types(): JSX.Element {
       />
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-h1 m-0">{strings.TYPES_PAGE_TITLE}</h1>
+        <h1 className="text-h1 m-0">{typesStrings.pageTitle}</h1>
         <Button variant="primary" onClick={() => setShowCreate(true)}>
           <i className="ph ph-plus mr-2" />
-          {strings.TYPES_NEW_BUTTON}
+          {typesStrings.newButton}
         </Button>
       </div>
 
-      {isLoading && <p className="text-body text-n-500">{strings.TYPES_LOADING}</p>}
+      {isLoading && <p className="text-body text-n-500">{typesStrings.loading}</p>}
 
       {isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          {strings.TYPES_ERROR}
+          {typesStrings.error}
         </Callout>
       )}
 
       {!isLoading && !isError && types?.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-tag" />}
-          title={strings.TYPES_EMPTY_TITLE}
-          description={strings.TYPES_EMPTY_DESCRIPTION}
+          title={typesStrings.emptyTitle}
+          description={typesStrings.emptyDescription}
           action={
             <Button variant="primary" onClick={() => setShowCreate(true)}>
-              {strings.TYPES_NEW_BUTTON}
+              {typesStrings.newButton}
             </Button>
           }
         />
@@ -302,9 +298,9 @@ export function Types(): JSX.Element {
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isLocked ? (
-                      <Badge variant="review">{strings.TYPES_LOCKED_BADGE(t.protocolCount)}</Badge>
+                      <Badge variant="review">{typesStrings.lockedBadge(t.protocolCount)}</Badge>
                     ) : (
-                      <Badge variant="active">{strings.TYPES_ACTIVE_BADGE}</Badge>
+                      <Badge variant="active">{typesStrings.activeBadge}</Badge>
                     )}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-500">
@@ -313,13 +309,13 @@ export function Types(): JSX.Element {
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
                       <Button variant="secondary" size="sm" onClick={() => setRenaming(t)}>
-                        {strings.TYPES_LIST_EDIT}
+                        {typesStrings.listEdit}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title={strings.TYPES_LIST_DELETE}
+                        title={typesStrings.listDelete}
                         disabled={t.isLocked || deletingId === t.id}
                         onClick={() => handleDelete(t)}
                       >

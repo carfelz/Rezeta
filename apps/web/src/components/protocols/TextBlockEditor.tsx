@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import { Button, Row, Stack, Textarea } from '@/components/ui'
 
 interface TextBlockEditorProps {
@@ -32,15 +32,15 @@ export function TextBlockEditor({ id, content }: TextBlockEditorProps): JSX.Elem
         rows={4}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        placeholder={strings.EDITOR_TEXT_PLACEHOLDER}
+        placeholder={blockEditorStrings.textPlaceholder}
         autoFocus
       />
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

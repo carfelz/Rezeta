@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
-import { strings } from '@/lib/strings'
+import { blockEditorStrings } from './strings'
 import {
   Button,
   Field,
@@ -25,10 +25,10 @@ interface AlertBlockEditorProps {
 }
 
 const SEVERITY_OPTIONS: { value: Severity; label: string }[] = [
-  { value: 'info', label: strings.EDITOR_ALERT_SEVERITY_INFO },
-  { value: 'warning', label: strings.EDITOR_ALERT_SEVERITY_WARNING },
-  { value: 'danger', label: strings.EDITOR_ALERT_SEVERITY_DANGER },
-  { value: 'success', label: strings.EDITOR_ALERT_SEVERITY_SUCCESS },
+  { value: 'info', label: blockEditorStrings.alertSeverityInfo },
+  { value: 'warning', label: blockEditorStrings.alertSeverityWarning },
+  { value: 'danger', label: blockEditorStrings.alertSeverityDanger },
+  { value: 'success', label: blockEditorStrings.alertSeveritySuccess },
 ]
 
 export function AlertBlockEditor({
@@ -64,7 +64,7 @@ export function AlertBlockEditor({
 
   return (
     <Stack gap={3} className="p-4">
-      <Field label={strings.EDITOR_ALERT_SEVERITY_LABEL}>
+      <Field label={blockEditorStrings.alertSeverityLabel}>
         <Select value={draftSeverity} onValueChange={(v) => setDraftSeverity(v as Severity)}>
           <SelectTrigger>
             <SelectValue />
@@ -79,30 +79,30 @@ export function AlertBlockEditor({
         </Select>
       </Field>
 
-      <Field label={strings.EDITOR_ALERT_TITLE_LABEL}>
+      <Field label={blockEditorStrings.alertTitleLabel}>
         <Input
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder={strings.EDITOR_ALERT_TITLE_PLACEHOLDER}
+          placeholder={blockEditorStrings.alertTitlePlaceholder}
         />
       </Field>
 
-      <Field label={strings.EDITOR_ALERT_CONTENT_LABEL}>
+      <Field label={blockEditorStrings.alertContentLabel}>
         <Textarea
           rows={3}
           value={draftContent}
           onChange={(e) => setDraftContent(e.target.value)}
-          placeholder={strings.EDITOR_ALERT_CONTENT_PLACEHOLDER}
+          placeholder={blockEditorStrings.alertContentPlaceholder}
           autoFocus
         />
       </Field>
 
       <Row gap={2} justify="end">
         <Button variant="secondary" size="sm" onClick={cancel}>
-          {strings.EDITOR_BLOCK_CANCEL}
+          {blockEditorStrings.blockCancel}
         </Button>
         <Button variant="primary" size="sm" onClick={commit}>
-          {strings.EDITOR_BLOCK_APPLY}
+          {blockEditorStrings.blockApply}
         </Button>
       </Row>
     </Stack>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
-import { strings } from '@/lib/strings'
+import { onboardingCustomizeStrings } from './strings'
 import type { TemplateCandidate } from './types'
 
 export interface StepTemplatesProps {
@@ -32,8 +32,8 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
 
   return (
     <div>
-      <h2 className="text-h2 mb-2">{strings.ONBOARDING_STEP1_TITLE}</h2>
-      <p className="text-body text-n-600 mb-6">{strings.ONBOARDING_STEP1_DESC}</p>
+      <h2 className="text-h2 mb-2">{onboardingCustomizeStrings.step1Title}</h2>
+      <p className="text-body text-n-600 mb-6">{onboardingCustomizeStrings.step1Desc}</p>
 
       <div className="flex flex-col gap-2 mb-4">
         {local.map((t) => (
@@ -62,19 +62,21 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
       </div>
 
       {local.length === 0 && (
-        <p className="text-caption text-warning-text mb-4">{strings.ONBOARDING_STEP1_EMPTY}</p>
+        <p className="text-caption text-warning-text mb-4">
+          {onboardingCustomizeStrings.step1Empty}
+        </p>
       )}
 
       <Button variant="ghost" size="sm" onClick={addBlank} className="mb-8">
-        {strings.ONBOARDING_STEP1_ADD}
+        {onboardingCustomizeStrings.step1Add}
       </Button>
 
       <div className="flex justify-between items-center">
         <Button variant="secondary" onClick={onBack}>
-          {strings.ONBOARDING_STEP1_BACK}
+          {onboardingCustomizeStrings.step1Back}
         </Button>
         <Button variant="primary" disabled={!canContinue} onClick={() => onContinue(local)}>
-          {strings.ONBOARDING_STEP1_CONTINUE}
+          {onboardingCustomizeStrings.step1Continue}
         </Button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Badge, Button } from '@/components/ui'
-import { strings } from '@/lib/strings'
+import { protocolEditorStrings } from './strings'
 import { formatRelativeTime } from './helpers'
 
 export interface EditorHeaderProps {
@@ -84,18 +84,18 @@ export function EditorHeader({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 pt-1">
-        {isDirty && <Badge variant="review">{strings.EDITOR_UNSAVED_CHANGES}</Badge>}
+        {isDirty && <Badge variant="review">{protocolEditorStrings.unsavedChanges}</Badge>}
         <Button variant="secondary" size="sm" onClick={onPreview}>
           <i className="ph ph-eye mr-2" />
-          {strings.EDITOR_VISTA_PREVIA}
+          {protocolEditorStrings.preview}
         </Button>
         <Button variant="secondary" size="sm" onClick={onSaveDraft} disabled={isSaving}>
           {isSaving ? <i className="ph ph-spinner animate-spin mr-2" /> : null}
-          {strings.EDITOR_GUARDAR}
+          {protocolEditorStrings.save}
         </Button>
         <Button variant="primary" size="sm" onClick={onPublishClick} disabled={isSaving}>
           <i className="ph ph-check mr-2" />
-          {strings.EDITOR_PUBLICAR(nextPublishVersion)}
+          {protocolEditorStrings.publish(nextPublishVersion)}
         </Button>
       </div>
     </div>
