@@ -9,11 +9,18 @@ import {
   useSkipStep,
   useUpdateCheckedState,
   useUpdateConsultation,
+  useUpdateProtocolUsage,
 } from '@/hooks/consultations/use-consultations'
+import type { UpdateProtocolUsageDto } from '@rezeta/shared'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
 import { Button } from '@/components/ui'
-import { CanvasView, type SoapField } from '@/components/consultations/CanvasView'
+import {
+  CanvasView,
+  type SoapField,
+  type BlockModificationEvent,
+} from '@/components/consultations/CanvasView'
+import { appendModification } from '@/lib/consultation/modifications'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
@@ -57,8 +64,17 @@ export function Consultation(): JSX.Element {
     (activeUsageId && consultation?.protocolUsages?.find((u) => u.id === activeUsageId)) ||
     consultation?.protocolUsages?.[0]
   const updateCheckedState = useUpdateCheckedState(id!, activeUsage?.id ?? '')
+  const updateProtocolUsage = useUpdateProtocolUsage(id!, activeUsage?.id ?? '')
 
   const [usageIdStack, setUsageIdStack] = useState<string[]>([])
+
+  function handleModification(event: BlockModificationEvent): void {
+    if (!activeUsage) return
+    const next = appendModification(activeUsage.modifications ?? {}, event)
+    updateProtocolUsage.mutate({
+      modifications: next as unknown as UpdateProtocolUsageDto['modifications'],
+    })
+  }
 
   function handleCheck(id: string, checked: boolean): void {
     if (!activeUsage) return
@@ -303,6 +319,7 @@ export function Consultation(): JSX.Element {
               onCheck={handleCheck}
               onAutoPopulate={handleAutoPopulate}
               onLaunchLinkedProtocol={handleLaunchLinkedProtocol}
+              onModification={handleModification}
               isSigned={isSigned}
               onContinueWithoutProtocol={() => {
                 if (activeUsage) {

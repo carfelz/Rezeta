@@ -5,12 +5,15 @@ import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
 import { blockRendererRunModeStrings } from './strings'
+import type { BlockModificationEvent } from '@/lib/consultation/modifications'
 
+export type { BlockModificationEvent }
 export type SoapField = 'objective' | 'assessment' | 'plan'
 
 export interface RunModeProps {
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
+  onModification?: (event: BlockModificationEvent) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
@@ -26,12 +29,14 @@ function StepsRunMode({
   steps,
   checkedState,
   onCheck,
+  onModification,
   onAutoPopulate,
   isSigned,
 }: {
   steps: Array<{ id: string; order: number; title: string; detail?: string }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
+  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -92,6 +97,7 @@ function StepsRunMode({
                   size="sm"
                   onClick={() => {
                     onCheck(step.id, true)
+                    onModification?.({ type: 'step_completed', step_id: step.id })
                     onAutoPopulate?.('plan', `✓ ${step.title}`)
                   }}
                   className="text-success-text border-success-border bg-success-bg hover:bg-success-border"
@@ -118,12 +124,14 @@ function ChecklistRunMode({
   items,
   checkedState,
   onCheck,
+  onModification,
   onAutoPopulate,
   isSigned,
 }: {
   items: Array<{ id: string; text: string; critical?: boolean }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
+  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -143,6 +151,7 @@ function ChecklistRunMode({
               if (isSigned) return
               const next = !done
               onCheck(item.id, next)
+              onModification?.({ type: 'checklist_item', item_id: item.id, checked: next })
               if (next && item.critical) {
                 onAutoPopulate?.('objective', `✓ ${item.text}`)
               }
@@ -182,6 +191,7 @@ function DecisionRunMode({
   branches,
   checkedState,
   onCheck,
+  onModification,
   onLaunchLinkedProtocol,
   onAutoPopulate,
   isSigned,
@@ -191,6 +201,7 @@ function DecisionRunMode({
   branches: Array<{ id: string; label: string; action: string; linked_protocol_id?: string }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
+  onModification?: (event: BlockModificationEvent) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
@@ -219,6 +230,12 @@ function DecisionRunMode({
                         })
                         onCheck(branch.id, !selected)
                         if (!wasSelected) {
+                          onModification?.({
+                            type: 'decision_branch',
+                            decision_id: blockId,
+                            branch_id: branch.id,
+                            linked_protocol_launched: Boolean(branch.linked_protocol_id),
+                          })
                           onAutoPopulate?.('assessment', branch.action)
                         }
                       }
@@ -267,10 +284,12 @@ function DecisionRunMode({
 
 function ImagingOrderRunMode({
   orders,
+  onModification,
   onAutoPopulate,
   isSigned,
 }: {
   orders: ImagingOrderItem[]
+  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -308,6 +327,11 @@ function ImagingOrderRunMode({
                   : {}),
                 source: `protocol:${order.id}`,
               })
+              onModification?.({
+                type: 'imaging_queued',
+                order_id: order.id,
+                study_type: order.study_type,
+              })
               onAutoPopulate?.('plan', `Imagen: ${order.study_type}`)
             }}
           >
@@ -320,10 +344,13 @@ function ImagingOrderRunMode({
 }
 
 function DosageTableRunMode({
+  blockId,
   rows,
+  onModification,
   onAutoPopulate,
   isSigned,
 }: {
+  blockId: string
   rows: Array<{
     id: string
     drug: string
@@ -332,6 +359,7 @@ function DosageTableRunMode({
     frequency: string
     notes: string
   }>
+  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -376,6 +404,16 @@ function DosageTableRunMode({
                     ...(row.notes ? { notes: row.notes } : {}),
                     source,
                   })
+                  onModification?.({
+                    type: 'medication_queued',
+                    block_id: blockId,
+                    row_id: row.id,
+                    drug: row.drug,
+                    dose: row.dose,
+                    route: row.route,
+                    frequency: row.frequency,
+                    ...(row.notes ? { notes: row.notes } : {}),
+                  })
                   onAutoPopulate?.('plan', `${row.drug} ${row.dose}`)
                 }}
               >
@@ -391,10 +429,12 @@ function DosageTableRunMode({
 
 function LabOrderRunMode({
   orders,
+  onModification,
   onAutoPopulate,
   isSigned,
 }: {
   orders: LabOrderItem[]
+  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -433,6 +473,11 @@ function LabOrderRunMode({
                   : {}),
                 source: `protocol:${order.id}`,
               })
+              onModification?.({
+                type: 'lab_queued',
+                order_id: order.id,
+                test_name: order.test_name,
+              })
               onAutoPopulate?.('plan', `Lab: ${order.test_name}`)
             }}
           >
@@ -450,7 +495,14 @@ export function BlockRendererRunMode({
   runMode,
 }: BlockRunModeProps): JSX.Element | null {
   const b = block as Block
-  const { checkedState, onCheck, onLaunchLinkedProtocol, onAutoPopulate, isSigned } = runMode
+  const {
+    checkedState,
+    onCheck,
+    onLaunchLinkedProtocol,
+    onAutoPopulate,
+    isSigned,
+    onModification,
+  } = runMode
 
   switch (b.type) {
     case 'section':
@@ -496,6 +548,7 @@ export function BlockRendererRunMode({
             onCheck={onCheck}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )
@@ -513,6 +566,7 @@ export function BlockRendererRunMode({
             onCheck={onCheck}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )
@@ -533,6 +587,7 @@ export function BlockRendererRunMode({
             {...(onLaunchLinkedProtocol ? { onLaunchLinkedProtocol } : {})}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )
@@ -545,9 +600,11 @@ export function BlockRendererRunMode({
           nested={nested}
         >
           <DosageTableRunMode
+            blockId={b.id}
             rows={b.rows}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )
@@ -579,6 +636,7 @@ export function BlockRendererRunMode({
             orders={imgBlock.orders}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )
@@ -596,6 +654,7 @@ export function BlockRendererRunMode({
             orders={labBlock.orders}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )

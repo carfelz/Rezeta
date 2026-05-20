@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Modification tracking: protocol interactions feed pattern detection
+
+### Added
+
+- `lib/consultation/modifications.ts` — `BlockModificationEvent` discriminated union + `appendModification()` helper (append-only, immutable updates to `ProtocolUsageModifications`)
+- `lib/consultation/__tests__/modifications.test.ts` — 10 tests covering all 6 event types, immutability, explicit timestamp, and notes omission
+- `components/protocols/BlockRendererRunMode.tsx` — `onModification` prop on all interactive sub-components (`StepsRunMode`, `ChecklistRunMode`, `DecisionRunMode`, `ImagingOrderRunMode`, `DosageTableRunMode`, `LabOrderRunMode`); fires typed event on every user interaction; re-exports `BlockModificationEvent`
+- `components/consultations/CanvasView.tsx` — `onModification` prop wired into `runMode` spread; re-exports `BlockModificationEvent`
+- `pages/Consultation/index.tsx` — `handleModification` uses `appendModification` then calls `useUpdateProtocolUsage` to persist; passed to `CanvasView`
+
+---
+
 ## [2026-05-19] — Suggestions UI: SuggestionBanner wired end-to-end
 
 ### Fixed

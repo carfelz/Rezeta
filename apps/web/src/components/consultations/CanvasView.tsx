@@ -1,15 +1,20 @@
 import { Button, Overline } from '@/components/ui'
-import { BlockRendererRunMode, type SoapField } from '@/components/protocols/BlockRendererRunMode'
+import {
+  BlockRendererRunMode,
+  type SoapField,
+  type BlockModificationEvent,
+} from '@/components/protocols/BlockRendererRunMode'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
 import { canvasViewStrings } from './strings'
 
-export type { SoapField }
+export type { SoapField, BlockModificationEvent }
 
 export interface CanvasViewProps {
   usage: ConsultationProtocolUsage
   onCheck: (id: string, checked: boolean) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
+  onModification?: (event: BlockModificationEvent) => void
   isSigned: boolean
   onContinueWithoutProtocol?: () => void
   onEditProtocol?: () => void
@@ -20,6 +25,7 @@ export function CanvasView({
   onCheck,
   onAutoPopulate,
   onLaunchLinkedProtocol,
+  onModification,
   isSigned,
   onContinueWithoutProtocol,
   onEditProtocol,
@@ -69,6 +75,7 @@ export function CanvasView({
             isSigned,
             ...(onAutoPopulate ? { onAutoPopulate } : {}),
             ...(onLaunchLinkedProtocol ? { onLaunchLinkedProtocol } : {}),
+            ...(onModification ? { onModification } : {}),
           }}
         />
       ))}
