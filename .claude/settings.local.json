@@ -221,7 +221,8 @@
       "Bash(perl -i -pe 's/import \\\\{ blockEditorStrings, blockTypeStrings \\\\} from/import { blockTypeStrings } from/g' /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/BlockRenderer.tsx)",
       "Bash(grep *)",
       "Bash(pnpm test:coverage)",
-      "Bash(echo \"HOOK_EXIT: $?\")"
+      "Bash(echo \"HOOK_EXIT: $?\")",
+      "Bash(echo \"lint-staged exit: $?\")"
     ]
   }
 }

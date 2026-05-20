@@ -38,7 +38,7 @@ export function Onboarding(): JSX.Element {
         <Button
           variant="primary"
           size="lg"
-          className="w-full justify-center mb-3"
+          className="w-full justify-center mb-3 text-n-0"
           disabled={defaultMutation.isPending}
           onClick={() => {
             void handleDefault()

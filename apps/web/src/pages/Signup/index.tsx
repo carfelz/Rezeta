@@ -105,7 +105,7 @@ export function Signup(): JSX.Element {
             size="lg"
             type="submit"
             disabled={isSubmitting}
-            className="w-full justify-center"
+            className="w-full justify-center text-n-0"
           >
             {isSubmitting ? signupStrings.submitting : signupStrings.submit}
           </Button>
