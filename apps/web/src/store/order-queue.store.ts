@@ -76,6 +76,14 @@ interface OrderQueueState {
   removeLabOrder: (id: string) => void
 
   reset: () => void
+  restoreSnapshot: (snapshot: {
+    medicationGroups: OrderGroup[]
+    medications: QueuedMedication[]
+    imagingGroups: OrderGroup[]
+    imagingOrders: QueuedImagingOrder[]
+    labGroups: OrderGroup[]
+    labOrders: QueuedLabOrder[]
+  }) => void
 }
 
 function makeId(): string {
@@ -207,4 +215,14 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
   removeLabOrder: (id) => set((s) => ({ labOrders: s.labOrders.filter((o) => o.id !== id) })),
 
   reset: () => set(initialState),
+
+  restoreSnapshot: (snapshot) =>
+    set({
+      medicationGroups: snapshot.medicationGroups,
+      medications: snapshot.medications,
+      imagingGroups: snapshot.imagingGroups,
+      imagingOrders: snapshot.imagingOrders,
+      labGroups: snapshot.labGroups,
+      labOrders: snapshot.labOrders,
+    }),
 }))

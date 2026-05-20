@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Session state: order queue persists across page reloads
+
+### Added
+
+- `store/order-queue.store.ts` — `restoreSnapshot` action restores all 6 queue arrays atomically
+- `hooks/consultations/use-order-queue-session.ts` — resets store on consultation mount, restores ungenerated orders from `localStorage` (keyed `rz:oq:${consultationId}`), persists on every queue change, clears on sign. Shows toast on restore.
+- `hooks/use-before-unload-guard.ts` — registers `beforeunload` listener when there are unsaved queued orders; cleans up on unmount or when deactivated
+- `lib/toasts.ts` — added `orderQueueRestored` string
+- `hooks/__tests__/use-before-unload-guard.test.ts` — 5 tests covering listener lifecycle and handler behavior
+- `hooks/consultations/__tests__/use-order-queue-session.test.ts` — 8 tests covering restore, toast, sign guard, persist, clear on empty, clear on sign, reset on ID change, corrupted data
+
+### Changed
+
+- `Consultation/index.tsx` — wires `useOrderQueueSession` and `useBeforeUnloadGuard`; moves `isSigned` computation before early returns so hooks are called unconditionally
+
+---
+
 ## [2026-05-19] — Wire BlockRendererRunMode into consultation canvas; auto-populate SOAP; linked protocol chain
 
 ### Changed

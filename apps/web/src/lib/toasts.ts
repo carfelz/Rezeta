@@ -103,6 +103,9 @@ export const toastStrings = {
   suggestionVariantCreated: 'Variante creada',
   suggestionDismissed: 'Sugerencia descartada',
 
+  // ── Session ─────────────────────────────────────────────────────────────────
+  orderQueueRestored: 'Órdenes en cola restauradas de tu sesión anterior.',
+
   // ── Generic ─────────────────────────────────────────────────────────────────
   errorGeneric: 'Ocurrió un error. Intenta de nuevo.',
   errorNetwork: 'Error de conexión. Verifica tu red.',

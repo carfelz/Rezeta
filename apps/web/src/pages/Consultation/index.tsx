@@ -14,6 +14,9 @@ import { usePatient } from '@/hooks/patients/use-patients'
 import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
 import { Button } from '@/components/ui'
 import { CanvasView, type SoapField } from '@/components/consultations/CanvasView'
+import { useOrderQueueStore } from '@/store/order-queue.store'
+import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
+import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
 import {
   MissingFieldsPanel,
   computeMissingFields,
@@ -161,6 +164,13 @@ export function Consultation(): JSX.Element {
     )
   }
 
+  const consultationSigned = consultation?.status === 'signed'
+  const hasUnsavedOrders = useOrderQueueStore(
+    (s) => s.medications.length > 0 || s.imagingOrders.length > 0 || s.labOrders.length > 0,
+  )
+  useOrderQueueSession(id ?? '', consultationSigned)
+  useBeforeUnloadGuard(hasUnsavedOrders && !consultationSigned)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -183,7 +193,7 @@ export function Consultation(): JSX.Element {
     )
   }
 
-  const isSigned = consultation.status === 'signed'
+  const isSigned = consultationSigned
   const protocolIds = consultation.protocolUsages.map((u) => u.protocolId)
   // Derive from server record + live soap state. Server values cover first
   // render (soap state hydrates one tick later); soap values cover live edits.
