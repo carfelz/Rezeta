@@ -10,6 +10,7 @@ import {
 } from '@/components/ui'
 import { useDeleteInvoice } from '@/hooks/invoices/use-invoices'
 import type { InvoiceWithDetails } from '@rezeta/shared'
+import { billingStrings } from './strings'
 
 export interface DeleteConfirmModalProps {
   invoice: InvoiceWithDetails
@@ -26,7 +27,7 @@ export function DeleteConfirmModal({ invoice, onClose }: DeleteConfirmModalProps
       await deleteMutation.mutateAsync(invoice.id)
       onClose()
     } catch {
-      setError('No se pudo eliminar la factura. Intenta de nuevo.')
+      setError(billingStrings.deleteErrorMessage)
     }
   }
 
@@ -39,8 +40,8 @@ export function DeleteConfirmModal({ invoice, onClose }: DeleteConfirmModalProps
     >
       <ModalContent>
         <ModalHeader
-          title="Eliminar factura"
-          subtitle={`¿Eliminar la factura ${invoice.invoiceNumber}? Esta acción no se puede deshacer.`}
+          title={billingStrings.deleteModalTitle}
+          subtitle={billingStrings.deleteModalSubtitle(invoice.invoiceNumber)}
           icon={<i className="ph ph-trash" />}
           iconVariant="danger"
         />
@@ -53,14 +54,16 @@ export function DeleteConfirmModal({ invoice, onClose }: DeleteConfirmModalProps
         )}
         <ModalFooter>
           <Button variant="secondary" onClick={onClose} disabled={deleteMutation.isPending}>
-            Cancelar
+            {billingStrings.deleteCancelButton}
           </Button>
           <Button
             variant="danger"
             onClick={() => void handleConfirm()}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar factura'}
+            {deleteMutation.isPending
+              ? billingStrings.deletingButton
+              : billingStrings.deleteConfirmButton}
           </Button>
         </ModalFooter>
       </ModalContent>

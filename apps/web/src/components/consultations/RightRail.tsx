@@ -1,5 +1,6 @@
 import { GroupSectionCard, Callout } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { rightRailStrings } from './strings'
 
 export interface AlertEntry {
   id: string
@@ -40,7 +41,7 @@ export function RightRail({ alerts, steps, orders }: RightRailProps): JSX.Elemen
       {alerts.length > 0 && (
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-n-400 mb-2">
-            Alertas
+            {rightRailStrings.alertsLabel}
           </div>
           <div className="flex flex-col gap-2">
             {alerts.map((a) => (
@@ -53,7 +54,7 @@ export function RightRail({ alerts, steps, orders }: RightRailProps): JSX.Elemen
       )}
 
       {steps.length > 0 && (
-        <GroupSectionCard label="Pasos del protocolo" compact>
+        <GroupSectionCard label={rightRailStrings.protocolStepsLabel} compact>
           {steps.map((s) => (
             <div key={s.n} className="flex items-center justify-between py-px text-[12px]">
               <span
@@ -71,7 +72,7 @@ export function RightRail({ alerts, steps, orders }: RightRailProps): JSX.Elemen
               {s.done && <i className="ph ph-check-circle text-[13px] text-success-text" />}
               {s.active && (
                 <span className="font-mono text-[9.5px] uppercase tracking-[0.06em] text-p-700">
-                  en curso
+                  {rightRailStrings.stepInProgress}
                 </span>
               )}
             </div>
@@ -80,7 +81,7 @@ export function RightRail({ alerts, steps, orders }: RightRailProps): JSX.Elemen
       )}
 
       {orders.length > 0 && (
-        <GroupSectionCard label="Órdenes" compact>
+        <GroupSectionCard label={rightRailStrings.ordersLabel} compact>
           {orders.map((o) => (
             <div
               key={o.label}

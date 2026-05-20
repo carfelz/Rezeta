@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
+import { blockRendererRunModeStrings } from './strings'
 
 export type SoapField = 'objective' | 'assessment' | 'plan'
 
@@ -72,12 +73,12 @@ function StepsRunMode({
               </div>
               {state === 'completed' && (
                 <span className="shrink-0 text-[11px] font-mono text-success-text bg-success-bg border border-success-border px-2 py-1 rounded-sm h-fit mt-1">
-                  ✓ Completado
+                  {blockRendererRunModeStrings.completedStep}
                 </span>
               )}
               {state === 'skipped' && (
                 <span className="shrink-0 text-[11px] font-mono text-n-400 bg-n-50 border border-n-200 px-2 py-1 rounded-sm h-fit mt-1">
-                  ⊘ Omitido
+                  {blockRendererRunModeStrings.skippedStep}
                 </span>
               )}
             </div>
@@ -92,14 +93,14 @@ function StepsRunMode({
                   }}
                   className="text-success-text border-success-border bg-success-bg hover:bg-success-border"
                 >
-                  ✓ Completado
+                  {blockRendererRunModeStrings.completedStep}
                 </Button>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => onCheck(`${step.id}:skipped`, true)}
                 >
-                  ⊘ Omitido
+                  {blockRendererRunModeStrings.skippedStep}
                 </Button>
               </Row>
             )}
@@ -155,7 +156,7 @@ function ChecklistRunMode({
               {item.text}
               {item.critical && (
                 <span className="ml-2 text-[10.5px] font-mono text-danger-text uppercase">
-                  crítico
+                  {blockRendererRunModeStrings.criticalItem}
                 </span>
               )}
             </span>
@@ -228,7 +229,7 @@ function DecisionRunMode({
                   className="ml-3"
                 >
                   <i className="ph ph-arrow-square-out text-[14px]" />
-                  Abrir protocolo vinculado
+                  {blockRendererRunModeStrings.openLinkedProtocol}
                 </TextLink>
               )}
             </div>
@@ -242,7 +243,7 @@ function DecisionRunMode({
           onClick={() => branches.forEach((b) => onCheck(b.id, false))}
           className="mt-2 font-mono"
         >
-          Limpiar selección
+          {blockRendererRunModeStrings.clearSelection}
         </TextLink>
       )}
     </div>
@@ -292,7 +293,7 @@ function ImagingOrderRunMode({
               onAutoPopulate?.('plan', `Imagen: ${order.study_type}`)
             }}
           >
-            + Añadir a órdenes
+            {blockRendererRunModeStrings.addToOrders}
           </Button>
         </div>
       ))}
@@ -337,7 +338,7 @@ function DosageTableRunMode({
             </div>
             {alreadyQueued ? (
               <span className="shrink-0 text-[12px] font-mono text-success-text bg-success-bg border border-success-border px-3 py-1 rounded-sm">
-                ✓ Añadido
+                {blockRendererRunModeStrings.alreadyQueued}
               </span>
             ) : (
               <Button
@@ -357,7 +358,7 @@ function DosageTableRunMode({
                   onAutoPopulate?.('plan', `${row.drug} ${row.dose}`)
                 }}
               >
-                + Añadir a receta
+                {blockRendererRunModeStrings.addToPrescription}
               </Button>
             )}
           </div>
@@ -411,7 +412,7 @@ function LabOrderRunMode({
               onAutoPopulate?.('plan', `Lab: ${order.test_name}`)
             }}
           >
-            + Añadir a órdenes
+            {blockRendererRunModeStrings.addToOrders}
           </Button>
         </div>
       ))}
@@ -430,7 +431,11 @@ export function BlockRendererRunMode({
   switch (b.type) {
     case 'section':
       return (
-        <ProtocolBlock type="Sección" title={b.title} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.sectionType}
+          title={b.title}
+          nested={nested}
+        >
           {b.blocks.length > 0 ? (
             <div className="flex flex-col gap-0">
               {b.blocks.map((child) => (
@@ -443,7 +448,11 @@ export function BlockRendererRunMode({
 
     case 'text':
       return (
-        <ProtocolBlock type="Texto" title="Texto" nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.textType}
+          title={blockRendererRunModeStrings.textType}
+          nested={nested}
+        >
           <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
             {b.content}
           </p>
@@ -452,7 +461,11 @@ export function BlockRendererRunMode({
 
     case 'checklist':
       return (
-        <ProtocolBlock type="Lista" title={b.title ?? 'Lista de verificación'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.checklistType}
+          title={b.title ?? blockRendererRunModeStrings.checklistDefaultTitle}
+          nested={nested}
+        >
           <ChecklistRunMode
             items={b.items}
             checkedState={checkedState}
@@ -464,7 +477,11 @@ export function BlockRendererRunMode({
 
     case 'steps':
       return (
-        <ProtocolBlock type="Pasos" title={b.title ?? 'Pasos'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.stepsType}
+          title={b.title ?? blockRendererRunModeStrings.stepsDefaultTitle}
+          nested={nested}
+        >
           <StepsRunMode
             steps={b.steps}
             checkedState={checkedState}
@@ -476,7 +493,11 @@ export function BlockRendererRunMode({
 
     case 'decision':
       return (
-        <ProtocolBlock type="Decisión" title={b.condition || 'Decisión'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.decisionType}
+          title={b.condition || blockRendererRunModeStrings.decisionDefaultTitle}
+          nested={nested}
+        >
           <DecisionRunMode
             blockId={b.id}
             condition={b.condition}
@@ -491,14 +512,22 @@ export function BlockRendererRunMode({
 
     case 'dosage_table':
       return (
-        <ProtocolBlock type="Medicación" title={b.title ?? 'Medicamentos'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.dosageType}
+          title={b.title ?? blockRendererRunModeStrings.dosageDefaultTitle}
+          nested={nested}
+        >
           <DosageTableRunMode rows={b.rows} {...(onAutoPopulate ? { onAutoPopulate } : {})} />
         </ProtocolBlock>
       )
 
     case 'alert':
       return (
-        <ProtocolBlock type="Alerta" title={b.title ?? 'Alerta'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.alertType}
+          title={b.title ?? blockRendererRunModeStrings.alertDefaultTitle}
+          nested={nested}
+        >
           <ProtocolAlert
             severity={b.severity}
             content={b.content}
@@ -510,7 +539,11 @@ export function BlockRendererRunMode({
     case 'imaging_order' as Block['type']: {
       const imgBlock = b as unknown as { title?: string; orders: ImagingOrderItem[] }
       return (
-        <ProtocolBlock type="Imagen" title={imgBlock.title ?? 'Estudios de imagen'} nested={nested}>
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.imagingType}
+          title={imgBlock.title ?? blockRendererRunModeStrings.imagingDefaultTitle}
+          nested={nested}
+        >
           <ImagingOrderRunMode
             orders={imgBlock.orders}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
@@ -523,8 +556,8 @@ export function BlockRendererRunMode({
       const labBlock = b as unknown as { title?: string; orders: LabOrderItem[] }
       return (
         <ProtocolBlock
-          type="Laboratorio"
-          title={labBlock.title ?? 'Estudios de laboratorio'}
+          type={blockRendererRunModeStrings.labType}
+          title={labBlock.title ?? blockRendererRunModeStrings.labDefaultTitle}
           nested={nested}
         >
           <LabOrderRunMode

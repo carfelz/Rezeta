@@ -10,7 +10,12 @@ import { StepsBlockEditor } from './StepsBlockEditor'
 import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
 import { useEditorStore } from '@/store/editor.store'
-import { blockEditorStrings, blockTypeStrings } from './strings'
+import {
+  blockEditorStrings,
+  blockTypeStrings,
+  imagingOrderEditorStrings,
+  labOrderEditorStrings,
+} from './strings'
 import { Button, IconButton, Row, TextLink, ConfirmDialog } from '@/components/ui'
 import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
@@ -314,7 +319,7 @@ function BlockContextMenu({
       <DropdownMenu.Trigger asChild>
         <button
           className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms] shrink-0"
-          title="Más acciones"
+          title={blockEditorStrings.blockCtxMoreActions}
         >
           <i className="ph ph-dots-three text-[14px]" />
         </button>
@@ -418,9 +423,9 @@ function EditForm({ block }: { block: ProtocolBlock }): JSX.Element | null {
 // ── ImagingOrderBlockEditor ───────────────────────────────────────────────────
 
 const URGENCY_OPTIONS: { value: OrderUrgency; label: string }[] = [
-  { value: 'routine', label: 'Rutina' },
-  { value: 'urgent', label: 'Urgente' },
-  { value: 'stat', label: 'STAT' },
+  { value: 'routine', label: imagingOrderEditorStrings.urgencyRoutine },
+  { value: 'urgent', label: imagingOrderEditorStrings.urgencyUrgent },
+  { value: 'stat', label: imagingOrderEditorStrings.urgencyStat },
 ]
 
 function ImagingOrderBlockEditor({
@@ -471,18 +476,22 @@ function ImagingOrderBlockEditor({
   return (
     <div className="p-4 flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">Título (opcional)</label>
+        <label className="text-[12px] font-sans font-medium text-n-600">
+          {imagingOrderEditorStrings.titleLabel}
+        </label>
         <input
           type="text"
           className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder="Ej. Estudios de imagen cardíaca"
+          placeholder={imagingOrderEditorStrings.titlePlaceholder}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-[12px] font-sans font-medium text-n-600">Estudios</label>
+        <label className="text-[12px] font-sans font-medium text-n-600">
+          {imagingOrderEditorStrings.studiesLabel}
+        </label>
         {draftOrders.map((order, idx) => (
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -492,12 +501,12 @@ function ImagingOrderBlockEditor({
                 className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
                 value={order.study_type}
                 onChange={(e) => updateOrder(order.id, { study_type: e.target.value })}
-                placeholder="Tipo de estudio (ej. Radiografía de tórax PA)"
+                placeholder={imagingOrderEditorStrings.studyTypePlaceholder}
                 autoFocus={idx === draftOrders.length - 1 && order.study_type === ''}
               />
               <IconButton
                 icon="ph ph-x"
-                aria-label="Eliminar"
+                aria-label={imagingOrderEditorStrings.deleteStudyLabel}
                 tone="danger"
                 size="sm"
                 disabled={draftOrders.length === 1}
@@ -510,7 +519,7 @@ function ImagingOrderBlockEditor({
                 className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
                 value={order.indication}
                 onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
-                placeholder="Indicación clínica"
+                placeholder={imagingOrderEditorStrings.indicationPlaceholder}
               />
               <select
                 className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
@@ -532,7 +541,9 @@ function ImagingOrderBlockEditor({
                   onChange={(e) => updateOrder(order.id, { contrast: e.target.checked })}
                   className="w-4 h-4"
                 />
-                <span className="text-[12px] font-sans text-n-600">Con contraste</span>
+                <span className="text-[12px] font-sans text-n-600">
+                  {imagingOrderEditorStrings.contrastLabel}
+                </span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
@@ -541,13 +552,15 @@ function ImagingOrderBlockEditor({
                   onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
                   className="w-4 h-4"
                 />
-                <span className="text-[12px] font-sans text-n-600">Requiere ayuno</span>
+                <span className="text-[12px] font-sans text-n-600">
+                  {imagingOrderEditorStrings.fastingLabel}
+                </span>
               </label>
             </div>
           </div>
         ))}
         <TextLink tone="primary" size="md" onClick={addOrder} className="mt-1 self-start">
-          + Añadir estudio
+          {imagingOrderEditorStrings.addStudyButton}
         </TextLink>
       </div>
 
@@ -566,10 +579,10 @@ function ImagingOrderBlockEditor({
 // ── LabOrderBlockEditor ───────────────────────────────────────────────────────
 
 const SAMPLE_TYPE_OPTIONS: { value: LabSampleType; label: string }[] = [
-  { value: 'blood', label: 'Sangre' },
-  { value: 'urine', label: 'Orina' },
-  { value: 'stool', label: 'Heces' },
-  { value: 'other', label: 'Otro' },
+  { value: 'blood', label: labOrderEditorStrings.sampleBlood },
+  { value: 'urine', label: labOrderEditorStrings.sampleUrine },
+  { value: 'stool', label: labOrderEditorStrings.sampleStool },
+  { value: 'other', label: labOrderEditorStrings.sampleOther },
 ]
 
 function LabOrderBlockEditor({
@@ -620,18 +633,22 @@ function LabOrderBlockEditor({
   return (
     <div className="p-4 flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">Título (opcional)</label>
+        <label className="text-[12px] font-sans font-medium text-n-600">
+          {labOrderEditorStrings.titleLabel}
+        </label>
         <input
           type="text"
           className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder="Ej. Perfil metabólico completo"
+          placeholder={labOrderEditorStrings.titlePlaceholder}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-[12px] font-sans font-medium text-n-600">Pruebas</label>
+        <label className="text-[12px] font-sans font-medium text-n-600">
+          {labOrderEditorStrings.testsLabel}
+        </label>
         {draftOrders.map((order, idx) => (
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -641,12 +658,12 @@ function LabOrderBlockEditor({
                 className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
                 value={order.test_name}
                 onChange={(e) => updateOrder(order.id, { test_name: e.target.value })}
-                placeholder="Nombre de la prueba (ej. Hemograma completo)"
+                placeholder={labOrderEditorStrings.testNamePlaceholder}
                 autoFocus={idx === draftOrders.length - 1 && order.test_name === ''}
               />
               <IconButton
                 icon="ph ph-x"
-                aria-label="Eliminar"
+                aria-label={labOrderEditorStrings.deleteTestLabel}
                 tone="danger"
                 size="sm"
                 disabled={draftOrders.length === 1}
@@ -659,7 +676,7 @@ function LabOrderBlockEditor({
                 className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
                 value={order.indication}
                 onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
-                placeholder="Indicación clínica"
+                placeholder={labOrderEditorStrings.indicationPlaceholder}
               />
               <select
                 className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
@@ -693,12 +710,14 @@ function LabOrderBlockEditor({
                 onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
                 className="w-4 h-4"
               />
-              <span className="text-[12px] font-sans text-n-600">Requiere ayuno</span>
+              <span className="text-[12px] font-sans text-n-600">
+                {labOrderEditorStrings.fastingLabel}
+              </span>
             </label>
           </div>
         ))}
         <TextLink tone="primary" size="md" onClick={addOrder} className="mt-1 self-start">
-          + Añadir prueba
+          {labOrderEditorStrings.addTestButton}
         </TextLink>
       </div>
 

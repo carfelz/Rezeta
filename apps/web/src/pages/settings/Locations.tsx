@@ -23,6 +23,7 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui'
+import { locationsStrings } from './strings'
 
 // ─── Location Form Modal ──────────────────────────────────────────────────────
 
@@ -90,17 +91,20 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
       }}
     >
       <ModalContent>
-        <ModalHeader title={isEdit ? 'Editar ubicación' : 'Nueva ubicación'} showClose={false} />
+        <ModalHeader
+          title={isEdit ? locationsStrings.formEditTitle : locationsStrings.formCreateTitle}
+          showClose={false}
+        />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
         >
           <ModalBody className="flex flex-col gap-4">
-            <Field label="Nombre" required>
+            <Field label={locationsStrings.nameLabel} required>
               <Input
                 type="text"
-                placeholder="Ej. Centro Médico Lincoln"
+                placeholder={locationsStrings.namePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -108,35 +112,35 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Ciudad">
+              <Field label={locationsStrings.cityLabel}>
                 <Input
                   type="text"
-                  placeholder="Ej. Santo Domingo"
+                  placeholder={locationsStrings.cityPlaceholder}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
               </Field>
-              <Field label="Teléfono">
+              <Field label={locationsStrings.phoneLabel}>
                 <Input
                   type="tel"
-                  placeholder="Ej. 809-555-0000"
+                  placeholder={locationsStrings.phonePlaceholder}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </Field>
             </div>
 
-            <Field label="Dirección">
+            <Field label={locationsStrings.addressLabel}>
               <Input
                 type="text"
-                placeholder="Ej. Av. Winston Churchill 1099, Suite 301"
+                placeholder={locationsStrings.addressPlaceholder}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Honorarios (RD$)" helper="Tu tarifa de consulta en esta ubicación">
+              <Field label={locationsStrings.feeLabel} helper={locationsStrings.feeHelper}>
                 <Input
                   type="number"
                   min="0"
@@ -146,7 +150,10 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
                   onChange={(e) => setConsultationFee(e.target.value)}
                 />
               </Field>
-              <Field label="Comisión (%)" helper="Porcentaje que retiene el centro">
+              <Field
+                label={locationsStrings.commissionLabel}
+                helper={locationsStrings.commissionHelper}
+              >
                 <Input
                   type="number"
                   min="0"
@@ -160,7 +167,7 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Tipo">
+              <Field label={locationsStrings.typeLabel}>
                 <label className="flex items-center gap-2 h-input-md cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -168,15 +175,15 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
                     checked={isOwned}
                     onChange={(e) => setIsOwned(e.target.checked)}
                   />
-                  <span className="text-[13px] text-n-700">Consultorio propio</span>
+                  {locationsStrings.ownedCheckbox}
                 </label>
               </Field>
             </div>
 
-            <Field label="Notas">
+            <Field label={locationsStrings.notesLabel}>
               <textarea
                 className="w-full min-h-[72px] px-3 py-2 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none transition-[border-color] duration-[100ms] focus:border-p-500 placeholder:text-n-400 resize-y"
-                placeholder="Información adicional sobre esta ubicación..."
+                placeholder={locationsStrings.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -194,10 +201,14 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
 
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
+              {locationsStrings.cancelButton}
             </Button>
             <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
-              {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear ubicación'}
+              {isPending
+                ? locationsStrings.savingButton
+                : isEdit
+                  ? locationsStrings.saveButton
+                  : locationsStrings.createButton}
             </Button>
           </ModalFooter>
         </form>
@@ -224,19 +235,16 @@ function DeleteConfirmModal({ location, onConfirm, onClose, isDeleting }: Delete
       }}
     >
       <ModalContent>
-        <ModalHeader title="Eliminar ubicación" showClose={false} />
+        <ModalHeader title={locationsStrings.deleteTitle} showClose={false} />
         <ModalBody>
-          <p className="text-body text-n-700">
-            ¿Eliminar <span className="font-semibold">{location.name}</span>? Esta acción no se
-            puede deshacer.
-          </p>
+          <p className="text-body text-n-700">{locationsStrings.deleteBody(location.name)}</p>
         </ModalBody>
         <ModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            {locationsStrings.cancelButton}
           </Button>
           <Button type="button" variant="danger" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? 'Eliminando...' : 'Eliminar ubicación'}
+            {isDeleting ? locationsStrings.deletingButton : locationsStrings.deleteConfirmButton}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -262,7 +270,7 @@ export function Locations(): JSX.Element {
       await deleteMutation.mutateAsync(deleting.id)
       setDeleting(null)
     } catch {
-      setDeleteError('No se puede eliminar: la ubicación tiene citas próximas programadas.')
+      setDeleteError(locationsStrings.deleteError)
     }
   }
 
@@ -285,10 +293,10 @@ export function Locations(): JSX.Element {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-h1 m-0">Ubicaciones</h1>
+        <h1 className="text-h1 m-0">{locationsStrings.pageTitle}</h1>
         <Button variant="primary" onClick={() => setShowCreate(true)}>
           <i className="ph ph-plus mr-2" />
-          Nueva ubicación
+          {locationsStrings.newButton}
         </Button>
       </div>
 
@@ -300,22 +308,22 @@ export function Locations(): JSX.Element {
         </div>
       )}
 
-      {isLoading && <p className="text-body text-n-500">Cargando ubicaciones...</p>}
+      {isLoading && <p className="text-body text-n-500">{locationsStrings.loading}</p>}
 
       {isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          No se pudieron cargar las ubicaciones. Intenta recargar la página.
+          {locationsStrings.loadError}
         </Callout>
       )}
 
       {!isLoading && !isError && locations?.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-map-pin" />}
-          title="Aún no tienes ubicaciones registradas"
-          description="Registra los centros médicos o consultorios donde ejerces para poder agendar citas."
+          title={locationsStrings.emptyTitle}
+          description={locationsStrings.emptyDescription}
           action={
             <Button variant="primary" onClick={() => setShowCreate(true)}>
-              Nueva ubicación
+              {locationsStrings.newButton}
             </Button>
           }
         />
@@ -327,22 +335,22 @@ export function Locations(): JSX.Element {
             <thead>
               <tr>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Nombre
+                  {locationsStrings.tableHeaderName}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Dirección
+                  {locationsStrings.tableHeaderAddress}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Teléfono
+                  {locationsStrings.tableHeaderPhone}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Honorarios
+                  {locationsStrings.tableHeaderFee}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Comisión
+                  {locationsStrings.tableHeaderCommission}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Tipo
+                  {locationsStrings.tableHeaderType}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left" />
               </tr>
@@ -377,21 +385,21 @@ export function Locations(): JSX.Element {
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {loc.isOwned ? (
-                      <Badge variant="active">Propio</Badge>
+                      <Badge variant="active">{locationsStrings.ownedBadge}</Badge>
                     ) : (
-                      <Badge variant="draft">Externo</Badge>
+                      <Badge variant="draft">{locationsStrings.externalBadge}</Badge>
                     )}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
                       <Button variant="secondary" size="sm" onClick={() => setEditing(loc)}>
-                        Editar
+                        {locationsStrings.editButton}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title="Eliminar ubicación"
+                        title={locationsStrings.deleteButtonTitle}
                         onClick={() => {
                           setDeleteError(null)
                           setDeleting(loc)

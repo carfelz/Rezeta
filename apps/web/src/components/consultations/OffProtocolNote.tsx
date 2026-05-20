@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Chip, TextLink } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
 import { formatDoctorName } from '@/lib/format/names'
+import { offProtocolNoteStrings } from './strings'
 
 export type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
 
@@ -12,10 +13,10 @@ export interface OffProtocolNoteProps {
 }
 
 const SOAP_FIELD_LABELS: Record<SoapField, string> = {
-  subjective: 'Subjetivo',
-  objective: 'Examen físico',
-  assessment: 'Evaluación',
-  plan: 'Plan',
+  subjective: offProtocolNoteStrings.soapSubjective,
+  objective: offProtocolNoteStrings.soapObjective,
+  assessment: offProtocolNoteStrings.soapAssessment,
+  plan: offProtocolNoteStrings.soapPlan,
 }
 
 export function OffProtocolNote({
@@ -37,7 +38,7 @@ export function OffProtocolNote({
       <div className="px-4 pt-3 pb-3">
         <div className="mb-3">
           <Chip tone="warning" size="md">
-            Fuera de protocolo
+            {offProtocolNoteStrings.chipLabel}
           </Chip>
         </div>
 
@@ -45,14 +46,14 @@ export function OffProtocolNote({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título del hallazgo (ej. Dolor torácico atípico)"
+          placeholder={offProtocolNoteStrings.titlePlaceholder}
           className="w-full font-serif font-medium text-[18px] text-n-900 leading-tight bg-transparent border-0 focus:outline-none placeholder:text-n-300 mb-2"
         />
 
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Describe el hallazgo. Anexar a SOAP → [campo]."
+          placeholder={offProtocolNoteStrings.bodyPlaceholder}
           rows={3}
           className="w-full text-[13px] font-sans text-n-700 placeholder:text-n-300 bg-transparent border-0 focus:outline-none resize-none leading-snug"
         />
@@ -65,7 +66,7 @@ export function OffProtocolNote({
           disabled={!body.trim() || isPending}
           onClick={() => onSave({ title: title.trim(), body: body.trim(), promoteTo: null })}
         >
-          Convertir en paso
+          {offProtocolNoteStrings.convertToStepButton}
         </Button>
 
         <SoapMover
@@ -78,7 +79,7 @@ export function OffProtocolNote({
         />
 
         <TextLink onClick={onCancel} size="md" className="ml-1">
-          Cancelar
+          {offProtocolNoteStrings.cancelButton}
         </TextLink>
 
         <span className="text-[11.5px] text-n-400 ml-auto">
@@ -105,7 +106,9 @@ function SoapMover({
   return (
     <div className="relative">
       <Button variant="secondary" size="sm" disabled={disabled} onClick={() => setOpen((o) => !o)}>
-        Mover a {selected ? SOAP_FIELD_LABELS[selected] : 'SOAP'}
+        {offProtocolNoteStrings.moveTo(
+          selected ? SOAP_FIELD_LABELS[selected] : offProtocolNoteStrings.moveToSoap,
+        )}
       </Button>
       {open && !disabled && (
         <div className="absolute left-0 bottom-full mb-1 bg-n-0 border border-n-200 rounded-md shadow-floating w-[160px] py-1 z-30">

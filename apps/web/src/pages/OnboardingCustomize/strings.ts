@@ -11,6 +11,8 @@ export const onboardingCustomizeStrings = {
   step1Continue: 'Continuar a tipos',
   step1Back: 'Volver al inicio',
   step1Empty: 'Necesitas al menos una plantilla para continuar.',
+  step1TemplatePlaceholder: 'Nombre de la plantilla',
+  step1DeleteLabel: 'Eliminar',
 
   // ── Step 2 — Types ─────────────────────────────────────────────────────────
   step2Title: 'Revisa tus tipos',
@@ -20,4 +22,6 @@ export const onboardingCustomizeStrings = {
   step2Finish: 'Finalizar configuración',
   step2Back: 'Volver a plantillas',
   step2Empty: 'Necesitas al menos un tipo para continuar.',
+  step2TypePlaceholder: 'Nombre del tipo',
+  step2DeleteLabel: 'Eliminar',
 } as const

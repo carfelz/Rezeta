@@ -1,5 +1,6 @@
 import { VitalInput } from './VitalInput'
 import { computeBMI, type LocalVitals } from '@/lib/consultation/vitals'
+import { vitalsSectionStrings } from './strings'
 
 export interface VitalsSectionProps {
   vitals: LocalVitals
@@ -14,7 +15,7 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
   if (disabled) {
     const hasData = Object.values(vitals).some(Boolean)
     if (!hasData) {
-      return <p className="text-[13px] text-n-300">—</p>
+      return <p className="text-[13px] text-n-300">{vitalsSectionStrings.emptyDash}</p>
     }
   }
 
@@ -22,7 +23,7 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div className="field">
         <label className="block text-[12px] font-sans font-medium text-n-700 mb-1">
-          Presión arterial
+          {vitalsSectionStrings.bloodPressureLabel}
         </label>
         <div className="flex h-[34px] border border-n-300 rounded-sm overflow-hidden focus-within:border-p-500 focus-within:ring-[3px] focus-within:ring-p-500/10">
           <input
@@ -49,43 +50,49 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
       </div>
 
       <VitalInput
-        label="Frec. cardíaca"
+        label={vitalsSectionStrings.heartRateLabel}
         value={vitals.hr}
         onChange={set('hr')}
         unit="lpm"
         disabled={disabled}
       />
       <VitalInput
-        label="Temperatura"
+        label={vitalsSectionStrings.temperatureLabel}
         value={vitals.temp}
         onChange={set('temp')}
         unit="°C"
         disabled={disabled}
       />
       <VitalInput
-        label="Saturación O₂"
+        label={vitalsSectionStrings.spo2Label}
         value={vitals.spo2}
         onChange={set('spo2')}
         unit="%"
         disabled={disabled}
       />
       <VitalInput
-        label="Peso"
+        label={vitalsSectionStrings.weightLabel}
         value={vitals.weight}
         onChange={set('weight')}
         unit="kg"
         disabled={disabled}
       />
       <VitalInput
-        label="Talla"
+        label={vitalsSectionStrings.heightLabel}
         value={vitals.height}
         onChange={set('height')}
         unit="cm"
         disabled={disabled}
       />
-      <VitalInput label="IMC · calculado" value={bmi} onChange={() => {}} unit="kg/m²" readOnly />
       <VitalInput
-        label="Frec. respiratoria"
+        label={vitalsSectionStrings.bmiLabel}
+        value={bmi}
+        onChange={() => {}}
+        unit="kg/m²"
+        readOnly
+      />
+      <VitalInput
+        label={vitalsSectionStrings.respiratoryRateLabel}
         value={vitals.resp}
         onChange={set('resp')}
         unit="resp/min"

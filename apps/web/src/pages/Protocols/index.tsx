@@ -204,11 +204,11 @@ export function Protocols(): JSX.Element {
       ) : error ? (
         <EmptyState
           icon={<i className="ph ph-warning-circle text-danger-solid" />}
-          title="Error al cargar protocolos"
+          title={protocolsStrings.errorTitle}
           description={protocolsStrings.error}
           action={
             <Button variant="secondary" onClick={() => window.location.reload()}>
-              Reintentar
+              {protocolsStrings.retryButton}
             </Button>
           }
         />

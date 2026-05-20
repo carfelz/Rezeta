@@ -8,6 +8,7 @@ import { AppointmentFormModal } from './AppointmentFormModal'
 import { DateNavigation } from './DateNavigation'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { toDateInputValue } from './helpers'
+import { schedulePageStrings } from './strings'
 
 export function Schedule(): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
@@ -90,10 +91,10 @@ export function Schedule(): JSX.Element {
       )}
 
       <div className="flex items-center justify-between mb-6 gap-4">
-        <h1 className="text-h1 m-0">Agenda</h1>
+        <h1 className="text-h1 m-0">{schedulePageStrings.pageTitle}</h1>
         <Button variant="primary" onClick={() => setShowCreate(true)}>
           <i className="ph ph-plus mr-2" />
-          Nueva cita
+          {schedulePageStrings.newAppointmentButton}
         </Button>
       </div>
 
@@ -107,26 +108,28 @@ export function Schedule(): JSX.Element {
 
       {!activeLocationId && (
         <Callout variant="info" icon={<i className="ph ph-info" style={{ fontSize: 18 }} />}>
-          Selecciona una ubicación en la barra superior para ver las citas del día.
+          {schedulePageStrings.selectLocationInfo}
         </Callout>
       )}
 
-      {activeLocationId && isLoading && <p className="text-body text-n-500">Cargando citas...</p>}
+      {activeLocationId && isLoading && (
+        <p className="text-body text-n-500">{schedulePageStrings.loading}</p>
+      )}
 
       {activeLocationId && isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          No se pudieron cargar las citas. Intenta recargar la página.
+          {schedulePageStrings.loadError}
         </Callout>
       )}
 
       {activeLocationId && !isLoading && !isError && (appointments?.length ?? 0) === 0 && (
         <EmptyState
           icon={<i className="ph ph-calendar-blank" />}
-          title="No hay citas para este día"
-          description="Agenda la primera cita del día para comenzar."
+          title={schedulePageStrings.emptyTitle}
+          description={schedulePageStrings.emptyDescription}
           action={
             <Button variant="primary" onClick={() => setShowCreate(true)}>
-              Nueva cita
+              {schedulePageStrings.newAppointmentButton}
             </Button>
           }
         />

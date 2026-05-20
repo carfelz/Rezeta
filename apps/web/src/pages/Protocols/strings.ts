@@ -9,6 +9,8 @@ export const protocolsStrings = {
   listVersion: (n: number) => `v${n}`,
   loading: 'Cargando protocolos...',
   error: 'No se pudo cargar los protocolos.',
+  errorTitle: 'Error al cargar protocolos',
+  retryButton: 'Reintentar',
   searchPlaceholder: 'Buscar protocolos…',
   filterAllTypes: 'Todos los tipos',
   filterFavorites: 'Favoritos',

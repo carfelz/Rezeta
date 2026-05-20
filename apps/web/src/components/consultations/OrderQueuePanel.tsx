@@ -38,13 +38,14 @@ import {
   useDeleteLabOrder,
 } from '@/hooks/consultations/use-consultations'
 import { apiClient, triggerDownload } from '@/lib/api-client'
+import { orderQueueStrings } from './strings'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 const URGENCY_LABELS: Record<string, string> = {
-  routine: 'Rutina',
-  urgent: 'Urgente',
-  stat: 'Stat',
+  routine: orderQueueStrings.urgencyRoutine,
+  urgent: orderQueueStrings.urgencyUrgent,
+  stat: orderQueueStrings.urgencyStat,
 }
 
 const URGENCY_TONES = {
@@ -65,7 +66,7 @@ function SavedChip(): JSX.Element {
   return (
     <Chip tone="success" size="md" format="sentence">
       <i className="ph ph-check text-[10px]" />
-      Guardada
+      {orderQueueStrings.savedChip}
     </Chip>
   )
 }
@@ -107,7 +108,8 @@ function SavedPrescriptionCard({
         title={
           <span className="flex items-center gap-2">
             <span className="text-[12.5px] font-semibold text-n-800">
-              {prescription.groupTitle ?? `Receta ${prescription.groupOrder}`}
+              {prescription.groupTitle ??
+                orderQueueStrings.prescriptionGroupFallback(prescription.groupOrder)}
             </span>
             <SavedChip />
           </span>
@@ -116,7 +118,7 @@ function SavedPrescriptionCard({
           !isSigned ? (
             <IconButton
               icon="ph ph-trash"
-              aria-label="Eliminar receta"
+              aria-label={orderQueueStrings.deletePrescriptionLabel}
               tone="danger"
               size="sm"
               disabled={isDeleting}
@@ -134,12 +136,12 @@ function SavedPrescriptionCard({
             {downloading ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-                Descargando…
+                {orderQueueStrings.downloadingPdf}
               </>
             ) : (
               <>
                 <i className="ph ph-download-simple mr-1 text-[12px]" />
-                Descargar PDF
+                {orderQueueStrings.downloadPdf}
               </>
             )}
           </Button>
@@ -162,7 +164,7 @@ function SavedPrescriptionCard({
           ))}
           {prescription.prescriptionItems.length === 0 && (
             <Caption tone="muted" size="lg" as="p" className="italic py-3 px-4 block">
-              Sin medicamentos.
+              {orderQueueStrings.noMedications}
             </Caption>
           )}
         </div>
@@ -213,12 +215,12 @@ function SavedImagingGroupCard({
                 <div className="flex items-center gap-3 mt-1">
                   {order.contrast && (
                     <Caption tone="muted" size="xs" className="font-mono">
-                      Con contraste
+                      {orderQueueStrings.withContrast}
                     </Caption>
                   )}
                   {order.fastingRequired && (
                     <Caption tone="muted" size="xs" className="font-mono">
-                      En ayunas
+                      {orderQueueStrings.fastingRequired}
                     </Caption>
                   )}
                 </div>
@@ -226,7 +228,7 @@ function SavedImagingGroupCard({
               {!isSigned && (
                 <IconButton
                   icon="ph ph-trash"
-                  aria-label="Eliminar orden"
+                  aria-label={orderQueueStrings.deleteOrderLabel}
                   tone="danger"
                   size="sm"
                   disabled={isDeleting}
@@ -290,7 +292,7 @@ function SavedLabGroupCard({
                   </Caption>
                   {order.fastingRequired && (
                     <Caption tone="muted" size="xs" className="font-mono">
-                      En ayunas
+                      {orderQueueStrings.fastingRequired}
                     </Caption>
                   )}
                   <Caption tone="muted" size="xs" className="font-mono capitalize">
@@ -301,7 +303,7 @@ function SavedLabGroupCard({
               {!isSigned && (
                 <IconButton
                   icon="ph ph-trash"
-                  aria-label="Eliminar orden"
+                  aria-label={orderQueueStrings.deleteOrderLabel}
                   tone="danger"
                   size="sm"
                   disabled={isDeleting}
@@ -361,7 +363,9 @@ function MedicationGroup({
   // D8: flat medication list — display "Medicamentos N" instead of the group's
   // stored title (e.g. "Receta"). The group's title persists as the receta's
   // PDF title; multi-receta UI is removed but the data model is unchanged.
-  const displayTitle = isOnlyGroup ? `Medicamentos ${medications.length}` : group.title
+  const displayTitle = isOnlyGroup
+    ? `${orderQueueStrings.tabMedications} ${medications.length}`
+    : group.title
 
   return (
     <div className="mb-3">
@@ -371,7 +375,7 @@ function MedicationGroup({
           !isOnlyGroup ? (
             <IconButton
               icon="ph ph-x"
-              aria-label="Eliminar grupo"
+              aria-label={orderQueueStrings.deleteGroupLabel}
               tone="muted"
               size="sm"
               onClick={() => onRemoveGroup(group.id)}
@@ -388,12 +392,12 @@ function MedicationGroup({
             {createPrescription.isPending ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-                Generando…
+                {orderQueueStrings.generatingPdf}
               </>
             ) : (
               <>
                 <i className="ph ph-file-pdf mr-1 text-[12px]" />
-                Generar receta
+                {orderQueueStrings.generatePrescription}
               </>
             )}
           </Button>
@@ -402,7 +406,7 @@ function MedicationGroup({
         {medications.length === 0 ? (
           <div className="px-4 py-3">
             <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
-              Sin medicamentos en este grupo.
+              {orderQueueStrings.noMedicationsInGroup}
             </Caption>
           </div>
         ) : (
@@ -433,7 +437,7 @@ function MedicationGroup({
                 </div>
                 <IconButton
                   icon="ph ph-x"
-                  aria-label="Quitar medicamento"
+                  aria-label={orderQueueStrings.removeMedicationLabel}
                   tone="muted"
                   size="sm"
                   onClick={() => onRemoveMedication(med.id)}
@@ -497,7 +501,7 @@ function ImagingGroup({
           !isOnlyGroup ? (
             <IconButton
               icon="ph ph-x"
-              aria-label="Eliminar grupo"
+              aria-label={orderQueueStrings.deleteGroupLabel}
               tone="muted"
               size="sm"
               onClick={() => onRemoveGroup(group.id)}
@@ -514,12 +518,12 @@ function ImagingGroup({
             {createImagingOrder.isPending ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-                Generando…
+                {orderQueueStrings.generatingPdf}
               </>
             ) : (
               <>
                 <i className="ph ph-file-pdf mr-1 text-[12px]" />
-                Generar orden
+                {orderQueueStrings.generateImaging}
               </>
             )}
           </Button>
@@ -528,7 +532,7 @@ function ImagingGroup({
         {orders.length === 0 ? (
           <div className="px-4 py-3">
             <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
-              Sin estudios en este grupo.
+              {orderQueueStrings.noImageStudiesInGroup}
             </Caption>
           </div>
         ) : (
@@ -546,12 +550,12 @@ function ImagingGroup({
                   <div className="flex items-center gap-3 mt-1">
                     {order.contrast && (
                       <Caption tone="muted" size="xs" className="font-mono">
-                        Con contraste
+                        {orderQueueStrings.withContrast}
                       </Caption>
                     )}
                     {order.fasting_required && (
                       <Caption tone="muted" size="xs" className="font-mono">
-                        En ayunas
+                        {orderQueueStrings.fastingRequired}
                       </Caption>
                     )}
                     {order.special_instructions && (
@@ -563,7 +567,7 @@ function ImagingGroup({
                 </div>
                 <IconButton
                   icon="ph ph-x"
-                  aria-label="Quitar estudio"
+                  aria-label={orderQueueStrings.removeStudyLabel}
                   tone="muted"
                   size="sm"
                   onClick={() => onRemoveOrder(order.id)}
@@ -628,7 +632,7 @@ function LabGroup({
           !isOnlyGroup ? (
             <IconButton
               icon="ph ph-x"
-              aria-label="Eliminar grupo"
+              aria-label={orderQueueStrings.deleteGroupLabel}
               tone="muted"
               size="sm"
               onClick={() => onRemoveGroup(group.id)}
@@ -645,12 +649,12 @@ function LabGroup({
             {createLabOrder.isPending ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
-                Generando…
+                {orderQueueStrings.generatingPdf}
               </>
             ) : (
               <>
                 <i className="ph ph-file-pdf mr-1 text-[12px]" />
-                Generar laboratorio
+                {orderQueueStrings.generateLab}
               </>
             )}
           </Button>
@@ -659,7 +663,7 @@ function LabGroup({
         {orders.length === 0 ? (
           <div className="px-4 py-3">
             <Caption tone="muted" size="lg" as="p" className="italic py-2 px-1 block">
-              Sin estudios en este grupo.
+              {orderQueueStrings.noImageStudiesInGroup}
             </Caption>
           </div>
         ) : (
@@ -684,7 +688,7 @@ function LabGroup({
                     </Caption>
                     {order.fasting_required && (
                       <Caption tone="muted" size="xs" className="font-mono">
-                        En ayunas
+                        {orderQueueStrings.fastingRequired}
                       </Caption>
                     )}
                     {order.special_instructions && (
@@ -696,7 +700,7 @@ function LabGroup({
                 </div>
                 <IconButton
                   icon="ph ph-x"
-                  aria-label="Quitar estudio"
+                  aria-label={orderQueueStrings.removeStudyLabel}
                   tone="muted"
                   size="sm"
                   onClick={() => onRemoveOrder(order.id)}
@@ -732,7 +736,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
     return (
       <DashedButton tone="neutral" size="sm" onClick={() => setOpen(true)}>
         <i className="ph ph-plus text-[12px]" />
-        Añadir medicamento
+        {orderQueueStrings.addMedicationButton}
       </DashedButton>
     )
   }
@@ -762,31 +766,39 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
   return (
     <div className="bg-n-0 border border-n-200 rounded-md p-4 mb-3">
       <Overline tone="muted" size="lg" className="mb-3">
-        Nuevo medicamento
+        {orderQueueStrings.newMedicationTitle}
       </Overline>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div className="col-span-2">
           <Input
-            placeholder="Medicamento *"
+            placeholder={orderQueueStrings.drugPlaceholder}
             value={drug}
             onChange={(e) => setDrug(e.target.value)}
           />
         </div>
-        <Input placeholder="Dosis *" value={dose} onChange={(e) => setDose(e.target.value)} />
-        <Input placeholder="Vía *" value={route} onChange={(e) => setRoute(e.target.value)} />
         <Input
-          placeholder="Frecuencia *"
+          placeholder={orderQueueStrings.dosePlaceholder}
+          value={dose}
+          onChange={(e) => setDose(e.target.value)}
+        />
+        <Input
+          placeholder={orderQueueStrings.routePlaceholder}
+          value={route}
+          onChange={(e) => setRoute(e.target.value)}
+        />
+        <Input
+          placeholder={orderQueueStrings.frequencyPlaceholder}
           value={frequency}
           onChange={(e) => setFrequency(e.target.value)}
         />
         <Input
-          placeholder="Duración"
+          placeholder={orderQueueStrings.durationPlaceholder}
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
         />
         <div className="col-span-2">
           <Input
-            placeholder="Notas (opcional)"
+            placeholder={orderQueueStrings.notesPlaceholder}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -795,7 +807,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
           <div className="col-span-2">
             <Select value={groupId} onValueChange={setGroupId}>
               <SelectTrigger>
-                <SelectValue placeholder="Receta…" />
+                <SelectValue placeholder={orderQueueStrings.prescriptionSelectPlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {groups.map((g) => (
@@ -810,7 +822,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
       </div>
       <div className="flex items-center justify-end gap-2 mt-3">
         <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-          Cancelar
+          {orderQueueStrings.cancelButton}
         </Button>
         <Button
           variant="primary"
@@ -818,7 +830,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
           onClick={handleSubmit}
           disabled={!drug.trim() || !dose.trim() || !route.trim() || !frequency.trim()}
         >
-          Añadir
+          {orderQueueStrings.addButton}
         </Button>
       </div>
     </div>
@@ -874,7 +886,11 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     if (existing) {
       existing.orders.push(order)
     } else {
-      acc.push({ key, title: order.groupTitle ?? `Orden ${order.groupOrder}`, orders: [order] })
+      acc.push({
+        key,
+        title: order.groupTitle ?? orderQueueStrings.imagingGroupFallback(order.groupOrder),
+        orders: [order],
+      })
     }
     return acc
   }, [])
@@ -889,7 +905,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     } else {
       acc.push({
         key,
-        title: order.groupTitle ?? `Laboratorio ${order.groupOrder}`,
+        title: order.groupTitle ?? orderQueueStrings.labGroupFallback(order.groupOrder),
         orders: [order],
       })
     }
@@ -908,14 +924,22 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden">
       <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
         <i className="ph ph-prescription text-[16px] text-p-500" />
-        <h3 className="text-[13.5px] font-semibold text-n-800">Órdenes médicas</h3>
+        <h3 className="text-[13.5px] font-semibold text-n-800">{orderQueueStrings.panelTitle}</h3>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="px-2">
-          <TabRailTrigger value="medications" label="Medicamentos" count={totalMeds} />
-          <TabRailTrigger value="imaging" label="Imagen" count={totalImaging} />
-          <TabRailTrigger value="labs" label="Laboratorio" count={totalLabs} />
+          <TabRailTrigger
+            value="medications"
+            label={orderQueueStrings.tabMedications}
+            count={totalMeds}
+          />
+          <TabRailTrigger
+            value="imaging"
+            label={orderQueueStrings.tabImaging}
+            count={totalImaging}
+          />
+          <TabRailTrigger value="labs" label={orderQueueStrings.tabLabs} count={totalLabs} />
         </TabsList>
 
         <TabsContent value="medications" className="p-4">
@@ -923,7 +947,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {savedRxCount > 0 && !isSigned && medications.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  Generadas
+                  {orderQueueStrings.generatedLabel}
                 </Overline>
               )}
               {(savedPrescriptions.data ?? []).map((rx) => (
@@ -943,7 +967,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {savedRxCount > 0 && medications.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  En cola
+                  {orderQueueStrings.queuedLabel}
                 </Overline>
               )}
               {medicationGroups.map((group) => {
@@ -971,7 +995,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
 
           {isSigned && savedRxCount === 0 && (
             <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
-              Sin recetas en esta consulta.
+              {orderQueueStrings.noRxSigned}
             </Caption>
           )}
         </TabsContent>
@@ -981,7 +1005,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {!isSigned && imagingOrders.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  Generadas
+                  {orderQueueStrings.generatedLabel}
                 </Overline>
               )}
               {imagingGroups_saved.map((g) => (
@@ -1001,7 +1025,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {imagingGroups_saved.length > 0 && imagingOrders.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  En cola
+                  {orderQueueStrings.queuedLabel}
                 </Overline>
               )}
               {imagingGroups.map((group) => (
@@ -1017,14 +1041,14 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
               ))}
               <DashedButton tone="subtle" size="sm" onClick={() => addImagingGroup()}>
                 <i className="ph ph-plus text-[11px]" />
-                Nueva orden de imagen
+                {orderQueueStrings.newImagingOrder}
               </DashedButton>
             </>
           )}
 
           {isSigned && imagingGroups_saved.length === 0 && (
             <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
-              Sin órdenes de imagen en esta consulta.
+              {orderQueueStrings.noImagingSigned}
             </Caption>
           )}
         </TabsContent>
@@ -1034,7 +1058,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {!isSigned && labOrders.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  Generadas
+                  {orderQueueStrings.generatedLabel}
                 </Overline>
               )}
               {labGroups_saved.map((g) => (
@@ -1054,7 +1078,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
             <>
               {labGroups_saved.length > 0 && labOrders.length > 0 && (
                 <Overline tone="neutral" size="sm" className="px-1 mb-2">
-                  En cola
+                  {orderQueueStrings.queuedLabel}
                 </Overline>
               )}
               {labGroups.map((group) => (
@@ -1070,14 +1094,14 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
               ))}
               <DashedButton tone="subtle" size="sm" onClick={() => addLabGroup()}>
                 <i className="ph ph-plus text-[11px]" />
-                Nuevo laboratorio
+                {orderQueueStrings.newLabOrder}
               </DashedButton>
             </>
           )}
 
           {isSigned && labGroups_saved.length === 0 && (
             <Caption tone="muted" size="lg" as="p" className="py-2 px-1 block">
-              Sin órdenes de laboratorio en esta consulta.
+              {orderQueueStrings.noLabsSigned}
             </Caption>
           )}
         </TabsContent>

@@ -2,6 +2,7 @@ import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ProtocolSuggestion } from '@rezeta/shared'
 import type { UseMutationResult } from '@tanstack/react-query'
 import { Button, Caption, Callout, Row, Stack, TextLink } from '@/components/ui'
+import { suggestionBannerStrings } from './strings'
 
 interface MutationActions {
   apply: UseMutationResult<void, Error, string>
@@ -20,11 +21,15 @@ function SuggestionCard({
   const pct = Math.round(suggestion.occurrencePercentage)
 
   return (
-    <Callout tone="warning" icon="ph ph-lightbulb" title="Sugerencia de optimización">
+    <Callout tone="warning" icon="ph ph-lightbulb" title={suggestionBannerStrings.calloutTitle}>
       <Stack gap={2}>
         <p className="text-[12.5px] text-n-700 leading-[1.45]">{suggestion.impactSummary}</p>
         <Caption tone="muted" size="sm" className="font-mono">
-          Detectado en {suggestion.occurrenceCount}/{suggestion.totalUses} usos ({pct}%)
+          {suggestionBannerStrings.detectedIn(
+            suggestion.occurrenceCount,
+            suggestion.totalUses,
+            pct,
+          )}
         </Caption>
         <Row gap={2} wrap className="mt-1">
           <Button
@@ -33,7 +38,9 @@ function SuggestionCard({
             disabled={apply.isPending}
             onClick={() => apply.mutate(suggestion.id)}
           >
-            {apply.isPending ? 'Aplicando…' : 'Aplicar cambio'}
+            {apply.isPending
+              ? suggestionBannerStrings.applyingButton
+              : suggestionBannerStrings.applyButton}
           </Button>
           <Button
             variant="secondary"
@@ -41,7 +48,9 @@ function SuggestionCard({
             disabled={createVariant.isPending}
             onClick={() => createVariant.mutate(suggestion.id)}
           >
-            {createVariant.isPending ? 'Creando…' : 'Crear variante'}
+            {createVariant.isPending
+              ? suggestionBannerStrings.creatingButton
+              : suggestionBannerStrings.createVariantButton}
           </Button>
           <TextLink
             tone="neutral"
@@ -49,7 +58,7 @@ function SuggestionCard({
             disabled={dismiss.isPending}
             onClick={() => dismiss.mutate(suggestion.id)}
           >
-            Ignorar
+            {suggestionBannerStrings.dismissButton}
           </TextLink>
         </Row>
       </Stack>

@@ -65,7 +65,7 @@ export function StepTypes({
             <input
               className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
               value={t.name}
-              placeholder="Nombre del tipo"
+              placeholder={onboardingCustomizeStrings.step2TypePlaceholder}
               onChange={(e) => updateName(i, e.target.value)}
             />
             <select
@@ -84,7 +84,7 @@ export function StepTypes({
               size="sm"
               className="w-[28px] px-0"
               onClick={() => remove(i)}
-              title="Eliminar"
+              title={onboardingCustomizeStrings.step2DeleteLabel}
             >
               <i className="ph ph-trash text-[15px] text-danger-text" />
             </Button>

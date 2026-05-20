@@ -2,6 +2,7 @@ import { Button } from '@/components/ui'
 import type { ConsultationViewMode } from '@/store/ui.store'
 import { AsideCard } from './AsideCard'
 import { OrderQueuePanel } from './OrderQueuePanel'
+import { consultationSidebarStrings } from './strings'
 
 interface PatientLite {
   allergies: string[]
@@ -51,7 +52,7 @@ export function ConsultationSidebar({
   return (
     <div className="flex flex-col gap-4">
       {patient && (patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
-        <AsideCard title="Alertas del paciente">
+        <AsideCard title={consultationSidebarStrings.patientAlertsTitle}>
           <div className="flex flex-col gap-2">
             {patient.allergies.map((a) => (
               <div
@@ -60,7 +61,7 @@ export function ConsultationSidebar({
               >
                 <i className="ph ph-x-circle text-[16px] shrink-0 mt-1" />
                 <div>
-                  <strong>Alergia</strong> · {a}
+                  <strong>{consultationSidebarStrings.allergyPrefix}</strong> · {a}
                 </div>
               </div>
             ))}
@@ -81,12 +82,12 @@ export function ConsultationSidebar({
         <div>
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400">
-              Protocolos
+              {consultationSidebarStrings.protocolsLabel}
             </span>
             {!isSigned && (
               <Button variant="secondary" size="sm" onClick={onAddProtocol}>
                 <i className="ph ph-plus text-[12px]" />
-                Agregar
+                {consultationSidebarStrings.addProtocolButton}
               </Button>
             )}
           </div>
@@ -94,15 +95,15 @@ export function ConsultationSidebar({
             <i className="ph ph-stack text-[22px] text-n-400" />
             <p className="text-[12.5px] text-n-400">
               {isSigned
-                ? 'Sin protocolos aplicados.'
-                : 'Agrega un protocolo para guiar esta consulta.'}
+                ? consultationSidebarStrings.noProtocolsSigned
+                : consultationSidebarStrings.noProtocolsUnsigned}
             </p>
           </div>
         </div>
       )}
 
       {!isCanvas && prevList.length > 0 && (
-        <AsideCard title="Consultas previas">
+        <AsideCard title={consultationSidebarStrings.prevConsultationsTitle}>
           <div className="flex flex-col gap-1">
             {prevList.map((c) => (
               <button
@@ -112,7 +113,7 @@ export function ConsultationSidebar({
                 className="flex items-center justify-between w-full text-left py-2 text-[12.5px] group"
               >
                 <span className="text-n-700 group-hover:text-n-900 transition-colors truncate flex-1 text-left">
-                  {c.chiefComplaint ?? 'Sin motivo'}
+                  {c.chiefComplaint ?? consultationSidebarStrings.noChiefComplaint}
                 </span>
                 <span className="font-mono text-n-400 text-[11px] shrink-0 ml-2">
                   {formatDate(c.consultedAt)}

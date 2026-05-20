@@ -6,6 +6,7 @@ import { InvoiceFormModal } from './InvoiceFormModal'
 import { InvoiceRow } from './InvoiceRow'
 import { SummaryCards } from './SummaryCards'
 import { STATUS_OPTIONS, type ActiveModal } from './helpers'
+import { billingStrings } from './strings'
 
 export function Billing(): JSX.Element {
   const [statusFilter, setStatusFilter] = useState('')
@@ -21,10 +22,10 @@ export function Billing(): JSX.Element {
   return (
     <div>
       <div className="flex items-center mb-6 gap-4">
-        <h1 className="text-h1 flex-1">Facturación</h1>
+        <h1 className="text-h1 flex-1">{billingStrings.pageTitle}</h1>
         <Button variant="primary" size="md" onClick={() => setActiveModal({ type: 'create' })}>
           <i className="ph ph-plus text-[14px]" />
-          Nueva factura
+          {billingStrings.newInvoiceButton}
         </Button>
       </div>
 
@@ -45,13 +46,15 @@ export function Billing(): JSX.Element {
         </div>
 
         {isLoading && (
-          <div className="p-8 text-center text-n-400 text-[13px]">Cargando facturas...</div>
+          <div className="p-8 text-center text-n-400 text-[13px]">
+            {billingStrings.loadingInvoices}
+          </div>
         )}
 
         {isError && (
           <div className="m-4">
             <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
-              No se pudo cargar la lista de facturas.
+              {billingStrings.errorLoadingInvoices}
             </Callout>
           </div>
         )}
@@ -59,11 +62,11 @@ export function Billing(): JSX.Element {
         {!isLoading && !isError && invoices.length === 0 && (
           <EmptyState
             icon={<i className="ph ph-receipt" />}
-            title="No hay facturas"
-            description="Las facturas se generan automáticamente al firmar una consulta, o puedes crear una manualmente."
+            title={billingStrings.emptyTitle}
+            description={billingStrings.emptyDescription}
             action={
               <Button variant="primary" onClick={() => setActiveModal({ type: 'create' })}>
-                Nueva factura
+                {billingStrings.emptyCta}
               </Button>
             }
             className="rounded-none border-0"
@@ -75,16 +78,16 @@ export function Billing(): JSX.Element {
             <thead>
               <tr>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Número
+                  {billingStrings.tableColNumber}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Paciente / Ubicación
+                  {billingStrings.tableColPatientLocation}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Estado
+                  {billingStrings.tableColStatus}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-right">
-                  Monto
+                  {billingStrings.tableColAmount}
                 </th>
                 <th className="bg-n-50 px-4 py-3" />
               </tr>

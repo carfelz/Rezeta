@@ -10,6 +10,7 @@ import {
   Textarea,
 } from '@/components/ui'
 import { useAmendConsultation } from '@/hooks/consultations/use-consultations'
+import { amendmentModalStrings } from './strings'
 
 export interface AmendmentModalProps {
   consultationId: string
@@ -22,39 +23,34 @@ export function AmendmentModal({ consultationId, onClose }: AmendmentModalProps)
   const [notes, setNotes] = useState('')
   return (
     <ModalContent>
-      <ModalHeader
-        title="Agregar enmienda"
-        subtitle="Las enmiendas quedan registradas junto a la consulta original."
-      />
+      <ModalHeader title={amendmentModalStrings.title} subtitle={amendmentModalStrings.subtitle} />
       <ModalBody>
         <div className="flex flex-col gap-4">
-          <Field label="Motivo de la enmienda" required>
+          <Field label={amendmentModalStrings.reasonLabel} required>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Describe la corrección…"
+              placeholder={amendmentModalStrings.reasonPlaceholder}
               rows={3}
             />
           </Field>
-          <Field label="Notas adicionales (opcional)">
+          <Field label={amendmentModalStrings.notesLabel}>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Información corregida o aclarada…"
+              placeholder={amendmentModalStrings.notesPlaceholder}
               rows={3}
             />
           </Field>
           {amendMutation.isError && (
-            <p className="text-[12px] text-danger-text">
-              No se pudo guardar la enmienda. Inténtalo de nuevo.
-            </p>
+            <p className="text-[12px] text-danger-text">{amendmentModalStrings.errorMessage}</p>
           )}
         </div>
       </ModalBody>
       <ModalFooter>
         <ModalClose asChild>
           <Button variant="secondary" onClick={onClose}>
-            Cancelar
+            {amendmentModalStrings.cancelButton}
           </Button>
         </ModalClose>
         <Button
@@ -67,7 +63,9 @@ export function AmendmentModal({ consultationId, onClose }: AmendmentModalProps)
             )
           }
         >
-          {amendMutation.isPending ? 'Guardando…' : 'Guardar enmienda'}
+          {amendMutation.isPending
+            ? amendmentModalStrings.savingButton
+            : amendmentModalStrings.saveButton}
         </Button>
       </ModalFooter>
     </ModalContent>

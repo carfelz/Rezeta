@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Caption, TextLink } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
+import { dashboardStrings } from './strings'
 
 export interface RecentPatientsProps {
   patients: Patient[]
@@ -14,10 +15,10 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
     <div className="bg-n-0 border border-n-200 rounded-md p-5">
       <div className="flex items-center justify-between mb-[14px]">
         <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
-          Pacientes recientes
+          {dashboardStrings.recentPatientsTitle}
         </h3>
         <TextLink tone="neutral" size="md" onClick={() => void navigate('/pacientes')}>
-          Ver todos →
+          {dashboardStrings.recentPatientsViewAll}
         </TextLink>
       </div>
       {isLoading ? (
@@ -28,7 +29,7 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
         </div>
       ) : patients.length === 0 ? (
         <Caption tone="muted" size="lg" as="p" className="py-2 block">
-          Aún no tienes pacientes registrados.
+          {dashboardStrings.recentPatientsEmpty}
         </Caption>
       ) : (
         <div className="flex flex-col gap-3">
@@ -48,7 +49,7 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
                     {p.firstName} {p.lastName}
                   </div>
                   <Caption tone="neutral" size="sm" as="div" className="mt-1">
-                    {p.documentNumber ?? 'Sin documento'} ·{' '}
+                    {p.documentNumber ?? dashboardStrings.recentPatientsNoDocument} ·{' '}
                     {new Date(p.createdAt).toLocaleDateString('es-DO', {
                       day: 'numeric',
                       month: 'short',

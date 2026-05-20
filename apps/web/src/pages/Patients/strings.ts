@@ -1,0 +1,70 @@
+export const patientsPageStrings = {
+  pageTitle: 'Pacientes',
+  registerButton: 'Registrar paciente',
+  searchPlaceholder: 'Buscar por nombre, cédula, teléfono...',
+  loading: 'Cargando pacientes...',
+  loadError: 'No se pudo cargar la lista de pacientes.',
+  emptyTitle: 'Aún no hay pacientes registrados',
+  emptyDescription:
+    'Registra a tu primer paciente para empezar a gestionar citas, consultas y prescripciones desde un solo lugar.',
+  tableHeaderPatient: 'Paciente',
+  tableHeaderDocument: 'Cédula / Documento',
+  tableHeaderAge: 'Edad',
+  tableHeaderStatus: 'Estado',
+  deleteError: 'No se pudo eliminar el paciente. Intenta de nuevo.',
+} as const
+
+export const patientRowStrings = {
+  openPatientLabel: (name: string) => `Abrir paciente ${name}`,
+  statusActive: 'Activo',
+  viewLabel: 'Ver paciente',
+  editLabel: 'Editar paciente',
+  deleteLabel: 'Eliminar paciente',
+} as const
+
+export const deletePatientModalStrings = {
+  title: 'Eliminar paciente',
+  subtitle: (name: string) =>
+    `¿Eliminar a ${name}? Esta acción no se puede deshacer y eliminará todos sus datos del sistema.`,
+  cancelButton: 'Cancelar',
+  deletingButton: 'Eliminando...',
+  deleteButton: 'Eliminar paciente',
+} as const
+
+export const patientModalStrings = {
+  titleEdit: 'Editar paciente',
+  titleCreate: 'Registrar paciente',
+  nameLabel: 'Nombre completo',
+  namePlaceholder: 'Ej. Ana María Reyes',
+  dobLabel: 'Fecha de nacimiento',
+  sexLabel: 'Sexo',
+  sexPlaceholder: 'Seleccionar',
+  sexFemale: 'Femenino',
+  sexMale: 'Masculino',
+  docTypeLabel: 'Tipo de documento',
+  docTypePlaceholder: 'Seleccionar',
+  docTypeCedula: 'Cédula',
+  docTypePassport: 'Pasaporte',
+  docNumberLabel: 'Número de documento',
+  docNumberPlaceholder: 'Ej. 001-1234567-8',
+  phoneLabel: 'Teléfono',
+  phonePlaceholder: 'Ej. 809-555-0000',
+  emailLabel: 'Correo electrónico',
+  emailPlaceholder: 'Ej. ana@email.com',
+  notesLabel: 'Notas',
+  notesPlaceholder: 'Observaciones iniciales...',
+  updateError: 'No se pudo actualizar el paciente. Intenta de nuevo.',
+  createError: 'No se pudo registrar el paciente. Intenta de nuevo.',
+  cancelButton: 'Cancelar',
+  savingButton: 'Guardando...',
+  saveButton: 'Guardar cambios',
+  registerButton: 'Registrar paciente',
+  readDocumentLabel: 'Documento',
+  readDobLabel: 'Fecha de nacimiento',
+  readSexLabel: 'Sexo',
+  readPhoneLabel: 'Teléfono',
+  readEmailLabel: 'Correo electrónico',
+  readNotesLabel: 'Notas',
+  allergiesLabel: 'Alergias',
+  chronicConditionsLabel: 'Condiciones crónicas',
+} as const

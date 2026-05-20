@@ -15,6 +15,7 @@ export const blockEditorStrings = {
   // ── Shared block controls ──────────────────────────────────────────────────
   blockEdit: 'Editar bloque',
   blockCtxEdit: 'Editar',
+  blockCtxMoreActions: 'Más acciones',
   blockCtxMoveUp: 'Mover arriba',
   blockCtxMoveDown: 'Mover abajo',
   blockCtxDuplicate: 'Duplicar',
@@ -103,4 +104,96 @@ export const blockEditorStrings = {
   typePickerCreating: 'Creando...',
   typePickerNoTypes: 'No tienes tipos de protocolo activos.',
   typePickerNoTypesCta: 'Ir a Ajustes → Tipos',
+} as const
+
+export const createProtocolDialogStrings = {
+  title: 'Crear nuevo protocolo',
+  subtypePrefix: 'Tipo:',
+  nameLabel: 'Nombre del protocolo',
+  namePlaceholder: 'Ej. Mi Protocolo de Anafilaxia',
+  cancelButton: 'Cancelar',
+  creatingButton: 'Creando...',
+  createButton: 'Crear protocolo',
+} as const
+
+export const blockRendererRunModeStrings = {
+  sectionType: 'Sección',
+  textType: 'Texto',
+  checklistType: 'Lista',
+  checklistDefaultTitle: 'Lista de verificación',
+  stepsType: 'Pasos',
+  stepsDefaultTitle: 'Pasos',
+  decisionType: 'Decisión',
+  decisionDefaultTitle: 'Decisión',
+  dosageType: 'Medicación',
+  dosageDefaultTitle: 'Medicamentos',
+  alertType: 'Alerta',
+  alertDefaultTitle: 'Alerta',
+  imagingType: 'Imagen',
+  imagingDefaultTitle: 'Estudios de imagen',
+  labType: 'Laboratorio',
+  labDefaultTitle: 'Estudios de laboratorio',
+  completedStep: '✓ Completado',
+  skippedStep: '⊘ Omitido',
+  criticalItem: 'crítico',
+  clearSelection: 'Limpiar selección',
+  openLinkedProtocol: 'Abrir protocolo vinculado',
+  addToOrders: '+ Añadir a órdenes',
+  addToPrescription: '+ Añadir a receta',
+  alreadyQueued: '✓ Añadido',
+} as const
+
+export const protocolPickerModalStrings = {
+  title: 'Seleccionar protocolo',
+  description: 'Elige un protocolo para aplicarlo en esta consulta.',
+  searchPlaceholder: 'Buscar protocolo…',
+  loading: 'Cargando protocolos…',
+  noResults: 'No se encontraron protocolos.',
+  cancelButton: 'Cancelar',
+  applyingButton: 'Aplicando…',
+  applyButton: 'Aplicar protocolo',
+} as const
+
+export const suggestionBannerStrings = {
+  calloutTitle: 'Sugerencia de optimización',
+  detectedIn: (count: number, total: number, pct: number) =>
+    `Detectado en ${count}/${total} usos (${pct}%)`,
+  applyingButton: 'Aplicando…',
+  applyButton: 'Aplicar cambio',
+  creatingButton: 'Creando…',
+  createVariantButton: 'Crear variante',
+  dismissButton: 'Ignorar',
+} as const
+
+export const imagingOrderEditorStrings = {
+  titleLabel: 'Título (opcional)',
+  titlePlaceholder: 'Ej. Estudios de imagen cardíaca',
+  studiesLabel: 'Estudios',
+  studyTypePlaceholder: 'Tipo de estudio (ej. Radiografía de tórax PA)',
+  indicationPlaceholder: 'Indicación clínica',
+  deleteStudyLabel: 'Eliminar',
+  contrastLabel: 'Con contraste',
+  fastingLabel: 'Requiere ayuno',
+  addStudyButton: '+ Añadir estudio',
+  urgencyRoutine: 'Rutina',
+  urgencyUrgent: 'Urgente',
+  urgencyStat: 'STAT',
+} as const
+
+export const labOrderEditorStrings = {
+  titleLabel: 'Título (opcional)',
+  titlePlaceholder: 'Ej. Perfil metabólico completo',
+  testsLabel: 'Pruebas',
+  testNamePlaceholder: 'Nombre de la prueba (ej. Hemograma completo)',
+  indicationPlaceholder: 'Indicación clínica',
+  deleteTestLabel: 'Eliminar',
+  fastingLabel: 'Requiere ayuno',
+  addTestButton: '+ Añadir prueba',
+  sampleBlood: 'Sangre',
+  sampleUrine: 'Orina',
+  sampleStool: 'Heces',
+  sampleOther: 'Otro',
+  urgencyRoutine: 'Rutina',
+  urgencyUrgent: 'Urgente',
+  urgencyStat: 'STAT',
 } as const

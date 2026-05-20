@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
 import type { AppointmentWithDetails } from '@rezeta/shared'
 import { formatTime, minutesUntil, statusBadgeVariant, statusLabel } from './helpers'
+import { dashboardStrings } from './strings'
 
 export interface UpcomingRowProps {
   appt: AppointmentWithDetails
@@ -28,7 +29,7 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
     const mins = minutesUntil(appt.startsAt)
     if (mins >= 0 && mins <= 30) {
       badgeVariant = 'active'
-      badgeLabel = 'En espera'
+      badgeLabel = dashboardStrings.upcomingRowPending
     } else {
       badgeVariant = 'draft'
     }

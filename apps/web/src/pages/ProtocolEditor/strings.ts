@@ -1,5 +1,8 @@
 export const protocolEditorStrings = {
   // ── Header ──────────────────────────────────────────────────────────────────
+  titleRenameTooltip: 'Haz clic para renombrar',
+  blockCount: (n: number) => `${n} ${n === 1 ? 'bloque' : 'bloques'}`,
+  sectionCount: (n: number) => `${n} ${n === 1 ? 'sección' : 'secciones'}`,
   saveButton: 'Guardar versión',
   save: 'Guardar',
   publish: (_n: number) => 'Publicar',
@@ -28,6 +31,7 @@ export const protocolEditorStrings = {
 
   // ── History ───────────────────────────────────────────────────────────────────
   historyButton: 'Historial',
+  historyCloseLabel: 'Cerrar historial',
   historyViewAll: 'Ver historial completo',
   historyTitle: 'Historial de versiones',
   historyEmpty: 'Sin versiones guardadas.',

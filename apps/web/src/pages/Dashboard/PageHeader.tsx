@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Button, Row } from '@/components/ui'
 import { formatDateKicker } from './helpers'
+import { dashboardStrings } from './strings'
 
 export interface PageHeaderProps {
   now: Date
@@ -24,11 +25,11 @@ export function PageHeader({ now, greeting, subtitle }: PageHeaderProps): JSX.El
       <Row gap={2} className="shrink-0">
         <Button variant="secondary" size="md" onClick={() => void navigate('/agenda')}>
           <i className="ph ph-calendar-blank text-[15px]" />
-          Ver agenda
+          {dashboardStrings.pageHeaderViewSchedule}
         </Button>
         <Button variant="primary" size="md" onClick={() => void navigate('/pacientes')}>
           <i className="ph ph-plus text-[15px]" />
-          Nueva consulta
+          {dashboardStrings.pageHeaderNewConsultation}
         </Button>
       </Row>
     </div>

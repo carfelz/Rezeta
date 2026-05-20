@@ -19,6 +19,7 @@ import {
 } from '@/components/ui'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ProtocolTypeDto } from '@rezeta/shared'
+import { createProtocolDialogStrings } from './strings'
 
 interface CreateProtocolDialogProps {
   type: ProtocolTypeDto | null
@@ -58,14 +59,16 @@ export function CreateProtocolDialog({
     <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContent className="sm:max-w-[480px]">
         <ModalHeader
-          title="Crear nuevo protocolo"
-          {...(type ? { subtitle: `Tipo: ${type.name}` } : {})}
+          title={createProtocolDialogStrings.title}
+          {...(type
+            ? { subtitle: `${createProtocolDialogStrings.subtypePrefix} ${type.name}` }
+            : {})}
         />
 
         <ModalBody className="py-6">
-          <Field label="Nombre del protocolo" required>
+          <Field label={createProtocolDialogStrings.nameLabel} required>
             <Input
-              placeholder="Ej. Mi Protocolo de Anafilaxia"
+              placeholder={createProtocolDialogStrings.namePlaceholder}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -76,17 +79,17 @@ export function CreateProtocolDialog({
         <ModalFooter>
           <ModalClose asChild>
             <Button variant="secondary" disabled={isPending}>
-              Cancelar
+              {createProtocolDialogStrings.cancelButton}
             </Button>
           </ModalClose>
           <Button variant="primary" onClick={handleCreate} disabled={!title.trim() || isPending}>
             {isPending ? (
               <>
                 <i className="ph ph-spinner animate-spin mr-2" />
-                Creando...
+                {createProtocolDialogStrings.creatingButton}
               </>
             ) : (
-              'Crear protocolo'
+              createProtocolDialogStrings.createButton
             )}
           </Button>
         </ModalFooter>

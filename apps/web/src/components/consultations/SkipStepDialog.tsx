@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Button, DialogCard, RadioCard } from '@/components/ui'
+import { skipStepStrings } from './strings'
 
 const PRESET_REASONS = [
-  { value: 'no_coop', label: 'Paciente no cooperaba' },
-  { value: 'not_relevant', label: 'No clínicamente relevante hoy' },
-  { value: 'already_done', label: 'Paso ya documentado en visita reciente' },
-  { value: 'other', label: 'Otro…' },
+  { value: 'no_coop', label: skipStepStrings.reasonNoCoop },
+  { value: 'not_relevant', label: skipStepStrings.reasonNotRelevant },
+  { value: 'already_done', label: skipStepStrings.reasonAlreadyDone },
+  { value: 'other', label: skipStepStrings.reasonOther },
 ] as const
 
 type ReasonValue = (typeof PRESET_REASONS)[number]['value']
@@ -38,14 +39,14 @@ export function SkipStepDialog({
   return (
     <DialogCard
       width="md"
-      overline="Saltar paso"
+      overline={skipStepStrings.overline}
       overlineTone="warning"
       title={`¿Por qué saltar ${stepTitle}?`}
-      description="Quedará registrado en la consulta. El protocolo seguirá marcado como completo parcialmente."
+      description={skipStepStrings.description}
       footer={
         <>
           <Button variant="secondary" size="sm" onClick={onClose}>
-            Cancelar
+            {skipStepStrings.cancelButton}
           </Button>
           <Button
             variant="warning"
@@ -53,7 +54,7 @@ export function SkipStepDialog({
             disabled={!canConfirm}
             onClick={() => onConfirm(finalReason())}
           >
-            {isPending ? 'Guardando…' : 'Saltar paso'}
+            {isPending ? skipStepStrings.savingButton : skipStepStrings.skipButton}
           </Button>
         </>
       }
@@ -72,7 +73,7 @@ export function SkipStepDialog({
           <textarea
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}
-            placeholder="Describe el motivo…"
+            placeholder={skipStepStrings.otherPlaceholder}
             rows={2}
             className="mt-1 w-full px-3 py-2 text-[13px] font-sans text-n-700 placeholder:text-n-300 border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0 resize-none"
           />

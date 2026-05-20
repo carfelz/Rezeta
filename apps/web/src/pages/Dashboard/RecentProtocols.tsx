@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, Caption, TextLink } from '@/components/ui'
 import type { ProtocolListItem } from '@rezeta/shared'
 import { labelForProtocolStatus, statusToBadgeVariant } from './helpers'
+import { dashboardStrings } from './strings'
 
 export interface RecentProtocolsProps {
   protocols: ProtocolListItem[]
@@ -15,15 +16,15 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
     <div className="bg-n-0 border border-n-200 rounded-md p-5">
       <div className="flex items-center justify-between mb-[14px]">
         <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
-          Protocolos recientes
+          {dashboardStrings.recentProtocolsTitle}
         </h3>
         <TextLink tone="neutral" size="md" onClick={() => void navigate('/protocolos')}>
-          Ver todos →
+          {dashboardStrings.recentProtocolsViewAll}
         </TextLink>
       </div>
       {visible.length === 0 ? (
         <Caption tone="muted" size="lg" as="p" className="py-2 block">
-          Aún no tienes protocolos. Crea uno desde la sección Protocolos.
+          {dashboardStrings.recentProtocolsEmpty}
         </Caption>
       ) : (
         <div className="flex flex-col gap-3">
@@ -40,7 +41,7 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
                 <div className="text-[13px] font-semibold text-n-900 truncate">{proto.title}</div>
                 <Caption tone="neutral" size="sm" as="div" className="mt-1">
                   {proto.currentVersionNumber !== null ? `v${proto.currentVersionNumber} · ` : ''}
-                  actualizado{' '}
+                  {dashboardStrings.recentProtocolsUpdated}{' '}
                   {new Date(proto.updatedAt).toLocaleDateString('es-DO', {
                     day: 'numeric',
                     month: 'short',

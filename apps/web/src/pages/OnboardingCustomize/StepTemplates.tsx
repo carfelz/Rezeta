@@ -45,7 +45,7 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
             <input
               className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
               value={t.name}
-              placeholder="Nombre de la plantilla"
+              placeholder={onboardingCustomizeStrings.step1TemplatePlaceholder}
               onChange={(e) => updateName(t.clientId, e.target.value)}
             />
             <Button
@@ -53,7 +53,7 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
               size="sm"
               className="w-[28px] px-0"
               onClick={() => remove(t.clientId)}
-              title="Eliminar"
+              title={onboardingCustomizeStrings.step1DeleteLabel}
             >
               <i className="ph ph-trash text-[15px] text-danger-text" />
             </Button>

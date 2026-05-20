@@ -1,6 +1,7 @@
 import { Avatar, Button, DialogCard } from '@/components/ui'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
 import { formatRelativeMinutes } from '@/lib/format/dates'
+import { resumeBannerStrings } from './strings'
 
 export interface ResumeBannerProps {
   usage: ConsultationProtocolUsage
@@ -41,27 +42,27 @@ export function ResumeBanner({
     <DialogCard
       width="xl"
       elevation="raised"
-      overline="Consulta en progreso"
+      overline={resumeBannerStrings.overline}
       overlineTone="neutral"
-      title="Bienvenido de vuelta"
+      title={resumeBannerStrings.title}
       description={
-        <>
-          Dejaste una consulta de {patientName} a medias {formatRelativeMinutes(elapsedMinutes)}.
-          ¿Quieres continuar donde la dejaste?
-        </>
+        <>{resumeBannerStrings.description(patientName, formatRelativeMinutes(elapsedMinutes))}</>
       }
       footer={
         <div className="flex flex-col w-full gap-3">
           <div className="flex items-center gap-2 w-full">
             <Button variant="primary" size="md" className="flex-1" onClick={onResume}>
-              Continuar
-              {currentStep && ` en paso ${currentStep.number} · ${currentStep.title}`}
+              {currentStep
+                ? resumeBannerStrings.resumeButton(currentStep.number, currentStep.title)
+                : resumeBannerStrings.resumeButtonSimple}
             </Button>
             <Button variant="secondary" size="md" onClick={onStartNew}>
-              Empezar nueva
+              {resumeBannerStrings.startNewButton}
             </Button>
           </div>
-          <p className="text-[11.5px] text-n-400 text-center">El borrador se conserva 7 días.</p>
+          <p className="text-[11.5px] text-n-400 text-center">
+            {resumeBannerStrings.draftRetentionNote}
+          </p>
         </div>
       }
     >
@@ -71,11 +72,15 @@ export function ResumeBanner({
           <div className="min-w-0">
             <div className="text-[13.5px] font-medium text-n-900 truncate">
               {patientName}
-              {patientAge != null && ` · ${patientAge} años`}
+              {patientAge != null && resumeBannerStrings.patientAge(patientAge)}
             </div>
             {currentStep && (
               <div className="text-[11.5px] text-n-500 mt-px">
-                Protocolo {usage.protocolTitle} · paso {currentStep.number} de {totalSteps ?? '?'}
+                {resumeBannerStrings.protocolStep(
+                  usage.protocolTitle,
+                  currentStep.number,
+                  totalSteps ?? '?',
+                )}
               </div>
             )}
           </div>
@@ -100,10 +105,15 @@ export function ResumeBanner({
           <div className="flex items-center justify-between text-[11.5px] text-n-500">
             {lastEditField && (
               <span>
-                Última edición: <span className="text-n-800 font-medium">{lastEditField}</span>
+                {resumeBannerStrings.lastEditLabel}{' '}
+                <span className="text-n-800 font-medium">{lastEditField}</span>
               </span>
             )}
-            {lastEditTime && <span>{lastEditTime} · auto-guardado</span>}
+            {lastEditTime && (
+              <span>
+                {lastEditTime} {resumeBannerStrings.autoSaved}
+              </span>
+            )}
           </div>
         )}
       </div>

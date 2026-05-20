@@ -22,17 +22,18 @@ import {
   ModalFooter,
   IconButton,
 } from '@/components/ui'
+import { schedulesStrings } from './strings'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DAY_LABELS: Record<number, string> = {
-  0: 'Domingo',
-  1: 'Lunes',
-  2: 'Martes',
-  3: 'Miércoles',
-  4: 'Jueves',
-  5: 'Viernes',
-  6: 'Sábado',
+  0: schedulesStrings.daySunday,
+  1: schedulesStrings.dayMonday,
+  2: schedulesStrings.dayTuesday,
+  3: schedulesStrings.dayWednesday,
+  4: schedulesStrings.dayThursday,
+  5: schedulesStrings.dayFriday,
+  6: schedulesStrings.daySaturday,
 }
 
 // ─── Block Form Modal ─────────────────────────────────────────────────────────
@@ -65,10 +66,10 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
     } catch (err: unknown) {
       const msg =
         err instanceof Error && err.message.includes('SCHEDULE_BLOCK_OVERLAP')
-          ? 'Ya existe un bloque en ese horario para ese día.'
+          ? schedulesStrings.blockOverlapError
           : err instanceof Error && err.message.includes('SCHEDULE_BLOCK_TIME_INVALID')
-            ? 'La hora de inicio debe ser anterior a la hora de fin.'
-            : 'No se pudo crear el bloque. Intenta de nuevo.'
+            ? schedulesStrings.blockTimeInvalidError
+            : schedulesStrings.blockCreateError
       setError(msg)
     }
   }
@@ -83,7 +84,7 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
       }}
     >
       <ModalContent>
-        <ModalHeader title="Nuevo bloque de disponibilidad" showClose={false} />
+        <ModalHeader title={schedulesStrings.blockFormTitle} showClose={false} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
@@ -98,7 +99,7 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
                 {error}
               </Callout>
             )}
-            <Field label="Día de la semana" required>
+            <Field label={schedulesStrings.blockDayLabel} required>
               <select
                 className="w-full h-input-md px-3 border border-n-300 rounded-sm text-body-sm bg-n-0 focus:outline-none focus:border-p-500"
                 value={dayOfWeek}
@@ -112,7 +113,7 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
               </select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Hora inicio" required>
+              <Field label={schedulesStrings.blockStartTimeLabel} required>
                 <Input
                   type="time"
                   value={startTime}
@@ -120,7 +121,7 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
                   step="900"
                 />
               </Field>
-              <Field label="Hora fin" required>
+              <Field label={schedulesStrings.blockEndTimeLabel} required>
                 <Input
                   type="time"
                   value={endTime.slice(0, 5)}
@@ -129,7 +130,10 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
                 />
               </Field>
             </div>
-            <Field label="Duración por turno (min)" helper="Ej. 30 o 60 minutos">
+            <Field
+              label={schedulesStrings.blockSlotDurationLabel}
+              helper={schedulesStrings.blockSlotDurationHelper}
+            >
               <Input
                 type="number"
                 min="15"
@@ -142,10 +146,12 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
           </ModalBody>
           <ModalFooter>
             <Button variant="secondary" type="button" onClick={onClose}>
-              Cancelar
+              {schedulesStrings.blockCancelButton}
             </Button>
             <Button variant="primary" type="submit" disabled={!canSubmit || createBlock.isPending}>
-              {createBlock.isPending ? 'Guardando…' : 'Crear bloque'}
+              {createBlock.isPending
+                ? schedulesStrings.blockSavingButton
+                : schedulesStrings.blockCreateButton}
             </Button>
           </ModalFooter>
         </form>
@@ -186,8 +192,8 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
     } catch (err: unknown) {
       const msg =
         err instanceof Error && err.message.includes('SCHEDULE_EXCEPTION_TIME_INVALID')
-          ? 'La hora de inicio debe ser anterior a la hora de fin.'
-          : 'No se pudo crear la excepción. Intenta de nuevo.'
+          ? schedulesStrings.exceptionTimeInvalidError
+          : schedulesStrings.exceptionCreateError
       setError(msg)
     }
   }
@@ -202,7 +208,7 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
       }}
     >
       <ModalContent>
-        <ModalHeader title="Nueva excepción de horario" showClose={false} />
+        <ModalHeader title={schedulesStrings.exceptionFormTitle} showClose={false} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
@@ -217,21 +223,24 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
                 {error}
               </Callout>
             )}
-            <Field label="Fecha" required>
+            <Field label={schedulesStrings.exceptionDateLabel} required>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
-            <Field label="Tipo" required>
+            <Field label={schedulesStrings.exceptionTypeLabel} required>
               <select
                 className="w-full h-input-md px-3 border border-n-300 rounded-sm text-body-sm bg-n-0 focus:outline-none focus:border-p-500"
                 value={type}
                 onChange={(e) => setType(e.target.value as 'blocked' | 'available')}
               >
-                <option value="blocked">Bloqueado</option>
-                <option value="available">Disponible extra</option>
+                <option value="blocked">{schedulesStrings.exceptionTypeBlocked}</option>
+                <option value="available">{schedulesStrings.exceptionTypeAvailable}</option>
               </select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Hora inicio" helper="Opcional">
+              <Field
+                label={schedulesStrings.exceptionStartTimeLabel}
+                helper={schedulesStrings.exceptionStartTimeHelper}
+              >
                 <Input
                   type="time"
                   value={startTime}
@@ -239,7 +248,10 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
                   step="900"
                 />
               </Field>
-              <Field label="Hora fin" helper="Opcional">
+              <Field
+                label={schedulesStrings.exceptionEndTimeLabel}
+                helper={schedulesStrings.exceptionEndTimeHelper}
+              >
                 <Input
                   type="time"
                   value={endTime}
@@ -248,10 +260,13 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
                 />
               </Field>
             </div>
-            <Field label="Motivo" helper="Opcional">
+            <Field
+              label={schedulesStrings.exceptionReasonLabel}
+              helper={schedulesStrings.exceptionReasonHelper}
+            >
               <Input
                 type="text"
-                placeholder="Ej. Día festivo"
+                placeholder={schedulesStrings.exceptionReasonPlaceholder}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
@@ -259,14 +274,16 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
           </ModalBody>
           <ModalFooter>
             <Button variant="secondary" type="button" onClick={onClose}>
-              Cancelar
+              {schedulesStrings.exceptionCancelButton}
             </Button>
             <Button
               variant="primary"
               type="submit"
               disabled={!canSubmit || createException.isPending}
             >
-              {createException.isPending ? 'Guardando…' : 'Crear excepción'}
+              {createException.isPending
+                ? schedulesStrings.exceptionSavingButton
+                : schedulesStrings.exceptionCreateButton}
             </Button>
           </ModalFooter>
         </form>
@@ -284,12 +301,12 @@ function BlockRow({ block, onDelete }: { block: ScheduleBlock; onDelete: () => v
         <div className="text-[13px] font-semibold text-n-800">{DAY_LABELS[block.dayOfWeek]}</div>
         <div className="text-[12px] text-n-500 font-mono">
           {block.startTime.slice(0, 5)} – {block.endTime.slice(0, 5)} · {block.slotDurationMin}{' '}
-          min/turno
+          {schedulesStrings.slotDurationSuffix}
         </div>
       </div>
       <IconButton
         icon="ph ph-trash"
-        aria-label="Eliminar bloque"
+        aria-label={schedulesStrings.deleteBlockLabel}
         tone="danger"
         size="md"
         onClick={onDelete}
@@ -319,7 +336,9 @@ function ExceptionRow({
                 : 'bg-success-bg border-success-border text-success-text'
             }`}
           >
-            {ex.type === 'blocked' ? 'Bloqueado' : 'Disponible extra'}
+            {ex.type === 'blocked'
+              ? schedulesStrings.exceptionBlocked
+              : schedulesStrings.exceptionAvailable}
           </span>
         </div>
         {(ex.startTime || ex.reason) && (
@@ -335,7 +354,7 @@ function ExceptionRow({
       <button
         type="button"
         className="text-n-400 hover:text-danger-text transition-colors p-1 rounded min-h-touch flex items-center justify-center"
-        aria-label="Eliminar excepción"
+        aria-label={schedulesStrings.deleteExceptionLabel}
         onClick={onDelete}
       >
         <i className="ph ph-trash" style={{ fontSize: 16 }} />
@@ -364,20 +383,20 @@ export function Schedules(): JSX.Element {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-h1">Horario de disponibilidad</h1>
+        <h1 className="text-h1">{schedulesStrings.pageTitle}</h1>
       </div>
 
       {locations && locations.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-map-pin" />}
-          title="No tienes ubicaciones registradas"
-          description="Añade una ubicación para gestionar tu horario de disponibilidad."
+          title={schedulesStrings.noLocations}
+          description={schedulesStrings.noLocationsDescription}
           action={
             <Button
               variant="primary"
               onClick={() => window.location.assign('/ajustes/ubicaciones')}
             >
-              Ir a Ubicaciones
+              {schedulesStrings.goToLocationsButton}
             </Button>
           }
         />
@@ -404,24 +423,24 @@ export function Schedules(): JSX.Element {
           {/* Weekly blocks */}
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-h3">Disponibilidad semanal</h2>
+              <h2 className="text-h3">{schedulesStrings.weeklyBlocksTitle}</h2>
               <Button variant="secondary" size="sm" onClick={() => setShowBlockModal(true)}>
                 <i className="ph ph-plus mr-1.5" />
-                Añadir bloque
+                {schedulesStrings.addBlockButton}
               </Button>
             </div>
             <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden">
               {blocksLoading && (
-                <div className="px-4 py-8 text-center text-n-500 text-body-sm">Cargando…</div>
+                <div className="px-4 py-8 text-center text-n-500 text-body-sm">
+                  {schedulesStrings.loading}
+                </div>
               )}
               {!blocksLoading && (!blocks || blocks.length === 0) && (
                 <div className="px-4 py-8 text-center">
                   <p className="text-[13px] font-serif text-n-800 mb-1">
-                    Sin bloques de disponibilidad
+                    {schedulesStrings.noBlocks}
                   </p>
-                  <p className="text-[12px] text-n-500">
-                    Añade un bloque para definir tu horario semanal.
-                  </p>
+                  <p className="text-[12px] text-n-500">{schedulesStrings.noBlocksDescription}</p>
                 </div>
               )}
               {!blocksLoading &&
@@ -442,23 +461,25 @@ export function Schedules(): JSX.Element {
           {/* Exceptions */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-h3">Excepciones de horario</h2>
+              <h2 className="text-h3">{schedulesStrings.exceptionsTitle}</h2>
               <Button variant="secondary" size="sm" onClick={() => setShowExceptionModal(true)}>
                 <i className="ph ph-plus mr-1.5" />
-                Añadir excepción
+                {schedulesStrings.addExceptionButton}
               </Button>
             </div>
             <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden">
               {exceptionsLoading && (
-                <div className="px-4 py-8 text-center text-n-500 text-body-sm">Cargando…</div>
+                <div className="px-4 py-8 text-center text-n-500 text-body-sm">
+                  {schedulesStrings.loading}
+                </div>
               )}
               {!exceptionsLoading && (!exceptions || exceptions.length === 0) && (
                 <div className="px-4 py-8 text-center">
                   <p className="text-[13px] font-serif text-n-800 mb-1">
-                    Sin excepciones registradas
+                    {schedulesStrings.noExceptions}
                   </p>
                   <p className="text-[12px] text-n-500">
-                    Añade excepciones para días festivos, vacaciones o disponibilidad extra.
+                    {schedulesStrings.noExceptionsDescription}
                   </p>
                 </div>
               )}

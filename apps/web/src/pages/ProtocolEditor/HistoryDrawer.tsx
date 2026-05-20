@@ -39,7 +39,7 @@ export function HistoryDrawer({
         </span>
         <IconButton
           icon="ph ph-x"
-          aria-label="Cerrar historial"
+          aria-label={protocolEditorStrings.historyCloseLabel}
           tone="neutral"
           size="sm"
           onClick={onClose}

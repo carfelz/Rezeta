@@ -1,4 +1,5 @@
 import { Button, Callout, Chip, IconButton, TextLink } from '@/components/ui'
+import { missingFieldsStrings } from './strings'
 
 export interface MissingField {
   id: string
@@ -24,13 +25,13 @@ export function MissingFieldsCallout({
   onShowList,
 }: MissingFieldsCalloutProps): JSX.Element {
   return (
-    <Callout tone="danger" icon="ph ph-warning-circle" title="No puedes firmar todavía">
+    <Callout tone="danger" icon="ph ph-warning-circle" title={missingFieldsStrings.calloutTitle}>
       <div className="flex items-center gap-3">
         <TextLink tone="danger" size="md" underline="hover" onClick={onJumpFirst}>
-          Faltan {count} campos requeridos por el protocolo. Saltar al primero ↓
+          {missingFieldsStrings.calloutLink(count)}
         </TextLink>
         <Button variant="secondary" size="sm" onClick={onShowList} className="ml-auto">
-          Ver faltantes
+          {missingFieldsStrings.calloutShowList}
         </Button>
       </div>
     </Callout>
@@ -72,11 +73,11 @@ export function MissingFieldsPanel({
         <div className="flex items-center gap-2 text-success-text">
           <i className="ph ph-check-circle text-[16px]" aria-hidden />
           <p className="text-[12.5px] font-medium leading-tight">
-            Listo · todos los campos requeridos están completos.
+            {missingFieldsStrings.readyMessage}
           </p>
         </div>
         <Button variant="primary" size="sm" onClick={onSign}>
-          Firmar y cerrar
+          {missingFieldsStrings.signButton}
         </Button>
       </div>
     )
@@ -86,14 +87,19 @@ export function MissingFieldsPanel({
     <div className="bg-n-0 border border-danger-border rounded-md overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-danger-text">
-          Faltantes ({fields.length})
+          {missingFieldsStrings.panelTitle(fields.length)}
         </span>
         {onDismiss && (
-          <IconButton icon="ph ph-x" aria-label="Cerrar panel" tone="neutral" onClick={onDismiss} />
+          <IconButton
+            icon="ph ph-x"
+            aria-label={missingFieldsStrings.panelClosePanelLabel}
+            tone="neutral"
+            onClick={onDismiss}
+          />
         )}
       </div>
       <p className="px-4 pb-3 text-[12px] text-n-500 leading-snug">
-        No puedes firmar hasta completarlos. Toca uno para ir directo.
+        {missingFieldsStrings.panelDescription}
       </p>
       <div className="flex flex-col gap-2 px-3 pb-3">
         {fields.map((field) => (
@@ -114,7 +120,7 @@ export function MissingFieldsPanel({
               )}
             </div>
             <span className="text-[12px] text-danger-text font-medium shrink-0 group-hover:translate-x-0.5 transition-transform">
-              Ir →
+              {missingFieldsStrings.panelGoArrow}
             </span>
           </button>
         ))}
@@ -128,7 +134,7 @@ export function MissingFieldsPanel({
 export function RequiredBadge(): JSX.Element {
   return (
     <Chip tone="warning" size="xs">
-      Requerido
+      {missingFieldsStrings.requiredBadge}
     </Chip>
   )
 }
@@ -147,20 +153,20 @@ export interface ConsultationFieldCheck {
 export function computeMissingFields(fields: ConsultationFieldCheck): MissingField[] {
   const missing: MissingField[] = []
   if (!fields.chiefComplaint.trim()) {
-    missing.push({ id: 'chiefComplaint', label: 'Motivo de consulta' })
+    missing.push({ id: 'chiefComplaint', label: missingFieldsStrings.chiefComplaintLabel })
   }
   if (!fields.assessment.trim()) {
     missing.push({
       id: 'assessment',
-      label: 'Evaluación',
-      description: 'Impresión diagnóstica o diagnóstico diferencial',
+      label: missingFieldsStrings.assessmentLabel,
+      description: missingFieldsStrings.assessmentDescription,
     })
   }
   if (fields.diagnoses.length === 0) {
     missing.push({
       id: 'diagnoses',
-      label: 'Diagnósticos',
-      description: 'Al menos un diagnóstico registrado',
+      label: missingFieldsStrings.diagnosesLabel,
+      description: missingFieldsStrings.diagnosesDescription,
     })
   }
   return missing

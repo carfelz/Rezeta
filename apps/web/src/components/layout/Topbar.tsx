@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import type { Location as ClinicLocation } from '@rezeta/shared'
 import { useLocations } from '@/hooks/locations/use-locations'
 import { Avatar, Caption, IconButton } from '@/components/ui'
+import { topbarStrings } from './strings'
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -53,7 +54,7 @@ export function Topbar(): JSX.Element {
         >
           <span className="w-2 h-2 bg-p-500 rounded-full shrink-0" />
           <span className="text-[13px] font-medium text-n-800">
-            {activeLocation ? activeLocation.name : 'Seleccionar ubicación'}
+            {activeLocation ? activeLocation.name : topbarStrings.selectLocation}
           </span>
           {activeLocation?.city && (
             <Caption tone="neutral" size="md">
@@ -110,7 +111,7 @@ export function Topbar(): JSX.Element {
         </span>
         <input
           type="search"
-          placeholder="Buscar pacientes, citas..."
+          placeholder={topbarStrings.searchPlaceholder}
           className="w-full h-input-md pl-8 pr-12 text-[13px] bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
@@ -119,7 +120,12 @@ export function Topbar(): JSX.Element {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <IconButton icon="ph ph-bell" aria-label="Notificaciones" tone="neutral" size="md" />
+        <IconButton
+          icon="ph ph-bell"
+          aria-label={topbarStrings.notificationsLabel}
+          tone="neutral"
+          size="md"
+        />
 
         {user && (
           <div className="flex items-center gap-3 pl-4 border-l border-n-200">
@@ -127,7 +133,7 @@ export function Topbar(): JSX.Element {
             <div>
               <div className="text-[13px] font-semibold text-n-800">{user.fullName}</div>
               <Caption tone="neutral" size="md" as="div">
-                {user.specialty ?? 'Médico'}
+                {user.specialty ?? topbarStrings.defaultSpecialty}
               </Caption>
             </div>
           </div>

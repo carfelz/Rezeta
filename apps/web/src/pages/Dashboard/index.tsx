@@ -64,8 +64,10 @@ export function Dashboard(): JSX.Element {
   }, 0)
   const billingDelta =
     lastMonthTotal > 0
-      ? `${Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)}% vs mes anterior`
-      : 'Sin datos del mes anterior'
+      ? dashboardStrings.kpiBillingDelta(
+          Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100),
+        )
+      : dashboardStrings.kpiBillingNoPrev
   const billingDeltaDir: 'up' | 'down' | 'flat' =
     lastMonthTotal === 0 || thisMonthTotal === lastMonthTotal
       ? 'flat'
@@ -80,15 +82,15 @@ export function Dashboard(): JSX.Element {
 
   const greeting = dashboardStrings.greeting(user?.fullName ?? null)
 
-  let subtitle = 'Bienvenido a Rezeta.'
+  let subtitle: string = dashboardStrings.subtitleWelcome
   if (!apptLoading) {
     if (todayTotal > 0) {
-      subtitle = `Tienes ${todayTotal} consulta${todayTotal !== 1 ? 's' : ''} programada${todayTotal !== 1 ? 's' : ''} hoy.`
+      subtitle = dashboardStrings.subtitleConsultations(todayTotal)
       if (nextApptMins !== null && nextApptMins >= 0 && nextApptMins <= 120) {
-        subtitle += ` Tu próxima cita es en ${nextApptMins} minuto${nextApptMins !== 1 ? 's' : ''}.`
+        subtitle += dashboardStrings.subtitleNextAppt(nextApptMins)
       }
     } else {
-      subtitle = 'No tienes consultas programadas hoy.'
+      subtitle = dashboardStrings.subtitleNoConsultations
     }
   }
 
@@ -98,42 +100,48 @@ export function Dashboard(): JSX.Element {
 
       <div className="grid grid-cols-4 gap-5 mb-5">
         <KpiCard
-          label="Consultas hoy"
+          label={dashboardStrings.kpiConsultationsLabel}
           value={apptLoading ? '—' : todayCompleted}
           {...(!apptLoading && { unit: `/ ${todayTotal}` })}
           delta={
             apptLoading
-              ? '…'
+              ? dashboardStrings.kpiConsultationsLoading
               : todayTotal > 0
-                ? `${Math.round((todayCompleted / todayTotal) * 100)}% completadas`
-                : 'Sin citas hoy'
+                ? dashboardStrings.kpiConsultationsCompleted(
+                    Math.round((todayCompleted / todayTotal) * 100),
+                  )
+                : dashboardStrings.kpiConsultationsNone
           }
           deltaDir="flat"
           loading={apptLoading}
         />
         <KpiCard
-          label="Pacientes activos"
+          label={dashboardStrings.kpiPatientsLabel}
           value={patientsLoading ? '—' : totalPatients.toLocaleString('es-DO')}
           delta={
             patientsLoading
-              ? '…'
+              ? dashboardStrings.kpiConsultationsLoading
               : patientsAddedThisMonth > 0
-                ? `+${patientsAddedThisMonth} este mes`
-                : 'Sin nuevos este mes'
+                ? dashboardStrings.kpiPatientsAdded(patientsAddedThisMonth)
+                : dashboardStrings.kpiPatientsNone
           }
           deltaDir={patientsAddedThisMonth > 0 ? 'up' : 'flat'}
           loading={patientsLoading}
         />
         <KpiCard
-          label={`Facturación · ${MONTHS_ES[now.getMonth()]}`}
+          label={dashboardStrings.kpiBillingLabel(MONTHS_ES[now.getMonth()] ?? '')}
           value={billingFormatted}
           delta={billingDelta}
           deltaDir={billingDeltaDir}
         />
         <KpiCard
-          label="Protocolos activos"
+          label={dashboardStrings.kpiProtocolsLabel}
           value={(recentProtocols?.length ?? 0).toString()}
-          delta={recentProtocols && recentProtocols.length > 0 ? 'en uso' : 'aún no hay protocolos'}
+          delta={
+            recentProtocols && recentProtocols.length > 0
+              ? dashboardStrings.kpiProtocolsActive
+              : dashboardStrings.kpiProtocolsNone
+          }
           deltaDir="flat"
         />
       </div>

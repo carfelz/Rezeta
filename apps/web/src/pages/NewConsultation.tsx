@@ -14,6 +14,7 @@ import { ResumeBanner } from '@/components/consultations/ResumeBanner'
 import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
 import { formatDoctorName } from '@/lib/format/names'
+import { newConsultationStrings } from './Consultation/strings'
 
 export function NewConsultation(): JSX.Element {
   const navigate = useNavigate()
@@ -84,7 +85,7 @@ export function NewConsultation(): JSX.Element {
 
   async function handleGateSelect(protocolId: string | null): Promise<void> {
     if (!ready) {
-      setError('Selecciona paciente y ubicación antes de continuar.')
+      setError(newConsultationStrings.selectPatientLocationError)
       return
     }
     setError(null)
@@ -98,7 +99,7 @@ export function NewConsultation(): JSX.Element {
       })
       void navigate(`/consultas/${consultation.id}`, { replace: true })
     } catch {
-      setError('No se pudo crear la consulta. Inténtalo de nuevo.')
+      setError(newConsultationStrings.createError)
     } finally {
       setIsCreating(false)
     }
@@ -107,13 +108,15 @@ export function NewConsultation(): JSX.Element {
   const patientFullName = patient ? `${patient.firstName} ${patient.lastName}`.trim() : null
   const breadcrumbs = patient
     ? [
-        { label: 'Pacientes', to: '/pacientes' },
+        { label: newConsultationStrings.breadcrumbPatients, to: '/pacientes' },
         { label: patientFullName ?? '', to: `/pacientes/${patient.id}` },
-        { label: `Consulta · ${formatBreadcrumbDate(now)}` },
+        { label: `${newConsultationStrings.breadcrumbDatePrefix} · ${formatBreadcrumbDate(now)}` },
       ]
     : [
-        { label: 'Pacientes', to: '/pacientes' },
-        { label: `Nueva consulta · ${formatBreadcrumbDate(now)}` },
+        { label: newConsultationStrings.breadcrumbPatients, to: '/pacientes' },
+        {
+          label: `${newConsultationStrings.breadcrumbNewConsultation} · ${formatBreadcrumbDate(now)}`,
+        },
       ]
 
   const datetimeOverline = location
@@ -127,7 +130,7 @@ export function NewConsultation(): JSX.Element {
       <ConsultHeader
         breadcrumbs={breadcrumbs}
         datetimeOverline={datetimeOverline}
-        title="Nueva consulta"
+        title={newConsultationStrings.pageTitle}
         subtitle={subtitle}
         rightSlot={
           <Button
@@ -136,7 +139,7 @@ export function NewConsultation(): JSX.Element {
             disabled={isCreating || !ready}
             onClick={() => void handleGateSelect(null)}
           >
-            Abrir consulta vacía
+            {newConsultationStrings.openEmptyButton}
           </Button>
         }
       />

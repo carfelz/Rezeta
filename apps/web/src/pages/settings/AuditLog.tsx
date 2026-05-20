@@ -5,57 +5,58 @@ import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-
 import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
 import { Button, Callout, EmptyState, IconButton, TextLink } from '@/components/ui'
+import { auditLogStrings } from './strings'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORY_LABELS: Record<string, string> = {
-  entity: 'Entidad',
-  auth: 'Autenticación',
-  communication: 'Comunicación',
-  system: 'Sistema',
+  entity: auditLogStrings.categoryEntity,
+  auth: auditLogStrings.categoryAuth,
+  communication: auditLogStrings.categoryCommunication,
+  system: auditLogStrings.categorySystem,
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  create: 'Creado',
-  update: 'Actualizado',
-  delete: 'Eliminado',
-  restore: 'Restaurado',
-  sign: 'Firmado',
-  amend: 'Enmendado',
-  archive: 'Archivado',
-  lock: 'Bloqueado',
-  unlock: 'Desbloqueado',
-  login: 'Inicio de sesión',
-  logout: 'Cierre de sesión',
-  login_failed: 'Inicio de sesión fallido',
-  password_change: 'Cambio de contraseña',
-  mfa_enabled: 'MFA habilitado',
-  session_revoked: 'Sesión revocada',
-  permission_granted: 'Permiso otorgado',
-  permission_revoked: 'Permiso revocado',
-  email_queued: 'Email en cola',
-  email_sent: 'Email enviado',
-  email_delivered: 'Email entregado',
-  email_bounced: 'Email rechazado',
-  sms_sent: 'SMS enviado',
-  whatsapp_sent: 'WhatsApp enviado',
-  notification_sent: 'Notificación enviada',
-  pdf_generated: 'PDF generado',
-  pdf_downloaded: 'PDF descargado',
-  reminder_sent: 'Recordatorio enviado',
-  invoice_issued: 'Factura emitida',
-  prescription_dispensed: 'Receta dispensada',
-  export_generated: 'Exportación generada',
-  report_run: 'Informe ejecutado',
-  backup_verified: 'Respaldo verificado',
-  webhook_received: 'Webhook recibido',
+  create: auditLogStrings.actionCreate,
+  update: auditLogStrings.actionUpdate,
+  delete: auditLogStrings.actionDelete,
+  restore: auditLogStrings.actionRestore,
+  sign: auditLogStrings.actionSign,
+  amend: auditLogStrings.actionAmend,
+  archive: auditLogStrings.actionArchive,
+  lock: auditLogStrings.actionLock,
+  unlock: auditLogStrings.actionUnlock,
+  login: auditLogStrings.actionLogin,
+  logout: auditLogStrings.actionLogout,
+  login_failed: auditLogStrings.actionLoginFailed,
+  password_change: auditLogStrings.actionPasswordChange,
+  mfa_enabled: auditLogStrings.actionMfaEnabled,
+  session_revoked: auditLogStrings.actionSessionRevoked,
+  permission_granted: auditLogStrings.actionPermissionGranted,
+  permission_revoked: auditLogStrings.actionPermissionRevoked,
+  email_queued: auditLogStrings.actionEmailQueued,
+  email_sent: auditLogStrings.actionEmailSent,
+  email_delivered: auditLogStrings.actionEmailDelivered,
+  email_bounced: auditLogStrings.actionEmailBounced,
+  sms_sent: auditLogStrings.actionSmsSent,
+  whatsapp_sent: auditLogStrings.actionWhatsappSent,
+  notification_sent: auditLogStrings.actionNotificationSent,
+  pdf_generated: auditLogStrings.actionPdfGenerated,
+  pdf_downloaded: auditLogStrings.actionPdfDownloaded,
+  reminder_sent: auditLogStrings.actionReminderSent,
+  invoice_issued: auditLogStrings.actionInvoiceIssued,
+  prescription_dispensed: auditLogStrings.actionPrescriptionDispensed,
+  export_generated: auditLogStrings.actionExportGenerated,
+  report_run: auditLogStrings.actionReportRun,
+  backup_verified: auditLogStrings.actionBackupVerified,
+  webhook_received: auditLogStrings.actionWebhookReceived,
 }
 
 const ACTOR_TYPE_LABELS: Record<string, string> = {
   user: '',
-  system: 'Sistema',
-  webhook: 'Webhook',
-  cron: 'Cron',
+  system: auditLogStrings.actorSystem,
+  webhook: auditLogStrings.actorWebhook,
+  cron: auditLogStrings.actorCron,
 }
 
 function formatTs(iso: string): string {
@@ -111,7 +112,7 @@ function StatusDot({ status }: { status: string }) {
     return (
       <span className="inline-flex items-center gap-1 text-warning-text text-[12px]">
         <i className="ph ph-warning text-[13px]" />
-        Fallido
+        {auditLogStrings.statusFailed}
       </span>
     )
   }
@@ -128,7 +129,7 @@ interface DrawerProps {
 function DetailDrawer({ item, onClose }: DrawerProps) {
   const actorLabel =
     item.actorType === 'user'
-      ? (item.actor?.fullName ?? item.actor?.email ?? 'Usuario desconocido')
+      ? (item.actor?.fullName ?? item.actor?.email ?? auditLogStrings.actorUnknown)
       : (ACTOR_TYPE_LABELS[item.actorType] ?? item.actorType)
 
   return (
@@ -148,7 +149,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           </div>
           <IconButton
             icon="ph ph-x"
-            aria-label="Cerrar"
+            aria-label={auditLogStrings.drawerCloseLabel}
             tone="neutral"
             size="md"
             onClick={onClose}
@@ -163,7 +164,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
             {item.status === 'failed' && (
               <span className="inline-flex items-center gap-1 text-warning-text text-[12px]">
                 <i className="ph ph-warning" />
-                Fallido
+                {auditLogStrings.statusFailed}
                 {item.errorCode && (
                   <span className="font-mono text-[11px] ml-1 text-n-500">{item.errorCode}</span>
                 )}
@@ -173,7 +174,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
 
           {/* actor */}
           <section>
-            <p className="text-overline mb-2">Actor</p>
+            <p className="text-overline mb-2">{auditLogStrings.drawerActorSection}</p>
             <p className="text-[13px] text-n-800 font-medium">{actorLabel}</p>
             {item.ipAddress && (
               <p className="text-[12px] font-mono text-n-500 mt-0.5">{item.ipAddress}</p>
@@ -183,7 +184,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {/* entity */}
           {item.entityType && (
             <section>
-              <p className="text-overline mb-2">Entidad</p>
+              <p className="text-overline mb-2">{auditLogStrings.drawerEntitySection}</p>
               <p className="text-[13px] text-n-700">
                 <span className="font-medium">{item.entityType}</span>
                 {item.entityId && (
@@ -196,7 +197,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {/* changes diff */}
           {item.changes && Object.keys(item.changes).length > 0 && (
             <section>
-              <p className="text-overline mb-2">Cambios</p>
+              <p className="text-overline mb-2">{auditLogStrings.drawerChangesSection}</p>
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 {Object.entries(item.changes).map(([field, diff]) => (
                   <div key={field} className="px-3 py-2 border-b border-n-100 last:border-0">
@@ -217,7 +218,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {/* metadata */}
           {item.metadata && Object.keys(item.metadata).length > 0 && (
             <section>
-              <p className="text-overline mb-2">Detalles</p>
+              <p className="text-overline mb-2">{auditLogStrings.drawerMetadataSection}</p>
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 {Object.entries(item.metadata).map(([k, v]) => (
                   <div key={k} className="flex gap-3 px-3 py-2 border-b border-n-100 last:border-0">
@@ -234,7 +235,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {/* request id */}
           {item.requestId && (
             <section>
-              <p className="text-overline mb-2">ID de solicitud</p>
+              <p className="text-overline mb-2">{auditLogStrings.drawerRequestIdSection}</p>
               <p className="text-[11px] font-mono text-n-500 break-all">{item.requestId}</p>
             </section>
           )}
@@ -267,7 +268,9 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 mb-5">
       <div className="flex items-center gap-2">
-        <label className="text-[11.5px] font-medium text-n-600 shrink-0">Desde</label>
+        <label className="text-[11.5px] font-medium text-n-600 shrink-0">
+          {auditLogStrings.filterFrom}
+        </label>
         <input
           type="date"
           value={filters.dateFrom}
@@ -276,7 +279,9 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
         />
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-[11.5px] font-medium text-n-600 shrink-0">Hasta</label>
+        <label className="text-[11.5px] font-medium text-n-600 shrink-0">
+          {auditLogStrings.filterTo}
+        </label>
         <input
           type="date"
           value={filters.dateTo}
@@ -290,11 +295,11 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
         onChange={(e) => set('category', e.target.value)}
         className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
       >
-        <option value="">Todas las categorías</option>
-        <option value="entity">Entidad</option>
-        <option value="auth">Autenticación</option>
-        <option value="communication">Comunicación</option>
-        <option value="system">Sistema</option>
+        <option value="">{auditLogStrings.filterAllCategories}</option>
+        <option value="entity">{auditLogStrings.categoryEntity}</option>
+        <option value="auth">{auditLogStrings.categoryAuth}</option>
+        <option value="communication">{auditLogStrings.categoryCommunication}</option>
+        <option value="system">{auditLogStrings.categorySystem}</option>
       </select>
 
       <select
@@ -302,9 +307,9 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
         onChange={(e) => set('status', e.target.value)}
         className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
       >
-        <option value="">Todos los estados</option>
-        <option value="success">Exitoso</option>
-        <option value="failed">Fallido</option>
+        <option value="">{auditLogStrings.filterAllStatuses}</option>
+        <option value="success">{auditLogStrings.filterStatusSuccess}</option>
+        <option value="failed">{auditLogStrings.filterStatusFailed}</option>
       </select>
 
       {(filters.category || filters.status) && (
@@ -313,7 +318,7 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
           size="md"
           onClick={() => onChange({ ...filters, category: '', action: '', status: '' })}
         >
-          Limpiar filtros
+          {auditLogStrings.filterClearButton}
         </TextLink>
       )}
     </div>
@@ -328,8 +333,8 @@ function PlanBanner({ plan }: { plan: string }) {
     <div className="mb-5 px-4 py-3 bg-info-bg border border-info-border rounded-sm flex items-center gap-3">
       <i className="ph ph-info text-info-text text-[16px] shrink-0" />
       <p className="text-[13px] text-info-text">
-        Estás viendo los últimos {days} días.{' '}
-        <span className="font-medium">Actualiza tu plan para ver el historial completo.</span>
+        {auditLogStrings.planBannerDays(days)}{' '}
+        <span className="font-medium">{auditLogStrings.planBannerUpgrade}</span>
       </p>
     </div>
   )
@@ -385,7 +390,7 @@ export function AuditLog(): JSX.Element {
       const ts = new Date().toISOString().slice(0, 10)
       triggerDownload(blob, `audit-log-${ts}.csv`)
     } catch {
-      setExportError('No se pudo generar el CSV. Intenta de nuevo.')
+      setExportError(auditLogStrings.exportError)
     } finally {
       setExporting(false)
     }
@@ -397,7 +402,7 @@ export function AuditLog(): JSX.Element {
 
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-h1 m-0">Registros de actividad</h1>
+        <h1 className="text-h1 m-0">{auditLogStrings.pageTitle}</h1>
         {isClinic && (
           <Button
             variant="secondary"
@@ -408,7 +413,7 @@ export function AuditLog(): JSX.Element {
             }}
           >
             <i className="ph ph-download-simple mr-1.5" />
-            {exporting ? 'Exportando...' : 'Exportar CSV'}
+            {exporting ? auditLogStrings.exportingButton : auditLogStrings.exportButton}
           </Button>
         )}
       </div>
@@ -429,12 +434,12 @@ export function AuditLog(): JSX.Element {
       <FiltersBar filters={filters} onChange={handleFiltersChange} />
 
       {/* Loading */}
-      {isLoading && <p className="text-body text-n-500">Cargando registros...</p>}
+      {isLoading && <p className="text-body text-n-500">{auditLogStrings.loading}</p>}
 
       {/* Error */}
       {isError && (
         <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-          No se pudieron cargar los registros. Intenta recargar la página.
+          {auditLogStrings.loadError}
         </Callout>
       )}
 
@@ -442,8 +447,8 @@ export function AuditLog(): JSX.Element {
       {!isLoading && !isError && data?.data.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-clipboard-text" />}
-          title="Aún no hay actividad registrada"
-          description="Cuando uses el sistema, aparecerá aquí cada acción — consultas firmadas, citas creadas, emails enviados."
+          title={auditLogStrings.emptyTitle}
+          description={auditLogStrings.emptyDescription}
         />
       )}
 
@@ -454,7 +459,14 @@ export function AuditLog(): JSX.Element {
             <table className="w-full border-collapse bg-n-0">
               <thead>
                 <tr className="bg-n-50">
-                  {['Fecha', 'Actor', 'Categoría', 'Acción', 'Entidad', 'Estado'].map((col) => (
+                  {[
+                    auditLogStrings.colDate,
+                    auditLogStrings.colActor,
+                    auditLogStrings.colCategory,
+                    auditLogStrings.colAction,
+                    auditLogStrings.colEntity,
+                    auditLogStrings.colStatus,
+                  ].map((col) => (
                     <th
                       key={col}
                       className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"
@@ -468,7 +480,7 @@ export function AuditLog(): JSX.Element {
                 {data!.data.map((item) => {
                   const actorLabel =
                     item.actorType === 'user'
-                      ? (item.actor?.fullName ?? item.actor?.email ?? 'Usuario')
+                      ? (item.actor?.fullName ?? item.actor?.email ?? auditLogStrings.actorUser)
                       : (ACTOR_TYPE_LABELS[item.actorType] ?? item.actorType)
 
                   const isSelected = selectedItem?.id === item.id
@@ -522,12 +534,12 @@ export function AuditLog(): JSX.Element {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <p className="text-[12px] text-n-500">
-              {data!.data.length} registro{data!.data.length !== 1 ? 's' : ''}
+              {auditLogStrings.recordCount(data!.data.length)}
             </p>
             <div className="flex gap-2">
               {cursor && (
                 <Button variant="secondary" size="sm" onClick={() => setCursor(undefined)}>
-                  Primera página
+                  {auditLogStrings.firstPage}
                 </Button>
               )}
               {data!.pagination.hasMore && (
@@ -536,7 +548,7 @@ export function AuditLog(): JSX.Element {
                   size="sm"
                   onClick={() => setCursor(data!.pagination.cursor ?? undefined)}
                 >
-                  Siguiente →
+                  {auditLogStrings.nextPage}
                 </Button>
               )}
             </div>

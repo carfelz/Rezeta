@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
+import { sidebarStrings } from './strings'
 
 interface NavItem {
   to: string
@@ -13,18 +14,23 @@ interface NavItem {
 }
 
 const NAV_HOY: NavItem[] = [
-  { to: '/dashboard', icon: 'squares-four', label: 'Dashboard' },
-  { to: '/agenda', icon: 'calendar-blank', label: 'Agenda' },
+  { to: '/dashboard', icon: 'squares-four', label: sidebarStrings.navDashboard },
+  { to: '/agenda', icon: 'calendar-blank', label: sidebarStrings.navAgenda },
 ]
 
 const NAV_CLINICO: NavItem[] = [
-  { to: '/pacientes', icon: 'user', label: 'Pacientes', alsoActiveOn: ['/consultas'] },
-  { to: '/protocolos', icon: 'stack', label: 'Protocolos' },
+  {
+    to: '/pacientes',
+    icon: 'user',
+    label: sidebarStrings.navPatients,
+    alsoActiveOn: ['/consultas'],
+  },
+  { to: '/protocolos', icon: 'stack', label: sidebarStrings.navProtocols },
 ]
 
 const NAV_ADMIN: NavItem[] = [
-  { to: '/facturacion', icon: 'receipt', label: 'Facturación' },
-  { to: '/ajustes', icon: 'gear-six', label: 'Ajustes' },
+  { to: '/facturacion', icon: 'receipt', label: sidebarStrings.navBilling },
+  { to: '/ajustes', icon: 'gear-six', label: sidebarStrings.navSettings },
 ]
 
 function initials(name: string | null): string {
@@ -106,9 +112,9 @@ export function Sidebar(): JSX.Element {
       </div>
 
       <div className="flex-1 pt-4">
-        <NavGroup label="Hoy" items={NAV_HOY} />
-        <NavGroup label="Trabajo Clínico" items={NAV_CLINICO} />
-        <NavGroup label="Administración" items={NAV_ADMIN} />
+        <NavGroup label={sidebarStrings.navTodayLabel} items={NAV_HOY} />
+        <NavGroup label={sidebarStrings.navClinicalLabel} items={NAV_CLINICO} />
+        <NavGroup label={sidebarStrings.navAdminLabel} items={NAV_ADMIN} />
       </div>
 
       {user && (
@@ -120,7 +126,7 @@ export function Sidebar(): JSX.Element {
                 {user.fullName}
               </div>
               <Caption tone="neutral" size="xs" as="div">
-                {user.specialty ?? 'Médico'}
+                {user.specialty ?? sidebarStrings.defaultSpecialty}
               </Caption>
             </div>
           </div>

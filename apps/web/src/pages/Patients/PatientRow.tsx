@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react'
 import { Badge, IconButton, Row } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
 import { DOC_LABELS_UPPER, formatAge, resolveDocumentType } from './helpers'
+import { patientRowStrings } from './strings'
 
 export interface PatientRowProps {
   patient: Patient
@@ -25,7 +26,7 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
       onClick={handleRowClick}
       role="link"
       tabIndex={0}
-      aria-label={`Abrir paciente ${name}`}
+      aria-label={patientRowStrings.openPatientLabel(name)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -66,27 +67,27 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
         {formatAge(patient.dateOfBirth)}
       </td>
       <td className="text-[13px] px-4 py-3 border-b border-n-100">
-        <Badge variant="active">Activo</Badge>
+        <Badge variant="active">{patientRowStrings.statusActive}</Badge>
       </td>
       <td className="text-[13px] px-4 py-3 border-b border-n-100">
         <Row gap={1} justify="end">
           <IconButton
             icon="ph ph-eye"
-            aria-label="Ver paciente"
+            aria-label={patientRowStrings.viewLabel}
             tone="neutral"
             size="md"
             onClick={onView}
           />
           <IconButton
             icon="ph ph-pencil-simple"
-            aria-label="Editar paciente"
+            aria-label={patientRowStrings.editLabel}
             tone="neutral"
             size="md"
             onClick={onEdit}
           />
           <IconButton
             icon="ph ph-trash"
-            aria-label="Eliminar paciente"
+            aria-label={patientRowStrings.deleteLabel}
             tone="danger"
             size="md"
             onClick={onDelete}

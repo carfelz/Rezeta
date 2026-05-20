@@ -21,6 +21,7 @@ import { useLocations } from '@/hooks/locations/use-locations'
 import type { AppointmentWithDetails } from '@rezeta/shared'
 import { PatientCombobox } from './PatientCombobox'
 import { toDateInputValue } from './helpers'
+import { appointmentFormModalStrings } from './strings'
 
 export interface AppointmentFormModalProps {
   appointment?: AppointmentWithDetails
@@ -74,7 +75,7 @@ export function AppointmentFormModal({
     const endsAt = new Date(`${date}T${endTime}:00`).toISOString()
 
     if (new Date(endsAt) <= new Date(startsAt)) {
-      setError('La hora de fin debe ser posterior a la hora de inicio.')
+      setError(appointmentFormModalStrings.timeOrderError)
       return
     }
 
@@ -103,12 +104,12 @@ export function AppointmentFormModal({
       const msg = (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data
         ?.error?.code
       if (msg === 'APPOINTMENT_CONFLICT') {
-        setError('Este horario se solapa con otra cita. Elige un horario diferente.')
+        setError(appointmentFormModalStrings.conflictError)
       } else {
         setError(
           isEdit
-            ? 'No se pudo actualizar la cita. Intenta de nuevo.'
-            : 'No se pudo crear la cita. Intenta de nuevo.',
+            ? appointmentFormModalStrings.updateError
+            : appointmentFormModalStrings.createError,
         )
       }
     }
@@ -122,7 +123,12 @@ export function AppointmentFormModal({
       }}
     >
       <ModalContent>
-        <ModalHeader title={isEdit ? 'Editar cita' : 'Nueva cita'} showClose={false} />
+        <ModalHeader
+          title={
+            isEdit ? appointmentFormModalStrings.titleEdit : appointmentFormModalStrings.titleCreate
+          }
+          showClose={false}
+        />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
@@ -130,15 +136,15 @@ export function AppointmentFormModal({
         >
           <ModalBody className="flex flex-col gap-4">
             {!isEdit && (
-              <Field label="Paciente" required>
+              <Field label={appointmentFormModalStrings.patientLabel} required>
                 <PatientCombobox value={patientId} onChange={(id) => setPatientId(id)} />
               </Field>
             )}
 
-            <Field label="Ubicación" required>
+            <Field label={appointmentFormModalStrings.locationLabel} required>
               <Select {...(locationId ? { value: locationId } : {})} onValueChange={setLocationId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar ubicación" />
+                  <SelectValue placeholder={appointmentFormModalStrings.locationPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {locations?.map((loc) => (
@@ -151,35 +157,35 @@ export function AppointmentFormModal({
               </Select>
             </Field>
 
-            <Field label="Fecha" required>
+            <Field label={appointmentFormModalStrings.dateLabel} required>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Hora inicio" required>
+              <Field label={appointmentFormModalStrings.startTimeLabel} required>
                 <Input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
                 />
               </Field>
-              <Field label="Hora fin" required>
+              <Field label={appointmentFormModalStrings.endTimeLabel} required>
                 <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
               </Field>
             </div>
 
-            <Field label="Motivo de consulta">
+            <Field label={appointmentFormModalStrings.reasonLabel}>
               <Input
                 type="text"
-                placeholder="Ej. Revisión de rutina"
+                placeholder={appointmentFormModalStrings.reasonPlaceholder}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
             </Field>
 
-            <Field label="Notas">
+            <Field label={appointmentFormModalStrings.notesLabel}>
               <Textarea
-                placeholder="Información adicional..."
+                placeholder={appointmentFormModalStrings.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="min-h-[60px]"
@@ -197,10 +203,14 @@ export function AppointmentFormModal({
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
+              {appointmentFormModalStrings.cancelButton}
             </Button>
             <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
-              {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear cita'}
+              {isPending
+                ? appointmentFormModalStrings.savingButton
+                : isEdit
+                  ? appointmentFormModalStrings.saveButton
+                  : appointmentFormModalStrings.createButton}
             </Button>
           </ModalFooter>
         </form>

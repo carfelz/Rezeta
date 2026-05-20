@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { useSwitchProtocolUsage } from '@/hooks/consultations/use-consultations'
 import { Button, DialogCard, ModalContent, SearchInput, SelectableCard } from '@/components/ui'
+import { switchProtocolStrings } from './strings'
 
 export interface SwitchProtocolDialogProps {
   consultationId: string
@@ -51,22 +52,22 @@ export function SwitchProtocolDialog({
         width="lg"
         elevation="none"
         className="border-0 rounded"
-        overline="Cambio de protocolo"
+        overline={switchProtocolStrings.overline}
         overlineTone="warning"
         title={
           target
-            ? `Cambiar ${currentProtocolTitle} → ${target.title}`
-            : `Cambiar ${currentProtocolTitle}`
+            ? switchProtocolStrings.dialogTitle(currentProtocolTitle, target.title)
+            : switchProtocolStrings.dialogTitleNoTarget(currentProtocolTitle)
         }
-        description={`Has completado ${completedSteps} de ${totalSteps} pasos. ${
+        description={
           target
-            ? 'Esto es lo que pasa con el progreso actual:'
-            : 'Selecciona el nuevo protocolo abajo.'
-        }`}
+            ? switchProtocolStrings.descriptionProgress(completedSteps, totalSteps)
+            : switchProtocolStrings.descriptionNoTarget(completedSteps, totalSteps)
+        }
         footer={
           <>
             <Button variant="secondary" size="sm" onClick={onClose}>
-              Cancelar
+              {switchProtocolStrings.cancelButton}
             </Button>
             <Button
               variant="primary"
@@ -74,7 +75,9 @@ export function SwitchProtocolDialog({
               disabled={!selectedId || switchMutation.isPending}
               onClick={handleSwitch}
             >
-              {switchMutation.isPending ? 'Cambiando…' : 'Cambiar protocolo'}
+              {switchMutation.isPending
+                ? switchProtocolStrings.switchingButton
+                : switchProtocolStrings.switchButton}
             </Button>
           </>
         }
@@ -83,14 +86,16 @@ export function SwitchProtocolDialog({
           <div className="flex flex-col gap-2">
             <SearchInput
               size="sm"
-              placeholder="Buscar protocolo…"
+              placeholder={switchProtocolStrings.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
               {filtered.length === 0 ? (
                 <p className="text-[12.5px] text-n-400 py-3 text-center">
-                  {search ? 'Sin resultados.' : 'No hay otros protocolos activos.'}
+                  {search
+                    ? switchProtocolStrings.noResults
+                    : switchProtocolStrings.noOtherProtocols}
                 </p>
               ) : (
                 filtered.map((p) => (
@@ -112,18 +117,18 @@ export function SwitchProtocolDialog({
             <div className="border border-n-200 rounded-md p-4 flex flex-col gap-3 bg-n-25">
               <ImpactRow
                 tone="kept"
-                title="Motivo, vitales, subjetivo"
-                detail="Se conservan — son compatibles"
+                title={switchProtocolStrings.keptTitle}
+                detail={switchProtocolStrings.keptDetail}
               />
               <ImpactRow
                 tone="moved"
-                title={`Examen físico (paso ${completedSteps})`}
-                detail='Se mueve a "fuera de protocolo"'
+                title={switchProtocolStrings.movedTitle(completedSteps)}
+                detail={switchProtocolStrings.movedDetail}
               />
               <ImpactRow
                 tone="discarded"
-                title="Decisión, tratamiento, etc."
-                detail="Se descartan — no aplican"
+                title={switchProtocolStrings.discardedTitle}
+                detail={switchProtocolStrings.discardedDetail}
               />
             </div>
             <label className="flex items-center gap-2 mt-4 text-[12.5px] text-n-700 cursor-pointer">
@@ -133,15 +138,13 @@ export function SwitchProtocolDialog({
                 onChange={(e) => setKeepDraft(e.target.checked)}
                 className="w-4 h-4 accent-p-500"
               />
-              Conservar borrador del protocolo {currentProtocolTitle} por 24h (puedes volver)
+              {switchProtocolStrings.keepDraftLabel(currentProtocolTitle)}
             </label>
           </>
         )}
 
         {switchMutation.isError && (
-          <p className="text-[12px] text-danger-text mt-3">
-            No se pudo cambiar el protocolo. Inténtalo de nuevo.
-          </p>
+          <p className="text-[12px] text-danger-text mt-3">{switchProtocolStrings.errorMessage}</p>
         )}
       </DialogCard>
     </ModalContent>

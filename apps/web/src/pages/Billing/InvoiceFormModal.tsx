@@ -16,6 +16,7 @@ import { useLocations } from '@/hooks/locations/use-locations'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { InvoiceWithDetails, Location as ClinicLocation } from '@rezeta/shared'
 import { calcTotal, defaultItem, formatCurrency, type ItemRow } from './helpers'
+import { billingStrings } from './strings'
 
 export interface InvoiceFormModalProps {
   invoice?: InvoiceWithDetails
@@ -107,11 +108,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
       }
       onClose()
     } catch {
-      setError(
-        isEdit
-          ? 'No se pudo actualizar la factura. Intenta de nuevo.'
-          : 'No se pudo crear la factura. Intenta de nuevo.',
-      )
+      setError(isEdit ? billingStrings.updateErrorMessage : billingStrings.createErrorMessage)
     }
   }
 
@@ -123,7 +120,9 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
       }}
     >
       <ModalContent size="lg">
-        <ModalHeader title={isEdit ? 'Editar factura' : 'Nueva factura'} />
+        <ModalHeader
+          title={isEdit ? billingStrings.editModalTitle : billingStrings.createModalTitle}
+        />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
@@ -140,7 +139,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-[12.5px] font-medium text-n-700">
-                    Paciente <span className="text-danger-solid">*</span>
+                    {billingStrings.fieldPatient} <span className="text-danger-solid">*</span>
                   </label>
                   <select
                     required
@@ -148,7 +147,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                     onChange={(e) => setPatientId(e.target.value)}
                     className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
                   >
-                    <option value="">Seleccionar paciente</option>
+                    <option value="">{billingStrings.fieldPatientPlaceholder}</option>
                     {patientsData?.items.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.firstName} {p.lastName}
@@ -158,7 +157,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12.5px] font-medium text-n-700">
-                    Ubicación <span className="text-danger-solid">*</span>
+                    {billingStrings.fieldLocation} <span className="text-danger-solid">*</span>
                   </label>
                   <select
                     required
@@ -166,7 +165,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                     onChange={(e) => setLocationId(e.target.value)}
                     className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
                   >
-                    <option value="">Seleccionar ubicación</option>
+                    <option value="">{billingStrings.fieldLocationPlaceholder}</option>
                     {locations?.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
@@ -178,7 +177,9 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-[12.5px] font-medium text-n-700">Moneda</label>
+              <label className="text-[12.5px] font-medium text-n-700">
+                {billingStrings.fieldCurrency}
+              </label>
               <div className="flex gap-2">
                 {(['DOP', 'USD'] as const).map((c) => (
                   <Button
@@ -195,23 +196,23 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
 
             <div className="flex flex-col gap-2">
               <label className="text-[12.5px] font-medium text-n-700">
-                Ítems <span className="text-danger-solid">*</span>
+                {billingStrings.fieldItems} <span className="text-danger-solid">*</span>
               </label>
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 <table className="w-full text-[12px]">
                   <thead>
                     <tr className="bg-n-50 text-n-600 text-left">
                       <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[50%]">
-                        Descripción
+                        {billingStrings.itemColDescription}
                       </th>
                       <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[15%]">
-                        Cant.
+                        {billingStrings.itemColQty}
                       </th>
                       <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[25%]">
-                        Precio unit.
+                        {billingStrings.itemColUnitPrice}
                       </th>
                       <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] text-right w-[10%]">
-                        Total
+                        {billingStrings.itemColTotal}
                       </th>
                       <th className="w-[32px]" />
                     </tr>
@@ -223,7 +224,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                           <Input
                             value={item.description}
                             onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                            placeholder="Descripción del servicio"
+                            placeholder={billingStrings.itemDescriptionPlaceholder}
                             required
                             className="text-[12px]"
                           />
@@ -254,7 +255,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                           {items.length > 1 && (
                             <IconButton
                               icon="ph ph-x"
-                              aria-label="Eliminar ítem"
+                              aria-label={billingStrings.removeItemLabel}
                               tone="danger"
                               size="sm"
                               onClick={() => removeItem(idx)}
@@ -267,24 +268,24 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                 </table>
               </div>
               <TextLink tone="primary" size="md" onClick={addItem} className="self-start">
-                <i className="ph ph-plus text-[13px]" /> Añadir ítem
+                <i className="ph ph-plus text-[13px]" /> {billingStrings.addItemLink}
               </TextLink>
             </div>
 
             {(commissionPct > 0 || isEdit) && (
               <div className="bg-n-50 border border-n-200 rounded-sm p-3 flex flex-col gap-1 text-[12px] font-mono">
                 <div className="flex justify-between text-n-600">
-                  <span>Subtotal</span>
+                  <span>{billingStrings.summarySubtotal}</span>
                   <span>{formatCurrency(subtotal, currency)}</span>
                 </div>
                 {commissionPct > 0 && (
                   <div className="flex justify-between text-n-500">
-                    <span>Comisión ({commissionPct}%)</span>
+                    <span>{billingStrings.summaryCommission(commissionPct)}</span>
                     <span>− {formatCurrency(commissionAmount, currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold text-n-800 border-t border-n-200 mt-1 pt-1">
-                  <span>Neto al médico</span>
+                  <span>{billingStrings.summaryNet}</span>
                   <span>
                     {formatCurrency(commissionPct > 0 ? netToDoctor : subtotal, currency)}
                   </span>
@@ -293,12 +294,14 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-[12.5px] font-medium text-n-700">Notas</label>
+              <label className="text-[12.5px] font-medium text-n-700">
+                {billingStrings.fieldNotes}
+              </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                placeholder="Opcional"
+                placeholder={billingStrings.fieldNotesPlaceholder}
                 maxLength={2000}
                 className="w-full border border-n-300 rounded-sm px-3 py-2 text-[13px] text-n-700 bg-n-0 resize-none focus:outline-none focus:border-p-500"
               />
@@ -306,10 +309,14 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              Cancelar
+              {billingStrings.cancelButton}
             </Button>
             <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
-              {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear factura'}
+              {isPending
+                ? billingStrings.savingButton
+                : isEdit
+                  ? billingStrings.saveButton
+                  : billingStrings.createButton}
             </Button>
           </ModalFooter>
         </form>

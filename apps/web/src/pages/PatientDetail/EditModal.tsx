@@ -18,6 +18,7 @@ import {
 } from '@/components/ui'
 import { useUpdatePatient } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
+import { patientDetailStrings } from './strings'
 
 export interface EditModalProps {
   patient: Patient
@@ -57,7 +58,7 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
       })
       onClose()
     } catch {
-      setError('No se pudo actualizar el paciente. Intenta de nuevo.')
+      setError(patientDetailStrings.errorMessage)
     }
   }
 
@@ -69,59 +70,63 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
       }}
     >
       <ModalContent>
-        <ModalHeader title="Editar paciente" />
+        <ModalHeader title={patientDetailStrings.editModalTitle} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
         >
           <ModalBody className="flex flex-col gap-4">
-            <Field label="Nombre completo" required>
+            <Field label={patientDetailStrings.fieldFullName} required>
               <Input
                 type="text"
-                placeholder="Ej. Ana María Reyes"
+                placeholder={patientDetailStrings.fieldFullNamePlaceholder}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
               />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Fecha de nacimiento">
+              <Field label={patientDetailStrings.fieldDateOfBirthLabel}>
                 <Input
                   type="date"
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
                 />
               </Field>
-              <Field label="Sexo">
+              <Field label={patientDetailStrings.fieldSexLabel}>
                 <Select value={sex} onValueChange={setSex}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar" />
+                    <SelectValue placeholder={patientDetailStrings.sexSelectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="female">Femenino</SelectItem>
-                    <SelectItem value="male">Masculino</SelectItem>
+                    <SelectItem value="female">{patientDetailStrings.sexFemale}</SelectItem>
+                    <SelectItem value="male">{patientDetailStrings.sexMale}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Tipo de documento">
+              <Field label={patientDetailStrings.fieldDocumentType}>
                 <Select value={documentType} onValueChange={setDocumentType}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar" />
+                    <SelectValue placeholder={patientDetailStrings.documentTypeSelectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cedula">Cédula</SelectItem>
-                    <SelectItem value="passport">Pasaporte</SelectItem>
+                    <SelectItem value="cedula">
+                      {patientDetailStrings.documentTypeCedula}
+                    </SelectItem>
+                    <SelectItem value="passport">
+                      {patientDetailStrings.documentTypePassport}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Número de documento">
+              <Field label={patientDetailStrings.fieldDocumentNumber}>
                 <Input
                   type="text"
-                  placeholder="Ej. 001-1234567-8"
+                  placeholder={patientDetailStrings.fieldDocumentNumberPlaceholder}
                   value={documentNumber}
                   onChange={(e) => setDocumentNumber(e.target.value)}
                 />
@@ -129,27 +134,27 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Teléfono">
+              <Field label={patientDetailStrings.fieldPhoneLabel}>
                 <Input
                   type="tel"
-                  placeholder="Ej. 809-555-0000"
+                  placeholder={patientDetailStrings.fieldPhonePlaceholder}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </Field>
-              <Field label="Correo electrónico">
+              <Field label={patientDetailStrings.fieldEmailLabel}>
                 <Input
                   type="email"
-                  placeholder="Ej. ana@email.com"
+                  placeholder={patientDetailStrings.fieldEmailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </Field>
             </div>
 
-            <Field label="Notas">
+            <Field label={patientDetailStrings.fieldNotesLabel}>
               <Textarea
-                placeholder="Observaciones iniciales..."
+                placeholder={patientDetailStrings.fieldNotesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="min-h-[60px]"
@@ -167,14 +172,16 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
+              {patientDetailStrings.cancelButton}
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={!canSubmit || updateMutation.isPending}
             >
-              {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+              {updateMutation.isPending
+                ? patientDetailStrings.savingButton
+                : patientDetailStrings.saveButton}
             </Button>
           </ModalFooter>
         </form>

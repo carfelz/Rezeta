@@ -605,7 +605,7 @@ function BlockRow({
                   onChange={(e) =>
                     onUpdate(block.id, { title: e.target.value || undefined }, parentId)
                   }
-                  placeholder="Ej. Indicaciones"
+                  placeholder={templateEditorWidgetStrings.sectionTitlePlaceholder}
                 />
               </Field>
               <Field label={templateEditorWidgetStrings.sectionDescLabel}>
@@ -615,13 +615,13 @@ function BlockRow({
                   onChange={(e) =>
                     onUpdate(block.id, { description: e.target.value || undefined }, parentId)
                   }
-                  placeholder="Descripción corta (opcional)"
+                  placeholder={templateEditorWidgetStrings.blockDescriptionPlaceholder}
                 />
               </Field>
             </>
           ) : (
             <>
-              <Field label="Título (opcional)">
+              <Field label={templateEditorWidgetStrings.blockTitleOptional}>
                 <Input
                   value={block.title ?? ''}
                   disabled={isLocked}
@@ -640,7 +640,7 @@ function BlockRow({
                   onChange={(e) =>
                     onUpdate(block.id, { placeholder: e.target.value || undefined }, parentId)
                   }
-                  placeholder="Instrucción para el médico al rellenar este bloque"
+                  placeholder={templateEditorWidgetStrings.blockPlaceholderInstruction}
                 />
               </Field>
             </>
@@ -666,7 +666,10 @@ function BlockRow({
           )}
           {!isLocked && (
             <div style={{ padding: '4px 12px 0' }}>
-              <AddBlockButton onClick={() => onAddChild('text', block.id)} label="Añadir bloque" />
+              <AddBlockButton
+                onClick={() => onAddChild('text', block.id)}
+                label={templateEditorWidgetStrings.addBlockLabel}
+              />
             </div>
           )}
         </div>

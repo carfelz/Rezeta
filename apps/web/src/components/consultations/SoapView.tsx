@@ -3,6 +3,7 @@ import { SoapTextarea } from './SoapTextarea'
 import { VitalsSection } from './VitalsSection'
 import { DiagnosesSection } from './DiagnosesSection'
 import type { LocalVitals } from '@/lib/consultation/vitals'
+import { soapViewStrings } from './strings'
 
 export interface SoapViewProps {
   chiefComplaint: string
@@ -41,61 +42,61 @@ export function SoapView({
 }: SoapViewProps): JSX.Element {
   return (
     <div>
-      <SectionBlock title="Motivo de consulta" id="field-chiefComplaint">
+      <SectionBlock title={soapViewStrings.chiefComplaintTitle} id="field-chiefComplaint">
         <SoapTextarea
           value={chiefComplaint}
           onChange={onChiefComplaintChange}
-          placeholder="Seguimiento trimestral, motivo de consulta, síntomas principales…"
+          placeholder={soapViewStrings.chiefComplaintPlaceholder}
           rows={2}
           disabled={isSigned}
         />
       </SectionBlock>
 
-      <SectionBlock title="Signos vitales" id="field-vitals">
+      <SectionBlock title={soapViewStrings.vitalsTitle} id="field-vitals">
         <VitalsSection vitals={vitals} onChange={onVitalsChange} disabled={isSigned} />
       </SectionBlock>
 
-      <SectionBlock title="Subjetivo" id="field-subjective">
+      <SectionBlock title={soapViewStrings.subjectiveTitle} id="field-subjective">
         <SoapTextarea
           value={subjective}
           onChange={onSubjectiveChange}
-          placeholder="Historia del paciente, síntomas, antecedentes relevantes, contexto clínico…"
+          placeholder={soapViewStrings.subjectivePlaceholder}
           rows={4}
           disabled={isSigned}
         />
       </SectionBlock>
 
-      <SectionBlock title="Examen físico" id="field-objective">
+      <SectionBlock title={soapViewStrings.objectiveTitle} id="field-objective">
         <SoapTextarea
           value={objective}
           onChange={onObjectiveChange}
-          placeholder="Hallazgos del examen físico, signos clínicos, datos objetivos…"
+          placeholder={soapViewStrings.objectivePlaceholder}
           rows={4}
           disabled={isSigned}
         />
       </SectionBlock>
 
-      <SectionBlock title="Evaluación" id="field-assessment">
+      <SectionBlock title={soapViewStrings.assessmentTitle} id="field-assessment">
         <SoapTextarea
           value={assessment}
           onChange={onAssessmentChange}
-          placeholder="Impresión diagnóstica, diagnóstico diferencial…"
+          placeholder={soapViewStrings.assessmentPlaceholder}
           rows={3}
           disabled={isSigned}
         />
       </SectionBlock>
 
-      <SectionBlock title="Plan" id="field-plan">
+      <SectionBlock title={soapViewStrings.planTitle} id="field-plan">
         <SoapTextarea
           value={plan}
           onChange={onPlanChange}
-          placeholder="Tratamiento, indicaciones, estudios solicitados, seguimiento…"
+          placeholder={soapViewStrings.planPlaceholder}
           rows={4}
           disabled={isSigned}
         />
       </SectionBlock>
 
-      <SectionBlock title="Diagnósticos" id="field-diagnoses">
+      <SectionBlock title={soapViewStrings.diagnosesTitle} id="field-diagnoses">
         <DiagnosesSection diagnoses={diagnoses} onChange={onDiagnosesChange} disabled={isSigned} />
       </SectionBlock>
     </div>

@@ -6,6 +6,7 @@ import type { Patient } from '@rezeta/shared'
 import { PatientModal, type PatientModalMode } from './PatientModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { PatientRow } from './PatientRow'
+import { patientsPageStrings } from './strings'
 
 export function Patients(): JSX.Element {
   const navigate = useNavigate()
@@ -59,7 +60,7 @@ export function Patients(): JSX.Element {
       await deleteMutation.mutateAsync(deletingPatient.id)
       setDeletingPatient(null)
     } catch {
-      setDeleteError('No se pudo eliminar el paciente. Intenta de nuevo.')
+      setDeleteError(patientsPageStrings.deleteError)
     }
   }
 
@@ -85,10 +86,10 @@ export function Patients(): JSX.Element {
       )}
 
       <div className="flex items-center mb-6 gap-4">
-        <h1 className="text-h1 flex-1">Pacientes</h1>
+        <h1 className="text-h1 flex-1">{patientsPageStrings.pageTitle}</h1>
         <Button variant="primary" onClick={openCreate}>
           <i className="ph ph-plus mr-2" />
-          Registrar paciente
+          {patientsPageStrings.registerButton}
         </Button>
       </div>
 
@@ -100,19 +101,21 @@ export function Patients(): JSX.Element {
             </InputIcon>
             <Input
               type="search"
-              placeholder="Buscar por nombre, cédula, teléfono..."
+              placeholder={patientsPageStrings.searchPlaceholder}
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
             />
           </InputGroup>
         </div>
 
-        {isLoading && <div className="p-8 text-center text-n-400">Cargando pacientes...</div>}
+        {isLoading && (
+          <div className="p-8 text-center text-n-400">{patientsPageStrings.loading}</div>
+        )}
 
         {isError && (
           <div className="m-4">
             <Callout variant="danger" icon={<i className="ph ph-warning-circle" />}>
-              No se pudo cargar la lista de pacientes.
+              {patientsPageStrings.loadError}
             </Callout>
           </div>
         )}
@@ -120,11 +123,11 @@ export function Patients(): JSX.Element {
         {!isLoading && !isError && data?.items.length === 0 && (
           <EmptyState
             icon={<i className="ph ph-user" />}
-            title="Aún no hay pacientes registrados"
-            description="Registra a tu primer paciente para empezar a gestionar citas, consultas y prescripciones desde un solo lugar."
+            title={patientsPageStrings.emptyTitle}
+            description={patientsPageStrings.emptyDescription}
             action={
               <Button variant="primary" onClick={openCreate}>
-                Registrar paciente
+                {patientsPageStrings.registerButton}
               </Button>
             }
             className="rounded-none border-0"
@@ -136,16 +139,16 @@ export function Patients(): JSX.Element {
             <thead>
               <tr>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Paciente
+                  {patientsPageStrings.tableHeaderPatient}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Cédula / Documento
+                  {patientsPageStrings.tableHeaderDocument}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Edad
+                  {patientsPageStrings.tableHeaderAge}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Estado
+                  {patientsPageStrings.tableHeaderStatus}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3" />
               </tr>

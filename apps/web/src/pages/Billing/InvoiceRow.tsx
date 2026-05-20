@@ -4,6 +4,7 @@ import { apiClient, triggerDownload } from '@/lib/api-client'
 import type { InvoiceWithDetails } from '@rezeta/shared'
 import { formatCurrency, formatDate, statusLabel, statusVariant } from './helpers'
 import { StatusAction } from './StatusAction'
+import { billingStrings } from './strings'
 
 export interface InvoiceRowProps {
   invoice: InvoiceWithDetails
@@ -47,7 +48,7 @@ export function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.
         </div>
         {invoice.commissionPercent > 0 && (
           <div className="text-[11px] font-mono text-n-500 mt-1">
-            Neto: {formatCurrency(invoice.netToDoctor, invoice.currency)}
+            {billingStrings.netLabel(formatCurrency(invoice.netToDoctor, invoice.currency))}
           </div>
         )}
       </td>
@@ -55,7 +56,7 @@ export function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.
         <Row gap={3} justify="end">
           <IconButton
             icon={downloading ? 'ph ph-spinner animate-spin' : 'ph ph-file-pdf'}
-            aria-label="Descargar PDF"
+            aria-label={billingStrings.downloadPdfLabel}
             tone="neutral"
             size="sm"
             disabled={downloading}
@@ -65,14 +66,14 @@ export function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.
             <>
               <IconButton
                 icon="ph ph-pencil-simple"
-                aria-label="Editar factura"
+                aria-label={billingStrings.editInvoiceLabel}
                 tone="neutral"
                 size="sm"
                 onClick={() => onEdit(invoice)}
               />
               <IconButton
                 icon="ph ph-trash"
-                aria-label="Eliminar factura"
+                aria-label={billingStrings.deleteInvoiceLabel}
                 tone="danger"
                 size="sm"
                 onClick={() => onDelete(invoice)}

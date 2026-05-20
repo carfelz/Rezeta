@@ -1,5 +1,6 @@
 import { Chip, IconButton, Row, TextLink } from '@/components/ui'
 import { formatDate } from './helpers'
+import { dateNavigationStrings } from './strings'
 
 export interface DateNavigationProps {
   currentDate: Date
@@ -20,14 +21,14 @@ export function DateNavigation({
     <Row gap={3} className="mb-5">
       <IconButton
         icon="ph ph-caret-left"
-        aria-label="Día anterior"
+        aria-label={dateNavigationStrings.prevDayLabel}
         tone="neutral"
         size="md"
         onClick={onPrev}
       />
       <IconButton
         icon="ph ph-caret-right"
-        aria-label="Día siguiente"
+        aria-label={dateNavigationStrings.nextDayLabel}
         tone="neutral"
         size="md"
         onClick={onNext}
@@ -36,13 +37,13 @@ export function DateNavigation({
         <span className="text-[15px] font-semibold text-n-800">{formatDate(currentDate)}</span>
         {isToday && (
           <Chip tone="primarySolid" size="md" format="sentence">
-            Hoy
+            {dateNavigationStrings.todayChip}
           </Chip>
         )}
       </Row>
       {!isToday && (
         <TextLink tone="primary" size="lg" weight="medium" onClick={onToday} className="ml-1">
-          Ir a hoy
+          {dateNavigationStrings.goTodayLink}
         </TextLink>
       )}
     </Row>

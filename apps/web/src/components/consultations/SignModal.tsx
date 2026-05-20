@@ -7,6 +7,7 @@ import {
   ModalHeader,
 } from '@/components/ui'
 import { useSignConsultation } from '@/hooks/consultations/use-consultations'
+import { signModalStrings } from './strings'
 
 export interface SignModalProps {
   consultationId: string
@@ -17,23 +18,19 @@ export function SignModal({ consultationId, onClose }: SignModalProps): JSX.Elem
   const signMutation = useSignConsultation(consultationId)
   return (
     <ModalContent>
-      <ModalHeader
-        title="Firmar consulta"
-        subtitle="Al firmar, la consulta quedará bloqueada. Solo podrá editarse mediante enmiendas."
-      />
+      <ModalHeader title={signModalStrings.title} subtitle={signModalStrings.subtitle} />
       <ModalBody>
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-md px-4 py-3">
           <i className="ph ph-warning text-[18px] text-warning-text shrink-0 mt-1" />
           <p className="text-[13px] text-warning-text leading-[1.45]">
-            Esta acción es irreversible. Verifica que todos los datos sean correctos antes de
-            continuar.
+            {signModalStrings.warningMessage}
           </p>
         </div>
       </ModalBody>
       <ModalFooter>
         <ModalClose asChild>
           <Button variant="secondary" onClick={onClose}>
-            Cancelar
+            {signModalStrings.cancelButton}
           </Button>
         </ModalClose>
         <Button
@@ -41,7 +38,7 @@ export function SignModal({ consultationId, onClose }: SignModalProps): JSX.Elem
           onClick={() => signMutation.mutate(undefined, { onSuccess: onClose })}
           disabled={signMutation.isPending}
         >
-          {signMutation.isPending ? 'Firmando…' : 'Firmar y cerrar'}
+          {signMutation.isPending ? signModalStrings.signingButton : signModalStrings.signButton}
         </Button>
       </ModalFooter>
     </ModalContent>

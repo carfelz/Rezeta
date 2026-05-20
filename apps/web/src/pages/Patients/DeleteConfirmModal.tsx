@@ -1,5 +1,6 @@
 import { Button, Callout, Modal, ModalContent, ModalFooter, ModalHeader } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
+import { deletePatientModalStrings } from './strings'
 
 export interface DeleteConfirmModalProps {
   patient: Patient
@@ -28,16 +29,18 @@ export function DeleteConfirmModal({
         <ModalHeader
           icon={<i className="ph ph-trash" />}
           iconVariant="danger"
-          title="Eliminar paciente"
-          subtitle={`¿Eliminar a ${name}? Esta acción no se puede deshacer y eliminará todos sus datos del sistema.`}
+          title={deletePatientModalStrings.title}
+          subtitle={deletePatientModalStrings.subtitle(name)}
           showClose={false}
         />
         <ModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            {deletePatientModalStrings.cancelButton}
           </Button>
           <Button type="button" variant="danger" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? 'Eliminando...' : 'Eliminar paciente'}
+            {isDeleting
+              ? deletePatientModalStrings.deletingButton
+              : deletePatientModalStrings.deleteButton}
           </Button>
         </ModalFooter>
         {error && (

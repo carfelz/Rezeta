@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
+import { patientComboboxStrings } from './strings'
 
 export interface PatientComboboxProps {
   value: string
@@ -38,7 +39,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
     <div className="relative" ref={containerRef}>
       <Input
         type="text"
-        placeholder="Buscar paciente..."
+        placeholder={patientComboboxStrings.searchPlaceholder}
         value={value && !open ? selectedName : search}
         onFocus={() => setOpen(true)}
         onChange={(e) => {
@@ -52,7 +53,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
         <div className="absolute top-full left-0 right-0 mt-1 bg-n-0 border border-n-200 rounded shadow-floating z-50 max-h-[200px] overflow-y-auto">
           {patients.length === 0 ? (
             <div className="px-3 py-2 text-[12px] text-n-400">
-              {search ? 'Sin resultados' : 'Escribe para buscar'}
+              {search ? patientComboboxStrings.noResults : patientComboboxStrings.typeToSearch}
             </div>
           ) : (
             patients.map((p) => (

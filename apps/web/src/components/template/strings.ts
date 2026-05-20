@@ -29,6 +29,7 @@ export const templateEditorWidgetStrings = {
     `¿Eliminar la sección "${title}" y sus ${count} bloque${count === 1 ? '' : 's'} hijo${count === 1 ? '' : 's'}?`,
   placeholderHint: 'Pista para el médico (opcional)',
   sectionTitleLabel: 'Título de la sección',
+  sectionTitlePlaceholder: 'Ej. Indicaciones',
   sectionDescLabel: 'Descripción (opcional)',
   navigateAway: 'Tienes cambios sin guardar. ¿Descartar y salir?',
   moveUp: 'Mover arriba',
@@ -37,4 +38,8 @@ export const templateEditorWidgetStrings = {
   delete: 'Eliminar',
   requiredTooltip: 'Desactiva "Requerido" antes de eliminar.',
   noTitle: '(sin título)',
+  blockTitleOptional: 'Título (opcional)',
+  blockDescriptionPlaceholder: 'Descripción corta (opcional)',
+  blockPlaceholderInstruction: 'Instrucción para el médico al rellenar este bloque',
+  addBlockLabel: 'Añadir bloque',
 } as const

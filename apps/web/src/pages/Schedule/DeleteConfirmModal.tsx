@@ -1,6 +1,7 @@
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui'
 import type { AppointmentWithDetails } from '@rezeta/shared'
 import { formatTime } from './helpers'
+import { deleteAppointmentModalStrings } from './strings'
 
 export interface DeleteConfirmModalProps {
   appt: AppointmentWithDetails
@@ -23,23 +24,27 @@ export function DeleteConfirmModal({
       }}
     >
       <ModalContent>
-        <ModalHeader title="Eliminar cita" showClose={false} />
+        <ModalHeader title={deleteAppointmentModalStrings.title} showClose={false} />
         <ModalBody>
           <p className="text-body text-n-700">
-            ¿Eliminar la cita de <span className="font-semibold">{appt.patientName}</span> el{' '}
-            {new Date(appt.startsAt).toLocaleDateString('es-DO', {
-              day: 'numeric',
-              month: 'long',
-            })}{' '}
-            a las {formatTime(appt.startsAt)}? Esta acción no se puede deshacer.
+            {deleteAppointmentModalStrings.body(
+              appt.patientName,
+              new Date(appt.startsAt).toLocaleDateString('es-DO', {
+                day: 'numeric',
+                month: 'long',
+              }),
+              formatTime(appt.startsAt),
+            )}
           </p>
         </ModalBody>
         <ModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            {deleteAppointmentModalStrings.cancelButton}
           </Button>
           <Button type="button" variant="danger" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? 'Eliminando...' : 'Eliminar cita'}
+            {isDeleting
+              ? deleteAppointmentModalStrings.deletingButton
+              : deleteAppointmentModalStrings.deleteButton}
           </Button>
         </ModalFooter>
       </ModalContent>

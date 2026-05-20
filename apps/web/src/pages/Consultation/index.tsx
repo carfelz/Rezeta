@@ -29,6 +29,7 @@ import { ConsultationModals } from './ConsultationModals'
 import { useSoapState } from './use-soap-state'
 import { formatDate } from './helpers'
 import { formatBreadcrumbDate } from '@/lib/format/dates'
+import { consultationPageStrings } from './strings'
 
 export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -127,7 +128,7 @@ export function Consultation(): JSX.Element {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-[13px] text-n-500 flex items-center gap-2">
-          <i className="ph ph-spinner animate-spin" /> Cargando consulta…
+          <i className="ph ph-spinner animate-spin" /> {consultationPageStrings.loading}
         </div>
       </div>
     )
@@ -137,9 +138,9 @@ export function Consultation(): JSX.Element {
     return (
       <div className="max-w-lg mx-auto mt-16 text-center">
         <i className="ph ph-warning text-[32px] text-n-300 mb-3" />
-        <p className="text-[14px] text-n-600 mb-4">No se pudo cargar la consulta.</p>
+        <p className="text-[14px] text-n-600 mb-4">{consultationPageStrings.loadError}</p>
         <Button variant="secondary" onClick={() => void navigate(-1)}>
-          Volver
+          {consultationPageStrings.backButton}
         </Button>
       </div>
     )
@@ -281,7 +282,7 @@ export function Consultation(): JSX.Element {
 
         <aside
           className="self-start sticky top-[120px] max-h-[calc(100vh-140px)] overflow-y-auto"
-          aria-label="Información complementaria"
+          aria-label={consultationPageStrings.complementaryInfoLabel}
         >
           <ConsultationSidebar
             consultationId={consultation.id}

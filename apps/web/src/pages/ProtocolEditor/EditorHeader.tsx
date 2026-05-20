@@ -71,15 +71,15 @@ export function EditorHeader({
           <h1
             onClick={onStartEditing}
             className="text-[28px] font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-[100ms] leading-tight"
-            title="Haz clic para renombrar"
+            title={protocolEditorStrings.titleRenameTooltip}
           >
             {title}
           </h1>
         )}
 
         <p className="text-[13px] font-sans text-n-500">
-          {totalBlocks} {totalBlocks === 1 ? 'bloque' : 'bloques'}
-          {sectionCount > 0 && ` · ${sectionCount} ${sectionCount === 1 ? 'sección' : 'secciones'}`}
+          {protocolEditorStrings.blockCount(totalBlocks)}
+          {sectionCount > 0 && ` · ${protocolEditorStrings.sectionCount(sectionCount)}`}
         </p>
       </div>
 

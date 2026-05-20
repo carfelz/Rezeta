@@ -11,6 +11,7 @@ import {
   SelectableCard,
 } from '@/components/ui'
 import type { ProtocolListItem } from '@rezeta/shared'
+import { protocolPickerModalStrings } from './strings'
 
 interface ProtocolPickerModalProps {
   open: boolean
@@ -62,16 +63,18 @@ export function ProtocolPickerModal({
     <Modal open={open} onOpenChange={handleOpenChange}>
       <ModalContent>
         <div className="px-6 pt-6 pb-3 border-b border-n-200">
-          <Dialog.Title className="text-h3 text-n-800 mb-1">Seleccionar protocolo</Dialog.Title>
+          <Dialog.Title className="text-h3 text-n-800 mb-1">
+            {protocolPickerModalStrings.title}
+          </Dialog.Title>
           <Dialog.Description className="text-[13px] text-n-500">
-            Elige un protocolo para aplicarlo en esta consulta.
+            {protocolPickerModalStrings.description}
           </Dialog.Description>
           <div className="mt-4">
             <SearchInput
               size="sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar protocolo…"
+              placeholder={protocolPickerModalStrings.searchPlaceholder}
             />
           </div>
         </div>
@@ -79,12 +82,12 @@ export function ProtocolPickerModal({
         <div className="overflow-y-auto max-h-[320px]">
           {isLoading && (
             <Caption tone="muted" size="lg" as="div" className="text-center py-12">
-              Cargando protocolos…
+              {protocolPickerModalStrings.loading}
             </Caption>
           )}
           {!isLoading && filtered.length === 0 && (
             <Caption tone="muted" size="lg" as="div" className="text-center py-12">
-              No se encontraron protocolos.
+              {protocolPickerModalStrings.noResults}
             </Caption>
           )}
           {!isLoading &&
@@ -116,7 +119,7 @@ export function ProtocolPickerModal({
 
         <Row gap={3} justify="end" className="px-6 py-4 border-t border-n-200">
           <Button variant="secondary" size="md" onClick={() => handleOpenChange(false)}>
-            Cancelar
+            {protocolPickerModalStrings.cancelButton}
           </Button>
           <Button
             variant="primary"
@@ -124,7 +127,9 @@ export function ProtocolPickerModal({
             disabled={!selectedProtocol || isPending}
             onClick={handleConfirm}
           >
-            {isPending ? 'Aplicando…' : 'Aplicar protocolo'}
+            {isPending
+              ? protocolPickerModalStrings.applyingButton
+              : protocolPickerModalStrings.applyButton}
           </Button>
         </Row>
       </ModalContent>

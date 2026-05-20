@@ -16,29 +16,29 @@ export function Settings(): JSX.Element {
 
   return (
     <div>
-      <h1 className="text-h1 mb-6">Ajustes</h1>
+      <h1 className="text-h1 mb-6">{settingsStrings.pageTitle}</h1>
 
       {user && (
         <Card className="max-w-[560px] mb-6">
-          <CardTitle>Mi cuenta</CardTitle>
+          <CardTitle>{settingsStrings.accountSectionTitle}</CardTitle>
           <div className="mt-4 flex flex-col gap-3">
             <div>
-              <span className="text-overline">Nombre</span>
+              <span className="text-overline">{settingsStrings.accountNameLabel}</span>
               <div className="text-body">{user.fullName}</div>
             </div>
             <div>
-              <span className="text-overline">Correo electrónico</span>
+              <span className="text-overline">{settingsStrings.accountEmailLabel}</span>
               <div className="text-body">{user.email}</div>
             </div>
             {user.specialty && (
               <div>
-                <span className="text-overline">Especialidad</span>
+                <span className="text-overline">{settingsStrings.accountSpecialtyLabel}</span>
                 <div className="text-body">{user.specialty}</div>
               </div>
             )}
             {user.licenseNumber && (
               <div>
-                <span className="text-overline">No. de licencia</span>
+                <span className="text-overline">{settingsStrings.accountLicenseLabel}</span>
                 <div className="text-body text-mono">{user.licenseNumber}</div>
               </div>
             )}
@@ -53,10 +53,8 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-map-pin text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">Ubicaciones</div>
-            <div className="text-[12px] text-n-500">
-              Centros médicos y consultorios donde ejerces
-            </div>
+            <div className="text-[13px] font-semibold">{settingsStrings.locationsTitle}</div>
+            <div className="text-[12px] text-n-500">{settingsStrings.locationsDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -67,9 +65,7 @@ export function Settings(): JSX.Element {
           <i className="ph ph-file-text text-[18px] text-p-500" />
           <div>
             <div className="text-[13px] font-semibold">{templatesStrings.pageTitle}</div>
-            <div className="text-[12px] text-n-500">
-              Gestiona las plantillas de protocolos de tu práctica
-            </div>
+            <div className="text-[12px] text-n-500">{settingsStrings.templatesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -80,7 +76,7 @@ export function Settings(): JSX.Element {
           <i className="ph ph-tag text-[18px] text-p-500" />
           <div>
             <div className="text-[13px] font-semibold">{typesStrings.pageTitle}</div>
-            <div className="text-[12px] text-n-500">Categorías que agrupan tus protocolos</div>
+            <div className="text-[12px] text-n-500">{settingsStrings.typesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -90,10 +86,8 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-clipboard-text text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">Registros de actividad</div>
-            <div className="text-[12px] text-n-500">
-              Historial de todas las acciones del sistema
-            </div>
+            <div className="text-[13px] font-semibold">{settingsStrings.auditLogTitle}</div>
+            <div className="text-[12px] text-n-500">{settingsStrings.auditLogDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -103,10 +97,8 @@ export function Settings(): JSX.Element {
         >
           <i className="ph ph-calendar-check text-[18px] text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">Horario de disponibilidad</div>
-            <div className="text-[12px] text-n-500">
-              Bloques semanales y excepciones por ubicación
-            </div>
+            <div className="text-[13px] font-semibold">{settingsStrings.schedulesTitle}</div>
+            <div className="text-[12px] text-n-500">{settingsStrings.schedulesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>

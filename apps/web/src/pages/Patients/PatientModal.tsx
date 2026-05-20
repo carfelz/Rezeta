@@ -22,6 +22,7 @@ import { useCreatePatient, useUpdatePatient } from '@/hooks/patients/use-patient
 import { useLocations } from '@/hooks/locations/use-locations'
 import { useUiStore } from '@/store/ui.store'
 import { ClinicalHistory } from './ClinicalHistory'
+import { patientModalStrings } from './strings'
 import { ReadField } from './ReadField'
 import { DOC_LABELS, SEX_LABELS, formatAge, formatDate } from './helpers'
 
@@ -69,8 +70,8 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
   const title = isView
     ? `${patient?.firstName ?? ''} ${patient?.lastName ?? ''}`.trim()
     : isEdit
-      ? 'Editar paciente'
-      : 'Registrar paciente'
+      ? patientModalStrings.titleEdit
+      : patientModalStrings.titleCreate
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
@@ -95,11 +96,7 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
       }
       onClose()
     } catch {
-      setError(
-        isEdit
-          ? 'No se pudo actualizar el paciente. Intenta de nuevo.'
-          : 'No se pudo registrar el paciente. Intenta de nuevo.',
-      )
+      setError(isEdit ? patientModalStrings.updateError : patientModalStrings.createError)
     }
   }
 
@@ -117,7 +114,7 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
           <ModalBody className="flex flex-col gap-0">
             <div className="grid grid-cols-2 gap-x-6 gap-y-4 pb-5 border-b border-n-100">
               <ReadField
-                label="Documento"
+                label={patientModalStrings.readDocumentLabel}
                 value={
                   patient.documentNumber
                     ? `${DOC_LABELS[patient.documentType ?? ''] ?? patient.documentType} · ${patient.documentNumber}`
@@ -125,19 +122,22 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
                 }
               />
               <ReadField
-                label="Fecha de nacimiento"
+                label={patientModalStrings.readDobLabel}
                 value={
                   patient.dateOfBirth
                     ? `${formatDate(patient.dateOfBirth)} (${formatAge(patient.dateOfBirth)})`
                     : null
                 }
               />
-              <ReadField label="Sexo" value={patient.sex ? SEX_LABELS[patient.sex] : null} />
-              <ReadField label="Teléfono" value={patient.phone} />
-              <ReadField label="Correo electrónico" value={patient.email} />
+              <ReadField
+                label={patientModalStrings.readSexLabel}
+                value={patient.sex ? SEX_LABELS[patient.sex] : null}
+              />
+              <ReadField label={patientModalStrings.readPhoneLabel} value={patient.phone} />
+              <ReadField label={patientModalStrings.readEmailLabel} value={patient.email} />
               {patient.notes && (
                 <div className="col-span-2">
-                  <ReadField label="Notas" value={patient.notes} />
+                  <ReadField label={patientModalStrings.readNotesLabel} value={patient.notes} />
                 </div>
               )}
             </div>
@@ -147,7 +147,7 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
                 {patient.allergies.length > 0 && (
                   <div>
                     <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
-                      Alergias
+                      {patientModalStrings.allergiesLabel}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {patient.allergies.map((a) => (
@@ -161,7 +161,7 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
                 {patient.chronicConditions.length > 0 && (
                   <div>
                     <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
-                      Condiciones crónicas
+                      {patientModalStrings.chronicConditionsLabel}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {patient.chronicConditions.map((c) => (
@@ -187,10 +187,10 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
             }}
           >
             <ModalBody className="flex flex-col gap-4">
-              <Field label="Nombre completo" required>
+              <Field label={patientModalStrings.nameLabel} required>
                 <Input
                   type="text"
-                  placeholder="Ej. Ana María Reyes"
+                  placeholder={patientModalStrings.namePlaceholder}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   autoFocus={isCreate}
@@ -198,42 +198,44 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Fecha de nacimiento">
+                <Field label={patientModalStrings.dobLabel}>
                   <Input
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
                   />
                 </Field>
-                <Field label="Sexo">
+                <Field label={patientModalStrings.sexLabel}>
                   <Select value={sex} onValueChange={setSex}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder={patientModalStrings.sexPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="female">Femenino</SelectItem>
-                      <SelectItem value="male">Masculino</SelectItem>
+                      <SelectItem value="female">{patientModalStrings.sexFemale}</SelectItem>
+                      <SelectItem value="male">{patientModalStrings.sexMale}</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Tipo de documento">
+                <Field label={patientModalStrings.docTypeLabel}>
                   <Select value={documentType} onValueChange={setDocumentType}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder={patientModalStrings.docTypePlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cedula">Cédula</SelectItem>
-                      <SelectItem value="passport">Pasaporte</SelectItem>
+                      <SelectItem value="cedula">{patientModalStrings.docTypeCedula}</SelectItem>
+                      <SelectItem value="passport">
+                        {patientModalStrings.docTypePassport}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Número de documento">
+                <Field label={patientModalStrings.docNumberLabel}>
                   <Input
                     type="text"
-                    placeholder="Ej. 001-1234567-8"
+                    placeholder={patientModalStrings.docNumberPlaceholder}
                     value={documentNumber}
                     onChange={(e) => setDocumentNumber(e.target.value)}
                   />
@@ -241,27 +243,27 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Teléfono">
+                <Field label={patientModalStrings.phoneLabel}>
                   <Input
                     type="tel"
-                    placeholder="Ej. 809-555-0000"
+                    placeholder={patientModalStrings.phonePlaceholder}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </Field>
-                <Field label="Correo electrónico">
+                <Field label={patientModalStrings.emailLabel}>
                   <Input
                     type="email"
-                    placeholder="Ej. ana@email.com"
+                    placeholder={patientModalStrings.emailPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </Field>
               </div>
 
-              <Field label="Notas">
+              <Field label={patientModalStrings.notesLabel}>
                 <Textarea
-                  placeholder="Observaciones iniciales..."
+                  placeholder={patientModalStrings.notesPlaceholder}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="min-h-[60px]"
@@ -279,10 +281,14 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
             </ModalBody>
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={onClose}>
-                Cancelar
+                {patientModalStrings.cancelButton}
               </Button>
               <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
-                {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Registrar paciente'}
+                {isPending
+                  ? patientModalStrings.savingButton
+                  : isEdit
+                    ? patientModalStrings.saveButton
+                    : patientModalStrings.registerButton}
               </Button>
             </ModalFooter>
           </form>
