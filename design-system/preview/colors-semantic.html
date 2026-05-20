@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Semantic colors</title>
+<link rel="stylesheet" href="_base.css"/>
+<style>
+  body{padding:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:700px}
+  .cell{border-radius:var(--radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+  .cell .name{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500}
+  .cell .body{font-family:var(--font-sans);font-size:13px;line-height:1.45}
+  .swatches{display:flex;gap:6px;margin-top:8px;font-family:var(--font-mono);font-size:9.5px}
+  .sq{width:24px;height:24px;border-radius:3px;border:1px solid rgba(0,0,0,0.05)}
+</style></head>
+<body>
+<div class="grid">
+  <div class="cell" style="background:#EDF3EC;border:1px solid #B8CFB2;color:#2F5C28">
+    <span class="name">Success</span>
+    <span class="body">Receta firmada · pago recibido · cita confirmada</span>
+    <div class="swatches"><div class="sq" style="background:#EDF3EC"></div><div class="sq" style="background:#B8CFB2"></div><div class="sq" style="background:#2F5C28"></div></div>
+  </div>
+  <div class="cell" style="background:#F7F1E3;border:1px solid #DCC89A;color:#6E5319">
+    <span class="name">Warning</span>
+    <span class="body">Revisión pendiente · borrador sin firmar</span>
+    <div class="swatches"><div class="sq" style="background:#F7F1E3"></div><div class="sq" style="background:#DCC89A"></div><div class="sq" style="background:#6E5319"></div></div>
+  </div>
+  <div class="cell" style="background:#F6EAE8;border:1px solid #D9B4AE;color:#7A2B22">
+    <span class="name">Danger</span>
+    <span class="body">Contraindicación · alergia registrada · factura vencida</span>
+    <div class="swatches"><div class="sq" style="background:#F6EAE8"></div><div class="sq" style="background:#D9B4AE"></div><div class="sq" style="background:#7A2B22"></div></div>
+  </div>
+  <div class="cell" style="background:#ECF0F3;border:1px solid #B8C6D0;color:#2B435A">
+    <span class="name">Info</span>
+    <span class="body">Nueva versión publicada · cambio de sede</span>
+    <div class="swatches"><div class="sq" style="background:#ECF0F3"></div><div class="sq" style="background:#B8C6D0"></div><div class="sq" style="background:#2B435A"></div></div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Rezeta — Medical ERP · MVP routes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  :root {
+    --n-0:#FFFFFF; --n-25:#FAFAF7; --n-50:#F4F4F0; --n-100:#EBEBE6; --n-200:#D8D8D2;
+    --n-300:#B9B9B3; --n-400:#8E8E88; --n-500:#6B6B66; --n-600:#4A4A46; --n-700:#2E2E2B;
+    --n-800:#1C1C1A; --n-900:#0E0E0D;
+    --p-50:#EAF0F1; --p-100:#C9D7DA; --p-300:#6A8B91; --p-500:#2D5760; --p-700:#1B3A41; --p-900:#0E2429;
+    --ok-bg:#EDF3EC; --ok-border:#B8CFB2; --ok-text:#2F5C28;
+    --warn-bg:#F7F1E3; --warn-border:#DCC89A; --warn-text:#6E5319;
+    --err-bg:#F6EAE8; --err-border:#D9B4AE; --err-text:#7A2B22;
+    --info-bg:#ECF0F3; --info-border:#B8C6D0; --info-text:#2B435A;
+    --r-sm:3px; --r-md:5px; --r-lg:8px;
+    --serif:"Source Serif 4",ui-serif,Georgia,serif;
+    --sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--n-700);background:var(--n-25);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--mono)}
+
+  /* ===== App shell ===== */
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  .sidebar{background:var(--n-25);border-right:1px solid var(--n-200);display:flex;flex-direction:column;padding:20px 0 16px;position:sticky;top:0;height:100vh}
+  .sb-brand{padding:0 20px 22px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--n-100);margin-bottom:14px}
+  .sb-logo{width:28px;height:28px;background:var(--p-500);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:500;color:#fff;font-size:16px}
+  .sb-brand-name{font-family:var(--serif);font-weight:500;font-size:18px;color:var(--n-900);letter-spacing:-0.01em}
+  .sb-section-label{padding:12px 20px 6px;font-family:var(--mono);font-size:10px;color:var(--n-400);letter-spacing:0.12em;text-transform:uppercase}
+  .sb-item{display:flex;align-items:center;gap:10px;padding:7px 20px;font-size:13px;color:var(--n-600);cursor:pointer;position:relative}
+  .sb-item i{font-size:16px;color:var(--n-500)}
+  .sb-item:hover{background:var(--n-50);color:var(--n-800)}
+  .sb-item.active{color:var(--n-900);background:var(--n-0);font-weight:500}
+  .sb-item.active::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2px;background:var(--p-500)}
+  .sb-item.active i{color:var(--p-500)}
+  .sb-item .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--n-400)}
+  .sb-footer{margin-top:auto;padding:12px 14px 0;border-top:1px solid var(--n-100)}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:4px;cursor:pointer}
+  .sb-user:hover{background:var(--n-50)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--p-50);color:var(--p-700);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0}
+  .sb-user-info{flex:1;min-width:0}
+  .sb-user-name{font-weight:600;font-size:12.5px;color:var(--n-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sb-user-role{font-size:11px;color:var(--n-500)}
+
+  /* ===== Main ===== */
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{background:var(--n-0);border-bottom:1px solid var(--n-200);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:20}
+  .loc-switcher{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--n-200);border-radius:var(--r-sm);cursor:pointer;background:var(--n-0)}
+  .loc-dot{width:6px;height:6px;border-radius:50%;background:var(--p-500)}
+  .loc-text{font-size:13px;color:var(--n-800);font-weight:500}
+  .loc-sub{font-size:12px;color:var(--n-500)}
+  .tb-search{flex:1;max-width:480px;position:relative}
+  .tb-search input{height:34px;width:100%;padding:0 12px 0 34px;border:1px solid var(--n-200);border-radius:var(--r-sm);background:var(--n-0);font-family:var(--sans);font-size:13px;color:var(--n-800)}
+  .tb-search input:focus{outline:none;border-color:var(--p-500);box-shadow:0 0 0 3px rgba(45,87,96,.12)}
+  .tb-search i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--n-400);font-size:16px}
+  .tb-search kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:10px;color:var(--n-500);border:1px solid var(--n-200);padding:2px 5px;border-radius:3px;background:var(--n-25)}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .tb-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);color:var(--n-600);cursor:pointer;position:relative}
+  .tb-icon:hover{background:var(--n-50)}
+  .tb-icon .badge-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:#8C2A20;border-radius:50%;border:1.5px solid var(--n-0)}
+  .tb-doctor{display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--n-200);cursor:pointer}
+  .tb-doctor .n{font-weight:600;font-size:12.5px;color:var(--n-800)}
+  .tb-doctor .r{font-size:11.5px;color:var(--n-500)}
+
+  .content{padding:28px 32px;max-width:1400px;width:100%}
+  .content.wide{max-width:none}
+
+  /* ===== Typography ===== */
+  h1.page-title{font-family:var(--serif);font-weight:500;font-size:30px;line-height:1.15;letter-spacing:-0.015em;color:var(--n-900);margin:0}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+  .page-sub{font-size:13px;color:var(--n-500);margin:4px 0 0}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--n-400);margin-bottom:6px}
+  .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--n-500);margin-bottom:14px}
+  .breadcrumb a:hover{color:var(--n-800)}
+  .breadcrumb i{font-size:12px;color:var(--n-300)}
+
+  /* ===== Buttons ===== */
+  .btn{font-family:var(--sans);font-weight:500;font-size:13px;line-height:1;border-radius:var(--r-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;padding:0 14px;height:32px;white-space:nowrap;transition:all .1s}
+  .btn i{font-size:15px}
+  .btn.sm{height:28px;font-size:12.5px;padding:0 10px}
+  .btn.lg{height:40px;font-size:14px;padding:0 18px}
+  .btn.icon-only{padding:0;width:32px}
+  .btn.icon-only.sm{width:28px}
+  .btn-primary{background:var(--p-500);color:#fff;border-color:var(--p-500)}
+  .btn-primary:hover{background:var(--p-700);border-color:var(--p-700)}
+  .btn-secondary{background:var(--n-0);color:var(--n-800);border-color:var(--n-300)}
+  .btn-secondary:hover{background:var(--n-50);border-color:var(--n-400)}
+  .btn-ghost{background:transparent;color:var(--n-700)}
+  .btn-ghost:hover{background:var(--n-100)}
+  .btn-danger{background:#8C2A20;color:#fff;border-color:#8C2A20}
+  .btn-danger:hover{background:#6E2018}
+
+  /* ===== Inputs ===== */
+  .input{font-family:var(--sans);font-size:13px;color:var(--n-800);height:34px;padding:0 12px;background:var(--n-0);border:1px solid var(--n-300);border-radius:var(--r-sm);width:100%}
+  .input::placeholder{color:var(--n-400)}
+  .input:focus{outline:none;border-color:var(--p-500);box-shadow:0 0 0 3px rgba(45,87,96,.12)}
+  textarea.input{height:auto;padding:10px 12px;resize:vertical;font-family:var(--sans)}
+  select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--n-500) 50%),linear-gradient(135deg,var(--n-500) 50%,transparent 50%);background-position:calc(100% - 14px) 14px,calc(100% - 9px) 14px;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-weight:500;font-size:12.5px;color:var(--n-700)}
+  .field .helper{font-size:11.5px;color:var(--n-500)}
+  .input-group{position:relative;display:flex;align-items:stretch;border:1px solid var(--n-300);border-radius:var(--r-sm);background:var(--n-0)}
+  .input-group:focus-within{border-color:var(--p-500);box-shadow:0 0 0 3px rgba(45,87,96,.12)}
+  .input-group .input{border:none;background:transparent;box-shadow:none!important;flex:1;min-width:0;padding:0 10px}
+  .input-group .adorn{display:inline-flex;align-items:center;padding:0 10px;font-family:var(--mono);font-size:12px;color:var(--n-500);background:var(--n-50);border-left:1px solid var(--n-200)}
+  .input-group .adorn.leading{border-left:none;border-right:1px solid var(--n-200)}
+  .input-group .icon{display:inline-flex;align-items:center;justify-content:center;width:32px;color:var(--n-400);font-size:16px;flex-shrink:0}
+
+  /* ===== Cards / surfaces ===== */
+  .card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:20px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .card-head h3{margin:0;font-family:var(--serif);font-weight:500;font-size:18px;color:var(--n-900);letter-spacing:-0.005em}
+  .card-head .more{font-size:12px;color:var(--n-500);cursor:pointer}
+
+  /* ===== Badges ===== */
+  .badge{display:inline-flex;align-items:center;gap:5px;font-weight:500;font-size:11.5px;line-height:1;padding:4px 8px;border-radius:3px;border:1px solid}
+  .badge .dot{width:6px;height:6px;border-radius:50%}
+  .b-draft{background:var(--n-50);border-color:var(--n-200);color:var(--n-600)} .b-draft .dot{background:var(--n-400)}
+  .b-active{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)} .b-active .dot{background:var(--ok-text)}
+  .b-signed{background:var(--p-50);border-color:var(--p-100);color:var(--p-700)} .b-signed .dot{background:var(--p-500)}
+  .b-review{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text)} .b-review .dot{background:var(--warn-text)}
+  .b-paid{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)} .b-paid .dot{background:var(--ok-text)}
+  .b-overdue{background:var(--err-bg);border-color:var(--err-border);color:var(--err-text)} .b-overdue .dot{background:var(--err-text)}
+  .b-archive{background:var(--n-50);border-color:var(--n-200);color:var(--n-500)} .b-archive .dot{background:var(--n-400)}
+
+  /* ===== Tables ===== */
+  .tbl{width:100%;border-collapse:collapse;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);overflow:hidden}
+  .tbl th,.tbl td{padding:11px 16px;text-align:left;font-size:13px}
+  .tbl thead th{background:var(--n-50);border-bottom:1px solid var(--n-200);font-weight:600;font-size:11px;color:var(--n-600);letter-spacing:0.06em;text-transform:uppercase}
+  .tbl tbody tr{border-bottom:1px solid var(--n-100);cursor:pointer}
+  .tbl tbody tr:last-child{border-bottom:none}
+  .tbl tbody tr:hover{background:var(--n-25)}
+  .tbl td.name{font-weight:600;color:var(--n-800)}
+  .tbl td.mono{font-family:var(--mono);font-size:12px;color:var(--n-600)}
+  .tbl td.num{font-family:var(--mono);text-align:right}
+
+  /* ===== Tabs ===== */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--n-200);margin-bottom:20px}
+  .tab{font-weight:500;font-size:13px;color:var(--n-500);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab:hover{color:var(--n-800)}
+  .tab.active{color:var(--n-900);border-bottom-color:var(--p-500)}
+  .tab .count{font-family:var(--mono);font-size:11px;color:var(--n-400);margin-left:6px}
+
+  /* ===== Empty ===== */
+  .empty{background:var(--n-0);border:1px dashed var(--n-200);border-radius:var(--r-md);padding:48px 32px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+  .empty-glyph{width:56px;height:56px;border-radius:50%;background:var(--n-50);display:flex;align-items:center;justify-content:center;color:var(--n-500);font-size:24px;margin-bottom:12px}
+  .empty h3{font-family:var(--serif);font-weight:500;font-size:20px;color:var(--n-800);margin:0}
+  .empty p{font-size:13px;color:var(--n-500);max-width:42ch;margin:0 0 14px}
+
+  /* ===== Utility ===== */
+  .row{display:flex;align-items:center}
+  .stack{display:flex;flex-direction:column}
+  .gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.gap-6{gap:24px}
+  .between{justify-content:space-between}
+  .wrap{flex-wrap:wrap}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .muted{color:var(--n-500)}
+  .strong{color:var(--n-900);font-weight:600}
+  .divider{height:1px;background:var(--n-100);margin:16px 0}
+
+  /* ===== Anchor rule ===== */
+  .anchor{position:relative;padding-left:14px}
+  .anchor::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:2px;background:var(--p-500)}
+
+  /* ===== Route wrapper ===== */
+  .route{display:none}
+  .route.active{display:block}
+
+  /* ===== Dashboard KPI ===== */
+  .kpi{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:18px 20px}
+  .kpi .label{font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--n-500);margin-bottom:10px}
+  .kpi .value{font-family:var(--serif);font-weight:500;font-size:34px;color:var(--n-900);line-height:1;letter-spacing:-0.015em}
+  .kpi .value .unit{font-family:var(--sans);font-weight:500;font-size:13px;color:var(--n-400);margin-left:4px}
+  .kpi .delta{font-family:var(--mono);font-size:11px;margin-top:8px;display:flex;align-items:center;gap:4px}
+  .kpi .delta.up{color:var(--ok-text)}
+  .kpi .delta.down{color:var(--err-text)}
+  .kpi .delta.flat{color:var(--n-500)}
+
+  /* ===== Agenda ===== */
+  .day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .day-tabs{display:flex;gap:2px}
+  .day-tab{padding:8px 14px;font-size:12.5px;color:var(--n-500);border:1px solid transparent;border-radius:var(--r-sm);cursor:pointer;text-align:center;min-width:54px}
+  .day-tab.active{background:var(--n-0);border-color:var(--n-200);color:var(--n-900);font-weight:600}
+  .day-tab .num{display:block;font-family:var(--serif);font-size:18px;line-height:1;margin-top:2px}
+  .agenda-grid{display:grid;grid-template-columns:60px 1fr;gap:0;background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);overflow:hidden}
+  .agenda-hour{border-top:1px solid var(--n-100);padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--n-400);text-align:right}
+  .agenda-hour:first-child{border-top:none}
+  .agenda-slot{border-top:1px solid var(--n-100);padding:8px 12px;min-height:56px;position:relative}
+  .agenda-slot:first-child{border-top:none}
+  .appt{background:var(--p-50);border-left:2px solid var(--p-500);padding:6px 10px;border-radius:var(--r-sm);margin-bottom:6px}
+  .appt .who{font-weight:600;font-size:12.5px;color:var(--n-900)}
+  .appt .why{font-size:11.5px;color:var(--n-600)}
+  .appt.done{background:var(--n-50);border-left-color:var(--n-300);opacity:.8}
+  .appt.done .who{text-decoration:line-through;color:var(--n-500)}
+  .appt.urgent{background:var(--err-bg);border-left-color:#8C2A20}
+
+  /* ===== Patient detail ===== */
+  .patient-hero{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:24px 28px;margin-bottom:20px}
+  .p-avatar{width:64px;height:64px;border-radius:50%;background:var(--p-50);color:var(--p-700);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:500;font-size:24px}
+  .p-name{font-family:var(--serif);font-weight:500;font-size:28px;color:var(--n-900);letter-spacing:-0.01em;margin:0}
+  .p-meta{display:flex;gap:16px;font-size:12.5px;color:var(--n-500);margin-top:4px;flex-wrap:wrap}
+  .p-meta b{color:var(--n-800);font-weight:500}
+  .vitals{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--n-200);border:1px solid var(--n-200);border-radius:var(--r-md);overflow:hidden;margin-top:18px}
+  .vital{background:var(--n-0);padding:12px 16px}
+  .vital .k{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--n-500);margin-bottom:4px}
+  .vital .v{font-family:var(--serif);font-weight:500;font-size:22px;color:var(--n-900);letter-spacing:-0.01em}
+  .vital .v .u{font-family:var(--mono);font-size:11px;color:var(--n-400);margin-left:3px;font-weight:400}
+
+  /* ===== Consultation editor ===== */
+  .consult-layout{display:grid;grid-template-columns:1fr 320px;gap:20px}
+  .consult-main .section-block{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:20px 24px;margin-bottom:16px}
+  .section-block h3{font-family:var(--serif);font-weight:500;font-size:18px;color:var(--n-900);margin:0 0 12px;letter-spacing:-0.005em}
+  .aside-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:18px}
+  .aside-card + .aside-card{margin-top:14px}
+  .aside-card h4{margin:0 0 10px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--n-700);font-weight:600}
+  .alert-list{display:flex;flex-direction:column;gap:8px}
+  .alert-row{display:flex;gap:10px;padding:10px 12px;border:1px solid;border-radius:var(--r-sm);font-size:12.5px;line-height:1.4}
+  .alert-row.err{background:var(--err-bg);border-color:var(--err-border);color:var(--err-text)}
+  .alert-row.warn{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text)}
+  .alert-row i{font-size:16px;flex-shrink:0}
+
+  /* ===== Protocols list ===== */
+  .proto-card{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:18px 20px;cursor:pointer;transition:border-color .1s}
+  .proto-card:hover{border-color:var(--n-400)}
+  .proto-card h3{font-family:var(--serif);font-weight:500;font-size:19px;color:var(--n-900);margin:0 0 4px;letter-spacing:-0.005em}
+  .proto-card .spec{font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--n-400);margin-bottom:6px}
+  .proto-card .desc{font-size:12.5px;color:var(--n-600);line-height:1.5;margin:0}
+  .proto-card .meta{display:flex;gap:14px;font-family:var(--mono);font-size:11px;color:var(--n-500);margin-top:14px;padding-top:12px;border-top:1px solid var(--n-100)}
+
+  /* ===== Protocol editor ===== */
+  .editor-layout{display:grid;grid-template-columns:240px 1fr 280px;gap:20px}
+  .toc{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:12px 8px;height:fit-content;position:sticky;top:72px}
+  .toc-item{padding:6px 10px;font-size:12.5px;color:var(--n-500);cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:8px}
+  .toc-item:hover{background:var(--n-50);color:var(--n-800)}
+  .toc-item.active{color:var(--n-900);font-weight:500;background:var(--p-50)}
+  .toc-item .num{font-family:var(--mono);font-size:10.5px;color:var(--n-400);min-width:18px}
+  .toc-item.active .num{color:var(--p-500)}
+
+  .pblock{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);margin-bottom:12px}
+  .pblock-header{padding:10px 14px 10px 16px;border-bottom:1px solid var(--n-100);display:flex;align-items:center;gap:10px;position:relative;background:var(--n-25);border-top-left-radius:var(--r-md);border-top-right-radius:var(--r-md)}
+  .pblock-header::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--p-500)}
+  .pblock-handle{color:var(--n-300);font-size:16px;cursor:grab}
+  .pblock-type{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--p-700);background:var(--p-50);border:1px solid var(--p-100);padding:2px 6px;border-radius:3px}
+  .pblock-title{flex:1;font-family:var(--serif);font-weight:500;font-size:16px;color:var(--n-900);padding:2px 0;border:none;background:transparent;outline:none}
+  .pblock-body{padding:14px 18px}
+  .plist-item{display:flex;align-items:flex-start;gap:10px;padding:4px 6px;border-radius:3px;font-size:13.5px}
+  .plist-item:hover{background:var(--n-25)}
+  .check-box{width:15px;height:15px;border:1px solid var(--n-400);border-radius:3px;flex-shrink:0;margin-top:2px;display:inline-flex;align-items:center;justify-content:center}
+  .check-box.checked{background:var(--p-500);border-color:var(--p-500)}
+  .check-box.checked::after{content:"";width:8px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+  .pblock-add{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:12.5px;color:var(--n-500);border:1px dashed var(--n-200);border-radius:var(--r-sm);cursor:pointer;margin-top:6px;background:transparent;width:100%;justify-content:center}
+  .pblock-add:hover{border-color:var(--n-400);color:var(--n-800)}
+
+  .block-palette{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:14px;height:fit-content;position:sticky;top:72px}
+  .block-palette h4{margin:0 0 10px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--n-600);font-weight:600}
+  .palette-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--n-200);border-radius:var(--r-sm);cursor:grab;margin-bottom:6px;background:var(--n-0);font-size:12.5px;color:var(--n-700)}
+  .palette-item:hover{border-color:var(--n-400);background:var(--n-25)}
+  .palette-item i{color:var(--p-500);font-size:16px}
+
+  /* ===== Billing ===== */
+  .bill-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--n-200);border-radius:999px;font-size:12px;color:var(--n-600);background:var(--n-0);cursor:pointer}
+  .chip.active{background:var(--n-900);color:#fff;border-color:var(--n-900)}
+
+  /* ===== Settings ===== */
+  .settings-layout{display:grid;grid-template-columns:220px 1fr;gap:24px}
+  .settings-nav{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:8px;height:fit-content}
+  .settings-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;color:var(--n-600);border-radius:var(--r-sm);cursor:pointer}
+  .settings-nav-item:hover{background:var(--n-50);color:var(--n-800)}
+  .settings-nav-item.active{background:var(--p-50);color:var(--p-700);font-weight:500}
+  .settings-nav-item i{font-size:16px}
+  .form-section{background:var(--n-0);border:1px solid var(--n-200);border-radius:var(--r-md);padding:24px 28px;margin-bottom:16px}
+  .form-section h3{font-family:var(--serif);font-weight:500;font-size:20px;color:var(--n-900);margin:0 0 4px;letter-spacing:-0.005em}
+  .form-section .desc{font-size:12.5px;color:var(--n-500);margin:0 0 18px}
+  .form-row{display:grid;grid-template-columns:200px 1fr;gap:20px;padding:14px 0;border-top:1px solid var(--n-100)}
+  .form-row:first-of-type{border-top:none;padding-top:0}
+  .form-row .lbl{font-weight:500;font-size:13px;color:var(--n-800)}
+  .form-row .lbl .sub{display:block;font-weight:400;font-size:11.5px;color:var(--n-500);margin-top:2px}
+
+  /* ===== Dev route pill ===== */
+  .route-pill{position:fixed;bottom:14px;left:14px;background:var(--n-900);color:#fff;font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:3px;letter-spacing:0.04em;z-index:50;opacity:0.7}
+
+  .toggle{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:var(--n-700);cursor:pointer}
+  .toggle .track{width:30px;height:18px;background:var(--n-300);border-radius:999px;position:relative}
+  .toggle .track::after{content:"";width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px}
+  .toggle.on .track{background:var(--p-500)}
+  .toggle.on .track::after{left:14px}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR (shared) ============ -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">R</div>
+      <div class="sb-brand-name">Rezeta</div>
+    </div>
+    <div class="sb-section-label">Hoy</div>
+    <div class="sb-item" data-nav="dashboard"><i class="ph ph-squares-four"></i>Dashboard</div>
+    <div class="sb-item" data-nav="agenda"><i class="ph ph-calendar-blank"></i>Agenda<span class="count">14</span></div>
+    <div class="sb-section-label">Trabajo clínico</div>
+    <div class="sb-item" data-nav="pacientes"><i class="ph ph-user"></i>Pacientes<span class="count">1,247</span></div>
+    <div class="sb-item" data-nav="protocolos"><i class="ph ph-stack"></i>Protocolos<span class="count">32</span></div>
+    <div class="sb-section-label">Administración</div>
+    <div class="sb-item" data-nav="facturacion"><i class="ph ph-receipt"></i>Facturación</div>
+    <div class="sb-item" data-nav="ajustes"><i class="ph ph-gear"></i>Ajustes</div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="avatar">DR</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Dr. Rafael Núñez</div>
+          <div class="sb-user-role">Medicina interna</div>
+        </div>
+        <i class="ph ph-caret-up-down" style="color:var(--n-400)"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="loc-switcher">
+        <span class="loc-dot"></span>
+        <span class="loc-text">HOMS</span>
+        <span class="loc-sub">· Sala 3</span>
+        <i class="ph ph-caret-down" style="color:var(--n-500);font-size:12px;margin-left:4px"></i>
+      </div>
+      <div class="tb-search">
+        <i class="ph ph-magnifying-glass"></i>
+        <input placeholder="Buscar paciente, protocolo o consulta…" />
+        <kbd>⌘K</kbd>
+      </div>
+      <div class="tb-right">
+        <div class="tb-icon"><i class="ph ph-question"></i></div>
+        <div class="tb-icon"><i class="ph ph-bell"></i><span class="badge-dot"></span></div>
+        <div class="tb-doctor">
+          <div class="avatar" style="width:30px;height:30px;font-size:11px">DR</div>
+          <div>
+            <div class="n">Dr. Rafael Núñez</div>
+            <div class="r">Medicina interna</div>
+          </div>
+          <i class="ph ph-caret-down" style="color:var(--n-400);font-size:12px"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /dashboard ============ -->
+    <div class="route" data-route="dashboard" data-screen-label="01 Dashboard">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <div class="kicker">Lunes 14 de abril · 09:42 AM</div>
+            <h1 class="page-title">Buenos días, Dr. Núñez.</h1>
+            <p class="page-sub">Hoy tienes 14 consultas programadas. Tu próxima cita es en 22 minutos.</p>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary"><i class="ph ph-calendar-blank"></i>Ver agenda</button>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Nueva consulta</button>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="kpi">
+            <div class="label">Consultas hoy</div>
+            <div class="value">14<span class="unit">/ 18</span></div>
+            <div class="delta flat"><i class="ph ph-minus"></i>78% completadas</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Pacientes activos</div>
+            <div class="value">1,247</div>
+            <div class="delta up"><i class="ph ph-arrow-up"></i>+32 este mes</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Facturación · abril</div>
+            <div class="value">RD$ 284,300</div>
+            <div class="delta up"><i class="ph ph-arrow-up"></i>+12% vs marzo</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Prescripciones pendientes</div>
+            <div class="value">3</div>
+            <div class="delta down"><i class="ph ph-arrow-down"></i>requieren firma</div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card" style="grid-column:span 2">
+            <div class="card-head">
+              <h3>Próximas citas</h3>
+              <span class="more" data-goto="agenda">Ver agenda completa →</span>
+            </div>
+            <div class="stack gap-2">
+              <div class="anchor row gap-4 between" style="padding:10px 0 10px 14px;border-bottom:1px solid var(--n-100)">
+                <div>
+                  <div class="strong" style="font-size:13.5px">Ana María Reyes</div>
+                  <div class="muted" style="font-size:12px">Control de hipertensión · seguimiento trimestral</div>
+                </div>
+                <div class="row gap-3">
+                  <span class="mono muted">10:00</span>
+                  <span class="badge b-active"><span class="dot"></span>En espera</span>
+                </div>
+              </div>
+              <div class="anchor row gap-4 between" style="padding:10px 0 10px 14px;border-bottom:1px solid var(--n-100);opacity:.7">
+                <div>
+                  <div class="strong" style="font-size:13.5px">Juan Pablo Castillo</div>
+                  <div class="muted" style="font-size:12px">Revisión post-operatoria · cirugía de rodilla</div>
+                </div>
+                <div class="row gap-3">
+                  <span class="mono muted">10:30</span>
+                  <span class="badge b-draft"><span class="dot"></span>Confirmada</span>
+                </div>
+              </div>
+              <div class="anchor row gap-4 between" style="padding:10px 0 10px 14px;border-bottom:1px solid var(--n-100);opacity:.7">
+                <div>
+                  <div class="strong" style="font-size:13.5px">Rosa Esperanza Jiménez</div>
+                  <div class="muted" style="font-size:12px">Evaluación de dolor torácico · nueva paciente</div>
+                </div>
+                <div class="row gap-3">
+                  <span class="mono muted">11:00</span>
+                  <span class="badge b-review"><span class="dot"></span>Sin confirmar</span>
+                </div>
+              </div>
+              <div class="anchor row gap-4 between" style="padding:10px 0 10px 14px;opacity:.7">
+                <div>
+                  <div class="strong" style="font-size:13.5px">Miguel Ángel Santana</div>
+                  <div class="muted" style="font-size:12px">Resultados de laboratorio · perfil lipídico</div>
+                </div>
+                <div class="row gap-3">
+                  <span class="mono muted">11:30</span>
+                  <span class="badge b-draft"><span class="dot"></span>Confirmada</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack gap-4">
+            <div class="card">
+              <div class="card-head"><h3>Prescripciones pendientes</h3></div>
+              <div class="stack gap-3">
+                <div>
+                  <div class="strong" style="font-size:13px">Loratadina 10 mg · 7 días</div>
+                  <div class="muted" style="font-size:11.5px">Ana María Reyes · hace 5 min</div>
+                </div>
+                <div>
+                  <div class="strong" style="font-size:13px">Metformina 850 mg · continuo</div>
+                  <div class="muted" style="font-size:11.5px">Juan Pablo Castillo · hace 1 h</div>
+                </div>
+                <div>
+                  <div class="strong" style="font-size:13px">Atorvastatina 20 mg · 30 días</div>
+                  <div class="muted" style="font-size:11.5px">Miguel Ángel Santana · ayer</div>
+                </div>
+                <button class="btn btn-secondary sm" style="align-self:flex-start;margin-top:4px">Firmar todas</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px">
+          <div class="card">
+            <div class="card-head"><h3>Protocolos recientes</h3><span class="more" data-goto="protocolos">Ver todos →</span></div>
+            <div class="stack gap-3">
+              <div class="row gap-3 between" style="padding-bottom:10px;border-bottom:1px solid var(--n-100)">
+                <div><div class="strong" style="font-size:13px">Manejo de anafilaxia en adultos</div><div class="muted" style="font-size:11.5px">v2.3 · actualizado hace 2 días</div></div>
+                <span class="badge b-signed"><span class="dot"></span>Firmado</span>
+              </div>
+              <div class="row gap-3 between" style="padding-bottom:10px;border-bottom:1px solid var(--n-100)">
+                <div><div class="strong" style="font-size:13px">Dolor torácico agudo</div><div class="muted" style="font-size:11.5px">v1.8 · actualizado hace 1 semana</div></div>
+                <span class="badge b-review"><span class="dot"></span>En revisión</span>
+              </div>
+              <div class="row gap-3 between">
+                <div><div class="strong" style="font-size:13px">Cetoacidosis diabética</div><div class="muted" style="font-size:11.5px">v3.1 · actualizado hoy</div></div>
+                <span class="badge b-signed"><span class="dot"></span>Firmado</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Actividad</h3></div>
+            <div class="stack gap-3">
+              <div class="row gap-3"><div class="avatar" style="width:28px;height:28px;font-size:10px">DR</div><div style="flex:1"><div style="font-size:13px">Firmaste la prescripción para <b>Carlos Méndez</b></div><div class="muted" style="font-size:11.5px">hace 15 minutos</div></div></div>
+              <div class="row gap-3"><div class="avatar" style="width:28px;height:28px;font-size:10px">AM</div><div style="flex:1"><div style="font-size:13px"><b>Ana Martínez</b> confirmó su cita del miércoles</div><div class="muted" style="font-size:11.5px">hace 1 hora</div></div></div>
+              <div class="row gap-3"><div class="avatar" style="width:28px;height:28px;font-size:10px">SS</div><div style="flex:1"><div style="font-size:13px">Se publicó la v2.3 de <b>Manejo de anafilaxia</b></div><div class="muted" style="font-size:11.5px">hace 2 días</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /agenda ============ -->
+    <div class="route" data-route="agenda" data-screen-label="02 Agenda">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Agenda</h1>
+            <p class="page-sub">14 consultas programadas · HOMS · Sala 3</p>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-left"></i></button>
+            <button class="btn btn-secondary sm">Hoy</button>
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-right"></i></button>
+            <span style="width:12px"></span>
+            <button class="btn btn-secondary">Día</button>
+            <button class="btn btn-ghost">Semana</button>
+            <button class="btn btn-ghost">Mes</button>
+            <span style="width:12px"></span>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Nueva cita</button>
+          </div>
+        </div>
+
+        <div class="day-head">
+          <div class="day-tabs">
+            <div class="day-tab"><span class="mono">LUN</span><span class="num">14</span></div>
+            <div class="day-tab active"><span class="mono">MAR</span><span class="num">15</span></div>
+            <div class="day-tab"><span class="mono">MIÉ</span><span class="num">16</span></div>
+            <div class="day-tab"><span class="mono">JUE</span><span class="num">17</span></div>
+            <div class="day-tab"><span class="mono">VIE</span><span class="num">18</span></div>
+            <div class="day-tab"><span class="mono">SÁB</span><span class="num">19</span></div>
+            <div class="day-tab"><span class="mono">DOM</span><span class="num">20</span></div>
+          </div>
+          <div class="mono muted" style="font-size:11px">Abril 2026 · semana 16</div>
+        </div>
+
+        <div class="agenda-grid">
+          <div class="agenda-hour">08:00</div>
+          <div class="agenda-slot">
+            <div class="appt done"><div class="who">Carlos Mendoza</div><div class="why">Control post-quirúrgico · 08:00 — 08:30</div></div>
+          </div>
+          <div class="agenda-hour">09:00</div>
+          <div class="agenda-slot">
+            <div class="appt done"><div class="who">Luisa Peña Rodríguez</div><div class="why">Primera consulta · 09:00 — 09:45</div></div>
+          </div>
+          <div class="agenda-hour">10:00</div>
+          <div class="agenda-slot">
+            <div class="appt"><div class="who">Ana María Reyes <span class="badge b-active" style="margin-left:6px"><span class="dot"></span>En espera</span></div><div class="why">Control de hipertensión · 10:00 — 10:30</div></div>
+            <div class="appt"><div class="who">Juan Pablo Castillo</div><div class="why">Revisión post-operatoria · 10:30 — 11:00</div></div>
+          </div>
+          <div class="agenda-hour">11:00</div>
+          <div class="agenda-slot">
+            <div class="appt urgent"><div class="who">Rosa Esperanza Jiménez <span class="badge b-overdue" style="margin-left:6px"><span class="dot"></span>Urgente</span></div><div class="why">Dolor torácico · evaluación nueva · 11:00 — 11:45</div></div>
+          </div>
+          <div class="agenda-hour">12:00</div>
+          <div class="agenda-slot" style="background:var(--n-25);color:var(--n-400);font-size:12px;font-style:italic;padding:18px 12px">Almuerzo · 12:00 — 13:00</div>
+          <div class="agenda-hour">13:00</div>
+          <div class="agenda-slot">
+            <div class="appt"><div class="who">Miguel Ángel Santana</div><div class="why">Resultados de laboratorio · 13:00 — 13:20</div></div>
+            <div class="appt"><div class="who">Elena Beatriz Vargas</div><div class="why">Renovación de receta · 13:30 — 13:45</div></div>
+          </div>
+          <div class="agenda-hour">14:00</div>
+          <div class="agenda-slot">
+            <div class="appt"><div class="who">Pedro José Almonte</div><div class="why">Control diabetes tipo 2 · 14:00 — 14:30</div></div>
+          </div>
+          <div class="agenda-hour">15:00</div>
+          <div class="agenda-slot"></div>
+          <div class="agenda-hour">16:00</div>
+          <div class="agenda-slot">
+            <div class="appt"><div class="who">Familia Rodríguez (3)</div><div class="why">Consulta familiar programada · 16:00 — 17:00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /pacientes ============ -->
+    <div class="route" data-route="pacientes" data-screen-label="03 Pacientes List">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Pacientes</h1>
+            <p class="page-sub">1,247 pacientes · 32 nuevos este mes</p>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary"><i class="ph ph-export"></i>Exportar</button>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Nuevo paciente</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div style="flex:1;max-width:360px;position:relative">
+            <i class="ph ph-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--n-400)"></i>
+            <input class="input" placeholder="Buscar por nombre, cédula o expediente…" style="padding-left:34px"/>
+          </div>
+          <div class="chip active">Todos <span class="mono">1,247</span></div>
+          <div class="chip">Activos <span class="mono">1,189</span></div>
+          <div class="chip">Nuevos este mes <span class="mono">32</span></div>
+          <div class="chip">Con facturas vencidas <span class="mono">8</span></div>
+          <div class="chip">Archivados <span class="mono">58</span></div>
+          <button class="btn btn-ghost sm" style="margin-left:auto"><i class="ph ph-funnel"></i>Más filtros</button>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th>Paciente</th><th>Documento</th><th>Edad</th><th>Última visita</th><th>Centro</th><th>Estado</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr data-goto="pacientes-detail"><td class="name">Ana María Reyes</td><td class="mono">001-1234567-8</td><td class="mono">34</td><td>Hoy, 10:00</td><td>HOMS · Sala 3</td><td><span class="badge b-active"><span class="dot"></span>En consulta</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Juan Pablo Castillo</td><td class="mono">402-0987654-1</td><td class="mono">58</td><td>Hoy, 10:30</td><td>HOMS · Sala 3</td><td><span class="badge b-paid"><span class="dot"></span>Al día</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Rosa Esperanza Jiménez</td><td class="mono">223-5544331-7</td><td class="mono">47</td><td>28 mar 2026</td><td>Consultorio privado</td><td><span class="badge b-overdue"><span class="dot"></span>Factura vencida</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Miguel Ángel Santana</td><td class="mono">001-0456789-3</td><td class="mono">62</td><td>10 abr 2026</td><td>Bournigal</td><td><span class="badge b-paid"><span class="dot"></span>Al día</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Elena Beatriz Vargas</td><td class="mono">402-1122334-5</td><td class="mono">29</td><td>05 abr 2026</td><td>HOMS · Sala 3</td><td><span class="badge b-paid"><span class="dot"></span>Al día</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Pedro José Almonte</td><td class="mono">001-9988776-2</td><td class="mono">71</td><td>02 abr 2026</td><td>HOMS · Sala 3</td><td><span class="badge b-active"><span class="dot"></span>Crónico</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Luisa Peña Rodríguez</td><td class="mono">223-3344556-9</td><td class="mono">41</td><td>Hoy, 09:00</td><td>HOMS · Sala 3</td><td><span class="badge b-draft"><span class="dot"></span>Nueva</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Carlos Mendoza Pérez</td><td class="mono">001-7788990-4</td><td class="mono">53</td><td>Hoy, 08:00</td><td>HOMS · Sala 3</td><td><span class="badge b-paid"><span class="dot"></span>Al día</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">María de los Ángeles Fernández</td><td class="mono">402-5566778-1</td><td class="mono">38</td><td>30 mar 2026</td><td>Bournigal</td><td><span class="badge b-review"><span class="dot"></span>Seguimiento</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="name">Francisco Javier Rosario</td><td class="mono">001-2233445-6</td><td class="mono">45</td><td>25 mar 2026</td><td>HOMS · Sala 3</td><td><span class="badge b-archive"><span class="dot"></span>Inactivo</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+          </tbody>
+        </table>
+        <div class="row between" style="margin-top:12px;font-size:12px;color:var(--n-500)">
+          <div class="mono">Mostrando 1–10 de 1,247</div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-left"></i></button>
+            <span class="mono">Página 1 de 125</span>
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /pacientes/:id ============ -->
+    <div class="route" data-route="pacientes-detail" data-screen-label="04 Patient Detail">
+      <div class="content">
+        <div class="breadcrumb">
+          <a data-goto="pacientes">Pacientes</a>
+          <i class="ph ph-caret-right"></i>
+          <span class="strong">Ana María Reyes</span>
+        </div>
+        <div class="patient-hero">
+          <div class="row gap-4">
+            <div class="p-avatar">AR</div>
+            <div style="flex:1">
+              <div class="row gap-3 between">
+                <div>
+                  <h2 class="p-name">Ana María Reyes</h2>
+                  <div class="p-meta">
+                    <span><b>34 años</b> · Femenino</span>
+                    <span>Cédula <b class="mono">001-1234567-8</b></span>
+                    <span>Expediente <b class="mono">EXP-2026-004182</b></span>
+                    <span>Tipo sang. <b>O+</b></span>
+                    <span>Seguro <b>ARS Humano · Premium</b></span>
+                  </div>
+                </div>
+                <div class="row gap-2">
+                  <button class="btn btn-secondary"><i class="ph ph-envelope-simple"></i>Enviar mensaje</button>
+                  <button class="btn btn-secondary"><i class="ph ph-pencil-simple"></i>Editar</button>
+                  <button class="btn btn-primary" data-goto="consulta"><i class="ph ph-notepad"></i>Nueva consulta</button>
+                </div>
+              </div>
+              <div class="vitals">
+                <div class="vital"><div class="k">Presión arterial</div><div class="v">128/84 <span class="u">mmHg</span></div></div>
+                <div class="vital"><div class="k">Peso</div><div class="v">64.2 <span class="u">kg</span></div></div>
+                <div class="vital"><div class="k">Frec. cardíaca</div><div class="v">78 <span class="u">lpm</span></div></div>
+                <div class="vital"><div class="k">Última visita</div><div class="v" style="font-size:14px">02 abr 2026</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active">Resumen</div>
+          <div class="tab">Consultas <span class="count">24</span></div>
+          <div class="tab">Prescripciones <span class="count">7</span></div>
+          <div class="tab">Protocolos aplicados <span class="count">3</span></div>
+          <div class="tab">Facturación</div>
+          <div class="tab">Archivos <span class="count">12</span></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card" style="grid-column:span 2">
+            <div class="card-head"><h3>Historial reciente</h3><span class="more">Ver todo →</span></div>
+            <div class="stack">
+              <div class="anchor" style="padding:10px 0 14px 14px;border-bottom:1px solid var(--n-100);cursor:pointer" data-goto="consulta">
+                <div class="row between"><div class="strong">Control de hipertensión</div><div class="mono muted" style="font-size:11.5px">Hoy, 10:00</div></div>
+                <div class="muted" style="font-size:12.5px;margin-top:3px">Seguimiento trimestral. PA 128/84. Continúa losartán 50 mg/día. Revisión en 3 meses.</div>
+                <div class="row gap-2" style="margin-top:8px"><span class="badge b-active"><span class="dot"></span>En curso</span></div>
+              </div>
+              <div style="padding:12px 0 14px 14px;border-bottom:1px solid var(--n-100)">
+                <div class="row between"><div class="strong">Consulta por urticaria aguda</div><div class="mono muted" style="font-size:11.5px">02 abr 2026</div></div>
+                <div class="muted" style="font-size:12.5px;margin-top:3px">Urticaria generalizada tras ingesta de mariscos. Se aplicó protocolo de anafilaxia. Evolución favorable.</div>
+                <div class="row gap-2" style="margin-top:8px"><span class="badge b-signed"><span class="dot"></span>Firmada</span><span class="badge b-draft"><span class="dot"></span>Protocolo anafilaxia</span></div>
+              </div>
+              <div style="padding:12px 0 4px 14px">
+                <div class="row between"><div class="strong">Chequeo anual</div><div class="mono muted" style="font-size:11.5px">15 ene 2026</div></div>
+                <div class="muted" style="font-size:12.5px;margin-top:3px">Laboratorios generales dentro de parámetros. Inicio de losartán 50 mg por HTA estadio 1.</div>
+                <div class="row gap-2" style="margin-top:8px"><span class="badge b-signed"><span class="dot"></span>Firmada</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack gap-4">
+            <div class="aside-card">
+              <h4>Alertas clínicas</h4>
+              <div class="alert-list">
+                <div class="alert-row err"><i class="ph ph-x-circle"></i><div><b>Alergia · Penicilina</b><br/>Anafilaxia documentada en 2024. Evitar betalactámicos.</div></div>
+                <div class="alert-row warn"><i class="ph ph-warning-circle"></i><div><b>HTA estadio 1</b><br/>Diagnosticada en enero 2026. En tratamiento.</div></div>
+              </div>
+            </div>
+            <div class="aside-card">
+              <h4>Medicación actual</h4>
+              <div class="stack gap-2" style="font-size:13px">
+                <div class="row between"><span>Losartán 50 mg</span><span class="mono muted">1/día</span></div>
+                <div class="row between"><span>Vitamina D3 2000 UI</span><span class="mono muted">1/día</span></div>
+                <div class="row between"><span>Omega-3 1000 mg</span><span class="mono muted">1/día</span></div>
+              </div>
+            </div>
+            <div class="aside-card">
+              <h4>Contacto</h4>
+              <div class="stack gap-1" style="font-size:12.5px">
+                <div class="muted">Teléfono</div>
+                <div>+1 809 555 0142</div>
+                <div class="muted" style="margin-top:6px">Correo</div>
+                <div>ana.reyes@correo.do</div>
+                <div class="muted" style="margin-top:6px">Contacto de emergencia</div>
+                <div>Pedro Reyes (hermano) · +1 809 555 0201</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /pacientes/:id/consultas/:id ============ -->
+    <div class="route" data-route="consulta" data-screen-label="05 Consultation">
+      <div class="content wide">
+        <div class="breadcrumb">
+          <a data-goto="pacientes">Pacientes</a>
+          <i class="ph ph-caret-right"></i>
+          <a data-goto="pacientes-detail">Ana María Reyes</a>
+          <i class="ph ph-caret-right"></i>
+          <span class="strong">Consulta · 14 abr 2026</span>
+        </div>
+
+        <div class="page-head">
+          <div>
+            <div class="kicker">Consulta · 14 abr 2026 · 10:00 · HOMS · Sala 3</div>
+            <h1 class="page-title">Control de hipertensión — seguimiento</h1>
+            <p class="page-sub">Ana María Reyes · 34 años · Femenino · EXP-2026-004182</p>
+          </div>
+          <div class="row gap-2">
+            <span class="badge b-draft"><span class="dot"></span>Borrador · guardado hace 12 s</span>
+            <button class="btn btn-secondary">Guardar borrador</button>
+            <button class="btn btn-primary"><i class="ph ph-check"></i>Firmar y cerrar</button>
+          </div>
+        </div>
+
+        <div class="consult-layout">
+          <div class="consult-main">
+            <div class="section-block">
+              <h3>Motivo de consulta</h3>
+              <textarea class="input" rows="2">Seguimiento trimestral de hipertensión arterial. Refiere buena adherencia al tratamiento, sin efectos adversos.</textarea>
+            </div>
+
+            <div class="section-block">
+              <h3>Signos vitales</h3>
+              <div class="grid-4">
+                <div class="field"><label>Presión arterial</label><div class="input-group"><input class="input" value="128"/><span class="adorn">/ 84</span><span class="adorn">mmHg</span></div></div>
+                <div class="field"><label>Frec. cardíaca</label><div class="input-group"><input class="input" value="78"/><span class="adorn">lpm</span></div></div>
+                <div class="field"><label>Temperatura</label><div class="input-group"><input class="input" value="36.6"/><span class="adorn">°C</span></div></div>
+                <div class="field"><label>Saturación O₂</label><div class="input-group"><input class="input" value="98"/><span class="adorn">%</span></div></div>
+                <div class="field"><label>Peso</label><div class="input-group"><input class="input" value="64.2"/><span class="adorn">kg</span></div></div>
+                <div class="field"><label>Talla</label><div class="input-group"><input class="input" value="1.62"/><span class="adorn">m</span></div></div>
+                <div class="field"><label>IMC · calculado</label><div class="input-group"><input class="input" value="24.4" readonly style="background:var(--n-25)"/><span class="adorn">kg/m²</span></div></div>
+                <div class="field"><label>Glicemia capilar</label><div class="input-group"><input class="input" placeholder="—"/><span class="adorn">mg/dL</span></div></div>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <h3>Examen físico</h3>
+              <textarea class="input" rows="4">Paciente alerta, orientada, en buen estado general. Ruidos cardíacos rítmicos sin soplos. Pulmones ventilados en todos los campos, sin estertores. Abdomen blando, depresible, no doloroso. Extremidades sin edema.</textarea>
+            </div>
+
+            <div class="section-block">
+              <h3>Plan y prescripciones</h3>
+              <div class="stack gap-3">
+                <div class="anchor" style="padding:10px 0 10px 14px">
+                  <div class="row between">
+                    <div><div class="strong">Losartán 50 mg · continuar</div><div class="muted" style="font-size:12.5px">1 tab vía oral c/24h · indefinido</div></div>
+                    <button class="btn btn-ghost icon-only sm"><i class="ph ph-dots-three"></i></button>
+                  </div>
+                </div>
+                <button class="pblock-add"><i class="ph ph-plus"></i>Añadir prescripción</button>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <h3>Diagnósticos</h3>
+              <div class="row gap-2 wrap">
+                <span class="badge b-signed"><span class="dot"></span>I10 · Hipertensión arterial esencial</span>
+                <button class="btn btn-ghost sm"><i class="ph ph-plus"></i>Añadir CIE-10</button>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <h3>Seguimiento</h3>
+              <div class="grid-2">
+                <div class="field"><label>Próxima cita</label><div class="input-group"><span class="icon"><i class="ph ph-calendar-blank"></i></span><input class="input" value="14 / 07 / 2026"/></div></div>
+                <div class="field"><label>Estudios solicitados</label><input class="input" value="Perfil lipídico, creatinina sérica, orina"/></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="aside-card">
+              <h4>Alertas del paciente</h4>
+              <div class="alert-list">
+                <div class="alert-row err"><i class="ph ph-x-circle"></i><div><b>Alergia · Penicilina</b><br/>Anafilaxia 2024. Evitar betalactámicos.</div></div>
+              </div>
+            </div>
+            <div class="aside-card">
+              <h4>Aplicar protocolo</h4>
+              <div class="stack gap-2">
+                <div class="row gap-2" style="padding:8px 10px;border:1px solid var(--n-200);border-radius:3px;cursor:pointer"><i class="ph ph-stack" style="color:var(--p-500)"></i><span style="font-size:12.5px">Manejo de HTA</span><span class="badge b-signed" style="margin-left:auto"><span class="dot"></span>v1.4</span></div>
+                <div class="row gap-2" style="padding:8px 10px;border:1px solid var(--n-200);border-radius:3px;cursor:pointer"><i class="ph ph-stack" style="color:var(--p-500)"></i><span style="font-size:12.5px">Control metabólico</span></div>
+                <button class="btn btn-ghost sm"><i class="ph ph-magnifying-glass"></i>Buscar protocolo…</button>
+              </div>
+            </div>
+            <div class="aside-card">
+              <h4>Consultas previas</h4>
+              <div class="stack gap-2" style="font-size:12.5px">
+                <div class="row between"><a data-goto="pacientes-detail" style="cursor:pointer">Urticaria aguda</a><span class="mono muted">02 abr</span></div>
+                <div class="row between"><a data-goto="pacientes-detail" style="cursor:pointer">Chequeo anual</a><span class="mono muted">15 ene</span></div>
+                <div class="row between"><a data-goto="pacientes-detail" style="cursor:pointer">Control HTA</a><span class="mono muted">10 oct 2025</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /protocolos ============ -->
+    <div class="route" data-route="protocolos" data-screen-label="06 Protocols List">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Protocolos</h1>
+            <p class="page-sub">32 protocolos · biblioteca clínica personal</p>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary"><i class="ph ph-download-simple"></i>Importar</button>
+            <button class="btn btn-primary" data-goto="protocolo-edit"><i class="ph ph-plus"></i>Nuevo protocolo</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div style="flex:1;max-width:360px;position:relative">
+            <i class="ph ph-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--n-400)"></i>
+            <input class="input" placeholder="Buscar protocolos…" style="padding-left:34px"/>
+          </div>
+          <div class="chip active">Todos <span class="mono">32</span></div>
+          <div class="chip">Firmados <span class="mono">24</span></div>
+          <div class="chip">En revisión <span class="mono">5</span></div>
+          <div class="chip">Borradores <span class="mono">3</span></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Emergencias · Alergia</div>
+            <h3>Manejo de anafilaxia en adultos</h3>
+            <p class="desc">Criterios diagnósticos, dosificación de adrenalina IM por peso, y flujo de observación hospitalaria.</p>
+            <div class="meta"><span>v2.3</span><span>12 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Cardiología</div>
+            <h3>Dolor torácico agudo</h3>
+            <p class="desc">Triage, ECG seriado, biomarcadores y criterios de derivación a hemodinámica.</p>
+            <div class="meta"><span>v1.8</span><span>18 bloques</span><span class="badge b-review"><span class="dot"></span>En revisión</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Endocrinología</div>
+            <h3>Cetoacidosis diabética</h3>
+            <p class="desc">Reposición hidroelectrolítica, insulinoterapia IV, monitoreo y transición a subcutánea.</p>
+            <div class="meta"><span>v3.1</span><span>22 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Medicina interna</div>
+            <h3>Manejo de hipertensión arterial</h3>
+            <p class="desc">Clasificación JNC-8, objetivos terapéuticos por comorbilidad, elección de primera línea.</p>
+            <div class="meta"><span>v1.4</span><span>9 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Infectología</div>
+            <h3>Antibioticoterapia empírica</h3>
+            <p class="desc">Decisión por foco, ajuste renal, duración y criterios de cambio a vía oral.</p>
+            <div class="meta"><span>v2.0</span><span>14 bloques</span><span class="badge b-review"><span class="dot"></span>En revisión</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Neurología</div>
+            <h3>Evaluación inicial de ACV</h3>
+            <p class="desc">Escala NIHSS, ventana terapéutica, criterios de trombolisis y trombectomía.</p>
+            <div class="meta"><span>v1.2</span><span>16 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Neumología</div>
+            <h3>Crisis asmática — adulto</h3>
+            <p class="desc">Severidad, broncodilatadores, corticoides sistémicos y criterios de UCI.</p>
+            <div class="meta"><span>v1.9</span><span>11 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Gastroenterología</div>
+            <h3>Hemorragia digestiva alta</h3>
+            <p class="desc">Triage hemodinámico, IBP IV, endoscopía y transfusión racional.</p>
+            <div class="meta"><span>v1.0</span><span>8 bloques</span><span class="badge b-draft"><span class="dot"></span>Borrador</span></div>
+          </div>
+          <div class="proto-card" data-goto="protocolo-edit">
+            <div class="spec">Medicina familiar</div>
+            <h3>Chequeo anual adulto</h3>
+            <p class="desc">Tamizajes por grupo etario, vacunación, perfil de riesgo cardiovascular.</p>
+            <div class="meta"><span>v2.1</span><span>20 bloques</span><span class="badge b-signed"><span class="dot"></span>Firmado</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /protocolos/:id/edit ============ -->
+    <div class="route" data-route="protocolo-edit" data-screen-label="07 Protocol Editor">
+      <div class="content wide">
+        <div class="breadcrumb">
+          <a data-goto="protocolos">Protocolos</a>
+          <i class="ph ph-caret-right"></i>
+          <span class="strong">Manejo de anafilaxia en adultos</span>
+          <span class="mono muted" style="margin-left:8px">· v2.3</span>
+        </div>
+
+        <div class="page-head">
+          <div>
+            <div class="kicker">Emergencias · Alergia · última edición hace 2 min</div>
+            <h1 class="page-title">Manejo de anafilaxia en adultos</h1>
+            <p class="page-sub">12 bloques · 3 checklists anidados · Dr. Rafael Núñez</p>
+          </div>
+          <div class="row gap-2">
+            <span class="badge b-review"><span class="dot"></span>Cambios sin publicar</span>
+            <button class="btn btn-secondary"><i class="ph ph-eye"></i>Vista previa</button>
+            <button class="btn btn-secondary">Guardar</button>
+            <button class="btn btn-primary"><i class="ph ph-check"></i>Publicar v2.4</button>
+          </div>
+        </div>
+
+        <div class="editor-layout">
+          <!-- TOC -->
+          <div class="toc">
+            <div class="toc-item active"><span class="num">1</span>Reconocimiento inicial</div>
+            <div class="toc-item"><span class="num">2</span>Criterios diagnósticos</div>
+            <div class="toc-item"><span class="num">3</span>Adrenalina IM · dosis</div>
+            <div class="toc-item"><span class="num">4</span>Vía aérea y oxígeno</div>
+            <div class="toc-item"><span class="num">5</span>Reposición de volumen</div>
+            <div class="toc-item"><span class="num">6</span>Adyuvantes</div>
+            <div class="toc-item"><span class="num">7</span>Observación hospitalaria</div>
+            <div class="toc-item"><span class="num">8</span>Alta y educación</div>
+            <div class="toc-item"><span class="num">9</span>Referencias</div>
+          </div>
+
+          <!-- Main editor -->
+          <div>
+            <div class="pblock">
+              <div class="pblock-header">
+                <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                <span class="pblock-type">Sección</span>
+                <input class="pblock-title" value="Reconocimiento inicial y criterios diagnósticos"/>
+                <button class="btn btn-ghost icon-only sm"><i class="ph ph-plus"></i></button>
+                <button class="btn btn-ghost icon-only sm"><i class="ph ph-dots-three"></i></button>
+              </div>
+              <div class="pblock-body">
+                <textarea class="input" rows="2">La anafilaxia es una reacción alérgica grave de inicio súbito. El diagnóstico clínico se establece cuando se cumple cualquiera de los tres criterios.</textarea>
+                <div style="margin-top:14px;margin-left:28px;border-left:1px solid var(--n-200);padding-left:14px">
+                  <div class="pblock">
+                    <div class="pblock-header">
+                      <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                      <span class="pblock-type">Checklist</span>
+                      <input class="pblock-title" value="Criterios diagnósticos (cualquiera de 3)"/>
+                      <button class="btn btn-ghost icon-only sm"><i class="ph ph-dots-three"></i></button>
+                    </div>
+                    <div class="pblock-body">
+                      <div class="plist-item"><span class="check-box checked"></span><div>Inicio agudo de compromiso de piel/mucosa + compromiso respiratorio o hipotensión.</div></div>
+                      <div class="plist-item"><span class="check-box"></span><div>Dos o más de los siguientes tras exposición a alergeno probable: piel/mucosa, respiratorio, hipotensión, síntomas GI persistentes.</div></div>
+                      <div class="plist-item"><span class="check-box"></span><div>Hipotensión tras exposición a alergeno conocido para el paciente.</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pblock">
+              <div class="pblock-header">
+                <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                <span class="pblock-type">Tabla de dosis</span>
+                <input class="pblock-title" value="Adrenalina IM · dosificación por peso"/>
+                <button class="btn btn-ghost icon-only sm"><i class="ph ph-dots-three"></i></button>
+              </div>
+              <div class="pblock-body" style="padding:0">
+                <table class="tbl" style="border:none;border-radius:0">
+                  <thead><tr><th>Peso corporal</th><th>Dosis IM</th><th>Volumen (1 mg/mL)</th><th>Repetir si</th></tr></thead>
+                  <tbody>
+                    <tr><td class="name">10–25 kg</td><td class="mono">0.15 mg</td><td class="mono">0.15 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                    <tr><td class="name">25–50 kg</td><td class="mono">0.30 mg</td><td class="mono">0.30 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                    <tr><td class="name">&gt; 50 kg</td><td class="mono">0.50 mg</td><td class="mono">0.50 mL</td><td>Sin mejoría en 5–15 min</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="pblock">
+              <div class="pblock-header">
+                <i class="ph ph-dots-six-vertical pblock-handle"></i>
+                <span class="pblock-type">Árbol de decisión</span>
+                <input class="pblock-title" value="Criterios de alta vs observación prolongada"/>
+                <button class="btn btn-ghost icon-only sm"><i class="ph ph-dots-three"></i></button>
+              </div>
+              <div class="pblock-body">
+                <div class="stack gap-2">
+                  <div class="anchor" style="padding:8px 0 8px 14px;font-size:13px"><b>Si</b> respuesta completa a una sola dosis de adrenalina → observar <span class="mono">4 h</span> y alta con plan.</div>
+                  <div class="anchor" style="padding:8px 0 8px 14px;font-size:13px"><b>Si</b> requirió ≥ 2 dosis o broncoespasmo refractario → observación <span class="mono">≥ 12 h</span>.</div>
+                  <div class="anchor" style="padding:8px 0 8px 14px;font-size:13px"><b>Si</b> hipotensión sostenida → ingreso a UCI.</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="pblock-add"><i class="ph ph-plus"></i>Añadir bloque</button>
+          </div>
+
+          <!-- Block palette -->
+          <div class="block-palette">
+            <h4>Bloques disponibles</h4>
+            <div class="palette-item"><i class="ph ph-text-align-left"></i>Texto</div>
+            <div class="palette-item"><i class="ph ph-heading"></i>Sección</div>
+            <div class="palette-item"><i class="ph ph-list-checks"></i>Checklist</div>
+            <div class="palette-item"><i class="ph ph-table"></i>Tabla de dosis</div>
+            <div class="palette-item"><i class="ph ph-tree-structure"></i>Árbol de decisión</div>
+            <div class="palette-item"><i class="ph ph-calculator"></i>Calculadora</div>
+            <div class="palette-item"><i class="ph ph-warning-octagon"></i>Alerta clínica</div>
+            <div class="palette-item"><i class="ph ph-book-open"></i>Referencia</div>
+            <h4 style="margin-top:20px">Historial</h4>
+            <div class="stack gap-2" style="font-size:12px;color:var(--n-500)">
+              <div><b style="color:var(--n-800)">v2.3</b> · hoy · Dr. Núñez</div>
+              <div><b style="color:var(--n-800)">v2.2</b> · 10 abr · Dra. Vargas</div>
+              <div><b style="color:var(--n-800)">v2.1</b> · 28 mar · Dr. Núñez</div>
+              <a style="color:var(--p-500);margin-top:6px;cursor:pointer">Ver historial completo</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /facturacion ============ -->
+    <div class="route" data-route="facturacion" data-screen-label="08 Billing">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Facturación</h1>
+            <p class="page-sub">Abril 2026 · HOMS · Sala 3</p>
+          </div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary"><i class="ph ph-export"></i>Exportar</button>
+            <button class="btn btn-secondary"><i class="ph ph-receipt"></i>Conciliar ARS</button>
+            <button class="btn btn-primary"><i class="ph ph-plus"></i>Nueva factura</button>
+          </div>
+        </div>
+
+        <div class="bill-kpis">
+          <div class="kpi"><div class="label">Facturado · abril</div><div class="value">RD$ 284,300</div><div class="delta up"><i class="ph ph-arrow-up"></i>+12% vs marzo</div></div>
+          <div class="kpi"><div class="label">Cobrado</div><div class="value">RD$ 248,100</div><div class="delta flat"><i class="ph ph-circle"></i>87.3% del facturado</div></div>
+          <div class="kpi"><div class="label">Pendiente ARS</div><div class="value">RD$ 28,450</div><div class="delta flat"><i class="ph ph-clock"></i>12 facturas en ruta</div></div>
+          <div class="kpi"><div class="label">Vencido</div><div class="value">RD$ 7,750</div><div class="delta down"><i class="ph ph-warning"></i>3 facturas</div></div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="chip active">Todas <span class="mono">142</span></div>
+          <div class="chip">Pagadas <span class="mono">98</span></div>
+          <div class="chip">Pendientes <span class="mono">41</span></div>
+          <div class="chip">Vencidas <span class="mono">3</span></div>
+          <div style="width:12px"></div>
+          <select class="input" style="width:180px;height:30px"><option>Todos los centros</option><option>HOMS · Sala 3</option><option>Bournigal</option></select>
+          <select class="input" style="width:180px;height:30px"><option>Abril 2026</option><option>Marzo 2026</option><option>Febrero 2026</option></select>
+          <button class="btn btn-ghost sm" style="margin-left:auto"><i class="ph ph-funnel"></i>Más filtros</button>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th>Factura</th><th>Paciente</th><th>Fecha</th><th>Servicio</th><th>Pagador</th><th>Monto</th><th>Estado</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">F-2026-01142</td><td class="name">Ana María Reyes</td><td>14 abr 2026</td><td>Consulta · HTA seguimiento</td><td>ARS Humano</td><td class="num">RD$ 2,400</td><td><span class="badge b-paid"><span class="dot"></span>Pagado</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01141</td><td class="name">Juan Pablo Castillo</td><td>14 abr 2026</td><td>Revisión post-quirúrgica</td><td>ARS Senasa</td><td class="num">RD$ 3,200</td><td><span class="badge b-review"><span class="dot"></span>Pendiente ARS</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01140</td><td class="name">Miguel Ángel Santana</td><td>10 abr 2026</td><td>Consulta + lab</td><td>Privado</td><td class="num">RD$ 4,800</td><td><span class="badge b-paid"><span class="dot"></span>Pagado</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01139</td><td class="name">Elena Beatriz Vargas</td><td>05 abr 2026</td><td>Renovación de receta</td><td>ARS Humano</td><td class="num">RD$ 1,200</td><td><span class="badge b-paid"><span class="dot"></span>Pagado</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01138</td><td class="name">Rosa Esperanza Jiménez</td><td>28 mar 2026</td><td>Consulta · dolor torácico</td><td>Privado</td><td class="num">RD$ 3,450</td><td><span class="badge b-overdue"><span class="dot"></span>Vencido · 21 d</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01137</td><td class="name">Pedro José Almonte</td><td>02 abr 2026</td><td>Control diabetes</td><td>ARS Senasa</td><td class="num">RD$ 2,400</td><td><span class="badge b-review"><span class="dot"></span>Pendiente ARS</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01136</td><td class="name">Luisa Peña Rodríguez</td><td>Hoy</td><td>Primera consulta</td><td>Privado</td><td class="num">RD$ 3,800</td><td><span class="badge b-draft"><span class="dot"></span>Borrador</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+            <tr><td class="mono">F-2026-01135</td><td class="name">Francisco Javier Rosario</td><td>25 mar 2026</td><td>Consulta + ECG</td><td>ARS Palic</td><td class="num">RD$ 4,200</td><td><span class="badge b-overdue"><span class="dot"></span>Vencido · 24 d</span></td><td><i class="ph ph-caret-right muted"></i></td></tr>
+          </tbody>
+        </table>
+
+        <div class="row between" style="margin-top:12px;font-size:12px;color:var(--n-500)">
+          <div class="mono">Mostrando 1–8 de 142</div>
+          <div class="row gap-2">
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-left"></i></button>
+            <span class="mono">Página 1 de 18</span>
+            <button class="btn btn-secondary sm"><i class="ph ph-caret-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ /ajustes ============ -->
+    <div class="route" data-route="ajustes" data-screen-label="09 Settings">
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Ajustes</h1>
+            <p class="page-sub">Configuración de cuenta, centros y facturación</p>
+          </div>
+        </div>
+
+        <div class="settings-layout">
+          <div class="settings-nav">
+            <div class="settings-nav-item active"><i class="ph ph-user-circle"></i>Perfil</div>
+            <div class="settings-nav-item"><i class="ph ph-buildings"></i>Centros de atención</div>
+            <div class="settings-nav-item"><i class="ph ph-users-three"></i>Equipo</div>
+            <div class="settings-nav-item"><i class="ph ph-receipt"></i>Facturación y pagos</div>
+            <div class="settings-nav-item"><i class="ph ph-bell"></i>Notificaciones</div>
+            <div class="settings-nav-item"><i class="ph ph-shield-check"></i>Seguridad</div>
+            <div class="settings-nav-item"><i class="ph ph-plug"></i>Integraciones</div>
+            <div class="settings-nav-item"><i class="ph ph-file-text"></i>Plantillas</div>
+          </div>
+
+          <div>
+            <div class="form-section">
+              <h3>Perfil profesional</h3>
+              <p class="desc">Datos que aparecen en prescripciones, certificados y facturas.</p>
+
+              <div class="form-row">
+                <div class="lbl">Foto de perfil<span class="sub">Mostrada en el encabezado y portafirmas.</span></div>
+                <div class="row gap-3">
+                  <div class="avatar" style="width:56px;height:56px;font-size:20px">DR</div>
+                  <div class="stack gap-2"><button class="btn btn-secondary sm">Cambiar foto</button><span class="muted" style="font-size:11.5px">JPG o PNG · máx. 2 MB</span></div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="lbl">Nombre completo</div>
+                <div class="row gap-3">
+                  <input class="input" value="Dr. Rafael Núñez Peralta" style="flex:1"/>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="lbl">Especialidad</div>
+                <div class="row gap-3">
+                  <select class="input" style="flex:1"><option>Medicina interna</option><option>Cardiología</option><option>Pediatría</option></select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="lbl">Exequátur · código CMD</div>
+                <div class="row gap-3">
+                  <div class="input-group" style="max-width:240px"><span class="adorn leading">EXQ</span><input class="input" value="2014-00892"/></div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="lbl">Correo y teléfono</div>
+                <div class="grid-2" style="width:100%">
+                  <div class="input-group"><span class="icon"><i class="ph ph-envelope-simple"></i></span><input class="input" value="rafael.nunez@rezeta.do"/></div>
+                  <div class="input-group"><span class="adorn leading">+1</span><input class="input" value="809 555 0180"/></div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="lbl">Idioma de la interfaz</div>
+                <div class="row gap-3">
+                  <select class="input" style="max-width:240px"><option>Español (República Dominicana)</option><option>Español (neutro)</option><option>English</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Firma digital</h3>
+              <p class="desc">Se adjunta a prescripciones y certificados firmados.</p>
+              <div class="form-row">
+                <div class="lbl">Firma</div>
+                <div style="flex:1">
+                  <div style="background:var(--n-25);border:1px dashed var(--n-200);border-radius:var(--r-sm);padding:20px;font-family:var(--serif);font-style:italic;font-size:28px;color:var(--n-800)">Rafael Núñez</div>
+                  <div class="row gap-2" style="margin-top:8px"><button class="btn btn-secondary sm">Subir firma</button><button class="btn btn-ghost sm">Dibujar firma</button></div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="lbl">Solicitar PIN al firmar<span class="sub">Recomendado para cumplimiento regulatorio.</span></div>
+                <div><span class="toggle on"><span class="track"></span>Activo</span></div>
+              </div>
+            </div>
+
+            <div class="row gap-2" style="justify-content:flex-end">
+              <button class="btn btn-ghost">Descartar</button>
+              <button class="btn btn-primary">Guardar cambios</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- route pill -->
+<div class="route-pill" id="routePill">/dashboard</div>
+
+<script>
+  const ROUTES = {
+    dashboard:        { path: '/dashboard',                                  nav: 'dashboard' },
+    agenda:           { path: '/agenda',                                     nav: 'agenda'    },
+    pacientes:        { path: '/pacientes',                                  nav: 'pacientes' },
+    'pacientes-detail': { path: '/pacientes/ana-maria-reyes',               nav: 'pacientes' },
+    consulta:         { path: '/pacientes/ana-maria-reyes/consultas/c-4182', nav: 'pacientes' },
+    protocolos:       { path: '/protocolos',                                 nav: 'protocolos'},
+    'protocolo-edit': { path: '/protocolos/anafilaxia-adultos/edit',         nav: 'protocolos'},
+    facturacion:      { path: '/facturacion',                                nav: 'facturacion'},
+    ajustes:          { path: '/ajustes',                                    nav: 'ajustes'   },
+  };
+
+  function goto(r) {
+    if (!ROUTES[r]) r = 'dashboard';
+    document.querySelectorAll('.route').forEach(el => el.classList.toggle('active', el.dataset.route === r));
+    document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.nav === ROUTES[r].nav));
+    document.getElementById('routePill').textContent = ROUTES[r].path;
+    window.scrollTo(0, 0);
+    try { localStorage.setItem('rezeta-route', r); } catch (e) {}
+    if (location.hash !== '#' + r) location.hash = r;
+  }
+
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', () => goto(el.dataset.nav));
+  });
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); goto(el.dataset.goto); });
+  });
+
+  // initial
+  const initial = (location.hash || '').replace('#','') || localStorage.getItem('rezeta-route') || 'dashboard';
+  goto(initial);
+
+  window.addEventListener('hashchange', () => {
+    const r = location.hash.replace('#','');
+    if (r && ROUTES[r]) goto(r);
+  });
+</script>
+</body>
+</html>

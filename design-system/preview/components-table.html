@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Patient Row</title>
+<link rel="stylesheet" href="_base.css"/>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body{padding:20px;justify-content:flex-start;align-items:flex-start}
+  .tbl{width:100%;max-width:700px;border:1px solid var(--color-n-200);border-radius:5px;overflow:hidden;background:#fff;font-family:var(--font-sans);font-size:13px}
+  .th,.tr{display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 1.4fr 0.9fr 30px;gap:12px;padding:10px 16px;align-items:center}
+  .th{background:var(--color-n-25);border-bottom:1px solid var(--color-n-200);font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-n-500);font-weight:500}
+  .tr{border-top:1px solid var(--color-n-100)}
+  .tr:first-of-type{border-top:0}
+  .tr:hover{background:var(--color-n-25)}
+  .name{font-weight:600;color:var(--color-n-800)}
+  .mono{font-family:var(--font-mono);font-size:12px;color:var(--color-n-500)}
+  .badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:3px;border:1px solid;display:inline-flex;align-items:center;gap:5px;width:fit-content}
+  .badge .dot{width:5px;height:5px;border-radius:50%}
+  .b-active{background:#EDF3EC;color:#2F5C28;border-color:#B8CFB2}
+  .b-review{background:#F7F1E3;color:#6E5319;border-color:#DCC89A}
+  i{color:var(--color-n-400)}
+</style></head>
+<body><div class="tbl">
+  <div class="th"><span>Paciente</span><span>Cédula</span><span>Edad</span><span>Diagnóstico</span><span>Estado</span><span></span></div>
+  <div class="tr"><span class="name">Ana María Reyes</span><span class="mono">001-1234567-8</span><span>42 años</span><span style="color:var(--color-n-700)">HTA esencial</span><span class="badge b-active"><span class="dot" style="background:#5C8E54"></span>Activo</span><i class="ph ph-caret-right" style="font-size:13px"></i></div>
+  <div class="tr"><span class="name">José Manuel Cabrera</span><span class="mono">402-2345678-1</span><span>67 años</span><span style="color:var(--color-n-700)">Cardiopatía isquémica</span><span class="badge b-review"><span class="dot" style="background:#A88B3F"></span>Revisión</span><i class="ph ph-caret-right" style="font-size:13px"></i></div>
+  <div class="tr"><span class="name">Luis Felipe Tavárez</span><span class="mono">031-1112223-4</span><span>58 años</span><span style="color:var(--color-n-700)">DM2, control</span><span class="badge b-active"><span class="dot" style="background:#5C8E54"></span>Activo</span><i class="ph ph-caret-right" style="font-size:13px"></i></div>
+</div></body></html>

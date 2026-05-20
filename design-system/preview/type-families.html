@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Type families</title>
+<link rel="stylesheet" href="_base.css"/>
+<style>
+  body{padding:24px;background:var(--color-n-25)}
+  .wrap{width:100%;max-width:700px;display:grid;grid-template-columns:auto 1fr;gap:14px 22px;align-items:baseline}
+  .lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-n-400);padding-top:14px}
+  .row{display:flex;flex-direction:column;gap:2px}
+  .specimen{color:var(--color-n-900);line-height:1.05}
+  .meta{font-family:var(--font-mono);font-size:10.5px;color:var(--color-n-500)}
+  .serif{font-family:var(--font-serif);font-weight:500;font-size:38px;letter-spacing:-0.015em}
+  .sans{font-family:var(--font-sans);font-weight:500;font-size:30px;letter-spacing:-0.01em}
+  .mono{font-family:var(--font-mono);font-weight:500;font-size:22px;letter-spacing:0}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="lbl">Display</div>
+  <div class="row"><div class="specimen serif">Source Serif 4</div><div class="meta">400 · 500 · 600 · headings, protocol titles, patient names</div></div>
+  <div class="lbl">UI · body</div>
+  <div class="row"><div class="specimen sans">IBM Plex Sans</div><div class="meta">400 · 500 · 600 · forms, tables, body, buttons</div></div>
+  <div class="lbl">Data</div>
+  <div class="row"><div class="specimen mono">IBM Plex Mono</div><div class="meta">400 · 500 · kickers, labels, data values, kbd</div></div>
+</div>
+</body></html>

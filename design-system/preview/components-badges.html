@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Badges & Tags</title>
+<link rel="stylesheet" href="_base.css"/>
+<style>
+  body{padding:20px;justify-content:flex-start;align-items:flex-start}
+  .wrap{display:flex;flex-direction:column;gap:12px;width:100%;max-width:700px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-n-400);min-width:88px}
+  .badge{font-family:var(--font-sans);font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:3px;display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;line-height:1.4}
+  .badge .dot{width:6px;height:6px;border-radius:50%}
+  .b-active{background:#EDF3EC;color:#2F5C28;border-color:#B8CFB2}
+  .b-review{background:#F7F1E3;color:#6E5319;border-color:#DCC89A}
+  .b-overdue{background:#F6EAE8;color:#7A2B22;border-color:#D9B4AE}
+  .b-info{background:#ECF0F3;color:#2B435A;border-color:#B8C6D0}
+  .b-signed{background:var(--color-p-50);color:var(--color-p-700);border-color:var(--color-p-100)}
+  .b-soft{background:var(--color-n-50);color:var(--color-n-700);border-color:var(--color-n-200)}
+  .b-mono{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;padding:2px 6px}
+</style></head>
+<body><div class="wrap">
+  <div class="row"><span class="lbl">Estado</span>
+    <span class="badge b-active"><span class="dot" style="background:#5C8E54"></span>Activo</span>
+    <span class="badge b-review"><span class="dot" style="background:#A88B3F"></span>En revisión</span>
+    <span class="badge b-overdue"><span class="dot" style="background:#8C2A20"></span>Vencido</span>
+    <span class="badge b-info"><span class="dot" style="background:#5A7894"></span>Programado</span>
+  </div>
+  <div class="row"><span class="lbl">Clínico</span>
+    <span class="badge b-signed">Firmada · v2.1</span>
+    <span class="badge b-overdue">⚠ Contraindicación</span>
+    <span class="badge b-active">Adherente</span>
+    <span class="badge b-soft">DM2</span>
+    <span class="badge b-soft">HTA · I10</span>
+  </div>
+  <div class="row"><span class="lbl">Tipo bloque</span>
+    <span class="badge b-mono b-signed">checklist</span>
+    <span class="badge b-mono b-soft">decisión</span>
+    <span class="badge b-mono b-overdue">alerta · crítica</span>
+    <span class="badge b-mono b-soft">tabla · dosis</span>
+  </div>
+</div></body></html>

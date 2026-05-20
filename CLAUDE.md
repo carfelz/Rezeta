@@ -13,7 +13,7 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 
 ## Specification Documents
 
-@./specs/mvp-scope.md
+<!-- @./specs/mvp-scope.md
 @./specs/full-scope.md
 @./specs/business-model.md
 @./specs/medical_erp_erd.mmd
@@ -29,14 +29,10 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/design-system/implementation.md
 @./specs/technical-architecture.md
 @./specs/audit-log-implementation-prompt.md
-@./specs/audit-log-spec.md
-@./specs/protocol-in-consultation-spec.md
-@./specs/protocol-engine-slices.md
-
 @./specs/01-rezeta-live-audit.md
 @./specs/02-claude-code-handoffs.md
 @./specs/03-claude-design-handoff.md
-@./specs/04-rezeta-improvements.md
+@./specs/04-rezeta-improvements.md -->
 
 The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).
 

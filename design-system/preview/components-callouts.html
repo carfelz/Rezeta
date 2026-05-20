@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Callouts</title>
+<link rel="stylesheet" href="_base.css"/>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body{padding:20px;justify-content:flex-start;align-items:flex-start}
+  .wrap{display:flex;flex-direction:column;gap:10px;width:100%;max-width:700px}
+  .callout{display:flex;gap:12px;padding:12px 14px;border-radius:5px;border:1px solid;font-size:13px;line-height:1.45}
+  .callout i{flex-shrink:0;font-size:18px;margin-top:1px}
+  .callout .t{font-weight:600;font-family:var(--font-sans);font-size:13px;margin-bottom:2px}
+  .c-info   {background:#ECF0F3;border-color:#B8C6D0;color:#2B435A}
+  .c-success{background:#EDF3EC;border-color:#B8CFB2;color:#2F5C28}
+  .c-warning{background:#F7F1E3;border-color:#DCC89A;color:#6E5319}
+  .c-danger {background:#F6EAE8;border-color:#D9B4AE;color:#7A2B22}
+</style></head>
+<body><div class="wrap">
+  <div class="callout c-danger"><i class="ph ph-x-circle"></i><div><div class="t">Contraindicación absoluta</div>Amoxicilina registrada como alergia previa (anafilaxia, 2024). No prescribir sin evaluación especializada.</div></div>
+  <div class="callout c-warning"><i class="ph ph-warning"></i><div><div class="t">Revisión pendiente</div>El protocolo "Dolor torácico agudo" tiene 3 bloques sin revisar desde la última actualización de guías ACC/AHA.</div></div>
+  <div class="callout c-info"><i class="ph ph-info"></i><div><div class="t">MAPA programado</div>Estudio MAPA de 24 h agendado para el 22 abr. Recordatorio enviado al paciente.</div></div>
+  <div class="callout c-success"><i class="ph ph-check-circle"></i><div><div class="t">Receta enviada</div>Losartán 100 mg · Amlodipino 5 mg · entregada por SMS a Ana María Reyes.</div></div>
+</div></body></html>

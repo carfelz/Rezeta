@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Flow Hybrid · Click-through</title>
+<link rel="stylesheet" href="rezeta-tokens.css"/>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
+<style>
+  html, body { height: 100%; margin: 0; background: #0E0E0D; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  .frame { width: 100%; height: 100%; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="deck-stage.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#F6F4EF"/><g transform="translate(30 30)" fill="none" stroke="#1F4FA3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="0" y="0" width="40" height="40" rx="4"/><path d="M8 12 L14 18 L24 8"/><path d="M8 26 L14 32 L24 22"/></g></svg></template>
+</head>
+<body>
+<deck-stage width="1440" height="900">
+  <section data-screen-label="01 · Puerta de inicio"><div class="frame" id="frame-1"></div></section>
+  <section data-screen-label="02 · HTA hover"><div class="frame" id="frame-2"></div></section>
+  <section data-screen-label="03 · Vista SOAP (default)"><div class="frame" id="frame-3"></div></section>
+  <section data-screen-label="04 · Cambio a vista Protocolo"><div class="frame" id="frame-4"></div></section>
+  <section data-screen-label="05 · Decisión · vista Protocolo"><div class="frame" id="frame-5"></div></section>
+  <section data-screen-label="06 · Vista SOAP · firmar"><div class="frame" id="frame-6"></div></section>
+</deck-stage>
+
+<script type="text/babel" src="consultation-shell.jsx"></script>
+<script type="text/babel" src="flow-e.jsx"></script>
+<script type="text/babel" src="flow-f.jsx"></script>
+<script type="text/babel" src="flow-hybrid.jsx"></script>
+
+<script type="text/babel">
+for (let i = 1; i <= 6; i++) {
+  const root = ReactDOM.createRoot(document.getElementById('frame-' + i));
+  root.render(<HybridFrame n={i}/>);
+}
+</script>
+</body>
+</html>

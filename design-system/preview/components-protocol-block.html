@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Protocol Block</title>
+<link rel="stylesheet" href="_base.css"/>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body{padding:24px;justify-content:flex-start;align-items:flex-start}
+  .wrap{width:100%;max-width:660px}
+  .pblock{border:1px solid var(--color-n-200);border-radius:5px;background:#fff;margin-bottom:10px;overflow:hidden}
+  .ph-head{position:relative;display:flex;align-items:center;gap:12px;padding:12px 16px 12px 18px;background:var(--color-n-25);border-bottom:1px solid var(--color-n-100)}
+  .ph-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--color-p-500)}
+  .ph-grip{color:var(--color-n-300);font-size:14px}
+  .ph-tag{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-p-700);background:var(--color-p-50);border:1px solid var(--color-p-100);padding:2px 6px;border-radius:3px}
+  .ph-tag.crit{color:#7A2B22;background:#F6EAE8;border-color:#D9B4AE}
+  .ph-title{font-family:var(--font-serif);font-weight:500;font-size:16px;color:var(--color-n-900);flex:1;letter-spacing:-0.005em;text-align:center;margin:0}
+  .ph-actions{display:flex;gap:2px}
+  .ph-actions button{width:26px;height:26px;border-radius:3px;border:0;background:transparent;color:var(--color-n-500);cursor:pointer}
+  .ph-body{padding:14px 18px}
+  .pli{display:flex;align-items:flex-start;gap:10px;padding:6px 4px;border-radius:3px}
+  .check{width:14px;height:14px;border:1.5px solid var(--color-n-300);border-radius:2px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+  .check.on{background:var(--color-p-500);border-color:var(--color-p-500);color:#fff}
+  .pli-text{font-size:13px;color:var(--color-n-700);line-height:1.5}
+  .pli-text.done{color:var(--color-n-400);text-decoration:line-through}
+  .pli-crit{font-family:var(--font-mono);font-size:10.5px;color:#7A2B22;letter-spacing:0.06em;text-transform:uppercase;margin-top:3px}
+  .nested{margin-left:22px;border-left:1px solid var(--color-n-200);padding-left:0}
+</style></head>
+<body><div class="wrap">
+  <div class="pblock">
+    <div class="ph-head">
+      <i class="ph ph-dots-six-vertical ph-grip"></i>
+      <span class="ph-tag crit">alerta · crítica</span>
+      <h3 class="ph-title">Manejo inicial — primeros 5 minutos</h3>
+      <div class="ph-actions">
+        <button><i class="ph ph-pencil-simple" style="font-size:13px"></i></button>
+        <button><i class="ph ph-dots-three" style="font-size:14px"></i></button>
+      </div>
+    </div>
+    <div class="ph-body">
+      <div class="pli"><span class="check on"><i class="ph ph-check" style="font-size:10px"></i></span><div><div class="pli-text done">Posicionar al paciente en decúbito supino</div></div></div>
+      <div class="pli"><span class="check"></span><div><div class="pli-text">Adrenalina IM 0.3–0.5 mg en muslo lateral · repetir cada 5–15 min PRN</div><div class="pli-crit">⚠ Crítico</div></div></div>
+      <div class="pli"><span class="check"></span><div><div class="pli-text">Suspender el agente desencadenante si está identificado</div></div></div>
+    </div>
+  </div>
+</div></body></html>

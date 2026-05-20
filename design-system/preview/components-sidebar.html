@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<title>Sidebar Nav</title>
+<link rel="stylesheet" href="_base.css"/>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body{padding:0;background:#fff}
+  .sb{width:240px;background:var(--color-n-25);border:1px solid var(--color-n-200);border-radius:5px;display:flex;flex-direction:column;padding:16px 0;font-family:var(--font-sans);margin:auto}
+  .brand{padding:0 18px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--color-n-100);margin-bottom:10px}
+  .logo{width:26px;height:26px;background:var(--color-p-500);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);color:#fff;font-weight:500;font-size:15px}
+  .name{font-family:var(--font-serif);font-weight:500;font-size:17px;color:var(--color-n-900);letter-spacing:-0.01em}
+  .label{padding:10px 18px 4px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-n-400)}
+  .item{display:flex;align-items:center;gap:10px;padding:6px 18px;font-size:13px;color:var(--color-n-600);position:relative}
+  .item i{font-size:16px;color:var(--color-n-500)}
+  .item .ct{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--color-n-400)}
+  .item.active{color:var(--color-n-900);background:#fff;font-weight:500}
+  .item.active i{color:var(--color-p-500)}
+  .item.active::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:2px;background:var(--color-p-500)}
+</style></head>
+<body><div class="sb">
+  <div class="brand"><div class="logo">R</div><div class="name">Rezeta</div></div>
+  <div class="label">Clínico</div>
+  <div class="item"><i class="ph ph-house"></i>Dashboard</div>
+  <div class="item"><i class="ph ph-calendar-blank"></i>Agenda<span class="ct">7</span></div>
+  <div class="item active"><i class="ph ph-users"></i>Pacientes<span class="ct">248</span></div>
+  <div class="item"><i class="ph ph-list-checks"></i>Protocolos<span class="ct">34</span></div>
+  <div class="label">Administración</div>
+  <div class="item"><i class="ph ph-receipt"></i>Facturación</div>
+  <div class="item"><i class="ph ph-gear-six"></i>Ajustes</div>
+</div></body></html>

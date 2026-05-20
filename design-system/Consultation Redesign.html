@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Rezeta · Consulta — exploración</title>
+<link rel="stylesheet" href="rezeta-tokens.css"/>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--color-n-100); }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="consultation-shell.jsx"></script>
+<script type="text/babel" src="option-current.jsx"></script>
+<script type="text/babel" src="option-suggest.jsx"></script>
+<script type="text/babel" src="option-protocol-first.jsx"></script>
+<script type="text/babel" src="option-walker.jsx"></script>
+<script type="text/babel" src="option-inline.jsx"></script>
+<script type="text/babel" src="option-gate.jsx"></script>
+
+<script type="text/babel">
+const W = 1280;
+const H = 820;
+
+const App = () => (
+  <DesignCanvas
+    title="Consulta — protocolo en el centro"
+    subtitle="5 direcciones para que el protocolo sea inevitable, no opcional. Aplica al módulo de consulta existente."
+  >
+    <DCSection
+      id="reference"
+      title="Referencia"
+      description="El módulo actual: el protocolo es una tarjeta vacía en la barra lateral, fácil de ignorar."
+    >
+      <DCArtboard id="current" label="A · Estado actual (hoy)" width={W} height={H}>
+        <OptionCurrent/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection
+      id="low-friction"
+      title="Cambios de bajo riesgo"
+      description="Mismo layout, pero el protocolo se vuelve activo: aparece solo o se llama con / dentro de los campos."
+    >
+      <DCArtboard id="suggest" label="B · Sugerencia automática" width={W} height={H}>
+        <OptionSuggest/>
+      </DCArtboard>
+      <DCArtboard id="inline" label="C · Comando “/” en línea" width={W} height={H}>
+        <OptionInline/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection
+      id="high-impact"
+      title="Rediseños que ponen el protocolo al centro"
+      description="Cambian el modelo mental: el protocolo es la espina, los SOAP se llenan solos."
+    >
+      <DCArtboard id="walker" label="D · Caminante de protocolo (lateral)" width={W} height={H}>
+        <OptionWalker/>
+      </DCArtboard>
+      <DCArtboard id="protocol-first" label="E · Lienzo guiado por protocolo" width={W} height={H}>
+        <OptionProtocolFirst/>
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection
+      id="entry"
+      title="Cambio en el punto de entrada"
+      description="Antes de que aparezca el formulario, el doctor elige motivo o protocolo."
+    >
+      <DCArtboard id="gate" label="F · Puerta de inicio" width={W} height={H}>
+        <OptionGate/>
+      </DCArtboard>
+    </DCSection>
+  </DesignCanvas>
+);
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

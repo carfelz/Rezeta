@@ -1,0 +1,23 @@
+/* Shared preview-card base — keeps cards visually consistent and minimal. */
+@import url('../colors_and_type.css');
+
+html, body { height: 100%; }
+body {
+  background: var(--color-n-25);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card {
+  width: 100%;
+  max-width: 652px;
+  background: var(--color-n-0);
+  border: var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+.row { display: flex; align-items: center; }
+.stack { display: flex; flex-direction: column; }
+.gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; } .gap-5 { gap: 20px; } .gap-6 { gap: 24px; }

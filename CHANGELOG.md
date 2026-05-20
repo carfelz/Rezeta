@@ -4,6 +4,87 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Stage 4: colocate remaining hardcoded Spanish strings across 13 files
+
+### Added
+
+- `apps/web/src/pages/PatientDetail/strings.ts` — new strings file with `patientDetailStrings` for `DemographicsBlock` and `EditModal`
+- `apps/web/src/pages/Billing/strings.ts` — new strings file with `billingStrings` for all four Billing files
+
+### Changed
+
+- `apps/web/src/pages/PatientDetail/DemographicsBlock.tsx` — all section title and field labels replaced with `patientDetailStrings.*`
+- `apps/web/src/pages/PatientDetail/EditModal.tsx` — all field labels, placeholders, select options, button text, and error message replaced with `patientDetailStrings.*`
+- `apps/web/src/pages/Billing/index.tsx` — page title, button, table headers, loading/error/empty states replaced with `billingStrings.*`
+- `apps/web/src/pages/Billing/InvoiceRow.tsx` — `aria-label` strings and net label replaced with `billingStrings.*`
+- `apps/web/src/pages/Billing/DeleteConfirmModal.tsx` — modal title, dynamic subtitle, button text, and error message replaced with `billingStrings.*`
+- `apps/web/src/pages/Billing/InvoiceFormModal.tsx` — all field labels, placeholders, table column headers, summary labels, button text, and error messages replaced with `billingStrings.*`
+- `apps/web/src/pages/Protocols/index.tsx` — hardcoded `"Error al cargar protocolos"` title and `"Reintentar"` button replaced with `protocolsStrings.*`
+- `apps/web/src/pages/Protocols/strings.ts` — added `errorTitle` and `retryButton` keys
+- `apps/web/src/pages/OnboardingCustomize/StepTemplates.tsx` — template `placeholder` and delete button `title` replaced with `onboardingCustomizeStrings.*`
+- `apps/web/src/pages/OnboardingCustomize/StepTypes.tsx` — type `placeholder` and delete button `title` replaced with `onboardingCustomizeStrings.*`
+- `apps/web/src/pages/OnboardingCustomize/strings.ts` — added `step1TemplatePlaceholder`, `step1DeleteLabel`, `step2TypePlaceholder`, `step2DeleteLabel`
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx` — three `"Eliminar grupo"` aria-labels and three template-literal group title fallbacks replaced with `orderQueueStrings.*`
+- `apps/web/src/components/consultations/SwitchProtocolDialog.tsx` — dynamic dialog title, `"Examen físico (paso N)"` and `"Decisión, tratamiento, etc."` impact row titles replaced with `switchProtocolStrings.*`
+- `apps/web/src/components/consultations/strings.ts` — added `prescriptionGroupFallback`, `imagingGroupFallback`, `labGroupFallback`, `movedTitle`, `discardedTitle`, `dialogTitle`, `dialogTitleNoTarget`
+
+## [2026-05-19] — Stage 3: extract all hardcoded user-facing strings from components and pages
+
+### Changed
+
+- `apps/web/src/pages/settings/Locations.tsx` — all hardcoded strings replaced with `locationsStrings.*`; remaining table header and edit button strings fixed
+- `apps/web/src/pages/settings/AuditLog.tsx` — added `import { auditLogStrings }` and replaced all hardcoded strings: `CATEGORY_LABELS`, `ACTION_LABELS`, `ACTOR_TYPE_LABELS` constants, drawer section labels, filter labels/options, plan banner, page header, loading/error/empty states, pagination, export button
+- `apps/web/src/pages/settings/Schedules.tsx` — added `import { schedulesStrings }` and replaced all hardcoded strings: `DAY_LABELS` constant, block/exception form modal headers, field labels, error messages, footer buttons, section headers, loading/empty states, row labels
+- `apps/web/src/pages/ProtocolEditor/EditorHeader.tsx` — replaced `title="Haz clic para renombrar"` and block/section count inline strings with `protocolEditorStrings.*`
+- `apps/web/src/pages/ProtocolEditor/HistoryDrawer.tsx` — replaced `aria-label="Cerrar historial"` with `protocolEditorStrings.historyCloseLabel`
+- `apps/web/src/pages/ProtocolEditor/strings.ts` — added `titleRenameTooltip`, `blockCount`, `sectionCount`, `historyCloseLabel` keys
+- `apps/web/src/pages/Dashboard/index.tsx` — replaced all hardcoded subtitle logic, KPI card labels, and delta strings with `dashboardStrings.*`
+- `apps/web/src/pages/Dashboard/strings.ts` — added subtitle functions, KPI label/delta strings, page header buttons, section titles, empty states, and row strings
+- `apps/web/src/pages/Dashboard/PageHeader.tsx` — extracted button labels to `dashboardStrings`
+- `apps/web/src/pages/Dashboard/UpcomingAppointments.tsx` — extracted title, link, and empty state to `dashboardStrings`
+- `apps/web/src/pages/Dashboard/UpcomingRow.tsx` — extracted "En espera" badge label to `dashboardStrings.upcomingRowPending`
+- `apps/web/src/pages/Dashboard/RecentPatients.tsx` — extracted title, link, empty state, and "Sin documento" fallback to `dashboardStrings`
+- `apps/web/src/pages/Dashboard/RecentProtocols.tsx` — extracted title, link, empty state, and "actualizado" label to `dashboardStrings`
+- `apps/web/src/pages/Dashboard/ActivityFeed.tsx` — extracted title and empty state to `dashboardStrings`
+
+## [2026-05-19] — Colocated strings refactor: decompose lib/strings.ts into per-feature files
+
+### Added
+
+- `apps/web/src/lib/toasts.ts` — `toastStrings`, `firebaseErrorStrings`, `firebaseErrorToSpanish()` extracted from central strings file
+- `apps/web/src/lib/protocol-status.ts` — `PROTOCOL_STATUS_LABELS` and `protocolStatusLabel()` extracted from central strings file
+- `apps/web/src/pages/Login/strings.ts` — `loginStrings` (camelCase, `as const`)
+- `apps/web/src/pages/Signup/strings.ts` — `signupStrings`
+- `apps/web/src/pages/NotFound/strings.ts` — `notFoundStrings`
+- `apps/web/src/pages/Dashboard/strings.ts` — `dashboardStrings` (including time-based greeting function)
+- `apps/web/src/pages/Onboarding/strings.ts` — `onboardingStrings`
+- `apps/web/src/pages/OnboardingCustomize/strings.ts` — `onboardingCustomizeStrings`
+- `apps/web/src/pages/Protocols/strings.ts` — `protocolsStrings`
+- `apps/web/src/pages/ProtocolViewer/strings.ts` — `protocolViewerStrings`
+- `apps/web/src/pages/ProtocolEditor/strings.ts` — `protocolEditorStrings`
+- `apps/web/src/pages/settings/strings.ts` — `settingsStrings`, `templatesStrings`, `templateEditorStrings`, `typesStrings`
+- `apps/web/src/components/auth/strings.ts` — `authGateStrings`
+- `apps/web/src/components/protocols/strings.ts` — `blockTypeStrings`, `blockEditorStrings`
+- `apps/web/src/components/template/strings.ts` — `templateEditorWidgetStrings`
+
+### Changed
+
+- Moved 6 flat page `.tsx` files into folder/`index.tsx` structures: `Login`, `Signup`, `NotFound`, `Dashboard`, `Onboarding`, `ProtocolViewer`
+- Updated all 10 hook files to import `toastStrings` from `@/lib/toasts` instead of `lib/strings`
+- Updated `lib/auth/firebase-auth-client.ts` to import `firebaseErrorToSpanish` from `../toasts`
+- Updated all protocol block editor components, template editor, and settings pages to import from colocated `strings.ts`
+- Updated `lib/__tests__/strings.test.ts` and `lib/auth/__tests__/firebase-auth-client.test.ts` to import from new colocated paths
+- Deleted `apps/web/src/lib/strings.ts` after all 43 consumers were migrated
+
+## [2026-05-19] — Rename all spanish page files, folders, and exports to english
+
+### Changed
+
+- Renamed 7 page folders: `Pacientes→Patients`, `Consulta→Consultation`, `Facturacion→Billing`, `ajustes→settings`, `PacienteDetalle→PatientDetail`, `BienvenidoPersonalizar→OnboardingCustomize`, `Agenda→Schedule`
+- Renamed 9 component/page files to English equivalents (e.g. `ConsultaModals→ConsultationModals`, `PlantillaEditor→TemplateEditor`, `BienvenidoGate→OnboardingGate`, etc.)
+- Updated all exported function names to match new English file names
+- Updated `App.tsx` router imports and all internal cross-references
+
 ## [2026-05-19] — Add dev-only JSX debug attributes via Babel plugin
 
 ### Added

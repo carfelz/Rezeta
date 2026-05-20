@@ -1,0 +1,203 @@
+/**
+ * Medical ERP — Design Tokens
+ * Single source of truth for all design values.
+ * Import this file first in any stylesheet.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ============================================================
+     NEUTRALS
+     Cool true-grey with a hair of warmth at the light end.
+     Optimized for long reading sessions without eye fatigue.
+     ============================================================ */
+  --color-n-0:   #FFFFFF;
+  --color-n-25:  #FAFAF7;  /* paper — app background */
+  --color-n-50:  #F4F4F0;  /* subtle row alternates */
+  --color-n-100: #EBEBE6;  /* borders-soft */
+  --color-n-200: #D8D8D2;  /* borders */
+  --color-n-300: #B9B9B3;  /* dividers-strong */
+  --color-n-400: #8E8E88;  /* muted text */
+  --color-n-500: #6B6B66;  /* secondary text */
+  --color-n-600: #4A4A46;  /* body */
+  --color-n-700: #2E2E2B;  /* heading */
+  --color-n-800: #1C1C1A;  /* strong heading */
+  --color-n-900: #0E0E0D;  /* max contrast */
+
+  /* ============================================================
+     PRIMARY — Deep teal-slate (#2D5760)
+     Trustworthy without being tech-SaaS blue or clinical green.
+     Used sparingly: primary actions, active rule, links.
+     ============================================================ */
+  --color-p-50:  #EAF0F1;
+  --color-p-100: #C9D7DA;
+  --color-p-300: #6A8B91;
+  --color-p-500: #2D5760;  /* brand anchor */
+  --color-p-700: #1B3A41;
+  --color-p-900: #0E2429;
+
+  /* ============================================================
+     SEMANTIC COLORS
+     Muted and serious. Reserved exclusively for patient/protocol
+     state — never decorative.
+     ============================================================ */
+  --color-success-bg:     #EDF3EC;
+  --color-success-border: #B8CFB2;
+  --color-success-text:   #2F5C28;
+
+  --color-warning-bg:     #F7F1E3;
+  --color-warning-border: #DCC89A;
+  --color-warning-text:   #6E5319;
+
+  --color-danger-bg:      #F6EAE8;
+  --color-danger-border:  #D9B4AE;
+  --color-danger-text:    #7A2B22;
+
+  --color-info-bg:        #ECF0F3;
+  --color-info-border:    #B8C6D0;
+  --color-info-text:      #2B435A;
+
+  /* Danger solid (destructive buttons) */
+  --color-danger-solid:   #8C2A20;
+
+  /* ============================================================
+     TYPOGRAPHY
+     Source Serif 4: display/headings — editorial, scientific heritage
+     IBM Plex Sans: UI/body/tables — humanist, excellent at small sizes
+     IBM Plex Mono: tokens/labels/data — technical, monospaced
+     Weights: 400 / 500 / 600 only
+     ============================================================ */
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-sans:  "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  "IBM Plex Mono", ui-monospace, monospace;
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+
+  /* ============================================================
+     TYPE SCALE
+     ============================================================ */
+  --text-display-size:    56px;
+  --text-display-lh:      1.05;
+  --text-display-ls:      -0.02em;
+
+  --text-h1-size:         40px;
+  --text-h1-lh:           1.10;
+  --text-h1-ls:           -0.015em;
+
+  --text-h2-size:         28px;
+  --text-h2-lh:           1.20;
+  --text-h2-ls:           -0.01em;
+
+  --text-h3-size:         18px;
+  --text-h3-lh:           1.35;
+  --text-h3-ls:           -0.005em;
+
+  --text-body-lg-size:    16px;
+  --text-body-lg-lh:      1.55;
+
+  --text-body-size:       14px;
+  --text-body-lh:         1.55;
+
+  --text-body-sm-size:    13px;
+  --text-body-sm-lh:      1.50;
+
+  --text-caption-size:    12px;
+  --text-caption-lh:      1.40;
+
+  --text-overline-size:   11px;
+  --text-overline-lh:     1.40;
+  --text-overline-ls:     0.10em;
+
+  /* ============================================================
+     SPACING — base unit 4px
+     ============================================================ */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  /* ============================================================
+     BORDER RADIUS — three values, no more
+     sm: buttons, inputs, chips
+     md: cards, modals
+     lg: large containers
+     ============================================================ */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+
+  /* ============================================================
+     BORDERS
+     Borders carry hierarchy; shadows are secondary.
+     ============================================================ */
+  --border-default: 1px solid var(--color-n-200);
+  --border-soft:    1px solid var(--color-n-100);
+  --border-strong:  1px solid var(--color-n-300);
+  --border-accent:  2px solid var(--color-p-500);   /* active state signature */
+  --border-dashed:  1px dashed var(--color-n-200);  /* empty states, drop targets */
+  --border-focus:   1px solid var(--color-p-500);
+
+  /* ============================================================
+     ELEVATION
+     Three levels. Typography + borders handle hierarchy first.
+     ============================================================ */
+  --shadow-flat:     none;
+  --shadow-raised:   0 1px 0 rgba(14,14,13,0.04), 0 1px 2px rgba(14,14,13,0.04);
+  --shadow-floating: 0 1px 0 rgba(14,14,13,0.04),
+                     0 8px 24px -8px rgba(14,14,13,0.12),
+                     0 2px 6px rgba(14,14,13,0.06);
+
+  /* Focus ring (for keyboard nav) */
+  --shadow-focus:    0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-p-300);
+  --shadow-focus-danger: 0 0 0 2px var(--color-n-0), 0 0 0 4px var(--color-danger-border);
+
+  /* ============================================================
+     LAYOUT
+     1440px: 12 cols, 24px gutter, 48px margin
+     1024px:  8 cols, 20px gutter, 32px margin
+     Sidebar: 240px fixed
+     Topbar:   56px fixed
+     ============================================================ */
+  --layout-max-width:      1440px;
+  --layout-sidebar-width:  240px;
+  --layout-topbar-height:   56px;
+  --layout-margin-xl:       48px;
+  --layout-margin-lg:       32px;
+  --layout-gutter-xl:       24px;
+  --layout-gutter-lg:       20px;
+
+  /* ============================================================
+     COMPONENT SIZES
+     Minimum touch target: 44px (WCAG)
+     ============================================================ */
+  --size-btn-sm:    28px;
+  --size-btn-md:    32px;
+  --size-btn-lg:    40px;
+  --size-input-md:  34px;
+  --size-touch-min: 44px;
+
+  /* ============================================================
+     ICONOGRAPHY
+     Library: Phosphor Icons (regular weight)
+     Sizes: 16px inline, 18px callouts, 22px domain grid, 24px empty states
+     ============================================================ */
+  --icon-size-sm: 15px;
+  --icon-size-md: 16px;
+  --icon-size-lg: 18px;
+  --icon-size-xl: 22px;
+
+  /* ============================================================
+     TRANSITIONS
+     ============================================================ */
+  --transition-fast:   100ms ease;
+  --transition-medium: 150ms ease;
+}
