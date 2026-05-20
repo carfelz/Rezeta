@@ -251,6 +251,23 @@ export const soapViewStrings = {
   diagnosesTitle: 'Diagnósticos',
 } as const
 
+// ── CanvasView ──────────────────────────────────────────────────────────────────
+
+export const canvasViewStrings = {
+  emptyProtocolOverline: 'Protocolo sin pasos',
+  emptyProtocolHeading: 'Este protocolo todavía no tiene pasos.',
+  emptyProtocolDescription:
+    'Sus secciones existen pero aún no contienen bloques. Puedes editarlo ahora o seguir con la consulta en blanco.',
+  continueWithoutProtocol: 'Continuar sin protocolo',
+  editProtocol: 'Editar protocolo',
+} as const
+
+// ── Protocol chain breadcrumb ───────────────────────────────────────────────────
+
+export const chainBreadcrumbStrings = {
+  backButton: 'Atrás',
+} as const
+
 // ── RightRail ───────────────────────────────────────────────────────────────────
 
 export const saveBadgeStrings = {

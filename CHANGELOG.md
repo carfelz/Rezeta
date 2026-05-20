@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Wire BlockRendererRunMode into consultation canvas; auto-populate SOAP; linked protocol chain
+
+### Changed
+
+- `CanvasView.tsx` — rewritten to use `BlockRendererRunMode` for all block types (section, checklist, steps, decision, dosage table, imaging order, lab order, alert, text). Removed hand-rolled step-list logic (`collectSteps`, `ProtoStep`). New props: `onCheck`, `onAutoPopulate`, `onLaunchLinkedProtocol`.
+- `BlockRendererRunMode.tsx` — added `isSigned?: boolean` to `RunModeProps`; gated all interactive elements (step buttons, checklist clicks, decision card clicks, queue buttons) behind the flag.
+- `Consultation/index.tsx` — replaced `handleToggleStep`/`onSkipStep` with `handleCheck`; added `handleAutoPopulate` (appends text to objective/assessment/plan); added `handleLaunchLinkedProtocol` (mutates new usage, tracks chain stack); added chain breadcrumb display with back navigation.
+- `components/consultations/strings.ts` — added `canvasViewStrings` and `chainBreadcrumbStrings`.
+
+### Fixed
+
+- `soap` and `onSoapChange` props were passed into old `CanvasView` but immediately `void`ed — auto-populate now actually writes to SOAP fields.
+- Dosage tables, imaging/lab order blocks, decision branches, text blocks, alerts were invisible in canvas mode — all now render.
+
+---
+
 ## [2026-05-19] — Stage 4 (complete): replace all raw HTML with UI primitives across pages and smart components
 
 ### Changed

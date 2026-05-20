@@ -13,6 +13,7 @@ export interface RunModeProps {
   onCheck: (id: string, checked: boolean) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }
 
 interface BlockRunModeProps {
@@ -26,11 +27,13 @@ function StepsRunMode({
   checkedState,
   onCheck,
   onAutoPopulate,
+  isSigned,
 }: {
   steps: Array<{ id: string; order: number; title: string; detail?: string }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   return (
     <ol className="flex flex-col gap-3">
@@ -82,7 +85,7 @@ function StepsRunMode({
                 </span>
               )}
             </div>
-            {state === 'pending' && (
+            {state === 'pending' && !isSigned && (
               <Row gap={2} className="ml-8">
                 <Button
                   variant="secondary"
@@ -116,11 +119,13 @@ function ChecklistRunMode({
   checkedState,
   onCheck,
   onAutoPopulate,
+  isSigned,
 }: {
   items: Array<{ id: string; text: string; critical?: boolean }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   return (
     <ul className="flex flex-col gap-2">
@@ -129,8 +134,13 @@ function ChecklistRunMode({
         return (
           <li
             key={item.id}
-            className={cn('flex gap-3 cursor-pointer', done && 'opacity-60')}
+            className={cn(
+              'flex gap-3',
+              isSigned ? 'cursor-default' : 'cursor-pointer',
+              done && 'opacity-60',
+            )}
             onClick={() => {
+              if (isSigned) return
               const next = !done
               onCheck(item.id, next)
               if (next && item.critical) {
@@ -174,6 +184,7 @@ function DecisionRunMode({
   onCheck,
   onLaunchLinkedProtocol,
   onAutoPopulate,
+  isSigned,
 }: {
   blockId: string
   condition: string
@@ -182,6 +193,7 @@ function DecisionRunMode({
   onCheck: (id: string, checked: boolean) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   const selectedId = branches.find((b) => checkedState[b.id])?.id ?? null
   return (
@@ -197,16 +209,20 @@ function DecisionRunMode({
               <SelectableCard
                 density="standard"
                 state={selected ? 'selected' : 'default'}
-                onClick={() => {
-                  const wasSelected = selected
-                  branches.forEach((b) => {
-                    if (b.id !== branch.id && checkedState[b.id]) onCheck(b.id, false)
-                  })
-                  onCheck(branch.id, !selected)
-                  if (!wasSelected) {
-                    onAutoPopulate?.('assessment', branch.action)
-                  }
-                }}
+                onClick={
+                  isSigned
+                    ? undefined
+                    : () => {
+                        const wasSelected = selected
+                        branches.forEach((b) => {
+                          if (b.id !== branch.id && checkedState[b.id]) onCheck(b.id, false)
+                        })
+                        onCheck(branch.id, !selected)
+                        if (!wasSelected) {
+                          onAutoPopulate?.('assessment', branch.action)
+                        }
+                      }
+                }
               >
                 <span
                   className={cn(
@@ -252,9 +268,11 @@ function DecisionRunMode({
 function ImagingOrderRunMode({
   orders,
   onAutoPopulate,
+  isSigned,
 }: {
   orders: ImagingOrderItem[]
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   const queueImagingOrder = useOrderQueueStore((s) => s.queueImagingOrder)
   return (
@@ -277,6 +295,7 @@ function ImagingOrderRunMode({
             variant="secondary"
             size="sm"
             className="shrink-0"
+            disabled={isSigned}
             onClick={() => {
               queueImagingOrder({
                 study_type: order.study_type,
@@ -303,6 +322,7 @@ function ImagingOrderRunMode({
 function DosageTableRunMode({
   rows,
   onAutoPopulate,
+  isSigned,
 }: {
   rows: Array<{
     id: string
@@ -313,6 +333,7 @@ function DosageTableRunMode({
     notes: string
   }>
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   const queueMedication = useOrderQueueStore((s) => s.queueMedication)
   const queuedMedications = useOrderQueueStore((s) => s.medications)
@@ -344,6 +365,7 @@ function DosageTableRunMode({
                 variant="secondary"
                 size="sm"
                 className="shrink-0"
+                disabled={isSigned}
                 onClick={() => {
                   queueMedication({
                     drug: row.drug,
@@ -370,9 +392,11 @@ function DosageTableRunMode({
 function LabOrderRunMode({
   orders,
   onAutoPopulate,
+  isSigned,
 }: {
   orders: LabOrderItem[]
   onAutoPopulate?: (field: SoapField, text: string) => void
+  isSigned?: boolean
 }): JSX.Element {
   const queueLabOrder = useOrderQueueStore((s) => s.queueLabOrder)
   return (
@@ -395,6 +419,7 @@ function LabOrderRunMode({
             variant="secondary"
             size="sm"
             className="shrink-0"
+            disabled={isSigned}
             onClick={() => {
               queueLabOrder({
                 test_name: order.test_name,
@@ -425,7 +450,7 @@ export function BlockRendererRunMode({
   runMode,
 }: BlockRunModeProps): JSX.Element | null {
   const b = block as Block
-  const { checkedState, onCheck, onLaunchLinkedProtocol, onAutoPopulate } = runMode
+  const { checkedState, onCheck, onLaunchLinkedProtocol, onAutoPopulate, isSigned } = runMode
 
   switch (b.type) {
     case 'section':
@@ -470,6 +495,7 @@ export function BlockRendererRunMode({
             checkedState={checkedState}
             onCheck={onCheck}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
           />
         </ProtocolBlock>
       )
@@ -486,6 +512,7 @@ export function BlockRendererRunMode({
             checkedState={checkedState}
             onCheck={onCheck}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
           />
         </ProtocolBlock>
       )
@@ -505,6 +532,7 @@ export function BlockRendererRunMode({
             onCheck={onCheck}
             {...(onLaunchLinkedProtocol ? { onLaunchLinkedProtocol } : {})}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
           />
         </ProtocolBlock>
       )
@@ -516,7 +544,11 @@ export function BlockRendererRunMode({
           title={b.title ?? blockRendererRunModeStrings.dosageDefaultTitle}
           nested={nested}
         >
-          <DosageTableRunMode rows={b.rows} {...(onAutoPopulate ? { onAutoPopulate } : {})} />
+          <DosageTableRunMode
+            rows={b.rows}
+            {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
+          />
         </ProtocolBlock>
       )
 
@@ -546,6 +578,7 @@ export function BlockRendererRunMode({
           <ImagingOrderRunMode
             orders={imgBlock.orders}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
           />
         </ProtocolBlock>
       )
@@ -562,6 +595,7 @@ export function BlockRendererRunMode({
           <LabOrderRunMode
             orders={labBlock.orders}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
           />
         </ProtocolBlock>
       )

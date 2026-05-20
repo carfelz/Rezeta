@@ -219,7 +219,9 @@
       "Bash(sed -i '' 's/strings\\\\.TEMPLATE_EDITOR_NO_TITLE/templateEditorWidgetStrings.noTitle/g; *)",
       "Bash(perl -i -pe 's/import \\\\{ blockEditorStrings, blockTypeStrings \\\\} from/import { blockEditorStrings } from/g' /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/AlertBlockEditor.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/ChecklistBlockEditor.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/DecisionBlockEditor.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/DosageTableEditor.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/StepsBlockEditor.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/TemplatePickerModal.tsx /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/TextBlockEditor.tsx)",
       "Bash(perl -i -pe 's/import \\\\{ blockEditorStrings, blockTypeStrings \\\\} from/import { blockTypeStrings } from/g' /Users/carlosfeliz/code/medical_app/apps/web/src/components/protocols/BlockRenderer.tsx)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(pnpm test:coverage)",
+      "Bash(echo \"HOOK_EXIT: $?\")"
     ]
   }
 }

@@ -13,7 +13,7 @@ import {
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
 import { Button } from '@/components/ui'
-import { CanvasView } from '@/components/consultations/CanvasView'
+import { CanvasView, type SoapField } from '@/components/consultations/CanvasView'
 import {
   MissingFieldsPanel,
   computeMissingFields,
@@ -30,6 +30,7 @@ import { useSoapState } from './use-soap-state'
 import { formatDate } from './helpers'
 import { formatBreadcrumbDate } from '@/lib/format/dates'
 import { consultationPageStrings } from './strings'
+import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 
 export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -54,10 +55,46 @@ export function Consultation(): JSX.Element {
     consultation?.protocolUsages?.[0]
   const updateCheckedState = useUpdateCheckedState(id!, activeUsage?.id ?? '')
 
-  function handleToggleStep(stepId: string, checked: boolean): void {
+  const [usageIdStack, setUsageIdStack] = useState<string[]>([])
+
+  function handleCheck(id: string, checked: boolean): void {
     if (!activeUsage) return
-    const next = { ...activeUsage.checkedState, [stepId]: checked }
+    const next = { ...activeUsage.checkedState, [id]: checked }
     updateCheckedState.mutate({ checkedState: next })
+  }
+
+  function handleAutoPopulate(field: SoapField, text: string): void {
+    const current: Record<string, string> = {
+      objective: soap.objective,
+      assessment: soap.assessment,
+      plan: soap.plan,
+    }
+    const setters: Record<string, (v: string) => void> = {
+      objective: soap.setObjective,
+      assessment: soap.setAssessment,
+      plan: soap.setPlan,
+    }
+    const existing = current[field] ?? ''
+    setters[field]?.(existing ? `${existing}\n${text}` : text)
+  }
+
+  function handleLaunchLinkedProtocol(protocolId: string, triggerBlockId: string): void {
+    if (!activeUsage) return
+    const parentId = activeUsage.id
+    setUsageIdStack((prev) => [...prev, parentId])
+    addUsageMutation.mutate(
+      { protocolId, parentUsageId: parentId, triggerBlockId },
+      {
+        onSuccess: (newUsage) => setActiveUsageId(newUsage.id),
+        onError: () => setUsageIdStack((prev) => prev.slice(0, -1)),
+      },
+    )
+  }
+
+  function handleBackInChain(): void {
+    const prevId = usageIdStack[usageIdStack.length - 1] ?? null
+    setActiveUsageId(prevId)
+    setUsageIdStack((prev) => prev.slice(0, -1))
   }
 
   const [showMissingFields, setShowMissingFields] = useState(false)
@@ -227,28 +264,35 @@ export function Consultation(): JSX.Element {
 
       <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 360px' }}>
         <div className="min-w-0">
+          {viewMode === 'canvas' && activeUsage && usageIdStack.length > 0 && (
+            <div className="flex items-center gap-3 mb-3 py-2">
+              <Button variant="ghost" size="sm" onClick={handleBackInChain}>
+                ← {chainBreadcrumbStrings.backButton}
+              </Button>
+              <div className="flex items-center gap-1 text-[12px] font-mono text-n-500 flex-wrap">
+                {[...usageIdStack, activeUsage.id].map((uid, i) => {
+                  const isActive = uid === activeUsage.id
+                  const title = isActive
+                    ? activeUsage.protocolTitle
+                    : (consultation.protocolUsages.find((u) => u.id === uid)?.protocolTitle ?? '…')
+                  return (
+                    <span key={uid} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-n-300">→</span>}
+                      <span className={isActive ? 'text-n-800 font-semibold' : 'text-n-400'}>
+                        {title}
+                      </span>
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           {viewMode === 'canvas' && activeUsage ? (
             <CanvasView
               usage={activeUsage}
-              soap={{
-                chiefComplaint: soap.chiefComplaint,
-                subjective: soap.subjective,
-                objective: soap.objective,
-                assessment: soap.assessment,
-                plan: soap.plan,
-              }}
-              onSoapChange={(field, value) => {
-                const setters: Record<string, (v: string) => void> = {
-                  chiefComplaint: soap.setChiefComplaint,
-                  subjective: soap.setSubjective,
-                  objective: soap.setObjective,
-                  assessment: soap.setAssessment,
-                  plan: soap.setPlan,
-                }
-                setters[field]?.(value)
-              }}
-              onToggleStep={handleToggleStep}
-              onSkipStep={(step) => setSkipStepTarget(step)}
+              onCheck={handleCheck}
+              onAutoPopulate={handleAutoPopulate}
+              onLaunchLinkedProtocol={handleLaunchLinkedProtocol}
               isSigned={isSigned}
               onContinueWithoutProtocol={() => {
                 if (activeUsage) {
