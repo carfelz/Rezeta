@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TextLink } from '@/components/ui'
+import { IconButton, Input, TextLink } from '@/components/ui'
 import { diagnosesSectionStrings } from './strings'
 
 export interface DiagnosesSectionProps {
@@ -35,20 +35,20 @@ export function DiagnosesSection({
         >
           {d}
           {!disabled && (
-            <button
-              type="button"
-              onClick={() => removeDiagnosis(d)}
-              className="ml-1 text-p-500 hover:text-p-900 leading-none"
+            <IconButton
+              icon="ph ph-x"
+              size="sm"
+              tone="neutral"
               aria-label={diagnosesSectionStrings.removeDiagnosisLabel(d)}
-            >
-              <i className="ph ph-x text-[11px]" />
-            </button>
+              onClick={() => removeDiagnosis(d)}
+              className="ml-1"
+            />
           )}
         </span>
       ))}
       {!disabled && (
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -59,7 +59,7 @@ export function DiagnosesSection({
               }
             }}
             placeholder={diagnosesSectionStrings.addPlaceholder}
-            className="h-[30px] px-3 text-[12.5px] font-sans border border-dashed border-n-300 rounded-sm bg-n-0 placeholder:text-n-300 text-n-700 focus:outline-none focus:border-p-500 w-[200px]"
+            className="h-[30px] text-[12.5px] border-dashed w-[200px]"
           />
           {input.trim() && (
             <TextLink tone="primary" size="sm" weight="medium" onClick={addDiagnosis}>

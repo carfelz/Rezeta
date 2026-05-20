@@ -16,7 +16,20 @@ import {
   imagingOrderEditorStrings,
   labOrderEditorStrings,
 } from './strings'
-import { Button, IconButton, Row, TextLink, ConfirmDialog } from '@/components/ui'
+import {
+  Button,
+  Checkbox,
+  IconButton,
+  Input,
+  Row,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  TextLink,
+  ConfirmDialog,
+} from '@/components/ui'
 import type { ImagingOrderItem, LabOrderItem, OrderUrgency, LabSampleType } from '@rezeta/shared'
 
 type SectionBlock = Extract<ProtocolBlock, { type: 'section' }>
@@ -134,12 +147,13 @@ function SectionEditor({
         </span>
 
         {/* Title — editable inline */}
-        <input
+        <Input
+          variant="ghost"
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={commitTitle}
           onKeyDown={handleTitleKeyDown}
-          className="flex-1 min-w-0 font-serif text-[17px] font-medium text-n-900 bg-transparent border-none outline-none focus:border-b focus:border-p-500 pb-px"
+          className="flex-1 min-w-0 font-serif text-[17px] font-medium text-n-900 pb-px"
           placeholder={blockEditorStrings.sectionTitlePlaceholder}
         />
 
@@ -317,12 +331,12 @@ function BlockContextMenu({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button
-          className="w-6 h-6 flex items-center justify-center rounded text-n-400 hover:text-n-800 hover:bg-n-100 transition-colors duration-[100ms] shrink-0"
-          title={blockEditorStrings.blockCtxMoreActions}
-        >
-          <i className="ph ph-dots-three text-[14px]" />
-        </button>
+        <IconButton
+          icon="ph ph-dots-three"
+          aria-label={blockEditorStrings.blockCtxMoreActions}
+          tone="neutral"
+          size="md"
+        />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
@@ -479,9 +493,8 @@ function ImagingOrderBlockEditor({
         <label className="text-[12px] font-sans font-medium text-n-600">
           {imagingOrderEditorStrings.titleLabel}
         </label>
-        <input
+        <Input
           type="text"
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           placeholder={imagingOrderEditorStrings.titlePlaceholder}
@@ -496,9 +509,9 @@ function ImagingOrderBlockEditor({
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
-              <input
+              <Input
                 type="text"
-                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                className="flex-1"
                 value={order.study_type}
                 onChange={(e) => updateOrder(order.id, { study_type: e.target.value })}
                 placeholder={imagingOrderEditorStrings.studyTypePlaceholder}
@@ -514,43 +527,43 @@ function ImagingOrderBlockEditor({
               />
             </div>
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
-                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                className="flex-1"
                 value={order.indication}
                 onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
                 placeholder={imagingOrderEditorStrings.indicationPlaceholder}
               />
-              <select
-                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+              <Select
                 value={order.urgency}
-                onChange={(e) => updateOrder(order.id, { urgency: e.target.value as OrderUrgency })}
+                onValueChange={(v) => updateOrder(order.id, { urgency: v as OrderUrgency })}
               >
-                {URGENCY_OPTIONS.map((u) => (
-                  <option key={u.value} value={u.value}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {URGENCY_OPTIONS.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-4">
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={order.contrast}
                   onChange={(e) => updateOrder(order.id, { contrast: e.target.checked })}
-                  className="w-4 h-4"
                 />
                 <span className="text-[12px] font-sans text-n-600">
                   {imagingOrderEditorStrings.contrastLabel}
                 </span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={order.fasting_required}
                   onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
-                  className="w-4 h-4"
                 />
                 <span className="text-[12px] font-sans text-n-600">
                   {imagingOrderEditorStrings.fastingLabel}
@@ -636,9 +649,8 @@ function LabOrderBlockEditor({
         <label className="text-[12px] font-sans font-medium text-n-600">
           {labOrderEditorStrings.titleLabel}
         </label>
-        <input
+        <Input
           type="text"
-          className="h-[34px] px-3 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           placeholder={labOrderEditorStrings.titlePlaceholder}
@@ -653,9 +665,9 @@ function LabOrderBlockEditor({
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
-              <input
+              <Input
                 type="text"
-                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                className="flex-1"
                 value={order.test_name}
                 onChange={(e) => updateOrder(order.id, { test_name: e.target.value })}
                 placeholder={labOrderEditorStrings.testNamePlaceholder}
@@ -671,44 +683,48 @@ function LabOrderBlockEditor({
               />
             </div>
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
-                className="flex-1 h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500"
+                className="flex-1"
                 value={order.indication}
                 onChange={(e) => updateOrder(order.id, { indication: e.target.value })}
                 placeholder={labOrderEditorStrings.indicationPlaceholder}
               />
-              <select
-                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+              <Select
                 value={order.urgency}
-                onChange={(e) => updateOrder(order.id, { urgency: e.target.value as OrderUrgency })}
+                onValueChange={(v) => updateOrder(order.id, { urgency: v as OrderUrgency })}
               >
-                {URGENCY_OPTIONS.map((u) => (
-                  <option key={u.value} value={u.value}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="h-[30px] px-2 text-[13px] font-sans border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0"
+                <SelectTrigger className="w-[110px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {URGENCY_OPTIONS.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
                 value={order.sample_type}
-                onChange={(e) =>
-                  updateOrder(order.id, { sample_type: e.target.value as LabSampleType })
-                }
+                onValueChange={(v) => updateOrder(order.id, { sample_type: v as LabSampleType })}
               >
-                {SAMPLE_TYPE_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[110px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SAMPLE_TYPE_OPTIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={order.fasting_required}
                 onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
-                className="w-4 h-4"
               />
               <span className="text-[12px] font-sans text-n-600">
                 {labOrderEditorStrings.fastingLabel}

@@ -57,11 +57,13 @@ export function HistoryDrawer({
           </p>
         ) : (
           versionHistory.map((v) => (
-            <button
+            <Button
               key={v.id}
+              variant="item"
+              size="sm"
               onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
-              className={`flex items-center gap-3 px-5 py-3 text-left border-b border-n-100 last:border-0 transition-colors duration-[100ms] ${
-                selectedVersionId === v.id ? 'bg-p-50' : 'hover:bg-n-25'
+              className={`flex items-center gap-3 w-full px-5 py-3 text-left border-b border-n-100 last:border-0 ${
+                selectedVersionId === v.id ? 'bg-p-50' : ''
               }`}
             >
               <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
@@ -81,7 +83,7 @@ export function HistoryDrawer({
                   month: 'short',
                 })}
               </span>
-            </button>
+            </Button>
           ))
         )}
       </div>

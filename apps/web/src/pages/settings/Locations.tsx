@@ -13,10 +13,12 @@ import {
 import {
   Button,
   Badge,
+  Checkbox,
   EmptyState,
   Callout,
   Field,
   Input,
+  Textarea,
   Modal,
   ModalContent,
   ModalHeader,
@@ -169,20 +171,14 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             <div className="grid grid-cols-2 gap-3">
               <Field label={locationsStrings.typeLabel}>
                 <label className="flex items-center gap-2 h-input-md cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 accent-p-500"
-                    checked={isOwned}
-                    onChange={(e) => setIsOwned(e.target.checked)}
-                  />
+                  <Checkbox checked={isOwned} onChange={(e) => setIsOwned(e.target.checked)} />
                   {locationsStrings.ownedCheckbox}
                 </label>
               </Field>
             </div>
 
             <Field label={locationsStrings.notesLabel}>
-              <textarea
-                className="w-full min-h-[72px] px-3 py-2 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none transition-[border-color] duration-[100ms] focus:border-p-500 placeholder:text-n-400 resize-y"
+              <Textarea
                 placeholder={locationsStrings.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Caption, TextLink } from '@/components/ui'
+import { Button, Caption, TextLink } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
 import { dashboardStrings } from './strings'
 
@@ -38,11 +38,12 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 4)
             .map((p) => (
-              <button
+              <Button
                 key={p.id}
-                type="button"
+                variant="item"
+                size="sm"
                 onClick={() => void navigate(`/pacientes/${p.id}`)}
-                className="flex items-center gap-3 text-left hover:bg-n-25 -mx-1 px-1 py-1 rounded transition-colors"
+                className="flex items-center gap-3 w-full text-left -mx-1 px-1 py-1 rounded"
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-n-900 truncate">
@@ -57,7 +58,7 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
                   </Caption>
                 </div>
                 <i className="ph ph-caret-right text-[12px] text-n-300" />
-              </button>
+              </Button>
             ))}
         </div>
       )}

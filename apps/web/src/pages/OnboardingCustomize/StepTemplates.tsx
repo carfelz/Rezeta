@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui'
+import { Button, Input } from '@/components/ui'
 import { onboardingCustomizeStrings } from './strings'
 import type { TemplateCandidate } from './types'
 
@@ -42,8 +42,9 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
             className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
             <i className="ph ph-file-text text-[16px] text-p-500 shrink-0" />
-            <input
-              className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
+            <Input
+              variant="ghost"
+              className="flex-1 p-0"
               value={t.name}
               placeholder={onboardingCustomizeStrings.step1TemplatePlaceholder}
               onChange={(e) => updateName(t.clientId, e.target.value)}

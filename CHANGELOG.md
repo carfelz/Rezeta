@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Stage 4 (complete): replace all raw HTML with UI primitives across pages and smart components
+
+### Changed
+
+- `pages/settings/Locations.tsx` — `<input type="checkbox">` → `Checkbox`, `<textarea>` → `Textarea`
+- `pages/settings/Schedules.tsx` — two `<select>` → `Select`/`SelectItem`, `<button>` delete → `IconButton`
+- `pages/settings/AuditLog.tsx` — two `<input type="date">` → `Input`, two `<select>` → `Select` with sentinel `__all__` values
+- `pages/settings/Types.tsx` — template `<select>` → `Select` with sentinel `__none__` value
+- `pages/Schedule/PatientCombobox.tsx` — patient row `<button>` → `Button variant="item"`
+- `pages/_preview/GatePreview.tsx` — skip `<button>` → `Button variant="secondary"`
+- `pages/OnboardingCustomize/StepTemplates.tsx` — template name `<input>` → `Input variant="ghost"`
+- `pages/OnboardingCustomize/StepTypes.tsx` — type name `<input>` → `Input variant="ghost"`, template `<select>` → `Select`
+- `pages/Billing/InvoiceFormModal.tsx` — patient and location `<select>` → `Select`, notes `<textarea>` → `Textarea`
+
 ## [2026-05-19] — Stage 4: colocate remaining hardcoded Spanish strings across 13 files
 
 ### Added

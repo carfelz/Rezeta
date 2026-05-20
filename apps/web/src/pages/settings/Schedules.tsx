@@ -21,6 +21,11 @@ import {
   ModalBody,
   ModalFooter,
   IconButton,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui'
 import { schedulesStrings } from './strings'
 
@@ -100,17 +105,18 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
               </Callout>
             )}
             <Field label={schedulesStrings.blockDayLabel} required>
-              <select
-                className="w-full h-input-md px-3 border border-n-300 rounded-sm text-body-sm bg-n-0 focus:outline-none focus:border-p-500"
-                value={dayOfWeek}
-                onChange={(e) => setDayOfWeek(e.target.value)}
-              >
-                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                  <option key={d} value={d}>
-                    {DAY_LABELS[d]}
-                  </option>
-                ))}
-              </select>
+              <Select value={dayOfWeek} onValueChange={(v) => setDayOfWeek(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                    <SelectItem key={d} value={String(d)}>
+                      {DAY_LABELS[d]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={schedulesStrings.blockStartTimeLabel} required>
@@ -227,14 +233,17 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
             <Field label={schedulesStrings.exceptionTypeLabel} required>
-              <select
-                className="w-full h-input-md px-3 border border-n-300 rounded-sm text-body-sm bg-n-0 focus:outline-none focus:border-p-500"
-                value={type}
-                onChange={(e) => setType(e.target.value as 'blocked' | 'available')}
-              >
-                <option value="blocked">{schedulesStrings.exceptionTypeBlocked}</option>
-                <option value="available">{schedulesStrings.exceptionTypeAvailable}</option>
-              </select>
+              <Select value={type} onValueChange={(v) => setType(v as 'blocked' | 'available')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blocked">{schedulesStrings.exceptionTypeBlocked}</SelectItem>
+                  <SelectItem value="available">
+                    {schedulesStrings.exceptionTypeAvailable}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field
@@ -351,14 +360,13 @@ function ExceptionRow({
           </div>
         )}
       </div>
-      <button
-        type="button"
-        className="text-n-400 hover:text-danger-text transition-colors p-1 rounded min-h-touch flex items-center justify-center"
+      <IconButton
+        icon="ph ph-trash"
         aria-label={schedulesStrings.deleteExceptionLabel}
+        tone="neutral"
+        size="sm"
         onClick={onDelete}
-      >
-        <i className="ph ph-trash" style={{ fontSize: 16 }} />
-      </button>
+      />
     </div>
   )
 }

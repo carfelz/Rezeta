@@ -1,4 +1,4 @@
-import { TextLink } from '@/components/ui'
+import { Button, TextLink } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 import type { VersionListItem } from '@rezeta/shared'
 import { PALETTE_ITEMS } from './block-factory'
@@ -31,14 +31,16 @@ export function EditorPalette({
       <div className="flex flex-col gap-2 mb-6">
         {PALETTE_ITEMS.map(({ type, icon, label, active }) =>
           active ? (
-            <button
+            <Button
               key={type}
+              variant="item"
+              size="sm"
               onClick={() => onPaletteClick(type)}
-              className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-0 text-[12.5px] font-sans text-n-700 hover:border-n-400 hover:bg-n-25 transition-colors duration-[100ms] cursor-pointer text-left"
+              className="flex items-center gap-3 w-full px-3 py-2 text-left"
             >
               <i className={`ph ${icon} text-p-500 text-[16px] shrink-0`} />
               {label}
-            </button>
+            </Button>
           ) : (
             <div
               key={type}

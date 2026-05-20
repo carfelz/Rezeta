@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { TextLink } from '@/components/ui'
 import { formatDate } from './helpers'
 
 export interface BreadcrumbProps {
@@ -14,13 +15,9 @@ export function Breadcrumb({ patientName, consultedAt }: BreadcrumbProps): JSX.E
         Pacientes
       </Link>
       <i className="ph ph-caret-right text-[11px] text-n-300" />
-      <button
-        type="button"
-        onClick={() => void navigate(-1)}
-        className="hover:text-n-800 transition-colors"
-      >
+      <TextLink tone="neutral" size="lg" onClick={() => void navigate(-1)}>
         {patientName}
-      </button>
+      </TextLink>
       <i className="ph ph-caret-right text-[11px] text-n-300" />
       <span className="text-n-800 font-medium">Consulta · {formatDate(consultedAt)}</span>
     </div>

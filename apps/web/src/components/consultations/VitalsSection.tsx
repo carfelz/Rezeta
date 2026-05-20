@@ -1,6 +1,7 @@
 import { VitalInput } from './VitalInput'
 import { computeBMI, type LocalVitals } from '@/lib/consultation/vitals'
 import { vitalsSectionStrings } from './strings'
+import { Input, InputAdorn, InputGroup } from '@/components/ui'
 
 export interface VitalsSectionProps {
   vitals: LocalVitals
@@ -25,28 +26,28 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
         <label className="block text-[12px] font-sans font-medium text-n-700 mb-1">
           {vitalsSectionStrings.bloodPressureLabel}
         </label>
-        <div className="flex h-[34px] border border-n-300 rounded-sm overflow-hidden focus-within:border-p-500 focus-within:ring-[3px] focus-within:ring-p-500/10">
-          <input
+        <InputGroup>
+          <Input
             type="number"
             value={vitals.bpSys}
             onChange={(e) => set('bpSys')(e.target.value)}
             placeholder="—"
             disabled={disabled}
-            className="w-[52px] shrink-0 px-2 text-[13px] font-sans text-n-700 placeholder:text-n-300 bg-n-0 focus:outline-none disabled:bg-n-25 disabled:text-n-500"
+            className="w-[52px] shrink-0 px-2"
           />
-          <span className="px-1 flex items-center text-n-400 text-[12px] bg-n-0">/</span>
-          <input
+          <InputAdorn plain className="px-1">
+            /
+          </InputAdorn>
+          <Input
             type="number"
             value={vitals.bpDia}
             onChange={(e) => set('bpDia')(e.target.value)}
             placeholder="—"
             disabled={disabled}
-            className="w-[52px] shrink-0 px-2 text-[13px] font-sans text-n-700 placeholder:text-n-300 bg-n-0 focus:outline-none disabled:bg-n-25 disabled:text-n-500"
+            className="w-[52px] shrink-0 px-2"
           />
-          <span className="px-2 flex items-center text-[11px] font-mono text-n-500 bg-n-50 border-l border-n-200 shrink-0">
-            mmHg
-          </span>
-        </div>
+          <InputAdorn side="right">mmHg</InputAdorn>
+        </InputGroup>
       </div>
 
       <VitalInput

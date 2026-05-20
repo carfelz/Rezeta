@@ -3,7 +3,7 @@ import { useUiStore } from '@/store/ui.store'
 import { useAuth } from '@/hooks/use-auth'
 import type { Location as ClinicLocation } from '@rezeta/shared'
 import { useLocations } from '@/hooks/locations/use-locations'
-import { Avatar, Caption, IconButton } from '@/components/ui'
+import { Avatar, Button, Caption, IconButton, Input } from '@/components/ui'
 import { topbarStrings } from './strings'
 
 function initials(name: string | null): string {
@@ -47,9 +47,10 @@ export function Topbar(): JSX.Element {
   return (
     <header className="fixed top-0 left-sidebar right-0 h-topbar bg-n-0 border-b border-n-200 flex items-center px-5 gap-4 z-30">
       <div className="relative shrink-0" ref={dropdownRef}>
-        <button
-          type="button"
-          className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-n-50 transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2 px-3 py-2"
           onClick={() => setDropdownOpen((o) => !o)}
         >
           <span className="w-2 h-2 bg-p-500 rounded-full shrink-0" />
@@ -62,15 +63,16 @@ export function Topbar(): JSX.Element {
             </Caption>
           )}
           <i className="ph ph-caret-down text-[12px] text-n-400 ml-1" />
-        </button>
+        </Button>
 
         {dropdownOpen && locations && locations.length > 0 && (
           <div className="absolute top-full left-0 mt-1 min-w-[220px] bg-n-0 border border-n-200 rounded-md shadow-floating z-50 py-1">
             {locations.map((loc) => (
-              <button
+              <Button
                 key={loc.id}
-                type="button"
-                className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-n-25 transition-colors"
+                variant="item"
+                size="sm"
+                className="w-full flex items-center gap-2 px-4 py-3 text-left"
                 onClick={() => {
                   setActiveLocation(loc.id)
                   setDropdownOpen(false)
@@ -99,7 +101,7 @@ export function Topbar(): JSX.Element {
                     </Caption>
                   )}
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -109,11 +111,7 @@ export function Topbar(): JSX.Element {
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400 flex items-center pointer-events-none">
           <i className="ph ph-magnifying-glass text-[16px]" />
         </span>
-        <input
-          type="search"
-          placeholder={topbarStrings.searchPlaceholder}
-          className="w-full h-input-md pl-8 pr-12 text-[13px] bg-n-0 border border-n-300 rounded-sm outline-none focus:border-p-500 focus:shadow-focus placeholder:text-n-400 transition-colors"
-        />
+        <Input type="search" placeholder={topbarStrings.searchPlaceholder} className="pl-8 pr-12" />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
           ⌘K
         </span>

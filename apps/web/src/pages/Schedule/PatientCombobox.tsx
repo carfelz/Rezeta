@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Input } from '@/components/ui'
+import { Button, Input } from '@/components/ui'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
 import { patientComboboxStrings } from './strings'
@@ -57,10 +57,11 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
             </div>
           ) : (
             patients.map((p) => (
-              <button
+              <Button
                 key={p.id}
-                type="button"
-                className="w-full flex flex-col items-start px-3 py-2 text-left hover:bg-n-50 transition-colors"
+                variant="item"
+                size="sm"
+                className="w-full flex flex-col items-start px-3 py-2 text-left"
                 onClick={() => handleSelect(p)}
               >
                 <span className="text-[13px] font-medium text-n-800">
@@ -69,7 +70,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
                 {p.documentNumber && (
                   <span className="text-[11.5px] font-mono text-n-400">{p.documentNumber}</span>
                 )}
-              </button>
+              </Button>
             ))
           )}
         </div>

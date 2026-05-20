@@ -23,6 +23,11 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   TextLink,
 } from '@/components/ui'
 
@@ -73,19 +78,25 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
               />
             </Field>
             <Field label={typesStrings.createFieldTemplate} required>
-              <select
-                className="w-full h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none transition-[border-color] duration-[100ms] focus:border-p-500 disabled:bg-n-50 disabled:text-n-400 disabled:cursor-not-allowed"
-                value={templateId}
-                onChange={(e) => setTemplateId(e.target.value)}
+              <Select
+                value={templateId || '__none__'}
+                onValueChange={(v) => setTemplateId(v === '__none__' ? '' : v)}
                 disabled={templatesLoading}
               >
-                <option value="">{typesStrings.createFieldTemplatePlaceholder}</option>
-                {templates?.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder={typesStrings.createFieldTemplatePlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    {typesStrings.createFieldTemplatePlaceholder}
+                  </SelectItem>
+                  {templates?.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             {error && (
               <Callout

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 
@@ -24,10 +25,12 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
         </p>
       ) : (
         sections.map((section, idx) => (
-          <button
+          <Button
             key={section.id}
+            variant="item"
+            size="sm"
             onClick={() => onSectionClick(section.id)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-[3px] text-[12.5px] font-sans text-n-500 hover:bg-n-50 hover:text-n-800 transition-colors duration-[100ms]"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-[3px]"
           >
             <span className="font-mono text-[10.5px] text-n-400 min-w-[18px] shrink-0">
               {idx + 1}
@@ -35,7 +38,7 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
             <span className="truncate">
               {section.title || protocolEditorStrings.sectionDefaultTitle}
             </span>
-          </button>
+          </Button>
         ))
       )}
     </div>

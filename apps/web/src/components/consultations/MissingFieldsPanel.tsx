@@ -103,11 +103,12 @@ export function MissingFieldsPanel({
       </p>
       <div className="flex flex-col gap-2 px-3 pb-3">
         {fields.map((field) => (
-          <button
+          <Button
             key={field.id}
-            type="button"
+            variant="item"
+            size="sm"
             onClick={() => onFieldClick(field.id)}
-            className="flex items-center gap-3 w-full text-left px-3 py-2 bg-danger-bg border border-danger-border rounded-sm hover:bg-[color:var(--color-danger-bg)] hover:opacity-95 transition-colors group"
+            className="flex items-center gap-3 w-full text-left px-3 py-2"
           >
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-semibold text-danger-text truncate">
@@ -119,10 +120,10 @@ export function MissingFieldsPanel({
                 </div>
               )}
             </div>
-            <span className="text-[12px] text-danger-text font-medium shrink-0 group-hover:translate-x-0.5 transition-transform">
+            <span className="text-[12px] text-danger-text font-medium shrink-0">
               {missingFieldsStrings.panelGoArrow}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

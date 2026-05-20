@@ -9,6 +9,12 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
   TextLink,
 } from '@/components/ui'
 import { useCreateInvoice, useUpdateInvoice } from '@/hooks/invoices/use-invoices'
@@ -141,37 +147,47 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                   <label className="text-[12.5px] font-medium text-n-700">
                     {billingStrings.fieldPatient} <span className="text-danger-solid">*</span>
                   </label>
-                  <select
-                    required
-                    value={patientId}
-                    onChange={(e) => setPatientId(e.target.value)}
-                    className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
+                  <Select
+                    value={patientId || '__none__'}
+                    onValueChange={(v) => setPatientId(v === '__none__' ? '' : v)}
                   >
-                    <option value="">{billingStrings.fieldPatientPlaceholder}</option>
-                    {patientsData?.items.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.firstName} {p.lastName}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder={billingStrings.fieldPatientPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">
+                        {billingStrings.fieldPatientPlaceholder}
+                      </SelectItem>
+                      {patientsData?.items.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.firstName} {p.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12.5px] font-medium text-n-700">
                     {billingStrings.fieldLocation} <span className="text-danger-solid">*</span>
                   </label>
-                  <select
-                    required
-                    value={locationId}
-                    onChange={(e) => setLocationId(e.target.value)}
-                    className="h-input-md w-full border border-n-300 rounded-sm px-3 text-[13px] text-n-700 bg-n-0 focus:outline-none focus:border-p-500"
+                  <Select
+                    value={locationId || '__none__'}
+                    onValueChange={(v) => setLocationId(v === '__none__' ? '' : v)}
                   >
-                    <option value="">{billingStrings.fieldLocationPlaceholder}</option>
-                    {locations?.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder={billingStrings.fieldLocationPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">
+                        {billingStrings.fieldLocationPlaceholder}
+                      </SelectItem>
+                      {locations?.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
@@ -297,13 +313,12 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
               <label className="text-[12.5px] font-medium text-n-700">
                 {billingStrings.fieldNotes}
               </label>
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder={billingStrings.fieldNotesPlaceholder}
                 maxLength={2000}
-                className="w-full border border-n-300 rounded-sm px-3 py-2 text-[13px] text-n-700 bg-n-0 resize-none focus:outline-none focus:border-p-500"
               />
             </div>
           </ModalBody>

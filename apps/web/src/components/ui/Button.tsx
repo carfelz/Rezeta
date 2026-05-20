@@ -37,6 +37,13 @@ const buttonVariants = cva(
           'focus-visible:shadow-focus',
           'disabled:text-n-300 disabled:cursor-not-allowed',
         ],
+        item: [
+          'bg-transparent text-n-700 border-transparent',
+          'hover:bg-n-25',
+          'active:bg-n-50',
+          'focus-visible:shadow-focus',
+          'disabled:text-n-300 disabled:cursor-not-allowed',
+        ],
         danger: [
           'bg-danger-solid text-n-0 border-danger-solid',
           'hover:bg-[#6E2018] hover:border-[#6E2018]',

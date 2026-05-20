@@ -106,19 +106,20 @@ export function ConsultationSidebar({
         <AsideCard title={consultationSidebarStrings.prevConsultationsTitle}>
           <div className="flex flex-col gap-1">
             {prevList.map((c) => (
-              <button
+              <Button
                 key={c.id}
-                type="button"
+                variant="item"
+                size="sm"
                 onClick={() => onPrevClick(c.id)}
-                className="flex items-center justify-between w-full text-left py-2 text-[12.5px] group"
+                className="flex items-center justify-between w-full text-left py-2"
               >
-                <span className="text-n-700 group-hover:text-n-900 transition-colors truncate flex-1 text-left">
+                <span className="truncate flex-1 text-left">
                   {c.chiefComplaint ?? consultationSidebarStrings.noChiefComplaint}
                 </span>
                 <span className="font-mono text-n-400 text-[11px] shrink-0 ml-2">
                   {formatDate(c.consultedAt)}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
         </AsideCard>

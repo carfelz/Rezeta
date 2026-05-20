@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor.store'
 import { blockEditorStrings } from './strings'
-import { Button, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
+import { Button, Checkbox, Field, IconButton, Input, Row, Stack, TextLink } from '@/components/ui'
 
 interface ChecklistItem {
   id: string
@@ -72,11 +72,10 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                 autoFocus={idx === draftItems.length - 1 && item.text === ''}
               />
               <Row gap={1} as="label" className="shrink-0 cursor-pointer select-none">
-                <input
-                  type="checkbox"
+                <Checkbox
+                  tone="danger"
                   checked={item.critical ?? false}
                   onChange={(e) => updateItem(item.id, { critical: e.target.checked })}
-                  className="w-4 h-4 accent-danger-text"
                 />
                 <span className="text-[11px] font-mono text-n-500 uppercase tracking-[0.05em]">
                   {blockEditorStrings.checklistCriticalLabel}

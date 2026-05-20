@@ -1,5 +1,5 @@
 import { ProtocolBlock, ProtocolAlert } from '@/components/ui/ProtocolBlock'
-import { Button, Row, SelectableCard, TextLink } from '@/components/ui'
+import { Button, Checkbox, Row, SelectableCard, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import type { ProtocolBlock as Block } from './BlockRenderer'
@@ -138,13 +138,12 @@ function ChecklistRunMode({
               }
             }}
           >
-            <input
-              type="checkbox"
+            <Checkbox
               checked={done}
               onChange={() => {}}
               onClick={(e) => e.stopPropagation()}
-              className="w-4 h-4 rounded-sm border-n-400 text-p-500 cursor-pointer shrink-0 mt-1"
               readOnly
+              className="shrink-0 mt-1"
             />
             <span
               className={cn(

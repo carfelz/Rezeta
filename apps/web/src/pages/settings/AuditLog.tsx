@@ -4,7 +4,15 @@ import { useAuth } from '@/hooks/use-auth'
 import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-logs'
 import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
-import { Button, Callout, EmptyState, IconButton, TextLink } from '@/components/ui'
+import {
+  Button,
+  Callout,
+  EmptyState,
+  IconButton,
+  Input,
+  NativeSelect,
+  TextLink,
+} from '@/components/ui'
 import { auditLogStrings } from './strings'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -271,46 +279,32 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
         <label className="text-[11.5px] font-medium text-n-600 shrink-0">
           {auditLogStrings.filterFrom}
         </label>
-        <input
+        <Input
           type="date"
           value={filters.dateFrom}
           onChange={(e) => set('dateFrom', e.target.value)}
-          className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
         />
       </div>
       <div className="flex items-center gap-2">
         <label className="text-[11.5px] font-medium text-n-600 shrink-0">
           {auditLogStrings.filterTo}
         </label>
-        <input
-          type="date"
-          value={filters.dateTo}
-          onChange={(e) => set('dateTo', e.target.value)}
-          className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
-        />
+        <Input type="date" value={filters.dateTo} onChange={(e) => set('dateTo', e.target.value)} />
       </div>
 
-      <select
-        value={filters.category}
-        onChange={(e) => set('category', e.target.value)}
-        className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
-      >
+      <NativeSelect value={filters.category} onChange={(e) => set('category', e.target.value)}>
         <option value="">{auditLogStrings.filterAllCategories}</option>
         <option value="entity">{auditLogStrings.categoryEntity}</option>
         <option value="auth">{auditLogStrings.categoryAuth}</option>
         <option value="communication">{auditLogStrings.categoryCommunication}</option>
         <option value="system">{auditLogStrings.categorySystem}</option>
-      </select>
+      </NativeSelect>
 
-      <select
-        value={filters.status}
-        onChange={(e) => set('status', e.target.value)}
-        className="h-input-md px-3 text-[13px] font-sans bg-n-0 text-n-700 border border-n-300 rounded-sm outline-none focus:border-p-500 transition-[border-color] duration-[100ms]"
-      >
+      <NativeSelect value={filters.status} onChange={(e) => set('status', e.target.value)}>
         <option value="">{auditLogStrings.filterAllStatuses}</option>
         <option value="success">{auditLogStrings.filterStatusSuccess}</option>
         <option value="failed">{auditLogStrings.filterStatusFailed}</option>
-      </select>
+      </NativeSelect>
 
       {(filters.category || filters.status) && (
         <TextLink

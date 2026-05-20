@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Button } from '@/components/ui'
 import { ConsultHeader } from '@/components/consultations/ConsultHeader'
 import { ConsultationGate } from '@/components/consultations/ConsultationGate'
 
@@ -131,12 +132,9 @@ export function GatePreview(): JSX.Element {
             title="Nueva consulta"
             subtitle="Isabel Cristina Cruz · Dr. Demo"
             rightSlot={
-              <button
-                type="button"
-                className="px-3 py-2 text-[12px] text-n-600 bg-transparent border border-n-200 rounded-sm hover:bg-n-25 transition-colors"
-              >
+              <Button variant="secondary" size="sm">
                 Saltar y abrir consulta vacía
-              </button>
+              </Button>
             }
           />
           <ConsultationGate

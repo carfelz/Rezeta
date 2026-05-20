@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { Textarea } from '@/components/ui'
 
 export interface SoapTextareaProps {
   value: string
@@ -28,12 +29,13 @@ export function SoapTextarea({
     )
   }
   return (
-    <textarea
+    <Textarea
+      variant="ghost"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full text-[13.5px] font-sans text-n-700 placeholder:text-n-300 leading-[1.55] resize-none focus:outline-none focus:ring-0 bg-transparent"
+      className="text-[13.5px] leading-[1.55]"
     />
   )
 }

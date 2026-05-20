@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, DialogCard, RadioCard } from '@/components/ui'
+import { Button, DialogCard, RadioCard, Textarea } from '@/components/ui'
 import { skipStepStrings } from './strings'
 
 const PRESET_REASONS = [
@@ -70,12 +70,12 @@ export function SkipStepDialog({
           </RadioCard>
         ))}
         {isOther && (
-          <textarea
+          <Textarea
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}
             placeholder={skipStepStrings.otherPlaceholder}
             rows={2}
-            className="mt-1 w-full px-3 py-2 text-[13px] font-sans text-n-700 placeholder:text-n-300 border border-n-300 rounded-sm focus:outline-none focus:border-p-500 bg-n-0 resize-none"
+            className="mt-1 resize-none"
           />
         )}
       </div>

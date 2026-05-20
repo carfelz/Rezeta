@@ -6,6 +6,7 @@ import {
   Caption,
   Chip,
   EmptyState,
+  IconButton,
   Row,
   SearchInput,
   Select,
@@ -47,9 +48,11 @@ interface ProtocolRowProps {
 
 function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps): JSX.Element {
   return (
-    <button
+    <Button
+      variant="item"
+      size="sm"
       onClick={onClick}
-      className="flex items-center gap-4 w-full px-5 py-4 bg-n-0 border-b border-n-100 hover:bg-n-25 transition-colors text-left group"
+      className="flex items-center gap-4 w-full px-5 py-4 border-b border-n-100 text-left group"
     >
       <div className="w-[36px] h-[36px] rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors">
         <i className="ph ph-stack text-[16px]" />
@@ -80,27 +83,21 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
         <RelativeDate iso={protocol.updatedAt} />
       </Caption>
 
-      <button
+      <IconButton
+        icon={protocol.isFavorite ? 'ph-fill ph-star' : 'ph ph-star'}
+        aria-label={
+          protocol.isFavorite ? protocolsStrings.favoriteRemove : protocolsStrings.favoriteAdd
+        }
+        tone="warning"
+        size="md"
         onClick={(e) => {
           e.stopPropagation()
           onToggleFavorite(protocol.id, protocol.isFavorite)
         }}
-        title={protocol.isFavorite ? protocolsStrings.favoriteRemove : protocolsStrings.favoriteAdd}
-        className="w-btn-sm h-btn-sm flex items-center justify-center rounded text-n-300 hover:text-warning-text transition-colors shrink-0"
-        aria-label={
-          protocol.isFavorite ? protocolsStrings.favoriteRemove : protocolsStrings.favoriteAdd
-        }
-      >
-        <i
-          className={cn(
-            protocol.isFavorite ? 'ph-fill ph-star text-warning-text' : 'ph ph-star',
-            'text-[15px]',
-          )}
-        />
-      </button>
+      />
 
       <i className="ph ph-arrow-right text-n-300 group-hover:text-n-600 transition-colors shrink-0" />
-    </button>
+    </Button>
   )
 }
 

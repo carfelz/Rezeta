@@ -1,12 +1,14 @@
 import { cn } from '@/lib/utils'
+import { TextLink } from '@/components/ui'
+import { saveBadgeStrings } from './strings'
 
 export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 
 function formatElapsed(savedAt: Date): string {
   const secs = Math.floor((Date.now() - savedAt.getTime()) / 1000)
-  if (secs < 60) return `hace ${secs}s`
+  if (secs < 60) return saveBadgeStrings.savedElapsedSecs(secs)
   const mins = Math.floor(secs / 60)
-  return `hace ${mins} min`
+  return saveBadgeStrings.savedElapsedMins(mins)
 }
 
 export function SaveBadge({
@@ -31,32 +33,36 @@ export function SaveBadge({
       {status === 'dirty' && (
         <>
           <span className="w-2 h-2 rounded-full bg-n-400 inline-block" />
-          Sin guardar
+          {saveBadgeStrings.unsaved}
         </>
       )}
       {status === 'saving' && (
         <>
           <i className="ph ph-spinner animate-spin text-[11px]" />
-          Guardando…
+          {saveBadgeStrings.saving}
         </>
       )}
       {status === 'saved' && (
         <>
           <i className="ph ph-check text-[11px]" />
-          Guardado{savedAt ? ` · ${formatElapsed(savedAt)}` : ''}
+          {saveBadgeStrings.saved}
+          {savedAt ? ` · ${formatElapsed(savedAt)}` : ''}
         </>
       )}
       {status === 'error' && (
         <>
           <i className="ph ph-warning text-[11px]" />
-          Error al guardar
+          {saveBadgeStrings.error}
           {onRetry && (
-            <button
+            <TextLink
+              tone="neutral"
+              size="sm"
+              underline="always"
               onClick={onRetry}
-              className="underline underline-offset-2 hover:no-underline ml-1"
+              className="ml-1"
             >
-              · Reintentar
-            </button>
+              · {saveBadgeStrings.retry}
+            </TextLink>
           )}
         </>
       )}

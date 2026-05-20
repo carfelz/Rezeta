@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { Button, Callout } from '@/components/ui'
+import {
+  Button,
+  Callout,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui'
 import { onboardingCustomizeStrings } from './strings'
 import type { TemplateCandidate, TypeCandidate } from './types'
 
@@ -62,23 +71,25 @@ export function StepTypes({
             className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
             <i className="ph ph-tag text-[16px] text-p-500 shrink-0" />
-            <input
-              className="flex-1 bg-transparent border-0 p-0 text-[13px] text-n-800 placeholder:text-n-400 focus:outline-none"
+            <Input
+              variant="ghost"
+              className="flex-1 p-0"
               value={t.name}
               placeholder={onboardingCustomizeStrings.step2TypePlaceholder}
               onChange={(e) => updateName(i, e.target.value)}
             />
-            <select
-              className="flex-1 text-[12px] h-[34px] border border-n-300 rounded-sm bg-n-0 px-3 text-n-800 focus:outline-none focus:border-p-500"
-              value={t.templateClientId}
-              onChange={(e) => updateTemplate(i, e.target.value)}
-            >
-              {templates.map((tmpl) => (
-                <option key={tmpl.clientId} value={tmpl.clientId}>
-                  {tmpl.name}
-                </option>
-              ))}
-            </select>
+            <Select value={t.templateClientId} onValueChange={(v) => updateTemplate(i, v)}>
+              <SelectTrigger className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((tmpl) => (
+                  <SelectItem key={tmpl.clientId} value={tmpl.clientId}>
+                    {tmpl.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               variant="ghost"
               size="sm"

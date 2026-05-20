@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Badge, Button } from '@/components/ui'
+import { Badge, Button, Input } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 import { formatRelativeTime } from './helpers'
 
@@ -54,8 +54,9 @@ export function EditorHeader({
         </div>
 
         {editingTitle ? (
-          <input
+          <Input
             ref={titleInputRef}
+            variant="ghost"
             value={titleDraft}
             autoFocus
             onChange={(e) => onTitleDraftChange(e.target.value)}
@@ -64,7 +65,7 @@ export function EditorHeader({
               if (e.key === 'Enter') onCommitTitle()
               if (e.key === 'Escape') onCancelTitleEdit()
             }}
-            className="text-[28px] font-serif font-medium text-n-900 bg-transparent border-b-2 border-p-500 outline-none w-full pb-1 mb-2 leading-tight"
+            className="text-[28px] font-serif font-medium text-n-900 pb-1 mb-2 leading-tight border-b-2 border-p-500"
             disabled={isRenaming}
           />
         ) : (

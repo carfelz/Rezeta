@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Badge, Caption, TextLink } from '@/components/ui'
+import { Badge, Button, Caption, TextLink } from '@/components/ui'
 import type { ProtocolListItem } from '@rezeta/shared'
 import { labelForProtocolStatus, statusToBadgeVariant } from './helpers'
 import { dashboardStrings } from './strings'
@@ -29,11 +29,12 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
       ) : (
         <div className="flex flex-col gap-3">
           {visible.map((proto, idx) => (
-            <button
+            <Button
               key={proto.id}
-              type="button"
+              variant="item"
+              size="sm"
               onClick={() => void navigate(`/protocolos/${proto.id}`)}
-              className={`flex items-center justify-between text-left hover:bg-n-25 -mx-1 px-1 py-1 rounded transition-colors ${
+              className={`flex items-center justify-between w-full text-left -mx-1 px-1 py-1 rounded ${
                 idx < visible.length - 1 ? 'pb-[10px] border-b border-n-100' : ''
               }`}
             >
@@ -51,7 +52,7 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
               <Badge variant={statusToBadgeVariant(proto.status)} showDot>
                 {labelForProtocolStatus(proto.status)}
               </Badge>
-            </button>
+            </Button>
           ))}
         </div>
       )}

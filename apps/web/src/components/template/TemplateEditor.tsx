@@ -30,8 +30,10 @@ import {
   Button,
   Badge,
   Callout,
+  Checkbox,
   Field,
   Input,
+  Textarea,
   AddBlockButton,
   ConfirmDialog,
 } from '@/components/ui'
@@ -507,16 +509,9 @@ function BlockRow({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isRequired}
               onChange={(e) => onUpdate(block.id, { required: e.target.checked }, parentId)}
-              style={{
-                accentColor: 'var(--color-p-500)',
-                width: 14,
-                height: 14,
-                cursor: 'pointer',
-              }}
             />
             <span
               style={{
@@ -632,8 +627,7 @@ function BlockRow({
                 />
               </Field>
               <Field label={templateEditorWidgetStrings.placeholderHint}>
-                <textarea
-                  className="w-full px-3 py-3 text-[13px] font-sans bg-n-0 text-n-700 placeholder:text-n-400 border border-n-300 rounded-sm outline-none resize-y transition-[border-color,box-shadow] duration-[100ms] focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)] disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed"
+                <Textarea
                   value={block.placeholder ?? ''}
                   disabled={isLocked}
                   rows={2}

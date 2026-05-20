@@ -1,4 +1,5 @@
 export { Button, type ButtonProps } from './Button'
+export { Checkbox, type CheckboxProps } from './Checkbox'
 export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './Breadcrumbs'
 export { Stack, type StackProps } from './Stack'
 export { Row, type RowProps } from './Row'
@@ -14,6 +15,7 @@ export {
   type SegmentedControlProps,
   type SegmentedControlOption,
 } from './SegmentedControl'
+export { NativeSelect, type NativeSelectProps } from './NativeSelect'
 export { SelectableCard, type SelectableCardProps } from './SelectableCard'
 export { RadioCard, type RadioCardProps } from './RadioCard'
 export { DashedButton, type DashedButtonProps } from './DashedButton'

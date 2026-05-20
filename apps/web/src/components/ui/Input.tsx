@@ -5,22 +5,29 @@ import { cn } from '@/lib/utils'
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean
+  variant?: 'default' | 'ghost'
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, ...props }, ref) => {
+  ({ className, error, variant = 'default', ...props }, ref) => {
+    const isGhost = variant === 'ghost'
     return (
       <input
         ref={ref}
         className={cn(
           'w-full h-input-md px-3 text-[13px] font-sans',
-          'bg-n-0 text-n-700 placeholder:text-n-400',
-          'border rounded-sm outline-none',
+          'text-n-700 placeholder:text-n-400',
+          'outline-none',
           'transition-[border-color,box-shadow] duration-[100ms]',
-          !error && 'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
-          error && 'border-danger-solid focus:border-danger-solid',
-          'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
-          'read-only:bg-n-25 read-only:border-n-200 read-only:cursor-default',
+          !isGhost && [
+            'bg-n-0 border rounded-sm',
+            !error &&
+              'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+            error && 'border-danger-solid focus:border-danger-solid',
+            'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
+            'read-only:bg-n-25 read-only:border-n-200 read-only:cursor-default',
+          ],
+          isGhost && 'bg-transparent border-0 shadow-none placeholder:text-n-300',
           className,
         )}
         {...props}
@@ -35,21 +42,28 @@ Input.displayName = 'Input'
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: boolean
+  variant?: 'default' | 'ghost'
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, ...props }, ref) => {
+  ({ className, error, variant = 'default', ...props }, ref) => {
+    const isGhost = variant === 'ghost'
     return (
       <textarea
         ref={ref}
         className={cn(
-          'w-full px-3 py-3 text-[13px] font-sans',
-          'bg-n-0 text-n-700 placeholder:text-n-400',
-          'border rounded-sm outline-none resize-y',
+          'w-full px-3 text-[13px] font-sans',
+          'text-n-700 placeholder:text-n-400',
+          'outline-none',
           'transition-[border-color,box-shadow] duration-[100ms]',
-          !error && 'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
-          error && 'border-danger-solid focus:border-danger-solid',
-          'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
+          !isGhost && [
+            'py-3 bg-n-0 border rounded-sm resize-y',
+            !error &&
+              'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+            error && 'border-danger-solid focus:border-danger-solid',
+            'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
+          ],
+          isGhost && 'bg-transparent border-0 shadow-none resize-none placeholder:text-n-300',
           className,
         )}
         {...props}

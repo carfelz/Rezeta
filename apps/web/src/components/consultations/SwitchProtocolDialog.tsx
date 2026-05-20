@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { useSwitchProtocolUsage } from '@/hooks/consultations/use-consultations'
-import { Button, DialogCard, ModalContent, SearchInput, SelectableCard } from '@/components/ui'
+import {
+  Button,
+  Checkbox,
+  DialogCard,
+  ModalContent,
+  SearchInput,
+  SelectableCard,
+} from '@/components/ui'
 import { switchProtocolStrings } from './strings'
 
 export interface SwitchProtocolDialogProps {
@@ -132,12 +139,7 @@ export function SwitchProtocolDialog({
               />
             </div>
             <label className="flex items-center gap-2 mt-4 text-[12.5px] text-n-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={keepDraft}
-                onChange={(e) => setKeepDraft(e.target.checked)}
-                className="w-4 h-4 accent-p-500"
-              />
+              <Checkbox checked={keepDraft} onChange={(e) => setKeepDraft(e.target.checked)} />
               {switchProtocolStrings.keepDraftLabel(currentProtocolTitle)}
             </label>
           </>

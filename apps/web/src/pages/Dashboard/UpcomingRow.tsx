@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Badge } from '@/components/ui'
+import { Badge, Button } from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
 import type { AppointmentWithDetails } from '@rezeta/shared'
 import { formatTime, minutesUntil, statusBadgeVariant, statusLabel } from './helpers'
@@ -38,12 +38,13 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="item"
+      size="sm"
       onClick={() => void navigate('/agenda')}
       className={[
         'relative flex items-center gap-4 w-full text-left py-[10px] pl-[14px] pr-4',
-        'border-b border-n-100 last:border-b-0 transition-colors hover:bg-n-25',
+        'border-b border-n-100 last:border-b-0',
         'before:absolute before:left-0 before:top-[12px] before:bottom-[12px] before:w-[2px] before:bg-p-500',
         !isFirst && isCompleted ? 'opacity-70' : '',
       ].join(' ')}
@@ -61,6 +62,6 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
           {badgeLabel}
         </Badge>
       </div>
-    </button>
+    </Button>
   )
 }

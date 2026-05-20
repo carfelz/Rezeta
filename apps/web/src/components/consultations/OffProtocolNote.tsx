@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Chip, TextLink } from '@/components/ui'
+import { Button, Chip, Input, TextLink, Textarea } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
 import { formatDoctorName } from '@/lib/format/names'
 import { offProtocolNoteStrings } from './strings'
@@ -42,20 +42,22 @@ export function OffProtocolNote({
           </Chip>
         </div>
 
-        <input
+        <Input
+          variant="ghost"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={offProtocolNoteStrings.titlePlaceholder}
-          className="w-full font-serif font-medium text-[18px] text-n-900 leading-tight bg-transparent border-0 focus:outline-none placeholder:text-n-300 mb-2"
+          className="font-serif font-medium text-[18px] text-n-900 leading-tight mb-2 h-auto px-0"
         />
 
-        <textarea
+        <Textarea
+          variant="ghost"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder={offProtocolNoteStrings.bodyPlaceholder}
           rows={3}
-          className="w-full text-[13px] font-sans text-n-700 placeholder:text-n-300 bg-transparent border-0 focus:outline-none resize-none leading-snug"
+          className="leading-snug px-0"
         />
       </div>
 
@@ -113,18 +115,19 @@ function SoapMover({
       {open && !disabled && (
         <div className="absolute left-0 bottom-full mb-1 bg-n-0 border border-n-200 rounded-md shadow-floating w-[160px] py-1 z-30">
           {(Object.keys(SOAP_FIELD_LABELS) as SoapField[]).map((f) => (
-            <button
+            <Button
               key={f}
-              type="button"
+              variant="item"
+              size="sm"
               onClick={() => {
                 onSelect(f)
                 setOpen(false)
                 onConfirm(f)
               }}
-              className="block w-full text-left px-3 py-2 text-[12.5px] text-n-700 hover:bg-n-25 transition-colors"
+              className="w-full text-left px-3"
             >
               {SOAP_FIELD_LABELS[f]}
-            </button>
+            </Button>
           ))}
         </div>
       )}

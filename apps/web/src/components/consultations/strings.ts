@@ -253,6 +253,16 @@ export const soapViewStrings = {
 
 // ── RightRail ───────────────────────────────────────────────────────────────────
 
+export const saveBadgeStrings = {
+  unsaved: 'Sin guardar',
+  saving: 'Guardando…',
+  saved: 'Guardado',
+  savedElapsedSecs: (s: number) => `hace ${s}s`,
+  savedElapsedMins: (m: number) => `hace ${m} min`,
+  error: 'Error al guardar',
+  retry: 'Reintentar',
+} as const
+
 export const rightRailStrings = {
   alertsLabel: 'Alertas',
   protocolStepsLabel: 'Pasos del protocolo',
