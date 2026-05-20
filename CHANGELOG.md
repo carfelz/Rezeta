@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-19] — Suggestions UI: SuggestionBanner wired end-to-end
+
+### Fixed
+
+- `protocol-improvements.controller.ts` — corrected route from `/v1/protocols/:id/improvements` to `/v1/protocols/:id/suggestions` to match frontend hooks and spec
+- `OrderQueuePanel.tsx` — removed redundant `useEffect(() => reset(), [consultationId])` now that `useOrderQueueSession` handles reset+restore in the parent
+
+### Added
+
+- `components/protocols/__tests__/SuggestionBanner.test.tsx` — 11 tests covering render, stats display, apply/createVariant/dismiss button actions, and pending loading states
+
+---
+
 ## [2026-05-19] — Session state: order queue persists across page reloads
 
 ### Added

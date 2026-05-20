@@ -26,7 +26,7 @@ import { ProtocolImprovementsService } from './protocol-improvements.service.js'
 @ApiTags('Protocol Improvements')
 @ApiBearerAuth(AUTH_BEARER_SCHEME)
 @ApiSecurity(AUTH_OAUTH2_SCHEME)
-@Controller('v1/protocols/:protocolId/improvements')
+@Controller('v1/protocols/:protocolId/suggestions')
 export class ProtocolImprovementsController {
   constructor(@Inject(ProtocolImprovementsService) private svc: ProtocolImprovementsService) {}
 

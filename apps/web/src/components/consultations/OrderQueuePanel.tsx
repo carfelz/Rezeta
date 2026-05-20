@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Tabs,
   TabsList,
@@ -863,12 +863,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
     addLabGroup,
     removeLabGroup,
     removeLabOrder,
-    reset,
   } = useOrderQueueStore()
-
-  useEffect(() => {
-    reset()
-  }, [consultationId, reset])
 
   const savedPrescriptions = useListPrescriptions(consultationId)
   const savedImagingOrders = useListImagingOrders(consultationId)

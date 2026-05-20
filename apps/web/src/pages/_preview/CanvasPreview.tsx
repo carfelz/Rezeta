@@ -112,13 +112,7 @@ export function CanvasPreview(): JSX.Element {
       />
 
       <div className="grid gap-5 px-7 py-5" style={{ gridTemplateColumns: '1fr 320px' }}>
-        <CanvasView
-          usage={usage}
-          soap={{ chiefComplaint: '', subjective: '', objective: '', assessment: '', plan: '' }}
-          onSoapChange={() => undefined}
-          onToggleStep={() => undefined}
-          isSigned={false}
-        />
+        <CanvasView usage={usage} onCheck={() => undefined} isSigned={false} />
 
         <RightRail
           alerts={[
