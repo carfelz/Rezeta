@@ -18,6 +18,9 @@ import type {
   CreatePrescriptionGroupDto,
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
+  PatchImagingOrderDto,
+  PatchLabOrderDto,
+  RenameOrderGroupDto,
   ResumableConsultation,
 } from '@rezeta/shared'
 
@@ -489,6 +492,79 @@ export function useDeleteLabOrder(consultationId: string): UseMutationResult<voi
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId, 'lab-orders'] })
       toast.success(toastStrings.labOrderDeleted)
+    },
+    onError: () => {
+      toast.error(toastStrings.errorOrderSave)
+    },
+  })
+}
+
+export function usePatchImagingOrder(
+  consultationId: string,
+): UseMutationResult<ImagingOrder, Error, { orderId: string; dto: PatchImagingOrderDto }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ orderId, dto }) =>
+      apiClient.patch<ImagingOrder>(
+        `/v1/consultations/${consultationId}/imaging-orders/${orderId}`,
+        dto,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'imaging-orders'] })
+    },
+    onError: () => {
+      toast.error(toastStrings.errorOrderSave)
+    },
+  })
+}
+
+export function usePatchLabOrder(
+  consultationId: string,
+): UseMutationResult<LabOrder, Error, { orderId: string; dto: PatchLabOrderDto }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ orderId, dto }) =>
+      apiClient.patch<LabOrder>(`/v1/consultations/${consultationId}/lab-orders/${orderId}`, dto),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'lab-orders'] })
+    },
+    onError: () => {
+      toast.error(toastStrings.errorOrderSave)
+    },
+  })
+}
+
+export function useRenameImagingOrderGroup(
+  consultationId: string,
+): UseMutationResult<ImagingOrder[], Error, { groupOrder: number; dto: RenameOrderGroupDto }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ groupOrder, dto }) =>
+      apiClient.patch<ImagingOrder[]>(
+        `/v1/consultations/${consultationId}/imaging-orders/rename-group?groupOrder=${groupOrder}`,
+        dto,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'imaging-orders'] })
+    },
+    onError: () => {
+      toast.error(toastStrings.errorOrderSave)
+    },
+  })
+}
+
+export function useRenameLabOrderGroup(
+  consultationId: string,
+): UseMutationResult<LabOrder[], Error, { groupOrder: number; dto: RenameOrderGroupDto }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ groupOrder, dto }) =>
+      apiClient.patch<LabOrder[]>(
+        `/v1/consultations/${consultationId}/lab-orders/rename-group?groupOrder=${groupOrder}`,
+        dto,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'lab-orders'] })
     },
     onError: () => {
       toast.error(toastStrings.errorOrderSave)

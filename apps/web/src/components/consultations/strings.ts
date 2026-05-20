@@ -58,6 +58,20 @@ export const orderQueueStrings = {
   // Add imaging/lab buttons
   newImagingOrder: 'Nueva orden de imagen',
   newLabOrder: 'Nuevo laboratorio',
+
+  // Rename group
+  renameGroupPlaceholder: 'Nombre del grupo…',
+  renameGroupSave: 'Guardar',
+  renameGroupCancel: 'Cancelar',
+
+  // Move to group
+  moveToGroup: 'Mover a…',
+  moveToGroupLabel: (order: number) => `Grupo ${order}`,
+
+  // PDF download for imaging/lab
+  downloadingImagingPdf: 'Descargando…',
+  downloadImagingPdf: 'Descargar orden',
+  downloadLabPdf: 'Descargar laboratorio',
 } as const
 
 // ── AmendmentModal ──────────────────────────────────────────────────────────────

@@ -5,6 +5,9 @@ import type {
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
   GenerateAllOrdersDto,
+  PatchImagingOrderDto,
+  PatchLabOrderDto,
+  RenameOrderGroupDto,
 } from '@rezeta/shared'
 import { ErrorCode } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
@@ -253,5 +256,165 @@ export class OrdersService {
       },
       location: location ? { name: location.name, address: location.address } : null,
     })
+  }
+
+  private async getOrderContext(
+    consultationId: string,
+    tenantId: string,
+    userId: string,
+  ): Promise<{
+    doctor: { fullName: string | null; specialty: string | null; licenseNumber: string | null }
+    patient: {
+      firstName: string
+      lastName: string
+      dateOfBirth: string | null
+      documentNumber: string | null
+      documentType: string | null
+    }
+    location: { name: string; address: string | null } | null
+  }> {
+    const consultation = await this.prisma.consultation.findFirst({
+      where: { id: consultationId, tenantId, deletedAt: null },
+      select: { locationId: true },
+    })
+    const [doctor, patient, location] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: { id: userId },
+        select: { fullName: true, specialty: true, licenseNumber: true },
+      }),
+      this.prisma.patient.findFirst({
+        where: { consultations: { some: { id: consultationId } }, tenantId },
+        select: {
+          firstName: true,
+          lastName: true,
+          dateOfBirth: true,
+          documentNumber: true,
+          documentType: true,
+        },
+      }),
+      consultation?.locationId
+        ? this.prisma.location.findFirst({
+            where: { id: consultation.locationId, tenantId },
+            select: { name: true, address: true },
+          })
+        : Promise.resolve(null),
+    ])
+    return {
+      doctor: {
+        fullName: doctor?.fullName ?? null,
+        specialty: doctor?.specialty ?? null,
+        licenseNumber: doctor?.licenseNumber ?? null,
+      },
+      patient: {
+        firstName: patient?.firstName ?? '',
+        lastName: patient?.lastName ?? '',
+        dateOfBirth: patient?.dateOfBirth?.toISOString() ?? null,
+        documentNumber: patient?.documentNumber ?? null,
+        documentType: patient?.documentType ?? null,
+      },
+      location: location ? { name: location.name, address: location.address } : null,
+    }
+  }
+
+  async getImagingOrderGroupPdf(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    userId: string,
+  ): Promise<Buffer> {
+    const orders = await this.repo.listImagingOrdersByConsultation(consultationId, tenantId)
+    const group = orders.filter((o) => o.groupOrder === groupOrder)
+    if (group.length === 0) {
+      throw new NotFoundException({
+        code: ErrorCode.IMAGING_ORDER_NOT_FOUND,
+        message: 'Imaging order group not found',
+      })
+    }
+    const first = group[0]!
+    const ctx = await this.getOrderContext(consultationId, tenantId, userId)
+    return this.pdf.generateImagingOrderGroup({
+      ...ctx,
+      groupTitle: first.groupTitle,
+      groupOrder,
+      issuedAt: first.createdAt,
+      orders: group,
+    })
+  }
+
+  async getLabOrderGroupPdf(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    userId: string,
+  ): Promise<Buffer> {
+    const orders = await this.repo.listLabOrdersByConsultation(consultationId, tenantId)
+    const group = orders.filter((o) => o.groupOrder === groupOrder)
+    if (group.length === 0) {
+      throw new NotFoundException({
+        code: ErrorCode.LAB_ORDER_NOT_FOUND,
+        message: 'Lab order group not found',
+      })
+    }
+    const first = group[0]!
+    const ctx = await this.getOrderContext(consultationId, tenantId, userId)
+    return this.pdf.generateLabOrderGroup({
+      ...ctx,
+      groupTitle: first.groupTitle,
+      groupOrder,
+      issuedAt: first.createdAt,
+      orders: group,
+    })
+  }
+
+  async patchImagingOrder(
+    consultationId: string,
+    orderId: string,
+    tenantId: string,
+    dto: PatchImagingOrderDto,
+  ): Promise<ImagingOrder> {
+    const order = await this.repo.findImagingOrderById(orderId, tenantId)
+    if (!order || order.consultationId !== consultationId) {
+      throw new NotFoundException({
+        code: ErrorCode.IMAGING_ORDER_NOT_FOUND,
+        message: 'Imaging order not found',
+      })
+    }
+    return this.repo.patchImagingOrder(orderId, tenantId, dto)
+  }
+
+  async patchLabOrder(
+    consultationId: string,
+    orderId: string,
+    tenantId: string,
+    dto: PatchLabOrderDto,
+  ): Promise<LabOrder> {
+    const order = await this.repo.findLabOrderById(orderId, tenantId)
+    if (!order || order.consultationId !== consultationId) {
+      throw new NotFoundException({
+        code: ErrorCode.LAB_ORDER_NOT_FOUND,
+        message: 'Lab order not found',
+      })
+    }
+    return this.repo.patchLabOrder(orderId, tenantId, dto)
+  }
+
+  async renameImagingOrderGroup(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    dto: RenameOrderGroupDto,
+  ): Promise<ImagingOrder[]> {
+    await this.getConsultationPatient(consultationId, tenantId)
+    return this.repo.renameImagingOrderGroup(consultationId, groupOrder, tenantId, dto.groupTitle)
+  }
+
+  async renameLabOrderGroup(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    dto: RenameOrderGroupDto,
+  ): Promise<LabOrder[]> {
+    await this.getConsultationPatient(consultationId, tenantId)
+    return this.repo.renameLabOrderGroup(consultationId, groupOrder, tenantId, dto.groupTitle)
   }
 }

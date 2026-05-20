@@ -2,13 +2,16 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
+  Query,
   Body,
   HttpCode,
   HttpStatus,
   Inject,
   ParseUUIDPipe,
+  ParseIntPipe,
   UsePipes,
   Res,
 } from '@nestjs/common'
@@ -19,6 +22,7 @@ import {
   ApiSecurity,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
@@ -28,10 +32,16 @@ import {
   CreateImagingOrderGroupSchema,
   CreateLabOrderGroupSchema,
   GenerateAllOrdersSchema,
+  PatchImagingOrderSchema,
+  PatchLabOrderSchema,
+  RenameOrderGroupSchema,
   type CreatePrescriptionGroupDto,
   type CreateImagingOrderGroupDto,
   type CreateLabOrderGroupDto,
   type GenerateAllOrdersDto,
+  type PatchImagingOrderDto,
+  type PatchLabOrderDto,
+  type RenameOrderGroupDto,
 } from '@rezeta/shared'
 import type { AuthUser } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
@@ -168,6 +178,66 @@ export class OrdersController {
     return this.svc.createImagingOrder(consultationId, tenantId, user.id, dto)
   }
 
+  @Get('imaging-orders/group-pdf')
+  @ApiOperation({ summary: 'Download imaging order group as PDF' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiQuery({ name: 'groupOrder', type: Number })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404, description: 'IMAGING_ORDER_NOT_FOUND' })
+  async downloadImagingOrderGroupPdf(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Query('groupOrder', ParseIntPipe) groupOrder: number,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.svc.getImagingOrderGroupPdf(
+      consultationId,
+      groupOrder,
+      tenantId,
+      user.id,
+    )
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="imagenes-${consultationId}-g${groupOrder}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
+  }
+
+  @Patch('imaging-orders/rename-group')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(RenameOrderGroupSchema))
+  @ApiOperation({ summary: 'Rename an imaging order group' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiQuery({ name: 'groupOrder', type: Number })
+  @ApiResponse({ status: 200 })
+  renameImagingOrderGroup(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Query('groupOrder', ParseIntPipe) groupOrder: number,
+    @Body() dto: RenameOrderGroupDto,
+  ): Promise<ImagingOrder[]> {
+    return this.svc.renameImagingOrderGroup(consultationId, groupOrder, tenantId, dto)
+  }
+
+  @Patch('imaging-orders/:orderId')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(PatchImagingOrderSchema))
+  @ApiOperation({ summary: 'Move imaging order to a different group' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'orderId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'IMAGING_ORDER_NOT_FOUND' })
+  patchImagingOrder(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() dto: PatchImagingOrderDto,
+  ): Promise<ImagingOrder> {
+    return this.svc.patchImagingOrder(consultationId, orderId, tenantId, dto)
+  }
+
   @Delete('imaging-orders/:orderId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an imaging order' })
@@ -224,6 +294,61 @@ export class OrdersController {
     @Body() dto: CreateLabOrderGroupDto,
   ): Promise<LabOrder[]> {
     return this.svc.createLabOrder(consultationId, tenantId, user.id, dto)
+  }
+
+  @Get('lab-orders/group-pdf')
+  @ApiOperation({ summary: 'Download lab order group as PDF' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiQuery({ name: 'groupOrder', type: Number })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404, description: 'LAB_ORDER_NOT_FOUND' })
+  async downloadLabOrderGroupPdf(
+    @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Query('groupOrder', ParseIntPipe) groupOrder: number,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.svc.getLabOrderGroupPdf(consultationId, groupOrder, tenantId, user.id)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="laboratorio-${consultationId}-g${groupOrder}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
+  }
+
+  @Patch('lab-orders/rename-group')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(RenameOrderGroupSchema))
+  @ApiOperation({ summary: 'Rename a lab order group' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiQuery({ name: 'groupOrder', type: Number })
+  @ApiResponse({ status: 200 })
+  renameLabOrderGroup(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Query('groupOrder', ParseIntPipe) groupOrder: number,
+    @Body() dto: RenameOrderGroupDto,
+  ): Promise<LabOrder[]> {
+    return this.svc.renameLabOrderGroup(consultationId, groupOrder, tenantId, dto)
+  }
+
+  @Patch('lab-orders/:orderId')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(PatchLabOrderSchema))
+  @ApiOperation({ summary: 'Move lab order to a different group' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'orderId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'LAB_ORDER_NOT_FOUND' })
+  patchLabOrder(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() dto: PatchLabOrderDto,
+  ): Promise<LabOrder> {
+    return this.svc.patchLabOrder(consultationId, orderId, tenantId, dto)
   }
 
   @Delete('lab-orders/:orderId')

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Tabs,
   TabsList,
@@ -36,6 +36,10 @@ import {
   useDeletePrescription,
   useDeleteImagingOrder,
   useDeleteLabOrder,
+  usePatchImagingOrder,
+  usePatchLabOrder,
+  useRenameImagingOrderGroup,
+  useRenameLabOrderGroup,
 } from '@/hooks/consultations/use-consultations'
 import { apiClient, triggerDownload } from '@/lib/api-client'
 import { orderQueueStrings } from './strings'
@@ -177,28 +181,114 @@ function SavedPrescriptionCard({
 
 interface SavedImagingGroupCardProps {
   groupTitle: string
+  groupOrder: number
   orders: ImagingOrder[]
+  consultationId: string
   isSigned: boolean
+  otherGroupOrders: number[]
   onDelete: (id: string) => void
   isDeleting: boolean
 }
 
 function SavedImagingGroupCard({
   groupTitle,
+  groupOrder,
   orders,
+  consultationId,
   isSigned,
+  otherGroupOrders,
   onDelete,
   isDeleting,
 }: SavedImagingGroupCardProps): JSX.Element {
-  void isSigned
+  const [downloading, setDownloading] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(groupTitle)
+  const renameInputRef = useRef<HTMLInputElement>(null)
+  const rename = useRenameImagingOrderGroup(consultationId)
+  const patch = usePatchImagingOrder(consultationId)
+
+  useEffect(() => {
+    if (renaming) renameInputRef.current?.focus()
+  }, [renaming])
+
+  async function handleDownloadPdf(): Promise<void> {
+    setDownloading(true)
+    try {
+      const blob = await apiClient.download(
+        `/v1/consultations/${consultationId}/imaging-orders/group-pdf?groupOrder=${groupOrder}`,
+      )
+      triggerDownload(blob, `imagenes-g${groupOrder}.pdf`)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  function handleRenameSubmit(): void {
+    rename.mutate({ groupOrder, dto: { groupTitle: renameValue || null } })
+    setRenaming(false)
+  }
+
   return (
     <div className="mb-3">
       <GroupSectionCard
         title={
-          <span className="flex items-center gap-2">
-            <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
-            <SavedChip />
-          </span>
+          renaming ? (
+            <div className="flex items-center gap-2">
+              <Input
+                ref={renameInputRef}
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameSubmit()
+                  if (e.key === 'Escape') setRenaming(false)
+                }}
+                className="h-6 text-[12px] py-0 px-2 w-36"
+              />
+              <Button variant="ghost" size="sm" onClick={handleRenameSubmit}>
+                {orderQueueStrings.renameGroupSave}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setRenaming(false)}>
+                {orderQueueStrings.renameGroupCancel}
+              </Button>
+            </div>
+          ) : (
+            <span className="flex items-center gap-2">
+              <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+              <SavedChip />
+              {!isSigned && (
+                <IconButton
+                  icon="ph ph-pencil"
+                  aria-label="Renombrar grupo"
+                  tone="muted"
+                  size="sm"
+                  onClick={() => {
+                    setRenameValue(groupTitle)
+                    setRenaming(true)
+                  }}
+                />
+              )}
+            </span>
+          )
+        }
+        footer={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                {orderQueueStrings.downloadingImagingPdf}
+              </>
+            ) : (
+              <>
+                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                {orderQueueStrings.downloadImagingPdf}
+              </>
+            )}
+          </Button>
         }
       >
         <div className="divide-y divide-n-100">
@@ -226,15 +316,34 @@ function SavedImagingGroupCard({
                 </div>
               </div>
               {!isSigned && (
-                <IconButton
-                  icon="ph ph-trash"
-                  aria-label={orderQueueStrings.deleteOrderLabel}
-                  tone="danger"
-                  size="sm"
-                  disabled={isDeleting}
-                  onClick={() => onDelete(order.id)}
-                  className="opacity-0 group-hover:opacity-100 mt-1"
-                />
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
+                  {otherGroupOrders.length > 0 && (
+                    <Select
+                      onValueChange={(val) =>
+                        patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
+                      }
+                    >
+                      <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                        <SelectValue placeholder={orderQueueStrings.moveToGroup} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {otherGroupOrders.map((g) => (
+                          <SelectItem key={g} value={String(g)}>
+                            {orderQueueStrings.moveToGroupLabel(g)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <IconButton
+                    icon="ph ph-trash"
+                    aria-label={orderQueueStrings.deleteOrderLabel}
+                    tone="danger"
+                    size="sm"
+                    disabled={isDeleting}
+                    onClick={() => onDelete(order.id)}
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -248,27 +357,114 @@ function SavedImagingGroupCard({
 
 interface SavedLabGroupCardProps {
   groupTitle: string
+  groupOrder: number
   orders: LabOrder[]
+  consultationId: string
   isSigned: boolean
+  otherGroupOrders: number[]
   onDelete: (id: string) => void
   isDeleting: boolean
 }
 
 function SavedLabGroupCard({
   groupTitle,
+  groupOrder,
   orders,
+  consultationId,
   isSigned,
+  otherGroupOrders,
   onDelete,
   isDeleting,
 }: SavedLabGroupCardProps): JSX.Element {
+  const [downloading, setDownloading] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(groupTitle)
+  const renameInputRef = useRef<HTMLInputElement>(null)
+  const rename = useRenameLabOrderGroup(consultationId)
+  const patch = usePatchLabOrder(consultationId)
+
+  useEffect(() => {
+    if (renaming) renameInputRef.current?.focus()
+  }, [renaming])
+
+  async function handleDownloadPdf(): Promise<void> {
+    setDownloading(true)
+    try {
+      const blob = await apiClient.download(
+        `/v1/consultations/${consultationId}/lab-orders/group-pdf?groupOrder=${groupOrder}`,
+      )
+      triggerDownload(blob, `laboratorio-g${groupOrder}.pdf`)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  function handleRenameSubmit(): void {
+    rename.mutate({ groupOrder, dto: { groupTitle: renameValue || null } })
+    setRenaming(false)
+  }
+
   return (
     <div className="mb-3">
       <GroupSectionCard
         title={
-          <span className="flex items-center gap-2">
-            <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
-            <SavedChip />
-          </span>
+          renaming ? (
+            <div className="flex items-center gap-2">
+              <Input
+                ref={renameInputRef}
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameSubmit()
+                  if (e.key === 'Escape') setRenaming(false)
+                }}
+                className="h-6 text-[12px] py-0 px-2 w-36"
+              />
+              <Button variant="ghost" size="sm" onClick={handleRenameSubmit}>
+                {orderQueueStrings.renameGroupSave}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setRenaming(false)}>
+                {orderQueueStrings.renameGroupCancel}
+              </Button>
+            </div>
+          ) : (
+            <span className="flex items-center gap-2">
+              <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+              <SavedChip />
+              {!isSigned && (
+                <IconButton
+                  icon="ph ph-pencil"
+                  aria-label="Renombrar grupo"
+                  tone="muted"
+                  size="sm"
+                  onClick={() => {
+                    setRenameValue(groupTitle)
+                    setRenaming(true)
+                  }}
+                />
+              )}
+            </span>
+          )
+        }
+        footer={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <>
+                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                {orderQueueStrings.downloadingImagingPdf}
+              </>
+            ) : (
+              <>
+                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                {orderQueueStrings.downloadLabPdf}
+              </>
+            )}
+          </Button>
         }
       >
         <div className="divide-y divide-n-100">
@@ -301,15 +497,34 @@ function SavedLabGroupCard({
                 </div>
               </div>
               {!isSigned && (
-                <IconButton
-                  icon="ph ph-trash"
-                  aria-label={orderQueueStrings.deleteOrderLabel}
-                  tone="danger"
-                  size="sm"
-                  disabled={isDeleting}
-                  onClick={() => onDelete(order.id)}
-                  className="opacity-0 group-hover:opacity-100 mt-1"
-                />
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
+                  {otherGroupOrders.length > 0 && (
+                    <Select
+                      onValueChange={(val) =>
+                        patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
+                      }
+                    >
+                      <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                        <SelectValue placeholder={orderQueueStrings.moveToGroup} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {otherGroupOrders.map((g) => (
+                          <SelectItem key={g} value={String(g)}>
+                            {orderQueueStrings.moveToGroupLabel(g)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <IconButton
+                    icon="ph ph-trash"
+                    aria-label={orderQueueStrings.deleteOrderLabel}
+                    tone="danger"
+                    size="sm"
+                    disabled={isDeleting}
+                    onClick={() => onDelete(order.id)}
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -874,7 +1089,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
   const deleteLabOrder = useDeleteLabOrder(consultationId)
 
   const imagingGroups_saved = (savedImagingOrders.data ?? []).reduce<
-    { key: string; title: string; orders: ImagingOrder[] }[]
+    { key: string; title: string; groupOrder: number; orders: ImagingOrder[] }[]
   >((acc, order) => {
     const key = `${order.groupOrder}-${order.groupTitle ?? ''}`
     const existing = acc.find((g) => g.key === key)
@@ -884,6 +1099,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
       acc.push({
         key,
         title: order.groupTitle ?? orderQueueStrings.imagingGroupFallback(order.groupOrder),
+        groupOrder: order.groupOrder,
         orders: [order],
       })
     }
@@ -891,7 +1107,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
   }, [])
 
   const labGroups_saved = (savedLabOrders.data ?? []).reduce<
-    { key: string; title: string; orders: LabOrder[] }[]
+    { key: string; title: string; groupOrder: number; orders: LabOrder[] }[]
   >((acc, order) => {
     const key = `${order.groupOrder}-${order.groupTitle ?? ''}`
     const existing = acc.find((g) => g.key === key)
@@ -901,6 +1117,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
       acc.push({
         key,
         title: order.groupTitle ?? orderQueueStrings.labGroupFallback(order.groupOrder),
+        groupOrder: order.groupOrder,
         orders: [order],
       })
     }
@@ -1007,8 +1224,13 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                 <SavedImagingGroupCard
                   key={g.key}
                   groupTitle={g.title}
+                  groupOrder={g.groupOrder}
                   orders={g.orders}
+                  consultationId={consultationId}
                   isSigned={isSigned}
+                  otherGroupOrders={imagingGroups_saved
+                    .filter((other) => other.groupOrder !== g.groupOrder)
+                    .map((other) => other.groupOrder)}
                   onDelete={(id) => deleteImagingOrder.mutate(id)}
                   isDeleting={deleteImagingOrder.isPending}
                 />
@@ -1060,8 +1282,13 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                 <SavedLabGroupCard
                   key={g.key}
                   groupTitle={g.title}
+                  groupOrder={g.groupOrder}
                   orders={g.orders}
+                  consultationId={consultationId}
                   isSigned={isSigned}
+                  otherGroupOrders={labGroups_saved
+                    .filter((other) => other.groupOrder !== g.groupOrder)
+                    .map((other) => other.groupOrder)}
                   onDelete={(id) => deleteLabOrder.mutate(id)}
                   isDeleting={deleteLabOrder.isPending}
                 />

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import PDFDocument from 'pdfkit'
-import type { Prescription, PrescriptionItemRow, InvoiceWithDetails } from '@rezeta/shared'
+import type {
+  Prescription,
+  PrescriptionItemRow,
+  InvoiceWithDetails,
+  ImagingOrder,
+  LabOrder,
+} from '@rezeta/shared'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -509,6 +515,300 @@ function buildInvoice(doc: PDFKit.PDFDocument, data: InvoicePdfData): void {
   })
 }
 
+// ─── Imaging order PDF data types ─────────────────────────────────────────────
+export interface OrderGroupPdfCommon {
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+  patient: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string | null
+    documentNumber: string | null
+    documentType: string | null
+  }
+  location: { name: string; address: string | null } | null
+  groupTitle: string | null
+  groupOrder: number
+  issuedAt: string
+}
+
+export interface ImagingOrderGroupPdfData extends OrderGroupPdfCommon {
+  orders: ImagingOrder[]
+}
+
+export interface LabOrderGroupPdfData extends OrderGroupPdfCommon {
+  orders: LabOrder[]
+}
+
+// ─── Imaging order group PDF ──────────────────────────────────────────────────
+function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroupPdfData): void {
+  const { doctor, patient, location, groupTitle, orders, issuedAt } = data
+  const doctorName = doctor.fullName ?? 'Médico'
+  const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
+  const age = calcAge(patient.dateOfBirth)
+  const docId = patient.documentNumber
+    ? `${(patient.documentType ?? 'Doc.').toUpperCase()} ${patient.documentNumber}`
+    : null
+  const issuedDate = formatDate(issuedAt)
+
+  let y = MARGIN
+
+  // Header
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  y += 18
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) {
+    doc.text(doctor.specialty, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (doctor.licenseNumber) {
+    doc.text(`Matrícula: ${doctor.licenseNumber}`, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (location) {
+    doc.text(location.name, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  doc.text(issuedDate, MARGIN, MARGIN + 2, { width: CONTENT_W, align: 'right', lineBreak: false })
+  if (groupTitle) {
+    doc.text(groupTitle, MARGIN, MARGIN + 14, {
+      width: CONTENT_W,
+      align: 'right',
+      lineBreak: false,
+    })
+  }
+  y = Math.max(y, MARGIN + 44) + 10
+  strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.teal, 2)
+  y += 14
+
+  // Patient block
+  fillRect(doc, MARGIN, y, CONTENT_W, 48, T.n25)
+  doc.font('Helvetica-Bold').fontSize(18).fillColor(T.teal)
+  doc.text('Rx', MARGIN + 10, y + 10, { lineBreak: false })
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900)
+  doc.text(patientFullName, MARGIN + 32, y + 12, { lineBreak: false })
+  const meta = [age, docId].filter(Boolean).join('  ·  ')
+  if (meta) {
+    doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+    doc.text(meta, MARGIN + 10, y + 32, { lineBreak: false })
+  }
+  y += 62
+
+  // Section label
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+  doc.text('ÓRDENES DE IMÁGENES', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
+  y += 14
+
+  // Table
+  const colW = {
+    study: CONTENT_W * 0.3,
+    indication: CONTENT_W * 0.4,
+    urgency: CONTENT_W * 0.15,
+    flags: CONTENT_W * 0.15,
+  }
+  const colX = {
+    study: MARGIN,
+    indication: MARGIN + colW.study,
+    urgency: MARGIN + colW.study + colW.indication,
+    flags: MARGIN + colW.study + colW.indication + colW.urgency,
+  }
+  const ROW_H = 28
+  const HEADER_H = 22
+
+  doc
+    .save()
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * orders.length)
+    .stroke(T.n200)
+    .restore()
+  fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n600)
+  doc.text('ESTUDIO', colX.study + 8, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('INDICACIÓN', colX.indication + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('URGENCIA', colX.urgency + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('NOTAS', colX.flags + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  y += HEADER_H
+
+  const URGENCY_ES: Record<string, string> = { routine: 'Rutina', urgent: 'Urgente', stat: 'STAT' }
+  orders.forEach((order, idx) => {
+    const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
+    fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
+    if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(order.studyType, 22), colX.study + 8, y + 9, { lineBreak: false })
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(order.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
+    doc.text(URGENCY_ES[order.urgency] ?? order.urgency, colX.urgency + 4, y + 9, {
+      lineBreak: false,
+    })
+    const flags = [order.contrast ? 'Contraste' : null, order.fastingRequired ? 'Ayuno' : null]
+      .filter(Boolean)
+      .join(', ')
+    if (flags) doc.text(flags, colX.flags + 4, y + 9, { lineBreak: false })
+    y += ROW_H
+  })
+
+  // Footer
+  const footerY = PAGE_H - MARGIN - 30
+  strokeLine(doc, MARGIN, footerY, MARGIN + CONTENT_W, footerY, T.n100)
+  doc.font('Helvetica').fontSize(8).fillColor(T.n400)
+  doc.text('Orden médica de imágenes.', MARGIN, footerY + 8, { lineBreak: false })
+  const sigX = MARGIN + CONTENT_W - 160
+  strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+    width: 160,
+    align: 'center',
+    lineBreak: false,
+  })
+  if (doctor.licenseNumber) {
+    doc.text(`Mat. ${doctor.licenseNumber}`, sigX, footerY + 20, {
+      width: 160,
+      align: 'center',
+      lineBreak: false,
+    })
+  }
+}
+
+// ─── Lab order group PDF ──────────────────────────────────────────────────────
+function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData): void {
+  const { doctor, patient, location, groupTitle, orders, issuedAt } = data
+  const doctorName = doctor.fullName ?? 'Médico'
+  const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
+  const age = calcAge(patient.dateOfBirth)
+  const docId = patient.documentNumber
+    ? `${(patient.documentType ?? 'Doc.').toUpperCase()} ${patient.documentNumber}`
+    : null
+  const issuedDate = formatDate(issuedAt)
+
+  let y = MARGIN
+
+  // Header
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  y += 18
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) {
+    doc.text(doctor.specialty, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (doctor.licenseNumber) {
+    doc.text(`Matrícula: ${doctor.licenseNumber}`, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  if (location) {
+    doc.text(location.name, MARGIN, y, { lineBreak: false })
+    y += 12
+  }
+  doc.text(issuedDate, MARGIN, MARGIN + 2, { width: CONTENT_W, align: 'right', lineBreak: false })
+  if (groupTitle) {
+    doc.text(groupTitle, MARGIN, MARGIN + 14, {
+      width: CONTENT_W,
+      align: 'right',
+      lineBreak: false,
+    })
+  }
+  y = Math.max(y, MARGIN + 44) + 10
+  strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.teal, 2)
+  y += 14
+
+  // Patient block
+  fillRect(doc, MARGIN, y, CONTENT_W, 48, T.n25)
+  doc.font('Helvetica-Bold').fontSize(18).fillColor(T.teal)
+  doc.text('Rx', MARGIN + 10, y + 10, { lineBreak: false })
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900)
+  doc.text(patientFullName, MARGIN + 32, y + 12, { lineBreak: false })
+  const meta = [age, docId].filter(Boolean).join('  ·  ')
+  if (meta) {
+    doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+    doc.text(meta, MARGIN + 10, y + 32, { lineBreak: false })
+  }
+  y += 62
+
+  // Section label
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
+  doc.text('ÓRDENES DE LABORATORIO', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
+  y += 14
+
+  // Table
+  const colW = {
+    test: CONTENT_W * 0.28,
+    indication: CONTENT_W * 0.37,
+    urgency: CONTENT_W * 0.15,
+    sample: CONTENT_W * 0.2,
+  }
+  const colX = {
+    test: MARGIN,
+    indication: MARGIN + colW.test,
+    urgency: MARGIN + colW.test + colW.indication,
+    sample: MARGIN + colW.test + colW.indication + colW.urgency,
+  }
+  const ROW_H = 28
+  const HEADER_H = 22
+
+  doc
+    .save()
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * orders.length)
+    .stroke(T.n200)
+    .restore()
+  fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n600)
+  doc.text('PRUEBA', colX.test + 8, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('INDICACIÓN', colX.indication + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('URGENCIA', colX.urgency + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  doc.text('MUESTRA', colX.sample + 4, y + 7, { lineBreak: false, characterSpacing: 0.5 })
+  y += HEADER_H
+
+  const URGENCY_ES: Record<string, string> = { routine: 'Rutina', urgent: 'Urgente', stat: 'STAT' }
+  const SAMPLE_ES: Record<string, string> = {
+    blood: 'Sangre',
+    urine: 'Orina',
+    stool: 'Heces',
+    other: 'Otro',
+  }
+  orders.forEach((order, idx) => {
+    const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
+    fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
+    if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n700)
+    const testLabel = order.testCode ? `${order.testName} (${order.testCode})` : order.testName
+    doc.text(truncate(testLabel, 24), colX.test + 8, y + 9, { lineBreak: false })
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(truncate(order.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
+    doc.text(URGENCY_ES[order.urgency] ?? order.urgency, colX.urgency + 4, y + 9, {
+      lineBreak: false,
+    })
+    doc.text(SAMPLE_ES[order.sampleType] ?? order.sampleType, colX.sample + 4, y + 9, {
+      lineBreak: false,
+    })
+    y += ROW_H
+  })
+
+  // Footer
+  const footerY = PAGE_H - MARGIN - 30
+  strokeLine(doc, MARGIN, footerY, MARGIN + CONTENT_W, footerY, T.n100)
+  doc.font('Helvetica').fontSize(8).fillColor(T.n400)
+  doc.text('Orden médica de laboratorio.', MARGIN, footerY + 8, { lineBreak: false })
+  const sigX = MARGIN + CONTENT_W - 160
+  strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+    width: 160,
+    align: 'center',
+    lineBreak: false,
+  })
+  if (doctor.licenseNumber) {
+    doc.text(`Mat. ${doctor.licenseNumber}`, sigX, footerY + 20, {
+      width: 160,
+      align: 'center',
+      lineBreak: false,
+    })
+  }
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 @Injectable()
 export class PdfService {
@@ -529,6 +829,26 @@ export class PdfService {
       info: { Title: `Factura ${data.invoice.invoiceNumber}` },
     })
     buildInvoice(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateImagingOrderGroup(data: ImagingOrderGroupPdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: 0,
+      info: { Title: `Orden de imágenes — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildImagingOrderGroup(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateLabOrderGroup(data: LabOrderGroupPdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: 0,
+      info: { Title: `Orden de laboratorio — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildLabOrderGroup(doc, data)
     return toBuffer(doc)
   }
 }

@@ -181,6 +181,20 @@ export const GenerateAllOrdersSchema = z.object({
   labOrders: z.array(CreateLabOrderGroupSchema).default([]),
 })
 
+export const PatchImagingOrderSchema = z.object({
+  groupOrder: z.number().int().min(1).optional(),
+  groupTitle: z.string().max(200).nullable().optional(),
+})
+
+export const PatchLabOrderSchema = z.object({
+  groupOrder: z.number().int().min(1).optional(),
+  groupTitle: z.string().max(200).nullable().optional(),
+})
+
+export const RenameOrderGroupSchema = z.object({
+  groupTitle: z.string().max(200).nullable(),
+})
+
 export type AddProtocolUsageDto = z.infer<typeof AddProtocolUsageSchema>
 export type UpdateCheckedStateDto = z.infer<typeof UpdateCheckedStateSchema>
 export type UpdateProtocolUsageDto = z.infer<typeof UpdateProtocolUsageSchema>
@@ -188,3 +202,6 @@ export type CreatePrescriptionGroupDto = z.infer<typeof CreatePrescriptionGroupS
 export type CreateImagingOrderGroupDto = z.infer<typeof CreateImagingOrderGroupSchema>
 export type CreateLabOrderGroupDto = z.infer<typeof CreateLabOrderGroupSchema>
 export type GenerateAllOrdersDto = z.infer<typeof GenerateAllOrdersSchema>
+export type PatchImagingOrderDto = z.infer<typeof PatchImagingOrderSchema>
+export type PatchLabOrderDto = z.infer<typeof PatchLabOrderSchema>
+export type RenameOrderGroupDto = z.infer<typeof RenameOrderGroupSchema>

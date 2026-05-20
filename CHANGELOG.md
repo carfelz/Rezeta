@@ -18,6 +18,22 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ---
 
+## [2026-05-19] — Imaging/lab PDF download, group rename, and move-between-groups
+
+### Added
+
+- `packages/shared/src/schemas/consultation.ts` — `PatchImagingOrderSchema`, `PatchLabOrderSchema`, `RenameOrderGroupSchema` (+ inferred DTO types)
+- `apps/api/src/lib/pdf.service.ts` — `generateImagingOrderGroup()` and `generateLabOrderGroup()` — PDFKit builders with doctor header, patient block, orders table, and signature footer
+- `apps/api/src/modules/orders/orders.service.ts` — `getImagingOrderGroupPdf()`, `getLabOrderGroupPdf()`, `patchImagingOrder()`, `patchLabOrder()`, `renameImagingOrderGroup()`, `renameLabOrderGroup()`
+- `apps/api/src/modules/orders/orders.repository.ts` — `patchImagingOrder()`, `patchLabOrder()`, `renameImagingOrderGroup()`, `renameLabOrderGroup()` (uses `updateMany` + re-list for bulk rename)
+- `apps/api/src/modules/orders/orders.controller.ts` — 6 new endpoints: `GET /imaging-orders/group-pdf`, `PATCH /imaging-orders/rename-group`, `PATCH /imaging-orders/:orderId`, same 3 for lab orders; static routes placed before parameterized to prevent NestJS shadowing
+- `apps/web/src/hooks/consultations/use-consultations.ts` — `usePatchImagingOrder`, `usePatchLabOrder`, `useRenameImagingOrderGroup`, `useRenameLabOrderGroup`
+- `apps/web/src/components/consultations/strings.ts` — `renameGroupPlaceholder`, `renameGroupSave`, `renameGroupCancel`, `moveToGroup`, `moveToGroupLabel`, `downloadingImagingPdf`, `downloadImagingPdf`, `downloadLabPdf`
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx` — `SavedImagingGroupCard` and `SavedLabGroupCard` now support: inline group rename (auto-focus input, Enter/Escape shortcuts), PDF download button, per-row move-to-group `Select` dropdown (hidden when only one group)
+- `apps/api/src/modules/orders/__tests__/orders.controller.spec.ts` — 6 new tests covering all new controller endpoints
+
+---
+
 ## [2026-05-19] — Modification tracking: protocol interactions feed pattern detection
 
 ### Added

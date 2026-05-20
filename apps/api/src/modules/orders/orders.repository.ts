@@ -4,6 +4,8 @@ import type {
   CreatePrescriptionGroupDto,
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
+  PatchImagingOrderDto,
+  PatchLabOrderDto,
 } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
@@ -368,5 +370,57 @@ export class OrdersRepository {
       where: { id, tenantId },
       data: { deletedAt: new Date() },
     })
+  }
+
+  async patchImagingOrder(
+    id: string,
+    tenantId: string,
+    dto: PatchImagingOrderDto,
+  ): Promise<ImagingOrder> {
+    const row = await this.prisma.imagingOrder.update({
+      where: { id, tenantId },
+      data: {
+        ...(dto.groupOrder !== undefined ? { groupOrder: dto.groupOrder } : {}),
+        ...(dto.groupTitle !== undefined ? { groupTitle: dto.groupTitle } : {}),
+      },
+    })
+    return toImagingOrder(row)
+  }
+
+  async patchLabOrder(id: string, tenantId: string, dto: PatchLabOrderDto): Promise<LabOrder> {
+    const row = await this.prisma.labOrder.update({
+      where: { id, tenantId },
+      data: {
+        ...(dto.groupOrder !== undefined ? { groupOrder: dto.groupOrder } : {}),
+        ...(dto.groupTitle !== undefined ? { groupTitle: dto.groupTitle } : {}),
+      },
+    })
+    return toLabOrder(row)
+  }
+
+  async renameImagingOrderGroup(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    groupTitle: string | null,
+  ): Promise<ImagingOrder[]> {
+    await this.prisma.imagingOrder.updateMany({
+      where: { consultationId, groupOrder, tenantId, deletedAt: null },
+      data: { groupTitle },
+    })
+    return this.listImagingOrdersByConsultation(consultationId, tenantId)
+  }
+
+  async renameLabOrderGroup(
+    consultationId: string,
+    groupOrder: number,
+    tenantId: string,
+    groupTitle: string | null,
+  ): Promise<LabOrder[]> {
+    await this.prisma.labOrder.updateMany({
+      where: { consultationId, groupOrder, tenantId, deletedAt: null },
+      data: { groupTitle },
+    })
+    return this.listLabOrdersByConsultation(consultationId, tenantId)
   }
 }

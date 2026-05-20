@@ -8,6 +8,8 @@ vi.mock('../../../lib/pdf.service.js', () => ({
   PdfService: class {
     generatePrescription = vi.fn().mockResolvedValue(Buffer.from([]))
     generateInvoice = vi.fn().mockResolvedValue(Buffer.from([]))
+    generateImagingOrderGroup = vi.fn().mockResolvedValue(Buffer.from([]))
+    generateLabOrderGroup = vi.fn().mockResolvedValue(Buffer.from([]))
   },
 }))
 
@@ -91,10 +93,16 @@ describe('OrdersController', () => {
       getImagingOrder: vi.fn(),
       createImagingOrder: vi.fn(),
       deleteImagingOrder: vi.fn(),
+      patchImagingOrder: vi.fn(),
+      renameImagingOrderGroup: vi.fn(),
+      getImagingOrderGroupPdf: vi.fn(),
       listLabOrders: vi.fn(),
       getLabOrder: vi.fn(),
       createLabOrder: vi.fn(),
       deleteLabOrder: vi.fn(),
+      patchLabOrder: vi.fn(),
+      renameLabOrderGroup: vi.fn(),
+      getLabOrderGroupPdf: vi.fn(),
       generateAll: vi.fn(),
     } as unknown as OrdersService
     controller = new OrdersController(svc)
@@ -197,5 +205,63 @@ describe('OrdersController', () => {
     const result = await controller.generateAll(tenantId, mockUser, consultationId, dto as never)
     expect(svc.generateAll).toHaveBeenCalledWith(consultationId, tenantId, 'user-1', dto)
     expect(result).toEqual(expected)
+  })
+
+  it('downloadImagingOrderGroupPdf streams PDF buffer', async () => {
+    const buf = Buffer.from([4, 5, 6])
+    vi.mocked(svc.getImagingOrderGroupPdf).mockResolvedValue(buf)
+    const res = { set: vi.fn(), end: vi.fn() }
+    await controller.downloadImagingOrderGroupPdf(
+      tenantId,
+      mockUser,
+      consultationId,
+      1,
+      res as never,
+    )
+    expect(svc.getImagingOrderGroupPdf).toHaveBeenCalledWith(consultationId, 1, tenantId, 'user-1')
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({ 'Content-Type': 'application/pdf' }),
+    )
+    expect(res.end).toHaveBeenCalledWith(buf)
+  })
+
+  it('renameImagingOrderGroup delegates to service', async () => {
+    vi.mocked(svc.renameImagingOrderGroup).mockResolvedValue([mockImagingOrder as never])
+    const dto = { groupTitle: 'Nuevo nombre' }
+    await controller.renameImagingOrderGroup(tenantId, consultationId, 1, dto)
+    expect(svc.renameImagingOrderGroup).toHaveBeenCalledWith(consultationId, 1, tenantId, dto)
+  })
+
+  it('patchImagingOrder delegates to service', async () => {
+    vi.mocked(svc.patchImagingOrder).mockResolvedValue(mockImagingOrder as never)
+    const dto = { groupOrder: 2 }
+    await controller.patchImagingOrder(tenantId, consultationId, 'img1', dto)
+    expect(svc.patchImagingOrder).toHaveBeenCalledWith(consultationId, 'img1', tenantId, dto)
+  })
+
+  it('downloadLabOrderGroupPdf streams PDF buffer', async () => {
+    const buf = Buffer.from([7, 8, 9])
+    vi.mocked(svc.getLabOrderGroupPdf).mockResolvedValue(buf)
+    const res = { set: vi.fn(), end: vi.fn() }
+    await controller.downloadLabOrderGroupPdf(tenantId, mockUser, consultationId, 1, res as never)
+    expect(svc.getLabOrderGroupPdf).toHaveBeenCalledWith(consultationId, 1, tenantId, 'user-1')
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({ 'Content-Type': 'application/pdf' }),
+    )
+    expect(res.end).toHaveBeenCalledWith(buf)
+  })
+
+  it('renameLabOrderGroup delegates to service', async () => {
+    vi.mocked(svc.renameLabOrderGroup).mockResolvedValue([mockLabOrder as never])
+    const dto = { groupTitle: 'Resultados CBC' }
+    await controller.renameLabOrderGroup(tenantId, consultationId, 1, dto)
+    expect(svc.renameLabOrderGroup).toHaveBeenCalledWith(consultationId, 1, tenantId, dto)
+  })
+
+  it('patchLabOrder delegates to service', async () => {
+    vi.mocked(svc.patchLabOrder).mockResolvedValue(mockLabOrder as never)
+    const dto = { groupOrder: 2 }
+    await controller.patchLabOrder(tenantId, consultationId, 'lab1', dto)
+    expect(svc.patchLabOrder).toHaveBeenCalledWith(consultationId, 'lab1', tenantId, dto)
   })
 })
