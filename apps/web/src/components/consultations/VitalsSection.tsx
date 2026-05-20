@@ -87,7 +87,7 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
       />
       <VitalInput
         label={vitalsSectionStrings.bmiLabel}
-        value={bmi}
+        value={bmi === '—' ? '' : bmi}
         onChange={() => {}}
         unit="kg/m²"
         readOnly

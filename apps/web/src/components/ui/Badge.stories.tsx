@@ -42,9 +42,15 @@ export const AllVariants: Story = {
 export const WithoutDot: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      <Badge variant="active" showDot={false}>Activo</Badge>
-      <Badge variant="paid" showDot={false}>Pagado</Badge>
-      <Badge variant="overdue" showDot={false}>Vencido</Badge>
+      <Badge variant="active" showDot={false}>
+        Activo
+      </Badge>
+      <Badge variant="paid" showDot={false}>
+        Pagado
+      </Badge>
+      <Badge variant="overdue" showDot={false}>
+        Vencido
+      </Badge>
     </div>
   ),
 }

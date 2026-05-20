@@ -46,12 +46,22 @@ describe('CreateLocationSchema', () => {
   })
 
   it('accepts commissionPercent boundary values 0 and 100', () => {
-    expect(CreateLocationSchema.parse({ name: 'Test', commissionPercent: 0 }).commissionPercent).toBe(0)
-    expect(CreateLocationSchema.parse({ name: 'Test', commissionPercent: 100 }).commissionPercent).toBe(100)
+    expect(
+      CreateLocationSchema.parse({ name: 'Test', commissionPercent: 0 }).commissionPercent,
+    ).toBe(0)
+    expect(
+      CreateLocationSchema.parse({ name: 'Test', commissionPercent: 100 }).commissionPercent,
+    ).toBe(100)
   })
 
   it('accepts null for optional fields', () => {
-    const result = CreateLocationSchema.parse({ name: 'Test', address: null, city: null, phone: null, notes: null })
+    const result = CreateLocationSchema.parse({
+      name: 'Test',
+      address: null,
+      city: null,
+      phone: null,
+      notes: null,
+    })
     expect(result.address).toBeNull()
     expect(result.city).toBeNull()
   })

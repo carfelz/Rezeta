@@ -437,8 +437,7 @@ const esFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'text',
-              placeholder:
-                'Objetivos a corto y largo plazo para esta fase de rehabilitación.',
+              placeholder: 'Objetivos a corto y largo plazo para esta fase de rehabilitación.',
             },
           ],
         },
@@ -451,8 +450,7 @@ const esFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'checklist',
-              placeholder:
-                'Dolor, rango de movimiento, fuerza, pruebas funcionales a realizar.',
+              placeholder: 'Dolor, rango de movimiento, fuerza, pruebas funcionales a realizar.',
             },
             {
               type: 'text',
@@ -482,8 +480,7 @@ const esFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'steps',
-              placeholder:
-                'Ejercicios, técnicas o modalidades (con repeticiones/series/duración).',
+              placeholder: 'Ejercicios, técnicas o modalidades (con repeticiones/series/duración).',
             },
           ],
         },
@@ -495,8 +492,7 @@ const esFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'steps',
-              placeholder:
-                'Ejercicios que el paciente realiza en casa entre sesiones.',
+              placeholder: 'Ejercicios que el paciente realiza en casa entre sesiones.',
             },
           ],
         },
@@ -508,8 +504,7 @@ const esFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'text',
-              placeholder:
-                'Movimientos, cargas o actividades a evitar en esta fase.',
+              placeholder: 'Movimientos, cargas o actividades a evitar en esta fase.',
             },
           ],
         },
@@ -656,9 +651,7 @@ const enFixtures: TemplateFixture[] = [
           type: 'section',
           title: 'Indications',
           required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'When this procedure is performed.' },
-          ],
+          placeholder_blocks: [{ type: 'text', placeholder: 'When this procedure is performed.' }],
         },
         {
           id: 'sec_preparation',
@@ -684,9 +677,7 @@ const enFixtures: TemplateFixture[] = [
           title: 'Procedure Steps',
           required: true,
           description: 'Step-by-step technique',
-          placeholder_blocks: [
-            { type: 'steps', placeholder: 'Numbered steps of the procedure.' },
-          ],
+          placeholder_blocks: [{ type: 'steps', placeholder: 'Numbered steps of the procedure.' }],
         },
         {
           id: 'sec_complications',
@@ -900,8 +891,7 @@ const enFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'text',
-              placeholder:
-                'Most common and most dangerous alternative diagnoses.',
+              placeholder: 'Most common and most dangerous alternative diagnoses.',
             },
           ],
         },
@@ -942,8 +932,7 @@ const enFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'checklist',
-              placeholder:
-                'Pain, ROM, strength, function tests to perform.',
+              placeholder: 'Pain, ROM, strength, function tests to perform.',
             },
             {
               type: 'text',
@@ -973,8 +962,7 @@ const enFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'steps',
-              placeholder:
-                'Exercises, techniques, or modalities (with reps/sets/duration).',
+              placeholder: 'Exercises, techniques, or modalities (with reps/sets/duration).',
             },
           ],
         },
@@ -998,8 +986,7 @@ const enFixtures: TemplateFixture[] = [
           placeholder_blocks: [
             {
               type: 'text',
-              placeholder:
-                'Movements, loads, or activities to avoid in this phase.',
+              placeholder: 'Movements, loads, or activities to avoid in this phase.',
             },
           ],
         },

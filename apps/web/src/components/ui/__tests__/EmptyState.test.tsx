@@ -42,13 +42,7 @@ describe('EmptyState', () => {
   })
 
   it('renders action with margin when description is absent', () => {
-    render(
-      <EmptyState
-        icon={<span>📂</span>}
-        title="Empty"
-        action={<button>Add</button>}
-      />,
-    )
+    render(<EmptyState icon={<span>📂</span>} title="Empty" action={<button>Add</button>} />)
     const actionWrapper = screen.getByRole('button', { name: 'Add' }).parentElement
     expect(actionWrapper?.className).toContain('mt-5')
   })

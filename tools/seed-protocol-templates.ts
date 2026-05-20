@@ -13,29 +13,53 @@ const templates = [
     icon: 'ambulance',
     schema: {
       version: '1.0',
-      metadata: { suggested_specialty: 'emergency_medicine', intended_use: 'Time-sensitive acute interventions' },
+      metadata: {
+        suggested_specialty: 'emergency_medicine',
+        intended_use: 'Time-sensitive acute interventions',
+      },
       blocks: [
         {
-          id: 'sec_indications', type: 'section', title: 'Indications', required: true,
-          placeholder_blocks: [{ type: 'text', placeholder: 'Clinical criteria that trigger this protocol...' }]
-        },
-        {
-          id: 'sec_contraindications', type: 'section', title: 'Contraindications', required: false,
-          placeholder_blocks: [{ type: 'alert', severity: 'danger', placeholder: 'Absolute/Relative stats' }]
-        },
-        {
-          id: 'sec_assessment', type: 'section', title: 'Initial Assessment', required: true,
-          placeholder_blocks: [{ type: 'checklist', placeholder: 'Primary survey (ABC, vitals).' }]
-        },
-        {
-          id: 'sec_intervention', type: 'section', title: 'Intervention', required: true,
+          id: 'sec_indications',
+          type: 'section',
+          title: 'Indications',
+          required: true,
           placeholder_blocks: [
-            { id: 'blk_int_meds', type: 'dosage_table', required: true, placeholder: 'First-line medications.' },
-            { type: 'steps', placeholder: 'Supportive care actions.' }
-          ]
-        }
-      ]
-    }
+            { type: 'text', placeholder: 'Clinical criteria that trigger this protocol...' },
+          ],
+        },
+        {
+          id: 'sec_contraindications',
+          type: 'section',
+          title: 'Contraindications',
+          required: false,
+          placeholder_blocks: [
+            { type: 'alert', severity: 'danger', placeholder: 'Absolute/Relative stats' },
+          ],
+        },
+        {
+          id: 'sec_assessment',
+          type: 'section',
+          title: 'Initial Assessment',
+          required: true,
+          placeholder_blocks: [{ type: 'checklist', placeholder: 'Primary survey (ABC, vitals).' }],
+        },
+        {
+          id: 'sec_intervention',
+          type: 'section',
+          title: 'Intervention',
+          required: true,
+          placeholder_blocks: [
+            {
+              id: 'blk_int_meds',
+              type: 'dosage_table',
+              required: true,
+              placeholder: 'First-line medications.',
+            },
+            { type: 'steps', placeholder: 'Supportive care actions.' },
+          ],
+        },
+      ],
+    },
   },
   {
     templateKey: 'clinical-procedure',
@@ -50,19 +74,28 @@ const templates = [
       metadata: { suggested_specialty: 'general', intended_use: 'Routine clinical procedures' },
       blocks: [
         {
-          id: 'sec_preparation', type: 'section', title: 'Preparation', required: false,
-          placeholder_blocks: [{ type: 'checklist', placeholder: 'Materials and patient prep.' }]
+          id: 'sec_preparation',
+          type: 'section',
+          title: 'Preparation',
+          required: false,
+          placeholder_blocks: [{ type: 'checklist', placeholder: 'Materials and patient prep.' }],
         },
         {
-          id: 'sec_steps', type: 'section', title: 'Procedure Steps', required: true,
-          placeholder_blocks: [{ type: 'steps', placeholder: 'Numbered steps of the procedure.' }]
+          id: 'sec_steps',
+          type: 'section',
+          title: 'Procedure Steps',
+          required: true,
+          placeholder_blocks: [{ type: 'steps', placeholder: 'Numbered steps of the procedure.' }],
         },
         {
-          id: 'sec_post', type: 'section', title: 'Post-procedure Instructions', required: true,
-          placeholder_blocks: [{ type: 'checklist', placeholder: 'Patient instructions.' }]
-        }
-      ]
-    }
+          id: 'sec_post',
+          type: 'section',
+          title: 'Post-procedure Instructions',
+          required: true,
+          placeholder_blocks: [{ type: 'checklist', placeholder: 'Patient instructions.' }],
+        },
+      ],
+    },
   },
   {
     templateKey: 'pharmacological-reference',
@@ -74,16 +107,27 @@ const templates = [
     icon: 'pill',
     schema: {
       version: '1.0',
-      metadata: { suggested_specialty: 'pharmacology', intended_use: 'Medication dosing references' },
+      metadata: {
+        suggested_specialty: 'pharmacology',
+        intended_use: 'Medication dosing references',
+      },
       blocks: [
         {
-          id: 'sec_dosing', type: 'section', title: 'Dosing', required: true,
+          id: 'sec_dosing',
+          type: 'section',
+          title: 'Dosing',
+          required: true,
           placeholder_blocks: [
-            { id: 'blk_dose_table', type: 'dosage_table', required: true, placeholder: 'Drugs, doses, routes...' }
-          ]
-        }
-      ]
-    }
+            {
+              id: 'blk_dose_table',
+              type: 'dosage_table',
+              required: true,
+              placeholder: 'Drugs, doses, routes...',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     templateKey: 'diagnostic-algorithm',
@@ -98,11 +142,14 @@ const templates = [
       metadata: { suggested_specialty: 'general', intended_use: 'Diagnostic decision pathways' },
       blocks: [
         {
-          id: 'sec_pathway', type: 'section', title: 'Decision Pathway', required: true,
-          placeholder_blocks: [{ type: 'decision', placeholder: 'First branch point.' }]
-        }
-      ]
-    }
+          id: 'sec_pathway',
+          type: 'section',
+          title: 'Decision Pathway',
+          required: true,
+          placeholder_blocks: [{ type: 'decision', placeholder: 'First branch point.' }],
+        },
+      ],
+    },
   },
   {
     templateKey: 'physiotherapy-session',
@@ -114,39 +161,50 @@ const templates = [
     icon: 'activity',
     schema: {
       version: '1.0',
-      metadata: { suggested_specialty: 'physiotherapy', intended_use: 'Rehabilitation session structure' },
+      metadata: {
+        suggested_specialty: 'physiotherapy',
+        intended_use: 'Rehabilitation session structure',
+      },
       blocks: [
         {
-          id: 'sec_assessment', type: 'section', title: 'Assessment', required: true,
-          placeholder_blocks: [{ type: 'checklist', placeholder: 'Pain, ROM, strength tests.' }]
+          id: 'sec_assessment',
+          type: 'section',
+          title: 'Assessment',
+          required: true,
+          placeholder_blocks: [{ type: 'checklist', placeholder: 'Pain, ROM, strength tests.' }],
         },
         {
-          id: 'sec_plan', type: 'section', title: 'Treatment Plan', required: true,
-          placeholder_blocks: [{ type: 'steps', placeholder: 'Exercises, techniques, or modalities.' }]
-        }
-      ]
-    }
-  }
+          id: 'sec_plan',
+          type: 'section',
+          title: 'Treatment Plan',
+          required: true,
+          placeholder_blocks: [
+            { type: 'steps', placeholder: 'Exercises, techniques, or modalities.' },
+          ],
+        },
+      ],
+    },
+  },
 ]
 
 async function main() {
   console.log('Seeding System Protocol Templates...')
-  
+
   for (const template of templates) {
     const { templateKey, locale, ...rest } = template
-    
+
     await prisma.protocolTemplate.upsert({
       where: {
         templateKey_locale: {
           templateKey,
-          locale
-        }
+          locale,
+        },
       },
       update: {
         ...rest,
-        // Using Prisma JsonValue requires JSON stringification or passing as object if TS allows it. 
+        // Using Prisma JsonValue requires JSON stringification or passing as object if TS allows it.
         // We'll pass it strictly casted to bypass deep type mismatch on unknown JS objects.
-        schema: rest.schema as any, 
+        schema: rest.schema as any,
       },
       create: {
         templateKey,
@@ -155,7 +213,7 @@ async function main() {
         tenantId: null,
         ...rest,
         schema: rest.schema as any,
-      }
+      },
     })
     console.log(`✅ Upserted ${templateKey} (${locale})`)
   }

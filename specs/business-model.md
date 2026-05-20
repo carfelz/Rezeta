@@ -14,22 +14,22 @@
 
 Only two tiers on day one. Resist the urge to offer more until pricing data validates them.
 
-| Tier | Monthly Price | Target | Key Features |
-|------|--------------|--------|--------------|
-| **Free** | $0 | Solo specialists trying the product | Unlimited locations, up to X patients, core modules |
-| **Solo** | ~$29–39 USD (~RD$1,700–2,300) | Active solo specialists | Unlimited patients, commission tracking, full protocol engine lite |
+| Tier     | Monthly Price                 | Target                              | Key Features                                                       |
+| -------- | ----------------------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| **Free** | $0                            | Solo specialists trying the product | Unlimited locations, up to X patients, core modules                |
+| **Solo** | ~$29–39 USD (~RD$1,700–2,300) | Active solo specialists             | Unlimited patients, commission tracking, full protocol engine lite |
 
 ### Post-Validation (v1.5 / v2)
 
 Once 50–100 paying customers validate willingness to pay, expand to:
 
-| Tier | Monthly Price | Target | Adds |
-|------|--------------|--------|------|
-| **Free** | $0 | Trial / light users | Basic features, limited patients |
-| **Solo** | ~$29–39 | Active solo specialists | Unlimited usage, basic analytics |
-| **Practice** | ~$99–129 | Small teams (2–5 providers) | Multi-user, shared protocols, team scheduling |
-| **Clinic** | ~$299+ | 10+ providers | Multi-location governance, admin controls, integrations, compliance tools |
-| **Enterprise** | Custom | Hospitals | SLAs, custom integrations, dedicated support |
+| Tier           | Monthly Price | Target                      | Adds                                                                      |
+| -------------- | ------------- | --------------------------- | ------------------------------------------------------------------------- |
+| **Free**       | $0            | Trial / light users         | Basic features, limited patients                                          |
+| **Solo**       | ~$29–39       | Active solo specialists     | Unlimited usage, basic analytics                                          |
+| **Practice**   | ~$99–129      | Small teams (2–5 providers) | Multi-user, shared protocols, team scheduling                             |
+| **Clinic**     | ~$299+        | 10+ providers               | Multi-location governance, admin controls, integrations, compliance tools |
+| **Enterprise** | Custom        | Hospitals                   | SLAs, custom integrations, dedicated support                              |
 
 ### Why Multi-Location Stays in the Free Tier ⭐
 
@@ -48,11 +48,11 @@ In the DR, specialists routinely work at 2–4 centers. Most international ERPs 
 
 Rough sanity-check numbers for planning purposes:
 
-| Scenario | Customers | Avg MRR/Customer | Monthly Revenue | Annual Revenue |
-|----------|-----------|------------------|-----------------|----------------|
-| Year 1 target | 100 solo | $29 | $2,900 | $34,800 |
-| Year 2 target | 500 solo + 50 practice | $29 / $99 | $19,450 | $233,400 |
-| Year 3 target | 1,000 solo + 200 practice + 20 clinic | $29 / $99 / $399 | $56,680 | $680,160 |
+| Scenario      | Customers                             | Avg MRR/Customer | Monthly Revenue | Annual Revenue |
+| ------------- | ------------------------------------- | ---------------- | --------------- | -------------- |
+| Year 1 target | 100 solo                              | $29              | $2,900          | $34,800        |
+| Year 2 target | 500 solo + 50 practice                | $29 / $99        | $19,450         | $233,400       |
+| Year 3 target | 1,000 solo + 200 practice + 20 clinic | $29 / $99 / $399 | $56,680         | $680,160       |
 
 Healthcare SaaS typically has **low churn (<3%/month)** and high **LTV** when the product fits — doctors rarely switch systems once embedded in their workflow. This is our moat.
 
@@ -89,16 +89,19 @@ Generalist ERPs lose to specialists. Pick the specialty and win it.
 Beyond subscriptions, opportunities to add revenue without raising prices:
 
 ### Add-Ons
+
 - Telemedicine module
 - Advanced analytics package
 - White-label / branded PDFs
 - Extra storage / attachments
 
 ### Transaction-Based
+
 - Small % fee on billing processed through the system (be careful — can feel extractive)
 - Payment processing markup if acting as merchant of record
 
 ### Marketplace
+
 - Lab integrations (paid referrals from partner labs)
 - Pharmacy integrations (e-prescriptions to partner pharmacies)
 - Insurance integrations
@@ -106,18 +109,18 @@ Beyond subscriptions, opportunities to add revenue without raising prices:
 
 ### B2B Expansion (Strategic Long-Term)
 
-The *centros médicos* themselves become customers. Specialists using our app become the beachhead into selling to the centers where they practice — natural Clinic/Enterprise tier expansion.
+The _centros médicos_ themselves become customers. Specialists using our app become the beachhead into selling to the centers where they practice — natural Clinic/Enterprise tier expansion.
 
 ## 7. Key Business Risks
 
-| Risk | Mitigation |
-|------|-----------|
-| Doctors reluctant to pay for software | Free tier generous enough to prove value; clear ROI via time saved |
-| Competition from international players | Local-first differentiation (multi-location, compliance, language) |
-| Slow adoption due to workflow changes | White-glove onboarding; focus on speed of first value |
-| Churn if product feels half-finished | Lock MVP scope tight; ship polish before features |
-| Regulatory changes (DR health data law) | Build compliance in from day one; monitor local regulation |
-| Payment collection in LATAM (failed cards, etc.) | Local payment processors; annual billing discount |
+| Risk                                             | Mitigation                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------ |
+| Doctors reluctant to pay for software            | Free tier generous enough to prove value; clear ROI via time saved |
+| Competition from international players           | Local-first differentiation (multi-location, compliance, language) |
+| Slow adoption due to workflow changes            | White-glove onboarding; focus on speed of first value              |
+| Churn if product feels half-finished             | Lock MVP scope tight; ship polish before features                  |
+| Regulatory changes (DR health data law)          | Build compliance in from day one; monitor local regulation         |
+| Payment collection in LATAM (failed cards, etc.) | Local payment processors; annual billing discount                  |
 
 ## 8. Success Metrics (Year 1)
 

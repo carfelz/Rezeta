@@ -175,9 +175,7 @@ describe('UpdateCheckedStateSchema', () => {
   })
 
   it('rejects non-boolean checked state value', () => {
-    expect(() =>
-      UpdateCheckedStateSchema.parse({ checkedState: { 'item-1': 'yes' } }),
-    ).toThrow()
+    expect(() => UpdateCheckedStateSchema.parse({ checkedState: { 'item-1': 'yes' } })).toThrow()
   })
 })
 

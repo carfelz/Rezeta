@@ -53,7 +53,9 @@ describe('useOrderQueueStore', () => {
     it('addMedicationGroup adds a new group and returns its id', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       let id: string = ''
-      act(() => { id = result.current.addMedicationGroup('Antibióticos') })
+      act(() => {
+        id = result.current.addMedicationGroup('Antibióticos')
+      })
       expect(result.current.medicationGroups).toHaveLength(2)
       expect(result.current.medicationGroups[1]?.title).toBe('Antibióticos')
       expect(id).toBeTruthy()
@@ -98,7 +100,9 @@ describe('useOrderQueueStore', () => {
     it('removeMedicationGroup removes group and its medications', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       let groupId: string = ''
-      act(() => { groupId = result.current.addMedicationGroup('Test Group') })
+      act(() => {
+        groupId = result.current.addMedicationGroup('Test Group')
+      })
       act(() => result.current.queueMedication(medBase, groupId))
       act(() => result.current.removeMedicationGroup(groupId))
       expect(result.current.medicationGroups).toHaveLength(1)
@@ -143,7 +147,9 @@ describe('useOrderQueueStore', () => {
     it('removeImagingGroup removes group and its orders', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       let groupId: string = ''
-      act(() => { groupId = result.current.addImagingGroup('Urgentes') })
+      act(() => {
+        groupId = result.current.addImagingGroup('Urgentes')
+      })
       act(() => result.current.queueImagingOrder(imagingBase, groupId))
       act(() => result.current.removeImagingGroup(groupId))
       expect(result.current.imagingGroups).toHaveLength(1)
@@ -183,7 +189,9 @@ describe('useOrderQueueStore', () => {
     it('removeLabGroup removes group and its orders', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       let groupId: string = ''
-      act(() => { groupId = result.current.addLabGroup('Urgentes') })
+      act(() => {
+        groupId = result.current.addLabGroup('Urgentes')
+      })
       act(() => result.current.queueLabOrder(labBase, groupId))
       act(() => result.current.removeLabGroup(groupId))
       expect(result.current.labGroups).toHaveLength(1)

@@ -132,7 +132,9 @@ describe('OrdersRepository', () => {
       const dto = {
         groupTitle: null,
         groupOrder: 1,
-        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID', duration: '5d' }],
+        items: [
+          { drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID', duration: '5d' },
+        ],
       }
       const result = await repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result.id).toBe('rx1')

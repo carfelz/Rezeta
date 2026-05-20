@@ -76,15 +76,11 @@ describe('CreateAppointmentSchema', () => {
   })
 
   it('rejects reason exceeding 500 chars', () => {
-    expect(() =>
-      CreateAppointmentSchema.parse({ ...valid, reason: 'x'.repeat(501) }),
-    ).toThrow()
+    expect(() => CreateAppointmentSchema.parse({ ...valid, reason: 'x'.repeat(501) })).toThrow()
   })
 
   it('rejects notes exceeding 2000 chars', () => {
-    expect(() =>
-      CreateAppointmentSchema.parse({ ...valid, notes: 'x'.repeat(2001) }),
-    ).toThrow()
+    expect(() => CreateAppointmentSchema.parse({ ...valid, notes: 'x'.repeat(2001) })).toThrow()
   })
 })
 

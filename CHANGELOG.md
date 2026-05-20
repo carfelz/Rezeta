@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-20] — QA Audit, Clinical Usability Report and Context Sincronization
+
+### Fixed
+
+- `apps/web/src/components/consultations/VitalsSection.tsx` — Passed empty string instead of em-dash `—` when BMI is not computed to prevent Chrome console warnings about invalid number formats.
+
+### Added
+
+- `medical_recommendations.pdf` — Comprehensive clinical usability assessment, Dominican Republic localization review, and workflow safety report.
+- `technical_bugs.pdf` — Code audit report documenting the resolution of the 14 major bugs and outlining recommendations for remaining technical debt.
+- `GEMINI.md` — Project context and audit summary to maintain memory sync for Gemini.
+
+---
+
 ## [2026-05-19] — Modification tracking: protocol interactions feed pattern detection
 
 ### Added

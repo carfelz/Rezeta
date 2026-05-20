@@ -6,12 +6,22 @@ function renderTabs(defaultValue = 'tab1') {
   return render(
     <Tabs defaultValue={defaultValue}>
       <TabsList>
-        <TabsTrigger value="tab1" id="trigger-tab1">Tab Uno</TabsTrigger>
-        <TabsTrigger value="tab2" id="trigger-tab2">Tab Dos</TabsTrigger>
-        <TabsTrigger value="disabled" disabled id="trigger-disabled">Disabled</TabsTrigger>
+        <TabsTrigger value="tab1" id="trigger-tab1">
+          Tab Uno
+        </TabsTrigger>
+        <TabsTrigger value="tab2" id="trigger-tab2">
+          Tab Dos
+        </TabsTrigger>
+        <TabsTrigger value="disabled" disabled id="trigger-disabled">
+          Disabled
+        </TabsTrigger>
       </TabsList>
-      <TabsContent value="tab1" id="content-tab1">Content One</TabsContent>
-      <TabsContent value="tab2" id="content-tab2">Content Two</TabsContent>
+      <TabsContent value="tab1" id="content-tab1">
+        Content One
+      </TabsContent>
+      <TabsContent value="tab2" id="content-tab2">
+        Content Two
+      </TabsContent>
       <TabsContent value="disabled">Disabled content</TabsContent>
     </Tabs>,
   )

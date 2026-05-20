@@ -38,9 +38,7 @@ describe('InvoiceItemSchema', () => {
   })
 
   it('rejects description exceeding 500 chars', () => {
-    expect(() =>
-      InvoiceItemSchema.parse({ ...validItem, description: 'x'.repeat(501) }),
-    ).toThrow()
+    expect(() => InvoiceItemSchema.parse({ ...validItem, description: 'x'.repeat(501) })).toThrow()
   })
 
   it('rejects quantity of 0', () => {

@@ -1,6 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Archive, Trash, CheckCircle } from '@phosphor-icons/react'
-import { Modal, ModalTrigger, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalClose } from './Modal'
+import {
+  Modal,
+  ModalTrigger,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalClose,
+} from './Modal'
 import { Button } from './Button'
 import { Field } from './Input'
 import { Input } from './Input'
@@ -27,7 +35,8 @@ export const DestructiveAction: StoryObj = {
         />
         <ModalBody>
           <p className="text-[13px] font-sans text-n-700 leading-relaxed">
-            ¿Estás seguro de que deseas archivar a <strong>Ana María Reyes</strong>? El expediente quedará disponible pero no podrá ser modificado. Esta acción puede revertirse.
+            ¿Estás seguro de que deseas archivar a <strong>Ana María Reyes</strong>? El expediente
+            quedará disponible pero no podrá ser modificado. Esta acción puede revertirse.
           </p>
         </ModalBody>
         <ModalFooter>
@@ -45,7 +54,9 @@ export const DeleteAction: StoryObj = {
   render: () => (
     <Modal>
       <ModalTrigger asChild>
-        <Button variant="danger"><Trash /> Eliminar protocolo</Button>
+        <Button variant="danger">
+          <Trash /> Eliminar protocolo
+        </Button>
       </ModalTrigger>
       <ModalContent>
         <ModalHeader
@@ -56,7 +67,8 @@ export const DeleteAction: StoryObj = {
         />
         <ModalBody>
           <p className="text-[13px] font-sans text-n-700 leading-relaxed">
-            Se eliminará permanentemente el protocolo <strong>"Manejo de anafilaxia"</strong>. No podrá recuperarse.
+            Se eliminará permanentemente el protocolo <strong>"Manejo de anafilaxia"</strong>. No
+            podrá recuperarse.
           </p>
         </ModalBody>
         <ModalFooter>
@@ -77,10 +89,7 @@ export const FormModal: StoryObj = {
         <Button variant="primary">Nueva ubicación</Button>
       </ModalTrigger>
       <ModalContent size="lg">
-        <ModalHeader
-          title="Nueva ubicación"
-          subtitle="Agrega un centro médico donde consultas."
-        />
+        <ModalHeader title="Nueva ubicación" subtitle="Agrega un centro médico donde consultas." />
         <ModalBody>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Field label="Nombre del centro" required>
@@ -126,7 +135,8 @@ export const SuccessModal: StoryObj = {
         />
         <ModalBody>
           <p className="text-[13px] font-sans text-n-700 leading-relaxed">
-            RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes. Factura F-2026-01142 marcada como pagada.
+            RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes. Factura F-2026-01142 marcada
+            como pagada.
           </p>
         </ModalBody>
         <ModalFooter>

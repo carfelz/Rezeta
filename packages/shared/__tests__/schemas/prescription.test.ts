@@ -35,9 +35,7 @@ describe('PrescriptionItemSchema', () => {
   })
 
   it('rejects drug name exceeding 200 chars', () => {
-    expect(() =>
-      PrescriptionItemSchema.parse({ ...validItem, drug: 'x'.repeat(201) }),
-    ).toThrow()
+    expect(() => PrescriptionItemSchema.parse({ ...validItem, drug: 'x'.repeat(201) })).toThrow()
   })
 
   it('rejects missing dose', () => {
@@ -100,9 +98,7 @@ describe('CreatePrescriptionSchema', () => {
   })
 
   it('rejects notes exceeding 2000 chars', () => {
-    expect(() =>
-      CreatePrescriptionSchema.parse({ ...valid, notes: 'x'.repeat(2001) }),
-    ).toThrow()
+    expect(() => CreatePrescriptionSchema.parse({ ...valid, notes: 'x'.repeat(2001) })).toThrow()
   })
 
   it('accepts multiple items', () => {

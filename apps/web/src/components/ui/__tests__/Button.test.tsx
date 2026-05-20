@@ -96,7 +96,11 @@ describe('Button', () => {
   })
 
   it('passes additional HTML attributes', () => {
-    render(<Button data-testid="my-btn" type="submit">Submit</Button>)
+    render(
+      <Button data-testid="my-btn" type="submit">
+        Submit
+      </Button>,
+    )
     const btn = screen.getByTestId('my-btn')
     expect(btn).toHaveAttribute('type', 'submit')
   })

@@ -177,7 +177,9 @@ describe('ConsultationsRepository', () => {
     })
 
     it('includes optional fields when provided', async () => {
-      mockPrisma.consultation.create.mockResolvedValue(makeConsultationRow({ chiefComplaint: 'Fever' }))
+      mockPrisma.consultation.create.mockResolvedValue(
+        makeConsultationRow({ chiefComplaint: 'Fever' }),
+      )
       await repo.create('t1', 'u1', {
         patientId: 'p1',
         locationId: 'loc1',
@@ -202,7 +204,9 @@ describe('ConsultationsRepository', () => {
 
   describe('update', () => {
     it('updates consultation and returns mapped result', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(makeConsultationRow({ plan: 'Updated plan' }))
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ plan: 'Updated plan' }),
+      )
       const result = await repo.update('c1', 't1', { plan: 'Updated plan' } as never)
       expect(result.id).toBe('c1')
     })
@@ -355,7 +359,9 @@ describe('ConsultationsRepository', () => {
     })
 
     it('updates status when provided', async () => {
-      mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow({ status: 'completed' }))
+      mockPrisma.protocolUsage.update.mockResolvedValue(
+        makeProtocolUsageRow({ status: 'completed' }),
+      )
       await repo.updateProtocolUsage('pu1', 't1', { status: 'completed' } as never)
       const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
       expect(data.status).toBe('completed')
@@ -490,9 +496,17 @@ describe('ConsultationsRepository', () => {
     })
 
     it('maps protocolUsage with child usages', async () => {
-      const child = { id: 'pu2', protocolId: 'proto2', depth: 1, status: 'in_progress', protocol: { title: 'Child Protocol' } }
+      const child = {
+        id: 'pu2',
+        protocolId: 'proto2',
+        depth: 1,
+        status: 'in_progress',
+        protocol: { title: 'Child Protocol' },
+      }
       const usage = makeProtocolUsageRow({ childUsages: [child] })
-      mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow({ protocolUsages: [usage] }))
+      mockPrisma.consultation.findFirst.mockResolvedValue(
+        makeConsultationRow({ protocolUsages: [usage] }),
+      )
       const result = await repo.findById('c1', 't1')
       expect(result?.protocolUsages[0].childUsages).toHaveLength(1)
       expect(result?.protocolUsages[0].childUsages![0].protocolTitle).toBe('Child Protocol')
@@ -500,9 +514,14 @@ describe('ConsultationsRepository', () => {
 
     it('maps amendments in result', async () => {
       const amendment = {
-        id: 'amd1', consultationId: 'c1', amendmentNumber: 1,
-        amendedBy: 'u1', reason: 'Fix', content: {},
-        amendedAt: now, signedAt: null,
+        id: 'amd1',
+        consultationId: 'c1',
+        amendmentNumber: 1,
+        amendedBy: 'u1',
+        reason: 'Fix',
+        content: {},
+        amendedAt: now,
+        signedAt: null,
       }
       mockPrisma.consultation.findFirst.mockResolvedValue(
         makeConsultationRow({ amendments: [amendment] }),

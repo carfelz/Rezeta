@@ -25,14 +25,18 @@ export class ProtocolTypesRepository {
   async findByIdWithTemplate(
     id: string,
     tenantId: string,
-  ): Promise<(TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null> {
+  ): Promise<
+    (TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null
+  > {
     return this.prisma.protocolType.findFirst({
       where: { id, tenantId, deletedAt: null },
       include: {
         template: { select: { id: true, name: true, schema: true } },
         _count: { select: { protocols: { where: { deletedAt: null } } } },
       },
-    }) as Promise<(TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null>
+    }) as Promise<
+      (TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null
+    >
   }
 
   async findById(id: string, tenantId: string): Promise<TypeWithDetails | null> {

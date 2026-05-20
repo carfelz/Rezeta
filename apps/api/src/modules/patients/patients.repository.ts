@@ -15,7 +15,13 @@ export interface PatientListParams {
 export class PatientsRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async findMany({ tenantId, ownerId, search, cursor, limit = 50 }: PatientListParams): Promise<Patient[]> {
+  async findMany({
+    tenantId,
+    ownerId,
+    search,
+    cursor,
+    limit = 50,
+  }: PatientListParams): Promise<Patient[]> {
     return this.prisma.patient.findMany({
       where: {
         tenantId,

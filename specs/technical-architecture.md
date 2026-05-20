@@ -29,21 +29,21 @@
 
 ## 1. Stack Summary
 
-| Layer | Choice | Rationale |
-|-------|--------|-----------|
-| **Language** | TypeScript (end-to-end) | One type system across frontend and backend, shared types |
-| **Frontend** | React + Vite | Fast dev server, simple mental model, no SSR complexity needed |
-| **Backend** | Node.js + NestJS | Structured DI framework, decorators, excellent REST + validation, scales with codebase size |
-| **Database** | PostgreSQL on Google Cloud SQL | Managed, production-grade, supports JSONB & GIN indexes |
-| **ORM** | Prisma | Strong TypeScript integration, migrations, good mental model |
-| **Auth** | Firebase Authentication | Google-native on GCP, cheap, handles email/password + OAuth |
-| **API style** | REST over HTTPS (JSON) | Well-understood, easy to document and test |
-| **Hosting** | Google Cloud Platform | Cleaner DX than AWS, Vertex AI for future Claude integration |
-| **File storage** | Google Cloud Storage | Native GCP, signed URLs for secure access |
-| **Background jobs** | Cloud Tasks + Cloud Run workers | Native, scales to zero, simple to reason about |
-| **Email** | SendGrid or Resend | Transactional email, appointment reminders, invoices |
-| **Monitoring** | Cloud Logging + Sentry | Platform-native logs + error tracking |
-| **CI/CD** | GitHub Actions → Cloud Run | Straightforward, low-friction |
+| Layer               | Choice                          | Rationale                                                                                   |
+| ------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Language**        | TypeScript (end-to-end)         | One type system across frontend and backend, shared types                                   |
+| **Frontend**        | React + Vite                    | Fast dev server, simple mental model, no SSR complexity needed                              |
+| **Backend**         | Node.js + NestJS                | Structured DI framework, decorators, excellent REST + validation, scales with codebase size |
+| **Database**        | PostgreSQL on Google Cloud SQL  | Managed, production-grade, supports JSONB & GIN indexes                                     |
+| **ORM**             | Prisma                          | Strong TypeScript integration, migrations, good mental model                                |
+| **Auth**            | Firebase Authentication         | Google-native on GCP, cheap, handles email/password + OAuth                                 |
+| **API style**       | REST over HTTPS (JSON)          | Well-understood, easy to document and test                                                  |
+| **Hosting**         | Google Cloud Platform           | Cleaner DX than AWS, Vertex AI for future Claude integration                                |
+| **File storage**    | Google Cloud Storage            | Native GCP, signed URLs for secure access                                                   |
+| **Background jobs** | Cloud Tasks + Cloud Run workers | Native, scales to zero, simple to reason about                                              |
+| **Email**           | SendGrid or Resend              | Transactional email, appointment reminders, invoices                                        |
+| **Monitoring**      | Cloud Logging + Sentry          | Platform-native logs + error tracking                                                       |
+| **CI/CD**           | GitHub Actions → Cloud Run      | Straightforward, low-friction                                                               |
 
 ## 2. System Architecture
 
@@ -442,6 +442,7 @@ Frontend calls Firebase `signOut()`. Token becomes unusable on next request. No 
 ### Response Envelopes
 
 Success:
+
 ```json
 {
   "data": { ... }
@@ -449,6 +450,7 @@ Success:
 ```
 
 Error:
+
 ```json
 {
   "error": { "code": "...", "message": "...", "details": {} }
@@ -456,6 +458,7 @@ Error:
 ```
 
 Lists include pagination:
+
 ```json
 {
   "data": [ ... ],
@@ -763,14 +766,14 @@ Medical records retained for the legally required period (varies by jurisdiction
 
 Decisions we are explicitly not making yet — flagged so they are not forgotten:
 
-| Topic | Why Deferred | When to Revisit |
-|-------|--------------|-----------------|
-| Native mobile framework (Expo? Native? Capacitor?) | MVP is PWA | Before v2 planning |
-| Full RBAC matrix | Only `owner` and `doctor` in MVP | When multi-user ships |
-| Real-time collaboration in protocol editor | Single-user lock is enough for MVP | v2 |
-| Event-driven architecture / event bus | REST covers current needs | When cross-module events become common |
-| GraphQL / tRPC migration | REST is simpler to build and audit | Never, unless there's a compelling reason |
-| Self-hosted option for enterprise | Not needed at launch | Clinic tier sales conversations |
-| Kubernetes | Cloud Run is sufficient | Only if we outgrow Cloud Run |
-| Offline-first mode | Complex, not MVP-critical | v2 |
-| Microservices split | Modular monolith is sufficient; see Section 5 for the triggers that would justify extracting a module into its own service | When a trigger is met, not on a schedule |
+| Topic                                              | Why Deferred                                                                                                               | When to Revisit                           |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Native mobile framework (Expo? Native? Capacitor?) | MVP is PWA                                                                                                                 | Before v2 planning                        |
+| Full RBAC matrix                                   | Only `owner` and `doctor` in MVP                                                                                           | When multi-user ships                     |
+| Real-time collaboration in protocol editor         | Single-user lock is enough for MVP                                                                                         | v2                                        |
+| Event-driven architecture / event bus              | REST covers current needs                                                                                                  | When cross-module events become common    |
+| GraphQL / tRPC migration                           | REST is simpler to build and audit                                                                                         | Never, unless there's a compelling reason |
+| Self-hosted option for enterprise                  | Not needed at launch                                                                                                       | Clinic tier sales conversations           |
+| Kubernetes                                         | Cloud Run is sufficient                                                                                                    | Only if we outgrow Cloud Run              |
+| Offline-first mode                                 | Complex, not MVP-critical                                                                                                  | v2                                        |
+| Microservices split                                | Modular monolith is sufficient; see Section 5 for the triggers that would justify extracting a module into its own service | When a trigger is met, not on a schedule  |

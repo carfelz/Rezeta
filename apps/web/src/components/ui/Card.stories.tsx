@@ -54,10 +54,34 @@ export const CardItemList: StoryObj = {
   render: () => (
     <div style={{ width: 560, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {[
-        { initials: 'AM', name: 'Ana María Reyes', meta: '001-1234567-8 · 42 años', badge: 'active' as const, badgeLabel: 'Activo' },
-        { initials: 'JL', name: 'José Luis Martínez', meta: '001-9876543-2 · 58 años', badge: 'active' as const, badgeLabel: 'Activo' },
-        { initials: 'CR', name: 'Carmen Rosa Vásquez', meta: '402-2345678-9 · 35 años', badge: 'archived' as const, badgeLabel: 'Archivado' },
-        { initials: 'PM', name: 'Pedro Miguel Sánchez', meta: '001-3456789-0 · 67 años', badge: 'review' as const, badgeLabel: 'En revisión' },
+        {
+          initials: 'AM',
+          name: 'Ana María Reyes',
+          meta: '001-1234567-8 · 42 años',
+          badge: 'active' as const,
+          badgeLabel: 'Activo',
+        },
+        {
+          initials: 'JL',
+          name: 'José Luis Martínez',
+          meta: '001-9876543-2 · 58 años',
+          badge: 'active' as const,
+          badgeLabel: 'Activo',
+        },
+        {
+          initials: 'CR',
+          name: 'Carmen Rosa Vásquez',
+          meta: '402-2345678-9 · 35 años',
+          badge: 'archived' as const,
+          badgeLabel: 'Archivado',
+        },
+        {
+          initials: 'PM',
+          name: 'Pedro Miguel Sánchez',
+          meta: '001-3456789-0 · 67 años',
+          badge: 'review' as const,
+          badgeLabel: 'En revisión',
+        },
       ].map((p) => (
         <CardItem
           key={p.initials}
@@ -79,16 +103,53 @@ export const CardWithContent: StoryObj = {
         <CardTitle>Mi cuenta</CardTitle>
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.10em', color: 'var(--color-n-500)', marginBottom: 2 }}>Nombre</div>
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.10em',
+                color: 'var(--color-n-500)',
+                marginBottom: 2,
+              }}
+            >
+              Nombre
+            </div>
             <div style={{ fontSize: 14, color: 'var(--color-n-700)' }}>Dr. Juan García</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.10em', color: 'var(--color-n-500)', marginBottom: 2 }}>Especialidad</div>
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.10em',
+                color: 'var(--color-n-500)',
+                marginBottom: 2,
+              }}
+            >
+              Especialidad
+            </div>
             <div style={{ fontSize: 14, color: 'var(--color-n-700)' }}>Cardiología</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.10em', color: 'var(--color-n-500)', marginBottom: 2 }}>No. de licencia</div>
-            <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--color-n-600)' }}>CMP-12345</div>
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.10em',
+                color: 'var(--color-n-500)',
+                marginBottom: 2,
+              }}
+            >
+              No. de licencia
+            </div>
+            <div
+              style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--color-n-600)' }}
+            >
+              CMP-12345
+            </div>
           </div>
         </div>
       </Card>

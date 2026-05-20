@@ -5,7 +5,12 @@ import type { PatientsService } from '../patients.service.js'
 import type { Patient } from '@rezeta/db'
 import type { AuthUser } from '@rezeta/shared'
 
-const mockUser: AuthUser = { id: 'user-1', tenantId: 'tenant-1', email: 'doc@test.com', role: 'owner' }
+const mockUser: AuthUser = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'doc@test.com',
+  role: 'owner',
+}
 const tenantId = 'tenant-1'
 
 function makePatient(id = 'p1'): Patient {

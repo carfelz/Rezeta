@@ -85,9 +85,7 @@ describe('CreatePatientSchema', () => {
   })
 
   it('rejects invalid email', () => {
-    expect(() =>
-      CreatePatientSchema.parse({ fullName: 'Test', email: 'not-an-email' }),
-    ).toThrow()
+    expect(() => CreatePatientSchema.parse({ fullName: 'Test', email: 'not-an-email' })).toThrow()
   })
 
   it('accepts null for nullable optional fields', () => {
@@ -108,9 +106,7 @@ describe('CreatePatientSchema', () => {
   })
 
   it('rejects invalid documentType enum', () => {
-    expect(() =>
-      CreatePatientSchema.parse({ fullName: 'Test', documentType: 'ssn' }),
-    ).toThrow()
+    expect(() => CreatePatientSchema.parse({ fullName: 'Test', documentType: 'ssn' })).toThrow()
   })
 
   it('rejects documentNumber exceeding 30 chars', () => {

@@ -31,15 +31,11 @@ describe('OnboardingCustomTemplateSchema', () => {
   })
 
   it('rejects empty clientId', () => {
-    expect(() =>
-      OnboardingCustomTemplateSchema.parse({ ...validTemplate, clientId: '' }),
-    ).toThrow()
+    expect(() => OnboardingCustomTemplateSchema.parse({ ...validTemplate, clientId: '' })).toThrow()
   })
 
   it('rejects empty name', () => {
-    expect(() =>
-      OnboardingCustomTemplateSchema.parse({ ...validTemplate, name: '' }),
-    ).toThrow()
+    expect(() => OnboardingCustomTemplateSchema.parse({ ...validTemplate, name: '' })).toThrow()
   })
 
   it('rejects missing schema', () => {
@@ -71,9 +67,7 @@ describe('OnboardingCustomTypeSchema', () => {
   })
 
   it('rejects empty templateClientId', () => {
-    expect(() =>
-      OnboardingCustomTypeSchema.parse({ ...validType, templateClientId: '' }),
-    ).toThrow()
+    expect(() => OnboardingCustomTypeSchema.parse({ ...validType, templateClientId: '' })).toThrow()
   })
 })
 
@@ -96,15 +90,11 @@ describe('OnboardingCustomSchema', () => {
   })
 
   it('rejects empty templates array', () => {
-    expect(() =>
-      OnboardingCustomSchema.parse({ ...validInput, templates: [] }),
-    ).toThrow()
+    expect(() => OnboardingCustomSchema.parse({ ...validInput, templates: [] })).toThrow()
   })
 
   it('rejects empty types array', () => {
-    expect(() =>
-      OnboardingCustomSchema.parse({ ...validInput, types: [] }),
-    ).toThrow()
+    expect(() => OnboardingCustomSchema.parse({ ...validInput, types: [] })).toThrow()
   })
 
   it('accepts multiple templates and types', () => {

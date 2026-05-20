@@ -19,7 +19,8 @@ export const Success: Story = {
     variant: 'success',
     icon: <CheckCircle size={18} />,
     title: 'Pago recibido',
-    children: 'RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes. Factura F-2026-01142 marcada como pagada.',
+    children:
+      'RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes. Factura F-2026-01142 marcada como pagada.',
   },
 }
 
@@ -29,7 +30,8 @@ export const WarningStory: Story = {
     variant: 'warning',
     icon: <WarningIcon size={18} />,
     title: 'Revisión pendiente',
-    children: 'El protocolo "Dolor torácico agudo" tiene 3 bloques sin revisar desde la última actualización de guías ACC/AHA.',
+    children:
+      'El protocolo "Dolor torácico agudo" tiene 3 bloques sin revisar desde la última actualización de guías ACC/AHA.',
   },
 }
 
@@ -38,7 +40,8 @@ export const Danger: Story = {
     variant: 'danger',
     icon: <XCircle size={18} />,
     title: 'Contraindicación absoluta',
-    children: 'Amoxicilina registrada como alergia previa (anafilaxia, 2024). No prescribir sin evaluación especializada.',
+    children:
+      'Amoxicilina registrada como alergia previa (anafilaxia, 2024). No prescribir sin evaluación especializada.',
   },
 }
 
@@ -48,7 +51,8 @@ export const InfoVariant: Story = {
     variant: 'info',
     icon: <Info size={18} />,
     title: 'Nueva versión del protocolo',
-    children: 'Se publicó la v2.3 de "Manejo de anafilaxia en adultos". Tus copias de trabajo no se verán afectadas.',
+    children:
+      'Se publicó la v2.3 de "Manejo de anafilaxia en adultos". Tus copias de trabajo no se verán afectadas.',
   },
 }
 

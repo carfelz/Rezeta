@@ -28,7 +28,7 @@ const mockPatient = (overrides: Partial<Patient> = {}): Patient =>
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  } as Patient)
+  }) as Patient
 
 describe('PatientsService', () => {
   let repo: PatientsRepository
@@ -128,7 +128,9 @@ describe('PatientsService', () => {
       const patient = mockPatient({ fullName: 'María Actualizada' })
       vi.mocked(repo.findById).mockResolvedValue(mockPatient())
       vi.mocked(repo.update).mockResolvedValue(patient)
-      const result = await service.update('patient-id-1', 'tenant-1', { fullName: 'María Actualizada' })
+      const result = await service.update('patient-id-1', 'tenant-1', {
+        fullName: 'María Actualizada',
+      })
       expect(result.fullName).toBe('María Actualizada')
     })
 

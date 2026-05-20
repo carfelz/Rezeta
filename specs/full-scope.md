@@ -29,24 +29,25 @@
 **North Star:** Become the default operating system for ambulatory medical practice in LATAM.
 
 **What we're NOT (even at full scope):**
+
 - A hospital information system (HIS) for inpatient care
 - A standalone telemedicine platform
 - A pure insurance claim processor
 
 ## 2. User Personas
 
-| Persona | Description | Primary Needs |
-|---------|-------------|---------------|
-| **Solo Specialist** | Works at 2–4 centers; runs their own practice | Speed, multi-location, low overhead |
-| **Practice Owner** | Owns a small practice with 2–10 providers | Team coordination, shared resources, reporting |
-| **Clinic Administrator** | Manages operations at a medium clinic | Governance, compliance, financial control |
-| **Provider (employee)** | Doctor working for a clinic | Clinical tools, protocols, easy documentation |
-| **Nurse / Assistant** | Clinical support staff | Vitals entry, patient prep, follow-up |
-| **Secretary / Receptionist** | Front-desk staff | Scheduling, check-in, billing |
-| **Billing Clerk** | Financial operations | Invoicing, claims, collections |
-| **Patient** | End recipient of care | Booking, records access, communication |
-| **Medical Director** | Clinical leadership | Protocol governance, quality oversight |
-| **System Admin / IT** | Technical administration | User management, integrations, audit |
+| Persona                      | Description                                   | Primary Needs                                  |
+| ---------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| **Solo Specialist**          | Works at 2–4 centers; runs their own practice | Speed, multi-location, low overhead            |
+| **Practice Owner**           | Owns a small practice with 2–10 providers     | Team coordination, shared resources, reporting |
+| **Clinic Administrator**     | Manages operations at a medium clinic         | Governance, compliance, financial control      |
+| **Provider (employee)**      | Doctor working for a clinic                   | Clinical tools, protocols, easy documentation  |
+| **Nurse / Assistant**        | Clinical support staff                        | Vitals entry, patient prep, follow-up          |
+| **Secretary / Receptionist** | Front-desk staff                              | Scheduling, check-in, billing                  |
+| **Billing Clerk**            | Financial operations                          | Invoicing, claims, collections                 |
+| **Patient**                  | End recipient of care                         | Booking, records access, communication         |
+| **Medical Director**         | Clinical leadership                           | Protocol governance, quality oversight         |
+| **System Admin / IT**        | Technical administration                      | User management, integrations, audit           |
 
 ## 3. Module Map
 
@@ -80,12 +81,14 @@
 ### 4.1 Patient Management
 
 **Basic (MVP):**
+
 - Demographics, contact info, emergency contacts
 - Medical history (allergies, chronic conditions)
 - Document uploads (lab results, images)
 - Doctor-owned patient relationships
 
 **Full Scope:**
+
 - Family history tracking
 - Genetic predisposition flags
 - Vaccination records with due-date reminders
@@ -104,12 +107,14 @@
 ### 4.2 Appointments & Scheduling
 
 **Basic (MVP):**
+
 - Calendar view per doctor per location
 - Create, reschedule, cancel appointments
 - Location-aware conflict detection
 - Status tracking (scheduled → completed)
 
 **Full Scope:**
+
 - Recurring appointments
 - Waitlists with automatic promotion
 - Online self-booking by patients
@@ -130,12 +135,14 @@
 ### 4.3 Consultations (Electronic Health Records)
 
 **Basic (MVP):**
+
 - SOAP note structure (Subjective, Objective, Assessment, Plan)
 - Vitals capture
 - Free-text diagnoses
 - Sign & amend workflow for immutability
 
 **Full Scope:**
+
 - Customizable consultation templates per specialty
 - Voice-to-text for note dictation
 - AI-assisted note drafting from conversation
@@ -157,11 +164,13 @@
 ### 4.4 Prescriptions
 
 **Basic (MVP):**
+
 - Drug, dose, route, frequency, duration, instructions
 - Printable PDF with doctor credentials
 - Sign & amend workflow
 
 **Full Scope:**
+
 - Drug interaction checking
 - Allergy cross-checking
 - Dose calculation by weight/age (pediatrics)
@@ -178,6 +187,7 @@
 ### 4.5 Lab & Imaging Orders and Results
 
 **Not in MVP — full scope only:**
+
 - Order sets for common panels (CBC, metabolic, etc.)
 - Electronic order submission to labs
 - Results ingestion (manual upload + HL7/FHIR feeds)
@@ -192,6 +202,7 @@
 ### 4.6 Medical Documentation
 
 **Documents doctors need to produce:**
+
 - Prescriptions ✓ (own module)
 - Medical certificates (sick leave, fitness for work, travel)
 - Referral letters
@@ -207,6 +218,7 @@
 ### 4.7 Vaccinations
 
 **Not in MVP — dedicated module for pediatric/preventive practice:**
+
 - National vaccination schedule (DR, customizable per country)
 - Vaccine inventory tracking
 - Lot and expiration management
@@ -220,6 +232,7 @@
 This is the **strategic differentiator** of the product. See also future `protocol-template-schema.md`.
 
 ### 5.1 MVP (Lite)
+
 - Pre-built templates
 - Personal protocol library
 - Search and favorites
@@ -227,6 +240,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 5.2 Full Scope
 
 **Template Management:**
+
 - Create custom templates from scratch
 - Block-based editor (checklist, stepwise, decision branch, dosage table, alerts, references)
 - Required vs optional blocks
@@ -234,6 +248,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - Template versioning
 
 **Protocol Creation:**
+
 - Fill-in experience based on template schema
 - Rich text, tables, images, attachments
 - Cross-reference other protocols
@@ -241,6 +256,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - Embedded calculators (BMI, GFR, dosing)
 
 **Governance:**
+
 - Draft → Review → Approved workflow
 - Review cycles (auto-expire protocols needing renewal)
 - Multi-signer approval
@@ -249,6 +265,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - Protocol endorsements (by medical directors)
 
 **Sharing & Community:**
+
 - Private / practice-shared / public visibility levels
 - Fork public protocols into your own library
 - Attribution to original authors
@@ -258,6 +275,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - Verified by platform experts badge
 
 **Clinical Integration:**
+
 - Launch protocol from inside a consultation
 - Auto-document steps taken in SOAP note
 - Protocol adherence tracking
@@ -267,6 +285,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - Timer support (for timed interventions)
 
 **Analytics:**
+
 - Most-used protocols
 - Time-to-complete per protocol
 - Deviation patterns
@@ -278,11 +297,13 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.1 Multi-Location Management
 
 **Basic (MVP):**
+
 - Unlimited locations
 - Per-location fees and commissions
 - Location-aware scheduling
 
 **Full Scope:**
+
 - Location-specific branding on documents
 - Per-location working hours and holidays
 - Per-location tax configuration
@@ -294,11 +315,13 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.2 Billing & Invoicing
 
 **Basic (MVP):**
+
 - Invoice generation per consultation
 - Commission split per location
 - Payment tracking
 
 **Full Scope:**
+
 - Multiple payment methods (cash, card, transfer, check)
 - Partial payments and payment plans
 - Refunds and credits
@@ -314,6 +337,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.3 Insurance Claims
 
 **Not in MVP — major module for v2+:**
+
 - Pre-authorization workflows
 - Claim submission (ARS integration in DR)
 - Claim status tracking
@@ -327,6 +351,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.4 Financial Reports
 
 **Full Scope:**
+
 - Revenue by doctor, location, specialty, period
 - Commission reports for third-party centers
 - Accounts receivable aging
@@ -342,6 +367,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.5 Inventory Management
 
 **Not in MVP — for clinics with in-house pharmacy/supplies:**
+
 - Medication inventory with lot/expiration tracking
 - Medical supply tracking
 - Equipment tracking and maintenance schedules
@@ -355,6 +381,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.6 Staff & Role Management
 
 **Full Scope:**
+
 - Multi-user with granular permissions
 - Role templates (doctor, nurse, secretary, admin, billing)
 - Custom role creation
@@ -370,6 +397,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.7 Document Management
 
 **Full Scope:**
+
 - Centralized document library
 - Document templates (contracts, forms, HR)
 - Version control
@@ -382,6 +410,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 6.8 Commission & Revenue Sharing
 
 **Critical for DR market:**
+
 - Per-location commission percentages
 - Per-procedure commission overrides
 - Automatic commission calculation on invoice
@@ -395,6 +424,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.1 Patient Portal
 
 **Not in MVP:**
+
 - Secure login (OAuth, biometric on mobile)
 - View upcoming appointments
 - Request appointments / cancel
@@ -409,6 +439,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.2 Online Self-Booking
 
 **Not in MVP — major conversion driver:**
+
 - Public booking page per doctor
 - Real-time availability
 - Specialty and location filtering
@@ -420,6 +451,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.3 Telemedicine
 
 **Not in MVP:**
+
 - Built-in video consultation
 - Screen sharing for reviewing results
 - Recording (with consent)
@@ -431,6 +463,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.4 Patient Messaging
 
 **Not in MVP:**
+
 - Secure in-app messaging
 - WhatsApp Business API integration
 - SMS fallback
@@ -443,6 +476,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.5 Educational Content Delivery
 
 **Not in MVP:**
+
 - Patient education library
 - Doctor-curated content recommendations
 - Post-consultation care instructions
@@ -452,6 +486,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 7.6 Health Tracking
 
 **Not in MVP — wellness/chronic care focus:**
+
 - Patient-reported outcomes
 - Home vitals integration (BP cuffs, glucometers, wearables)
 - Symptom journals
@@ -464,6 +499,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 8.1 Practice Analytics
 
 **Full Scope:**
+
 - Daily/weekly/monthly dashboards
 - Appointment metrics (show rate, no-show, utilization)
 - Revenue trends
@@ -476,6 +512,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 8.2 Clinical Insights
 
 **Full Scope:**
+
 - Patient cohort analysis
 - Outcome tracking per protocol
 - Quality measures (e.g., HbA1c control rates for diabetics)
@@ -486,6 +523,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 8.3 Predictive & AI Features
 
 **Future:**
+
 - Appointment no-show prediction
 - Churn risk for patients
 - Revenue forecasting
@@ -497,6 +535,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 8.4 Benchmarking
 
 **Future:**
+
 - Anonymized peer comparisons
 - Specialty benchmarks (income, patient volume, outcomes)
 - Opt-in data contribution
@@ -505,6 +544,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 8.5 Custom Reports & BI
 
 **Future:**
+
 - Report builder interface
 - Saved reports with scheduled delivery
 - Data warehouse export
@@ -522,15 +562,18 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 9.2 Third-Party Integrations
 
 **Labs:**
+
 - Referencia Laboratorio Clínico (DR)
 - Amadita
 - Roche / other national networks
 
 **Pharmacies:**
+
 - Major DR pharmacy chains (Carol, Medicar, etc.)
 - E-prescription delivery
 
 **Insurance (ARS in DR):**
+
 - SeNaSa
 - Humano
 - Mapfre Salud
@@ -538,27 +581,32 @@ This is the **strategic differentiator** of the product. See also future `protoc
 - ARS Palic
 
 **Payment Processors:**
+
 - Azul (DR)
 - CardNet (DR)
 - Stripe (international)
 - PayPal
 
 **Calendars:**
+
 - Google Calendar
 - Outlook / Microsoft 365
 - Apple iCloud
 
 **Communication:**
+
 - WhatsApp Business API
 - SMS (Twilio, local providers)
 - Email (SendGrid, Postmark)
 
 **Accounting:**
+
 - QuickBooks
 - Xero
 - Contabilizalo (LATAM-specific)
 
 **Identity:**
+
 - Google SSO
 - Microsoft SSO
 - Apple Sign In
@@ -567,6 +615,7 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ### 9.3 API & Webhooks
 
 **Public API for integrations:**
+
 - REST API with OpenAPI spec
 - Webhook events for key actions
 - OAuth 2.0 authorization
@@ -720,9 +769,11 @@ This is the **strategic differentiator** of the product. See also future `protoc
 ## 13. Phased Roadmap
 
 ### Phase 1 — MVP (Months 0–6)
+
 See [`mvp-scope.md`](./mvp-scope.md). Solo specialist focus.
 
 ### Phase 2 — Practice Tier (Months 6–12)
+
 - Multi-user with roles
 - Shared resources (patients, protocols, schedules)
 - Basic analytics dashboard
@@ -733,6 +784,7 @@ See [`mvp-scope.md`](./mvp-scope.md). Solo specialist focus.
 - Basic telemedicine
 
 ### Phase 3 — Clinic Tier (Months 12–24)
+
 - Department and multi-location governance
 - Insurance claims module
 - Lab integrations (top DR labs)
@@ -744,6 +796,7 @@ See [`mvp-scope.md`](./mvp-scope.md). Solo specialist focus.
 - Compliance tooling
 
 ### Phase 4 — Enterprise & Intelligence (Months 24–36)
+
 - Hospital-grade features (but not HIS)
 - Predictive analytics and AI
 - Benchmarking network
@@ -753,6 +806,7 @@ See [`mvp-scope.md`](./mvp-scope.md). Solo specialist focus.
 - Public API and SDK
 
 ### Phase 5 — Platform (Months 36+)
+
 - Developer ecosystem
 - Vertical-specific configurations
 - AI-native features (voice-first documentation, ambient scribes)
