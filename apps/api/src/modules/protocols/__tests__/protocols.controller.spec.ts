@@ -11,6 +11,7 @@ const mockService = {
   getVersion: vi.fn(),
   restoreVersion: vi.fn(),
   setFavorite: vi.fn(),
+  archive: vi.fn(),
 }
 
 const now = new Date('2026-01-01T00:00:00Z')
@@ -154,5 +155,13 @@ describe('ProtocolsController', () => {
     mockService.setFavorite.mockResolvedValue(undefined)
     await controller.removeFavorite('p1', 't1')
     expect(mockService.setFavorite).toHaveBeenCalledWith('p1', 't1', false)
+  })
+
+  // ── archive ────────────────────────────────────────────────────────────────
+
+  it('archive: delegates to service.archive', async () => {
+    mockService.archive.mockResolvedValue(undefined)
+    await controller.archive('p1', 't1')
+    expect(mockService.archive).toHaveBeenCalledWith('p1', 't1')
   })
 })

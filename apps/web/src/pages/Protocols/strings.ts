@@ -20,4 +20,10 @@ export const protocolsStrings = {
   sortTitleDesc: 'Z → A',
   favoriteAdd: 'Añadir a favoritos',
   favoriteRemove: 'Quitar de favoritos',
+  archiveButton: 'Archivar protocolo',
+  archiveTitle: 'Archivar protocolo',
+  archiveBody: (title: string) =>
+    `¿Archivar "${title}"? El protocolo ya no aparecerá en la lista principal.`,
+  archiveConfirmButton: 'Archivar',
+  archivingButton: 'Archivando...',
 } as const

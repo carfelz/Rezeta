@@ -108,7 +108,7 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
     notes: row.notes,
     appliedAt: row.appliedAt.toISOString(),
     protocolTitle: row.protocol.title,
-    protocolTypeName: row.protocol.type.name,
+    protocolTypeName: row.protocol.type?.name ?? null,
     versionNumber: row.protocolVersion.versionNumber,
     childUsages:
       row.childUsages?.map((c) => ({

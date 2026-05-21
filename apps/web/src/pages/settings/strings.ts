@@ -11,6 +11,15 @@ export const settingsStrings = {
   accountSpecialtyLabel: 'Especialidad',
   accountLicenseLabel: 'No. de licencia',
 
+  // ── Profile edit ─────────────────────────────────────────────────────────────
+  profileEditTitle: 'Editar perfil',
+  editButton: 'Editar',
+  cancelButton: 'Cancelar',
+  saveButton: 'Guardar cambios',
+  savingButton: 'Guardando...',
+  notSet: 'Sin definir',
+  profileUpdateError: 'No se pudo actualizar el perfil. Intenta de nuevo.',
+
   // ── Menu links ────────────────────────────────────────────────────────────────
   locationsTitle: 'Ubicaciones',
   locationsDescription: 'Centros médicos y consultorios donde ejerces',
@@ -20,12 +29,6 @@ export const settingsStrings = {
   auditLogDescription: 'Historial de todas las acciones del sistema',
   schedulesTitle: 'Horario de disponibilidad',
   schedulesDescription: 'Bloques semanales y excepciones por ubicación',
-
-  // ── Design system ─────────────────────────────────────────────────────────────
-  designSystemPrototypeTitle: 'Prototipo de la aplicación',
-  designSystemPrototypeDescription: 'Fuente visual de verdad para cada pantalla del MVP',
-  designSystemReferenceTitle: 'Referencia de componentes',
-  designSystemReferenceDescription: 'Catálogo completo de componentes del sistema de diseño',
 } as const
 
 export const templatesStrings = {
@@ -163,6 +166,13 @@ export const locationsStrings = {
   deleteBody: (name: string) => `¿Eliminar ${name}? Esta acción no se puede deshacer.`,
   deleteConfirmButton: 'Eliminar ubicación',
   deletingButton: 'Eliminando...',
+  archiveButtonTitle: 'Archivar ubicación',
+  archiveTitle: 'Archivar ubicación',
+  archiveBody: (name: string) =>
+    `¿Archivar ${name}? La ubicación ya no aparecerá en tu agenda ni en nuevas citas.`,
+  archiveConfirmButton: 'Archivar',
+  archivingButton: 'Archivando...',
+  archiveError: 'No se puede archivar: la ubicación tiene citas próximas programadas.',
 } as const
 
 export const auditLogStrings = {

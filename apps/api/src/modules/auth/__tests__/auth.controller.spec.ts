@@ -85,10 +85,11 @@ describe('AuthController', () => {
     it('calls service.provision and returns toAuthUser result', async () => {
       const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
       const req = { ip: '127.0.0.1', headers: {} } as never
-      const result = await controller.provision(decoded, req)
+      const result = await controller.provision(decoded, req, {})
       expect(mockService.provision).toHaveBeenCalledWith(
         decoded,
         expect.objectContaining({ ip: '127.0.0.1' }),
+        undefined,
       )
       expect(mockService.toAuthUser).toHaveBeenCalledWith(baseUser)
       expect(result).toEqual(authUser)
@@ -100,19 +101,19 @@ describe('AuthController', () => {
         ip: '127.0.0.1',
         headers: { 'user-agent': 'Mozilla/5.0', 'x-request-id': 'req-123' },
       } as never
-      await controller.provision(decoded, req)
-      expect(mockService.provision).toHaveBeenCalledWith(decoded, {
-        ip: '127.0.0.1',
-        userAgent: 'Mozilla/5.0',
-        requestId: 'req-123',
-      })
+      await controller.provision(decoded, req, {})
+      expect(mockService.provision).toHaveBeenCalledWith(
+        decoded,
+        { ip: '127.0.0.1', userAgent: 'Mozilla/5.0', requestId: 'req-123' },
+        undefined,
+      )
     })
 
     it('omits ip/userAgent/requestId when absent', async () => {
       const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
       const req = { headers: {} } as never
-      await controller.provision(decoded, req)
-      expect(mockService.provision).toHaveBeenCalledWith(decoded, {})
+      await controller.provision(decoded, req, {})
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, {}, undefined)
     })
 
     it('omits user-agent when header is non-string array', async () => {
@@ -121,8 +122,26 @@ describe('AuthController', () => {
         ip: '127.0.0.1',
         headers: { 'user-agent': ['a', 'b'], 'x-request-id': ['x', 'y'] },
       } as never
-      await controller.provision(decoded, req)
-      expect(mockService.provision).toHaveBeenCalledWith(decoded, { ip: '127.0.0.1' })
+      await controller.provision(decoded, req, {})
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, { ip: '127.0.0.1' }, undefined)
+    })
+
+    it('passes profile fields when body contains fullName/specialty', async () => {
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      const req = { headers: {} } as never
+      await controller.provision(decoded, req, { fullName: 'Dr. García', specialty: 'Cardiología' })
+      expect(mockService.provision).toHaveBeenCalledWith(
+        decoded,
+        {},
+        { fullName: 'Dr. García', specialty: 'Cardiología' },
+      )
+    })
+
+    it('ignores non-string body values for profile fields', async () => {
+      const decoded = { uid: 'fb1', email: 'dr@test.com' } as never
+      const req = { headers: {} } as never
+      await controller.provision(decoded, req, { fullName: 123, specialty: null })
+      expect(mockService.provision).toHaveBeenCalledWith(decoded, {}, undefined)
     })
   })
 

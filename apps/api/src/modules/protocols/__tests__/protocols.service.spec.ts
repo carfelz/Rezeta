@@ -8,6 +8,7 @@ const mockRepo = {
   create: vi.fn(),
   list: vi.fn(),
   setFavorite: vi.fn(),
+  archive: vi.fn(),
   findById: vi.fn(),
   rename: vi.fn(),
   saveVersion: vi.fn(),
@@ -121,6 +122,22 @@ describe('ProtocolsService', () => {
       expect(result[0].blockCount).toBe(0)
     })
 
+    it('returns null typeId and typeName for blank protocols in list', async () => {
+      const listRow = {
+        id: 'proto-blank',
+        title: 'Blank',
+        status: 'draft',
+        isFavorite: false,
+        updatedAt: now,
+        type: null,
+        versions: [],
+      }
+      mockRepo.list.mockResolvedValue([listRow])
+      const result = await service.list('t1')
+      expect(result[0].typeId).toBeNull()
+      expect(result[0].typeName).toBeNull()
+    })
+
     it('computes blockCount from latest version content blocks array', async () => {
       const listRow = {
         id: 'proto-with-blocks',
@@ -229,6 +246,14 @@ describe('ProtocolsService', () => {
       const result = await service.getById('proto1', 't1')
       expect(result.currentVersion).toBeNull()
     })
+
+    it('returns null typeId and typeName when protocol has no type', async () => {
+      mockRepo.findById.mockResolvedValue({ ...protocolRow, typeId: null, type: null })
+      const result = await service.getById('proto1', 't1')
+      expect(result.typeId).toBeNull()
+      expect(result.typeName).toBeNull()
+      expect(result.templateSchema).toBeNull()
+    })
   })
 
   // ── rename ─────────────────────────────────────────────────────────────────
@@ -260,6 +285,16 @@ describe('ProtocolsService', () => {
       })
       expect(result.versionNumber).toBe(2)
       expect(result.createdAt).toBe(now.toISOString())
+    })
+
+    it('saves version for blank protocol (no type, empty template schema)', async () => {
+      mockRepo.findById.mockResolvedValue({ ...protocolRow, typeId: null, type: null })
+      mockRepo.saveVersion.mockResolvedValue(version)
+      const result = await service.saveVersion('proto1', 't1', 'u1', {
+        content: minimalContent,
+        publish: false,
+      })
+      expect(result.versionNumber).toBe(2)
     })
 
     it('throws BadRequestException for invalid content', async () => {
@@ -404,6 +439,45 @@ describe('ProtocolsService', () => {
       await expect(service.restoreVersion('proto1', 'ver1', 't1', 'u1')).rejects.toThrow(
         NotFoundException,
       )
+    })
+  })
+
+  // ── archive ────────────────────────────────────────────────────────────────
+
+  describe('archive', () => {
+    it('archives protocol successfully', async () => {
+      mockRepo.archive.mockResolvedValue(true)
+      await expect(service.archive('proto1', 't1')).resolves.toBeUndefined()
+      expect(mockRepo.archive).toHaveBeenCalledWith('proto1', 't1')
+    })
+
+    it('throws NotFoundException when protocol not found', async () => {
+      mockRepo.archive.mockResolvedValue(false)
+      await expect(service.archive('bad', 't1')).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  // ── create without type (scratch mode) ────────────────────────────────────
+
+  describe('create without typeId', () => {
+    it('creates with empty content when typeId is absent', async () => {
+      const version = {
+        id: 'ver1',
+        versionNumber: 1,
+        content: { version: '1.0', template_version: '1.0', blocks: [] },
+        changeSummary: null,
+        createdAt: now,
+      }
+      mockRepo.create.mockResolvedValue({
+        protocol: { ...protocolRow, typeId: null, type: null },
+        version,
+      })
+      const result = await service.create('t1', 'u1', { title: 'Blank Protocol' })
+      expect(mockTypesRepo.findByIdWithTemplate).not.toHaveBeenCalled()
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Blank Protocol', tags: [] }),
+      )
+      expect(result.typeId).toBeNull()
     })
   })
 })

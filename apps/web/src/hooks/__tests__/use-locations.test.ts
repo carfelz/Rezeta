@@ -19,6 +19,7 @@ import {
   useCreateLocation,
   useUpdateLocation,
   useDeleteLocation,
+  useArchiveLocation,
 } from '../locations/use-locations'
 
 const mockLocation = {
@@ -111,5 +112,18 @@ describe('useDeleteLocation', () => {
       await result.current.mutateAsync('loc-1')
     })
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/locations/loc-1')
+  })
+})
+
+describe('useArchiveLocation', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('patches archive endpoint and invalidates cache', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(undefined)
+    const { result } = renderHook(() => useArchiveLocation(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync('loc-1')
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/v1/locations/loc-1/archive', {})
   })
 })

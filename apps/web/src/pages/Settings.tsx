@@ -1,13 +1,121 @@
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { UpdateProfileSchema, type UpdateProfileDto } from '@rezeta/shared'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuthStore } from '@/store/auth.store'
+import { useUpdateProfile } from '@/hooks/users/use-update-profile'
 import { settingsStrings, templatesStrings, typesStrings } from './settings/strings'
-import { Button, Card, CardTitle } from '@/components/ui'
+import {
+  Button,
+  Card,
+  CardTitle,
+  Field,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Callout,
+} from '@/components/ui'
+
+function ProfileEditModal({ onClose }: { onClose: () => void }): JSX.Element {
+  const { user } = useAuth()
+  const mutation = useUpdateProfile()
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<UpdateProfileDto>({
+    resolver: zodResolver(UpdateProfileSchema),
+    defaultValues: {
+      fullName: user?.fullName ?? '',
+      specialty: user?.specialty ?? null,
+      licenseNumber: user?.licenseNumber ?? null,
+    },
+  })
+
+  async function onSubmit(data: UpdateProfileDto): Promise<void> {
+    setServerError(null)
+    try {
+      await mutation.mutateAsync(data)
+      onClose()
+    } catch {
+      setServerError(settingsStrings.profileUpdateError)
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <ModalContent>
+        <ModalHeader title={settingsStrings.profileEditTitle} />
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(onSubmit)(e)
+          }}
+        >
+          <ModalBody className="flex flex-col gap-4">
+            <Field
+              label={settingsStrings.accountNameLabel}
+              required
+              error={errors.fullName?.message}
+            >
+              <Input
+                type="text"
+                autoFocus
+                autoComplete="name"
+                error={!!errors.fullName}
+                {...register('fullName')}
+              />
+            </Field>
+            <Field label={settingsStrings.accountSpecialtyLabel} error={errors.specialty?.message}>
+              <Input
+                type="text"
+                autoComplete="organization-title"
+                error={!!errors.specialty}
+                {...register('specialty')}
+              />
+            </Field>
+            <Field
+              label={settingsStrings.accountLicenseLabel}
+              error={errors.licenseNumber?.message}
+            >
+              <Input type="text" error={!!errors.licenseNumber} {...register('licenseNumber')} />
+            </Field>
+            {serverError && (
+              <Callout variant="danger" icon={<i className="ph ph-warning" />}>
+                {serverError}
+              </Callout>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {settingsStrings.cancelButton}
+            </Button>
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? settingsStrings.savingButton : settingsStrings.saveButton}
+            </Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </Modal>
+  )
+}
 
 export function Settings(): JSX.Element {
   const { user } = useAuth()
   const { signOut } = useAuthStore()
   const navigate = useNavigate()
+  const [editingProfile, setEditingProfile] = useState(false)
 
   async function handleSignOut() {
     await signOut()
@@ -16,32 +124,42 @@ export function Settings(): JSX.Element {
 
   return (
     <div>
+      {editingProfile && <ProfileEditModal onClose={() => setEditingProfile(false)} />}
+
       <h1 className="text-h1 mb-6">{settingsStrings.pageTitle}</h1>
 
       {user && (
         <Card className="max-w-[560px] mb-6">
-          <CardTitle>{settingsStrings.accountSectionTitle}</CardTitle>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="flex items-start justify-between mb-4">
+            <CardTitle>{settingsStrings.accountSectionTitle}</CardTitle>
+            <Button variant="secondary" size="sm" onClick={() => setEditingProfile(true)}>
+              <i className="ph ph-pencil mr-1.5" />
+              {settingsStrings.editButton}
+            </Button>
+          </div>
+          <div className="flex flex-col gap-3">
             <div>
               <span className="text-overline">{settingsStrings.accountNameLabel}</span>
-              <div className="text-body">{user.fullName}</div>
+              <div className="text-body">
+                {user.fullName ?? <span className="text-n-400">{settingsStrings.notSet}</span>}
+              </div>
             </div>
             <div>
               <span className="text-overline">{settingsStrings.accountEmailLabel}</span>
               <div className="text-body">{user.email}</div>
             </div>
-            {user.specialty && (
+            {user.specialty ? (
               <div>
                 <span className="text-overline">{settingsStrings.accountSpecialtyLabel}</span>
                 <div className="text-body">{user.specialty}</div>
               </div>
-            )}
-            {user.licenseNumber && (
+            ) : null}
+            {user.licenseNumber ? (
               <div>
                 <span className="text-overline">{settingsStrings.accountLicenseLabel}</span>
                 <div className="text-body text-mono">{user.licenseNumber}</div>
               </div>
-            )}
+            ) : null}
           </div>
         </Card>
       )}
@@ -93,42 +211,12 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/horarios"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-[100ms]"
         >
           <i className="ph ph-calendar-check text-[18px] text-p-500" />
           <div>
             <div className="text-[13px] font-semibold">{settingsStrings.schedulesTitle}</div>
             <div className="text-[12px] text-n-500">{settingsStrings.schedulesDescription}</div>
-          </div>
-          <i className="ph ph-caret-right ml-auto text-n-400" />
-        </Link>
-        <Link
-          to="/ajustes/design-system/prototype"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
-        >
-          <i className="ph ph-monitor text-[18px] text-p-500" />
-          <div>
-            <div className="text-[13px] font-semibold">
-              {settingsStrings.designSystemPrototypeTitle}
-            </div>
-            <div className="text-[12px] text-n-500">
-              {settingsStrings.designSystemPrototypeDescription}
-            </div>
-          </div>
-          <i className="ph ph-caret-right ml-auto text-n-400" />
-        </Link>
-        <Link
-          to="/ajustes/design-system/reference"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-[100ms]"
-        >
-          <i className="ph ph-squares-four text-[18px] text-p-500" />
-          <div>
-            <div className="text-[13px] font-semibold">
-              {settingsStrings.designSystemReferenceTitle}
-            </div>
-            <div className="text-[12px] text-n-500">
-              {settingsStrings.designSystemReferenceDescription}
-            </div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>

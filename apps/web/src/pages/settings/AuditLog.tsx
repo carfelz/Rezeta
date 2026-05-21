@@ -474,7 +474,7 @@ export function AuditLog(): JSX.Element {
                 {data!.data.map((item) => {
                   const actorLabel =
                     item.actorType === 'user'
-                      ? (item.actor?.fullName ?? item.actor?.email ?? auditLogStrings.actorUser)
+                      ? (item.actor?.fullName ?? item.actor?.email ?? auditLogStrings.actorUnknown)
                       : (ACTOR_TYPE_LABELS[item.actorType] ?? item.actorType)
 
                   const isSelected = selectedItem?.id === item.id
@@ -504,11 +504,19 @@ export function AuditLog(): JSX.Element {
                       <td className="px-4 py-3 text-[13px] text-n-600">
                         {item.entityType ? (
                           <span>
-                            <span className="font-medium text-n-800">{item.entityType}</span>
-                            {item.entityId && (
-                              <span className="font-mono text-[11px] text-n-400 ml-1.5">
-                                {item.entityId.slice(0, 8)}…
+                            {typeof item.metadata?.entityName === 'string' ? (
+                              <span className="font-medium text-n-800">
+                                {item.metadata.entityName}
                               </span>
+                            ) : (
+                              <>
+                                <span className="font-medium text-n-800">{item.entityType}</span>
+                                {item.entityId && (
+                                  <span className="font-mono text-[11px] text-n-400 ml-1.5">
+                                    {item.entityId.slice(0, 8)}…
+                                  </span>
+                                )}
+                              </>
                             )}
                           </span>
                         ) : (

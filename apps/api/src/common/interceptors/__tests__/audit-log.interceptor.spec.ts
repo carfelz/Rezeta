@@ -179,4 +179,42 @@ describe('AuditLogInterceptor', () => {
     const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
     expect(event['requestId']).toBe('req-abc-123')
   })
+
+  it('resolves action as "archive" for PATCH /archive path', async () => {
+    const req = makeRequest({
+      method: 'PATCH',
+      path: '/v1/locations/abc-123/archive',
+      params: { id: 'abc-123' },
+    })
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler()))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['action']).toBe('archive')
+  })
+
+  it('extracts entityName from response body name field', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/locations', params: {} })
+    const handler = makeHandler({ id: 'loc-1', name: 'Clínica Central', tenantId: 't1' })
+    await firstValueFrom(interceptor.intercept(makeContext(req), handler))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect((event['metadata'] as Record<string, unknown>)?.['entityName']).toBe('Clínica Central')
+  })
+
+  it('extracts entityName from response body fullName field', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/patients', params: {} })
+    const handler = makeHandler({ id: 'p1', fullName: 'María García', tenantId: 't1' })
+    await firstValueFrom(interceptor.intercept(makeContext(req), handler))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect((event['metadata'] as Record<string, unknown>)?.['entityName']).toBe('María García')
+  })
+
+  it('omits entityName when response has no name-like field', async () => {
+    const req = makeRequest()
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler({ id: 'x' })))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['metadata']).toBeUndefined()
+  })
 })

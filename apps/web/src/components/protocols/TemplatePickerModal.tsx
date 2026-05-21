@@ -54,27 +54,39 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
   const { mutate: createProtocol, isPending } = useCreateProtocol()
 
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
+  const [scratchMode, setScratchMode] = useState(false)
   const [title, setTitle] = useState('')
 
-  const canSubmit = !!selectedTypeId && title.trim().length >= 2 && !isPending
+  const canSubmit = (!!selectedTypeId || scratchMode) && title.trim().length >= 2 && !isPending
 
   const handleClose = () => {
     setSelectedTypeId(null)
+    setScratchMode(false)
     setTitle('')
     onClose()
   }
 
   const handleCreate = () => {
-    if (!canSubmit || !selectedTypeId) return
-    createProtocol(
-      { typeId: selectedTypeId, title: title.trim() },
-      {
-        onSuccess: (data) => {
-          handleClose()
-          void navigate(`/protocolos/${data.id}/edit`)
-        },
+    if (!canSubmit) return
+    const dto = scratchMode
+      ? { title: title.trim() }
+      : { typeId: selectedTypeId!, title: title.trim() }
+    createProtocol(dto, {
+      onSuccess: (data) => {
+        handleClose()
+        void navigate(`/protocolos/${data.id}/edit`)
       },
-    )
+    })
+  }
+
+  const handleSelectType = (id: string) => {
+    setSelectedTypeId(id)
+    setScratchMode(false)
+  }
+
+  const handleSelectScratch = () => {
+    setScratchMode(true)
+    setSelectedTypeId(null)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -118,9 +130,22 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
                     key={type.id}
                     type={type}
                     selected={selectedTypeId === type.id}
-                    onSelect={() => setSelectedTypeId(type.id)}
+                    onSelect={() => handleSelectType(type.id)}
                   />
                 ))}
+                <SelectableCard
+                  density="large"
+                  state={scratchMode ? 'selected' : 'default'}
+                  onClick={handleSelectScratch}
+                  className="flex-col items-start"
+                >
+                  <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">
+                    {blockEditorStrings.typePickerScratch}
+                  </span>
+                  <Caption tone="muted" size="sm" as="span" className="block mt-1">
+                    {blockEditorStrings.typePickerScratchDescription}
+                  </Caption>
+                </SelectableCard>
               </div>
               <Field label={blockEditorStrings.typePickerNameLabel} required>
                 <Input

@@ -461,7 +461,7 @@ model ProtocolType {
 model Protocol {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
-  typeId           String    @map("type_id") @db.Uuid
+  typeId           String?   @map("type_id") @db.Uuid
   title            String    @db.VarChar(300)
   description      String?   @db.Text
   specialty        String?   @db.VarChar(100)
@@ -477,7 +477,7 @@ model Protocol {
   deletedAt        DateTime? @map("deleted_at")
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  type        ProtocolType         @relation(fields: [typeId], references: [id])
+  type        ProtocolType?        @relation(fields: [typeId], references: [id])
   creator     User                 @relation("ProtocolCreator", fields: [createdBy], references: [id])
   versions    ProtocolVersion[]
   usages      ProtocolUsage[]

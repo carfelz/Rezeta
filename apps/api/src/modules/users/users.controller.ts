@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Inject, Patch, UsePipes } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Patch,
+  UsePipes,
+} from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger'
 import {
+  UpdateProfileSchema,
   UpdateUserPreferencesSchema,
   type AuthUser,
+  type UpdateProfileDto,
   type UpdateUserPreferencesDto,
   type UserPreferences,
 } from '@rezeta/shared'
@@ -17,6 +28,15 @@ import { UsersService } from './users.service.js'
 @Controller('v1/users/me')
 export class UsersController {
   constructor(@Inject(UsersService) private svc: UsersService) {}
+
+  @Patch('profile')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
+  @ApiOperation({ summary: "Update the current user's profile (name, specialty, license)" })
+  @ApiResponse({ status: 204 })
+  async updateProfile(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto): Promise<void> {
+    await this.svc.updateProfile(user.id, user.tenantId, dto)
+  }
 
   @Get('preferences')
   @ApiOperation({ summary: "Read the current user's UI preferences" })

@@ -33,7 +33,10 @@ export function Signup(): JSX.Element {
   async function onSubmit(data: SignUpDto) {
     setServerError(null)
     try {
-      await signUp(data.email, data.password)
+      await signUp(data.email, data.password, {
+        fullName: data.fullName,
+        ...(data.specialty !== undefined ? { specialty: data.specialty } : {}),
+      })
       const redirectTo = searchParams.get('redirectTo')
       const destination = isSafeRedirect(redirectTo) ? redirectTo : '/dashboard'
       void navigate(destination, { replace: true })
@@ -45,7 +48,7 @@ export function Signup(): JSX.Element {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
-      <Card className="w-full max-w-[400px]">
+      <Card className="w-full max-w-[440px]">
         <div className="mb-6 text-center">
           <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mx-auto mb-4">
             R
@@ -61,7 +64,30 @@ export function Signup(): JSX.Element {
           className="flex flex-col gap-4"
           noValidate
         >
-          <Field label={signupStrings.fieldEmail} error={errors.email?.message}>
+          <Field label={signupStrings.fieldFullName} required error={errors.fullName?.message}>
+            <Input
+              id="signup-fullname"
+              type="text"
+              error={!!errors.fullName}
+              placeholder={signupStrings.fieldFullNamePlaceholder}
+              autoComplete="name"
+              autoFocus
+              {...register('fullName')}
+            />
+          </Field>
+
+          <Field label={signupStrings.fieldSpecialty} error={errors.specialty?.message}>
+            <Input
+              id="signup-specialty"
+              type="text"
+              error={!!errors.specialty}
+              placeholder={signupStrings.fieldSpecialtyPlaceholder}
+              autoComplete="organization-title"
+              {...register('specialty')}
+            />
+          </Field>
+
+          <Field label={signupStrings.fieldEmail} required error={errors.email?.message}>
             <Input
               id="signup-email"
               type="email"
@@ -72,7 +98,12 @@ export function Signup(): JSX.Element {
             />
           </Field>
 
-          <Field label={signupStrings.fieldPassword} error={errors.password?.message}>
+          <Field
+            label={signupStrings.fieldPassword}
+            required
+            helper={signupStrings.fieldPasswordHint}
+            error={errors.password?.message}
+          >
             <Input
               id="signup-password"
               type="password"
@@ -83,7 +114,11 @@ export function Signup(): JSX.Element {
             />
           </Field>
 
-          <Field label={signupStrings.fieldConfirmPassword} error={errors.confirmPassword?.message}>
+          <Field
+            label={signupStrings.fieldConfirmPassword}
+            required
+            error={errors.confirmPassword?.message}
+          >
             <Input
               id="signup-confirm"
               type="password"

@@ -3,6 +3,7 @@ import type { User } from '@rezeta/db'
 import {
   ErrorCode,
   UserPreferencesSchema,
+  type UpdateProfileDto,
   type UpdateUserPreferencesDto,
   type UserPreferences,
 } from '@rezeta/shared'
@@ -21,6 +22,15 @@ export class UsersService {
       })
     }
     return user
+  }
+
+  async updateProfile(id: string, tenantId: string, dto: UpdateProfileDto): Promise<void> {
+    await this.getById(id, tenantId)
+    await this.repository.updateProfile(id, tenantId, {
+      fullName: dto.fullName,
+      specialty: dto.specialty,
+      licenseNumber: dto.licenseNumber,
+    })
   }
 
   async getPreferences(id: string, tenantId: string): Promise<UserPreferences> {

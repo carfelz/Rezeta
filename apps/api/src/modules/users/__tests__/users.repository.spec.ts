@@ -12,6 +12,7 @@ const mockPrisma = {
   user: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
+    updateMany: vi.fn(),
   },
   $transaction: vi.fn((cb: (tx: typeof mockTx) => unknown) => cb(mockTx)),
 }
@@ -50,6 +51,37 @@ describe('UsersRepository', () => {
     it('returns null when not found', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null)
       expect(await repo.findById('none', 't1')).toBeNull()
+    })
+  })
+
+  // ── updateProfile ─────────────────────────────────────────────────────────
+
+  describe('updateProfile', () => {
+    it('calls updateMany with correct tenant filter and profile data', async () => {
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 })
+      await repo.updateProfile('u1', 't1', {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+        licenseNumber: '1234-DR',
+      })
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'u1', tenantId: 't1', deletedAt: null },
+        data: { fullName: 'Dr. García', specialty: 'Cardiología', licenseNumber: '1234-DR' },
+      })
+    })
+
+    it('allows null specialty and licenseNumber', async () => {
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 })
+      await repo.updateProfile('u1', 't1', {
+        fullName: 'Dr. García',
+        specialty: null,
+        licenseNumber: null,
+      })
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ specialty: null, licenseNumber: null }),
+        }),
+      )
     })
   })
 
@@ -104,6 +136,31 @@ describe('UsersRepository', () => {
           }),
         }),
       )
+    })
+
+    it('saves profile fields on first creation when provided', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null)
+      const newUser = { ...existingUser, fullName: 'Dr. García', specialty: 'Cardiología' }
+      mockTx.tenant.create.mockResolvedValue({ id: 't1' })
+      mockTx.user.create.mockResolvedValue(newUser)
+
+      await repo.provisionUser(verified, { fullName: 'Dr. García', specialty: 'Cardiología' })
+      expect(mockTx.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ fullName: 'Dr. García', specialty: 'Cardiología' }),
+        }),
+      )
+    })
+
+    it('omits profile fields when not provided', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null)
+      mockTx.tenant.create.mockResolvedValue({ id: 't1' })
+      mockTx.user.create.mockResolvedValue(existingUser)
+
+      await repo.provisionUser(verified)
+      const callData = mockTx.user.create.mock.calls[0][0].data as Record<string, unknown>
+      expect(callData).not.toHaveProperty('fullName')
+      expect(callData).not.toHaveProperty('specialty')
     })
 
     it('handles empty email gracefully (uses empty string)', async () => {

@@ -110,4 +110,22 @@ describe('useAuthStore — internal setters', () => {
     act(() => result.current.setPreferences({ consultationViewMode: 'canvas' }))
     expect(result.current.user).toBeNull()
   })
+
+  it('setUser replaces the cached user in state', () => {
+    const { result } = renderHook(() => useAuthStore())
+    const user = {
+      id: 'u2',
+      externalUid: 'f2',
+      tenantId: 't2',
+      email: 'new@rezeta.app',
+      fullName: 'Dr. New',
+      role: 'owner' as const,
+      specialty: 'Neurología',
+      licenseNumber: null,
+      tenantSeededAt: null,
+    }
+    act(() => result.current.setUser(user))
+    expect(result.current.user?.email).toBe('new@rezeta.app')
+    expect(result.current.user?.specialty).toBe('Neurología')
+  })
 })

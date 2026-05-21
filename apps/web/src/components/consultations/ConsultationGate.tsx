@@ -85,7 +85,7 @@ export function ConsultationGate({
   const buckets = useMemo(() => {
     const map = new Map<string, number>()
     for (const p of populatedProtocols) {
-      map.set(p.typeName, (map.get(p.typeName) ?? 0) + 1)
+      map.set(p.typeName ?? '', (map.get(p.typeName ?? '') ?? 0) + 1)
     }
     return Array.from(map.entries())
       .map(([name, count]) => ({ name, count }))
@@ -97,7 +97,7 @@ export function ConsultationGate({
     if (search.trim().length < 2) return []
     const q = search.toLowerCase()
     return allProtocols.filter(
-      (p) => p.title.toLowerCase().includes(q) || p.typeName.toLowerCase().includes(q),
+      (p) => p.title.toLowerCase().includes(q) || (p.typeName ?? '').toLowerCase().includes(q),
     )
   }, [search, allProtocols])
 
@@ -187,7 +187,10 @@ export function ConsultationGate({
                   onClick={() => onSelect(p.id)}
                 >
                   <i
-                    className={cn('ph text-[14px] text-n-500 shrink-0', iconForType(p.typeName))}
+                    className={cn(
+                      'ph text-[14px] text-n-500 shrink-0',
+                      iconForType(p.typeName ?? ''),
+                    )}
                   />
                   <span className="text-[13px] text-n-800 flex-1 truncate">{p.title}</span>
                   <span className="font-mono text-[11px] text-n-400">{p.typeName}</span>

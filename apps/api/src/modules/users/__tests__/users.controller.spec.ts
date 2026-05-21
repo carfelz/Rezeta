@@ -3,6 +3,7 @@ import type { AuthUser } from '@rezeta/shared'
 import { UsersController } from '../users.controller.js'
 
 const mockSvc = {
+  updateProfile: vi.fn(),
   getPreferences: vi.fn(),
   updatePreferences: vi.fn(),
 }
@@ -26,6 +27,16 @@ describe('UsersController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     controller = new UsersController(mockSvc as never)
+  })
+
+  describe('updateProfile', () => {
+    it('delegates to service and returns void', async () => {
+      mockSvc.updateProfile.mockResolvedValue(undefined)
+      const dto = { fullName: 'Dr. García', specialty: 'Cardiología', licenseNumber: null }
+      const result = await controller.updateProfile(user, dto)
+      expect(result).toBeUndefined()
+      expect(mockSvc.updateProfile).toHaveBeenCalledWith('u1', 't1', dto)
+    })
   })
 
   describe('getPreferences', () => {

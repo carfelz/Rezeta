@@ -65,7 +65,7 @@ export interface ConsultationProtocolUsage {
   notes: string | null
   appliedAt: string
   protocolTitle: string
-  protocolTypeName: string
+  protocolTypeName: string | null
   versionNumber: number
   childUsages?: Array<{
     id: string

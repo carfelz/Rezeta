@@ -1,8 +1,16 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthStore } from '@/store/auth.store'
 import { sidebarStrings } from './strings'
+
+interface SidebarProps {
+  open: boolean
+  onClose: () => void
+}
 
 interface NavItem {
   to: string
@@ -97,41 +105,108 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
   )
 }
 
-export function Sidebar(): JSX.Element {
+export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
   const { user } = useAuth()
+  const { signOut } = useAuthStore()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    onClose()
+  }, [pathname])
+
+  async function handleSignOut(): Promise<void> {
+    await signOut()
+    void navigate('/login', { replace: true })
+  }
 
   return (
-    <nav className="fixed left-0 top-0 w-sidebar h-screen bg-n-25 border-r border-n-200 flex flex-col overflow-y-auto z-40">
-      <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
-        <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
-          R
-        </div>
-        <span className="text-[18px] font-serif font-medium text-n-900 tracking-[-0.01em]">
-          Rezeta
-        </span>
-      </div>
-
-      <div className="flex-1 pt-4">
-        <NavGroup label={sidebarStrings.navTodayLabel} items={NAV_HOY} />
-        <NavGroup label={sidebarStrings.navClinicalLabel} items={NAV_CLINICO} />
-        <NavGroup label={sidebarStrings.navAdminLabel} items={NAV_ADMIN} />
-      </div>
-
-      {user && (
-        <div className="shrink-0 border-t border-n-100 py-3">
-          <div className="flex items-center gap-3 px-5 py-2 hover:bg-n-50 transition-colors duration-[100ms] cursor-pointer">
-            <Avatar initials={initials(user.fullName)} size="sm" />
-            <div className="flex-1 min-w-0">
-              <div className="text-[12.5px] font-sans font-semibold text-n-800 truncate">
-                {user.fullName}
-              </div>
-              <Caption tone="neutral" size="xs" as="div">
-                {user.specialty ?? sidebarStrings.defaultSpecialty}
-              </Caption>
-            </div>
-          </div>
-        </div>
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
       )}
-    </nav>
+      <nav
+        className={cn(
+          'fixed left-0 top-0 w-sidebar h-screen bg-n-25 border-r border-n-200 flex flex-col overflow-y-auto z-40 transition-transform duration-200',
+          'lg:translate-x-0',
+          open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+        )}
+      >
+        <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
+          <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
+            R
+          </div>
+          <span className="text-[18px] font-serif font-medium text-n-900 tracking-[-0.01em]">
+            Rezeta
+          </span>
+        </div>
+
+        <div className="flex-1 pt-4">
+          <NavGroup label={sidebarStrings.navTodayLabel} items={NAV_HOY} />
+          <NavGroup label={sidebarStrings.navClinicalLabel} items={NAV_CLINICO} />
+          <NavGroup label={sidebarStrings.navAdminLabel} items={NAV_ADMIN} />
+        </div>
+
+        {user && (
+          <div className="shrink-0 border-t border-n-100 py-3">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-3 px-5 py-2 hover:bg-n-50 transition-colors duration-[100ms] cursor-pointer"
+                  aria-label={sidebarStrings.userMenuLabel}
+                >
+                  <Avatar initials={initials(user.fullName)} size="sm" />
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="text-[12.5px] font-sans font-semibold text-n-800 truncate">
+                      {user.fullName ?? sidebarStrings.defaultName}
+                    </div>
+                    <Caption tone="neutral" size="xs" as="div">
+                      {user.specialty ?? sidebarStrings.defaultSpecialty}
+                    </Caption>
+                  </div>
+                  <i className="ph ph-caret-up-down text-n-400 text-[14px] shrink-0" />
+                </button>
+              </DropdownMenu.Trigger>
+
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  side="top"
+                  align="start"
+                  sideOffset={4}
+                  className="z-50 min-w-[200px] bg-n-0 border border-n-200 rounded-md shadow-floating py-1 animate-in fade-in-0 zoom-in-95"
+                >
+                  <DropdownMenu.Item asChild>
+                    <NavLink
+                      to="/ajustes"
+                      className="flex items-center gap-2 px-3 py-2 text-[13px] font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-[100ms]"
+                    >
+                      <i className="ph ph-gear-six text-[15px] text-n-500" />
+                      {sidebarStrings.userMenuSettings}
+                    </NavLink>
+                  </DropdownMenu.Item>
+
+                  <DropdownMenu.Separator className="my-1 h-px bg-n-100" />
+
+                  <DropdownMenu.Item
+                    className="flex items-center gap-2 px-3 py-2 text-[13px] font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none transition-colors duration-[100ms]"
+                    onSelect={() => {
+                      void handleSignOut()
+                    }}
+                  >
+                    <i className="ph ph-sign-out text-[15px] text-n-500" />
+                    {sidebarStrings.userMenuSignOut}
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
+        )}
+      </nav>
+    </>
   )
 }

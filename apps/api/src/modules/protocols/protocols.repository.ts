@@ -23,7 +23,7 @@ export class ProtocolsRepository {
     tenantId: string
     title: string
     createdBy: string
-    typeId: string
+    typeId?: string
     tags?: string[]
     content: unknown
   }): Promise<ProtocolCreateResult> {
@@ -33,7 +33,7 @@ export class ProtocolsRepository {
           tenantId: data.tenantId,
           title: data.title,
           createdBy: data.createdBy,
-          typeId: data.typeId,
+          ...(data.typeId !== undefined ? { typeId: data.typeId } : {}),
           tags: data.tags ?? [],
           status: 'draft',
         },
@@ -132,6 +132,15 @@ export class ProtocolsRepository {
     })
     if (!existing) return false
     await this.prisma.protocol.update({ where: { id }, data: { isFavorite } })
+    return true
+  }
+
+  async archive(id: string, tenantId: string): Promise<boolean> {
+    const existing = await this.prisma.protocol.findFirst({
+      where: { id, tenantId, deletedAt: null },
+    })
+    if (!existing) return false
+    await this.prisma.protocol.update({ where: { id }, data: { status: 'archived' } })
     return true
   }
 

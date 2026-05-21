@@ -69,6 +69,11 @@ export const protocolEditorStrings = {
   draftDiscard: 'Descartar',
   navigateAway: 'Tienes cambios sin guardar. ¿Descartar y salir?',
 
+  // ── Mobile gate ───────────────────────────────────────────────────────────────
+  mobileGateTitle: 'Editor no disponible en móvil',
+  mobileGateBody:
+    'El editor de protocolos requiere una pantalla más grande. Usa un computador o tablet horizontal.',
+
   // ── Shared with viewer (not found / no content) ───────────────────────────────
   notFound: 'Protocolo no encontrado.',
   noContent: 'Este protocolo no tiene contenido todavía.',

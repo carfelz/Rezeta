@@ -235,7 +235,7 @@ export const ProtocolContentSchema = z.object({
 // ─── Request Schemas ─────────────────────────────────────────────────────────
 
 export const CreateProtocolSchema = z.object({
-  typeId: z.string().uuid(),
+  typeId: z.string().uuid().optional(),
   title: z.string().min(2).max(300),
 })
 
@@ -322,8 +322,8 @@ export const ProtocolTypeDtoSchema = z.object({
 export const ProtocolListItemSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  typeId: z.string().uuid(),
-  typeName: z.string(),
+  typeId: z.string().uuid().nullable(),
+  typeName: z.string().nullable(),
   status: z.string(),
   isFavorite: z.boolean(),
   updatedAt: z.string().datetime(),
@@ -352,8 +352,8 @@ export const ProtocolResponseSchema = z.object({
   isFavorite: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-  typeId: z.string().uuid(),
-  typeName: z.string(),
+  typeId: z.string().uuid().nullable(),
+  typeName: z.string().nullable(),
   templateSchema: z.any().nullable(),
   currentVersion: ProtocolVersionSummarySchema.nullable(),
 })

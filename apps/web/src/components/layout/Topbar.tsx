@@ -16,7 +16,11 @@ function initials(name: string | null): string {
     .toUpperCase()
 }
 
-export function Topbar(): JSX.Element {
+interface TopbarProps {
+  onMenuClick: () => void
+}
+
+export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const setActiveLocation = useUiStore((s) => s.setActiveLocation)
   const { user } = useAuth()
@@ -45,7 +49,15 @@ export function Topbar(): JSX.Element {
   }, [])
 
   return (
-    <header className="fixed top-0 left-sidebar right-0 h-topbar bg-n-0 border-b border-n-200 flex items-center px-5 gap-4 z-30">
+    <header className="fixed top-0 left-0 lg:left-sidebar right-0 h-topbar bg-n-0 border-b border-n-200 flex items-center px-4 lg:px-5 gap-3 z-30">
+      <button
+        type="button"
+        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-md text-n-600 hover:bg-n-50 transition-colors duration-[100ms] shrink-0"
+        onClick={onMenuClick}
+        aria-label={topbarStrings.openMenuLabel}
+      >
+        <i className="ph ph-list text-[20px]" />
+      </button>
       <div className="relative shrink-0" ref={dropdownRef}>
         <Button
           variant="ghost"

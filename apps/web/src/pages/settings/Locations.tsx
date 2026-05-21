@@ -8,7 +8,7 @@ import {
   useLocations,
   useCreateLocation,
   useUpdateLocation,
-  useDeleteLocation,
+  useArchiveLocation,
 } from '@/hooks/locations/use-locations'
 import {
   Button,
@@ -213,16 +213,21 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
   )
 }
 
-// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+// ─── Archive Confirm Modal ────────────────────────────────────────────────────
 
-interface DeleteConfirmModalProps {
+interface ArchiveConfirmModalProps {
   location: ClinicLocation
   onConfirm: () => void
   onClose: () => void
-  isDeleting: boolean
+  isArchiving: boolean
 }
 
-function DeleteConfirmModal({ location, onConfirm, onClose, isDeleting }: DeleteConfirmModalProps) {
+function ArchiveConfirmModal({
+  location,
+  onConfirm,
+  onClose,
+  isArchiving,
+}: ArchiveConfirmModalProps) {
   return (
     <Modal
       open={true}
@@ -231,16 +236,16 @@ function DeleteConfirmModal({ location, onConfirm, onClose, isDeleting }: Delete
       }}
     >
       <ModalContent>
-        <ModalHeader title={locationsStrings.deleteTitle} showClose={false} />
+        <ModalHeader title={locationsStrings.archiveTitle} showClose={false} />
         <ModalBody>
-          <p className="text-body text-n-700">{locationsStrings.deleteBody(location.name)}</p>
+          <p className="text-body text-n-700">{locationsStrings.archiveBody(location.name)}</p>
         </ModalBody>
         <ModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>
             {locationsStrings.cancelButton}
           </Button>
-          <Button type="button" variant="danger" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? locationsStrings.deletingButton : locationsStrings.deleteConfirmButton}
+          <Button type="button" variant="danger" onClick={onConfirm} disabled={isArchiving}>
+            {isArchiving ? locationsStrings.archivingButton : locationsStrings.archiveConfirmButton}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -252,21 +257,21 @@ function DeleteConfirmModal({ location, onConfirm, onClose, isDeleting }: Delete
 
 export function Locations(): JSX.Element {
   const { data: locations, isLoading, isError } = useLocations()
-  const deleteMutation = useDeleteLocation()
+  const archiveMutation = useArchiveLocation()
 
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<ClinicLocation | null>(null)
-  const [deleting, setDeleting] = useState<ClinicLocation | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [archiving, setArchiving] = useState<ClinicLocation | null>(null)
+  const [archiveError, setArchiveError] = useState<string | null>(null)
 
-  async function handleDelete() {
-    if (!deleting) return
-    setDeleteError(null)
+  async function handleArchive() {
+    if (!archiving) return
+    setArchiveError(null)
     try {
-      await deleteMutation.mutateAsync(deleting.id)
-      setDeleting(null)
+      await archiveMutation.mutateAsync(archiving.id)
+      setArchiving(null)
     } catch {
-      setDeleteError(locationsStrings.deleteError)
+      setArchiveError(locationsStrings.archiveError)
     }
   }
 
@@ -274,17 +279,17 @@ export function Locations(): JSX.Element {
     <div>
       {showCreate && <LocationFormModal onClose={() => setShowCreate(false)} />}
       {editing && <LocationFormModal location={editing} onClose={() => setEditing(null)} />}
-      {deleting && (
-        <DeleteConfirmModal
-          location={deleting}
+      {archiving && (
+        <ArchiveConfirmModal
+          location={archiving}
           onConfirm={() => {
-            void handleDelete()
+            void handleArchive()
           }}
           onClose={() => {
-            setDeleting(null)
-            setDeleteError(null)
+            setArchiving(null)
+            setArchiveError(null)
           }}
-          isDeleting={deleteMutation.isPending}
+          isArchiving={archiveMutation.isPending}
         />
       )}
 
@@ -296,10 +301,10 @@ export function Locations(): JSX.Element {
         </Button>
       </div>
 
-      {deleteError && (
+      {archiveError && (
         <div className="mb-4">
           <Callout variant="danger" icon={<i className="ph ph-warning" style={{ fontSize: 18 }} />}>
-            {deleteError}
+            {archiveError}
           </Callout>
         </div>
       )}
@@ -395,15 +400,15 @@ export function Locations(): JSX.Element {
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title={locationsStrings.deleteButtonTitle}
+                        title={locationsStrings.archiveButtonTitle}
                         onClick={() => {
-                          setDeleteError(null)
-                          setDeleting(loc)
+                          setArchiveError(null)
+                          setArchiving(loc)
                         }}
                       >
                         <i
-                          className="ph ph-trash text-[15px]"
-                          style={{ color: 'var(--color-danger-text)' }}
+                          className="ph ph-archive text-[15px]"
+                          style={{ color: 'var(--color-n-500)' }}
                         />
                       </Button>
                     </div>

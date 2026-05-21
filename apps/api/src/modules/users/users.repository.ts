@@ -21,6 +21,21 @@ export class UsersRepository {
     })
   }
 
+  async updateProfile(
+    id: string,
+    tenantId: string,
+    data: { fullName: string; specialty: string | null; licenseNumber: string | null },
+  ): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { id, tenantId, deletedAt: null },
+      data: {
+        fullName: data.fullName,
+        specialty: data.specialty,
+        licenseNumber: data.licenseNumber,
+      },
+    })
+  }
+
   async updatePreferences(
     id: string,
     tenantId: string,
@@ -49,7 +64,10 @@ export class UsersRepository {
    * Single source of truth for tenant + user creation. Race conditions on the
    * unique externalUid constraint are handled by catching P2002 and re-fetching.
    */
-  async provisionUser(verified: VerifiedToken): Promise<UserWithTenant> {
+  async provisionUser(
+    verified: VerifiedToken,
+    profile?: { fullName?: string; specialty?: string },
+  ): Promise<UserWithTenant> {
     const { externalUid, email } = verified
 
     const existing = await this.prisma.user.findUnique({
@@ -81,6 +99,8 @@ export class UsersRepository {
             externalUid,
             email: email ?? '',
             role: 'owner',
+            ...(profile?.fullName ? { fullName: profile.fullName } : {}),
+            ...(profile?.specialty ? { specialty: profile.specialty } : {}),
           },
           include: TENANT_SELECT,
         })

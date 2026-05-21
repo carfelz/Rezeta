@@ -117,6 +117,7 @@ export class AuthController {
   async provision(
     @VerifiedTokenParam() verified: VerifiedToken,
     @Req() req: Request,
+    @Body() body: Record<string, unknown>,
   ): Promise<AuthUser> {
     const meta = {
       ...(req.ip ? { ip: req.ip } : {}),
@@ -127,7 +128,15 @@ export class AuthController {
         ? { requestId: req.headers['x-request-id'] }
         : {}),
     }
-    const user = await this.service.provision(verified, meta)
+    const profile = {
+      ...(typeof body['fullName'] === 'string' ? { fullName: body['fullName'] } : {}),
+      ...(typeof body['specialty'] === 'string' ? { specialty: body['specialty'] } : {}),
+    }
+    const user = await this.service.provision(
+      verified,
+      meta,
+      Object.keys(profile).length ? profile : undefined,
+    )
     return this.service.toAuthUser(user)
   }
 

@@ -5,7 +5,7 @@ import { formatRelativeTime } from './helpers'
 
 export interface EditorHeaderProps {
   title: string
-  typeName: string
+  typeName: string | null
   updatedAt: string
   totalBlocks: number
   sectionCount: number
@@ -85,7 +85,7 @@ export function EditorHeader({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 pt-1">
-        {isDirty && <Badge variant="review">{protocolEditorStrings.unsavedChanges}</Badge>}
+        {isDirty && <Badge variant="review">{protocolEditorStrings.unsaved}</Badge>}
         <Button variant="secondary" size="sm" onClick={onPreview}>
           <i className="ph ph-eye mr-2" />
           {protocolEditorStrings.preview}

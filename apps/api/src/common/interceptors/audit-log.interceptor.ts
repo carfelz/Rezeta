@@ -11,10 +11,18 @@ const MUTATION_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE'])
 
 function resolveAction(method: string, path: string): AuditEntityAction {
   if (method === 'DELETE') return 'delete'
+  if (method === 'PATCH' && path.endsWith('/archive')) return 'archive'
   if (method === 'POST' && path.endsWith('/sign')) return 'sign'
   if (method === 'POST' && path.endsWith('/amend')) return 'amend'
   if (method === 'POST') return 'create'
   return 'update'
+}
+
+function extractEntityName(response: unknown): string | undefined {
+  if (!response || typeof response !== 'object') return undefined
+  const r = response as Record<string, unknown>
+  const candidate = r['name'] ?? r['fullName'] ?? r['title']
+  return typeof candidate === 'string' && candidate.length > 0 ? candidate : undefined
 }
 
 interface AuthenticatedRequest extends Request {
@@ -89,8 +97,12 @@ export class AuditLogInterceptor implements NestInterceptor {
         next
           .handle()
           .pipe(
-            tap(() => {
-              void this.auditLog.record(buildRecord('success'))
+            tap((response: unknown) => {
+              const entityName = extractEntityName(response)
+              void this.auditLog.record({
+                ...buildRecord('success'),
+                ...(entityName !== undefined ? { metadata: { entityName } } : {}),
+              })
             }),
             catchError((err: unknown) => {
               void this.auditLog.record(buildRecord('failed', err))

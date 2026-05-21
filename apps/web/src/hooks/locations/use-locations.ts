@@ -71,3 +71,17 @@ export function useDeleteLocation(): UseMutationResult<void, Error, string> {
     },
   })
 }
+
+export function useArchiveLocation(): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiClient.patch<void>(`/v1/locations/${id}/archive`, {}),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [QK] })
+      toast.success(toastStrings.locationArchived)
+    },
+    onError: () => {
+      toast.error(toastStrings.errorLocationArchive)
+    },
+  })
+}

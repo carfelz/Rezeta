@@ -20,6 +20,7 @@ import { EditorTOC } from './EditorTOC'
 import { EditorPalette } from './EditorPalette'
 import { HistoryDrawer } from './HistoryDrawer'
 import { PublishModal } from './PublishModal'
+import { SaveModal } from './SaveModal'
 
 export function ProtocolEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -43,13 +44,16 @@ export function ProtocolEditor(): JSX.Element {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
   const [publishModalOpen, setPublishModalOpen] = useState(false)
+  const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [changeSummary, setChangeSummary] = useState('')
+  const [saveSummary, setSaveSummary] = useState('')
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [draftBanner, setDraftBanner] = useState<{
     blocks: ProtocolBlock[]
     savedAt: number
   } | null>(null)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
 
   const { data: versionHistory, isLoading: historyLoading } = useGetVersionHistory(id ?? '')
   const { data: selectedVersion, isLoading: versionPreviewLoading } = useGetVersion(
@@ -90,6 +94,25 @@ export function ProtocolEditor(): JSX.Element {
     }, 30_000)
     return () => clearInterval(interval)
   }, [id])
+
+  // ── Mobile gate ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (): void => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  // ── Keyboard shortcut: Cmd+S / Ctrl+S ───────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        if (isDirtyRef.current) setSaveModalOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // ── Navigation guard ────────────────────────────────────────────────────
   const blocker = useBlocker(isDirty)
@@ -156,11 +179,27 @@ export function ProtocolEditor(): JSX.Element {
     blocks,
   })
 
-  const handleSaveDraft = (): void => {
+  const handleSaveDraft = (summary?: string): void => {
     saveVersion(
-      { content: buildContent(), changeSummary: null, publish: false },
+      { content: buildContent(), changeSummary: summary?.trim() || null, publish: false },
       {
         onSuccess: () => {
+          setSaveModalOpen(false)
+          setSaveSummary('')
+          markSaved()
+          if (id) clearLocalDraft(id)
+        },
+      },
+    )
+  }
+
+  const handleSaveModalPublish = (): void => {
+    saveVersion(
+      { content: buildContent(), changeSummary: saveSummary.trim() || null, publish: true },
+      {
+        onSuccess: () => {
+          setSaveModalOpen(false)
+          setSaveSummary('')
           markSaved()
           if (id) clearLocalDraft(id)
         },
@@ -224,14 +263,28 @@ export function ProtocolEditor(): JSX.Element {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const handleRestore = (): void => {
-    if (!selectedVersionId) return
-    restoreVersion(selectedVersionId, {
+  const handleRestore = (versionId: string): void => {
+    restoreVersion(versionId, {
       onSuccess: () => {
         setHistoryOpen(false)
         setSelectedVersionId(null)
       },
     })
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6 text-center">
+        <i className="ph ph-desktop text-[48px] text-n-300" />
+        <h2 className="text-h2 text-n-800">{protocolEditorStrings.mobileGateTitle}</h2>
+        <p className="text-body-sm text-n-500 max-w-[36ch]">
+          {protocolEditorStrings.mobileGateBody}
+        </p>
+        <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
+          ← {protocolEditorStrings.back}
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -266,7 +319,7 @@ export function ProtocolEditor(): JSX.Element {
         onCancelTitleEdit={() => setEditingTitle(false)}
         nextPublishVersion={nextPublishVersion}
         onPreview={() => void navigate(`/protocolos/${id}`)}
-        onSaveDraft={handleSaveDraft}
+        onSaveDraft={() => setSaveModalOpen(true)}
         onPublishClick={() => setPublishModalOpen(true)}
       />
 
@@ -335,6 +388,19 @@ export function ProtocolEditor(): JSX.Element {
         onConfirm={handlePublishConfirm}
         isSaving={isSaving}
         nextPublishVersion={nextPublishVersion}
+      />
+
+      <SaveModal
+        open={saveModalOpen}
+        changeSummary={saveSummary}
+        onChangeSummary={setSaveSummary}
+        onClose={() => {
+          setSaveModalOpen(false)
+          setSaveSummary('')
+        }}
+        onSaveDraft={() => handleSaveDraft(saveSummary)}
+        onPublish={handleSaveModalPublish}
+        isSaving={isSaving}
       />
     </div>
   )

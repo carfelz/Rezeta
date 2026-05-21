@@ -1,4 +1,4 @@
-import { Button, IconButton } from '@/components/ui'
+import { IconButton } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { protocolEditorStrings } from './strings'
 import type { VersionDetailResponse, VersionListItem } from '@rezeta/shared'
@@ -11,7 +11,7 @@ export interface HistoryDrawerProps {
   versionPreviewLoading: boolean
   onSelectVersion: (id: string | null) => void
   onClose: () => void
-  onRestore: () => void
+  onRestore: (versionId: string) => void
   isRestoring: boolean
 }
 
@@ -57,33 +57,46 @@ export function HistoryDrawer({
           </p>
         ) : (
           versionHistory.map((v) => (
-            <Button
+            <div
               key={v.id}
-              variant="item"
-              size="sm"
-              onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
-              className={`flex items-center gap-3 w-full px-5 py-3 text-left border-b border-n-100 last:border-0 ${
+              className={`flex items-center gap-2 px-5 py-3 border-b border-n-100 last:border-0 ${
                 selectedVersionId === v.id ? 'bg-p-50' : ''
               }`}
             >
-              <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
-                {protocolEditorStrings.version(v.versionNumber)}
-              </span>
-              {v.isCurrent && (
-                <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
-                  {protocolEditorStrings.historyCurrent}
+              <button
+                type="button"
+                onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
+                className="flex items-center gap-3 flex-1 min-w-0 text-left"
+              >
+                <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
+                  {protocolEditorStrings.version(v.versionNumber)}
                 </span>
+                {v.isCurrent && (
+                  <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
+                    {protocolEditorStrings.historyCurrent}
+                  </span>
+                )}
+                <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
+                  {v.changeSummary ?? protocolEditorStrings.historyNoSummary}
+                </span>
+                <span className="text-[11px] font-mono text-n-400 shrink-0">
+                  {new Date(v.createdAt).toLocaleDateString('es-DO', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                </span>
+              </button>
+              {!v.isCurrent && (
+                <IconButton
+                  icon="ph ph-clock-counter-clockwise"
+                  aria-label={protocolEditorStrings.historyRestore}
+                  tone="neutral"
+                  size="sm"
+                  disabled={isRestoring}
+                  onClick={() => onRestore(v.id)}
+                />
               )}
-              <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
-                {v.changeSummary ?? protocolEditorStrings.historyNoSummary}
-              </span>
-              <span className="text-[11px] font-mono text-n-400 shrink-0">
-                {new Date(v.createdAt).toLocaleDateString('es-DO', {
-                  day: 'numeric',
-                  month: 'short',
-                })}
-              </span>
-            </Button>
+            </div>
           ))
         )}
       </div>
@@ -110,30 +123,6 @@ export function HistoryDrawer({
           </div>
         )}
       </div>
-
-      {selectedVersionId &&
-        versionHistory?.find((v) => v.id === selectedVersionId && !v.isCurrent) && (
-          <div className="px-5 py-3 border-t border-n-200 shrink-0">
-            <Button
-              variant="secondary"
-              onClick={onRestore}
-              disabled={isRestoring}
-              className="w-full justify-center"
-            >
-              {isRestoring ? (
-                <>
-                  <i className="ph ph-spinner animate-spin mr-2" />
-                  {protocolEditorStrings.historyRestoring}
-                </>
-              ) : (
-                <>
-                  <i className="ph ph-clock-counter-clockwise mr-2" />
-                  {protocolEditorStrings.historyRestore}
-                </>
-              )}
-            </Button>
-          </div>
-        )}
     </div>
   )
 }

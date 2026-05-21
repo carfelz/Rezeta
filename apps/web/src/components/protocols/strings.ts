@@ -104,6 +104,8 @@ export const blockEditorStrings = {
   typePickerCreating: 'Creando...',
   typePickerNoTypes: 'No tienes tipos de protocolo activos.',
   typePickerNoTypesCta: 'Ir a Ajustes → Tipos',
+  typePickerScratch: 'Desde cero',
+  typePickerScratchDescription: 'Sin plantilla — empieza con un protocolo en blanco.',
 } as const
 
 export const createProtocolDialogStrings = {

@@ -66,8 +66,12 @@ export function Patients(): JSX.Element {
 
   return (
     <div>
-      {modalMode && selectedPatient && (
-        <PatientModal mode={modalMode} patient={selectedPatient} onClose={closeModal} />
+      {modalMode && (modalMode === 'create' || selectedPatient) && (
+        <PatientModal
+          mode={modalMode}
+          {...(selectedPatient !== null ? { patient: selectedPatient } : {})}
+          onClose={closeModal}
+        />
       )}
 
       {deletingPatient && (

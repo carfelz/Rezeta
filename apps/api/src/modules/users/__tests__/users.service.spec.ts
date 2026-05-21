@@ -4,6 +4,7 @@ import { UsersService } from '../users.service.js'
 
 const mockRepo = {
   findById: vi.fn(),
+  updateProfile: vi.fn(),
   updatePreferences: vi.fn(),
 }
 
@@ -27,6 +28,37 @@ describe('UsersService', () => {
     it('throws NotFoundException when user not found', async () => {
       mockRepo.findById.mockResolvedValue(null)
       await expect(service.getById('missing', 't1')).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  describe('updateProfile', () => {
+    it('delegates to repository after verifying user exists', async () => {
+      const existingUser = { id: 'u1', tenantId: 't1', preferences: {} }
+      mockRepo.findById.mockResolvedValue(existingUser)
+      mockRepo.updateProfile.mockResolvedValue(undefined)
+
+      await service.updateProfile('u1', 't1', {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+        licenseNumber: '1234',
+      })
+
+      expect(mockRepo.updateProfile).toHaveBeenCalledWith('u1', 't1', {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+        licenseNumber: '1234',
+      })
+    })
+
+    it('throws NotFoundException when user not found', async () => {
+      mockRepo.findById.mockResolvedValue(null)
+      await expect(
+        service.updateProfile('missing', 't1', {
+          fullName: 'Dr. García',
+          specialty: null,
+          licenseNumber: null,
+        }),
+      ).rejects.toThrow(NotFoundException)
     })
   })
 

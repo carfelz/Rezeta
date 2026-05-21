@@ -41,6 +41,7 @@ interface UseProtocolsReturn {
     protocolId: string,
   ) => UseMutationResult<SaveVersionResponse, Error, SaveProtocolVersionDto>
   useToggleFavorite: (protocolId: string) => UseMutationResult<void, Error, boolean>
+  useArchiveProtocol: () => UseMutationResult<void, Error, string>
   useGetVersionHistory: (protocolId: string) => UseQueryResult<VersionListItem[]>
   useGetVersion: (
     protocolId: string,
@@ -137,6 +138,19 @@ export function useProtocols(): UseProtocolsReturn {
       },
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['protocols'] })
+      },
+    })
+  }
+
+  const useArchiveProtocol = () => {
+    return useMutation({
+      mutationFn: (id: string) => apiClient.patch<void>(`/v1/protocols/${id}/archive`, {}),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['protocols'] })
+        toast.success(toastStrings.protocolArchived)
+      },
+      onError: () => {
+        toast.error(toastStrings.errorProtocolArchive)
       },
     })
   }
@@ -244,6 +258,7 @@ export function useProtocols(): UseProtocolsReturn {
     useRenameProtocol,
     useSaveVersion,
     useToggleFavorite,
+    useArchiveProtocol,
     useGetVersionHistory,
     useGetVersion,
     useRestoreVersion,

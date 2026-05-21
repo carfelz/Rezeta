@@ -65,7 +65,7 @@ describe('AuthService', () => {
       const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       const result = await service.provision(verified)
       expect(result).toEqual(baseUser)
-      expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified)
+      expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified, undefined)
     })
 
     it('records login audit event after successful provision', async () => {

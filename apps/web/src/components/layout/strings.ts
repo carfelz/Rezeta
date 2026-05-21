@@ -3,6 +3,7 @@ export const topbarStrings = {
   searchPlaceholder: 'Buscar pacientes, citas...',
   notificationsLabel: 'Notificaciones',
   defaultSpecialty: 'Médico',
+  openMenuLabel: 'Abrir menú',
 } as const
 
 export const sidebarStrings = {
@@ -16,4 +17,8 @@ export const sidebarStrings = {
   navBilling: 'Facturación',
   navSettings: 'Ajustes',
   defaultSpecialty: 'Médico',
+  defaultName: 'Médico',
+  userMenuLabel: 'Menú de usuario',
+  userMenuSettings: 'Ajustes',
+  userMenuSignOut: 'Cerrar sesión',
 } as const

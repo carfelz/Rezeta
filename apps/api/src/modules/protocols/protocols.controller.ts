@@ -260,6 +260,16 @@ export class ProtocolsController {
     return this.service.restoreVersion(id, versionId, tenantId, user.id)
   }
 
+  @Patch(':id/archive')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Archive a protocol' })
+  @ApiParam({ name: 'id', format: 'uuid', example: PROTOCOL_ID })
+  @ApiResponse({ status: 204, description: 'Protocol archived.' })
+  @ApiResponse({ status: 404, description: 'Protocol not found.' })
+  archive(@Param('id', ParseUUIDPipe) id: string, @TenantId() tenantId: string): Promise<void> {
+    return this.service.archive(id, tenantId)
+  }
+
   @Post(':id/favorite')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Add to favorites' })

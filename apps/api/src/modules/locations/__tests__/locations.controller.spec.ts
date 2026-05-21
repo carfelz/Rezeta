@@ -41,6 +41,7 @@ describe('LocationsController', () => {
       create: vi.fn(),
       update: vi.fn(),
       remove: vi.fn(),
+      archive: vi.fn(),
     } as unknown as LocationsService
     controller = new LocationsController(service)
   })
@@ -76,6 +77,12 @@ describe('LocationsController', () => {
   it('remove delegates to service', async () => {
     vi.mocked(service.remove).mockResolvedValue(undefined)
     await controller.remove('loc1', tenantId)
+    expect(service.remove).toHaveBeenCalledWith('loc1', tenantId)
+  })
+
+  it('archive delegates to service.remove', async () => {
+    vi.mocked(service.remove).mockResolvedValue(undefined)
+    await controller.archive('loc1', tenantId)
     expect(service.remove).toHaveBeenCalledWith('loc1', tenantId)
   })
 })

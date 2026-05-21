@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
   signUp: vi.fn(),
   signOut: vi.fn(),
+  apiPost: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({
@@ -15,6 +16,12 @@ vi.mock('@/lib/auth', () => ({
     onAuthStateChanged: vi.fn(),
     getToken: vi.fn().mockResolvedValue(null),
     errorCodeToMessage: vi.fn((c: string) => c),
+  },
+}))
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    post: mocks.apiPost,
   },
 }))
 
@@ -63,13 +70,41 @@ describe('useAuthStore — signUp', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.signUp.mockResolvedValue(undefined)
+    mocks.apiPost.mockResolvedValue(undefined)
     resetStore()
   })
 
-  it('delegates to authClient.signUp', async () => {
+  it('delegates to authClient.signUp without profile', async () => {
     const { result } = renderHook(() => useAuthStore())
     await act(() => result.current.signUp('doc@rezeta.app', 'securepass'))
     expect(mocks.signUp).toHaveBeenCalledWith('doc@rezeta.app', 'securepass')
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('calls provision endpoint when profile is provided', async () => {
+    const { result } = renderHook(() => useAuthStore())
+    await act(() =>
+      result.current.signUp('doc@rezeta.app', 'securepass', { fullName: 'Dr. García' }),
+    )
+    expect(mocks.signUp).toHaveBeenCalledWith('doc@rezeta.app', 'securepass')
+    expect(mocks.apiPost).toHaveBeenCalledWith(
+      '/v1/auth/provision',
+      expect.objectContaining({ fullName: 'Dr. García' }),
+    )
+  })
+
+  it('includes specialty when provided in profile', async () => {
+    const { result } = renderHook(() => useAuthStore())
+    await act(() =>
+      result.current.signUp('doc@rezeta.app', 'securepass', {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+      }),
+    )
+    expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', {
+      fullName: 'Dr. García',
+      specialty: 'Cardiología',
+    })
   })
 })
 

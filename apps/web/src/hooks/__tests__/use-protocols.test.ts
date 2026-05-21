@@ -282,3 +282,19 @@ describe('useProtocols — useRestoreVersion', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/v1/protocols/proto-1/versions/v-1/restore', {})
   })
 })
+
+describe('useProtocols — useArchiveProtocol', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('patches archive endpoint and invalidates cache', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(undefined)
+    const { result } = renderHook(() => useProtocols(), { wrapper: makeWrapper() })
+    const { result: mutResult } = renderHook(() => result.current.useArchiveProtocol(), {
+      wrapper: makeWrapper(),
+    })
+    await act(async () => {
+      await mutResult.current.mutateAsync('proto-1')
+    })
+    expect(apiClient.patch).toHaveBeenCalledWith('/v1/protocols/proto-1/archive', {})
+  })
+})

@@ -19,11 +19,17 @@ interface AuthState {
   _setStatus: (status: AuthStatus) => void
 
   // ── Public actions ─────────────────────────────────────────────────────────
-  signUp: (email: string, password: string) => Promise<void>
+  signUp: (
+    email: string,
+    password: string,
+    profile?: { fullName: string; specialty?: string },
+  ) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   /** Replace the cached preferences object on the in-memory user. */
   setPreferences: (preferences: UserPreferences) => void
+  /** Replace the full cached user (e.g. after profile update). */
+  setUser: (user: AuthUser) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -35,8 +41,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   _setSession: (session) => set({ session }),
   _setStatus: (status) => set({ status }),
 
-  signUp: async (email, password) => {
+  signUp: async (email, password, profile) => {
     await authClient.signUp(email, password)
+    if (profile) {
+      const { apiClient } = await import('@/lib/api-client')
+      await apiClient.post<AuthUser>('/v1/auth/provision', {
+        fullName: profile.fullName,
+        ...(profile.specialty ? { specialty: profile.specialty } : {}),
+      })
+    }
   },
 
   signIn: async (email, password) => {
@@ -49,4 +62,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setPreferences: (preferences) =>
     set((state) => (state.user ? { user: { ...state.user, preferences } } : {})),
+
+  setUser: (user) => set({ user }),
 }))

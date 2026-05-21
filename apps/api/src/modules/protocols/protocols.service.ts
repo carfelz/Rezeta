@@ -27,23 +27,27 @@ export class ProtocolsService {
     userId: string,
     dto: CreateProtocolDto,
   ): Promise<ProtocolResponse> {
-    const protocolType = await this.typesRepository.findByIdWithTemplate(dto.typeId, tenantId)
-    if (!protocolType) {
-      throw new NotFoundException({
-        code: ErrorCode.PROTOCOL_TYPE_NOT_FOUND,
-        message: 'Protocol type not found',
-      })
+    let content: unknown
+    if (dto.typeId) {
+      const protocolType = await this.typesRepository.findByIdWithTemplate(dto.typeId, tenantId)
+      if (!protocolType) {
+        throw new NotFoundException({
+          code: ErrorCode.PROTOCOL_TYPE_NOT_FOUND,
+          message: 'Protocol type not found',
+        })
+      }
+      content = buildInitialContentFromTemplate(
+        protocolType.template.schema as Parameters<typeof buildInitialContentFromTemplate>[0],
+      )
+    } else {
+      content = { version: '1.0', template_version: '1.0', blocks: [] }
     }
-
-    const content = buildInitialContentFromTemplate(
-      protocolType.template.schema as Parameters<typeof buildInitialContentFromTemplate>[0],
-    )
 
     const { protocol, version } = await this.repository.create({
       tenantId,
       title: dto.title.trim(),
       createdBy: userId,
-      typeId: dto.typeId,
+      ...(dto.typeId !== undefined ? { typeId: dto.typeId } : {}),
       tags: [],
       content,
     })
@@ -73,8 +77,8 @@ export class ProtocolsService {
       return {
         id: p.id,
         title: p.title,
-        typeId: p.type.id,
-        typeName: p.type.name,
+        typeId: p.type?.id ?? null,
+        typeName: p.type?.name ?? null,
         status: p.status,
         isFavorite: p.isFavorite,
         updatedAt: p.updatedAt.toISOString(),
@@ -86,6 +90,16 @@ export class ProtocolsService {
 
   async setFavorite(id: string, tenantId: string, isFavorite: boolean): Promise<void> {
     const found = await this.repository.setFavorite(id, tenantId, isFavorite)
+    if (!found) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_NOT_FOUND,
+        message: 'Protocol not found',
+      })
+    }
+  }
+
+  async archive(id: string, tenantId: string): Promise<void> {
+    const found = await this.repository.archive(id, tenantId)
     if (!found) {
       throw new NotFoundException({
         code: ErrorCode.PROTOCOL_NOT_FOUND,
@@ -149,7 +163,7 @@ export class ProtocolsService {
     }
 
     // Validate required blocks against the template (resolved through type)
-    const templateSchema = protocol.type.template.schema as {
+    const templateSchema = (protocol.type?.template?.schema ?? { blocks: [] }) as {
       blocks: Array<{
         id?: string
         required?: boolean
@@ -318,8 +332,8 @@ export class ProtocolsService {
     isFavorite: boolean
     createdAt: Date
     updatedAt: Date
-    typeId: string
-    type: { id: string; name: string; template: { schema: unknown } }
+    typeId: string | null
+    type?: { id: string; name: string; template: { schema: unknown } } | null
     currentVersion?: {
       id: string
       versionNumber: number
@@ -335,9 +349,9 @@ export class ProtocolsService {
       isFavorite: protocol.isFavorite,
       createdAt: protocol.createdAt.toISOString(),
       updatedAt: protocol.updatedAt.toISOString(),
-      typeId: protocol.typeId,
-      typeName: protocol.type.name,
-      templateSchema: protocol.type.template.schema ?? null,
+      typeId: protocol.typeId ?? null,
+      typeName: protocol.type?.name ?? null,
+      templateSchema: protocol.type?.template?.schema ?? null,
       currentVersion: protocol.currentVersion
         ? {
             id: protocol.currentVersion.id,

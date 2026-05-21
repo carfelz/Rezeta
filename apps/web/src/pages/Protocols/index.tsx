@@ -7,6 +7,11 @@ import {
   Chip,
   EmptyState,
   IconButton,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Row,
   SearchInput,
   Select,
@@ -44,9 +49,15 @@ interface ProtocolRowProps {
   protocol: ProtocolListItem
   onClick: () => void
   onToggleFavorite: (id: string, current: boolean) => void
+  onArchive: (protocol: ProtocolListItem) => void
 }
 
-function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps): JSX.Element {
+function ProtocolRow({
+  protocol,
+  onClick,
+  onToggleFavorite,
+  onArchive,
+}: ProtocolRowProps): JSX.Element {
   return (
     <Button
       variant="item"
@@ -96,6 +107,17 @@ function ProtocolRow({ protocol, onClick, onToggleFavorite }: ProtocolRowProps):
         }}
       />
 
+      <IconButton
+        icon="ph ph-archive"
+        aria-label={protocolsStrings.archiveButton}
+        tone="neutral"
+        size="md"
+        onClick={(e) => {
+          e.stopPropagation()
+          onArchive(protocol)
+        }}
+      />
+
       <i className="ph ph-arrow-right text-n-300 group-hover:text-n-600 transition-colors shrink-0" />
     </Button>
   )
@@ -111,6 +133,9 @@ const SORT_OPTIONS: Array<{ value: NonNullable<ProtocolListFilters['sort']>; lab
 export function Protocols(): JSX.Element {
   const navigate = useNavigate()
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [archivingProtocol, setArchivingProtocol] = useState<ProtocolListItem | null>(null)
+  const { useArchiveProtocol } = useProtocols()
+  const archiveMutation = useArchiveProtocol()
 
   const [search, setSearch] = useState('')
   const [typeId, setTypeId] = useState<string | undefined>(undefined)
@@ -216,6 +241,7 @@ export function Protocols(): JSX.Element {
               key={p.id}
               protocol={p}
               onClick={() => void navigate(`/protocolos/${p.id}`)}
+              onArchive={setArchivingProtocol}
             />
           ))}
         </div>
@@ -243,6 +269,41 @@ export function Protocols(): JSX.Element {
       )}
 
       <TemplatePickerModal isOpen={pickerOpen} onClose={() => setPickerOpen(false)} />
+
+      <Modal open={!!archivingProtocol} onOpenChange={(o) => !o && setArchivingProtocol(null)}>
+        <ModalContent>
+          <ModalHeader
+            title={protocolsStrings.archiveTitle}
+            subtitle={
+              archivingProtocol ? protocolsStrings.archiveBody(archivingProtocol.title) : ''
+            }
+          />
+          <ModalBody>{null}</ModalBody>
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setArchivingProtocol(null)}
+              disabled={archiveMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (!archivingProtocol) return
+                archiveMutation.mutate(archivingProtocol.id, {
+                  onSuccess: () => setArchivingProtocol(null),
+                })
+              }}
+              disabled={archiveMutation.isPending}
+            >
+              {archiveMutation.isPending
+                ? protocolsStrings.archivingButton
+                : protocolsStrings.archiveConfirmButton}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   )
 }
@@ -276,9 +337,11 @@ function FilterChip({
 function ProtocolRowWithFavorite({
   protocol,
   onClick,
+  onArchive,
 }: {
   protocol: ProtocolListItem
   onClick: () => void
+  onArchive: (protocol: ProtocolListItem) => void
 }): JSX.Element {
   const { useToggleFavorite } = useProtocols()
   const { mutate } = useToggleFavorite(protocol.id)
@@ -288,6 +351,7 @@ function ProtocolRowWithFavorite({
       protocol={protocol}
       onClick={onClick}
       onToggleFavorite={(_id, current) => mutate(!current)}
+      onArchive={onArchive}
     />
   )
 }

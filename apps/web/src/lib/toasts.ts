@@ -64,11 +64,15 @@ export const toastStrings = {
   errorLocationCreate: 'No se pudo agregar la ubicación.',
   errorLocationUpdate: 'No se pudo actualizar la ubicación.',
   errorLocationDelete: 'No se pudo eliminar la ubicación.',
+  locationArchived: 'Ubicación archivada',
+  errorLocationArchive: 'No se pudo archivar la ubicación.',
 
   // ── Protocols ───────────────────────────────────────────────────────────────
   protocolCreated: 'Protocolo creado',
   protocolUpdated: 'Protocolo actualizado',
   protocolDeleted: 'Protocolo eliminado',
+  protocolArchived: 'Protocolo archivado',
+  errorProtocolArchive: 'No se pudo archivar el protocolo.',
   protocolVersionPublished: 'Nueva versión publicada',
   protocolUsageAdded: 'Protocolo aplicado a la consulta',
   protocolUsageRemoved: 'Protocolo removido de la consulta',

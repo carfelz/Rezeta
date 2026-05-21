@@ -88,6 +88,17 @@ export class LocationsController {
     return this.service.update(id, tenantId, user.id, dto)
   }
 
+  @Patch(':id/archive')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Archive (soft-delete) a location' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiResponse({ status: 204, description: 'Location archived.' })
+  @ApiResponse({ status: 404, description: 'Location not found.' })
+  @ApiResponse({ status: 409, description: 'Location has upcoming appointments.' })
+  archive(@Param('id', ParseUUIDPipe) id: string, @TenantId() tenantId: string): Promise<void> {
+    return this.service.remove(id, tenantId)
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft-delete a location' })

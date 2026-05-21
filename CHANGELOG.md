@@ -4,6 +4,94 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-21] — Wave 5: Responsive sidebar, mobile layout fix
+
+### Fixed
+
+- **BUG-036** `AppLayout.tsx`, `Sidebar.tsx`, `Topbar.tsx` — sidebar now slides off-screen on mobile (`-translate-x-full`) and is revealed via hamburger button; overlay backdrop closes it on tap; `useLocation` effect auto-closes on navigation. `Topbar` moves from `left-sidebar` to `left-0 lg:left-sidebar`. Content area loses `ml-sidebar` on mobile (`lg:ml-sidebar`). Main padding reduced to `px-4 sm:px-6 lg:px-12`. Eliminates horizontal scroll at 375px viewport.
+
+## [2026-05-21] — Wave 4: Protocol editor UX, archive, scratch mode
+
+### Added
+
+- **BUG-026** `ProtocolEditor/SaveModal.tsx` — new 2-step save dialog with change-summary input, "Guardar como borrador" and "Guardar y publicar" buttons; replaces direct save on "Guardar" click
+- **BUG-028** `ProtocolEditor/index.tsx` — Cmd+S / Ctrl+S shortcut opens SaveModal when editor is dirty
+- **BUG-029** `ProtocolEditor/HistoryDrawer.tsx` — per-row restore icon button (`ph-clock-counter-clockwise`) on non-current versions; removes bottom-only restore button; `onRestore` now accepts `versionId` param
+- **BUG-030** `ProtocolEditor/index.tsx` — mobile gate shown when viewport < 1024px (centered message + back link, read-only guard)
+- **BUG-032** `PATCH /v1/protocols/:id/archive` endpoint in controller/service/repository; `useArchiveProtocol` hook in `use-protocols.ts`; archive icon button on protocol list rows with confirm modal in `Protocols/index.tsx`
+- **BUG-035** `TemplatePickerModal.tsx` — "Desde cero" selectable card (no template); `CreateProtocolSchema.typeId` now optional; DB migration `20260520000000_protocol_type_optional` makes `protocols.type_id` nullable; service creates with empty content when no typeId; `ProtocolListItem.typeId/typeName` and `ProtocolResponse.typeId/typeName` now nullable
+
+### Changed
+
+- **BUG-027** `EditorHeader.tsx` — dirty badge shows `unsaved` ("Cambios sin guardar") instead of `unsavedChanges` ("Cambios sin publicar")
+- `ConsultationGate.tsx` — `typeName` null-guards updated (`?? ''`) for blank protocols in search and bucketing
+- `consultations.repository.ts` — `protocolTypeName` now `string | null` (blank protocol support)
+- `packages/shared/src/types/consultation.ts` — `ConsultationProtocolUsage.protocolTypeName` changed to `string | null`
+- `ProtocolEditor/strings.ts` — added `mobileGateTitle`, `mobileGateBody` strings
+
+### Fixed
+
+- Auth store coverage gaps: added tests for `signUp` with profile, `setUser` action
+- Protocol service branch coverage: added tests for null-type list items, null-type getById, blank-protocol saveVersion
+
+---
+
+## [2026-05-20] — Wave 3: Audit log display, location archive, TS fixes
+
+### Added
+
+- `apps/api/src/modules/locations/locations.controller.ts` — `PATCH /v1/locations/:id/archive` endpoint; delegates to `service.remove()` so the audit log records action `'archive'` instead of `'delete'`. Fixes BUG-019 + BUG-037.
+- `apps/web/src/hooks/locations/use-locations.ts` — `useArchiveLocation` hook (PATCH /archive); invalidates location cache on success.
+- `apps/web/src/lib/toasts.ts` — `locationArchived` and `errorLocationArchive` toast strings.
+- `apps/web/src/pages/settings/strings.ts` — `archiveButtonTitle`, `archiveTitle`, `archiveBody`, `archiveConfirmButton`, `archivingButton`, `archiveError` strings for `locationsStrings`.
+
+### Changed
+
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts` — `resolveAction` now returns `'archive'` for `PATCH *.../archive` requests; `tap` handler extracts `entityName` from response body (`name` / `fullName` / `title`) and stores it in `metadata`. Fixes BUG-013, BUG-037, BUG-038.
+- `apps/web/src/pages/settings/AuditLog.tsx` — table row actor fallback now uses `actorUnknown` (consistent with detail drawer); entity column shows `metadata.entityName` when available, falling back to `entityType + entityId.slice(0,8)`. Fixes BUG-006, BUG-013, BUG-038.
+- `apps/web/src/pages/settings/Locations.tsx` — replaced trash/delete action with archive action using `useArchiveLocation`; `ArchiveConfirmModal` replaces `DeleteConfirmModal`. Fixes BUG-019.
+- `apps/web/src/pages/Patients/index.tsx` — fixed `exactOptionalPropertyTypes` error in PatientModal spread.
+- `apps/web/src/pages/Signup/index.tsx` — fixed `exactOptionalPropertyTypes` error when passing optional `specialty` to `signUp`.
+
+---
+
+## [2026-05-20] — Wave 2: Signup fields, profile edit, sidebar sign-out
+
+### Added
+
+- `packages/shared/src/schemas/auth.ts` — `fullName` (required) and `specialty` (optional) fields on `SignUpSchema`; password mix-requirement regex (uppercase + lowercase + digit); new `UpdateProfileSchema` / `UpdateProfileDto`.
+- `apps/api/src/modules/users/users.repository.ts` — `updateProfile()` method; `provisionUser()` now accepts optional `{ fullName?, specialty? }` and saves them on first user creation.
+- `apps/api/src/modules/users/users.service.ts` — `updateProfile()` service method (verifies user exists, delegates to repo).
+- `apps/api/src/modules/users/users.controller.ts` — `PATCH /v1/users/me/profile` endpoint (204 No Content) wired to `updateProfile`.
+- `apps/api/src/modules/auth/auth.controller.ts` — `provision` endpoint now reads optional `fullName` and `specialty` string fields from the request body and forwards them to the service.
+- `apps/api/src/modules/auth/auth.service.ts` — `provision()` accepts optional `profile` arg and passes it to `provisionUser`.
+- `apps/web/src/hooks/users/use-update-profile.ts` — TanStack mutation hook; on success calls `GET /v1/auth/me` and updates the auth store.
+- `apps/web/src/store/auth.store.ts` — `signUp` now accepts optional profile arg and calls provision with profile data after Firebase signup; new `setUser` action.
+
+### Changed
+
+- `apps/web/src/pages/Signup/index.tsx` — form now collects `fullName` (required) and `specialty` (optional); password field shows inline help text with mix requirements.
+- `apps/web/src/pages/Settings.tsx` — account card is now editable via `ProfileEditModal` (fullName, specialty, licenseNumber); shows "Sin definir" fallback for unset fields.
+- `apps/web/src/components/layout/Sidebar.tsx` — user chip now opens a Radix DropdownMenu with links to Ajustes and sign-out; sign-out is now reachable from every authenticated view.
+- `apps/web/src/pages/Signup/strings.ts` — added fullName, specialty, password hint strings.
+- `apps/web/src/pages/settings/strings.ts` — added profile edit modal strings.
+- `apps/web/src/components/layout/strings.ts` — added user menu strings.
+
+---
+
+## [2026-05-20] — Wave 1: Unblock patient creation, remove dev routes from production UI
+
+### Fixed
+
+- `apps/web/src/pages/Patients/index.tsx` — BLOCKER-001: modal render guard `modalMode && selectedPatient` prevented create flow from opening (selectedPatient is null on create). Changed to `modalMode && (modalMode === 'create' || selectedPatient !== null)`.
+
+### Changed
+
+- `apps/web/src/pages/Settings.tsx` — removed design-system prototype and reference links from the settings menu (SCOPE-001/002); routes remain accessible via direct URL for internal dev use.
+- `apps/web/src/pages/settings/strings.ts` — removed dead `designSystemPrototypeTitle`, `designSystemPrototypeDescription`, `designSystemReferenceTitle`, `designSystemReferenceDescription` string entries.
+
+---
+
 ## [2026-05-20] — QA Audit, Clinical Usability Report and Context Sincronization
 
 ### Fixed
