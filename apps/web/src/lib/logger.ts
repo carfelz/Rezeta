@@ -2,9 +2,9 @@ const API_BASE = (import.meta.env['VITE_API_URL'] as string | undefined) ?? ''
 
 interface LogPayload {
   message: string
-  stack?: string
-  url?: string
-  context?: string
+  stack?: string | undefined
+  url?: string | undefined
+  context?: string | undefined
   severity: 'error' | 'warn'
 }
 
@@ -17,7 +17,10 @@ function post(payload: LogPayload): void {
 }
 
 export const logger = {
-  error(message: string, opts?: { stack?: string; context?: string }): void {
+  error(
+    message: string,
+    opts?: { stack?: string | undefined; context?: string | undefined },
+  ): void {
     console.error(`[${opts?.context ?? 'app'}]`, message, opts?.stack ?? '')
     post({
       message,
