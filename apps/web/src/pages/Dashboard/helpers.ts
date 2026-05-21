@@ -19,7 +19,7 @@ export const MONTHS_ES = [
 
 export function formatDateKicker(date: Date): string {
   const dayNum = date.getDate()
-  const month = MONTHS_ES[date.getMonth()].slice(0, 3)
+  const month = MONTHS_ES[date.getMonth()]!.slice(0, 3)
   const year = date.getFullYear()
   const hours = date.getHours()
   const minutes = date.getMinutes().toString().padStart(2, '0')

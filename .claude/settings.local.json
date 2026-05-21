@@ -222,7 +222,8 @@
       "Bash(grep *)",
       "Bash(pnpm test:coverage)",
       "Bash(echo \"HOOK_EXIT: $?\")",
-      "Bash(echo \"lint-staged exit: $?\")"
+      "Bash(echo \"lint-staged exit: $?\")",
+      "mcp__github__list_commits"
     ]
   }
 }
