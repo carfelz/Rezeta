@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn() },
+}))
+
 const mocks = vi.hoisted(() => ({
   onAuthStateChangedCb: null as null | ((session: unknown) => void),
   signOut: vi.fn().mockResolvedValue(undefined),
@@ -104,7 +108,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() => expect(screen.getByText('withuser')).toBeInTheDocument())
   })
 
-  it('signs out when provision fails', async () => {
+  it('signs out when provision fails with an Error', async () => {
     mocks.apiPost.mockRejectedValue(new Error('provision failed'))
 
     const session = { uid: 'fb-uid', email: 'doc@test.com' }
@@ -121,6 +125,26 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       await Promise.resolve()
     })
     await waitFor(() => expect(screen.getByText('failcase')).toBeInTheDocument())
+    expect(mocks.signOut).toHaveBeenCalled()
+  })
+
+  it('signs out when provision fails with a non-Error value', async () => {
+    mocks.apiPost.mockRejectedValue('string rejection')
+
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>nonerrcase</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(screen.getByText('nonerrcase')).toBeInTheDocument())
     expect(mocks.signOut).toHaveBeenCalled()
   })
 })

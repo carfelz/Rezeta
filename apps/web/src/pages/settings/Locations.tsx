@@ -26,6 +26,7 @@ import {
   ModalFooter,
 } from '@/components/ui'
 import { locationsStrings } from './strings'
+import { logger } from '@/lib/logger'
 
 // ─── Location Form Modal ──────────────────────────────────────────────────────
 
@@ -76,7 +77,9 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
         await createMutation.mutateAsync(payload as CreateLocationDto)
       }
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Locations.submit' })
       setError(
         isEdit
           ? 'No se pudo actualizar la ubicación. Intenta de nuevo.'
@@ -270,7 +273,9 @@ export function Locations(): JSX.Element {
     try {
       await archiveMutation.mutateAsync(archiving.id)
       setArchiving(null)
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Locations.archive' })
       setArchiveError(locationsStrings.archiveError)
     }
   }

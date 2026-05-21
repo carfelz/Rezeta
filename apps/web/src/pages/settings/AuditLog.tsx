@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-logs'
 import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
+import { logger } from '@/lib/logger'
 import {
   Button,
   Callout,
@@ -383,7 +384,9 @@ export function AuditLog(): JSX.Element {
       })
       const ts = new Date().toISOString().slice(0, 10)
       triggerDownload(blob, `audit-log-${ts}.csv`)
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'AuditLog.exportCsv' })
       setExportError(auditLogStrings.exportError)
     } finally {
       setExporting(false)

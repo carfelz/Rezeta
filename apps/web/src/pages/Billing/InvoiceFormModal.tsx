@@ -22,6 +22,7 @@ import { useLocations } from '@/hooks/locations/use-locations'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { InvoiceWithDetails, Location as ClinicLocation } from '@rezeta/shared'
 import { calcTotal, defaultItem, formatCurrency, type ItemRow } from './helpers'
+import { logger } from '@/lib/logger'
 import { billingStrings } from './strings'
 
 export interface InvoiceFormModalProps {
@@ -113,7 +114,9 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
         await createMutation.mutateAsync(dto)
       }
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Billing.InvoiceFormModal' })
       setError(isEdit ? billingStrings.updateErrorMessage : billingStrings.createErrorMessage)
     }
   }

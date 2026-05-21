@@ -6,6 +6,7 @@ import { UpdateProfileSchema, type UpdateProfileDto } from '@rezeta/shared'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuthStore } from '@/store/auth.store'
 import { useUpdateProfile } from '@/hooks/users/use-update-profile'
+import { logger } from '@/lib/logger'
 import { settingsStrings, templatesStrings, typesStrings } from './settings/strings'
 import {
   Button,
@@ -44,7 +45,9 @@ function ProfileEditModal({ onClose }: { onClose: () => void }): JSX.Element {
     try {
       await mutation.mutateAsync(data)
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Settings.updateProfile' })
       setServerError(settingsStrings.profileUpdateError)
     }
   }

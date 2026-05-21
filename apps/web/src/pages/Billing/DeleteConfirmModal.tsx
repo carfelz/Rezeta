@@ -10,6 +10,7 @@ import {
 } from '@/components/ui'
 import { useDeleteInvoice } from '@/hooks/invoices/use-invoices'
 import type { InvoiceWithDetails } from '@rezeta/shared'
+import { logger } from '@/lib/logger'
 import { billingStrings } from './strings'
 
 export interface DeleteConfirmModalProps {
@@ -26,7 +27,9 @@ export function DeleteConfirmModal({ invoice, onClose }: DeleteConfirmModalProps
     try {
       await deleteMutation.mutateAsync(invoice.id)
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Billing.DeleteConfirmModal' })
       setError(billingStrings.deleteErrorMessage)
     }
   }

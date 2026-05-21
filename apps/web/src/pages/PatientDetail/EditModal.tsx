@@ -18,6 +18,7 @@ import {
 } from '@/components/ui'
 import { useUpdatePatient } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
+import { logger } from '@/lib/logger'
 import { patientDetailStrings } from './strings'
 
 export interface EditModalProps {
@@ -57,7 +58,9 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
         chronicConditions: patient.chronicConditions,
       })
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'PatientDetail.EditModal' })
       setError(patientDetailStrings.errorMessage)
     }
   }

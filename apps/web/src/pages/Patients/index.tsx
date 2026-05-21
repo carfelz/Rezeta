@@ -6,6 +6,7 @@ import type { Patient } from '@rezeta/shared'
 import { PatientModal, type PatientModalMode } from './PatientModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { PatientRow } from './PatientRow'
+import { logger } from '@/lib/logger'
 import { patientsPageStrings } from './strings'
 
 export function Patients(): JSX.Element {
@@ -59,7 +60,9 @@ export function Patients(): JSX.Element {
     try {
       await deleteMutation.mutateAsync(deletingPatient.id)
       setDeletingPatient(null)
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Patients.delete' })
       setDeleteError(patientsPageStrings.deleteError)
     }
   }

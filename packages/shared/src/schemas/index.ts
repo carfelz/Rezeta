@@ -1,4 +1,5 @@
 export * from './audit-log.js'
+export * from './client-error.js'
 export * from './auth.js'
 export * from './appointment.js'
 export * from './consultation.js'

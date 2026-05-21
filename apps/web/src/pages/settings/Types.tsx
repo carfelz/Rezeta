@@ -9,6 +9,7 @@ import {
 } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
 import { typesStrings } from './strings'
+import { logger } from '@/lib/logger'
 import type { ProtocolTypeDto } from '@rezeta/shared'
 import {
   Button,
@@ -46,7 +47,9 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
     try {
       await createMutation.mutateAsync({ name, templateId })
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Types.create' })
       setError('No se pudo crear el tipo. Verifica que el nombre no esté en uso.')
     }
   }
@@ -142,7 +145,9 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
     try {
       await updateMutation.mutateAsync({ name: name.trim() })
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Types.rename' })
       setError('No se pudo renombrar el tipo. Verifica que el nombre no esté en uso.')
     }
   }

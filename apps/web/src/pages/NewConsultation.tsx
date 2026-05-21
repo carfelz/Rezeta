@@ -14,6 +14,7 @@ import { ResumeBanner } from '@/components/consultations/ResumeBanner'
 import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
 import { formatDoctorName } from '@/lib/format/names'
+import { logger } from '@/lib/logger'
 import { newConsultationStrings } from './Consultation/strings'
 
 export function NewConsultation(): JSX.Element {
@@ -98,7 +99,9 @@ export function NewConsultation(): JSX.Element {
         ...(protocolId ? { protocolId } : {}),
       })
       void navigate(`/consultas/${consultation.id}`, { replace: true })
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'NewConsultation.create' })
       setError(newConsultationStrings.createError)
     } finally {
       setIsCreating(false)

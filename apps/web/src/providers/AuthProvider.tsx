@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { authClient } from '@/lib/auth'
 import { useAuthStore } from '@/store/auth.store'
+import { logger } from '@/lib/logger'
 import type { AuthUser } from '@rezeta/shared'
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
@@ -25,7 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           _setUser(user)
           _setStatus('authenticated')
         } catch (err) {
-          console.error('[AuthProvider] Provision failed:', err)
+          const error = err instanceof Error ? err : new Error(String(err))
+          logger.error(error.message, { stack: error.stack, context: 'AuthProvider.provision' })
           await authClient.signOut()
           _setUser(null)
           _setSession(null)

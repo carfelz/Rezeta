@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-21] — Frontend error logging to server app logs
+
+### Added
+
+- `POST /v1/logs/client-error` — public NestJS endpoint that receives frontend error reports and emits them via `Logger.error/warn` into the server stdout log stream (`apps/api/src/modules/logs/`)
+- `ClientErrorSchema` in `packages/shared/src/schemas/client-error.ts` — Zod schema shared between frontend and backend for the error payload
+- `apps/web/src/lib/logger.ts` — thin frontend logger utility (`logger.error`, `logger.warn`) that always logs to console and fire-and-forgets a POST to the backend endpoint
+- `apps/web/src/components/ErrorBoundary.tsx` — React class-component error boundary wrapping `<App />`; calls `logger.error` on `componentDidCatch` and renders a Spanish fallback UI
+- `window.onerror` and `window.onunhandledrejection` global handlers in `apps/web/src/main.tsx`
+- Global `QueryCache` and `MutationCache` error handlers in `apps/web/src/providers/QueryProvider.tsx` that log all TanStack Query failures
+
+### Changed
+
+- `apps/web/src/providers/AuthProvider.tsx` — replaced `console.error` with `logger.error`
+- `apps/web/src/pages/Settings.tsx`, `NewConsultation.tsx`, `Patients/PatientModal.tsx`, `Patients/index.tsx`, `settings/AuditLog.tsx`, `settings/Locations.tsx`, `settings/Types.tsx`, `PatientDetail/EditModal.tsx`, `Billing/DeleteConfirmModal.tsx`, `Billing/InvoiceFormModal.tsx` — all non-silent `catch {}` blocks now call `logger.error` with context before setting user-visible error state
+
 ## [2026-05-21] — Wave 5: Responsive sidebar, mobile layout fix
 
 ### Fixed

@@ -25,6 +25,7 @@ import { ClinicalHistory } from './ClinicalHistory'
 import { patientModalStrings } from './strings'
 import { ReadField } from './ReadField'
 import { DOC_LABELS, SEX_LABELS, formatAge, formatDate } from './helpers'
+import { logger } from '@/lib/logger'
 
 export type PatientModalMode = 'create' | 'edit' | 'view'
 
@@ -95,7 +96,9 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
         await createMutation.mutateAsync(payload)
       }
       onClose()
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'PatientModal.submit' })
       setError(isEdit ? patientModalStrings.updateError : patientModalStrings.createError)
     }
   }
