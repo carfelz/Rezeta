@@ -1,4 +1,4 @@
-import { IconButton } from '@/components/ui'
+import { IconButton, Button } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { protocolEditorStrings } from './strings'
 import type { VersionDetailResponse, VersionListItem } from '@rezeta/shared'
@@ -13,6 +13,7 @@ export interface HistoryDrawerProps {
   onClose: () => void
   onRestore: (versionId: string) => void
   isRestoring: boolean
+  currentVersionId?: string | null
 }
 
 export function HistoryDrawer({
@@ -25,6 +26,7 @@ export function HistoryDrawer({
   onClose,
   onRestore,
   isRestoring,
+  currentVersionId,
 }: HistoryDrawerProps): JSX.Element {
   return (
     <div
@@ -86,16 +88,38 @@ export function HistoryDrawer({
                   })}
                 </span>
               </button>
-              {!v.isCurrent && (
-                <IconButton
-                  icon="ph ph-clock-counter-clockwise"
-                  aria-label={protocolEditorStrings.historyRestore}
-                  tone="neutral"
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
                   size="sm"
-                  disabled={isRestoring}
-                  onClick={() => onRestore(v.id)}
-                />
-              )}
+                  className="text-[11.5px] px-2 h-7"
+                  onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
+                  aria-label={protocolEditorStrings.historyView}
+                >
+                  {protocolEditorStrings.historyView}
+                </Button>
+                {!v.isCurrent && currentVersionId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[11.5px] px-2 h-7"
+                    onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
+                    aria-label={protocolEditorStrings.historyCompare}
+                  >
+                    {protocolEditorStrings.historyCompare}
+                  </Button>
+                )}
+                {!v.isCurrent && (
+                  <IconButton
+                    icon="ph ph-clock-counter-clockwise"
+                    aria-label={protocolEditorStrings.historyRestore}
+                    tone="neutral"
+                    size="sm"
+                    disabled={isRestoring}
+                    onClick={() => onRestore(v.id)}
+                  />
+                )}
+              </div>
             </div>
           ))
         )}

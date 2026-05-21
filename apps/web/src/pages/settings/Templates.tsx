@@ -109,7 +109,9 @@ export function Templates(): JSX.Element {
                     {t.suggestedSpecialty ?? '—'}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
-                    {t.isLocked ? (
+                    {t.isSeeded ? (
+                      <Badge variant="draft">{templatesStrings.listSeededBadge}</Badge>
+                    ) : t.isLocked ? (
                       <Badge variant="review">
                         {templatesStrings.listBlockedBy(t.blockingTypeIds?.length ?? 0)}
                       </Badge>

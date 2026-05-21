@@ -18,14 +18,14 @@ export const MONTHS_ES = [
 ]
 
 export function formatDateKicker(date: Date): string {
-  const day = DAYS_ES[date.getDay()]
   const dayNum = date.getDate()
-  const month = MONTHS_ES[date.getMonth()]
+  const month = MONTHS_ES[date.getMonth()].slice(0, 3)
+  const year = date.getFullYear()
   const hours = date.getHours()
   const minutes = date.getMinutes().toString().padStart(2, '0')
   const ampm = hours >= 12 ? 'PM' : 'AM'
   const h12 = hours % 12 || 12
-  return `${day} ${dayNum} de ${month} · ${h12}:${minutes} ${ampm}`
+  return `${dayNum} ${month} ${year} · ${h12}:${minutes} ${ampm}`
 }
 
 export function formatTime(iso: string): string {

@@ -37,6 +37,8 @@ export const protocolEditorStrings = {
   historyEmpty: 'Sin versiones guardadas.',
   historyCurrent: 'Actual',
   historyNoSummary: 'Sin resumen',
+  historyView: 'Ver contenido',
+  historyCompare: 'Comparar con actual',
   historyRestore: 'Restaurar como nueva versión',
   historyRestoring: 'Restaurando…',
   historySelectPrompt: 'Selecciona una versión para ver su contenido.',

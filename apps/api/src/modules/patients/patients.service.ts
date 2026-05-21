@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common'
 import type { Patient } from '@rezeta/db'
 import { ErrorCode, type CreatePatientDto, type UpdatePatientDto } from '@rezeta/shared'
+import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { PatientsRepository, type PatientListParams } from './patients.repository.js'
 
 @Injectable()
@@ -41,7 +42,8 @@ export class PatientsService {
   }
 
   async remove(id: string, tenantId: string): Promise<void> {
-    await this.getById(id, tenantId)
+    const patient = await this.getById(id, tenantId)
+    setAuditEntityName(`${patient.firstName} ${patient.lastName}`)
     await this.repo.softDelete(id, tenantId)
   }
 }

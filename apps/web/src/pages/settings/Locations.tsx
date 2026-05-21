@@ -54,9 +54,12 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
 
   const isEdit = !!location
   const canSubmit = name.trim().length >= 2
+  const [submitted, setSubmitted] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSubmitted(true)
+    if (!canSubmit) return
     setError(null)
 
     const payload = {
@@ -106,8 +109,14 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
           }}
         >
           <ModalBody className="flex flex-col gap-4">
-            <Field label={locationsStrings.nameLabel} required>
+            <Field
+              id="location-name"
+              label={locationsStrings.nameLabel}
+              required
+              error={submitted && !canSubmit ? locationsStrings.nameRequired : undefined}
+            >
               <Input
+                id="location-name"
                 type="text"
                 placeholder={locationsStrings.namePlaceholder}
                 value={name}
@@ -117,16 +126,18 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={locationsStrings.cityLabel}>
+              <Field id="location-city" label={locationsStrings.cityLabel}>
                 <Input
+                  id="location-city"
                   type="text"
                   placeholder={locationsStrings.cityPlaceholder}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
               </Field>
-              <Field label={locationsStrings.phoneLabel}>
+              <Field id="location-phone" label={locationsStrings.phoneLabel}>
                 <Input
+                  id="location-phone"
                   type="tel"
                   placeholder={locationsStrings.phonePlaceholder}
                   value={phone}
@@ -135,8 +146,9 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
               </Field>
             </div>
 
-            <Field label={locationsStrings.addressLabel}>
+            <Field id="location-address" label={locationsStrings.addressLabel}>
               <Input
+                id="location-address"
                 type="text"
                 placeholder={locationsStrings.addressPlaceholder}
                 value={address}
@@ -145,8 +157,13 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={locationsStrings.feeLabel} helper={locationsStrings.feeHelper}>
+              <Field
+                id="location-fee"
+                label={locationsStrings.feeLabel}
+                helper={locationsStrings.feeHelper}
+              >
                 <Input
+                  id="location-fee"
                   type="number"
                   min="0"
                   step="0.01"
@@ -156,10 +173,12 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
                 />
               </Field>
               <Field
+                id="location-commission"
                 label={locationsStrings.commissionLabel}
                 helper={locationsStrings.commissionHelper}
               >
                 <Input
+                  id="location-commission"
                   type="number"
                   min="0"
                   max="100"
@@ -172,7 +191,7 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={locationsStrings.typeLabel}>
+              <Field id="location-type" label={locationsStrings.typeLabel}>
                 <label className="flex items-center gap-2 h-input-md cursor-pointer select-none">
                   <Checkbox checked={isOwned} onChange={(e) => setIsOwned(e.target.checked)} />
                   {locationsStrings.ownedCheckbox}
@@ -180,8 +199,9 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
               </Field>
             </div>
 
-            <Field label={locationsStrings.notesLabel}>
+            <Field id="location-notes" label={locationsStrings.notesLabel}>
               <Textarea
+                id="location-notes"
                 placeholder={locationsStrings.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -202,7 +222,7 @@ function LocationFormModal({ location, onClose }: LocationFormModalProps) {
             <Button type="button" variant="secondary" onClick={onClose}>
               {locationsStrings.cancelButton}
             </Button>
-            <Button type="submit" variant="primary" disabled={!canSubmit || isPending}>
+            <Button type="submit" variant="primary" disabled={isPending}>
               {isPending
                 ? locationsStrings.savingButton
                 : isEdit

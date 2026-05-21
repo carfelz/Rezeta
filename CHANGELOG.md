@@ -4,6 +4,27 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-21] — QA bug fixes (11 bugs from session 2026-05-21 retest)
+
+### Fixed
+
+- **BUG-005** (`Dashboard/helpers.ts`, `Dashboard/PageHeader.tsx`): Date kicker now shows "21 may 2026" format instead of "JUEVES 21 DE MAYO"; removed `uppercase` CSS class.
+- **BUG-011** (`settings/AuditLog.tsx`): Audit log timestamps now render "PM"/"AM" instead of "p. m."/"a. m."; replaced `toLocaleString` with manual hour formatting.
+- **BUG-039** (`Dashboard/PageHeader.tsx`): "Nueva consulta" button now navigates to `/consultas/nueva` instead of `/pacientes`.
+- **BUG-022** (`settings/Templates.tsx`, `settings/strings.ts`): System/seeded templates now show "Sistema" badge instead of "Bloqueada por N tipo(s)"; `isSeeded` check added before `isLocked` in badge logic.
+- **BUG-017** (`settings/Locations.tsx`, `settings/strings.ts`): Location form now shows inline validation error ("El nombre es obligatorio") and required marker on submit attempt; submit button is always enabled so validation fires on click.
+- **BUG-018** (`components/ui/Input.tsx`, `settings/Locations.tsx`): `Field` component now accepts `id` prop and sets `htmlFor` on its `<label>`; all 8 location form fields now have associated IDs.
+- **BUG-034** (`ProtocolEditor/EditorHeader.tsx`, `ProtocolEditor/helpers.ts`, `ProtocolEditor/index.tsx`): Protocol editor top bar now displays status badge (Borrador / Activo / En revisión / Archivado) via new `status` prop on `EditorHeader`.
+- **BUG-036** (`Dashboard/index.tsx`, `Dashboard/PageHeader.tsx`): Dashboard no longer overflows at 375px; grids use responsive breakpoints (`grid-cols-2 sm:grid-cols-4`, `grid-cols-1 sm:grid-cols-2`); PageHeader stacks vertically on mobile.
+- **BUG-029** (`ProtocolEditor/HistoryDrawer.tsx`, `ProtocolEditor/strings.ts`, `ProtocolEditor/index.tsx`): Version history panel now shows "Ver contenido" and "Comparar con actual" buttons alongside the existing Restaurar button for each non-current version.
+- **BUG-038** (`audit-context.store.ts`, `audit-log.interceptor.ts`, `protocols.service.ts`, `patients.service.ts`, `locations.service.ts`, `protocol-templates.service.ts`, `settings/AuditLog.tsx`): Audit log entity names no longer truncated on delete/archive; services set entity name in context before deletion; frontend fallback now shows localized entity type labels (e.g. "Protocolo" not "Protocol").
+- **BUG-008** (`pages/Onboarding/index.tsx`, `pages/Onboarding/strings.ts`): Fresh accounts no longer blocked at `/bienvenido`; onboarding auto-triggers default seeding on mount and redirects automatically; error state shows retry button.
+
+### Added
+
+- `setAuditEntityName()` helper in `audit-context.store.ts` for services to register entity names before delete/archive operations.
+- Tests for `setAuditEntityName` in `audit-context.store.spec.ts` and interceptor context fallback in `audit-log.interceptor.spec.ts`.
+
 ## [2026-05-21] — Frontend error logging to server app logs
 
 ### Added

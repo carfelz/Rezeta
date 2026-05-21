@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common'
+import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolsRepository } from './protocols.repository.js'
 import { ProtocolTypesRepository } from '../protocol-types/protocol-types.repository.js'
 import {
@@ -99,6 +100,8 @@ export class ProtocolsService {
   }
 
   async archive(id: string, tenantId: string): Promise<void> {
+    const existing = await this.repository.findById(id, tenantId)
+    if (existing) setAuditEntityName(existing.title)
     const found = await this.repository.archive(id, tenantId)
     if (!found) {
       throw new NotFoundException({

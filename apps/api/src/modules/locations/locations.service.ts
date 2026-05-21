@@ -2,6 +2,7 @@ import { Injectable, Inject, NotFoundException, ConflictException } from '@nestj
 import type { Location } from '@rezeta/shared'
 import type { CreateLocationDto, UpdateLocationDto } from '@rezeta/shared'
 import { ErrorCode } from '@rezeta/shared'
+import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { LocationsRepository } from './locations.repository.js'
 
 @Injectable()
@@ -38,7 +39,8 @@ export class LocationsService {
   }
 
   async remove(id: string, tenantId: string): Promise<void> {
-    await this.getById(id, tenantId)
+    const location = await this.getById(id, tenantId)
+    setAuditEntityName(location.name)
     const hasFuture = await this.repo.hasFutureAppointments(id, tenantId)
     if (hasFuture) {
       throw new ConflictException({

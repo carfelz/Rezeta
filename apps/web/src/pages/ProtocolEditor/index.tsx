@@ -308,6 +308,7 @@ export function ProtocolEditor(): JSX.Element {
         updatedAt={protocol.updatedAt}
         totalBlocks={totalBlocks}
         sectionCount={sectionCount}
+        status={protocol.status}
         isDirty={isDirty}
         isSaving={isSaving}
         isRenaming={isRenaming}
@@ -377,6 +378,7 @@ export function ProtocolEditor(): JSX.Element {
           onClose={() => setHistoryOpen(false)}
           onRestore={handleRestore}
           isRestoring={isRestoring}
+          currentVersionId={protocol.currentVersion?.id ?? null}
         />
       )}
 

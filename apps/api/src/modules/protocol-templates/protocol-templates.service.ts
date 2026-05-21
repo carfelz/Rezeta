@@ -4,6 +4,7 @@ import type {
   CreateProtocolTemplateDto,
   UpdateProtocolTemplateDto,
 } from '@rezeta/shared'
+import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolTemplatesRepository } from './protocol-templates.repository.js'
 
 @Injectable()
@@ -98,6 +99,7 @@ export class ProtocolTemplatesService {
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    setAuditEntityName(existing.name)
 
     const isLocked = existing.protocolTypes.length > 0
     if (isLocked) {

@@ -5,8 +5,9 @@ export const onboardingStrings = {
   defaultCta: 'Empezar con la configuración por defecto',
   defaultHelper:
     '5 plantillas listas para emergencias, procedimientos, medicación, diagnóstico y fisioterapia.',
-  customizeLink: 'Prefiero personalizar',
+  customizeLink: 'Personalizar plantillas y tipos',
   loading: 'Configurando tu cuenta...',
+  retryLabel: 'Intentar de nuevo',
   error: 'Algo salió mal. Inténtalo de nuevo.',
   successToast: 'Configuración lista. Ya puedes crear tu primer protocolo.',
 } as const

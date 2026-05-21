@@ -1,7 +1,7 @@
 import type { ExecutionContext, CallHandler } from '@nestjs/common'
 import { of, throwError, firstValueFrom } from 'rxjs'
 import { AuditLogInterceptor } from '../audit-log.interceptor.js'
-import { httpAuditContextStore } from '../../audit-log/audit-context.store.js'
+import { httpAuditContextStore, setAuditEntityName } from '../../audit-log/audit-context.store.js'
 import type { AuditLogService } from '../../audit-log/audit-log.service.js'
 
 function makeRequest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -216,5 +216,24 @@ describe('AuditLogInterceptor', () => {
     await new Promise((r) => setTimeout(r, 10))
     const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
     expect(event['metadata']).toBeUndefined()
+  })
+
+  it('uses entityName from HttpAuditContext when response body has none (DELETE/archive path)', async () => {
+    const req = makeRequest({
+      method: 'DELETE',
+      path: '/v1/protocols/abc-123',
+      params: { id: 'abc-123' },
+    })
+    // Simulate a service calling setAuditEntityName from within the handler (inside the interceptor's run context)
+    const handlerWithSideEffect: CallHandler = {
+      handle: () => {
+        setAuditEntityName('My Protocol')
+        return of(undefined)
+      },
+    }
+    await firstValueFrom(interceptor.intercept(makeContext(req), handlerWithSideEffect))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect((event?.['metadata'] as Record<string, unknown>)?.['entityName']).toBe('My Protocol')
   })
 })

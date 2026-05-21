@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { useOnboardingDefault } from '@/hooks/onboarding/use-onboarding'
@@ -8,23 +9,22 @@ export function Onboarding(): JSX.Element {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
   const defaultMutation = useOnboardingDefault()
+  const { mutate } = defaultMutation
 
-  async function handleDefault() {
-    await defaultMutation.mutateAsync()
-    void navigate('/dashboard', { replace: true })
-  }
+  useEffect(() => {
+    mutate()
+  }, [mutate])
 
-  return (
-    <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
-      <div className="w-full max-w-[560px]">
-        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6">
-          R
-        </div>
-
-        <h1 className="text-h1 mb-4">{onboardingStrings.welcomeHeading(user?.fullName ?? null)}</h1>
-        <p className="text-body text-n-600 mb-8">{onboardingStrings.welcomeLead}</p>
-
-        {defaultMutation.isError && (
+  if (defaultMutation.isError) {
+    return (
+      <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
+        <div className="w-full max-w-[560px]">
+          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6">
+            R
+          </div>
+          <h1 className="text-h1 mb-4">
+            {onboardingStrings.welcomeHeading(user?.fullName ?? null)}
+          </h1>
           <div className="mb-6">
             <Callout
               variant="danger"
@@ -33,33 +33,36 @@ export function Onboarding(): JSX.Element {
               {onboardingStrings.error}
             </Callout>
           </div>
-        )}
-
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full justify-center mb-3 text-n-0"
-          disabled={defaultMutation.isPending}
-          onClick={() => {
-            void handleDefault()
-          }}
-        >
-          {defaultMutation.isPending ? onboardingStrings.loading : onboardingStrings.defaultCta}
-        </Button>
-
-        <p className="text-caption text-n-500 text-center mb-8">
-          {onboardingStrings.defaultHelper}
-        </p>
-
-        <div className="text-center">
           <Button
-            variant="ghost"
-            className="text-n-600 text-[13px]"
-            onClick={() => void navigate('/bienvenido/personalizar')}
+            variant="primary"
+            size="lg"
+            className="w-full justify-center mb-3 text-n-0"
+            onClick={() => mutate()}
           >
-            {onboardingStrings.customizeLink}
+            {onboardingStrings.retryLabel}
           </Button>
+          <div className="text-center mt-4">
+            <Button
+              variant="ghost"
+              className="text-n-600 text-[13px]"
+              onClick={() => void navigate('/bienvenido/personalizar')}
+            >
+              {onboardingStrings.customizeLink}
+            </Button>
+          </div>
         </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
+      <div className="w-full max-w-[560px] text-center">
+        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6 mx-auto">
+          R
+        </div>
+        <i className="ph ph-spinner animate-spin text-[32px] text-p-400 mb-4 block" />
+        <p className="text-body-sm text-n-500">{onboardingStrings.loading}</p>
       </div>
     </div>
   )

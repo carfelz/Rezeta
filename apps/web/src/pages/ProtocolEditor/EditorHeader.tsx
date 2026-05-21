@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Badge, Button, Input } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
-import { formatRelativeTime } from './helpers'
+import { formatRelativeTime, statusToBadgeVariant, labelForProtocolStatus } from './helpers'
 
 export interface EditorHeaderProps {
   title: string
@@ -9,6 +9,7 @@ export interface EditorHeaderProps {
   updatedAt: string
   totalBlocks: number
   sectionCount: number
+  status: string
   isDirty: boolean
   isSaving: boolean
   isRenaming: boolean
@@ -30,6 +31,7 @@ export function EditorHeader({
   updatedAt,
   totalBlocks,
   sectionCount,
+  status,
   isDirty,
   isSaving,
   isRenaming,
@@ -85,6 +87,7 @@ export function EditorHeader({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 pt-1">
+        <Badge variant={statusToBadgeVariant(status)}>{labelForProtocolStatus(status)}</Badge>
         {isDirty && <Badge variant="review">{protocolEditorStrings.unsaved}</Badge>}
         <Button variant="secondary" size="sm" onClick={onPreview}>
           <i className="ph ph-eye mr-2" />

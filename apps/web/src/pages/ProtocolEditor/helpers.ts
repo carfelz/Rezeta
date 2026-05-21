@@ -1,4 +1,22 @@
+import type { BadgeProps } from '@/components/ui'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
+
+export function statusToBadgeVariant(status: string): BadgeProps['variant'] {
+  if (status === 'active') return 'active'
+  if (status === 'archived') return 'archived'
+  if (status === 'review') return 'review'
+  return 'draft'
+}
+
+export function labelForProtocolStatus(status: string): string {
+  const map: Record<string, string> = {
+    active: 'Activo',
+    draft: 'Borrador',
+    archived: 'Archivado',
+    review: 'En revisión',
+  }
+  return map[status] ?? status
+}
 
 export function formatRelativeTime(isoDate: string): string {
   const diffMs = Date.now() - new Date(isoDate).getTime()

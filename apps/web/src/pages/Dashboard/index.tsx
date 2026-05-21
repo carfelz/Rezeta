@@ -98,7 +98,7 @@ export function Dashboard(): JSX.Element {
     <div>
       <PageHeader now={now} greeting={greeting} subtitle={subtitle} />
 
-      <div className="grid grid-cols-4 gap-5 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5 mb-5">
         <KpiCard
           label={dashboardStrings.kpiConsultationsLabel}
           value={apptLoading ? '—' : todayCompleted}
@@ -146,12 +146,12 @@ export function Dashboard(): JSX.Element {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-5 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5">
         <UpcomingAppointments appointments={todayScheduled} isLoading={apptLoading} />
         <RecentPatients patients={patients?.items ?? []} isLoading={patientsLoading} />
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
         <RecentProtocols protocols={recentProtocols ?? []} />
         <ActivityFeed entries={auditFeed?.data ?? []} />
       </div>

@@ -98,7 +98,8 @@ export class AuditLogInterceptor implements NestInterceptor {
           .handle()
           .pipe(
             tap((response: unknown) => {
-              const entityName = extractEntityName(response)
+              const entityName =
+                extractEntityName(response) ?? httpAuditContextStore.getStore()?.entityName
               void this.auditLog.record({
                 ...buildRecord('success'),
                 ...(entityName !== undefined ? { metadata: { entityName } } : {}),

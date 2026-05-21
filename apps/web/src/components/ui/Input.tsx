@@ -174,6 +174,7 @@ export interface FieldProps {
   error?: string | undefined
   children: ReactNode
   className?: string
+  id?: string
 }
 
 export function Field({
@@ -183,11 +184,12 @@ export function Field({
   error,
   children,
   className,
+  id,
 }: FieldProps): JSX.Element {
   return (
     <div className={cn('flex flex-col gap-[6px]', className)}>
       {label && (
-        <label className="text-[12.5px] font-sans font-medium text-n-700 leading-none">
+        <label htmlFor={id} className="text-[12.5px] font-sans font-medium text-n-700 leading-none">
           {label}
           {required && <span className="text-danger-solid ml-1">*</span>}
         </label>

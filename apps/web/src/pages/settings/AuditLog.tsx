@@ -68,13 +68,29 @@ const ACTOR_TYPE_LABELS: Record<string, string> = {
   cron: auditLogStrings.actorCron,
 }
 
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  Consultation: 'Consulta',
+  Patient: 'Paciente',
+  Protocol: 'Protocolo',
+  ProtocolVersion: 'Versión de protocolo',
+  ProtocolTemplate: 'Plantilla',
+  ProtocolType: 'Tipo de protocolo',
+  Prescription: 'Prescripción',
+  Appointment: 'Cita',
+  Invoice: 'Factura',
+  Location: 'Ubicación',
+}
+
 function formatTs(iso: string): string {
   const d = new Date(iso)
   const day = d.getDate()
   const month = d.toLocaleString('es-DO', { month: 'short' })
   const year = d.getFullYear()
-  const time = d.toLocaleString('es-DO', { hour: 'numeric', minute: '2-digit', hour12: true })
-  return `${day} ${month} ${year}, ${time}`
+  const hours = d.getHours()
+  const minutes = d.getMinutes().toString().padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const h12 = hours % 12 || 12
+  return `${day} ${month} ${year}, ${h12}:${minutes} ${ampm}`
 }
 
 function renderValue(v: unknown): string {
@@ -513,7 +529,9 @@ export function AuditLog(): JSX.Element {
                               </span>
                             ) : (
                               <>
-                                <span className="font-medium text-n-800">{item.entityType}</span>
+                                <span className="font-medium text-n-800">
+                                  {ENTITY_TYPE_LABELS[item.entityType] ?? item.entityType}
+                                </span>
                                 {item.entityId && (
                                   <span className="font-mono text-[11px] text-n-400 ml-1.5">
                                     {item.entityId.slice(0, 8)}…
