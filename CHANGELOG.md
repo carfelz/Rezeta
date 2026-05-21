@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-21] — fix CI typecheck failure on months array index
+
+### Fixed
+
+- **CI** (`Dashboard/helpers.ts:22`): Added non-null assert (`!`) on `MONTHS_ES[date.getMonth()]` to satisfy `exactOptionalPropertyTypes` — TS2532 was failing the build on CI despite passing locally.
+
+---
+
 ## [2026-05-21] — QA bug fixes (11 bugs from session 2026-05-21 retest)
 
 ### Fixed
