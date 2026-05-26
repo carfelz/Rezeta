@@ -32,6 +32,8 @@ export function Consultation(): JSX.Element {
 
   const [showMissingFields, setShowMissingFields] = useState(false)
   const [showSign, setShowSign] = useState(false)
+  const [showAmend, setShowAmend] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
 
   const missingFields = computeMissingFields({
     chiefComplaint: soap.chiefComplaint,
@@ -112,7 +114,7 @@ export function Consultation(): JSX.Element {
           saveStatus={soap.saveStatus}
           {...(soap.savedAt !== undefined ? { savedAt: soap.savedAt } : {})}
           isSigned={isSigned}
-          onAmend={() => setShowSign(false)}
+          onAmend={() => setShowAmend(true)}
           onRetry={soap.saveNow}
           onSignClick={handleSignClick}
         />
@@ -147,18 +149,24 @@ export function Consultation(): JSX.Element {
           <ProtocolPanel
             consultation={consultation}
             readOnly={isSigned}
-            updateMutation={updateMutation}
             soap={soap}
-            onSignClick={handleSignClick}
             showSign={showSign}
             onShowSignChange={setShowSign}
+            showAmend={showAmend}
+            onShowAmendChange={setShowAmend}
+            showPicker={showPicker}
+            onShowPickerChange={setShowPicker}
           />
         </main>
         <aside
           className="w-80 border-l border-n-200 flex flex-col overflow-hidden"
           aria-label={consultationPageStrings.complementaryInfoLabel}
         >
-          <OrdersRail consultation={consultation} readOnly={isSigned} />
+          <OrdersRail
+            consultation={consultation}
+            readOnly={isSigned}
+            onAddProtocol={() => setShowPicker(true)}
+          />
         </aside>
       </div>
     </div>

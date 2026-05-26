@@ -9,9 +9,10 @@ import { usePatientConsultations } from '@/hooks/consultations/use-consultations
 interface OrdersRailProps {
   consultation: ConsultationWithDetails
   readOnly: boolean
+  onAddProtocol: () => void
 }
 
-export function OrdersRail({ consultation, readOnly }: OrdersRailProps): JSX.Element {
+export function OrdersRail({ consultation, readOnly, onAddProtocol }: OrdersRailProps): JSX.Element {
   const navigate = useNavigate()
   const { data: patient } = usePatient(consultation.patientId)
   const { data: prevConsultations = [] } = usePatientConsultations(consultation.patientId)
@@ -33,7 +34,7 @@ export function OrdersRail({ consultation, readOnly }: OrdersRailProps): JSX.Ele
           hasProtocols={consultation.protocolUsages.length > 0}
           patient={patient ?? null}
           prevList={prevList}
-          onAddProtocol={() => undefined}
+          onAddProtocol={onAddProtocol}
           onPrevClick={(prevId) => void navigate(`/consultas/${prevId}`)}
           formatDate={formatDate}
         />

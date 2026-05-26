@@ -574,7 +574,7 @@ function MedicationGroup({
     )
   }
 
-  // D8: flat medication list — display "Medicamentos N" instead of the group's
+  // D8: flat medication list — display "Recetas N" instead of the group's
   // stored title (e.g. "Receta"). The group's title persists as the receta's
   // PDF title; multi-receta UI is removed but the data model is unchanged.
   const displayTitle = isOnlyGroup

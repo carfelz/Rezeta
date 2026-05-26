@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeBlock, PALETTE_ITEMS } from '../block-factory.js'
+import { makeBlock, PALETTE_ITEMS } from '../block-factory'
 
 describe('makeBlock', () => {
   it('creates a vitals block with default fields array', () => {

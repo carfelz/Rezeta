@@ -16,29 +16,31 @@ import {
 import type { ConsultationWithDetails, UpdateProtocolUsageDto } from '@rezeta/shared'
 import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
 import type { useSoapState } from './use-soap-state'
-import type { UseMutationResult } from '@tanstack/react-query'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 import { ConsultationModals } from './ConsultationModals'
 
 interface ProtocolPanelProps {
   consultation: ConsultationWithDetails
   readOnly: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updateMutation: UseMutationResult<ConsultationWithDetails, Error, any>
   soap: ReturnType<typeof useSoapState>
-  onSignClick: () => void
   showSign: boolean
   onShowSignChange: (open: boolean) => void
+  showAmend: boolean
+  onShowAmendChange: (open: boolean) => void
+  showPicker: boolean
+  onShowPickerChange: (open: boolean) => void
 }
 
 export function ProtocolPanel({
   consultation,
   readOnly,
-  updateMutation,
   soap,
-  onSignClick,
   showSign,
   onShowSignChange,
+  showAmend,
+  onShowAmendChange,
+  showPicker,
+  onShowPickerChange,
 }: ProtocolPanelProps): JSX.Element {
   const navigate = useNavigate()
   const id = consultation.id
@@ -56,9 +58,7 @@ export function ProtocolPanel({
   const updateProtocolUsage = useUpdateProtocolUsage(id, activeUsage?.id ?? '')
   const [usageIdStack, setUsageIdStack] = useState<string[]>([])
 
-  const [showPicker, setShowPicker] = useState(false)
   const [showSwitch, setShowSwitch] = useState(false)
-  const [showAmend, setShowAmend] = useState(false)
   const [skipStepTarget, setSkipStepTarget] = useState<{ id: string; title: string } | null>(null)
   const [showOffProtocolNote, setShowOffProtocolNote] = useState(false)
 
@@ -149,9 +149,6 @@ export function ProtocolPanel({
     )
   }
 
-  void updateMutation
-  void onSignClick
-
   return (
     <>
       <ProtocolBar
@@ -161,7 +158,7 @@ export function ProtocolPanel({
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSelectUsage={setActiveUsageId}
-        onAddProtocol={() => setShowPicker(true)}
+        onAddProtocol={() => onShowPickerChange(true)}
         onSwitchProtocol={() => setShowSwitch(true)}
         onAddOffProtocolNote={() => setShowOffProtocolNote(true)}
       />
@@ -231,7 +228,7 @@ export function ProtocolPanel({
         <div className="mt-4 flex justify-center">
           <button
             className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-400 hover:text-p-600 transition-colors justify-center text-[13px]"
-            onClick={() => setShowPicker(true)}
+            onClick={() => onShowPickerChange(true)}
           >
             <i className="ph ph-plus text-[15px]" />
             Agregar protocolo
@@ -241,11 +238,11 @@ export function ProtocolPanel({
 
       <ProtocolPickerModal
         open={showPicker}
-        onOpenChange={setShowPicker}
+        onOpenChange={onShowPickerChange}
         onSelect={(protocol) => {
           addUsageMutation.mutate(
             { protocolId: protocol.id },
-            { onSuccess: () => setShowPicker(false) },
+            { onSuccess: () => onShowPickerChange(false) },
           )
         }}
         excludeIds={protocolIds}
@@ -259,9 +256,9 @@ export function ProtocolPanel({
         showSign={showSign}
         onShowSignChange={onShowSignChange}
         showAmend={showAmend}
-        onShowAmendChange={setShowAmend}
-        showPicker={false}
-        onShowPickerChange={() => undefined}
+        onShowAmendChange={onShowAmendChange}
+        showPicker={showPicker}
+        onShowPickerChange={onShowPickerChange}
         showSwitch={showSwitch}
         onShowSwitchChange={setShowSwitch}
         skipStepTarget={skipStepTarget}
@@ -272,7 +269,7 @@ export function ProtocolPanel({
         isSkippingStep={skipStepMutation.isPending}
         isSavingOffProtocolNote={offProtocolNoteMutation.isPending}
         onAddProtocol={(protocolId) =>
-          addUsageMutation.mutate({ protocolId }, { onSuccess: () => setShowPicker(false) })
+          addUsageMutation.mutate({ protocolId }, { onSuccess: () => onShowPickerChange(false) })
         }
         onConfirmSkipStep={handleConfirmSkipStep}
         onSaveOffProtocolNote={handleSaveOffProtocolNote}

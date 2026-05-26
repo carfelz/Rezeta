@@ -31,7 +31,7 @@ export const VitalsBlock: FC<VitalsBlockProps> = ({ fields, values = {}, readOnl
           ) : (
             <input
               type={field.input_type === 'number' ? 'number' : 'text'}
-              className="h-touch px-3 rounded-sm border border-n-200 bg-white text-n-900 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-p-400 disabled:bg-n-50"
+              className="h-touch px-3 rounded-sm border border-n-200 bg-n-0 text-n-900 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-p-400 disabled:bg-n-50"
               value={String(values[field.id] ?? '')}
               disabled={readOnly}
               onChange={(e) => onChange?.(field.id, e.target.value)}

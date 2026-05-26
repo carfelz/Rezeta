@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(web): wire amendment/protocol buttons, design tokens, cleanup
+
+### Fixed
+
+- `apps/web/src/pages/Consultation/index.tsx`: lifted `showAmend` and `showPicker` state from `ProtocolPanel` to the page level; `onAmend` in `PageHeader` now opens the `AmendmentModal` via `setShowAmend(true)` instead of no-oping.
+- `apps/web/src/pages/Consultation/OrdersRail.tsx`: added `onAddProtocol` prop; passed it through to `ConsultationSidebar` so the "Agregar protocolo" button in the orders rail is no longer a no-op.
+- `apps/web/src/pages/Consultation/ProtocolPanel.tsx`: replaced local `showAmend` / `showPicker` state with lifted props from `index.tsx`; removed unused `updateMutation` and `onSignClick` props and the suppressing `void` statements; removed unused `UseMutationResult` import.
+- `apps/web/src/pages/Consultation/PageHeader.tsx`: replaced raw Tailwind palette classes (`bg-red-50`, `border-red-200`, `text-red-700`, `text-red-500`, `bg-amber-50`, `border-amber-200`, `text-amber-700`, `text-amber-500`) with design-system semantic tokens (`bg-danger-bg`, `border-danger-border`, `text-danger-text`, `bg-warning-bg`, `border-warning-border`, `text-warning-text`).
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`: replaced `bg-white` with `bg-n-0`.
+- `apps/web/src/components/protocols/blocks/ClinicalNotesBlock.tsx`: replaced `bg-white` with `bg-n-0` and `text-red-500` with `text-danger-text`.
+- `apps/web/src/hooks/use-consultation-orders.ts` (renamed from `useConsultationOrders.ts`): updated DTO parameter types from `unknown` to `CreatePrescriptionGroupDto`, `CreateImagingOrderGroupDto`, `CreateLabOrderGroupDto`.
+- `apps/web/src/hooks/__tests__/use-consultation-orders.test.ts` (renamed from `useConsultationOrders.test.ts`): updated import to match new kebab-case filename.
+- `apps/web/src/pages/ProtocolEditor/__tests__/block-factory.test.ts`: removed `.js` extension from import path for consistency with rest of test suite.
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: corrected stale comment from `"Medicamentos"` to `"Recetas"` to reflect the actual displayed string.
+
 ## [2026-05-26] — fix(web): allergy alerts in header, PATCH sign verb, Recetas tab, useConsultationOrders hook
 
 ### Added

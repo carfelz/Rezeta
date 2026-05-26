@@ -1,7 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Prescription, ImagingOrder, LabOrder } from '@rezeta/shared'
+import type {
+  Prescription,
+  ImagingOrder,
+  LabOrder,
+  CreatePrescriptionGroupDto,
+  CreateImagingOrderGroupDto,
+  CreateLabOrderGroupDto,
+} from '@rezeta/shared'
 
 export interface ConsultationOrders {
   prescriptions: Prescription[]
@@ -21,10 +28,10 @@ export function useConsultationOrders(
 
 export function useCreatePrescriptionGroup(
   consultationId: string,
-): UseMutationResult<Prescription, Error, unknown> {
+): UseMutationResult<Prescription, Error, CreatePrescriptionGroupDto> {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: unknown) =>
+    mutationFn: (dto: CreatePrescriptionGroupDto) =>
       apiClient.post<Prescription>(`/v1/consultations/${consultationId}/prescriptions`, dto),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['consultation-orders', consultationId] })
@@ -35,10 +42,10 @@ export function useCreatePrescriptionGroup(
 
 export function useCreateImagingOrderGroup(
   consultationId: string,
-): UseMutationResult<ImagingOrder[], Error, unknown> {
+): UseMutationResult<ImagingOrder[], Error, CreateImagingOrderGroupDto> {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: unknown) =>
+    mutationFn: (dto: CreateImagingOrderGroupDto) =>
       apiClient.post<ImagingOrder[]>(
         `/v1/consultations/${consultationId}/imaging-orders`,
         dto,
@@ -51,10 +58,10 @@ export function useCreateImagingOrderGroup(
 
 export function useCreateLabOrderGroup(
   consultationId: string,
-): UseMutationResult<LabOrder[], Error, unknown> {
+): UseMutationResult<LabOrder[], Error, CreateLabOrderGroupDto> {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: unknown) =>
+    mutationFn: (dto: CreateLabOrderGroupDto) =>
       apiClient.post<LabOrder[]>(`/v1/consultations/${consultationId}/lab-orders`, dto),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['consultation-orders', consultationId] })

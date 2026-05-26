@@ -19,7 +19,7 @@ import {
   useCreateImagingOrderGroup,
   useCreateLabOrderGroup,
   useDeleteOrderGroup,
-} from '../useConsultationOrders'
+} from '../use-consultation-orders'
 
 const mockOrders = {
   prescriptions: [{ id: 'rx-1', consultationId: 'cons-1', items: [] }],
