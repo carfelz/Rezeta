@@ -77,14 +77,11 @@ describe('TenantSeedingService — locale names', () => {
     }
   })
 
-  it('seedCustom: types correctly reference their templates', async () => {
-    await service.seedCustom(
-      't1',
-      [{ clientId: 'tmpl-1', name: 'My Template', schema: { version: '1.0', blocks: [] } }],
-      [{ name: 'My Type', templateClientId: 'tmpl-1' }],
-    )
+  it('seedCustom: creates the supplied templates', async () => {
+    await service.seedCustom('t1', [
+      { clientId: 'tmpl-1', name: 'My Template', schema: { version: '1.0', blocks: [] } },
+    ])
 
-    // Template was created successfully (types deferred to Plan 02)
     expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(1)
     expect(mockTx.protocolTemplate.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ name: 'My Template' }) }),
@@ -92,11 +89,9 @@ describe('TenantSeedingService — locale names', () => {
   })
 
   it('seedCustom: cross-tenant isolation — all rows scoped to given tenantId', async () => {
-    await service.seedCustom(
-      't1',
-      [{ clientId: 'x', name: 'T', schema: { version: '1.0', blocks: [] } }],
-      [{ name: 'Ty', templateClientId: 'x' }],
-    )
+    await service.seedCustom('t1', [
+      { clientId: 'x', name: 'T', schema: { version: '1.0', blocks: [] } },
+    ])
 
     for (const call of mockTx.protocolTemplate.create.mock.calls) {
       expect((call[0] as { data: { tenantId: string } }).data.tenantId).toBe('t1')

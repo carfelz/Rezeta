@@ -58,11 +58,10 @@ describe('ProtocolCategoriesController', () => {
     expect(result).toEqual(updated)
   })
 
-  it('delete: delegates to service.delete', async () => {
-    const deleted = { ...cat, deletedAt: new Date() }
-    mockService.delete.mockResolvedValue(deleted)
+  it('delete: delegates to service.delete and returns void', async () => {
+    mockService.delete.mockResolvedValue(undefined)
     const result = await controller.delete('tenant-1', 'cat-1')
     expect(mockService.delete).toHaveBeenCalledWith('tenant-1', 'cat-1')
-    expect(result).toEqual(deleted)
+    expect(result).toBeUndefined()
   })
 })

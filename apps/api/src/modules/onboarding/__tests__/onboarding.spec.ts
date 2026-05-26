@@ -4,7 +4,7 @@ import { OnboardingService } from '../onboarding.service.js'
 
 // Supplement onboarding.service.spec.ts with gap coverage:
 // - TENANT_ALREADY_SEEDED conflict propagation
-// - Multiple templates + types seeding call counts
+// - Multiple templates seeding call counts
 // - Return shape (tenantSeededAt truthy after seeding)
 
 const mockSeeder = {
@@ -112,7 +112,7 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
       ).rejects.toMatchObject({ response: { code: 'TENANT_ALREADY_SEEDED' } })
     })
 
-    it('passes all templates and types to seeder (multiple)', async () => {
+    it('passes all templates to seeder (multiple)', async () => {
       await service.seedCustom('fb1', {
         templates: [
           { clientId: 'a', name: 'Template A', schema: { version: '1.0', blocks: [] } },
@@ -125,13 +125,8 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
         ],
       })
 
-      const [, templates, types] = mockSeeder.seedCustom.mock.calls[0] as [
-        string,
-        unknown[],
-        unknown[],
-      ]
+      const [, templates] = mockSeeder.seedCustom.mock.calls[0] as [string, unknown[]]
       expect(templates).toHaveLength(3)
-      expect(types).toHaveLength(2)
     })
   })
 })

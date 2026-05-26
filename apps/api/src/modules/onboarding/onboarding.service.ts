@@ -2,7 +2,6 @@ import {
   Injectable,
   Inject,
   InternalServerErrorException,
-  BadRequestException,
 } from '@nestjs/common'
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 import { TenantSeedingService } from '../tenant-seeding/tenant-seeding.service.js'
@@ -43,17 +42,6 @@ export class OnboardingService {
   }
 
   async seedCustom(externalUid: string, input: OnboardingCustomInput): Promise<AuthUser> {
-    // Validate cross-references before hitting the DB
-    const templateClientIds = new Set(input.templates.map((t) => t.clientId))
-    for (const type of input.types) {
-      if (!templateClientIds.has(type.templateClientId)) {
-        throw new BadRequestException({
-          code: 'UNKNOWN_TEMPLATE_CLIENT_ID',
-          message: `Type "${type.name}" references unknown templateClientId "${type.templateClientId}"`,
-        })
-      }
-    }
-
     const user = await this.users.findByExternalUid(externalUid)
     if (!user) throw new InternalServerErrorException('User not found after auth')
     await this.seeder.seedCustom(
@@ -64,7 +52,6 @@ export class OnboardingService {
         ...(t.suggestedSpecialty !== undefined ? { suggestedSpecialty: t.suggestedSpecialty } : {}),
         schema: t.schema,
       })),
-      input.types,
     )
     const refreshed = await this.users.findByExternalUid(externalUid)
     if (!refreshed) throw new InternalServerErrorException('User not found after seeding')

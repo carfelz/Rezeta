@@ -16,6 +16,7 @@ export function Templates(): JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<ProtocolTemplateDto | null>(null)
 
   function handleDelete(t: ProtocolTemplateDto) {
+    if (t.isSeeded) return
     setDeleteTarget(t)
   }
 
@@ -130,13 +131,21 @@ export function Templates(): JSX.Element {
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title={templatesStrings.listDelete}
-                        disabled={deletingId === t.id}
+                        title={
+                          t.isSeeded
+                            ? templatesStrings.deleteSeeded
+                            : templatesStrings.listDelete
+                        }
+                        disabled={t.isSeeded || deletingId === t.id}
                         onClick={() => handleDelete(t)}
                       >
                         <i
                           className="ph ph-trash text-[15px]"
-                          style={{ color: 'var(--color-danger-text)' }}
+                          style={{
+                            color: t.isSeeded
+                              ? 'var(--color-n-300)'
+                              : 'var(--color-danger-text)',
+                          }}
                         />
                       </Button>
                     </div>

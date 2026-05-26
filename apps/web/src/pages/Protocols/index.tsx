@@ -23,7 +23,7 @@ import {
 import { TemplatePickerModal } from '@/components/protocols/TemplatePickerModal'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import type { ProtocolListFilters } from '@/hooks/protocols/use-protocols'
-import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
+import { useProtocolCategories } from '@/hooks/protocol-categories/use-protocol-categories'
 import { protocolStatusLabel } from '@/lib/protocol-status'
 import { protocolsStrings } from './strings'
 import { cn } from '@/lib/utils'
@@ -151,7 +151,7 @@ export function Protocols(): JSX.Element {
 
   const { useGetProtocols } = useProtocols()
   const { data: protocols, isLoading, error } = useGetProtocols(filters)
-  const { data: types } = useProtocolTypes()
+  const { data: types } = useProtocolCategories()
 
   return (
     <div>

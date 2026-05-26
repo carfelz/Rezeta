@@ -4,6 +4,27 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(api,web): address code review — tenant isolation, category hooks migration, cleanup (feat/protocol-api-simplification)
+
+### Fixed
+
+- **`apps/api/src/modules/protocol-categories/protocol-categories.repository.ts`**: Added `tenantId` to `where` clause in `update()` and `softDelete()` to enforce tenant isolation at the DB layer. Removed redundant `dto.color ?? '#6B7280'` fallback in `create()` (Prisma schema already defaults it).
+- **`apps/api/src/modules/protocol-categories/protocol-categories.controller.ts`**: Changed `DELETE` endpoint to return `204 No Content` with no body, consistent with the templates module. Added `@HttpCode(204)` decorator.
+- **`apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`**: Extracted duplicate category seed rows into a `DEFAULT_CATEGORY_SEEDS` constant shared by `seedDefault` and `seedCustom`. Removed dead `types: SeedCustomTypeInput[]` parameter from `seedCustom` and deleted the `SeedCustomTypeInput` interface.
+- **`apps/api/src/modules/tenant-seeding/index.ts`**: Removed `SeedCustomTypeInput` re-export.
+- **`apps/api/src/modules/onboarding/onboarding.service.ts`**: Removed cross-reference validation loop and `input.types` pass-through now that `seedCustom` no longer accepts a `types` argument.
+
+### Changed
+
+- **`apps/web/src/hooks/protocol-categories/use-protocol-categories.ts`** (new): Migrated from deleted `/v1/protocol-types` to `/v1/protocol-categories`. New hooks: `useProtocolCategories`, `useProtocolCategory`, `useCreateProtocolCategory`, `useUpdateProtocolCategory`, `useDeleteProtocolCategory`. DTO uses `ProtocolCategoryDto` (id, tenantId, name, color, isSeeded, deletedAt).
+- **`apps/web/src/hooks/protocol-types/use-protocol-types.ts`** (deleted): Removed; all consumers migrated to the categories hook.
+- **`apps/web/src/pages/settings/Types.tsx`**: Migrated from `useProtocolTypes` to `useProtocolCategories`. Replaced template/lock/protocol-count columns with color swatch and seeded badge. Delete and rename buttons disabled for seeded categories.
+- **`apps/web/src/components/protocols/TemplatePickerModal.tsx`**: Migrated from `useProtocolTypes` to `useProtocolCategories`. Protocol creation now passes `categoryId` to `createProtocol`.
+- **`apps/web/src/pages/Protocols/index.tsx`**: Migrated filter chip data source from `useProtocolTypes` to `useProtocolCategories`.
+- **`apps/web/src/pages/settings/Templates.tsx`**: Disabled delete button for seeded templates; shows tooltip "No se puede eliminar una plantilla del sistema".
+- **`apps/web/src/lib/toasts.ts`**: Added `protocolCategoryCreated`, `protocolCategoryUpdated`, `protocolCategoryDeleted`, `errorProtocolCategorySave` toast strings.
+- **`apps/web/src/pages/settings/strings.ts`**: Updated `typesStrings` to reflect category terminology. Added `deleteSeeded`, `seededBadge`, `createFieldColor`. Added `deleteSeeded` to `templatesStrings`.
+
 ## [2026-05-26] — fix(api): resolve spec gaps — remove lock stubs, add vitals/clinical_notes to seeded templates (feat/protocol-api-simplification)
 
 ### Changed

@@ -11,11 +11,13 @@ export interface SeedCustomTemplateInput {
   schema: object
 }
 
-export interface SeedCustomTypeInput {
-  name: string
-  /** Must match the `clientId` of one of the submitted templates */
-  templateClientId: string
-}
+const DEFAULT_CATEGORY_SEEDS = [
+  { name: 'Emergencias', color: '#EF4444', isSeeded: true },
+  { name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
+  { name: 'Medicación', color: '#22C55E', isSeeded: true },
+  { name: 'Procedimiento', color: '#F59E0B', isSeeded: true },
+  { name: 'Rehabilitación', color: '#A855F7', isSeeded: true },
+] as const
 
 @Injectable()
 export class TenantSeedingService {
@@ -74,13 +76,7 @@ export class TenantSeedingService {
       // Seed 5 default protocol categories
       await tx.protocolCategory.createMany({
         skipDuplicates: true,
-        data: [
-          { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
-          { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
-          { tenantId, name: 'Medicación', color: '#22C55E', isSeeded: true },
-          { tenantId, name: 'Procedimiento', color: '#F59E0B', isSeeded: true },
-          { tenantId, name: 'Rehabilitación', color: '#A855F7', isSeeded: true },
-        ],
+        data: DEFAULT_CATEGORY_SEEDS.map((c) => ({ ...c, tenantId })),
       })
 
       await tx.tenant.update({
@@ -91,15 +87,10 @@ export class TenantSeedingService {
   }
 
   /**
-   * Seeds a tenant with user-provided templates and types (personalizar path).
-   * `types[n].templateClientId` must match the `clientId` of one of the supplied templates.
+   * Seeds a tenant with user-provided templates (personalizar path).
    * Throws ConflictException if the tenant has already been seeded.
    */
-  async seedCustom(
-    tenantId: string,
-    templates: SeedCustomTemplateInput[],
-    types: SeedCustomTypeInput[],
-  ): Promise<void> {
+  async seedCustom(tenantId: string, templates: SeedCustomTemplateInput[]): Promise<void> {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } })
     if (!tenant) {
       throw new NotFoundException({
@@ -127,10 +118,9 @@ export class TenantSeedingService {
         })
       }
 
-      // Insert templates and build clientId → server UUID map
-      const clientIdToServerId = new Map<string, string>()
+      // Insert templates
       for (const t of templates) {
-        const created = await tx.protocolTemplate.create({
+        await tx.protocolTemplate.create({
           data: {
             tenantId,
             name: t.name,
@@ -139,22 +129,13 @@ export class TenantSeedingService {
             isSeeded: true,
           },
         })
-        clientIdToServerId.set(t.clientId, created.id)
       }
 
       // Seed 5 default protocol categories (custom path still gets the defaults)
       await tx.protocolCategory.createMany({
         skipDuplicates: true,
-        data: [
-          { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
-          { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
-          { tenantId, name: 'Medicación', color: '#22C55E', isSeeded: true },
-          { tenantId, name: 'Procedimiento', color: '#F59E0B', isSeeded: true },
-          { tenantId, name: 'Rehabilitación', color: '#A855F7', isSeeded: true },
-        ],
+        data: DEFAULT_CATEGORY_SEEDS.map((c) => ({ ...c, tenantId })),
       })
-
-      void types
 
       await tx.tenant.update({
         where: { id: tenantId },

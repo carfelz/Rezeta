@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  useProtocolTypes,
-  useCreateProtocolType,
-  useUpdateProtocolType,
-  useDeleteProtocolType,
-  type ProtocolTypeDto,
-} from '@/hooks/protocol-types/use-protocol-types'
-import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
+  useProtocolCategories,
+  useCreateProtocolCategory,
+  useUpdateProtocolCategory,
+  useDeleteProtocolCategory,
+  type ProtocolCategoryDto,
+} from '@/hooks/protocol-categories/use-protocol-categories'
 import { typesStrings } from './strings'
 import { logger } from '@/lib/logger'
 import {
@@ -24,37 +22,30 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  TextLink,
 } from '@/components/ui'
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
-function CreateTypeModal({ onClose }: { onClose: () => void }) {
-  const { data: templates, isLoading: templatesLoading } = useProtocolTemplates()
-  const createMutation = useCreateProtocolType()
+function CreateCategoryModal({ onClose }: { onClose: () => void }) {
+  const createMutation = useCreateProtocolCategory()
   const [name, setName] = useState('')
-  const [templateId, setTemplateId] = useState('')
+  const [color, setColor] = useState('#6B7280')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     try {
-      await createMutation.mutateAsync({ name, templateId })
+      await createMutation.mutateAsync({ name, color })
       onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       logger.error(error.message, { stack: error.stack, context: 'Types.create' })
-      setError('No se pudo crear el tipo. Verifica que el nombre no esté en uso.')
+      setError('No se pudo crear la categoría. Verifica que el nombre no esté en uso.')
     }
   }
 
-  const canSubmit = name.trim().length > 0 && templateId.length > 0
+  const canSubmit = name.trim().length > 0
 
   return (
     <Modal
@@ -80,26 +71,13 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
                 autoFocus
               />
             </Field>
-            <Field label={typesStrings.createFieldTemplate} required>
-              <Select
-                value={templateId || '__none__'}
-                onValueChange={(v) => setTemplateId(v === '__none__' ? '' : v)}
-                disabled={templatesLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={typesStrings.createFieldTemplatePlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">
-                    {typesStrings.createFieldTemplatePlaceholder}
-                  </SelectItem>
-                  {templates?.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label={typesStrings.createFieldColor}>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-9 w-full rounded-sm border border-n-200 cursor-pointer"
+              />
             </Field>
             {error && (
               <Callout
@@ -130,14 +108,20 @@ function CreateTypeModal({ onClose }: { onClose: () => void }) {
 
 // ─── Rename Modal ─────────────────────────────────────────────────────────────
 
-function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: () => void }) {
-  const updateMutation = useUpdateProtocolType(type.id)
-  const [name, setName] = useState(type.name)
+function RenameCategoryModal({
+  category,
+  onClose,
+}: {
+  category: ProtocolCategoryDto
+  onClose: () => void
+}) {
+  const updateMutation = useUpdateProtocolCategory(category.id)
+  const [name, setName] = useState(category.name)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (name.trim() === type.name) {
+    if (name.trim() === category.name) {
       onClose()
       return
     }
@@ -148,7 +132,7 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       logger.error(error.message, { stack: error.stack, context: 'Types.rename' })
-      setError('No se pudo renombrar el tipo. Verifica que el nombre no esté en uso.')
+      setError('No se pudo renombrar la categoría. Verifica que el nombre no esté en uso.')
     }
   }
 
@@ -202,20 +186,19 @@ function RenameTypeModal({ type, onClose }: { type: ProtocolTypeDto; onClose: ()
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export function Types(): JSX.Element {
-  const { data: types, isLoading, isError } = useProtocolTypes()
-  const deleteMutation = useDeleteProtocolType()
-  const navigate = useNavigate()
+  const { data: categories, isLoading, isError } = useProtocolCategories()
+  const deleteMutation = useDeleteProtocolCategory()
   const [showCreate, setShowCreate] = useState(false)
-  const [renaming, setRenaming] = useState<ProtocolTypeDto | null>(null)
+  const [renaming, setRenaming] = useState<ProtocolCategoryDto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<ProtocolTypeDto | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ProtocolCategoryDto | null>(null)
 
-  function handleDelete(t: ProtocolTypeDto) {
-    if (t.isLocked) {
-      toast.error(typesStrings.deleteLocked)
+  function handleDelete(c: ProtocolCategoryDto) {
+    if (c.isSeeded) {
+      toast.error(typesStrings.deleteSeeded)
       return
     }
-    setDeleteTarget(t)
+    setDeleteTarget(c)
   }
 
   function confirmDelete() {
@@ -229,8 +212,8 @@ export function Types(): JSX.Element {
 
   return (
     <div>
-      {showCreate && <CreateTypeModal onClose={() => setShowCreate(false)} />}
-      {renaming && <RenameTypeModal type={renaming} onClose={() => setRenaming(null)} />}
+      {showCreate && <CreateCategoryModal onClose={() => setShowCreate(false)} />}
+      {renaming && <RenameCategoryModal category={renaming} onClose={() => setRenaming(null)} />}
       <ConfirmDialog
         open={!!deleteTarget}
         title={typesStrings.listDelete}
@@ -258,7 +241,7 @@ export function Types(): JSX.Element {
         </Callout>
       )}
 
-      {!isLoading && !isError && types?.length === 0 && (
+      {!isLoading && !isError && categories?.length === 0 && (
         <EmptyState
           icon={<i className="ph ph-tag" />}
           title={typesStrings.emptyTitle}
@@ -271,74 +254,64 @@ export function Types(): JSX.Element {
         />
       )}
 
-      {!isLoading && !isError && (types?.length ?? 0) > 0 && (
+      {!isLoading && !isError && (categories?.length ?? 0) > 0 && (
         <div className="border border-n-200 rounded-md overflow-hidden">
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                  Color
+                </th>
+                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Plantilla base
-                </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
-                </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Protocolos
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
-              {types!.map((t) => (
-                <tr key={t.id} className="hover:bg-n-25">
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
-                    {t.name}
-                    {t.isSeeded && (
-                      <span className="ml-2 text-[11px] font-mono text-n-400 uppercase tracking-[0.06em]">
-                        Predeterminado
-                      </span>
-                    )}
+              {categories!.map((c) => (
+                <tr key={c.id} className="hover:bg-n-25">
+                  <td className="px-4 py-3 border-b border-n-100">
+                    <span
+                      className="inline-block w-4 h-4 rounded-sm"
+                      style={{ backgroundColor: c.color }}
+                    />
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-500">
-                    <TextLink
-                      tone="neutral"
-                      size="lg"
-                      onClick={() => void navigate(`/ajustes/plantillas/${t.templateId}/edit`)}
-                    >
-                      {t.templateName}
-                      <i className="ph ph-arrow-square-out text-[12px]" />
-                    </TextLink>
+                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                    {c.name}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
-                    {t.isLocked ? (
-                      <Badge variant="review">{typesStrings.lockedBadge(t.protocolCount ?? 0)}</Badge>
+                    {c.isSeeded ? (
+                      <Badge variant="draft">{typesStrings.seededBadge}</Badge>
                     ) : (
                       <Badge variant="active">{typesStrings.activeBadge}</Badge>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-500">
-                    {t.protocolCount}
-                  </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
-                      <Button variant="secondary" size="sm" onClick={() => setRenaming(t)}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={c.isSeeded}
+                        onClick={() => setRenaming(c)}
+                      >
                         {typesStrings.listEdit}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
-                        title={typesStrings.listDelete}
-                        disabled={t.isLocked || deletingId === t.id}
-                        onClick={() => handleDelete(t)}
+                        title={c.isSeeded ? typesStrings.deleteSeeded : typesStrings.listDelete}
+                        disabled={c.isSeeded || deletingId === c.id}
+                        onClick={() => handleDelete(c)}
                       >
                         <i
                           className="ph ph-trash text-[15px]"
                           style={{
-                            color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
+                            color: c.isSeeded ? 'var(--color-n-300)' : 'var(--color-danger-text)',
                           }}
                         />
                       </Button>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common'
+import { InternalServerErrorException } from '@nestjs/common'
 import { OnboardingService } from '../onboarding.service.js'
 
 const mockSeeder = {
@@ -123,18 +123,8 @@ describe('OnboardingService', () => {
       expect(mockSeeder.seedCustom).toHaveBeenCalledWith(
         't1',
         expect.arrayContaining([expect.objectContaining({ clientId: 'c1' })]),
-        validInput.types,
       )
       expect(result).toEqual(authUser)
-    })
-
-    it('throws BadRequestException when type references unknown templateClientId', async () => {
-      const badInput = {
-        templates: [{ clientId: 'c1', name: 'T', schema: {} }],
-        types: [{ name: 'Bad', templateClientId: 'nonexistent' }],
-      }
-      await expect(service.seedCustom('fb1', badInput)).rejects.toThrow(BadRequestException)
-      expect(mockSeeder.seedCustom).not.toHaveBeenCalled()
     })
 
     it('throws InternalServerErrorException when user not found initially', async () => {

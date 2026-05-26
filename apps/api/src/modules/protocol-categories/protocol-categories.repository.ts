@@ -25,14 +25,14 @@ export class ProtocolCategoriesRepository {
       data: {
         tenantId,
         name: dto.name,
-        color: dto.color ?? '#6B7280',
+        ...(dto.color !== undefined && { color: dto.color }),
       },
     })
   }
 
   update(tenantId: string, id: string, dto: UpdateProtocolCategoryDto): Promise<ProtocolCategory> {
     return this.prisma.protocolCategory.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.color !== undefined && { color: dto.color }),
@@ -42,7 +42,7 @@ export class ProtocolCategoriesRepository {
 
   softDelete(tenantId: string, id: string): Promise<ProtocolCategory> {
     return this.prisma.protocolCategory.update({
-      where: { id },
+      where: { id, tenantId },
       data: { deletedAt: new Date() },
     })
   }

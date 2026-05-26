@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Param, Body, ParseUUIDPipe, HttpCode } from '@nestjs/common'
 import {
   ApiTags,
   ApiOperation,
@@ -65,10 +65,11 @@ export class ProtocolCategoriesController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a protocol category' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Category deleted.' })
-  delete(@TenantId() tenantId: string, @Param('id', ParseUUIDPipe) id: string): Promise<ProtocolCategory> {
-    return this.service.delete(tenantId, id)
+  @ApiResponse({ status: 204, description: 'Category deleted.' })
+  async delete(@TenantId() tenantId: string, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    await this.service.delete(tenantId, id)
   }
 }

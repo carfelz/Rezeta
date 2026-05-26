@@ -48,6 +48,7 @@ export const templatesStrings = {
   error: 'No se pudo cargar las plantillas.',
   deleteSuccess: 'Plantilla eliminada.',
   deleteLocked: 'No se puede eliminar: tiene tipos asociados.',
+  deleteSeeded: 'No se puede eliminar una plantilla del sistema.',
 } as const
 
 export const templateEditorStrings = {
@@ -92,32 +93,31 @@ export const templateEditorStrings = {
 } as const
 
 export const typesStrings = {
-  pageTitle: 'Tipos de protocolo',
-  newButton: 'Nuevo tipo',
-  emptyTitle: 'Sin tipos de protocolo',
-  emptyDescription: 'Crea al menos un tipo para poder crear protocolos.',
-  loading: 'Cargando tipos...',
-  error: 'No se pudo cargar los tipos.',
+  pageTitle: 'Categorías de protocolo',
+  newButton: 'Nueva categoría',
+  emptyTitle: 'Sin categorías',
+  emptyDescription: 'Crea categorías para organizar tus protocolos.',
+  loading: 'Cargando categorías...',
+  error: 'No se pudo cargar las categorías.',
   listEdit: 'Renombrar',
   listDelete: 'Eliminar',
   listDeleteConfirm: (name: string) =>
-    `¿Eliminar el tipo "${name}"? Esta acción no se puede deshacer.`,
-  deleteLocked: 'No se puede eliminar: tiene protocolos asociados.',
-  createTitle: 'Nuevo tipo de protocolo',
+    `¿Eliminar la categoría "${name}"? Esta acción no se puede deshacer.`,
+  deleteSeeded: 'No se puede eliminar una categoría del sistema.',
+  createTitle: 'Nueva categoría',
   createFieldName: 'Nombre',
   createFieldNamePlaceholder: 'Ej. Emergencia, Procedimiento',
-  createFieldTemplate: 'Plantilla base',
-  createFieldTemplatePlaceholder: 'Selecciona una plantilla',
-  createSubmit: 'Crear tipo',
+  createFieldColor: 'Color',
+  createSubmit: 'Crear categoría',
   createSubmitting: 'Creando...',
   createCancel: 'Cancelar',
-  renameTitle: 'Renombrar tipo',
+  renameTitle: 'Renombrar categoría',
   renameField: 'Nombre',
   renameSubmit: 'Guardar',
   renameSubmitting: 'Guardando...',
   renameCancel: 'Cancelar',
-  lockedBadge: (count: number) => `Bloqueado · ${count} protocolo${count === 1 ? '' : 's'}`,
-  activeBadge: 'Activo',
+  seededBadge: 'Sistema',
+  activeBadge: 'Activa',
 } as const
 
 export const locationsStrings = {

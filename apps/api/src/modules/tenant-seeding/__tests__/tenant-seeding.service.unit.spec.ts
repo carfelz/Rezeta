@@ -109,38 +109,33 @@ describe('TenantSeedingService (unit)', () => {
     const templates = [
       { clientId: 'c1', name: 'Custom Template', schema: { version: '1.0', blocks: [] } },
     ]
-    const types = [{ name: 'Custom Type', templateClientId: 'c1' }]
 
     it('throws NotFoundException when tenant not found', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(null)
-      await expect(service.seedCustom('t1', templates, types)).rejects.toThrow(NotFoundException)
+      await expect(service.seedCustom('t1', templates)).rejects.toThrow(NotFoundException)
     })
 
     it('throws ConflictException when already seeded (outer check)', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(seededTenant)
-      await expect(service.seedCustom('t1', templates, types)).rejects.toThrow(ConflictException)
+      await expect(service.seedCustom('t1', templates)).rejects.toThrow(ConflictException)
     })
 
     it('throws ConflictException when already seeded (inner transaction check)', async () => {
       mockTx.tenant.findUnique.mockResolvedValue({ seededAt: new Date() })
-      await expect(service.seedCustom('t1', templates, types)).rejects.toThrow(ConflictException)
+      await expect(service.seedCustom('t1', templates)).rejects.toThrow(ConflictException)
     })
 
-    it('creates exactly the supplied templates (types deferred to Plan 02)', async () => {
+    it('creates exactly the supplied templates', async () => {
       const twoTemplates = [
         { clientId: 'a', name: 'Template A', schema: {} },
         { clientId: 'b', name: 'Template B', schema: {} },
       ]
-      const twoTypes = [
-        { name: 'Type A', templateClientId: 'a' },
-        { name: 'Type B', templateClientId: 'b' },
-      ]
-      await service.seedCustom('t1', twoTemplates, twoTypes)
+      await service.seedCustom('t1', twoTemplates)
       expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(2)
     })
 
     it('sets isSeeded=true on all template rows', async () => {
-      await service.seedCustom('t1', templates, types)
+      await service.seedCustom('t1', templates)
       const tmplCall = (
         mockTx.protocolTemplate.create.mock.calls[0] as [{ data: { isSeeded: boolean } }]
       )[0]
@@ -148,7 +143,7 @@ describe('TenantSeedingService (unit)', () => {
     })
 
     it('sets tenant.seededAt inside the transaction', async () => {
-      await service.seedCustom('t1', templates, types)
+      await service.seedCustom('t1', templates)
       expect(mockTx.tenant.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 't1' } }),
       )
@@ -158,7 +153,7 @@ describe('TenantSeedingService (unit)', () => {
       const withSpecialty = [
         { clientId: 'c1', name: 'T', suggestedSpecialty: 'cardiology', schema: {} },
       ]
-      await service.seedCustom('t1', withSpecialty, types)
+      await service.seedCustom('t1', withSpecialty)
       const call = (
         mockTx.protocolTemplate.create.mock.calls[0] as [
           { data: { suggestedSpecialty: string | null } },
@@ -168,7 +163,7 @@ describe('TenantSeedingService (unit)', () => {
     })
 
     it('sets suggestedSpecialty to null when not provided', async () => {
-      await service.seedCustom('t1', templates, types)
+      await service.seedCustom('t1', templates)
       const call = (
         mockTx.protocolTemplate.create.mock.calls[0] as [
           { data: { suggestedSpecialty: string | null } },
