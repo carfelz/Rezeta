@@ -4,6 +4,30 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — Plan 02: replace protocol-types with protocol-categories (feat/protocol-api-simplification)
+
+### Added
+
+- **`apps/api/src/modules/protocol-categories/`**: New module (`ProtocolCategoriesController`, `ProtocolCategoriesService`, `ProtocolCategoriesRepository`, `ProtocolCategoriesModule`, `index.ts`) with full CRUD at `v1/protocol-categories`; seeded categories are protected from deletion.
+- **`apps/api/src/modules/protocol-categories/__tests__/`**: Controller spec (5 tests) and service spec (8 tests); coverage ≥99.9%.
+
+### Changed
+
+- **`apps/api/src/app.module.ts`**: Removed `ProtocolTypesModule` import and registration; added `ProtocolCategoriesModule`.
+- **`apps/api/src/modules/protocols/protocols.controller.ts`**: Updated Swagger `@ApiQuery` from `typeId` to `categoryId`; renamed `TYPE_ID` constant to `CATEGORY_ID`; updated `@ApiBody` property from `typeId` to `categoryId`.
+- **`apps/api/src/modules/protocols/__tests__/protocols.controller.spec.ts`**: Updated fixture and DTO from `typeId`/`type` to `categoryId`/`category`.
+- **`apps/api/src/modules/protocol-templates/protocol-templates.repository.ts`**: Renamed `findAllWithLockInfo` → `findAll`; removed `isLocked` and `getBlockingTypeIds` stubs.
+- **`apps/api/src/modules/protocol-templates/protocol-templates.service.ts`**: Updated `getTemplates` to call `repo.findAll`; added seeded-template delete guard (`BadRequestException`).
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.spec.ts`** and **`protocol-templates.repository.spec.ts`**: Updated to use `findAll`; added `BadRequestException` import; added seeded-delete test; removed stub tests.
+- **`apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`**: `seedDefault` and `seedCustom` now call `tx.protocolCategory.createMany` to insert 5 seeded categories (Emergencias, Diagnóstico, Medicación, Procedimiento, Rehabilitación).
+- **`apps/api/src/modules/tenant-seeding/__tests__/`**: Added `protocolCategory.createMany` mock; added assertion test for 5 categories with correct colors.
+
+### Fixed
+
+- Removed `protocol-types` module entirely (`apps/api/src/modules/protocol-types/`) — directory and all associated files deleted.
+
+---
+
 ## [2026-05-26] — fix CI failures on feat/schema-reset-v2: db coverage crash + shared branch coverage
 
 ### Fixed
