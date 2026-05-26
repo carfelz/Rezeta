@@ -284,6 +284,11 @@ describe('ConsultationsService', () => {
       )
     })
 
+    it('throws ConflictException if consultation is amended', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ id: 'c-1', status: 'amended' }))
+      await expect(service.sign('c-1', 'tenant-1', 'doc-1')).rejects.toThrow('already')
+    })
+
     it('does not call repo.sign when already signed', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
       await service.sign('consult-1', 'tenant-1', 'user-1').catch(() => {})

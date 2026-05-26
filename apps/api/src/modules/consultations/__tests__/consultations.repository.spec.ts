@@ -260,6 +260,21 @@ describe('ConsultationsRepository', () => {
         }),
       )
     })
+
+    it('rolls back if consultation update throws', async () => {
+      mockPrisma.$transaction.mockImplementationOnce(async (fn) => {
+        await fn({
+          protocolUsage: { updateMany: vi.fn() },
+          prescription: { updateMany: vi.fn() },
+          labOrder: { updateMany: vi.fn() },
+          imagingOrder: { updateMany: vi.fn() },
+          consultation: {
+            update: vi.fn().mockRejectedValue(new Error('DB error')),
+          },
+        })
+      })
+      await expect(repo.sign('tenant-1', 'c-1', 'u1')).rejects.toThrow('DB error')
+    })
   })
 
   // ── createAmendment ────────────────────────────────────────────────────────

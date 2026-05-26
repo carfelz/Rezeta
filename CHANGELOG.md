@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(api): add tenantId to sign transaction updateMany, add amended/rollback tests
+
+### Fixed
+
+- `consultations.repository.ts` `sign` method: added `tenantId` to `where` clause of all four `updateMany` calls (`protocolUsage`, `prescription`, `labOrder`, `imagingOrder`) inside the `$transaction` to enforce tenant isolation.
+
+### Added
+
+- `consultations.service.spec.ts`: new test verifying `ConflictException` is thrown when signing a consultation with `amended` status.
+- `consultations.repository.spec.ts`: new rollback test verifying `repo.sign` propagates DB errors from `consultation.update` within the transaction.
+
 ## [2026-05-26] — feat(api): atomic sign transaction + combined orders endpoint (feat/consultation-api-redesign)
 
 ### Changed
