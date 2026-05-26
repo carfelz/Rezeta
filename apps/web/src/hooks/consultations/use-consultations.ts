@@ -110,7 +110,7 @@ export function useSignConsultation(
 ): UseMutationResult<ConsultationWithDetails, Error, void> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => apiClient.post<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
+    mutationFn: () => apiClient.patch<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       toast.success(toastStrings.consultationSigned)

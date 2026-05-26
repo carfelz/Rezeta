@@ -249,6 +249,8 @@ export interface ConsultationWithDetails extends Consultation {
   patientName: string
   locationName: string
   doctorName: string
+  patientAllergies: string[]
+  patientChronicConditions: string[]
   amendments: ConsultationAmendment[]
   protocolUsages: ConsultationProtocolUsage[]
 }

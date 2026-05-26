@@ -152,13 +152,13 @@ describe('useUpdateConsultation', () => {
 describe('useSignConsultation', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('posts to sign endpoint', async () => {
-    vi.mocked(apiClient.post).mockResolvedValue({ ...mockConsultation, status: 'signed' })
+  it('patches to sign endpoint', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue({ ...mockConsultation, status: 'signed' })
     const { result } = renderHook(() => useSignConsultation('cons-1'), { wrapper: makeWrapper() })
     await act(async () => {
       await result.current.mutateAsync()
     })
-    expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/sign', {})
+    expect(apiClient.patch).toHaveBeenCalledWith('/v1/consultations/cons-1/sign', {})
   })
 })
 

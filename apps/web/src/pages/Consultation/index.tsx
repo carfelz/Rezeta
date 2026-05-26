@@ -106,6 +106,8 @@ export function Consultation(): JSX.Element {
           locationName={consultation.locationName}
           patientName={consultation.patientName}
           doctorName={consultation.doctorName}
+          patientAllergies={consultation.patientAllergies}
+          patientChronicConditions={consultation.patientChronicConditions}
           pageTitle={pageTitle}
           saveStatus={soap.saveStatus}
           {...(soap.savedAt !== undefined ? { savedAt: soap.savedAt } : {})}

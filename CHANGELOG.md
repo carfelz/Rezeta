@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(web): allergy alerts in header, PATCH sign verb, Recetas tab, useConsultationOrders hook
+
+### Added
+
+- `apps/web/src/pages/Consultation/PageHeader.tsx`: new `patientAllergies` and `patientChronicConditions` props; renders allergy badges (red) and chronic condition badges (amber) always visible below the patient/doctor line — hard clinical safety requirement.
+- `packages/shared/src/types/consultation.ts`: added `patientAllergies: string[]` and `patientChronicConditions: string[]` to `ConsultationWithDetails`.
+- `apps/api/src/modules/consultations/consultations.repository.ts`: included `allergies` and `chronicConditions` in the patient SELECT and mapped them to the returned `ConsultationWithDetails` shape.
+- `apps/web/src/hooks/useConsultationOrders.ts`: new hook file exposing `useConsultationOrders`, `useCreatePrescriptionGroup`, `useCreateImagingOrderGroup`, `useCreateLabOrderGroup`, and `useDeleteOrderGroup`.
+- `apps/web/src/hooks/__tests__/useConsultationOrders.test.ts`: unit tests for all five new hooks.
+
+### Changed
+
+- `apps/web/src/hooks/consultations/use-consultations.ts`: `useSignConsultation` changed from `apiClient.post` to `apiClient.patch` to match the `PATCH /v1/consultations/:id/sign` backend endpoint.
+- `apps/web/src/hooks/__tests__/use-consultations.test.ts`: updated `useSignConsultation` test to expect `apiClient.patch`.
+- `apps/web/src/components/consultations/strings.ts`: renamed `tabMedications` from `'Medicamentos'` to `'Recetas'` in `orderQueueStrings`.
+- `apps/web/src/pages/Consultation/index.tsx`: passes `patientAllergies` and `patientChronicConditions` from consultation data to `PageHeader`.
+
 ## [2026-05-26] — feat(web): frontend redesign plan 04 — vitals blocks, category chips, 3-zone consultation layout
 
 ### Added

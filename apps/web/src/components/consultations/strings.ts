@@ -2,7 +2,7 @@
 
 export const orderQueueStrings = {
   panelTitle: 'Órdenes médicas',
-  tabMedications: 'Medicamentos',
+  tabMedications: 'Recetas',
   tabImaging: 'Imagen',
   tabLabs: 'Laboratorio',
 
