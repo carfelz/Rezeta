@@ -79,7 +79,7 @@ export function ProtocolViewer(): JSX.Element {
       <SuggestionBanner protocolId={id} />
 
       <ProtocolContainer
-        {...(protocol.typeName ? { kicker: protocol.typeName } : {})}
+        {...(protocol.categoryName ? { kicker: protocol.categoryName } : {})}
         title={protocol.title}
         meta={`${protocolViewerStrings.updated} ${updatedDate} · ${protocolViewerStrings.version(versionNumber)}`}
         badge={

@@ -21,23 +21,15 @@ function mockConsultation(
     locationId: 'location-1',
     doctorUserId: 'user-1',
     appointmentId: null,
-    status: 'draft',
-    chiefComplaint: null,
-    subjective: null,
-    objective: null,
-    assessment: null,
-    plan: null,
-    vitals: null,
-    diagnoses: [],
-    contentHash: null,
+    status: 'open',
+    startedAt: new Date().toISOString(),
     signedAt: null,
-    signedBy: null,
-    consultedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     deletedAt: null,
     patientName: 'María García',
     locationName: 'Clínica Centro',
+    doctorName: 'Dr. García',
     amendments: [],
     protocolUsages: [],
     ...overrides,
@@ -51,21 +43,22 @@ function mockProtocolUsage(
     id: 'usage-1',
     consultationId: 'consult-1',
     tenantId: 'tenant-1',
-    userId: 'user-1',
     protocolId: 'protocol-1',
     protocolVersionId: 'version-1',
-    content: {},
+    content: { version: '1.0', blocks: [] },
     parentUsageId: null,
     triggerBlockId: null,
     depth: 0,
     status: 'in_progress',
-    checkedState: {},
     completedAt: null,
     notes: null,
-    modifications: null,
+    modifications: {},
     modificationSummary: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    appliedAt: new Date().toISOString(),
+    protocolTitle: 'Test Protocol',
+    protocolTypeName: null,
+    versionNumber: 1,
+    childUsages: [],
     ...overrides,
   }
 }
@@ -156,104 +149,32 @@ describe('ConsultationsService', () => {
       const result = await service.create('tenant-1', 'user-1', {
         patientId: 'p-1',
         locationId: 'l-1',
-        diagnoses: [],
       })
       expect(result).toEqual(c)
       expect(repo.create).toHaveBeenCalledTimes(1)
     })
 
-    describe('with protocolId (atomic)', () => {
-      function setProtocolValid(): void {
-        vi.mocked(prisma.protocol.findFirst).mockResolvedValue({
-          currentVersionId: 'version-1',
-        } as never)
-        vi.mocked(prisma.protocolVersion.findFirst).mockResolvedValue({
-          id: 'version-1',
-          content: { version: '1.0', blocks: [] },
-        } as never)
-      }
-
-      it('runs consultation insert + protocol-usage insert inside a single transaction', async () => {
-        setProtocolValid()
-        const txClient = {
-          consultation: { create: vi.fn().mockResolvedValue({ id: 'consult-1' }) },
-          protocolUsage: { create: vi.fn().mockResolvedValue({ id: 'usage-1' }) },
-        }
-        vi.mocked(prisma.$transaction).mockImplementation(async (cb: unknown) =>
-          (cb as (tx: typeof txClient) => Promise<string>)(txClient),
-        )
+    describe('with protocolId (schema reset v2 — create delegates to repo, protocol launched separately)', () => {
+      it('delegates to repo.create even when protocolId provided (protocol launch via addProtocolUsage)', async () => {
         const c = mockConsultation()
-        vi.mocked(repo.findById).mockResolvedValue(c)
+        vi.mocked(repo.create).mockResolvedValue(c)
 
         const result = await service.create('tenant-1', 'user-1', {
           patientId: 'p-1',
           locationId: 'l-1',
-          diagnoses: [],
           protocolId: '00000000-0000-0000-0000-000000000001',
-        })
+        } as never)
 
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
-        expect(txClient.consultation.create).toHaveBeenCalledTimes(1)
-        expect(txClient.protocolUsage.create).toHaveBeenCalledTimes(1)
+        expect(repo.create).toHaveBeenCalledTimes(1)
         expect(result).toEqual(c)
         expect(recommendationsSvc.invalidate).toHaveBeenCalledWith('tenant-1', 'user-1', 'p-1')
       })
 
-      it('rolls back when protocol-usage insert fails — returns no result, no findById', async () => {
-        setProtocolValid()
-        const txClient = {
-          consultation: { create: vi.fn().mockResolvedValue({ id: 'consult-1' }) },
-          protocolUsage: {
-            create: vi.fn().mockRejectedValue(new Error('FK violation')),
-          },
-        }
-        vi.mocked(prisma.$transaction).mockImplementation(async (cb: unknown) =>
-          (cb as (tx: typeof txClient) => Promise<string>)(txClient),
-        )
-
-        await expect(
-          service.create('tenant-1', 'user-1', {
-            patientId: 'p-1',
-            locationId: 'l-1',
-            diagnoses: [],
-            protocolId: '00000000-0000-0000-0000-000000000001',
-          }),
-        ).rejects.toThrow('FK violation')
-        expect(repo.findById).not.toHaveBeenCalled()
-      })
-
-      it('throws PROTOCOL_NOT_FOUND when protocol missing', async () => {
-        vi.mocked(prisma.protocol.findFirst).mockResolvedValue(null as never)
-        await expect(
-          service.create('tenant-1', 'user-1', {
-            patientId: 'p-1',
-            locationId: 'l-1',
-            diagnoses: [],
-            protocolId: '00000000-0000-0000-0000-000000000001',
-          }),
-        ).rejects.toMatchObject({
-          response: expect.objectContaining({ code: ErrorCode.PROTOCOL_NOT_FOUND }),
-        })
-        expect(prisma.$transaction).not.toHaveBeenCalled()
-      })
-
-      it('throws PROTOCOL_HAS_NO_ACTIVE_VERSION when currentVersionId is null', async () => {
-        vi.mocked(prisma.protocol.findFirst).mockResolvedValue({
-          currentVersionId: null,
-        } as never)
-        await expect(
-          service.create('tenant-1', 'user-1', {
-            patientId: 'p-1',
-            locationId: 'l-1',
-            diagnoses: [],
-            protocolId: '00000000-0000-0000-0000-000000000001',
-          }),
-        ).rejects.toMatchObject({
-          response: expect.objectContaining({
-            code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
-          }),
-        })
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+      it('invalidates recommendations cache after create', async () => {
+        const c = mockConsultation()
+        vi.mocked(repo.create).mockResolvedValue(c)
+        await service.create('tenant-1', 'user-1', { patientId: 'p-1', locationId: 'l-1' })
+        expect(recommendationsSvc.invalidate).toHaveBeenCalledWith('tenant-1', 'user-1', 'p-1')
       })
     })
   })
@@ -261,16 +182,16 @@ describe('ConsultationsService', () => {
   // ── update ─────────────────────────────────────────────────────────────────
 
   describe('update', () => {
-    it('updates a draft consultation', async () => {
+    it('updates an open consultation', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
-      vi.mocked(repo.update).mockResolvedValue(mockConsultation({ plan: 'Nuevo plan' }))
-      const result = await service.update('consult-1', 'tenant-1', { plan: 'Nuevo plan' })
-      expect(result.plan).toBe('Nuevo plan')
+      vi.mocked(repo.update).mockResolvedValue(mockConsultation())
+      const result = await service.update('consult-1', 'tenant-1', {})
+      expect(result.id).toBe('consult-1')
     })
 
     it('throws ConflictException when consultation is already signed', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
-      await expect(service.update('consult-1', 'tenant-1', { plan: 'X' })).rejects.toThrow(
+      await expect(service.update('consult-1', 'tenant-1', {})).rejects.toThrow(
         ConflictException,
       )
     })
@@ -289,31 +210,36 @@ describe('ConsultationsService', () => {
   // ── sign ───────────────────────────────────────────────────────────────────
 
   describe('sign', () => {
-    const signableConsult = (
-      overrides: Parameters<typeof mockConsultation>[0] = {},
-    ): ReturnType<typeof mockConsultation> =>
-      mockConsultation({
-        status: 'draft',
-        chiefComplaint: 'Cefaleas',
-        assessment: 'Migraña',
-        diagnoses: ['Migraña'],
-        ...overrides,
-      })
-
-    it('signs a draft consultation and computes contentHash', async () => {
-      const draft = signableConsult()
-      const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
+    it('signs an open consultation', async () => {
+      const draft = mockConsultation({ status: 'open' })
+      const signed = mockConsultation({ status: 'signed' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
-      // Verify that sign is called with a hex hash string
       const signCall = vi.mocked(repo.sign).mock.calls[0]
-      expect(signCall?.[3]).toMatch(/^[a-f0-9]{64}$/)
+      expect(signCall?.[0]).toBe('consult-1')
+      expect(signCall?.[1]).toBe('tenant-1')
+      expect(signCall?.[2]).toBe('user-1')
     })
 
-    it('throws when SOAP required fields are missing', async () => {
-      const draft = mockConsultation({ status: 'draft' }) // chiefComplaint/assessment empty
+    it('throws when required protocol blocks are missing', async () => {
+      // A required checklist block with unchecked items triggers the error
+      const usage = mockProtocolUsage({
+        content: {
+          version: '1.0',
+          blocks: [
+            {
+              id: 'chk1',
+              type: 'checklist' as const,
+              items: [{ id: 'i1', text: 'PA' }],
+              required: true,
+            } as never,
+          ],
+        },
+        modifications: {},
+      })
+      const draft = mockConsultation({ status: 'open', protocolUsages: [usage] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       await expect(service.sign('consult-1', 'tenant-1', 'user-1')).rejects.toMatchObject({
         response: expect.objectContaining({
@@ -324,7 +250,22 @@ describe('ConsultationsService', () => {
     })
 
     it('error response includes missing fields list', async () => {
-      const draft = mockConsultation({ status: 'draft' })
+      const usage = mockProtocolUsage({
+        content: {
+          version: '1.0',
+          blocks: [
+            {
+              id: 'chk1',
+              type: 'checklist' as const,
+              title: 'Vitales',
+              items: [{ id: 'i1', text: 'PA' }],
+              required: true,
+            } as never,
+          ],
+        },
+        modifications: {},
+      })
+      const draft = mockConsultation({ status: 'open', protocolUsages: [usage] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       try {
         await service.sign('consult-1', 'tenant-1', 'user-1')
@@ -332,9 +273,7 @@ describe('ConsultationsService', () => {
       } catch (e) {
         const resp = (e as { response: { details: { missing: { id: string }[] } } }).response
         const ids = resp.details.missing.map((m) => m.id)
-        expect(ids).toContain('chiefComplaint')
-        expect(ids).toContain('assessment')
-        expect(ids).toContain('diagnoses')
+        expect(ids).toContain('protocol:usage-1:chk1')
       }
     })
 
@@ -352,8 +291,8 @@ describe('ConsultationsService', () => {
     })
 
     it('triggers auto-invoice creation after signing', async () => {
-      const draft = signableConsult()
-      const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
+      const draft = mockConsultation({ status: 'open' })
+      const signed = mockConsultation({ status: 'signed' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       await service.sign('consult-1', 'tenant-1', 'user-1')
@@ -369,8 +308,8 @@ describe('ConsultationsService', () => {
     })
 
     it('sign succeeds even when auto-invoice creation fails', async () => {
-      const draft = signableConsult()
-      const signed = mockConsultation({ status: 'signed', contentHash: 'abc123' })
+      const draft = mockConsultation({ status: 'open' })
+      const signed = mockConsultation({ status: 'signed' })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       vi.mocked(invoicesSvc.createFromConsultation).mockRejectedValue(new Error('DB error'))
@@ -392,7 +331,7 @@ describe('ConsultationsService', () => {
     })
 
     it('throws BadRequestException when consultation is not signed', async () => {
-      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'draft' }))
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'open' }))
       await expect(
         service.amend('consult-1', 'tenant-1', 'user-1', { reason: 'Corrección necesaria.' }),
       ).rejects.toThrow(BadRequestException)
@@ -402,8 +341,8 @@ describe('ConsultationsService', () => {
   // ── remove ─────────────────────────────────────────────────────────────────
 
   describe('remove', () => {
-    it('soft-deletes a draft consultation', async () => {
-      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'draft' }))
+    it('soft-deletes an open consultation', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'open' }))
       vi.mocked(repo.softDelete).mockResolvedValue(undefined)
       await service.remove('consult-1', 'tenant-1')
       expect(repo.softDelete).toHaveBeenCalledOnce()
@@ -639,7 +578,7 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)
       await expect(
-        service.updateCheckedState('consult-1', 'usage-1', 'tenant-1', { checkedState: {} }),
+        service.updateCheckedState('consult-1', 'usage-1', 'tenant-1', {}),
       ).rejects.toThrow(NotFoundException)
     })
 
@@ -648,11 +587,11 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(mockProtocolUsage())
       vi.mocked(repo.updateCheckedState).mockResolvedValue(mockProtocolUsage())
       await service.updateCheckedState('consult-1', 'usage-1', 'tenant-1', {
-        checkedState: {},
         completedAt: null,
       })
       const call = vi.mocked(repo.updateCheckedState).mock.calls[0]
-      expect(call?.[3]).toBeNull()
+      // call: [usageId, tenantId, completedAt, notes]
+      expect(call?.[2]).toBeNull()
     })
 
     it('coerces ISO string completedAt to Date', async () => {
@@ -660,11 +599,11 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(mockProtocolUsage())
       vi.mocked(repo.updateCheckedState).mockResolvedValue(mockProtocolUsage())
       await service.updateCheckedState('consult-1', 'usage-1', 'tenant-1', {
-        checkedState: {},
         completedAt: '2026-05-01T10:00:00.000Z',
       })
       const call = vi.mocked(repo.updateCheckedState).mock.calls[0]
-      expect(call?.[3]).toBeInstanceOf(Date)
+      // call: [usageId, tenantId, completedAt, notes]
+      expect(call?.[2]).toBeInstanceOf(Date)
     })
   })
 })

@@ -32,7 +32,7 @@ export class ProtocolRecommendationsService {
     const now = Date.now()
     const hit = this.cache.get(key)
     if (hit && hit.expiresAt > now) return hit.data
-    const data = await this.repo.findRecommendations(tenantId, doctorUserId, patientId, limit)
+    const data = await this.repo.getRecommendations(tenantId, doctorUserId, patientId, limit)
     this.cache.set(key, { data, expiresAt: now + CACHE_TTL_MS })
     return data
   }

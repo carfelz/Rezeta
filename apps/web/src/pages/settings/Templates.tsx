@@ -113,7 +113,7 @@ export function Templates(): JSX.Element {
                       <Badge variant="draft">{templatesStrings.listSeededBadge}</Badge>
                     ) : t.isLocked ? (
                       <Badge variant="review">
-                        {templatesStrings.listBlockedBy(t.blockingTypeIds?.length ?? 0)}
+                        {templatesStrings.listBlockedBy(0)}
                       </Badge>
                     ) : (
                       <Badge variant="active">Activa</Badge>

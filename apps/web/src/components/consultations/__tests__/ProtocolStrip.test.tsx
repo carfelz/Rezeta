@@ -20,7 +20,6 @@ const baseUsage: ConsultationProtocolUsage = {
   notes: null,
   appliedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: {},
   modifications: {},
   content: {
     version: '1.0',
@@ -62,7 +61,15 @@ describe('ProtocolStrip', () => {
   })
 
   it('shows completed progress when items checked', () => {
-    const usage = { ...baseUsage, checkedState: { itm_1: true, itm_2: true } }
+    const usage = {
+      ...baseUsage,
+      modifications: {
+        checklist_items: [
+          { item_id: 'itm_1', checked: true },
+          { item_id: 'itm_2', checked: true },
+        ],
+      },
+    }
     render(<ProtocolStrip usage={usage} isSigned={false} onChangePicker={vi.fn()} />)
     expect(screen.getByText('2 / 2')).toBeInTheDocument()
   })
@@ -96,7 +103,10 @@ describe('ProtocolStrip', () => {
   })
 
   it('shows step completion status in popover', () => {
-    const usage = { ...baseUsage, checkedState: { itm_1: true } }
+    const usage = {
+      ...baseUsage,
+      modifications: { checklist_items: [{ item_id: 'itm_1', checked: true }] },
+    }
     render(<ProtocolStrip usage={usage} isSigned={false} onChangePicker={vi.fn()} />)
     fireEvent.click(screen.getByText('Ver pasos'))
     expect(screen.getByText('Anamnesis')).toBeInTheDocument()

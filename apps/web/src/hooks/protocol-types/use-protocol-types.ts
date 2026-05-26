@@ -3,7 +3,20 @@ import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import { toastStrings } from '@/lib/toasts'
-import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
+
+// ProtocolTypeDto removed from shared in schema reset v2 — defined locally until Types page is migrated
+export interface ProtocolTypeDto {
+  id: string
+  name: string
+  isSeeded: boolean
+  isLocked: boolean
+  templateId?: string
+  templateName?: string
+  protocolCount?: number
+}
+
+type CreateProtocolTypeDto = { name: string; templateId: string }
+type UpdateProtocolTypeDto = { name: string }
 
 const QK = 'protocol-types'
 

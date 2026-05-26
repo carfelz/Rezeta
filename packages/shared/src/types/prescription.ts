@@ -1,4 +1,4 @@
-export type PrescriptionStatus = 'draft' | 'signed'
+export type PrescriptionStatus = 'queued' | 'signed'
 
 export interface PrescriptionItem {
   drug: string
@@ -19,7 +19,32 @@ export interface PrescriptionItemRow {
   duration: string
   notes: string | null
   source: string | null
-  sortOrder: number
+  createdAt: string
+}
+
+export interface ImagingOrderItemRow {
+  id: string
+  imagingOrderId: string
+  studyType: string
+  indication: string
+  urgency: 'routine' | 'urgent' | 'stat'
+  contrast: boolean
+  fastingRequired: boolean
+  specialInstructions: string | null
+  source: string | null
+  createdAt: string
+}
+
+export interface LabOrderItemRow {
+  id: string
+  labOrderId: string
+  testName: string
+  indication: string
+  urgency: 'routine' | 'urgent' | 'stat'
+  fastingRequired: boolean
+  sampleType: 'blood' | 'urine' | 'stool' | 'csf' | 'other'
+  specialInstructions: string | null
+  source: string | null
   createdAt: string
 }
 
@@ -32,10 +57,8 @@ export interface Prescription {
   groupTitle: string | null
   groupOrder: number
   status: PrescriptionStatus
-  items: PrescriptionItem[]
   prescriptionItems: PrescriptionItemRow[]
   pdfUrl: string | null
-  notes: string | null
   signedAt: string | null
   createdAt: string
   updatedAt: string
@@ -50,16 +73,10 @@ export interface ImagingOrder {
   doctorUserId: string
   groupTitle: string | null
   groupOrder: number
-  studyType: string
-  indication: string
-  urgency: 'routine' | 'urgent' | 'stat'
-  contrast: boolean
-  fastingRequired: boolean
-  specialInstructions: string | null
-  source: string | null
-  status: 'draft' | 'signed'
+  status: 'queued' | 'signed'
   signedAt: string | null
   pdfUrl: string | null
+  items: ImagingOrderItemRow[]
   createdAt: string
   updatedAt: string
   deletedAt: string | null
@@ -73,17 +90,10 @@ export interface LabOrder {
   doctorUserId: string
   groupTitle: string | null
   groupOrder: number
-  testName: string
-  testCode: string | null
-  indication: string
-  urgency: 'routine' | 'urgent' | 'stat'
-  fastingRequired: boolean
-  sampleType: 'blood' | 'urine' | 'stool' | 'other'
-  specialInstructions: string | null
-  source: string | null
-  status: 'draft' | 'signed'
+  status: 'queued' | 'signed'
   signedAt: string | null
   pdfUrl: string | null
+  items: LabOrderItemRow[]
   createdAt: string
   updatedAt: string
   deletedAt: string | null

@@ -5,6 +5,7 @@ import {
   type BlockModificationEvent,
 } from '@/components/protocols/BlockRendererRunMode'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
+import { deriveCheckedState } from '@/lib/consultation/usage'
 import { canvasViewStrings } from './strings'
 
 export type { SoapField, BlockModificationEvent }
@@ -31,7 +32,7 @@ export function CanvasView({
   onEditProtocol,
 }: CanvasViewProps): JSX.Element {
   const blocks = usage.content?.blocks ?? []
-  const checkedState = usage.checkedState ?? {}
+  const checkedState = deriveCheckedState(usage)
 
   if (blocks.length === 0) {
     return (

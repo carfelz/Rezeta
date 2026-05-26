@@ -1,12 +1,19 @@
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common'
-import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
+import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common'
 import { ProtocolTypesRepository, type TypeWithDetails } from './protocol-types.repository.js'
+
+// Stubbed DTO until ProtocolCategory replaces ProtocolType (Plan 02).
+export interface ProtocolTypeDto {
+  id: string
+  tenantId: string
+  templateId: string
+  templateName: string
+  name: string
+  isSeeded: boolean
+  isLocked: boolean
+  protocolCount: number
+  createdAt: string
+  updatedAt: string
+}
 
 @Injectable()
 export class ProtocolTypesService {
@@ -38,30 +45,25 @@ export class ProtocolTypesService {
     return this.toDto(t)
   }
 
-  async create(tenantId: string, dto: CreateProtocolTypeDto): Promise<ProtocolTypeDto> {
+  async create(
+    tenantId: string,
+    dto: { name: string; templateId: string },
+  ): Promise<ProtocolTypeDto> {
     const templateOk = await this.repo.templateBelongsToTenant(dto.templateId, tenantId)
     if (!templateOk) {
-      throw new BadRequestException({ code: 'TEMPLATE_NOT_FOUND_FOR_TYPE' })
+      throw new ConflictException({ code: 'TEMPLATE_NOT_FOUND_FOR_TYPE' })
     }
-
-    const nameExists = await this.repo.existsByName(dto.name, tenantId)
-    if (nameExists) {
-      throw new ConflictException({ code: 'TYPE_NAME_CONFLICT' })
-    }
-
     const t = await this.repo.create(tenantId, dto.name, dto.templateId)
     return this.toDto(t)
   }
 
-  async update(id: string, tenantId: string, dto: UpdateProtocolTypeDto): Promise<ProtocolTypeDto> {
+  async update(
+    id: string,
+    tenantId: string,
+    dto: { name: string },
+  ): Promise<ProtocolTypeDto> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TYPE_NOT_FOUND' })
-
-    const nameExists = await this.repo.existsByName(dto.name, tenantId, id)
-    if (nameExists) {
-      throw new ConflictException({ code: 'TYPE_NAME_CONFLICT' })
-    }
-
     const t = await this.repo.update(id, tenantId, dto.name)
     return this.toDto(t)
   }
@@ -69,11 +71,6 @@ export class ProtocolTypesService {
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TYPE_NOT_FOUND' })
-
-    if (existing._count.protocols > 0) {
-      throw new ConflictException({ code: 'TYPE_LOCKED' })
-    }
-
     await this.repo.softDelete(id, tenantId)
   }
 }

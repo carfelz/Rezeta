@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix all test failures for schema-reset-v2 (Plan 01 complete)
+
+### Fixed
+
+- **`apps/api`** (`protocols/__tests__/protocols.spec.ts`): Removed `mockTypesRepo`, fixed constructor call to single arg, updated required-block tests to expect success (template schema hardcoded to `{ blocks: [] }` in service).
+- **`apps/api`** (`tenant-seeding/__tests__/*.spec.ts`): Rewrote both tenant-seeding specs to match new service behavior — `protocolType.create` no longer called (ProtocolType removed in schema reset v2; categories seeded in Plan 02).
+- **`apps/api`** (`protocol-types/__tests__/protocol-types.repository.spec.ts`): Rewrote to test stub behavior — all methods except `templateBelongsToTenant` are stubs returning empty/null/false/rejected.
+- **`apps/api`** (`protocol-types/__tests__/protocol-types.spec.ts`): Removed tests for removed behaviors (`existsByName` on update, `_count` lock check on delete, `existsByName` on create); fixed `BadRequestException` → `ConflictException` for `TEMPLATE_NOT_FOUND_FOR_TYPE`.
+- **`apps/api`** (`protocol-templates/__tests__/protocol-templates.repository.spec.ts`): Rewrote to match simplified repo — no `protocolTypes` include, `isLocked`/`getBlockingTypeIds` are stubs.
+- **`apps/api`** (`protocol-templates/__tests__/protocol-templates.spec.ts`): Removed `blockingTypeIds` and `TEMPLATE_LOCKED` tests (locking deferred to Plan 02); `isLocked` always `false`.
+- **`apps/api`** (`consultations/__tests__/consultations.service.spec.ts`): Replaced `with protocolId (atomic)` tests with schema-reset-v2 behavior — `create` now delegates to `repo.create` regardless of `protocolId`; protocol launch via `addProtocolUsage`.
+- **`apps/api`** (`protocols/__tests__/protocols.service.spec.ts`): Fixed `omits favoritesOnly when false` test — service always passes `favoritesOnly: false` through.
+- **`apps/api`** (`protocol-improvements/__tests__/protocol-improvements.service.spec.ts`): Added tests for `_max.versionNumber === null` (first version) and `categoryId` conditional branches; fixed mock to use `categoryId` not `typeId`.
+- **`apps/api`** (`protocols/protocols.service.ts`): Added `c8 ignore` comments around dead `validateRequiredBlocks` loop body (unreachable while template schema is hardcoded empty).
+- **`apps/web`** (`consultations/__tests__/ProtocolStrip.test.tsx`): Removed `checkedState` field (removed from type); updated checked-state tests to use `modifications.checklist_items` via `deriveCheckedState`.
+- **`apps/web`** (`consultations/__tests__/ConsultationGate.test.tsx`): Updated recommendation and protocol mock data from `typeId`/`typeName` to `categoryId`/`categoryName`.
+- **Coverage**: All packages now at ≥99% (API: 99.9% stmts / 99.85% branches; web: 100%).
+
+---
+
 ## [2026-05-21] — fix CI typecheck failure on months array index
 
 ### Fixed

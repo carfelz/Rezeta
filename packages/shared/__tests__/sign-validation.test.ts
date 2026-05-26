@@ -12,6 +12,12 @@ function makeUsage(
   blocks: ProtocolBlock[],
   checkedState: Record<string, boolean> = {},
 ): ConsultationProtocolUsage {
+  const ts = new Date().toISOString()
+  const checklistItems = Object.entries(checkedState).map(([item_id, checked]) => ({
+    item_id,
+    checked,
+    timestamp: ts,
+  }))
   return {
     id: 'u1',
     tenantId: 't1',
@@ -27,10 +33,9 @@ function makeUsage(
     triggerBlockId: null,
     completedAt: null,
     notes: null,
-    appliedAt: new Date().toISOString(),
+    appliedAt: ts,
     modificationSummary: null,
-    checkedState,
-    modifications: {},
+    modifications: checklistItems.length > 0 ? { checklist_items: checklistItems } : {},
     content: { version: '1.0', blocks },
   }
 }
@@ -409,7 +414,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     expect(r).toEqual([])
   })
 
-  it('handles usage with null checkedState', () => {
+  it('handles usage with empty modifications (no checklist_items)', () => {
     const block = {
       id: 'chk1',
       type: 'checklist' as const,
@@ -417,7 +422,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const usage = makeUsage([block])
-    usage.checkedState = null as unknown as Record<string, boolean>
+    usage.modifications = {}
     const r = computeMissingRequiredFields(okSoap, [usage])
     expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
   })

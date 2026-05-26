@@ -31,18 +31,33 @@ import {
   CreatePrescriptionGroupSchema,
   CreateImagingOrderGroupSchema,
   CreateLabOrderGroupSchema,
-  GenerateAllOrdersSchema,
-  PatchImagingOrderSchema,
-  PatchLabOrderSchema,
-  RenameOrderGroupSchema,
   type CreatePrescriptionGroupDto,
   type CreateImagingOrderGroupDto,
   type CreateLabOrderGroupDto,
-  type GenerateAllOrdersDto,
-  type PatchImagingOrderDto,
-  type PatchLabOrderDto,
-  type RenameOrderGroupDto,
 } from '@rezeta/shared'
+import { z } from 'zod'
+
+// Local stubs for schemas removed from shared in schema reset v2
+const GenerateAllOrdersSchema = z.object({
+  prescriptions: z.array(CreatePrescriptionGroupSchema).default([]),
+  imagingOrders: z.array(CreateImagingOrderGroupSchema).default([]),
+  labOrders: z.array(CreateLabOrderGroupSchema).default([]),
+})
+const PatchImagingOrderSchema = z.object({
+  groupOrder: z.number().int().min(1).optional(),
+  groupTitle: z.string().max(200).nullable().optional(),
+})
+const PatchLabOrderSchema = z.object({
+  groupOrder: z.number().int().min(1).optional(),
+  groupTitle: z.string().max(200).nullable().optional(),
+})
+const RenameOrderGroupSchema = z.object({
+  groupTitle: z.string().max(200).nullable(),
+})
+type GenerateAllOrdersDto = z.infer<typeof GenerateAllOrdersSchema>
+type PatchImagingOrderDto = z.infer<typeof PatchImagingOrderSchema>
+type PatchLabOrderDto = z.infer<typeof PatchLabOrderSchema>
+type RenameOrderGroupDto = z.infer<typeof RenameOrderGroupSchema>
 import type { AuthUser } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'

@@ -14,20 +14,11 @@ function makeConsultation(
     tenantId: 't1',
     patientId: 'pat1',
     locationId: 'loc1',
-    userId: 'u1',
+    doctorUserId: 'u1',
     appointmentId: null,
-    consultedAt: new Date().toISOString(),
-    chiefComplaint: 'Cefalea',
-    subjective: '',
-    objective: '',
-    assessment: '',
-    plan: '',
-    vitals: null,
-    diagnoses: [],
-    status: 'draft',
+    startedAt: new Date().toISOString(),
+    status: 'open',
     signedAt: null,
-    signedBy: null,
-    contentHash: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date(Date.now() - 30 * 60_000).toISOString(),
     deletedAt: null,
@@ -79,24 +70,13 @@ describe('ConsultationsService.getResumableForPatient', () => {
     expect(result?.elapsedMinutes).toBe(47)
   })
 
-  it('infers lastEditField as "Examen físico" when objective is filled', async () => {
+  it('returns null lastEditField (SOAP fields removed in schema reset v2)', async () => {
     const c = makeConsultation({
-      objective: 'RsCs rítmicos',
       updatedAt: new Date(Date.now() - 30 * 60_000).toISOString(),
     })
     repo.findResumableForPatient.mockResolvedValue(c)
     const result = await svc.getResumableForPatient('t1', 'u1', 'pat1')
-    expect(result?.lastEditField).toBe('Examen físico')
-  })
-
-  it('inference falls back to chiefComplaint when others empty', async () => {
-    const c = makeConsultation({
-      chiefComplaint: 'Cefalea',
-      updatedAt: new Date(Date.now() - 30 * 60_000).toISOString(),
-    })
-    repo.findResumableForPatient.mockResolvedValue(c)
-    const result = await svc.getResumableForPatient('t1', 'u1', 'pat1')
-    expect(result?.lastEditField).toBe('Motivo de consulta')
+    expect(result?.lastEditField).toBeNull()
   })
 
   it('passes 7-day window to repository', async () => {

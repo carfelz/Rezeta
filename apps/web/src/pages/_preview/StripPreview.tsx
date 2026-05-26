@@ -21,8 +21,14 @@ const mockUsage: ConsultationProtocolUsage = {
   notes: null,
   appliedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: { itm_1: true, itm_2: true, itm_3: true, itm_4: true },
-  modifications: {},
+  modifications: {
+    checklist_items: [
+      { item_id: 'itm_1', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'itm_2', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'itm_3', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'itm_4', checked: true, timestamp: new Date().toISOString() },
+    ],
+  },
   content: {
     version: '1.0',
     blocks: [

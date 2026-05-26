@@ -84,7 +84,7 @@ export function NewConsultation(): JSX.Element {
 
   const doctorDisplayName = formatDoctorName(user?.fullName)
 
-  async function handleGateSelect(protocolId: string | null): Promise<void> {
+  async function handleGateSelect(_protocolId: string | null): Promise<void> {
     if (!ready) {
       setError(newConsultationStrings.selectPatientLocationError)
       return
@@ -95,8 +95,6 @@ export function NewConsultation(): JSX.Element {
       const consultation = await createMutation.mutateAsync({
         patientId,
         locationId,
-        diagnoses: [],
-        ...(protocolId ? { protocolId } : {}),
       })
       void navigate(`/consultas/${consultation.id}`, { replace: true })
     } catch (err) {

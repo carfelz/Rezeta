@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common'
+import { Injectable, Inject, NotFoundException } from '@nestjs/common'
 import type {
   ProtocolTemplateDto,
   CreateProtocolTemplateDto,
@@ -6,17 +6,13 @@ import type {
 } from '@rezeta/shared'
 import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolTemplatesRepository } from './protocol-templates.repository.js'
+import type { ProtocolTemplate } from '@rezeta/db'
 
 @Injectable()
 export class ProtocolTemplatesService {
   constructor(@Inject(ProtocolTemplatesRepository) private repo: ProtocolTemplatesRepository) {}
 
-  private toDto(
-    t: Awaited<ReturnType<ProtocolTemplatesRepository['findById']>>,
-  ): ProtocolTemplateDto {
-    if (!t) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
-    const blockingTypeIds = t.protocolTypes.map((pt) => pt.id)
-    const isLocked = blockingTypeIds.length > 0
+  private toDto(t: ProtocolTemplate): ProtocolTemplateDto {
     return {
       id: t.id,
       tenantId: t.tenantId,
@@ -25,8 +21,7 @@ export class ProtocolTemplatesService {
       suggestedSpecialty: t.suggestedSpecialty,
       schema: t.schema,
       isSeeded: t.isSeeded,
-      isLocked,
-      blockingTypeIds: isLocked ? blockingTypeIds : [],
+      isLocked: false,
       createdAt: t.createdAt.toISOString(),
       updatedAt: t.updatedAt.toISOString(),
     }
@@ -39,6 +34,7 @@ export class ProtocolTemplatesService {
 
   async findById(id: string, tenantId: string): Promise<ProtocolTemplateDto> {
     const t = await this.repo.findById(id, tenantId)
+    if (!t) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
     return this.toDto(t)
   }
 
@@ -48,19 +44,7 @@ export class ProtocolTemplatesService {
     userId: string,
   ): Promise<ProtocolTemplateDto> {
     const t = await this.repo.create(tenantId, dto, userId)
-    return {
-      id: t.id,
-      tenantId: t.tenantId,
-      name: t.name,
-      description: t.description,
-      suggestedSpecialty: t.suggestedSpecialty,
-      schema: t.schema,
-      isSeeded: t.isSeeded,
-      isLocked: false,
-      blockingTypeIds: [],
-      createdAt: t.createdAt.toISOString(),
-      updatedAt: t.updatedAt.toISOString(),
-    }
+    return this.toDto(t)
   }
 
   async update(
@@ -70,46 +54,14 @@ export class ProtocolTemplatesService {
   ): Promise<ProtocolTemplateDto> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
-
-    const isLocked = existing.protocolTypes.length > 0
-    if (isLocked) {
-      throw new ConflictException({
-        code: 'TEMPLATE_LOCKED',
-        message: 'Template cannot be edited while protocol types reference it.',
-        blockingTypeIds: existing.protocolTypes.map((pt) => pt.id),
-      })
-    }
-
     const t = await this.repo.update(id, tenantId, dto)
-    return {
-      id: t.id,
-      tenantId: t.tenantId,
-      name: t.name,
-      description: t.description,
-      suggestedSpecialty: t.suggestedSpecialty,
-      schema: t.schema,
-      isSeeded: t.isSeeded,
-      isLocked: false,
-      blockingTypeIds: [],
-      createdAt: t.createdAt.toISOString(),
-      updatedAt: t.updatedAt.toISOString(),
-    }
+    return this.toDto(t)
   }
 
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
     setAuditEntityName(existing.name)
-
-    const isLocked = existing.protocolTypes.length > 0
-    if (isLocked) {
-      throw new ConflictException({
-        code: 'TEMPLATE_LOCKED',
-        message: 'Template cannot be deleted while protocol types reference it.',
-        blockingTypeIds: existing.protocolTypes.map((pt) => pt.id),
-      })
-    }
-
     await this.repo.softDelete(id, tenantId)
   }
 }

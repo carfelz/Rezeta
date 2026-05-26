@@ -26,8 +26,8 @@ export type ProtocolRecommendationSource = 'patient-history' | 'doctor-history' 
 export interface ProtocolRecommendation {
   protocolId: string
   title: string
-  typeId: string
-  typeName: string
+  categoryId: string | null
+  categoryName: string | null
   currentVersionNumber: number | null
   /** ISO timestamp of the most recent prior usage with this patient. Null
    * unless `source === 'patient-history'`. */

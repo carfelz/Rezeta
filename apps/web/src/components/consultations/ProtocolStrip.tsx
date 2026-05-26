@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { ConsultationProtocolUsage, ProtocolBlock } from '@rezeta/shared'
 import { Caption, Chip, Overline, StepCircle, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { deriveCheckedState } from '@/lib/consultation/usage'
 import { ViewModeToggle } from './ViewModeToggle'
 import type { ConsultationViewMode } from '@/store/ui.store'
 
@@ -133,7 +134,7 @@ export function ProtocolStrip({
 
   const blocks = usage.content?.blocks ?? []
   const steps = buildStepEntries(blocks)
-  const checkedState = usage.checkedState ?? {}
+  const checkedState = deriveCheckedState(usage)
 
   const allCheckableIds = collectCheckableIds(blocks)
   const totalItems = allCheckableIds.length

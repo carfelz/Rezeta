@@ -106,7 +106,7 @@ export function ProtocolPickerModal({
                       {protocol.title}
                     </div>
                     <Caption tone="neutral" size="md" as="div" className="mt-1">
-                      {protocol.typeName}
+                      {protocol.categoryName}
                     </Caption>
                   </div>
                   {protocol.isFavorite && (

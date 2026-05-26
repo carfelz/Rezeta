@@ -1,17 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { Protocol, ProtocolVersion, ProtocolType, ProtocolTemplate } from '@rezeta/db'
+import type { Protocol, ProtocolVersion, ProtocolCategory } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 
 type ProtocolCreateResult = {
-  protocol: Protocol & { type: ProtocolType & { template: ProtocolTemplate } }
+  protocol: Protocol & { category: ProtocolCategory | null }
   version: ProtocolVersion
 }
 type ProtocolFullResult = Protocol & {
-  type: ProtocolType & { template: ProtocolTemplate }
+  category: ProtocolCategory | null
   currentVersion: ProtocolVersion | null
 }
 type ProtocolListEntry = Protocol & {
-  type: { id: string; name: string }
+  category: { id: string; name: string } | null
   versions: { versionNumber: number; content: unknown }[]
 }
 
@@ -23,7 +23,7 @@ export class ProtocolsRepository {
     tenantId: string
     title: string
     createdBy: string
-    typeId?: string
+    categoryId?: string
     tags?: string[]
     content: unknown
   }): Promise<ProtocolCreateResult> {
@@ -33,7 +33,7 @@ export class ProtocolsRepository {
           tenantId: data.tenantId,
           title: data.title,
           createdBy: data.createdBy,
-          ...(data.typeId !== undefined ? { typeId: data.typeId } : {}),
+          ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
           tags: data.tags ?? [],
           status: 'draft',
         },
@@ -52,11 +52,11 @@ export class ProtocolsRepository {
       const updated = await tx.protocol.update({
         where: { id: protocol.id },
         data: { currentVersionId: version.id },
-        include: { type: { include: { template: true } } },
+        include: { category: true },
       })
 
       return {
-        protocol: updated as Protocol & { type: ProtocolType & { template: ProtocolTemplate } },
+        protocol: updated as Protocol & { category: ProtocolCategory | null },
         version,
       }
     })
@@ -65,7 +65,7 @@ export class ProtocolsRepository {
   async findById(id: string, tenantId: string): Promise<ProtocolFullResult | null> {
     const protocol = await this.prisma.protocol.findFirst({
       where: { id, tenantId, deletedAt: null },
-      include: { type: { include: { template: true } } },
+      include: { category: true },
     })
     if (!protocol) return null
 
@@ -76,7 +76,7 @@ export class ProtocolsRepository {
       : null
 
     return {
-      ...(protocol as Protocol & { type: ProtocolType & { template: ProtocolTemplate } }),
+      ...(protocol as Protocol & { category: ProtocolCategory | null }),
       currentVersion,
     }
   }
@@ -85,7 +85,7 @@ export class ProtocolsRepository {
     tenantId: string,
     filters: {
       search?: string
-      typeId?: string
+      categoryId?: string
       status?: string
       favoritesOnly?: boolean
       sort?: string
@@ -108,14 +108,14 @@ export class ProtocolsRepository {
       where: {
         tenantId,
         deletedAt: null,
-        ...(filters.typeId ? { typeId: filters.typeId } : {}),
+        ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
         ...(filters.status ? { status: filters.status } : {}),
         ...(filters.favoritesOnly ? { isFavorite: true } : {}),
         ...(filters.search ? { title: { contains: filters.search, mode: 'insensitive' } } : {}),
       },
       orderBy,
       include: {
-        type: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
         versions: {
           where: { deletedAt: null },
           orderBy: { versionNumber: 'desc' },

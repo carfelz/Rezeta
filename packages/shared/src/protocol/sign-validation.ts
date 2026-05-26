@@ -1,99 +1,71 @@
 import type { ProtocolBlock } from '../types/protocol.js'
 import type { ConsultationProtocolUsage } from '../types/consultation.js'
+import { getCheckedStateFromModifications } from './checked-state.js'
 
 export interface MissingRequiredField {
-  /** Stable identifier — e.g. `chiefComplaint`, `assessment`, `protocol:<usageId>:<blockId>` */
+  /** Stable identifier — e.g. `protocol:<usageId>:<blockId>` or a SOAP field name */
   id: string
   label: string
   description?: string
 }
 
-export interface SoapSnapshot {
-  chiefComplaint: string | null
-  assessment: string | null
-  diagnoses: string[]
+type SoapContext = {
+  chiefComplaint?: string
+  assessment?: string
+  diagnoses?: string[]
+  [key: string]: unknown
 }
-
-const SOAP_RULES: { id: string; label: string; check: (s: SoapSnapshot) => boolean }[] = [
-  {
-    id: 'chiefComplaint',
-    label: 'Motivo de consulta',
-    check: (s) => !s.chiefComplaint || !s.chiefComplaint.trim(),
-  },
-  {
-    id: 'assessment',
-    label: 'Evaluación',
-    check: (s) => !s.assessment || !s.assessment.trim(),
-  },
-  {
-    id: 'diagnoses',
-    label: 'Diagnósticos',
-    check: (s) => s.diagnoses.length === 0,
-  },
-]
 
 /**
- * Walks a block tree and returns required blocks that are not "completed" given
- * `checkedState`. Completion rules:
- *   - section: not directly required (the required flag cascades to children)
- *   - checklist: every item id must be in checkedState as true
- *   - steps: every step id must be in checkedState as true
- *   - decision: at least one branch id must be in checkedState as true
- *   - dosage_table: at least one row id must be in checkedState as true
- *   - text: passes (no completion semantics)
- *   - alert: passes
- *   - imaging_order/lab_order: at least one order id must be in checkedState as true
+ * Returns all unfilled required fields for a consultation. Caller decides
+ * whether to block the sign action (server) or surface a callout (client).
+ *
+ * Includes:
+ *   - SOAP required fields: chiefComplaint, assessment, diagnoses (when present in ctx)
+ *   - Protocol-required: every block flagged `required: true` in active usages
+ *     that hasn't been completed according to the usage's modifications.
  */
-function isBlockCompleted(block: ProtocolBlock, checkedState: Record<string, boolean>): boolean {
-  switch (block.type) {
-    case 'checklist':
-      return block.items.every((it) => checkedState[it.id] === true)
-    case 'steps':
-      return block.steps.every((st) => checkedState[st.id] === true)
-    case 'decision':
-      return block.branches.some((br) => checkedState[br.id] === true)
-    case 'dosage_table':
-      return block.rows.some((r) => checkedState[r.id] === true)
-    case 'imaging_order':
-      return block.orders.some((o) => checkedState[o.id] === true)
-    case 'lab_order':
-      return block.orders.some((o) => checkedState[o.id] === true)
-    case 'text':
-    case 'alert':
-      return true
-    default:
-      return true
+export function computeMissingRequiredFields(
+  ctx: Record<string, unknown>,
+  protocolUsages: ConsultationProtocolUsage[],
+): MissingRequiredField[] {
+  const missing: MissingRequiredField[] = []
+  const soap = ctx as SoapContext
+
+  // SOAP validation (fields provided by caller when applicable)
+  if ('chiefComplaint' in ctx && !String(soap.chiefComplaint ?? '').trim()) {
+    missing.push({ id: 'chiefComplaint', label: 'Motivo de consulta' })
   }
-}
+  if ('assessment' in ctx && !String(soap.assessment ?? '').trim()) {
+    missing.push({ id: 'assessment', label: 'Evaluación' })
+  }
+  if ('diagnoses' in ctx && (!Array.isArray(soap.diagnoses) || soap.diagnoses.length === 0)) {
+    missing.push({ id: 'diagnoses', label: 'Diagnóstico' })
+  }
 
-function blockIsRequired(_block: ProtocolBlock): boolean {
-  // The `required` flag lives on TEMPLATE blocks, not protocol-instance blocks.
-  // For a protocol usage, we treat blocks marked with a runtime `required: true`
-  // (carried over from template via content materialisation) as required.
-  // The base type doesn't expose `required`, so we read it as an unknown extension.
-  const r = (_block as unknown as { required?: boolean }).required
-  return r === true
-}
-
-function blockLabel(block: ProtocolBlock): string {
-  if ('title' in block && block.title) return block.title
-  if (block.type === 'section') return block.title
-  if (block.type === 'decision') return block.condition
-  return `Bloque ${block.id}`
+  // Protocol-required blocks
+  for (const usage of protocolUsages) {
+    if (usage.status !== 'in_progress' && usage.status !== 'completed') continue
+    const blocks = usage.content?.blocks ?? []
+    const checkedState = getCheckedStateFromModifications(usage.modifications ?? {})
+    walkRequired(blocks, usage.id, checkedState, missing)
+  }
+  return missing
 }
 
 function walkRequired(
   blocks: ProtocolBlock[],
-  checkedState: Record<string, boolean>,
   usageId: string,
+  checkedState: Record<string, boolean>,
   out: MissingRequiredField[],
 ): void {
   for (const block of blocks) {
     if (block.type === 'section') {
-      walkRequired(block.blocks, checkedState, usageId, out)
+      walkRequired(block.blocks, usageId, checkedState, out)
       continue
     }
-    if (blockIsRequired(block) && !isBlockCompleted(block, checkedState)) {
+    if (!blockIsRequired(block)) continue
+    if (!blockIsCompleted(block, checkedState)) {
       out.push({
         id: `protocol:${usageId}:${block.id}`,
         label: blockLabel(block),
@@ -103,27 +75,44 @@ function walkRequired(
   }
 }
 
-/**
- * Returns all unfilled required fields for a consultation. Caller decides
- * whether to block the sign action (server) or surface a callout (client).
- *
- * Includes:
- *   - SOAP-required: chiefComplaint, assessment, ≥1 diagnoses
- *   - Protocol-required: every block flagged `required: true` in active usages
- *     that is not "completed" per `isBlockCompleted` semantics
- */
-export function computeMissingRequiredFields(
-  soap: SoapSnapshot,
-  protocolUsages: ConsultationProtocolUsage[],
-): MissingRequiredField[] {
-  const missing: MissingRequiredField[] = []
-  for (const rule of SOAP_RULES) {
-    if (rule.check(soap)) missing.push({ id: rule.id, label: rule.label })
+function blockIsRequired(block: ProtocolBlock): boolean {
+  const r = (block as unknown as { required?: boolean }).required
+  return r === true
+}
+
+function blockIsCompleted(block: ProtocolBlock, checkedState: Record<string, boolean>): boolean {
+  switch (block.type) {
+    case 'checklist':
+      return block.items.length > 0 && block.items.every((i) => checkedState[i.id])
+    case 'steps':
+      return block.steps.length > 0 && block.steps.every((s) => checkedState[s.id])
+    case 'decision': {
+      const branches = block.branches ?? []
+      return branches.some((b) => checkedState[b.id])
+    }
+    case 'dosage_table': {
+      const rows = (block as unknown as { rows?: Array<{ id: string }> }).rows ?? []
+      return rows.some((r) => checkedState[r.id])
+    }
+    case 'imaging_order': {
+      const orders = (block as unknown as { orders?: Array<{ id: string }> }).orders ?? []
+      return orders.some((o) => checkedState[o.id])
+    }
+    case 'lab_order': {
+      const orders = (block as unknown as { orders?: Array<{ id: string }> }).orders ?? []
+      return orders.some((o) => checkedState[o.id])
+    }
+    case 'text':
+    case 'alert':
+      return true
+    default:
+      // Unknown block types default to complete
+      return true
   }
-  for (const usage of protocolUsages) {
-    if (usage.status !== 'in_progress' && usage.status !== 'completed') continue
-    const blocks = usage.content?.blocks ?? []
-    walkRequired(blocks, usage.checkedState ?? {}, usage.id, missing)
-  }
-  return missing
+}
+
+function blockLabel(block: ProtocolBlock): string {
+  if ('title' in block && typeof block.title === 'string' && block.title) return block.title
+  if (block.type === 'decision' && block.condition) return block.condition
+  return `Bloque ${block.id}`
 }

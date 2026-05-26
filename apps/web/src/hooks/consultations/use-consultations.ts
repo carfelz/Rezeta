@@ -7,10 +7,8 @@ import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
   CreateConsultationDto,
-  UpdateConsultationDto,
   AmendConsultationDto,
   AddProtocolUsageDto,
-  UpdateCheckedStateDto,
   UpdateProtocolUsageDto,
   Prescription,
   ImagingOrder,
@@ -18,11 +16,15 @@ import type {
   CreatePrescriptionGroupDto,
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
-  PatchImagingOrderDto,
-  PatchLabOrderDto,
-  RenameOrderGroupDto,
   ResumableConsultation,
 } from '@rezeta/shared'
+
+// Local stubs for types removed from shared in schema reset v2
+type UpdateConsultationDto = Record<string, never>
+type UpdateCheckedStateDto = { completedAt?: string | null; notes?: string | null }
+type PatchImagingOrderDto = { groupOrder?: number; groupTitle?: string | null }
+type PatchLabOrderDto = { groupOrder?: number; groupTitle?: string | null }
+type RenameOrderGroupDto = { groupTitle: string | null }
 
 const QK = 'consultations'
 

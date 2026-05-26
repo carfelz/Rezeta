@@ -7,7 +7,6 @@ import {
   usePatientConsultations,
   useRemoveProtocolUsage,
   useSkipStep,
-  useUpdateCheckedState,
   useUpdateConsultation,
   useUpdateProtocolUsage,
 } from '@/hooks/consultations/use-consultations'
@@ -63,7 +62,6 @@ export function Consultation(): JSX.Element {
   const activeUsage =
     (activeUsageId && consultation?.protocolUsages?.find((u) => u.id === activeUsageId)) ||
     consultation?.protocolUsages?.[0]
-  const updateCheckedState = useUpdateCheckedState(id!, activeUsage?.id ?? '')
   const updateProtocolUsage = useUpdateProtocolUsage(id!, activeUsage?.id ?? '')
 
   const [usageIdStack, setUsageIdStack] = useState<string[]>([])
@@ -77,9 +75,7 @@ export function Consultation(): JSX.Element {
   }
 
   function handleCheck(id: string, checked: boolean): void {
-    if (!activeUsage) return
-    const next = { ...activeUsage.checkedState, [id]: checked }
-    updateCheckedState.mutate({ checkedState: next })
+    handleModification({ type: 'checklist_item', item_id: id, checked })
   }
 
   function handleAutoPopulate(field: SoapField, text: string): void {
@@ -211,23 +207,16 @@ export function Consultation(): JSX.Element {
 
   const isSigned = consultationSigned
   const protocolIds = consultation.protocolUsages.map((u) => u.protocolId)
-  // Derive from server record + live soap state. Server values cover first
-  // render (soap state hydrates one tick later); soap values cover live edits.
   const hasContent = Boolean(
     soap.chiefComplaint.trim() ||
-    (consultation.chiefComplaint ?? '').trim() ||
-    (consultation.subjective ?? '').trim() ||
-    (consultation.objective ?? '').trim() ||
-    (consultation.assessment ?? '').trim() ||
-    (consultation.plan ?? '').trim() ||
-    consultation.diagnoses.length > 0 ||
     soap.subjective.trim() ||
     soap.objective.trim() ||
     soap.assessment.trim() ||
     soap.plan.trim() ||
-    soap.diagnoses.length > 0,
+    soap.diagnoses.length > 0 ||
+    consultation.protocolUsages.length > 0,
   )
-  const dateShort = formatBreadcrumbDate(new Date(consultation.consultedAt))
+  const dateShort = formatBreadcrumbDate(new Date(consultation.startedAt))
   const pageTitle = isSigned
     ? `Consulta del ${dateShort} · firmada`
     : hasContent
@@ -236,10 +225,10 @@ export function Consultation(): JSX.Element {
 
   return (
     <div className="py-8 px-8 max-w-[1440px]">
-      <Breadcrumb patientName={consultation.patientName} consultedAt={consultation.consultedAt} />
+      <Breadcrumb patientName={consultation.patientName} consultedAt={consultation.startedAt} />
 
       <PageHeader
-        consultedAt={consultation.consultedAt}
+        consultedAt={consultation.startedAt}
         locationName={consultation.locationName}
         patientName={consultation.patientName}
         doctorName={consultation.doctorName}
@@ -362,8 +351,8 @@ export function Consultation(): JSX.Element {
             patient={patient ?? null}
             prevList={prevList.map((c) => ({
               id: c.id,
-              consultedAt: c.consultedAt,
-              chiefComplaint: c.chiefComplaint,
+              consultedAt: c.startedAt,
+              chiefComplaint: c.protocolUsages[0]?.protocolTitle ?? null,
             }))}
             onAddProtocol={() => setShowPicker(true)}
             onPrevClick={(prevId) => void navigate(`/consultas/${prevId}`)}

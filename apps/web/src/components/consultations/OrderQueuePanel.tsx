@@ -292,61 +292,63 @@ function SavedImagingGroupCard({
         }
       >
         <div className="divide-y divide-n-100">
-          {orders.map((order) => (
-            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-n-800">{order.studyType}</span>
-                  <UrgencyChip urgency={order.urgency} />
+          {orders.flatMap((order) =>
+            order.items.map((item) => (
+              <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-n-800">{item.studyType}</span>
+                    <UrgencyChip urgency={item.urgency} />
+                  </div>
+                  <Caption tone="muted" size="md" as="div" className="mt-1">
+                    {item.indication}
+                  </Caption>
+                  <div className="flex items-center gap-3 mt-1">
+                    {item.contrast && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        {orderQueueStrings.withContrast}
+                      </Caption>
+                    )}
+                    {item.fastingRequired && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        {orderQueueStrings.fastingRequired}
+                      </Caption>
+                    )}
+                  </div>
                 </div>
-                <Caption tone="muted" size="md" as="div" className="mt-1">
-                  {order.indication}
-                </Caption>
-                <div className="flex items-center gap-3 mt-1">
-                  {order.contrast && (
-                    <Caption tone="muted" size="xs" className="font-mono">
-                      {orderQueueStrings.withContrast}
-                    </Caption>
-                  )}
-                  {order.fastingRequired && (
-                    <Caption tone="muted" size="xs" className="font-mono">
-                      {orderQueueStrings.fastingRequired}
-                    </Caption>
-                  )}
-                </div>
+                {!isSigned && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
+                    {otherGroupOrders.length > 0 && (
+                      <Select
+                        onValueChange={(val) =>
+                          patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
+                        }
+                      >
+                        <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                          <SelectValue placeholder={orderQueueStrings.moveToGroup} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {otherGroupOrders.map((g) => (
+                            <SelectItem key={g} value={String(g)}>
+                              {orderQueueStrings.moveToGroupLabel(g)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <IconButton
+                      icon="ph ph-trash"
+                      aria-label={orderQueueStrings.deleteOrderLabel}
+                      tone="danger"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={() => onDelete(order.id)}
+                    />
+                  </div>
+                )}
               </div>
-              {!isSigned && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
-                  {otherGroupOrders.length > 0 && (
-                    <Select
-                      onValueChange={(val) =>
-                        patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
-                      }
-                    >
-                      <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
-                        <SelectValue placeholder={orderQueueStrings.moveToGroup} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {otherGroupOrders.map((g) => (
-                          <SelectItem key={g} value={String(g)}>
-                            {orderQueueStrings.moveToGroupLabel(g)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <IconButton
-                    icon="ph ph-trash"
-                    aria-label={orderQueueStrings.deleteOrderLabel}
-                    tone="danger"
-                    size="sm"
-                    disabled={isDeleting}
-                    onClick={() => onDelete(order.id)}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            )),
+          )}
         </div>
       </GroupSectionCard>
     </div>
@@ -468,66 +470,63 @@ function SavedLabGroupCard({
         }
       >
         <div className="divide-y divide-n-100">
-          {orders.map((order) => (
-            <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-n-800">{order.testName}</span>
-                  {order.testCode && (
-                    <Caption tone="muted" size="xs" className="font-mono">
-                      {order.testCode}
-                    </Caption>
-                  )}
-                </div>
-                <Caption tone="muted" size="md" as="div" className="mt-1">
-                  {order.indication}
-                </Caption>
-                <div className="flex items-center gap-3 mt-1">
-                  <Caption tone="muted" size="xs" className="font-mono">
-                    {URGENCY_LABELS[order.urgency]}
+          {orders.flatMap((order) =>
+            order.items.map((item) => (
+              <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-n-800">{item.testName}</span>
+                  </div>
+                  <Caption tone="muted" size="md" as="div" className="mt-1">
+                    {item.indication}
                   </Caption>
-                  {order.fastingRequired && (
+                  <div className="flex items-center gap-3 mt-1">
                     <Caption tone="muted" size="xs" className="font-mono">
-                      {orderQueueStrings.fastingRequired}
+                      {URGENCY_LABELS[item.urgency]}
                     </Caption>
-                  )}
-                  <Caption tone="muted" size="xs" className="font-mono capitalize">
-                    {order.sampleType}
-                  </Caption>
+                    {item.fastingRequired && (
+                      <Caption tone="muted" size="xs" className="font-mono">
+                        {orderQueueStrings.fastingRequired}
+                      </Caption>
+                    )}
+                    <Caption tone="muted" size="xs" className="font-mono capitalize">
+                      {item.sampleType}
+                    </Caption>
+                  </div>
                 </div>
+                {!isSigned && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
+                    {otherGroupOrders.length > 0 && (
+                      <Select
+                        onValueChange={(val) =>
+                          patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
+                        }
+                      >
+                        <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                          <SelectValue placeholder={orderQueueStrings.moveToGroup} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {otherGroupOrders.map((g) => (
+                            <SelectItem key={g} value={String(g)}>
+                              {orderQueueStrings.moveToGroupLabel(g)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <IconButton
+                      icon="ph ph-trash"
+                      aria-label={orderQueueStrings.deleteOrderLabel}
+                      tone="danger"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={() => onDelete(order.id)}
+                    />
+                  </div>
+                )}
               </div>
-              {!isSigned && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 mt-1">
-                  {otherGroupOrders.length > 0 && (
-                    <Select
-                      onValueChange={(val) =>
-                        patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
-                      }
-                    >
-                      <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
-                        <SelectValue placeholder={orderQueueStrings.moveToGroup} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {otherGroupOrders.map((g) => (
-                          <SelectItem key={g} value={String(g)}>
-                            {orderQueueStrings.moveToGroupLabel(g)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <IconButton
-                    icon="ph ph-trash"
-                    aria-label={orderQueueStrings.deleteOrderLabel}
-                    tone="danger"
-                    size="sm"
-                    disabled={isDeleting}
-                    onClick={() => onDelete(order.id)}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            )),
+          )}
         </div>
       </GroupSectionCard>
     </div>
@@ -694,14 +693,14 @@ function ImagingGroup({
       {
         groupTitle: group.title,
         groupOrder: group.order,
-        orders: orders.map((o) => ({
-          study_type: o.study_type,
+        items: orders.map((o) => ({
+          studyType: o.study_type,
           indication: o.indication,
           urgency: o.urgency,
           contrast: o.contrast,
-          fasting_required: o.fasting_required,
-          special_instructions: o.special_instructions,
-          source: o.source,
+          fastingRequired: o.fasting_required,
+          ...(o.special_instructions ? { specialInstructions: o.special_instructions } : {}),
+          ...(o.source ? { source: o.source } : {}),
         })),
       },
       { onSuccess: () => onRemoveGroup(group.id) },
@@ -824,15 +823,14 @@ function LabGroup({
       {
         groupTitle: group.title,
         groupOrder: group.order,
-        orders: orders.map((o) => ({
-          test_name: o.test_name,
-          test_code: o.test_code,
+        items: orders.map((o) => ({
+          testName: o.test_name,
           indication: o.indication,
           urgency: o.urgency,
-          fasting_required: o.fasting_required,
-          sample_type: o.sample_type,
-          special_instructions: o.special_instructions,
-          source: o.source,
+          fastingRequired: o.fasting_required,
+          sampleType: o.sample_type === 'other' ? 'other' : o.sample_type,
+          ...(o.special_instructions ? { specialInstructions: o.special_instructions } : {}),
+          ...(o.source ? { source: o.source } : {}),
         })),
       },
       { onSuccess: () => onRemoveGroup(group.id) },

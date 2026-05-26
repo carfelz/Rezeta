@@ -71,19 +71,8 @@ export class TenantSeedingService {
         ),
       )
 
-      // Insert 5 types, each pointing at the corresponding template
-      await Promise.all(
-        fixtures.map((f, i) =>
-          tx.protocolType.create({
-            data: {
-              tenantId,
-              name: f.typeName,
-              templateId: createdTemplates[i]!.id,
-              isSeeded: true,
-            },
-          }),
-        ),
-      )
+      // ProtocolType removed — categories will be seeded in Plan 02
+      void createdTemplates // suppress unused warning
 
       await tx.tenant.update({
         where: { id: tenantId },
@@ -144,23 +133,8 @@ export class TenantSeedingService {
         clientIdToServerId.set(t.clientId, created.id)
       }
 
-      // Insert types, resolving templateClientId → server UUID
-      for (const ty of types) {
-        const templateId = clientIdToServerId.get(ty.templateClientId)
-        if (!templateId) {
-          throw new Error(
-            `Type "${ty.name}" references unknown templateClientId "${ty.templateClientId}"`,
-          )
-        }
-        await tx.protocolType.create({
-          data: {
-            tenantId,
-            name: ty.name,
-            templateId,
-            isSeeded: true,
-          },
-        })
-      }
+      // ProtocolType removed — types are now categories (Plan 02 will handle migration)
+      void types // suppress unused warning
 
       await tx.tenant.update({
         where: { id: tenantId },

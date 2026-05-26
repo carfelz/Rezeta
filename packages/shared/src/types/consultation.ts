@@ -1,6 +1,6 @@
 import type { ProtocolContent, ProtocolUsageStatus } from './protocol.js'
 
-export type ConsultationStatus = 'draft' | 'signed'
+export type ConsultationStatus = 'open' | 'signed' | 'amended'
 
 export interface Vitals {
   bloodPressureSystolic?: number
@@ -21,16 +21,8 @@ export interface Consultation {
   locationId: string
   appointmentId: string | null
   status: ConsultationStatus
-  chiefComplaint: string | null
-  subjective: string | null
-  objective: string | null
-  assessment: string | null
-  plan: string | null
-  vitals: Vitals | null
-  diagnoses: string[]
-  consultedAt: string
+  startedAt: string
   signedAt: string | null
-  signedByUserId: string | null
   createdAt: string
   updatedAt: string
   deletedAt: string | null
@@ -60,7 +52,6 @@ export interface ConsultationProtocolUsage {
   triggerBlockId: string | null
   depth: number
   status: ProtocolUsageStatus
-  checkedState: Record<string, boolean>
   completedAt: string | null
   notes: string | null
   appliedAt: string

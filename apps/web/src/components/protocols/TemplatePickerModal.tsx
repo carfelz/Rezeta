@@ -16,15 +16,19 @@ import {
 import { useProtocolTypes } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { blockEditorStrings } from './strings'
-import type { ProtocolTypeDto } from '@rezeta/shared'
-
 interface TemplatePickerModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface ProtocolTypeInfo {
+  id: string
+  name: string
+  templateName?: string
+}
+
 interface TypeCardProps {
-  type: ProtocolTypeDto
+  type: ProtocolTypeInfo
   selected: boolean
   onSelect: () => void
 }
@@ -68,9 +72,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
 
   const handleCreate = () => {
     if (!canSubmit) return
-    const dto = scratchMode
-      ? { title: title.trim() }
-      : { typeId: selectedTypeId!, title: title.trim() }
+    const dto = { title: title.trim() }
     createProtocol(dto, {
       onSuccess: (data) => {
         handleClose()

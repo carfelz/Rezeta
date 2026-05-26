@@ -6,8 +6,8 @@ const mockRecommendations = [
   {
     protocolId: 'proto-1',
     title: 'Protocolo HTA',
-    typeId: 'type-1',
-    typeName: 'Cardiovascular',
+    categoryId: 'cat-1',
+    categoryName: 'Cardiovascular',
     currentVersionNumber: 2,
     lastUsedAt: new Date().toISOString(),
     usageCount: 3,
@@ -17,8 +17,8 @@ const mockRecommendations = [
   {
     protocolId: 'proto-2',
     title: 'Analgesia básica',
-    typeId: 'type-2',
-    typeName: 'Medicación',
+    categoryId: 'cat-2',
+    categoryName: 'Medicación',
     currentVersionNumber: 1,
     lastUsedAt: null,
     usageCount: 0,
@@ -28,8 +28,8 @@ const mockRecommendations = [
   {
     protocolId: 'proto-3',
     title: 'Fisioterapia lumbar',
-    typeId: 'type-3',
-    typeName: 'Fisioterapia',
+    categoryId: 'cat-3',
+    categoryName: 'Fisioterapia',
     currentVersionNumber: 1,
     lastUsedAt: null,
     usageCount: 0,
@@ -41,8 +41,8 @@ const mockRecommendations = [
 const mockProtocols = mockRecommendations.map((r) => ({
   id: r.protocolId,
   title: r.title,
-  typeId: r.typeId,
-  typeName: r.typeName,
+  categoryId: r.categoryId,
+  categoryName: r.categoryName,
   status: 'active',
   isFavorite: false,
   currentVersionNumber: r.currentVersionNumber,

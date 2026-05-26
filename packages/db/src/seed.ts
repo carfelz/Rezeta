@@ -13,7 +13,6 @@ const STARTER_TEMPLATES = [
     name: 'Intervención de Emergencia',
     description: 'Para intervenciones agudas y urgentes (anafilaxia, ACV, paro cardíaco, etc.).',
     suggestedSpecialty: 'emergency_medicine',
-    typeName: 'Emergencia',
     schema: {
       version: '1.0',
       metadata: {
@@ -117,7 +116,6 @@ const STARTER_TEMPLATES = [
     description:
       'Para procedimientos de rutina con un flujo definido (cirugías menores, infiltraciones, biopsias, etc.).',
     suggestedSpecialty: 'general',
-    typeName: 'Procedimiento',
     schema: {
       version: '1.0',
       metadata: {
@@ -195,7 +193,6 @@ const STARTER_TEMPLATES = [
     description:
       'Para protocolos centrados en dosificación de medicamentos (insulina, antibióticos, dosis pediátricas, etc.).',
     suggestedSpecialty: 'pharmacology',
-    typeName: 'Medicación',
     schema: {
       version: '1.0',
       metadata: {
@@ -281,7 +278,6 @@ const STARTER_TEMPLATES = [
     description:
       'Para rutas de decisión diagnóstica (dolor torácico, síncope, fiebre pediátrica, etc.).',
     suggestedSpecialty: 'general',
-    typeName: 'Diagnóstico',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'general', intended_use: 'Rutas de decisión diagnóstica' },
@@ -364,7 +360,6 @@ const STARTER_TEMPLATES = [
     description:
       'Para protocolos de rehabilitación con evaluación, plan de tratamiento y reglas de progresión.',
     suggestedSpecialty: 'physiotherapy',
-    typeName: 'Fisioterapia',
     schema: {
       version: '1.0',
       metadata: {
@@ -888,25 +883,21 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
   }
   console.log(`  ${appointments.length} upcoming appointments`)
 
-  await seedTenantTemplatesAndTypes(tId, uId)
+  await seedTenantTemplates(tId, uId)
 }
 
-async function seedTenantTemplatesAndTypes(tenantId: string, createdBy: string | null) {
-  // Delete existing seeded templates and types for idempotency
-  const existingTypes = await prisma.protocolType.findMany({
-    where: { tenantId, isSeeded: true, deletedAt: null },
-  })
+async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
+  // Delete existing seeded templates for idempotency
   const existingTemplates = await prisma.protocolTemplate.findMany({
     where: { tenantId, isSeeded: true, deletedAt: null },
   })
 
-  if (existingTypes.length > 0 || existingTemplates.length > 0) {
-    await prisma.protocolType.deleteMany({ where: { tenantId, isSeeded: true } })
+  if (existingTemplates.length > 0) {
     await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
   }
 
   for (const t of STARTER_TEMPLATES) {
-    const template = await prisma.protocolTemplate.create({
+    await prisma.protocolTemplate.create({
       data: {
         tenantId,
         name: t.name,
@@ -917,18 +908,9 @@ async function seedTenantTemplatesAndTypes(tenantId: string, createdBy: string |
         createdBy,
       },
     })
-
-    await prisma.protocolType.create({
-      data: {
-        tenantId,
-        templateId: template.id,
-        name: t.typeName,
-        isSeeded: true,
-      },
-    })
   }
 
-  console.log(`✓ Seeded ${STARTER_TEMPLATES.length} templates + types for tenant ${tenantId}`)
+  console.log(`✓ Seeded ${STARTER_TEMPLATES.length} templates for tenant ${tenantId}`)
 }
 
 async function main() {

@@ -67,9 +67,7 @@ const FixedDosageColumnsSchema = z.tuple([
 ])
 
 // ─── Conditional rule expression tree (for blocks that activate conditionally) ──
-// Field paths supported in v1: vitals.bloodPressureSystolic, vitals.bloodPressureDiastolic,
-// vitals.heartRate, vitals.respiratoryRate, vitals.temperatureCelsius, vitals.oxygenSaturation,
-// vitals.weightKg, vitals.heightCm. Future: SOAP fields (text contains).
+// Field paths supported in v1: any vitals field or clinical_notes content.
 
 export const ComparisonOpSchema = z.enum(['<', '<=', '>', '>=', '==', '!='])
 
@@ -98,6 +96,16 @@ export const ConditionalRuleSchema: z.ZodType<unknown> = z.lazy(() =>
 
 // Types `ComparisonOp` and `ConditionalRule` are exported from `types/protocol.ts`
 // (single source of truth). This schema validates the same shape.
+
+// ─── Vitals field schema (shared between Template and Protocol blocks) ────────
+
+export const VitalsFieldSchema = z.object({
+  id: z.string().min(1).max(100),
+  label: z.string().min(1).max(200),
+  unit: z.string().max(50).optional(),
+  input_type: z.enum(['text', 'number', 'computed']),
+  formula: z.string().max(200).optional(),
+})
 
 // ─── Protocol Instance Schema (Strict Content) ─────────────────────────────
 
@@ -153,6 +161,17 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       type: z.literal('lab_order'),
       title: z.string().optional(),
       orders: z.array(LabOrderItemSchema).min(1),
+    }),
+    BaseBlockSchema.extend({
+      type: z.literal('vitals'),
+      fields: z.array(VitalsFieldSchema),
+      values: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
+    }),
+    BaseBlockSchema.extend({
+      type: z.literal('clinical_notes'),
+      label: z.string(),
+      required: z.boolean().optional(),
+      content: z.string(),
     }),
   ]),
 )
@@ -212,6 +231,16 @@ export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
       title: z.string().optional(),
       orders: z.array(LabOrderItemSchema).optional(),
     }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('vitals'),
+      fields: z.array(VitalsFieldSchema).optional(),
+    }),
+    BaseTemplateBlockSchema.extend({
+      type: z.literal('clinical_notes'),
+      label: z.string().optional(),
+      required: z.boolean().optional(),
+      content: z.string().optional(),
+    }),
   ]),
 )
 
@@ -235,7 +264,7 @@ export const ProtocolContentSchema = z.object({
 // ─── Request Schemas ─────────────────────────────────────────────────────────
 
 export const CreateProtocolSchema = z.object({
-  typeId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
   title: z.string().min(2).max(300),
 })
 
@@ -254,12 +283,9 @@ export const UpdateProtocolSchema = z.object({
 
 export const ProtocolListQuerySchema = z.object({
   search: z.string().max(300).optional(),
-  typeId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
   status: z.enum(['draft', 'active', 'archived']).optional(),
-  favoritesOnly: z
-    .string()
-    .optional()
-    .transform((v) => v === 'true'),
+  favoritesOnly: z.string().optional().transform((v) => v === 'true'),
   sort: z.enum(['updatedAt_desc', 'updatedAt_asc', 'title_asc', 'title_desc']).optional(),
 })
 
@@ -281,14 +307,17 @@ export const UpdateProtocolTemplateSchema = z.object({
   schema: ProtocolTemplateSchemaContent.optional(),
 })
 
-// ─── Protocol Type Request Schemas ───────────────────────────────────────────
+// ─── Protocol Category Request Schemas ───────────────────────────────────────
 
-export const CreateProtocolTypeSchema = z.object({
+export const CreateProtocolCategorySchema = z.object({
   name: z.string().min(1).max(200),
-  templateId: z.string().uuid(),
+  color: z.string().max(20).optional(),
 })
 
-export const UpdateProtocolTypeSchema = z.object({ name: z.string().min(1).max(200) }).strict()
+export const UpdateProtocolCategorySchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  color: z.string().max(20).optional(),
+})
 
 // ─── Response Schemas ────────────────────────────────────────────────────────
 
@@ -301,20 +330,6 @@ export const ProtocolTemplateDtoSchema = z.object({
   schema: z.any(),
   isSeeded: z.boolean(),
   isLocked: z.boolean(),
-  blockingTypeIds: z.array(z.string().uuid()).optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-})
-
-export const ProtocolTypeDtoSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  templateId: z.string().uuid(),
-  templateName: z.string(),
-  name: z.string(),
-  isSeeded: z.boolean(),
-  isLocked: z.boolean(),
-  protocolCount: z.number().int(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })
@@ -322,8 +337,8 @@ export const ProtocolTypeDtoSchema = z.object({
 export const ProtocolListItemSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
-  typeId: z.string().uuid().nullable(),
-  typeName: z.string().nullable(),
+  categoryId: z.string().uuid().nullable(),
+  categoryName: z.string().nullable(),
   status: z.string(),
   isFavorite: z.boolean(),
   updatedAt: z.string().datetime(),
@@ -352,8 +367,8 @@ export const ProtocolResponseSchema = z.object({
   isFavorite: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-  typeId: z.string().uuid().nullable(),
-  typeName: z.string().nullable(),
+  categoryId: z.string().uuid().nullable(),
+  categoryName: z.string().nullable(),
   templateSchema: z.any().nullable(),
   currentVersion: ProtocolVersionSummarySchema.nullable(),
 })
@@ -368,10 +383,9 @@ export type UpdateProtocolDto = z.infer<typeof UpdateProtocolSchema>
 export type UpdateProtocolTitleDto = z.infer<typeof UpdateProtocolTitleSchema>
 export type SaveVersionDto = z.infer<typeof SaveVersionSchema>
 export type SaveProtocolVersionDto = z.infer<typeof SaveProtocolVersionSchema>
-export type CreateProtocolTypeDto = z.infer<typeof CreateProtocolTypeSchema>
-export type UpdateProtocolTypeDto = z.infer<typeof UpdateProtocolTypeSchema>
+export type CreateProtocolCategoryDto = z.infer<typeof CreateProtocolCategorySchema>
+export type UpdateProtocolCategoryDto = z.infer<typeof UpdateProtocolCategorySchema>
 export type ProtocolTemplateDto = z.infer<typeof ProtocolTemplateDtoSchema>
-export type ProtocolTypeDto = z.infer<typeof ProtocolTypeDtoSchema>
 export type ProtocolListItem = z.infer<typeof ProtocolListItemSchema>
 export type ProtocolVersionSummary = z.infer<typeof ProtocolVersionSummarySchema>
 export type ProtocolResponse = z.infer<typeof ProtocolResponseSchema>

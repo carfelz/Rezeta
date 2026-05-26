@@ -461,7 +461,7 @@ export class PatternDetectionService {
     const [originalProtocol, currentVersion] = await Promise.all([
       this.prisma.protocol.findUnique({
         where: { id: protocolId },
-        select: { title: true, typeId: true, createdBy: true },
+        select: { title: true, categoryId: true, createdBy: true },
       }),
       this.prisma.protocolVersion.findUnique({
         where: { id: currentVersionId },
@@ -471,13 +471,13 @@ export class PatternDetectionService {
 
     if (!originalProtocol || !currentVersion) return
 
-    const { typeId, createdBy, title } = originalProtocol
+    const { categoryId, createdBy, title } = originalProtocol
 
     await this.prisma.$transaction(async (tx) => {
       const variant = await tx.protocol.create({
         data: {
           tenantId,
-          typeId,
+          ...(categoryId !== undefined ? { categoryId } : {}),
           createdBy,
           title: `${title} - Variante Optimizada`,
           status: 'draft',

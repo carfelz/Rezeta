@@ -3,7 +3,6 @@ import { ProtocolsRepository } from '../protocols.repository.js'
 
 const now = new Date('2026-01-01T00:00:00Z')
 const minimalContent = { version: '1.0', template_version: '1.0', blocks: [] }
-const minimalSchema = { version: '1.0', blocks: [] }
 
 const mockTx = {
   protocol: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
@@ -30,12 +29,13 @@ function makeProtocolRow(overrides: Record<string, unknown> = {}) {
     title: 'Anaphylaxis',
     status: 'draft',
     isFavorite: false,
-    typeId: 'type1',
+    categoryId: 'cat1',
     currentVersionId: 'ver1',
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
-    type: { id: 'type1', name: 'Emergencia', template: { schema: minimalSchema } },
+    category: { id: 'cat1', name: 'Emergencia' },
+    versions: [],
     ...overrides,
   }
 }
@@ -77,7 +77,7 @@ describe('ProtocolsRepository', () => {
         tenantId: 't1',
         title: 'Anaphylaxis',
         createdBy: 'u1',
-        typeId: 'type1',
+        categoryId: 'cat1',
         content: minimalContent,
       })
 
@@ -104,7 +104,7 @@ describe('ProtocolsRepository', () => {
         tenantId: 't1',
         title: 'Test',
         createdBy: 'u1',
-        typeId: 'type1',
+        categoryId: 'cat1',
         content: minimalContent,
         tags: ['cardiology'],
       })
@@ -126,7 +126,7 @@ describe('ProtocolsRepository', () => {
         tenantId: 't1',
         title: 'Test',
         createdBy: 'u1',
-        typeId: 'type1',
+        categoryId: 'cat1',
         content: minimalContent,
       })
 
@@ -215,11 +215,11 @@ describe('ProtocolsRepository', () => {
       expect(orderBy).toEqual({ title: 'desc' })
     })
 
-    it('applies typeId filter when provided', async () => {
+    it('applies categoryId filter when provided', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
-      await repo.list('t1', { typeId: 'type1' })
+      await repo.list('t1', { categoryId: 'cat1' })
       const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
-      expect(where.typeId).toBe('type1')
+      expect(where.categoryId).toBe('cat1')
     })
 
     it('applies status filter when provided', async () => {
@@ -247,7 +247,7 @@ describe('ProtocolsRepository', () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', {})
       const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
-      expect(where.typeId).toBeUndefined()
+      expect(where.categoryId).toBeUndefined()
       expect(where.status).toBeUndefined()
       expect(where.isFavorite).toBeUndefined()
       expect(where.title).toBeUndefined()
