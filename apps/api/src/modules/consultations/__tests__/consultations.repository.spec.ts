@@ -51,6 +51,7 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
 }
 
 const mockTx = {
+  consultation: { update: vi.fn() },
   protocolUsage: { updateMany: vi.fn() },
   prescription: { updateMany: vi.fn() },
   labOrder: { updateMany: vi.fn() },
@@ -205,18 +206,18 @@ describe('ConsultationsRepository', () => {
 
   describe('sign', () => {
     it('signs consultation and sets status to signed', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       const result = await repo.sign('c1', 't1', 'u1')
       expect(result.id).toBe('c1')
-      const data = mockPrisma.consultation.update.mock.calls[0][0].data
+      const data = mockTx.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
       expect(data.signedAt).toBeInstanceOf(Date)
     })
 
     it('atomically completes in-progress protocol usages', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       await repo.sign('c1', 't1', 'u1')
@@ -229,7 +230,7 @@ describe('ConsultationsRepository', () => {
     })
 
     it('atomically signs queued prescriptions', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       await repo.sign('c1', 't1', 'u1')
@@ -242,7 +243,7 @@ describe('ConsultationsRepository', () => {
     })
 
     it('atomically signs queued lab and imaging orders', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       await repo.sign('c1', 't1', 'u1')

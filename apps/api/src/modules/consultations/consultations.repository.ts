@@ -261,7 +261,7 @@ export class ConsultationsRepository {
     _userId: string,
   ): Promise<ConsultationWithDetails> {
     const now = new Date()
-    await this.prisma.$transaction(async (tx) => {
+    const row = await this.prisma.$transaction(async (tx) => {
       await tx.protocolUsage.updateMany({
         where: { consultationId: id, status: 'in_progress', deletedAt: null },
         data: { status: 'completed', completedAt: now },
@@ -278,11 +278,11 @@ export class ConsultationsRepository {
         where: { consultationId: id, status: 'queued', deletedAt: null },
         data: { status: 'signed', signedAt: now },
       })
-    })
-    const row = await this.prisma.consultation.update({
-      where: { id, tenantId, deletedAt: null },
-      data: { status: 'signed', signedAt: now },
-      include: RELATIONS_INCLUDE,
+      return tx.consultation.update({
+        where: { id, tenantId, deletedAt: null },
+        data: { status: 'signed', signedAt: now },
+        include: RELATIONS_INCLUDE,
+      })
     })
     return toConsultationWithDetails(row)
   }

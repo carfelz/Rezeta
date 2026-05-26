@@ -20,23 +20,15 @@ function makeConsultation(id = 'c1'): ConsultationWithDetails {
     locationId: 'l1',
     doctorUserId: 'user-1',
     appointmentId: null,
-    status: 'draft',
-    chiefComplaint: null,
-    subjective: null,
-    objective: null,
-    assessment: null,
-    plan: null,
-    vitals: null,
-    diagnoses: [],
-    contentHash: null,
+    status: 'open',
+    startedAt: '2026-01-01T00:00:00Z',
     signedAt: null,
-    signedBy: null,
-    consultedAt: '2026-01-01T00:00:00Z',
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     deletedAt: null,
     patientName: 'Ana Reyes',
     locationName: 'Clínica Central',
+    doctorName: 'Dr. Test',
     amendments: [],
     protocolUsages: [],
   }
@@ -47,21 +39,22 @@ function makeUsage(): ConsultationProtocolUsage {
     id: 'usage-1',
     consultationId: 'c1',
     tenantId: 'tenant-1',
-    userId: 'user-1',
     protocolId: 'proto-1',
     protocolVersionId: 'ver-1',
-    content: {},
+    content: { version: '1.0', blocks: [] },
     parentUsageId: null,
     triggerBlockId: null,
     depth: 0,
     status: 'in_progress',
-    checkedState: {},
     completedAt: null,
     notes: null,
-    modifications: null,
+    modifications: {},
     modificationSummary: null,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
+    appliedAt: '2026-01-01T00:00:00Z',
+    protocolTitle: 'Test Protocol',
+    protocolTypeName: null,
+    versionNumber: 1,
+    childUsages: [],
   }
 }
 
@@ -112,7 +105,7 @@ describe('ConsultationsController', () => {
 
   it('create delegates to service', async () => {
     vi.mocked(svc.create).mockResolvedValue(makeConsultation())
-    const dto = { patientId: 'p1', locationId: 'l1', diagnoses: [] }
+    const dto = { patientId: 'p1', locationId: 'l1' }
     const result = await controller.create(tenantId, mockUser, dto as never)
     expect(svc.create).toHaveBeenCalledWith(tenantId, 'user-1', dto)
     expect(result.id).toBe('c1')
@@ -120,8 +113,8 @@ describe('ConsultationsController', () => {
 
   it('update delegates to service', async () => {
     vi.mocked(svc.update).mockResolvedValue(makeConsultation('c1'))
-    const result = await controller.update(tenantId, 'c1', { plan: 'Rest' } as never)
-    expect(svc.update).toHaveBeenCalledWith('c1', tenantId, { plan: 'Rest' })
+    const result = await controller.update(tenantId, 'c1', {})
+    expect(svc.update).toHaveBeenCalledWith('c1', tenantId, {})
     expect(result.id).toBe('c1')
   })
 
