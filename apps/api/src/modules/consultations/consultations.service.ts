@@ -184,7 +184,7 @@ export class ConsultationsService {
     }
 
     // ── Required-fields validation (protocol-required blocks) ──────────────
-    const missing = computeMissingRequiredFields({}, c.protocolUsages)
+    const missing = computeMissingRequiredFields(c.protocolUsages)
     if (missing.length > 0) {
       throw new BadRequestException({
         code: ErrorCode.CONSULTATION_MISSING_REQUIRED_FIELDS,

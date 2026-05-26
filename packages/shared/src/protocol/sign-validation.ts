@@ -3,17 +3,10 @@ import type { ConsultationProtocolUsage } from '../types/consultation.js'
 import { getCheckedStateFromModifications } from './checked-state.js'
 
 export interface MissingRequiredField {
-  /** Stable identifier — e.g. `protocol:<usageId>:<blockId>` or a SOAP field name */
+  /** Stable identifier — e.g. `protocol:<usageId>:<blockId>` */
   id: string
   label: string
   description?: string
-}
-
-type SoapContext = {
-  chiefComplaint?: string
-  assessment?: string
-  diagnoses?: string[]
-  [key: string]: unknown
 }
 
 /**
@@ -21,27 +14,13 @@ type SoapContext = {
  * whether to block the sign action (server) or surface a callout (client).
  *
  * Includes:
- *   - SOAP required fields: chiefComplaint, assessment, diagnoses (when present in ctx)
  *   - Protocol-required: every block flagged `required: true` in active usages
  *     that hasn't been completed according to the usage's modifications.
  */
 export function computeMissingRequiredFields(
-  ctx: Record<string, unknown>,
   protocolUsages: ConsultationProtocolUsage[],
 ): MissingRequiredField[] {
   const missing: MissingRequiredField[] = []
-  const soap = ctx as SoapContext
-
-  // SOAP validation (fields provided by caller when applicable)
-  if ('chiefComplaint' in ctx && !String(soap.chiefComplaint ?? '').trim()) {
-    missing.push({ id: 'chiefComplaint', label: 'Motivo de consulta' })
-  }
-  if ('assessment' in ctx && !String(soap.assessment ?? '').trim()) {
-    missing.push({ id: 'assessment', label: 'Evaluación' })
-  }
-  if ('diagnoses' in ctx && (!Array.isArray(soap.diagnoses) || soap.diagnoses.length === 0)) {
-    missing.push({ id: 'diagnoses', label: 'Diagnóstico' })
-  }
 
   // Protocol-required blocks
   for (const usage of protocolUsages) {
@@ -101,6 +80,14 @@ function blockIsCompleted(block: ProtocolBlock, checkedState: Record<string, boo
     case 'lab_order': {
       const orders = (block as unknown as { orders?: Array<{ id: string }> }).orders ?? []
       return orders.some((o) => checkedState[o.id])
+    }
+    case 'vitals': {
+      const values = block.values ?? {}
+      return Object.keys(values).length > 0
+    }
+    case 'clinical_notes': {
+      const content = block.content ?? ''
+      return content.trim().length > 0
     }
     case 'text':
     case 'alert':

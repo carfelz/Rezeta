@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix CI failures on feat/schema-reset-v2: db coverage crash + shared branch coverage
+
+### Fixed
+
+- **`packages/db/package.json`**: Added `@vitest/coverage-v8` to devDependencies — `pnpm --filter @rezeta/db test:coverage` crashed with `Failed to load url @vitest/coverage-v8` because the package was missing.
+- **`packages/shared/src/types/protocol.ts`**: Added `'vitals'` and `'clinical_notes'` to `BlockType` union; added `VitalsField` interface; added two new `ProtocolBlock` union variants (`vitals` with `fields`/`values`, `clinical_notes` with `label`/`content`).
+- **`packages/shared/src/protocol/sign-validation.ts`**: Removed dead SOAP branches (`chiefComplaint`, `assessment`, `diagnoses`) and `SoapContext` type (SOAP fields removed in schema reset); simplified `computeMissingRequiredFields` signature from `(ctx, usages)` to `(usages)`; added `case 'vitals'` and `case 'clinical_notes'` to `blockIsCompleted` switch.
+- **`apps/api/src/modules/consultations/consultations.service.ts`**: Updated `computeMissingRequiredFields({}, c.protocolUsages)` → `computeMissingRequiredFields(c.protocolUsages)` to match new signature.
+- **`packages/shared/__tests__/sign-validation.test.ts`**: Removed SOAP-specific tests (dead code); updated all calls from 2-arg to 1-arg; added tests for `vitals` and `clinical_notes` block types (complete and incomplete cases); added null-coalescing fallback branch tests to push `sign-validation.ts` branch coverage from 87% to 97.87% (threshold 95%).
+
+---
+
 ## [2026-05-26] — fix all test failures for schema-reset-v2 (Plan 01 complete)
 
 ### Fixed

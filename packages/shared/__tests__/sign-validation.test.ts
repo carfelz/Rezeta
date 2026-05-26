@@ -2,12 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { computeMissingRequiredFields } from '../src/protocol/sign-validation'
 import type { ConsultationProtocolUsage, ProtocolBlock } from '../src'
 
-const okSoap = {
-  chiefComplaint: 'Cefaleas',
-  assessment: 'Migraña',
-  diagnoses: ['Migraña'],
-}
-
 function makeUsage(
   blocks: ProtocolBlock[],
   checkedState: Record<string, boolean> = {},
@@ -40,33 +34,11 @@ function makeUsage(
   }
 }
 
-describe('computeMissingRequiredFields — SOAP rules', () => {
-  it('returns empty when all SOAP filled and no protocols', () => {
-    expect(computeMissingRequiredFields(okSoap, [])).toEqual([])
-  })
-
-  it('flags missing chiefComplaint', () => {
-    const r = computeMissingRequiredFields({ ...okSoap, chiefComplaint: '' }, [])
-    expect(r.some((m) => m.id === 'chiefComplaint')).toBe(true)
-  })
-
-  it('flags whitespace-only chiefComplaint', () => {
-    const r = computeMissingRequiredFields({ ...okSoap, chiefComplaint: '   ' }, [])
-    expect(r.some((m) => m.id === 'chiefComplaint')).toBe(true)
-  })
-
-  it('flags missing assessment', () => {
-    const r = computeMissingRequiredFields({ ...okSoap, assessment: '' }, [])
-    expect(r.some((m) => m.id === 'assessment')).toBe(true)
-  })
-
-  it('flags empty diagnoses array', () => {
-    const r = computeMissingRequiredFields({ ...okSoap, diagnoses: [] }, [])
-    expect(r.some((m) => m.id === 'diagnoses')).toBe(true)
-  })
-})
-
 describe('computeMissingRequiredFields — protocol-required blocks', () => {
+  it('returns empty when no protocols', () => {
+    expect(computeMissingRequiredFields([])).toEqual([])
+  })
+
   it('flags an unchecked required checklist', () => {
     const block = {
       id: 'chk1',
@@ -78,7 +50,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { i1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { i1: true })])
     expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
@@ -89,7 +61,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       items: [{ id: 'i1', text: 'PA' }],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { i1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { i1: true })])
     expect(r).toEqual([])
   })
 
@@ -104,7 +76,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r.some((m) => m.id === 'protocol:u1:d1')).toBe(true)
   })
 
@@ -119,7 +91,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { b1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { b1: true })])
     expect(r).toEqual([])
   })
 
@@ -129,7 +101,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       type: 'checklist' as const,
       items: [{ id: 'i1', text: 'PA' }],
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r).toEqual([])
   })
 
@@ -147,7 +119,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
         },
       ],
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
@@ -156,7 +128,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       { id: 't1', type: 'text', content: 'foo', required: true },
       { id: 'a1', type: 'alert', severity: 'info', content: 'bar', required: true },
     ] as unknown as ProtocolBlock[]
-    const r = computeMissingRequiredFields(okSoap, [makeUsage(blocks)])
+    const r = computeMissingRequiredFields([makeUsage(blocks)])
     expect(r).toEqual([])
   })
 
@@ -169,20 +141,8 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const usage = makeUsage([block])
     usage.status = 'switched'
-    const r = computeMissingRequiredFields(okSoap, [usage])
+    const r = computeMissingRequiredFields([usage])
     expect(r).toEqual([])
-  })
-
-  it('combines SOAP + protocol missing fields', () => {
-    const block = {
-      id: 'chk1',
-      type: 'checklist' as const,
-      items: [{ id: 'i1', text: 'PA' }],
-      required: true,
-    } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields({ ...okSoap, chiefComplaint: '' }, [makeUsage([block])])
-    expect(r.length).toBe(2)
-    expect(r.map((m) => m.id)).toEqual(['chiefComplaint', 'protocol:u1:chk1'])
   })
 
   it('flags required steps block when not all steps checked', () => {
@@ -196,7 +156,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { s1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { s1: true })])
     expect(r.some((m) => m.id === 'protocol:u1:stp1')).toBe(true)
   })
 
@@ -207,7 +167,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       steps: [{ id: 's1', order: 1, title: 'A' }],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { s1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { s1: true })])
     expect(r).toEqual([])
   })
 
@@ -223,7 +183,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r.some((m) => m.id === 'protocol:u1:dt1')).toBe(true)
   })
 
@@ -235,7 +195,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       rows: [{ id: 'r1', drug: 'A', dose: '1', route: 'PO', frequency: 'qd', notes: '' }],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { r1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { r1: true })])
     expect(r).toEqual([])
   })
 
@@ -256,7 +216,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r.some((m) => m.id === 'protocol:u1:img1')).toBe(true)
   })
 
@@ -276,7 +236,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { o1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { o1: true })])
     expect(r).toEqual([])
   })
 
@@ -296,7 +256,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r.some((m) => m.id === 'protocol:u1:lab1')).toBe(true)
   })
 
@@ -316,7 +276,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { o1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { o1: true })])
     expect(r).toEqual([])
   })
 
@@ -326,7 +286,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       type: 'mystery_block',
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r).toEqual([])
   })
 
@@ -345,7 +305,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block], { i1: true })])
+    const r = computeMissingRequiredFields([makeUsage([block], { i1: true })])
     expect(r).toEqual([])
   })
 
@@ -362,7 +322,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
         },
       ],
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     expect(r).toEqual([])
   })
 
@@ -373,7 +333,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       items: [{ id: 'i1', text: 'X' }],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     const entry = r.find((m) => m.id === 'protocol:u1:chk_no_title')
     expect(entry?.label).toBe('Bloque chk_no_title')
   })
@@ -389,7 +349,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
       required: true,
     } as unknown as ProtocolBlock
-    const r = computeMissingRequiredFields(okSoap, [makeUsage([block])])
+    const r = computeMissingRequiredFields([makeUsage([block])])
     const entry = r.find((m) => m.id === 'protocol:u1:d1')
     expect(entry?.label).toBe('¿Hay fiebre?')
   })
@@ -403,14 +363,14 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const usage = makeUsage([block])
     usage.status = 'completed'
-    const r = computeMissingRequiredFields(okSoap, [usage])
+    const r = computeMissingRequiredFields([usage])
     expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
   it('handles usage with null content (no blocks)', () => {
     const usage = makeUsage([])
     usage.content = null
-    const r = computeMissingRequiredFields(okSoap, [usage])
+    const r = computeMissingRequiredFields([usage])
     expect(r).toEqual([])
   })
 
@@ -423,7 +383,128 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const usage = makeUsage([block])
     usage.modifications = {}
-    const r = computeMissingRequiredFields(okSoap, [usage])
+    const r = computeMissingRequiredFields([usage])
     expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+  })
+
+  it('vitals block is incomplete when no values entered', () => {
+    const block = {
+      id: 'blk1',
+      type: 'vitals' as const,
+      fields: [],
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toContain('blk1')
+  })
+
+  it('vitals block is complete when at least one value entered', () => {
+    const block = {
+      id: 'blk1',
+      type: 'vitals' as const,
+      fields: [],
+      values: { bp: '120/80' },
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(0)
+  })
+
+  it('clinical_notes block is incomplete when content is empty', () => {
+    const block = {
+      id: 'blk2',
+      type: 'clinical_notes' as const,
+      label: 'Nota',
+      content: '',
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toContain('blk2')
+  })
+
+  it('clinical_notes block is complete when content is non-empty', () => {
+    const block = {
+      id: 'blk2',
+      type: 'clinical_notes' as const,
+      label: 'Nota',
+      content: 'Paciente refiere dolor',
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(0)
+  })
+
+  it('decision block with undefined branches defaults to empty array (incomplete)', () => {
+    const block = {
+      id: 'd2',
+      type: 'decision' as const,
+      condition: '¿Dolor?',
+      branches: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields([makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:d2')).toBe(true)
+  })
+
+  it('dosage_table with undefined rows defaults to empty array (incomplete)', () => {
+    const block = {
+      id: 'dt2',
+      type: 'dosage_table' as const,
+      columns: [],
+      rows: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields([makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:dt2')).toBe(true)
+  })
+
+  it('imaging_order with undefined orders defaults to empty array (incomplete)', () => {
+    const block = {
+      id: 'img2',
+      type: 'imaging_order' as const,
+      orders: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields([makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:img2')).toBe(true)
+  })
+
+  it('lab_order with undefined orders defaults to empty array (incomplete)', () => {
+    const block = {
+      id: 'lab2',
+      type: 'lab_order' as const,
+      orders: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const r = computeMissingRequiredFields([makeUsage([block])])
+    expect(r.some((m) => m.id === 'protocol:u1:lab2')).toBe(true)
+  })
+
+  it('vitals block with undefined values defaults to empty object (incomplete)', () => {
+    const block = {
+      id: 'blk3',
+      type: 'vitals' as const,
+      fields: [],
+      values: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toContain('blk3')
+  })
+
+  it('clinical_notes block with undefined content defaults to empty string (incomplete)', () => {
+    const block = {
+      id: 'blk4',
+      type: 'clinical_notes' as const,
+      label: 'Nota',
+      content: undefined,
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toContain('blk4')
   })
 })

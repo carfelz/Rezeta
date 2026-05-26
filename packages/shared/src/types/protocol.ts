@@ -49,6 +49,8 @@ export type BlockType =
   | 'alert'
   | 'imaging_order'
   | 'lab_order'
+  | 'vitals'
+  | 'clinical_notes'
 export type AlertSeverity = 'info' | 'warning' | 'danger' | 'success'
 export type OrderUrgency = 'routine' | 'urgent' | 'stat'
 export type LabSampleType = 'blood' | 'urine' | 'stool' | 'other'
@@ -112,6 +114,14 @@ export type ConditionalRule =
   | { kind: 'or'; rules: ConditionalRule[] }
   | { kind: 'not'; rule: ConditionalRule }
 
+export interface VitalsField {
+  id: string
+  label: string
+  unit?: string
+  input_type: 'text' | 'number' | 'computed'
+  formula?: string
+}
+
 interface BlockBase {
   id: string
   conditional_rule?: ConditionalRule
@@ -134,6 +144,17 @@ export type ProtocolBlock =
   | (BlockBase & { type: 'alert'; severity: AlertSeverity; title?: string; content: string })
   | (BlockBase & { type: 'imaging_order'; title?: string; orders: ImagingOrderItem[] })
   | (BlockBase & { type: 'lab_order'; title?: string; orders: LabOrderItem[] })
+  | (BlockBase & {
+      type: 'vitals'
+      fields: VitalsField[]
+      values?: Record<string, string | number>
+    })
+  | (BlockBase & {
+      type: 'clinical_notes'
+      label: string
+      content: string
+      required?: boolean
+    })
 
 export interface ProtocolContent {
   version: string
