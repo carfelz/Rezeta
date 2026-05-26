@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — feat(web): frontend redesign plan 04 — vitals blocks, category chips, 3-zone consultation layout
+
+### Added
+
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`: new reusable component for rendering a grid of vitals fields (text/number/computed) in protocol editor and viewer.
+- `apps/web/src/components/protocols/blocks/ClinicalNotesBlock.tsx`: new reusable textarea component for clinical note blocks.
+- `apps/web/src/pages/ProtocolEditor/__tests__/block-factory.test.ts`: tests for `vitals` and `clinical_notes` in `makeBlock` and `PALETTE_ITEMS`.
+- `apps/web/src/pages/Consultation/ProtocolPanel.tsx`: new component encapsulating all protocol usage logic (canvas/SOAP view, protocol picker, modals) for the 3-zone consultation layout.
+- `apps/web/src/pages/Consultation/OrdersRail.tsx`: new right-rail component composing patient alerts, previous consultations, and the full orders queue panel (prescriptions, imaging, labs).
+
+### Changed
+
+- `apps/web/src/pages/ProtocolEditor/block-factory.ts`: added `vitals` and `clinical_notes` entries to `PALETTE_ITEMS` and `makeBlock()`.
+- `apps/web/src/components/protocols/BlockRenderer.tsx`: added `VitalsBlockType` and `ClinicalNotesBlockType` interfaces to the `ProtocolBlock` union; added `vitals` and `clinical_notes` switch cases rendering the new block components.
+- `apps/web/src/components/protocols/strings.ts`: added `vitals` and `clinicalNotes` to `blockTypeStrings`.
+- `apps/web/src/pages/Protocols/index.tsx`: category filter chips now show a color dot using `style={{ backgroundColor: cat.color }}`.
+- `apps/web/src/pages/NewConsultation.tsx`: removed `ConsultationGate` (protocol picker step); page now shows a simple "ready to start" state and creates consultation directly with `{ patientId, locationId }`.
+- `apps/web/src/pages/Consultation/index.tsx`: replaced old grid layout with `flex flex-col h-screen` 3-zone layout — fixed header zone, scrollable main zone (`ProtocolPanel`), and fixed right rail (`OrdersRail`).
+- `apps/web/src/pages/Consultation/strings.ts`: added `creatingButton`, `readyTitle`, `readyDescription` strings; renamed `openEmptyButton` to "Iniciar consulta".
+
 ## [2026-05-26] — fix(api): add tenantId to sign transaction updateMany, add amended/rollback tests
 
 ### Fixed
