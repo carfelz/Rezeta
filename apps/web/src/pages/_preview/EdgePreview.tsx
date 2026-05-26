@@ -29,7 +29,6 @@ const usage: ConsultationProtocolUsage = {
   notes: null,
   appliedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: {},
   modifications: {},
   content: { version: '1.0', blocks: [] },
 }

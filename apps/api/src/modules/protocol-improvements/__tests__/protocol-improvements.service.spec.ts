@@ -112,6 +112,14 @@ describe('ProtocolImprovementsService', () => {
         expect.objectContaining({ data: expect.objectContaining({ versionNumber: 3 }) }),
       )
     })
+
+    it('uses version 1 when max version is null (first version)', async () => {
+      mockPrisma.protocolVersion.aggregate.mockResolvedValue({ _max: { versionNumber: null } })
+      await service.apply('proto1', 'sug1', 't1', 'u1')
+      expect(mockPrisma.protocolVersion.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ versionNumber: 1 }) }),
+      )
+    })
   })
 
   // ── createVariant ──────────────────────────────────────────────────────────
@@ -119,7 +127,7 @@ describe('ProtocolImprovementsService', () => {
   describe('createVariant', () => {
     beforeEach(() => {
       mockRepo.findById.mockResolvedValue(suggestion)
-      mockPrisma.protocol.findUnique.mockResolvedValue({ title: 'Anaphylaxis', typeId: 'type1' })
+      mockPrisma.protocol.findUnique.mockResolvedValue({ title: 'Anaphylaxis', categoryId: 'cat1' })
       mockPrisma.protocolVersion.findUnique.mockResolvedValue({ content: { blocks: [] } })
       mockTx.protocol.create.mockResolvedValue({ id: 'variant1' })
       mockTx.protocolVersion.create.mockResolvedValue({ id: 'ver-v1' })
@@ -135,6 +143,22 @@ describe('ProtocolImprovementsService', () => {
           data: expect.objectContaining({ title: 'Anaphylaxis - Variante' }),
         }),
       )
+    })
+
+    it('includes categoryId in variant when originalProtocol has categoryId', async () => {
+      await service.createVariant('proto1', 'sug1', 't1', 'u1')
+      expect(mockTx.protocol.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ categoryId: 'cat1' }),
+        }),
+      )
+    })
+
+    it('omits categoryId when originalProtocol has undefined categoryId', async () => {
+      mockPrisma.protocol.findUnique.mockResolvedValue({ title: 'Anaphylaxis', categoryId: undefined })
+      await service.createVariant('proto1', 'sug1', 't1', 'u1')
+      const call = mockTx.protocol.create.mock.calls[0]?.[0] as { data: Record<string, unknown> }
+      expect(call?.data).not.toHaveProperty('categoryId')
     })
 
     it('skips variant creation when originalProtocol is null', async () => {

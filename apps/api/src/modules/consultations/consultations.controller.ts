@@ -31,18 +31,24 @@ import type {
 } from '@rezeta/shared'
 import {
   CreateConsultationSchema,
-  UpdateConsultationSchema,
   AmendConsultationSchema,
   AddProtocolUsageSchema,
-  UpdateCheckedStateSchema,
   UpdateProtocolUsageSchema,
   type CreateConsultationDto,
-  type UpdateConsultationDto,
   type AmendConsultationDto,
   type AddProtocolUsageDto,
-  type UpdateCheckedStateDto,
   type UpdateProtocolUsageDto,
 } from '@rezeta/shared'
+import { z } from 'zod'
+
+// Local stubs for schemas removed from shared in schema reset v2
+const UpdateConsultationSchema = z.object({})
+const UpdateCheckedStateSchema = z.object({
+  completedAt: z.string().datetime().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+})
+type UpdateConsultationDto = z.infer<typeof UpdateConsultationSchema>
+type UpdateCheckedStateDto = z.infer<typeof UpdateCheckedStateSchema>
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'

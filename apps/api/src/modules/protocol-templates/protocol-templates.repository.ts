@@ -2,36 +2,20 @@ import { Injectable, Inject } from '@nestjs/common'
 import type { ProtocolTemplate } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 
-type TemplateWithTypes = ProtocolTemplate & {
-  protocolTypes: { id: string }[]
-}
-
 @Injectable()
 export class ProtocolTemplatesRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async findAllWithLockInfo(tenantId: string): Promise<TemplateWithTypes[]> {
+  async findAllWithLockInfo(tenantId: string): Promise<ProtocolTemplate[]> {
     return this.prisma.protocolTemplate.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
-      include: {
-        protocolTypes: {
-          where: { deletedAt: null },
-          select: { id: true },
-        },
-      },
     })
   }
 
-  async findById(id: string, tenantId: string): Promise<TemplateWithTypes | null> {
+  async findById(id: string, tenantId: string): Promise<ProtocolTemplate | null> {
     return this.prisma.protocolTemplate.findFirst({
       where: { id, tenantId, deletedAt: null },
-      include: {
-        protocolTypes: {
-          where: { deletedAt: null },
-          select: { id: true },
-        },
-      },
     })
   }
 
@@ -81,19 +65,12 @@ export class ProtocolTemplatesRepository {
     })
   }
 
-  // Legacy: kept for backward compat if anything calls isLocked / getBlockingTypeIds directly
-  async isLocked(id: string, tenantId: string): Promise<boolean> {
-    const count = await this.prisma.protocolType.count({
-      where: { templateId: id, tenantId, deletedAt: null },
-    })
-    return count > 0
+  // ProtocolType removed — templates are no longer locked by types (Plan 02 will add category locking)
+  isLocked(_id: string, _tenantId: string): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
-  async getBlockingTypeIds(id: string, tenantId: string): Promise<string[]> {
-    const types = await this.prisma.protocolType.findMany({
-      where: { templateId: id, tenantId, deletedAt: null },
-      select: { id: true },
-    })
-    return types.map((t) => t.id)
+  getBlockingTypeIds(_id: string, _tenantId: string): Promise<string[]> {
+    return Promise.resolve([])
   }
 }

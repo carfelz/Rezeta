@@ -23,8 +23,14 @@ const usage: ConsultationProtocolUsage = {
   notes: null,
   appliedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: { motivo: true, vitales: true, subjetivo: true, examen: true },
-  modifications: {},
+  modifications: {
+    checklist_items: [
+      { item_id: 'motivo', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'vitales', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'subjetivo', checked: true, timestamp: new Date().toISOString() },
+      { item_id: 'examen', checked: true, timestamp: new Date().toISOString() },
+    ],
+  },
   content: {
     version: '1.0',
     blocks: [

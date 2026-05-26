@@ -72,9 +72,9 @@ function ProtocolRow({
       <div className="flex-1 min-w-0">
         <Row gap={2}>
           <span className="text-[13.5px] font-semibold text-n-800 truncate">{protocol.title}</span>
-          {protocol.typeName && (
+          {protocol.categoryName && (
             <Caption tone="muted" size="xs" className="font-mono truncate hidden sm:block">
-              {protocol.typeName}
+              {protocol.categoryName}
             </Caption>
           )}
         </Row>
@@ -144,7 +144,7 @@ export function Protocols(): JSX.Element {
 
   const filters: ProtocolListFilters = {
     ...(search.trim() ? { search: search.trim() } : {}),
-    ...(typeId ? { typeId } : {}),
+    ...(typeId ? { categoryId: typeId } : {}),
     ...(favoritesOnly ? { favoritesOnly: true } : {}),
     sort,
   }

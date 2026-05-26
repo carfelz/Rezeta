@@ -10,15 +10,13 @@ function makeRxRow(overrides: Record<string, unknown> = {}) {
     id: 'rx1',
     tenantId: 't1',
     patientId: 'p1',
-    userId: 'u1',
+    doctorId: 'u1',
     consultationId: 'c1',
     groupTitle: null,
     groupOrder: 1,
-    status: 'draft',
-    items: [],
+    status: 'queued',
     prescriptionItems: [],
     pdfUrl: null,
-    notes: null,
     signedAt: null,
     createdAt: now,
     updatedAt: now,
@@ -33,9 +31,24 @@ function makeImagingRow(overrides: Record<string, unknown> = {}) {
     tenantId: 't1',
     consultationId: 'c1',
     patientId: 'p1',
-    userId: 'u1',
+    doctorId: 'u1',
     groupTitle: null,
     groupOrder: 1,
+    status: 'queued',
+    signedAt: null,
+    pdfUrl: null,
+    items: [],
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    ...overrides,
+  }
+}
+
+function makeImagingItem(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'iitem1',
+    imagingOrderId: 'img1',
     studyType: 'Rx Tórax',
     indication: 'Disnea',
     urgency: 'routine',
@@ -43,12 +56,7 @@ function makeImagingRow(overrides: Record<string, unknown> = {}) {
     fastingRequired: false,
     specialInstructions: null,
     source: null,
-    status: 'draft',
-    signedAt: null,
-    pdfUrl: null,
     createdAt: now,
-    updatedAt: now,
-    deletedAt: null,
     ...overrides,
   }
 }
@@ -59,23 +67,32 @@ function makeLabRow(overrides: Record<string, unknown> = {}) {
     tenantId: 't1',
     consultationId: 'c1',
     patientId: 'p1',
-    userId: 'u1',
+    doctorId: 'u1',
     groupTitle: null,
     groupOrder: 1,
+    status: 'queued',
+    signedAt: null,
+    pdfUrl: null,
+    items: [],
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    ...overrides,
+  }
+}
+
+function makeLabItem(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'litem1',
+    labOrderId: 'lab1',
     testName: 'Hemograma',
-    testCode: 'CBC',
     indication: 'Anemia',
     urgency: 'routine',
     fastingRequired: false,
     sampleType: 'blood',
     specialInstructions: null,
     source: null,
-    status: 'draft',
-    signedAt: null,
-    pdfUrl: null,
     createdAt: now,
-    updatedAt: now,
-    deletedAt: null,
     ...overrides,
   }
 }
@@ -179,33 +196,37 @@ describe('OrdersRepository', () => {
   // ── Imaging Orders ─────────────────────────────────────────────────────────
 
   describe('createImagingOrder', () => {
-    it('creates imaging orders for each order in dto', async () => {
-      mockPrisma.imagingOrder.create.mockResolvedValue(makeImagingRow())
+    it('creates imaging orders for each item in dto', async () => {
+      mockPrisma.imagingOrder.create.mockResolvedValue(
+        makeImagingRow({ items: [makeImagingItem()] }),
+      )
       const dto = {
         groupTitle: null,
         groupOrder: 1,
-        orders: [
+        items: [
           {
-            study_type: 'Rx Tórax',
+            studyType: 'Rx Tórax',
             indication: 'Disnea',
             urgency: 'routine',
             contrast: false,
-            fasting_required: false,
+            fastingRequired: false,
           },
         ],
       }
       const result = await repo.createImagingOrder('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result).toHaveLength(1)
-      expect(result[0].studyType).toBe('Rx Tórax')
+      expect(result[0].items[0].studyType).toBe('Rx Tórax')
     })
   })
 
   describe('findImagingOrderById', () => {
     it('returns mapped imaging order when found', async () => {
-      mockPrisma.imagingOrder.findFirst.mockResolvedValue(makeImagingRow())
+      mockPrisma.imagingOrder.findFirst.mockResolvedValue(
+        makeImagingRow({ items: [makeImagingItem()] }),
+      )
       const result = await repo.findImagingOrderById('img1', 't1')
       expect(result?.id).toBe('img1')
-      expect(result?.urgency).toBe('routine')
+      expect(result?.items[0].urgency).toBe('routine')
     })
 
     it('returns null when not found', async () => {
@@ -225,34 +246,34 @@ describe('OrdersRepository', () => {
   // ── Lab Orders ─────────────────────────────────────────────────────────────
 
   describe('createLabOrder', () => {
-    it('creates lab orders for each order in dto', async () => {
-      mockPrisma.labOrder.create.mockResolvedValue(makeLabRow())
+    it('creates lab orders for each item in dto', async () => {
+      mockPrisma.labOrder.create.mockResolvedValue(makeLabRow({ items: [makeLabItem()] }))
       const dto = {
         groupTitle: null,
         groupOrder: 1,
-        orders: [
+        items: [
           {
-            test_name: 'Hemograma',
-            test_code: 'CBC',
+            testName: 'Hemograma',
+            testCode: 'CBC',
             indication: 'Anemia',
             urgency: 'routine',
-            fasting_required: false,
-            sample_type: 'blood',
+            fastingRequired: false,
+            sampleType: 'blood',
           },
         ],
       }
       const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result).toHaveLength(1)
-      expect(result[0].testName).toBe('Hemograma')
+      expect(result[0].items[0].testName).toBe('Hemograma')
     })
   })
 
   describe('findLabOrderById', () => {
     it('returns mapped lab order when found', async () => {
-      mockPrisma.labOrder.findFirst.mockResolvedValue(makeLabRow())
+      mockPrisma.labOrder.findFirst.mockResolvedValue(makeLabRow({ items: [makeLabItem()] }))
       const result = await repo.findLabOrderById('lab1', 't1')
       expect(result?.id).toBe('lab1')
-      expect(result?.sampleType).toBe('blood')
+      expect(result?.items[0].sampleType).toBe('blood')
     })
 
     it('returns null when not found', async () => {
@@ -263,10 +284,10 @@ describe('OrdersRepository', () => {
 
   describe('listLabOrdersByConsultation', () => {
     it('returns list of mapped lab orders', async () => {
-      mockPrisma.labOrder.findMany.mockResolvedValue([makeLabRow()])
+      mockPrisma.labOrder.findMany.mockResolvedValue([makeLabRow({ items: [makeLabItem()] })])
       const result = await repo.listLabOrdersByConsultation('c1', 't1')
       expect(result).toHaveLength(1)
-      expect(result[0].testCode).toBe('CBC')
+      expect(result[0].items[0].testName).toBe('Hemograma')
     })
   })
 
@@ -282,18 +303,12 @@ describe('OrdersRepository', () => {
 
     it('maps null optional fields for imaging orders', async () => {
       mockPrisma.imagingOrder.findFirst.mockResolvedValue(
-        makeImagingRow({ signedAt: null, pdfUrl: null, groupTitle: null, source: null }),
+        makeImagingRow({ signedAt: null, pdfUrl: null, groupTitle: null }),
       )
       const result = await repo.findImagingOrderById('img1', 't1')
       expect(result?.signedAt).toBeNull()
       expect(result?.pdfUrl).toBeNull()
       expect(result?.groupTitle).toBeNull()
-    })
-
-    it('maps null testCode for lab orders', async () => {
-      mockPrisma.labOrder.findFirst.mockResolvedValue(makeLabRow({ testCode: null }))
-      const result = await repo.findLabOrderById('lab1', 't1')
-      expect(result?.testCode).toBeNull()
     })
 
     it('maps non-null deletedAt for imaging orders', async () => {
@@ -314,23 +329,24 @@ describe('OrdersRepository', () => {
       expect(result?.deletedAt).toBe(deleted.toISOString())
     })
 
-    it('createLabOrder uses null when test_code is undefined', async () => {
-      mockPrisma.labOrder.create.mockResolvedValue(makeLabRow({ testCode: null }))
+    it('createLabOrder maps all required item fields', async () => {
+      mockPrisma.labOrder.create.mockResolvedValue(makeLabRow({ items: [makeLabItem()] }))
       const dto = {
         groupTitle: null,
         groupOrder: 1,
-        orders: [
+        items: [
           {
-            test_name: 'Hemograma',
+            testName: 'Hemograma',
             indication: 'Anemia',
             urgency: 'routine',
-            fasting_required: false,
-            sample_type: 'blood',
+            fastingRequired: false,
+            sampleType: 'blood',
           },
         ],
       }
       const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
-      expect(result[0].testCode).toBeNull()
+      expect(result[0].items[0].testName).toBe('Hemograma')
+      expect(result[0].items[0].sampleType).toBe('blood')
     })
   })
 })

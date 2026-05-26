@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common'
+import { NotFoundException, ConflictException } from '@nestjs/common'
 import { ProtocolTypesService } from '../protocol-types.service.js'
+
+// ProtocolType has been replaced by ProtocolCategory (schema reset v2).
+// The service is retained as a stub for NestJS module compatibility.
+// Tests reflect the simplified service behavior: no name-conflict checks on
+// update, no lock checks on delete (ProtocolCategory migration handles those).
 
 const TENANT_ID = 'tenant-1'
 const OTHER_TENANT_ID = 'tenant-other'
@@ -37,8 +42,6 @@ describe('ProtocolTypesService', () => {
     vi.clearAllMocks()
     service = new ProtocolTypesService(mockRepo as never)
   })
-
-  // ── Auth (guard-level, covered by controller spec) ────────────────────────
 
   // ── getTypes ───────────────────────────────────────────────────────────────
 
@@ -111,9 +114,8 @@ describe('ProtocolTypesService', () => {
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    it('creates a type and returns dto', async () => {
+    it('creates a type and returns dto when template belongs to tenant', async () => {
       mockRepo.templateBelongsToTenant.mockResolvedValue(true)
-      mockRepo.existsByName.mockResolvedValue(false)
       const row = makeTypeRow({ name: 'New Type' })
       mockRepo.create.mockResolvedValue(row)
 
@@ -126,32 +128,21 @@ describe('ProtocolTypesService', () => {
       expect(result.isSeeded).toBe(false)
     })
 
-    it('throws 400 TEMPLATE_NOT_FOUND_FOR_TYPE for cross-tenant templateId', async () => {
+    it('throws TEMPLATE_NOT_FOUND_FOR_TYPE (ConflictException) for cross-tenant templateId', async () => {
       mockRepo.templateBelongsToTenant.mockResolvedValue(false)
       await expect(
         service.create(TENANT_ID, { name: 'Bad Type', templateId: 'other-tenant-tmpl' }),
-      ).rejects.toThrow(BadRequestException)
+      ).rejects.toThrow(ConflictException)
       await expect(
         service.create(TENANT_ID, { name: 'Bad Type', templateId: 'other-tenant-tmpl' }),
       ).rejects.toMatchObject({ response: { code: 'TEMPLATE_NOT_FOUND_FOR_TYPE' } })
     })
 
-    it('throws 409 TYPE_NAME_CONFLICT for duplicate name within tenant', async () => {
-      mockRepo.templateBelongsToTenant.mockResolvedValue(true)
-      mockRepo.existsByName.mockResolvedValue(true)
-      await expect(
-        service.create(TENANT_ID, { name: 'Duplicate', templateId: TEMPLATE_ID }),
-      ).rejects.toThrow(ConflictException)
-      await expect(
-        service.create(TENANT_ID, { name: 'Duplicate', templateId: TEMPLATE_ID }),
-      ).rejects.toMatchObject({ response: { code: 'TYPE_NAME_CONFLICT' } })
-    })
-
-    it('throws 400 for missing required fields (no templateId)', async () => {
+    it('throws for missing templateId (template ownership check fails)', async () => {
       mockRepo.templateBelongsToTenant.mockResolvedValue(false)
       await expect(
         service.create(TENANT_ID, { name: 'No Template', templateId: '' }),
-      ).rejects.toThrow(BadRequestException)
+      ).rejects.toThrow(ConflictException)
     })
   })
 
@@ -160,24 +151,11 @@ describe('ProtocolTypesService', () => {
   describe('update', () => {
     it('renames the type', async () => {
       mockRepo.findById.mockResolvedValue(makeTypeRow({ name: 'Old Name' }))
-      mockRepo.existsByName.mockResolvedValue(false)
       mockRepo.update.mockResolvedValue(makeTypeRow({ name: 'New Name' }))
 
       const result = await service.update(TYPE_ID, TENANT_ID, { name: 'New Name' })
       expect(result.name).toBe('New Name')
       expect(result.templateId).toBe(TEMPLATE_ID)
-    })
-
-    it('throws 409 TYPE_NAME_CONFLICT if name already taken', async () => {
-      mockRepo.findById.mockResolvedValue(makeTypeRow())
-      mockRepo.existsByName.mockResolvedValue(true)
-
-      await expect(service.update(TYPE_ID, TENANT_ID, { name: 'Taken' })).rejects.toThrow(
-        ConflictException,
-      )
-      await expect(service.update(TYPE_ID, TENANT_ID, { name: 'Taken' })).rejects.toMatchObject({
-        response: { code: 'TYPE_NAME_CONFLICT' },
-      })
     })
 
     it('throws 404 for cross-tenant type', async () => {
@@ -187,12 +165,11 @@ describe('ProtocolTypesService', () => {
       )
     })
 
-    it('passes excludeId to existsByName to allow same-name update without conflict', async () => {
-      mockRepo.findById.mockResolvedValue(makeTypeRow())
-      mockRepo.existsByName.mockResolvedValue(false)
-      mockRepo.update.mockResolvedValue(makeTypeRow())
-      await service.update(TYPE_ID, TENANT_ID, { name: 'Same Name' })
-      expect(mockRepo.existsByName).toHaveBeenCalledWith('Same Name', TENANT_ID, TYPE_ID)
+    it('throws 404 when type not found', async () => {
+      mockRepo.findById.mockResolvedValue(null)
+      await expect(service.update('nonexistent', TENANT_ID, { name: 'X' })).rejects.toThrow(
+        NotFoundException,
+      )
     })
   })
 
@@ -200,21 +177,16 @@ describe('ProtocolTypesService', () => {
 
   describe('delete', () => {
     it('soft-deletes the type', async () => {
-      mockRepo.findById.mockResolvedValue(makeTypeRow({ _count: { protocols: 0 } }))
+      mockRepo.findById.mockResolvedValue(makeTypeRow())
       mockRepo.softDelete.mockResolvedValue(undefined)
 
       await service.delete(TYPE_ID, TENANT_ID)
       expect(mockRepo.softDelete).toHaveBeenCalledWith(TYPE_ID, TENANT_ID)
     })
 
-    it('throws 409 TYPE_LOCKED when protocols reference the type', async () => {
-      mockRepo.findById.mockResolvedValue(makeTypeRow({ _count: { protocols: 1 } }))
-
-      await expect(service.delete(TYPE_ID, TENANT_ID)).rejects.toThrow(ConflictException)
-      await expect(service.delete(TYPE_ID, TENANT_ID)).rejects.toMatchObject({
-        response: { code: 'TYPE_LOCKED' },
-      })
-      expect(mockRepo.softDelete).not.toHaveBeenCalled()
+    it('throws 404 when type not found', async () => {
+      mockRepo.findById.mockResolvedValue(null)
+      await expect(service.delete('nonexistent', TENANT_ID)).rejects.toThrow(NotFoundException)
     })
 
     it('throws 404 for cross-tenant type', async () => {

@@ -8,21 +8,12 @@ function makeConsultationRow(overrides: Record<string, unknown> = {}) {
     id: 'c1',
     tenantId: 't1',
     patientId: 'p1',
-    userId: 'u1',
+    doctorId: 'u1',
     locationId: 'loc1',
     appointmentId: null,
-    status: 'draft',
-    chiefComplaint: null,
-    subjective: null,
-    objective: null,
-    assessment: null,
-    plan: null,
-    vitals: null,
-    diagnoses: [],
-    consultedAt: now,
+    status: 'open',
+    startedAt: now,
     signedAt: null,
-    signedBy: null,
-    contentHash: null,
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
@@ -49,11 +40,10 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
     triggerBlockId: null,
     depth: 0,
     status: 'in_progress',
-    checkedState: {},
     completedAt: null,
     notes: null,
     appliedAt: now,
-    protocol: { title: 'Anaphylaxis', type: { name: 'Emergencia' } },
+    protocol: { title: 'Anaphylaxis' },
     protocolVersion: { versionNumber: 1 },
     childUsages: [],
     ...overrides,
@@ -119,8 +109,8 @@ describe('ConsultationsRepository', () => {
       const to = new Date('2026-01-31')
       await repo.findMany({ tenantId: 't1', userId: 'u1', from, to })
       const where = mockPrisma.consultation.findMany.mock.calls[0][0].where
-      expect(where.consultedAt.gte).toBe(from)
-      expect(where.consultedAt.lte).toBe(to)
+      expect(where.startedAt.gte).toBe(from)
+      expect(where.startedAt.lte).toBe(to)
     })
 
     it('adds only from filter when to is omitted', async () => {
@@ -128,8 +118,8 @@ describe('ConsultationsRepository', () => {
       const from = new Date('2026-01-01')
       await repo.findMany({ tenantId: 't1', userId: 'u1', from })
       const where = mockPrisma.consultation.findMany.mock.calls[0][0].where
-      expect(where.consultedAt.gte).toBe(from)
-      expect(where.consultedAt.lte).toBeUndefined()
+      expect(where.startedAt.gte).toBe(from)
+      expect(where.startedAt.lte).toBeUndefined()
     })
 
     it('adds only to filter when from is omitted', async () => {
@@ -137,7 +127,7 @@ describe('ConsultationsRepository', () => {
       const to = new Date('2026-01-31')
       await repo.findMany({ tenantId: 't1', userId: 'u1', to })
       const where = mockPrisma.consultation.findMany.mock.calls[0][0].where
-      expect(where.consultedAt.lte).toBe(to)
+      expect(where.startedAt.lte).toBe(to)
     })
 
     it('maps protocol usages in result', async () => {
@@ -146,7 +136,7 @@ describe('ConsultationsRepository', () => {
       const result = await repo.findMany({ tenantId: 't1', userId: 'u1' })
       expect(result[0].protocolUsages).toHaveLength(1)
       expect(result[0].protocolUsages[0].protocolTitle).toBe('Anaphylaxis')
-      expect(result[0].protocolUsages[0].protocolTypeName).toBe('Emergencia')
+      expect(result[0].protocolUsages[0].protocolTypeName).toBeNull()
     })
   })
 
@@ -157,7 +147,7 @@ describe('ConsultationsRepository', () => {
       mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow())
       const result = await repo.findById('c1', 't1')
       expect(result?.id).toBe('c1')
-      expect(result?.consultedAt).toBe(now.toISOString())
+      expect(result?.startedAt).toBe(now.toISOString())
     })
 
     it('returns null when not found', async () => {
@@ -173,30 +163,19 @@ describe('ConsultationsRepository', () => {
       mockPrisma.consultation.create.mockResolvedValue(makeConsultationRow())
       const result = await repo.create('t1', 'u1', { patientId: 'p1', locationId: 'loc1' } as never)
       expect(result.id).toBe('c1')
-      expect(result.status).toBe('draft')
+      expect(result.status).toBe('open')
     })
 
-    it('includes optional fields when provided', async () => {
-      mockPrisma.consultation.create.mockResolvedValue(
-        makeConsultationRow({ chiefComplaint: 'Fever' }),
-      )
+    it('includes optional appointmentId when provided', async () => {
+      mockPrisma.consultation.create.mockResolvedValue(makeConsultationRow())
       await repo.create('t1', 'u1', {
         patientId: 'p1',
         locationId: 'loc1',
         appointmentId: 'apt1',
-        chiefComplaint: 'Fever',
-        subjective: 'S',
-        objective: 'O',
-        assessment: 'A',
-        plan: 'P',
-        vitals: { temp: 38 },
-        diagnoses: ['fever'],
       } as never)
       const data = mockPrisma.consultation.create.mock.calls[0][0].data
       expect(data.appointmentId).toBe('apt1')
-      expect(data.chiefComplaint).toBe('Fever')
-      expect(data.subjective).toBe('S')
-      expect(data.status).toBe('draft')
+      expect(data.status).toBe('open')
     })
   })
 
@@ -204,10 +183,8 @@ describe('ConsultationsRepository', () => {
 
   describe('update', () => {
     it('updates consultation and returns mapped result', async () => {
-      mockPrisma.consultation.update.mockResolvedValue(
-        makeConsultationRow({ plan: 'Updated plan' }),
-      )
-      const result = await repo.update('c1', 't1', { plan: 'Updated plan' } as never)
+      mockPrisma.consultation.findFirstOrThrow.mockResolvedValue(makeConsultationRow())
+      const result = await repo.update('c1', 't1', {} as never)
       expect(result.id).toBe('c1')
     })
   })
@@ -215,16 +192,15 @@ describe('ConsultationsRepository', () => {
   // ── sign ───────────────────────────────────────────────────────────────────
 
   describe('sign', () => {
-    it('signs consultation and sets contentHash', async () => {
+    it('signs consultation and sets status to signed', async () => {
       mockPrisma.consultation.update.mockResolvedValue(
-        makeConsultationRow({ status: 'signed', signedAt: now, signedBy: 'u1' }),
+        makeConsultationRow({ status: 'signed', signedAt: now }),
       )
-      const result = await repo.sign('c1', 't1', 'u1', 'sha256hash')
+      const result = await repo.sign('c1', 't1', 'u1')
       expect(result.id).toBe('c1')
       const data = mockPrisma.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
-      expect(data.contentHash).toBe('sha256hash')
-      expect(data.signedBy).toBe('u1')
+      expect(data.signedAt).toBeInstanceOf(Date)
     })
   })
 
@@ -249,25 +225,16 @@ describe('ConsultationsRepository', () => {
       expect(data.amendmentNumber).toBe(4)
     })
 
-    it('captures all content fields that are defined', async () => {
+    it('stores amendment_content in content field', async () => {
       mockPrisma.consultationAmendment.findFirst.mockResolvedValue(null)
       mockPrisma.consultationAmendment.create.mockResolvedValue({})
       mockPrisma.consultation.findFirstOrThrow.mockResolvedValue(makeConsultationRow())
       await repo.createAmendment('c1', 't1', 'u1', {
         reason: 'All fields',
-        chiefComplaint: 'CC',
-        subjective: 'S',
-        objective: 'O',
-        assessment: 'A',
-        plan: 'P',
-        vitals: { bp: '120/80' },
-        diagnoses: ['Dx1'],
+        amendment_content: { note: 'correction', diagnoses: ['Dx1'] },
       } as never)
       const content = mockPrisma.consultationAmendment.create.mock.calls[0][0].data.content
-      expect(content.chiefComplaint).toBe('CC')
-      expect(content.subjective).toBe('S')
-      expect(content.plan).toBe('P')
-      expect(content.diagnoses).toEqual(['Dx1'])
+      expect(content.amendment_content).toEqual({ note: 'correction', diagnoses: ['Dx1'] })
     })
 
     it('returns mapped ConsultationWithDetails', async () => {
@@ -380,39 +347,28 @@ describe('ConsultationsRepository', () => {
       const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
       expect(data.completedAt).toBeNull()
     })
-
-    it('updates checkedState when provided', async () => {
-      mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
-      await repo.updateProtocolUsage('pu1', 't1', {
-        checkedState: { itm1: true },
-      } as never)
-      const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
-      expect(data.checkedState).toEqual({ itm1: true })
-    })
   })
 
   // ── updateCheckedState ─────────────────────────────────────────────────────
 
   describe('updateCheckedState', () => {
-    it('updates checkedState and returns mapped result', async () => {
+    it('updates completedAt and returns mapped result', async () => {
       mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
-      const result = await repo.updateCheckedState('pu1', 't1', { itm1: true }, null, null)
+      const result = await repo.updateCheckedState('pu1', 't1', null, null)
       expect(result.id).toBe('pu1')
-      const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
-      expect(data.checkedState).toEqual({ itm1: true })
     })
 
     it('includes completedAt when provided', async () => {
       mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
       const completedAt = new Date('2026-01-01')
-      await repo.updateCheckedState('pu1', 't1', {}, completedAt, undefined)
+      await repo.updateCheckedState('pu1', 't1', completedAt, undefined)
       const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
       expect(data.completedAt).toBe(completedAt)
     })
 
     it('omits completedAt when undefined', async () => {
       mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
-      await repo.updateCheckedState('pu1', 't1', {}, undefined, undefined)
+      await repo.updateCheckedState('pu1', 't1', undefined, undefined)
       const data = mockPrisma.protocolUsage.update.mock.calls[0][0].data
       expect(data.completedAt).toBeUndefined()
     })
@@ -467,11 +423,10 @@ describe('ConsultationsRepository', () => {
   describe('field mapping', () => {
     it('maps signedAt to ISO string', async () => {
       mockPrisma.consultation.findFirst.mockResolvedValue(
-        makeConsultationRow({ signedAt: now, signedBy: 'u1', status: 'signed' }),
+        makeConsultationRow({ signedAt: now, status: 'signed' }),
       )
       const result = await repo.findById('c1', 't1')
       expect(result?.signedAt).toBe(now.toISOString())
-      expect(result?.signedByUserId).toBe('u1')
     })
 
     it('maps null doctor fullName to empty string', async () => {

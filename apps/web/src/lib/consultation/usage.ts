@@ -18,3 +18,16 @@ function walk(blocks: ProtocolBlock[], out: string[]): void {
     else if (block.type === 'steps') for (const st of block.steps) out.push(st.id)
   }
 }
+
+/**
+ * Derives a { [itemId]: boolean } checked-state map from the ordered
+ * checklist_items events stored in a usage's modifications. The last event
+ * for each item_id wins (allows toggling).
+ */
+export function deriveCheckedState(usage: ConsultationProtocolUsage): Record<string, boolean> {
+  const result: Record<string, boolean> = {}
+  for (const ev of usage.modifications?.checklist_items ?? []) {
+    result[ev.item_id] = ev.checked
+  }
+  return result
+}

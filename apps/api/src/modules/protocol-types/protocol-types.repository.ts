@@ -1,98 +1,62 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { ProtocolType } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 
-export type TypeWithDetails = ProtocolType & {
+// ProtocolType has been replaced by ProtocolCategory.
+// This repository is retained as a stub for NestJS module compatibility.
+// Full replacement will be done in the ProtocolCategory migration (Plan 02).
+
+export type TypeWithDetails = {
+  id: string
+  tenantId: string
+  templateId: string
   template: { id: string; name: string }
+  name: string
+  isSeeded: boolean
+  isLocked: boolean
   _count: { protocols: number }
+  createdAt: Date
+  updatedAt: Date
 }
 
 @Injectable()
 export class ProtocolTypesRepository {
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private _prisma: PrismaService) {}
 
-  async findAll(tenantId: string): Promise<TypeWithDetails[]> {
-    return this.prisma.protocolType.findMany({
-      where: { tenantId, deletedAt: null },
-      orderBy: { name: 'asc' },
-      include: {
-        template: { select: { id: true, name: true } },
-        _count: { select: { protocols: { where: { deletedAt: null } } } },
-      },
-    }) as Promise<TypeWithDetails[]>
+  findAll(_tenantId: string): Promise<TypeWithDetails[]> {
+    return Promise.resolve([])
   }
 
-  async findByIdWithTemplate(
-    id: string,
-    tenantId: string,
-  ): Promise<
-    (TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null
-  > {
-    return this.prisma.protocolType.findFirst({
-      where: { id, tenantId, deletedAt: null },
-      include: {
-        template: { select: { id: true, name: true, schema: true } },
-        _count: { select: { protocols: { where: { deletedAt: null } } } },
-      },
-    }) as Promise<
-      (TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null
-    >
+  findByIdWithTemplate(
+    _id: string,
+    _tenantId: string,
+  ): Promise<(TypeWithDetails & { template: TypeWithDetails['template'] & { schema: unknown } }) | null> {
+    return Promise.resolve(null)
   }
 
-  async findById(id: string, tenantId: string): Promise<TypeWithDetails | null> {
-    return this.prisma.protocolType.findFirst({
-      where: { id, tenantId, deletedAt: null },
-      include: {
-        template: { select: { id: true, name: true } },
-        _count: { select: { protocols: { where: { deletedAt: null } } } },
-      },
-    }) as Promise<TypeWithDetails | null>
+  findById(_id: string, _tenantId: string): Promise<TypeWithDetails | null> {
+    return Promise.resolve(null)
   }
 
-  async existsByName(name: string, tenantId: string, excludeId?: string): Promise<boolean> {
-    const count = await this.prisma.protocolType.count({
-      where: {
-        tenantId,
-        name,
-        deletedAt: null,
-        ...(excludeId ? { id: { not: excludeId } } : {}),
-      },
-    })
-    return count > 0
+  existsByName(_name: string, _tenantId: string, _excludeId?: string): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
   async templateBelongsToTenant(templateId: string, tenantId: string): Promise<boolean> {
-    const count = await this.prisma.protocolTemplate.count({
+    const count = await this._prisma.protocolTemplate.count({
       where: { id: templateId, tenantId, deletedAt: null },
     })
     return count > 0
   }
 
-  async create(tenantId: string, name: string, templateId: string): Promise<TypeWithDetails> {
-    return this.prisma.protocolType.create({
-      data: { tenantId, name, templateId, isSeeded: false },
-      include: {
-        template: { select: { id: true, name: true } },
-        _count: { select: { protocols: { where: { deletedAt: null } } } },
-      },
-    }) as Promise<TypeWithDetails>
+  create(_tenantId: string, _name: string, _templateId: string): Promise<TypeWithDetails> {
+    return Promise.reject(new Error('ProtocolType has been replaced by ProtocolCategory'))
   }
 
-  async update(id: string, tenantId: string, name: string): Promise<TypeWithDetails> {
-    return this.prisma.protocolType.update({
-      where: { id, tenantId },
-      data: { name },
-      include: {
-        template: { select: { id: true, name: true } },
-        _count: { select: { protocols: { where: { deletedAt: null } } } },
-      },
-    }) as Promise<TypeWithDetails>
+  update(_id: string, _tenantId: string, _name: string): Promise<TypeWithDetails> {
+    return Promise.reject(new Error('ProtocolType has been replaced by ProtocolCategory'))
   }
 
-  async softDelete(id: string, tenantId: string): Promise<void> {
-    await this.prisma.protocolType.update({
-      where: { id, tenantId },
-      data: { deletedAt: new Date() },
-    })
+  softDelete(_id: string, _tenantId: string): Promise<void> {
+    return Promise.resolve()
   }
 }

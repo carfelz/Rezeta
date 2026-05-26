@@ -4,11 +4,17 @@ import type {
   CreatePrescriptionGroupDto,
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
-  GenerateAllOrdersDto,
-  PatchImagingOrderDto,
-  PatchLabOrderDto,
-  RenameOrderGroupDto,
 } from '@rezeta/shared'
+
+// Local stubs for types removed from shared in schema reset v2
+type PatchImagingOrderDto = { groupOrder?: number | undefined; groupTitle?: string | null | undefined }
+type PatchLabOrderDto = { groupOrder?: number | undefined; groupTitle?: string | null | undefined }
+type RenameOrderGroupDto = { groupTitle: string | null }
+type GenerateAllOrdersDto = {
+  prescriptions: CreatePrescriptionGroupDto[]
+  imagingOrders: CreateImagingOrderGroupDto[]
+  labOrders: CreateLabOrderGroupDto[]
+}
 import { ErrorCode } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { PdfService } from '../../lib/pdf.service.js'

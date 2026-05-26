@@ -5,7 +5,9 @@ import type {
   PrescriptionItemRow,
   InvoiceWithDetails,
   ImagingOrder,
+  ImagingOrderItemRow,
   LabOrder,
+  LabOrderItemRow,
 } from '@rezeta/shared'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -261,17 +263,6 @@ function buildPrescription(doc: PDFKit.PDFDocument, data: PrescriptionPdfData): 
     doc.text(truncate(item.duration, 12), colX.dur + 4, y + 9, { lineBreak: false })
     y += ROW_H
   })
-
-  // ── Notes ──
-  if (prescription.notes) {
-    y += 14
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(T.n500)
-    doc.text('INDICACIONES ADICIONALES', MARGIN, y, { lineBreak: false, characterSpacing: 0.8 })
-    y += 12
-    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
-    doc.text(prescription.notes, MARGIN, y, { width: CONTENT_W, lineGap: 3 })
-    y = doc.y + 4
-  }
 
   // ── Footer / signature ──
   const footerY = PAGE_H - MARGIN - 30
@@ -619,9 +610,11 @@ function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroup
   const ROW_H = 28
   const HEADER_H = 22
 
+  const allItems: ImagingOrderItemRow[] = orders.flatMap((o) => o.items)
+
   doc
     .save()
-    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * orders.length)
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * allItems.length)
     .stroke(T.n200)
     .restore()
   fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
@@ -633,18 +626,18 @@ function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroup
   y += HEADER_H
 
   const URGENCY_ES: Record<string, string> = { routine: 'Rutina', urgent: 'Urgente', stat: 'STAT' }
-  orders.forEach((order, idx) => {
+  allItems.forEach((item, idx) => {
     const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
     fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
     if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
     doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n700)
-    doc.text(truncate(order.studyType, 22), colX.study + 8, y + 9, { lineBreak: false })
+    doc.text(truncate(item.studyType, 22), colX.study + 8, y + 9, { lineBreak: false })
     doc.font('Helvetica').fontSize(10).fillColor(T.n700)
-    doc.text(truncate(order.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
-    doc.text(URGENCY_ES[order.urgency] ?? order.urgency, colX.urgency + 4, y + 9, {
+    doc.text(truncate(item.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
+    doc.text(URGENCY_ES[item.urgency] ?? item.urgency, colX.urgency + 4, y + 9, {
       lineBreak: false,
     })
-    const flags = [order.contrast ? 'Contraste' : null, order.fastingRequired ? 'Ayuno' : null]
+    const flags = [item.contrast ? 'Contraste' : null, item.fastingRequired ? 'Ayuno' : null]
       .filter(Boolean)
       .join(', ')
     if (flags) doc.text(flags, colX.flags + 4, y + 9, { lineBreak: false })
@@ -749,9 +742,11 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
   const ROW_H = 28
   const HEADER_H = 22
 
+  const allLabItems: LabOrderItemRow[] = orders.flatMap((o) => o.items)
+
   doc
     .save()
-    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * orders.length)
+    .rect(MARGIN, y, CONTENT_W, HEADER_H + ROW_H * allLabItems.length)
     .stroke(T.n200)
     .restore()
   fillRect(doc, MARGIN, y, CONTENT_W, HEADER_H, T.n50)
@@ -769,19 +764,18 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
     stool: 'Heces',
     other: 'Otro',
   }
-  orders.forEach((order, idx) => {
+  allLabItems.forEach((item, idx) => {
     const rowBg = idx % 2 === 0 ? '#FFFFFF' : T.n25
     fillRect(doc, MARGIN, y, CONTENT_W, ROW_H, rowBg)
     if (idx > 0) strokeLine(doc, MARGIN, y, MARGIN + CONTENT_W, y, T.n100)
     doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n700)
-    const testLabel = order.testCode ? `${order.testName} (${order.testCode})` : order.testName
-    doc.text(truncate(testLabel, 24), colX.test + 8, y + 9, { lineBreak: false })
+    doc.text(truncate(item.testName, 24), colX.test + 8, y + 9, { lineBreak: false })
     doc.font('Helvetica').fontSize(10).fillColor(T.n700)
-    doc.text(truncate(order.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
-    doc.text(URGENCY_ES[order.urgency] ?? order.urgency, colX.urgency + 4, y + 9, {
+    doc.text(truncate(item.indication, 32), colX.indication + 4, y + 9, { lineBreak: false })
+    doc.text(URGENCY_ES[item.urgency] ?? item.urgency, colX.urgency + 4, y + 9, {
       lineBreak: false,
     })
-    doc.text(SAMPLE_ES[order.sampleType] ?? order.sampleType, colX.sample + 4, y + 9, {
+    doc.text(SAMPLE_ES[item.sampleType] ?? item.sampleType, colX.sample + 4, y + 9, {
       lineBreak: false,
     })
     y += ROW_H

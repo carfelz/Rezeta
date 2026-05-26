@@ -1,7 +1,7 @@
 import { Button, Row } from '@/components/ui'
 import { ProtocolPills } from '@/components/consultations/ProtocolPills'
 import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
-import { collectUsageCheckableIds } from '@/lib/consultation/usage'
+import { collectUsageCheckableIds, deriveCheckedState } from '@/lib/consultation/usage'
 import type { ConsultationProtocolUsage, ConsultationWithDetails } from '@rezeta/shared'
 import type { ConsultationViewMode } from '@/store/ui.store'
 
@@ -35,7 +35,8 @@ export function ProtocolBar({
           <ProtocolPills
             pills={consultation.protocolUsages.map((u) => {
               const ids = collectUsageCheckableIds(u)
-              const checked = ids.filter((cid) => (u.checkedState ?? {})[cid]).length
+              const checkedState = deriveCheckedState(u)
+              const checked = ids.filter((cid) => checkedState[cid]).length
               return {
                 id: u.id,
                 title: u.protocolTitle,

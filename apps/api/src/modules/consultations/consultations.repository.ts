@@ -9,10 +9,12 @@ import type {
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
-  UpdateConsultationDto,
   AmendConsultationDto,
   UpdateProtocolUsageDto,
 } from '@rezeta/shared'
+
+// UpdateConsultationDto — SOAP fields removed in schema reset v2; stub until v1.5
+type UpdateConsultationDto = Record<string, never>
 import type { ProtocolContent } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
@@ -20,21 +22,12 @@ type PrismaConsultation = {
   id: string
   tenantId: string
   patientId: string
-  userId: string
+  doctorId: string
   locationId: string
   appointmentId: string | null
   status: string
-  chiefComplaint: string | null
-  subjective: string | null
-  objective: string | null
-  assessment: string | null
-  plan: string | null
-  vitals: unknown
-  diagnoses: unknown
-  consultedAt: Date
+  startedAt: Date
   signedAt: Date | null
-  signedBy: string | null
-  contentHash: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -56,20 +49,12 @@ function toConsultation(row: PrismaConsultation): Consultation {
     id: row.id,
     tenantId: row.tenantId,
     patientId: row.patientId,
-    doctorUserId: row.userId,
+    doctorUserId: row.doctorId,
     locationId: row.locationId,
     appointmentId: row.appointmentId,
     status: row.status as Consultation['status'],
-    chiefComplaint: row.chiefComplaint,
-    subjective: row.subjective,
-    objective: row.objective,
-    assessment: row.assessment,
-    plan: row.plan,
-    vitals: (row.vitals ?? null) as Consultation['vitals'],
-    diagnoses: (row.diagnoses as string[]) ?? [],
-    consultedAt: row.consultedAt.toISOString(),
+    startedAt: row.startedAt.toISOString(),
     signedAt: row.signedAt?.toISOString() ?? null,
-    signedByUserId: row.signedBy,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     deletedAt: row.deletedAt?.toISOString() ?? null,
@@ -103,12 +88,11 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
     triggerBlockId: row.triggerBlockId,
     depth: row.depth,
     status: row.status as ConsultationProtocolUsage['status'],
-    checkedState: (row.checkedState ?? {}) as unknown as Record<string, boolean>,
     completedAt: row.completedAt?.toISOString() ?? null,
     notes: row.notes,
     appliedAt: row.appliedAt.toISOString(),
     protocolTitle: row.protocol.title,
-    protocolTypeName: row.protocol.type?.name ?? null,
+    protocolTypeName: null,
     versionNumber: row.protocolVersion.versionNumber,
     childUsages:
       row.childUsages?.map((c) => ({
@@ -133,7 +117,7 @@ function toConsultationWithDetails(row: PrismaConsultationWithRels): Consultatio
 }
 
 const PROTOCOL_USAGE_INCLUDE = Prisma.validator<Prisma.ProtocolUsageInclude>()({
-  protocol: { select: { title: true, type: { select: { name: true } } } },
+  protocol: { select: { title: true } },
   protocolVersion: { select: { versionNumber: true } },
   childUsages: {
     where: { deletedAt: null },
@@ -185,13 +169,13 @@ export class ConsultationsRepository {
     const rows = await this.prisma.consultation.findMany({
       where: {
         tenantId: params.tenantId,
-        userId: params.userId,
+        doctorId: params.userId,
         deletedAt: null,
         ...(params.patientId ? { patientId: params.patientId } : {}),
         ...(params.locationId ? { locationId: params.locationId } : {}),
         ...(params.from || params.to
           ? {
-              consultedAt: {
+              startedAt: {
                 ...(params.from ? { gte: params.from } : {}),
                 ...(params.to ? { lte: params.to } : {}),
               },
@@ -199,7 +183,7 @@ export class ConsultationsRepository {
           : {}),
       },
       include: RELATIONS_INCLUDE,
-      orderBy: { consultedAt: 'desc' },
+      orderBy: { startedAt: 'desc' },
     })
     return rows.map((r) => toConsultationWithDetails(r))
   }
@@ -219,10 +203,10 @@ export class ConsultationsRepository {
     const row = await this.prisma.consultation.findFirst({
       where: {
         tenantId,
-        userId,
+        doctorId: userId,
         patientId,
         deletedAt: null,
-        status: 'draft',
+        status: 'open',
         updatedAt: { gte: cutoff },
       },
       include: RELATIONS_INCLUDE,
@@ -247,18 +231,11 @@ export class ConsultationsRepository {
     const row = await this.prisma.consultation.create({
       data: {
         tenantId,
-        userId,
+        doctorId: userId,
         patientId: dto.patientId,
         locationId: dto.locationId,
         ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
-        ...(dto.chiefComplaint != null ? { chiefComplaint: dto.chiefComplaint } : {}),
-        ...(dto.subjective != null ? { subjective: dto.subjective } : {}),
-        ...(dto.objective != null ? { objective: dto.objective } : {}),
-        ...(dto.assessment != null ? { assessment: dto.assessment } : {}),
-        ...(dto.plan != null ? { plan: dto.plan } : {}),
-        vitals: dto.vitals != null ? (dto.vitals as Prisma.InputJsonValue) : Prisma.JsonNull,
-        diagnoses: (dto.diagnoses ?? []) as Prisma.InputJsonValue,
-        status: 'draft',
+        status: 'open',
       },
       include: RELATIONS_INCLUDE,
     })
@@ -268,23 +245,11 @@ export class ConsultationsRepository {
   async update(
     id: string,
     tenantId: string,
-    dto: UpdateConsultationDto,
+    _dto: UpdateConsultationDto,
   ): Promise<ConsultationWithDetails> {
-    const row = await this.prisma.consultation.update({
+    // SOAP fields removed in schema reset v2 — update is a no-op until v1.5 adds new fields
+    const row = await this.prisma.consultation.findFirstOrThrow({
       where: { id, tenantId, deletedAt: null },
-      data: {
-        ...(dto.chiefComplaint !== undefined ? { chiefComplaint: dto.chiefComplaint } : {}),
-        ...(dto.subjective !== undefined ? { subjective: dto.subjective } : {}),
-        ...(dto.objective !== undefined ? { objective: dto.objective } : {}),
-        ...(dto.assessment !== undefined ? { assessment: dto.assessment } : {}),
-        ...(dto.plan !== undefined ? { plan: dto.plan } : {}),
-        ...(dto.vitals !== undefined
-          ? { vitals: dto.vitals != null ? (dto.vitals as Prisma.InputJsonValue) : Prisma.JsonNull }
-          : {}),
-        ...(dto.diagnoses !== undefined
-          ? { diagnoses: dto.diagnoses as Prisma.InputJsonValue }
-          : {}),
-      },
       include: RELATIONS_INCLUDE,
     })
     return toConsultationWithDetails(row)
@@ -293,12 +258,11 @@ export class ConsultationsRepository {
   async sign(
     id: string,
     tenantId: string,
-    userId: string,
-    contentHash: string,
+    _userId: string,
   ): Promise<ConsultationWithDetails> {
     const row = await this.prisma.consultation.update({
       where: { id, tenantId, deletedAt: null },
-      data: { status: 'signed', signedAt: new Date(), signedBy: userId, contentHash },
+      data: { status: 'signed', signedAt: new Date() },
       include: RELATIONS_INCLUDE,
     })
     return toConsultationWithDetails(row)
@@ -317,14 +281,9 @@ export class ConsultationsRepository {
     })
     const nextNumber = (lastAmendment?.amendmentNumber ?? 0) + 1
 
-    const content: Record<string, unknown> = {}
-    if (dto.chiefComplaint !== undefined) content['chiefComplaint'] = dto.chiefComplaint
-    if (dto.subjective !== undefined) content['subjective'] = dto.subjective
-    if (dto.objective !== undefined) content['objective'] = dto.objective
-    if (dto.assessment !== undefined) content['assessment'] = dto.assessment
-    if (dto.plan !== undefined) content['plan'] = dto.plan
-    if (dto.vitals !== undefined) content['vitals'] = dto.vitals
-    if (dto.diagnoses !== undefined) content['diagnoses'] = dto.diagnoses
+    const content: Record<string, unknown> = {
+      amendment_content: dto.amendment_content ?? {},
+    }
 
     await this.prisma.consultationAmendment.create({
       data: {
@@ -370,7 +329,6 @@ export class ConsultationsRepository {
         userId: params.userId,
         content: params.content as Prisma.InputJsonValue,
         modifications: {} as Prisma.InputJsonValue,
-        checkedState: {} as Prisma.InputJsonValue,
         status: 'in_progress',
         depth: params.depth,
         ...(params.parentUsageId ? { parentUsageId: params.parentUsageId } : {}),
@@ -413,14 +371,8 @@ export class ConsultationsRepository {
     if (dto.status !== undefined) {
       data.status = dto.status
     }
-    if (dto.checkedState !== undefined) {
-      data.checkedState = dto.checkedState as Prisma.InputJsonValue
-    }
     if (dto.completedAt !== undefined) {
       data.completedAt = dto.completedAt ? new Date(dto.completedAt) : null
-    }
-    if (dto.notes !== undefined) {
-      data.notes = dto.notes ?? null
     }
 
     const row = await this.prisma.protocolUsage.update({
@@ -434,14 +386,12 @@ export class ConsultationsRepository {
   async updateCheckedState(
     usageId: string,
     tenantId: string,
-    checkedState: Record<string, boolean>,
     completedAt: Date | null | undefined,
     notes: string | null | undefined,
   ): Promise<ConsultationProtocolUsage> {
     const row = await this.prisma.protocolUsage.update({
       where: { id: usageId, tenantId, deletedAt: null },
       data: {
-        checkedState: checkedState as Prisma.InputJsonValue,
         ...(completedAt !== undefined ? { completedAt } : {}),
         ...(notes !== undefined ? { notes } : {}),
       },

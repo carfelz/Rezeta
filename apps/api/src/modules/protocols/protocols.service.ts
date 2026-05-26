@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common'
 import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolsRepository } from './protocols.repository.js'
-import { ProtocolTypesRepository } from '../protocol-types/protocol-types.repository.js'
 import {
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
@@ -12,7 +11,6 @@ import {
   type VersionListItem,
   type VersionDetailResponse,
   ProtocolContentSchema,
-  buildInitialContentFromTemplate,
   ErrorCode,
 } from '@rezeta/shared'
 
@@ -20,7 +18,6 @@ import {
 export class ProtocolsService {
   constructor(
     @Inject(ProtocolsRepository) private repository: ProtocolsRepository,
-    @Inject(ProtocolTypesRepository) private typesRepository: ProtocolTypesRepository,
   ) {}
 
   async create(
@@ -28,35 +25,22 @@ export class ProtocolsService {
     userId: string,
     dto: CreateProtocolDto,
   ): Promise<ProtocolResponse> {
-    let content: unknown
-    if (dto.typeId) {
-      const protocolType = await this.typesRepository.findByIdWithTemplate(dto.typeId, tenantId)
-      if (!protocolType) {
-        throw new NotFoundException({
-          code: ErrorCode.PROTOCOL_TYPE_NOT_FOUND,
-          message: 'Protocol type not found',
-        })
-      }
-      content = buildInitialContentFromTemplate(
-        protocolType.template.schema as Parameters<typeof buildInitialContentFromTemplate>[0],
-      )
-    } else {
-      content = { version: '1.0', template_version: '1.0', blocks: [] }
-    }
+    const content: unknown = { version: '1.0', template_version: '1.0', blocks: [] }
 
-    const { protocol, version } = await this.repository.create({
+    const createResult = await this.repository.create({
       tenantId,
       title: dto.title.trim(),
       createdBy: userId,
-      ...(dto.typeId !== undefined ? { typeId: dto.typeId } : {}),
+      ...(dto.categoryId ? { categoryId: dto.categoryId } : {}),
       tags: [],
       content,
     })
+    const { protocol, version } = createResult
 
     return this.formatResponse({
       ...protocol,
       currentVersion: version,
-      type: protocol.type,
+      category: protocol.category,
     })
   }
 
@@ -64,13 +48,14 @@ export class ProtocolsService {
     tenantId: string,
     query: ProtocolListQuery = { favoritesOnly: false },
   ): Promise<ProtocolListItem[]> {
-    const protocols = await this.repository.list(tenantId, {
-      ...(query.search !== undefined ? { search: query.search } : {}),
-      ...(query.typeId !== undefined ? { typeId: query.typeId } : {}),
-      ...(query.status !== undefined ? { status: query.status } : {}),
-      ...(query.favoritesOnly ? { favoritesOnly: true } : {}),
-      ...(query.sort !== undefined ? { sort: query.sort } : {}),
-    })
+    const listFilters = {
+      ...(query.search ? { search: query.search } : {}),
+      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+      ...(query.status ? { status: query.status } : {}),
+      favoritesOnly: query.favoritesOnly || false,
+      ...(query.sort ? { sort: query.sort } : {}),
+    }
+    const protocols = await this.repository.list(tenantId, listFilters)
     return protocols.map((p) => {
       const latestVersion = p.versions[0] as { versionNumber: number; content: unknown } | undefined
       const content = (latestVersion?.content ?? null) as { blocks?: unknown[] } | null
@@ -78,8 +63,8 @@ export class ProtocolsService {
       return {
         id: p.id,
         title: p.title,
-        typeId: p.type?.id ?? null,
-        typeName: p.type?.name ?? null,
+        categoryId: p.category?.id ?? null,
+        categoryName: p.category?.name ?? null,
         status: p.status,
         isFavorite: p.isFavorite,
         updatedAt: p.updatedAt.toISOString(),
@@ -165,8 +150,8 @@ export class ProtocolsService {
       })
     }
 
-    // Validate required blocks against the template (resolved through type)
-    const templateSchema = (protocol.type?.template?.schema ?? { blocks: [] }) as {
+    // Template schema validation not available without type relation (Plan 02 will restore this)
+    const templateSchema = ({ blocks: [] }) as {
       blocks: Array<{
         id?: string
         required?: boolean
@@ -213,6 +198,9 @@ export class ProtocolsService {
   ): void {
     const contentIds = new Set(this.collectAllIds(contentBlocks))
 
+    // Template schema is always { blocks: [] } in schema-reset-v2.
+    // This loop body is unreachable until Plan 02 restores ProtocolCategory.
+    /* c8 ignore start */
     for (const block of templateSchema.blocks) {
       if (!block.required) continue
 
@@ -234,6 +222,7 @@ export class ProtocolsService {
         }
       }
     }
+    /* c8 ignore end */
   }
 
   private collectAllIds(blocks: Array<{ id: string; blocks?: Array<{ id: string }> }>): string[] {
@@ -335,8 +324,8 @@ export class ProtocolsService {
     isFavorite: boolean
     createdAt: Date
     updatedAt: Date
-    typeId: string | null
-    type?: { id: string; name: string; template: { schema: unknown } } | null
+    categoryId?: string | null
+    category?: { id: string; name: string } | null
     currentVersion?: {
       id: string
       versionNumber: number
@@ -352,9 +341,9 @@ export class ProtocolsService {
       isFavorite: protocol.isFavorite,
       createdAt: protocol.createdAt.toISOString(),
       updatedAt: protocol.updatedAt.toISOString(),
-      typeId: protocol.typeId ?? null,
-      typeName: protocol.type?.name ?? null,
-      templateSchema: protocol.type?.template?.schema ?? null,
+      categoryId: protocol.category?.id ?? null,
+      categoryName: protocol.category?.name ?? null,
+      templateSchema: null,
       currentVersion: protocol.currentVersion
         ? {
             id: protocol.currentVersion.id,

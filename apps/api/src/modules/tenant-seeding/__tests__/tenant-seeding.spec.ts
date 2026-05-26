@@ -12,7 +12,6 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
-  protocolType: { create: vi.fn() },
 }
 
 const mockPrisma = {
@@ -30,7 +29,6 @@ describe('TenantSeedingService — locale names', () => {
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
     mockTx.tenant.findUnique.mockResolvedValue({ seededAt: null })
     mockTx.tenant.update.mockResolvedValue({})
-    mockTx.protocolType.create.mockResolvedValue({})
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )
@@ -61,30 +59,10 @@ describe('TenantSeedingService — locale names', () => {
     expect(names).toContain('Clinical Procedure')
   })
 
-  it('seedDefault: each type references a template created in the same call', async () => {
-    await service.seedDefault('t1', 'es')
-
-    // Template IDs are derived from name by the mock: 'tmpl-{name}'
-    const templateNames = mockTx.protocolTemplate.create.mock.calls.map(
-      (call) => (call[0] as { data: { name: string } }).data.name,
-    )
-    const expectedTemplateIds = new Set(templateNames.map((n) => `tmpl-${n}`))
-    const typeTemplateIds = mockTx.protocolType.create.mock.calls.map(
-      (call) => (call[0] as { data: { templateId: string } }).data.templateId,
-    )
-
-    for (const typeTemplateId of typeTemplateIds) {
-      expect(expectedTemplateIds).toContain(typeTemplateId)
-    }
-  })
-
-  it('seedDefault: sets isSeeded=true on all templates and types', async () => {
+  it('seedDefault: sets isSeeded=true on all templates', async () => {
     await service.seedDefault('t1', 'es')
 
     for (const call of mockTx.protocolTemplate.create.mock.calls) {
-      expect((call[0] as { data: { isSeeded: boolean } }).data.isSeeded).toBe(true)
-    }
-    for (const call of mockTx.protocolType.create.mock.calls) {
       expect((call[0] as { data: { isSeeded: boolean } }).data.isSeeded).toBe(true)
     }
   })
@@ -93,9 +71,6 @@ describe('TenantSeedingService — locale names', () => {
     await service.seedDefault('t1', 'es')
 
     for (const call of mockTx.protocolTemplate.create.mock.calls) {
-      expect((call[0] as { data: { tenantId: string } }).data.tenantId).toBe('t1')
-    }
-    for (const call of mockTx.protocolType.create.mock.calls) {
       expect((call[0] as { data: { tenantId: string } }).data.tenantId).toBe('t1')
     }
   })
@@ -107,12 +82,11 @@ describe('TenantSeedingService — locale names', () => {
       [{ name: 'My Type', templateClientId: 'tmpl-1' }],
     )
 
-    // Mock returns { id: 'tmpl-My Template' } for a template named 'My Template'
-    const expectedTemplateId = 'tmpl-My Template'
-    const typeCall = (
-      mockTx.protocolType.create.mock.calls[0] as [{ data: { templateId: string } }]
-    )[0]
-    expect(typeCall.data.templateId).toBe(expectedTemplateId)
+    // Template was created successfully (types deferred to Plan 02)
+    expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(1)
+    expect(mockTx.protocolTemplate.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ name: 'My Template' }) }),
+    )
   })
 
   it('seedCustom: cross-tenant isolation — all rows scoped to given tenantId', async () => {
@@ -123,9 +97,6 @@ describe('TenantSeedingService — locale names', () => {
     )
 
     for (const call of mockTx.protocolTemplate.create.mock.calls) {
-      expect((call[0] as { data: { tenantId: string } }).data.tenantId).toBe('t1')
-    }
-    for (const call of mockTx.protocolType.create.mock.calls) {
       expect((call[0] as { data: { tenantId: string } }).data.tenantId).toBe('t1')
     }
   })

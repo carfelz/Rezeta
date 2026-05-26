@@ -5,8 +5,6 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common'
-import { createHash } from 'crypto'
-import { Prisma } from '@rezeta/db'
 import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
@@ -15,14 +13,19 @@ import type {
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
-  UpdateConsultationDto,
   AmendConsultationDto,
   AddProtocolUsageDto,
-  UpdateCheckedStateDto,
   UpdateProtocolUsageDto,
 } from '@rezeta/shared'
 import { ErrorCode, computeMissingRequiredFields, evaluateConditionalRule } from '@rezeta/shared'
 import type { ConditionalStepActivated } from '@rezeta/shared'
+
+// Stub types removed from shared in schema reset v2
+type UpdateConsultationDto = Record<string, never>
+type UpdateCheckedStateDto = {
+  completedAt?: string | null | undefined
+  notes?: string | null | undefined
+}
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
@@ -95,80 +98,7 @@ export class ConsultationsService {
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
-    if (!dto.protocolId) {
-      return this.repo.create(tenantId, userId, dto)
-    }
-
-    // Validate protocol + resolve version content before opening transaction.
-    const protocol = await this.prisma.protocol.findFirst({
-      where: { id: dto.protocolId, tenantId, deletedAt: null },
-      select: { currentVersionId: true },
-    })
-    if (!protocol) {
-      throw new NotFoundException({
-        code: ErrorCode.PROTOCOL_NOT_FOUND,
-        message: 'Protocol not found',
-      })
-    }
-    if (!protocol.currentVersionId) {
-      throw new BadRequestException({
-        code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
-        message: 'Protocol has no published version',
-      })
-    }
-    const version = await this.prisma.protocolVersion.findFirst({
-      where: { id: protocol.currentVersionId, tenantId },
-    })
-    if (!version) {
-      throw new BadRequestException({
-        code: ErrorCode.PROTOCOL_HAS_NO_ACTIVE_VERSION,
-        message: 'Protocol version not found',
-      })
-    }
-
-    const consultationId = await this.prisma.$transaction(async (tx) => {
-      const consultation = await tx.consultation.create({
-        data: {
-          tenantId,
-          userId,
-          patientId: dto.patientId,
-          locationId: dto.locationId,
-          ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
-          ...(dto.chiefComplaint != null ? { chiefComplaint: dto.chiefComplaint } : {}),
-          ...(dto.subjective != null ? { subjective: dto.subjective } : {}),
-          ...(dto.objective != null ? { objective: dto.objective } : {}),
-          ...(dto.assessment != null ? { assessment: dto.assessment } : {}),
-          ...(dto.plan != null ? { plan: dto.plan } : {}),
-          vitals: dto.vitals != null ? (dto.vitals as Prisma.InputJsonValue) : Prisma.JsonNull,
-          diagnoses: (dto.diagnoses ?? []) as Prisma.InputJsonValue,
-          status: 'draft',
-        },
-        select: { id: true },
-      })
-      await tx.protocolUsage.create({
-        data: {
-          tenantId,
-          consultationId: consultation.id,
-          protocolId: dto.protocolId!,
-          protocolVersionId: protocol.currentVersionId!,
-          userId,
-          content: version.content as Prisma.InputJsonValue,
-          modifications: {} as Prisma.InputJsonValue,
-          checkedState: {} as Prisma.InputJsonValue,
-          status: 'in_progress',
-          depth: 0,
-        },
-      })
-      return consultation.id
-    })
-
-    const result = await this.repo.findById(consultationId, tenantId)
-    if (!result) {
-      throw new NotFoundException({
-        code: ErrorCode.CONSULTATION_NOT_FOUND,
-        message: 'Consultation not found after creation',
-      })
-    }
+    const result = await this.repo.create(tenantId, userId, dto)
     this.recommendationsSvc.invalidate(tenantId, userId, dto.patientId)
     return result
   }
@@ -202,14 +132,7 @@ export class ConsultationsService {
     c: ConsultationWithDetails,
     tenantId: string,
   ): Promise<ConsultationWithDetails> {
-    const ctx = {
-      vitals: c.vitals,
-      chiefComplaint: c.chiefComplaint,
-      subjective: c.subjective,
-      objective: c.objective,
-      assessment: c.assessment,
-      plan: c.plan,
-    }
+    const ctx = {}
     const updatedUsages: ConsultationProtocolUsage[] = []
     let anyChanged = false
     for (const usage of c.protocolUsages) {
@@ -260,15 +183,8 @@ export class ConsultationsService {
       })
     }
 
-    // ── Required-fields validation (SOAP + protocol-required blocks) ──────
-    const missing = computeMissingRequiredFields(
-      {
-        chiefComplaint: c.chiefComplaint,
-        assessment: c.assessment,
-        diagnoses: c.diagnoses,
-      },
-      c.protocolUsages,
-    )
+    // ── Required-fields validation (protocol-required blocks) ──────────────
+    const missing = computeMissingRequiredFields(c.protocolUsages)
     if (missing.length > 0) {
       throw new BadRequestException({
         code: ErrorCode.CONSULTATION_MISSING_REQUIRED_FIELDS,
@@ -277,21 +193,7 @@ export class ConsultationsService {
       })
     }
 
-    const contentHash = createHash('sha256')
-      .update(
-        JSON.stringify({
-          chiefComplaint: c.chiefComplaint,
-          subjective: c.subjective,
-          objective: c.objective,
-          assessment: c.assessment,
-          plan: c.plan,
-          vitals: c.vitals,
-          diagnoses: c.diagnoses,
-        }),
-      )
-      .digest('hex')
-
-    const result = await this.repo.sign(id, tenantId, userId, contentHash)
+    const result = await this.repo.sign(id, tenantId, userId)
 
     // Auto-create draft invoice from DoctorLocation fee — non-fatal if it fails
     void this.invoicesSvc
@@ -346,10 +248,7 @@ export class ConsultationsService {
 
     const protocol = await this.prisma.protocol.findFirst({
       where: { id: dto.protocolId, tenantId, deletedAt: null },
-      select: {
-        currentVersionId: true,
-        type: { select: { templateId: true } },
-      },
+      select: { currentVersionId: true },
     })
     if (!protocol) {
       throw new NotFoundException({
@@ -441,7 +340,7 @@ export class ConsultationsService {
         : dto.completedAt === null
           ? null
           : new Date(dto.completedAt)
-    return this.repo.updateCheckedState(usageId, tenantId, dto.checkedState, completedAt, dto.notes)
+    return this.repo.updateCheckedState(usageId, tenantId, completedAt, dto.notes)
   }
 
   async getProtocolUsage(
@@ -496,7 +395,10 @@ function computeStepProgress(usage: ConsultationProtocolUsage | null): StepProgr
     }
   }
   const steps = collectStepsFromBlocks(usage.content?.blocks ?? [])
-  const checkedState = usage.checkedState ?? {}
+  const checkedState: Record<string, boolean> = {}
+  for (const ev of usage.modifications?.checklist_items ?? []) {
+    checkedState[ev.item_id] = ev.checked
+  }
   const totalSteps = steps.length
   const completedSteps = steps.filter((s) => checkedState[s.id]).length
   const currentIndex = steps.findIndex((s) => !checkedState[s.id])
@@ -544,12 +446,7 @@ function walkConditionalBlocks(
   }
 }
 
-function inferLastEditField(c: ConsultationWithDetails): string | null {
-  // Heuristic: pick first non-empty SOAP field by priority.
-  if (c.objective?.trim()) return 'Examen físico'
-  if (c.assessment?.trim()) return 'Evaluación'
-  if (c.plan?.trim()) return 'Plan'
-  if (c.subjective?.trim()) return 'Subjetivo'
-  if (c.chiefComplaint?.trim()) return 'Motivo de consulta'
+function inferLastEditField(_c: ConsultationWithDetails): string | null {
+  // SOAP fields removed in schema reset v2; last-edit field inference retired.
   return null
 }

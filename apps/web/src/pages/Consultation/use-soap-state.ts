@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { UseMutationResult } from '@tanstack/react-query'
-import type { ConsultationWithDetails, UpdateConsultationDto } from '@rezeta/shared'
+import type { ConsultationWithDetails } from '@rezeta/shared'
+
+// Local stub — SOAP update removed from shared in schema reset v2
+type UpdateConsultationDto = Record<string, never>
 import {
   EMPTY_LOCAL_VITALS,
-  localToVitals,
-  vitalsToLocal,
   type LocalVitals,
 } from '@/lib/consultation/vitals'
 import type { SaveStatus } from '@/components/consultations/SaveBadge'
@@ -30,13 +31,14 @@ interface SoapState {
 }
 
 /**
- * SOAP form state, hydration from server data, and debounced autosave.
- * Watches every SOAP-related state value for changes and triggers an
- * autosave 1.5s after the last keystroke.
+ * SOAP form state. In schema-reset v2 SOAP fields were removed from the
+ * Consultation DB model — the update mutation is a no-op. This hook keeps
+ * local UI state for the SOAP view while the protocol canvas is the primary
+ * editing surface.
  */
 export function useSoapState(
-  consultation: ConsultationWithDetails | undefined,
-  updateMutation: UseMutationResult<ConsultationWithDetails, Error, UpdateConsultationDto>,
+  _consultation: ConsultationWithDetails | undefined,
+  _updateMutation: UseMutationResult<ConsultationWithDetails, Error, UpdateConsultationDto>,
 ): SoapState {
   const [chiefComplaint, setChiefComplaint] = useState('')
   const [subjective, setSubjective] = useState('')
@@ -45,81 +47,13 @@ export function useSoapState(
   const [plan, setPlan] = useState('')
   const [vitals, setVitals] = useState<LocalVitals>(EMPTY_LOCAL_VITALS)
   const [diagnoses, setDiagnoses] = useState<string[]>([])
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
-  const [savedAt, setSavedAt] = useState<Date | undefined>(undefined)
+  const [saveStatus] = useState<SaveStatus>('idle')
+  const [savedAt] = useState<Date | undefined>(undefined)
+  const noop = useRef(() => {})
 
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const initialized = useRef(false)
-
-  useEffect(() => {
-    if (consultation && !initialized.current) {
-      initialized.current = true
-      setChiefComplaint(consultation.chiefComplaint ?? '')
-      setSubjective(consultation.subjective ?? '')
-      setObjective(consultation.objective ?? '')
-      setAssessment(consultation.assessment ?? '')
-      setPlan(consultation.plan ?? '')
-      setVitals(vitalsToLocal(consultation.vitals))
-      setDiagnoses(consultation.diagnoses ?? [])
-    }
-  }, [consultation])
-
-  const buildPayload = useCallback(
-    () => ({
-      chiefComplaint: chiefComplaint || null,
-      subjective: subjective || null,
-      objective: objective || null,
-      assessment: assessment || null,
-      plan: plan || null,
-      vitals: localToVitals(vitals),
-      diagnoses,
-    }),
-    [chiefComplaint, subjective, objective, assessment, plan, vitals, diagnoses],
-  )
-
-  const triggerAutoSave = useCallback(() => {
-    if (!consultation || consultation.status === 'signed') return
-    setSaveStatus('dirty')
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      setSaveStatus('saving')
-      updateMutation.mutate(buildPayload(), {
-        onSuccess: () => {
-          const now = new Date()
-          setSavedAt(now)
-          setSaveStatus('saved')
-          setTimeout(() => setSaveStatus('idle'), 2500)
-        },
-        onError: () => setSaveStatus('error'),
-      })
-    }, 1500)
-  }, [consultation, buildPayload, updateMutation])
-
-  function saveNow(): void {
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    setSaveStatus('saving')
-    updateMutation.mutate(buildPayload(), {
-      onSuccess: () => {
-        const now = new Date()
-        setSavedAt(now)
-        setSaveStatus('saved')
-        setTimeout(() => setSaveStatus('idle'), 2500)
-      },
-      onError: () => setSaveStatus('error'),
-    })
-  }
-
-  const skipFirst = useRef(true)
-  useEffect(() => {
-    if (skipFirst.current) {
-      skipFirst.current = false
-      return
-    }
-    if (initialized.current) triggerAutoSave()
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
-  }, [chiefComplaint, subjective, objective, assessment, plan, vitals, diagnoses, triggerAutoSave])
+  const saveNow = useCallback(() => {
+    noop.current()
+  }, [])
 
   return {
     chiefComplaint,

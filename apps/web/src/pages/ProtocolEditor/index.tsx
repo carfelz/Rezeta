@@ -304,7 +304,7 @@ export function ProtocolEditor(): JSX.Element {
 
       <EditorHeader
         title={protocol.title}
-        typeName={protocol.typeName}
+        typeName={protocol.categoryName}
         updatedAt={protocol.updatedAt}
         totalBlocks={totalBlocks}
         sectionCount={sectionCount}

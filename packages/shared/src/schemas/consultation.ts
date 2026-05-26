@@ -1,60 +1,15 @@
 import { z } from 'zod'
-import { PROTOCOL_USAGE_STATUSES } from '../types/protocol.js'
-
-export const VitalsSchema = z.object({
-  bloodPressureSystolic: z.number().int().min(0).max(300).optional(),
-  bloodPressureDiastolic: z.number().int().min(0).max(200).optional(),
-  heartRate: z.number().int().min(0).max(300).optional(),
-  respiratoryRate: z.number().int().min(0).max(100).optional(),
-  temperatureCelsius: z.number().min(25).max(45).optional(),
-  oxygenSaturation: z.number().min(0).max(100).optional(),
-  weightKg: z.number().min(0).max(500).optional(),
-  heightCm: z.number().min(0).max(300).optional(),
-})
 
 export const CreateConsultationSchema = z.object({
   patientId: z.string().uuid(),
   locationId: z.string().uuid(),
   appointmentId: z.string().uuid().nullable().optional(),
-  chiefComplaint: z.string().max(500).nullable().optional(),
-  subjective: z.string().max(5000).nullable().optional(),
-  objective: z.string().max(5000).nullable().optional(),
-  assessment: z.string().max(5000).nullable().optional(),
-  plan: z.string().max(5000).nullable().optional(),
-  vitals: VitalsSchema.nullable().optional(),
-  diagnoses: z.array(z.string().max(200)).default([]),
-  protocolId: z.string().uuid().optional(),
 })
-
-export const UpdateConsultationSchema = CreateConsultationSchema.partial().omit({
-  protocolId: true,
-})
-
-export const AmendConsultationSchema = z.object({
-  reason: z.string().min(10).max(1000),
-  chiefComplaint: z.string().max(500).optional(),
-  subjective: z.string().max(5000).optional(),
-  objective: z.string().max(5000).optional(),
-  assessment: z.string().max(5000).optional(),
-  plan: z.string().max(5000).optional(),
-  vitals: VitalsSchema.optional(),
-  diagnoses: z.array(z.string().max(200)).optional(),
-})
-
-export type CreateConsultationDto = z.infer<typeof CreateConsultationSchema>
-export type UpdateConsultationDto = z.infer<typeof UpdateConsultationSchema>
-export type AmendConsultationDto = z.infer<typeof AmendConsultationSchema>
 
 export const AddProtocolUsageSchema = z.object({
   protocolId: z.string().uuid(),
   parentUsageId: z.string().uuid().optional(),
   triggerBlockId: z.string().max(100).optional(),
-})
-
-export const UpdateCheckedStateSchema = z.object({
-  checkedState: z.record(z.string(), z.boolean()),
-  completedAt: z.string().datetime().nullable().optional(),
-  notes: z.string().max(2000).nullable().optional(),
 })
 
 const ProtocolContentSchema = z.object({
@@ -63,61 +18,35 @@ const ProtocolContentSchema = z.object({
   blocks: z.array(z.record(z.string(), z.unknown())),
 })
 
-// ── Modifications: typed entries we care about ─────────────────────────────
 const StepEventSchema = z.object({
   step_id: z.string().min(1).max(200),
   timestamp: z.string().datetime(),
   reason: z.string().min(1).max(500).optional(),
 })
 
-const OffProtocolNoteEventSchema = z.object({
-  timestamp: z.string().datetime(),
-  title: z.string().max(200).optional(),
-  note: z.string().min(1).max(2000),
-  promoted_to_soap_field: z.enum(['subjective', 'objective', 'assessment', 'plan']).optional(),
-})
-
-const ConditionalStepActivatedSchema = z.object({
-  block_id: z.string().min(1).max(200),
-  condition: z.string().max(500),
-  branch_label: z.string().max(200),
-  timestamp: z.string().datetime(),
-})
-
 const ModificationsSchema = z.object({
-  medication_changes: z.array(z.record(z.string(), z.unknown())).optional(),
-  medications_added: z.array(z.record(z.string(), z.unknown())).optional(),
-  medications_removed: z.array(z.record(z.string(), z.unknown())).optional(),
   steps_completed: z.array(StepEventSchema).optional(),
   steps_skipped: z.array(StepEventSchema).optional(),
   checklist_items: z.array(z.record(z.string(), z.unknown())).optional(),
   decision_branches: z.array(z.record(z.string(), z.unknown())).optional(),
+  vitals_entered: z.array(z.record(z.string(), z.unknown())).optional(),
+  notes_edited: z.array(z.record(z.string(), z.unknown())).optional(),
+  medication_changes: z.array(z.record(z.string(), z.unknown())).optional(),
   imaging_orders_queued: z.array(z.record(z.string(), z.unknown())).optional(),
-  imaging_orders_modified: z.array(z.record(z.string(), z.unknown())).optional(),
-  imaging_orders_removed: z.array(z.record(z.string(), z.unknown())).optional(),
   lab_orders_queued: z.array(z.record(z.string(), z.unknown())).optional(),
-  lab_orders_modified: z.array(z.record(z.string(), z.unknown())).optional(),
-  lab_orders_removed: z.array(z.record(z.string(), z.unknown())).optional(),
-  text_blocks_edited: z.array(z.record(z.string(), z.unknown())).optional(),
-  off_protocol_notes: z.array(OffProtocolNoteEventSchema).optional(),
-  conditional_steps_activated: z.array(ConditionalStepActivatedSchema).optional(),
 })
-
-export {
-  StepEventSchema,
-  OffProtocolNoteEventSchema,
-  ConditionalStepActivatedSchema,
-  ModificationsSchema,
-}
 
 export const UpdateProtocolUsageSchema = z.object({
   content: ProtocolContentSchema.optional(),
   modifications: ModificationsSchema.optional(),
   modificationSummary: z.string().max(500).nullable().optional(),
-  status: z.enum(PROTOCOL_USAGE_STATUSES).optional(),
-  checkedState: z.record(z.string(), z.boolean()).optional(),
+  status: z.enum(['in_progress', 'completed', 'abandoned']).optional(),
   completedAt: z.string().datetime().nullable().optional(),
-  notes: z.string().max(2000).nullable().optional(),
+})
+
+export const AmendConsultationSchema = z.object({
+  reason: z.string().min(10).max(1000),
+  amendment_content: z.record(z.string(), z.unknown()).optional(),
 })
 
 const PrescriptionItemSchema = z.object({
@@ -133,75 +62,66 @@ const PrescriptionItemSchema = z.object({
 export const CreatePrescriptionGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
-  items: z
-    .array(PrescriptionItemSchema)
-    .refine((arr) => arr.length >= 1, 'At least one item is required'),
+  items: z.array(PrescriptionItemSchema).min(1),
+})
+
+export const UpdatePrescriptionGroupSchema = z.object({
+  groupTitle: z.string().max(200).nullable().optional(),
+  groupOrder: z.number().int().min(1).optional(),
+  items: z.array(PrescriptionItemSchema).optional(),
 })
 
 const ImagingOrderItemSchema = z.object({
-  study_type: z.string().min(1).max(300),
+  studyType: z.string().min(1).max(300),
   indication: z.string().min(1).max(500),
   urgency: z.enum(['routine', 'urgent', 'stat']).default('routine'),
   contrast: z.boolean().default(false),
-  fasting_required: z.boolean().default(false),
-  special_instructions: z.string().max(2000).optional(),
+  fastingRequired: z.boolean().default(false),
+  specialInstructions: z.string().max(2000).optional(),
   source: z.string().max(200).optional(),
 })
 
 export const CreateImagingOrderGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
-  orders: z
-    .array(ImagingOrderItemSchema)
-    .refine((arr) => arr.length >= 1, 'At least one order is required'),
+  items: z.array(ImagingOrderItemSchema).min(1),
+})
+
+export const UpdateImagingOrderGroupSchema = z.object({
+  groupTitle: z.string().max(200).nullable().optional(),
+  groupOrder: z.number().int().min(1).optional(),
+  items: z.array(ImagingOrderItemSchema).optional(),
 })
 
 const LabOrderItemSchema = z.object({
-  test_name: z.string().min(1).max(300),
-  test_code: z.string().max(50).optional(),
+  testName: z.string().min(1).max(300),
   indication: z.string().min(1).max(500),
   urgency: z.enum(['routine', 'urgent', 'stat']).default('routine'),
-  fasting_required: z.boolean().default(false),
-  sample_type: z.enum(['blood', 'urine', 'stool', 'other']),
-  special_instructions: z.string().max(2000).optional(),
+  fastingRequired: z.boolean().default(false),
+  sampleType: z.enum(['blood', 'urine', 'stool', 'csf', 'other']).default('blood'),
+  specialInstructions: z.string().max(2000).optional(),
   source: z.string().max(200).optional(),
 })
 
 export const CreateLabOrderGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
-  orders: z
-    .array(LabOrderItemSchema)
-    .refine((arr) => arr.length >= 1, 'At least one order is required'),
+  items: z.array(LabOrderItemSchema).min(1),
 })
 
-export const GenerateAllOrdersSchema = z.object({
-  prescriptions: z.array(CreatePrescriptionGroupSchema).default([]),
-  imagingOrders: z.array(CreateImagingOrderGroupSchema).default([]),
-  labOrders: z.array(CreateLabOrderGroupSchema).default([]),
-})
-
-export const PatchImagingOrderSchema = z.object({
-  groupOrder: z.number().int().min(1).optional(),
+export const UpdateLabOrderGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
-})
-
-export const PatchLabOrderSchema = z.object({
   groupOrder: z.number().int().min(1).optional(),
-  groupTitle: z.string().max(200).nullable().optional(),
+  items: z.array(LabOrderItemSchema).optional(),
 })
 
-export const RenameOrderGroupSchema = z.object({
-  groupTitle: z.string().max(200).nullable(),
-})
-
+export type CreateConsultationDto = z.infer<typeof CreateConsultationSchema>
+export type AmendConsultationDto = z.infer<typeof AmendConsultationSchema>
 export type AddProtocolUsageDto = z.infer<typeof AddProtocolUsageSchema>
-export type UpdateCheckedStateDto = z.infer<typeof UpdateCheckedStateSchema>
 export type UpdateProtocolUsageDto = z.infer<typeof UpdateProtocolUsageSchema>
 export type CreatePrescriptionGroupDto = z.infer<typeof CreatePrescriptionGroupSchema>
+export type UpdatePrescriptionGroupDto = z.infer<typeof UpdatePrescriptionGroupSchema>
 export type CreateImagingOrderGroupDto = z.infer<typeof CreateImagingOrderGroupSchema>
+export type UpdateImagingOrderGroupDto = z.infer<typeof UpdateImagingOrderGroupSchema>
 export type CreateLabOrderGroupDto = z.infer<typeof CreateLabOrderGroupSchema>
-export type GenerateAllOrdersDto = z.infer<typeof GenerateAllOrdersSchema>
-export type PatchImagingOrderDto = z.infer<typeof PatchImagingOrderSchema>
-export type PatchLabOrderDto = z.infer<typeof PatchLabOrderSchema>
-export type RenameOrderGroupDto = z.infer<typeof RenameOrderGroupSchema>
+export type UpdateLabOrderGroupDto = z.infer<typeof UpdateLabOrderGroupSchema>

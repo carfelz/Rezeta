@@ -8,7 +8,7 @@ export function ConsultationListItem({
   consultation: ConsultationWithDetails
   onClick: () => void
 }): JSX.Element {
-  const date = new Date(consultation.consultedAt).toLocaleDateString('es-DO', {
+  const date = new Date(consultation.startedAt).toLocaleDateString('es-DO', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -20,7 +20,7 @@ export function ConsultationListItem({
       <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-semibold text-n-800 truncate">
-          {consultation.chiefComplaint ?? 'Sin motivo registrado'}
+          {consultation.protocolUsages[0]?.protocolTitle ?? 'Consulta'}
         </div>
         <Caption tone="neutral" size="sm" as="div" className="mt-1">
           {date} · {consultation.locationName}

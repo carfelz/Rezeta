@@ -6,11 +6,11 @@ import {
   useCreateProtocolType,
   useUpdateProtocolType,
   useDeleteProtocolType,
+  type ProtocolTypeDto,
 } from '@/hooks/protocol-types/use-protocol-types'
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
 import { typesStrings } from './strings'
 import { logger } from '@/lib/logger'
-import type { ProtocolTypeDto } from '@rezeta/shared'
 import {
   Button,
   Badge,
@@ -314,7 +314,7 @@ export function Types(): JSX.Element {
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isLocked ? (
-                      <Badge variant="review">{typesStrings.lockedBadge(t.protocolCount)}</Badge>
+                      <Badge variant="review">{typesStrings.lockedBadge(t.protocolCount ?? 0)}</Badge>
                     ) : (
                       <Badge variant="active">{typesStrings.activeBadge}</Badge>
                     )}

@@ -96,7 +96,7 @@ export class ProtocolImprovementsService {
     const [originalProtocol, currentVersion] = await Promise.all([
       this.prisma.protocol.findUnique({
         where: { id: protocolId },
-        select: { title: true, typeId: true },
+        select: { title: true, categoryId: true },
       }),
       this.prisma.protocolVersion.findUnique({
         where: { id: suggestion.protocolVersionId },
@@ -109,7 +109,7 @@ export class ProtocolImprovementsService {
         const variant = await tx.protocol.create({
           data: {
             tenantId,
-            typeId: originalProtocol.typeId,
+            ...(originalProtocol.categoryId !== undefined ? { categoryId: originalProtocol.categoryId } : {}),
             createdBy: userId,
             title: `${originalProtocol.title} - Variante`,
             status: 'draft',

@@ -19,6 +19,8 @@
     "migrate:reset": "prisma migrate reset --schema=prisma/schema.prisma",
     "studio": "prisma studio --schema=prisma/schema.prisma",
     "seed": "tsx --env-file=../../.env src/seed.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -26,8 +28,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "dotenv": "^16.4.5",
     "prisma": "^6.6.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "vitest": "^2.1.9"
   }
 }

@@ -36,7 +36,7 @@ model Tenant {
   invoices            Invoice[]
   protocols           Protocol[]
   protocolTemplates   ProtocolTemplate[]
-  protocolTypes       ProtocolType[]
+  protocolCategories  ProtocolCategory[]
   protocolVersions    ProtocolVersion[]
   protocolUsages      ProtocolUsage[]
   protocolSuggestions ProtocolSuggestion[]
@@ -69,13 +69,12 @@ model User {
   scheduleExceptions    ScheduleException[]
   ownedPatients         Patient[]               @relation("PatientOwner")
   appointments          Appointment[]
-  consultations         Consultation[]
-  signedConsultations   Consultation[]          @relation("ConsultationSigner")
+  consultationsAsDoctor Consultation[]          @relation("ConsultationDoctor")
   amendments            ConsultationAmendment[]
-  prescriptions         Prescription[]
+  prescriptionsAsDoctor Prescription[]          @relation("PrescriptionDoctor")
   invoices              Invoice[]
-  imagingOrders         ImagingOrder[]
-  labOrders             LabOrder[]
+  imagingOrdersAsDoctor ImagingOrder[]          @relation("ImagingOrderDoctor")
+  labOrdersAsDoctor     LabOrder[]              @relation("LabOrderDoctor")
   protocols             Protocol[]              @relation("ProtocolCreator")
   protocolTemplates     ProtocolTemplate[]
   protocolVersions      ProtocolVersion[]       @relation("VersionCreator")
@@ -227,11 +226,11 @@ model Appointment {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id])
-  patient      Patient       @relation(fields: [patientId], references: [id])
-  doctor       User          @relation(fields: [userId], references: [id])
-  location     Location      @relation(fields: [locationId], references: [id])
-  consultation Consultation?
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  doctor        User           @relation(fields: [userId], references: [id])
+  location      Location       @relation(fields: [locationId], references: [id])
+  consultations Consultation[]
 
   @@index([tenantId])
   @@index([tenantId, userId, startsAt])
@@ -244,43 +243,36 @@ model Appointment {
 model Consultation {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String    @map("tenant_id") @db.Uuid
-  appointmentId String?   @unique @map("appointment_id") @db.Uuid
   patientId     String    @map("patient_id") @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
+  doctorId      String    @map("doctor_id") @db.Uuid
   locationId    String    @map("location_id") @db.Uuid
-  status        String    @default("draft") @db.VarChar(20) // draft | signed
-  signedAt      DateTime? @map("signed_at")
-  signedBy      String?   @map("signed_by") @db.Uuid
-  contentHash   String?   @map("content_hash") @db.VarChar(64)
-  chiefComplaint String?  @map("chief_complaint") @db.Text
-  subjective    String?   @db.Text
-  objective     String?   @db.Text
-  assessment    String?   @db.Text
-  plan          String?   @db.Text
-  vitals        Json?
-  diagnoses     Json      @default("[]")
-  consultedAt      DateTime  @default(now()) @map("consulted_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  appointmentId String?   @map("appointment_id") @db.Uuid
 
-  tenant        Tenant                  @relation(fields: [tenantId], references: [id])
-  appointment   Appointment?            @relation(fields: [appointmentId], references: [id])
-  patient       Patient                 @relation(fields: [patientId], references: [id])
-  doctor        User                    @relation(fields: [userId], references: [id])
-  signer        User?                   @relation("ConsultationSigner", fields: [signedBy], references: [id])
-  location      Location                @relation(fields: [locationId], references: [id])
-  amendments    ConsultationAmendment[]
-  prescriptions Prescription[]
-  imagingOrders ImagingOrder[]
-  labOrders     LabOrder[]
-  invoice       Invoice?
+  status    String    @default("open") @db.VarChar(20) // open | signed | amended
+  startedAt DateTime  @default(now()) @map("started_at")
+  signedAt  DateTime? @map("signed_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant         Tenant                  @relation(fields: [tenantId], references: [id])
+  appointment    Appointment?            @relation(fields: [appointmentId], references: [id])
+  patient        Patient                 @relation(fields: [patientId], references: [id])
+  doctor         User                    @relation("ConsultationDoctor", fields: [doctorId], references: [id])
+  location       Location                @relation(fields: [locationId], references: [id])
+  amendments     ConsultationAmendment[]
+  prescriptions  Prescription[]
+  imagingOrders  ImagingOrder[]
+  labOrders      LabOrder[]
+  invoice        Invoice?
   protocolUsages ProtocolUsage[]
 
   @@index([tenantId])
-  @@index([tenantId, userId, consultedAt])
+  @@index([tenantId, doctorId, startedAt])
   @@index([tenantId, patientId])
   @@index([tenantId, deletedAt])
+  @@index([status])
   @@map("consultations")
 }
 
@@ -307,14 +299,12 @@ model Prescription {
   tenantId       String    @map("tenant_id") @db.Uuid
   consultationId String?   @map("consultation_id") @db.Uuid
   patientId      String    @map("patient_id") @db.Uuid
-  userId         String    @map("user_id") @db.Uuid
+  doctorId       String    @map("doctor_id") @db.Uuid
   groupTitle     String?   @map("group_title") @db.VarChar(200)
   groupOrder     Int       @default(1) @map("group_order")
-  items          Json      // legacy JSON blob kept for backward compat
-  status         String    @default("draft") @db.VarChar(20) // draft | signed
+  status         String    @default("queued") @db.VarChar(20) // queued | signed
   signedAt       DateTime? @map("signed_at")
   pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
-  notes          String?   @db.Text
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
@@ -322,7 +312,7 @@ model Prescription {
   tenant            Tenant             @relation(fields: [tenantId], references: [id])
   consultation      Consultation?      @relation(fields: [consultationId], references: [id])
   patient           Patient            @relation(fields: [patientId], references: [id])
-  doctor            User               @relation(fields: [userId], references: [id])
+  doctor            User               @relation("PrescriptionDoctor", fields: [doctorId], references: [id])
   prescriptionItems PrescriptionItem[]
 
   @@index([tenantId])
@@ -342,7 +332,6 @@ model PrescriptionItem {
   duration       String  @db.VarChar(200)
   notes          String? @db.Text
   source         String? @db.VarChar(200) // "protocol:blk_id:row_id" | "manual"
-  sortOrder      Int     @default(0) @map("sort_order")
   createdAt      DateTime @default(now()) @map("created_at")
 
   prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
@@ -428,40 +417,18 @@ model ProtocolTemplate {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   deletedAt          DateTime? @map("deleted_at")
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id])
-  creator       User?          @relation(fields: [createdBy], references: [id])
-  protocolTypes ProtocolType[]
+  tenant  Tenant @relation(fields: [tenantId], references: [id])
+  creator User?  @relation(fields: [createdBy], references: [id])
 
   @@index([tenantId])
   @@index([tenantId, deletedAt])
   @@map("protocol_templates")
 }
 
-model ProtocolType {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId   String    @map("tenant_id") @db.Uuid
-  templateId String    @map("template_id") @db.Uuid
-  name       String    @db.VarChar(200)
-  isSeeded   Boolean   @default(false) @map("is_seeded")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  deletedAt  DateTime? @map("deleted_at")
-
-  tenant    Tenant           @relation(fields: [tenantId], references: [id])
-  template  ProtocolTemplate @relation(fields: [templateId], references: [id])
-  protocols Protocol[]
-
-  @@unique([tenantId, name])
-  @@index([tenantId])
-  @@index([tenantId, templateId])
-  @@index([tenantId, deletedAt])
-  @@map("protocol_types")
-}
-
 model Protocol {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
-  typeId           String?   @map("type_id") @db.Uuid
+  categoryId       String?   @map("category_id") @db.Uuid
   title            String    @db.VarChar(300)
   description      String?   @db.Text
   specialty        String?   @db.VarChar(100)
@@ -477,14 +444,14 @@ model Protocol {
   deletedAt        DateTime? @map("deleted_at")
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
-  type        ProtocolType?        @relation(fields: [typeId], references: [id])
+  category    ProtocolCategory?    @relation(fields: [categoryId], references: [id])
   creator     User                 @relation("ProtocolCreator", fields: [createdBy], references: [id])
   versions    ProtocolVersion[]
   usages      ProtocolUsage[]
   suggestions ProtocolSuggestion[]
 
   @@index([tenantId])
-  @@index([tenantId, typeId])
+  @@index([tenantId, categoryId])
   @@index([tenantId, createdBy])
   @@index([tenantId, status])
   @@index([tenantId, deletedAt])
@@ -536,8 +503,6 @@ model ProtocolUsage {
   triggerBlockId      String?   @map("trigger_block_id") @db.VarChar(100)
   depth               Int       @default(0)
   status              String    @default("in_progress") @db.VarChar(20) // in_progress | completed | abandoned | switched
-  // Legacy field kept for backward compat with existing code
-  checkedState        Json      @default("{}") @map("checked_state")
   completedAt         DateTime? @map("completed_at")
   appliedAt           DateTime  @default(now()) @map("applied_at")
   notes               String?   @db.Text
@@ -563,6 +528,25 @@ model ProtocolUsage {
   @@index([status])
   @@index([createdAt])
   @@map("protocol_usages")
+}
+
+model ProtocolCategory {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  name      String    @db.VarChar(200)
+  color     String    @default("#6B7280") @db.VarChar(20)
+  isSeeded  Boolean   @default(false) @map("is_seeded")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  protocols Protocol[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([tenantId, deletedAt])
+  @@map("protocol_categories")
 }
 
 model ProtocolSuggestion {
@@ -593,31 +577,25 @@ model ProtocolSuggestion {
 }
 
 model ImagingOrder {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId             String    @map("tenant_id") @db.Uuid
-  consultationId       String    @map("consultation_id") @db.Uuid
-  patientId            String    @map("patient_id") @db.Uuid
-  userId               String    @map("user_id") @db.Uuid
-  groupTitle           String?   @map("group_title") @db.VarChar(200)
-  groupOrder           Int       @default(1) @map("group_order")
-  studyType            String    @map("study_type") @db.VarChar(300)
-  indication           String    @db.VarChar(500)
-  urgency              String    @default("routine") @db.VarChar(20) // routine | urgent | stat
-  contrast             Boolean   @default(false)
-  fastingRequired      Boolean   @default(false) @map("fasting_required")
-  specialInstructions  String?   @map("special_instructions") @db.Text
-  source               String?   @db.VarChar(200) // "protocol:blk_id:order_id" | "manual"
-  status               String    @default("draft") @db.VarChar(20) // draft | signed
-  signedAt             DateTime? @map("signed_at")
-  pdfUrl               String?   @map("pdf_url") @db.VarChar(2048)
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-  deletedAt            DateTime? @map("deleted_at")
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  consultationId String    @map("consultation_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  doctorId       String    @map("doctor_id") @db.Uuid
+  groupTitle     String?   @map("group_title") @db.VarChar(200)
+  groupOrder     Int       @default(1) @map("group_order")
+  status         String    @default("queued") @db.VarChar(20) // queued | signed
+  signedAt       DateTime? @map("signed_at")
+  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id])
-  consultation Consultation @relation(fields: [consultationId], references: [id])
-  patient      Patient      @relation(fields: [patientId], references: [id])
-  doctor       User         @relation(fields: [userId], references: [id])
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  consultation Consultation       @relation(fields: [consultationId], references: [id])
+  patient      Patient            @relation(fields: [patientId], references: [id])
+  doctor       User               @relation("ImagingOrderDoctor", fields: [doctorId], references: [id])
+  items        ImagingOrderItem[]
 
   @@index([consultationId, groupOrder])
   @@index([tenantId])
@@ -625,38 +603,67 @@ model ImagingOrder {
   @@map("imaging_orders")
 }
 
-model LabOrder {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId            String    @map("tenant_id") @db.Uuid
-  consultationId      String    @map("consultation_id") @db.Uuid
-  patientId           String    @map("patient_id") @db.Uuid
-  userId              String    @map("user_id") @db.Uuid
-  groupTitle          String?   @map("group_title") @db.VarChar(200)
-  groupOrder          Int       @default(1) @map("group_order")
-  testName            String    @map("test_name") @db.VarChar(300)
-  testCode            String?   @map("test_code") @db.VarChar(50)
-  indication          String    @db.VarChar(500)
-  urgency             String    @default("routine") @db.VarChar(20) // routine | urgent | stat
-  fastingRequired     Boolean   @default(false) @map("fasting_required")
-  sampleType          String    @map("sample_type") @db.VarChar(50) // blood | urine | stool | other
-  specialInstructions String?   @map("special_instructions") @db.Text
-  source              String?   @db.VarChar(200)
-  status              String    @default("draft") @db.VarChar(20) // draft | signed
-  signedAt            DateTime? @map("signed_at")
-  pdfUrl              String?   @map("pdf_url") @db.VarChar(2048)
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-  deletedAt           DateTime? @map("deleted_at")
+model ImagingOrderItem {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  imagingOrderId      String   @map("imaging_order_id") @db.Uuid
+  studyType           String   @map("study_type") @db.VarChar(300)
+  indication          String   @db.VarChar(500)
+  urgency             String   @default("routine") @db.VarChar(20) // routine | urgent | stat
+  contrast            Boolean  @default(false)
+  fastingRequired     Boolean  @default(false) @map("fasting_required")
+  specialInstructions String?  @map("special_instructions") @db.Text
+  source              String?  @db.VarChar(200)
+  createdAt           DateTime @default(now()) @map("created_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id])
-  consultation Consultation @relation(fields: [consultationId], references: [id])
-  patient      Patient      @relation(fields: [patientId], references: [id])
-  doctor       User         @relation(fields: [userId], references: [id])
+  imagingOrder ImagingOrder @relation(fields: [imagingOrderId], references: [id])
+
+  @@index([imagingOrderId])
+  @@map("imaging_order_items")
+}
+
+model LabOrder {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  consultationId String    @map("consultation_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  doctorId       String    @map("doctor_id") @db.Uuid
+  groupTitle     String?   @map("group_title") @db.VarChar(200)
+  groupOrder     Int       @default(1) @map("group_order")
+  status         String    @default("queued") @db.VarChar(20) // queued | signed
+  signedAt       DateTime? @map("signed_at")
+  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
+  consultation Consultation   @relation(fields: [consultationId], references: [id])
+  patient      Patient        @relation(fields: [patientId], references: [id])
+  doctor       User           @relation("LabOrderDoctor", fields: [doctorId], references: [id])
+  items        LabOrderItem[]
 
   @@index([consultationId, groupOrder])
   @@index([tenantId])
   @@index([tenantId, deletedAt])
   @@map("lab_orders")
+}
+
+model LabOrderItem {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  labOrderId          String   @map("lab_order_id") @db.Uuid
+  testName            String   @map("test_name") @db.VarChar(300)
+  indication          String   @db.VarChar(500)
+  urgency             String   @default("routine") @db.VarChar(20) // routine | urgent | stat
+  fastingRequired     Boolean  @default(false) @map("fasting_required")
+  sampleType          String   @default("blood") @map("sample_type") @db.VarChar(50)
+  specialInstructions String?  @map("special_instructions") @db.Text
+  source              String?  @db.VarChar(200)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  labOrder LabOrder @relation(fields: [labOrderId], references: [id])
+
+  @@index([labOrderId])
+  @@map("lab_order_items")
 }
 
 // ─────────────────────────────────────────────

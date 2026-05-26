@@ -110,7 +110,7 @@ export function SwitchProtocolDialog({
                     <i className="ph ph-stack text-[14px] text-n-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] text-n-800 truncate">{p.title}</div>
-                      <div className="font-mono text-[11px] text-n-400">{p.typeName}</div>
+                      <div className="font-mono text-[11px] text-n-400">{p.categoryName}</div>
                     </div>
                   </SelectableCard>
                 ))

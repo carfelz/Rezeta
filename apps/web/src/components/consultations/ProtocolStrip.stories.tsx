@@ -19,7 +19,6 @@ const baseUsage: ConsultationProtocolUsage = {
   notes: null,
   appliedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: {},
   modifications: {},
   content: {
     version: '1.0',
@@ -97,11 +96,13 @@ export const WithProgress: Story = {
   args: {
     usage: {
       ...baseUsage,
-      checkedState: {
-        itm_1: true,
-        itm_2: true,
-        stp_1: true,
-        stp_2: true,
+      modifications: {
+        checklist_items: [
+          { item_id: 'itm_1', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_2', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'stp_1', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'stp_2', checked: true, timestamp: new Date().toISOString() },
+        ],
       },
     },
     isSigned: false,
@@ -113,14 +114,16 @@ export const WithCompletedSteps: Story = {
   args: {
     usage: {
       ...baseUsage,
-      checkedState: {
-        itm_1: true,
-        itm_2: true,
-        itm_3: true,
-        stp_1: true,
-        stp_2: true,
-        itm_4: true,
-        itm_5: true,
+      modifications: {
+        checklist_items: [
+          { item_id: 'itm_1', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_2', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_3', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'stp_1', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'stp_2', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_4', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_5', checked: true, timestamp: new Date().toISOString() },
+        ],
       },
     },
     isSigned: false,
@@ -132,10 +135,12 @@ export const Signed: Story = {
   args: {
     usage: {
       ...baseUsage,
-      checkedState: {
-        itm_1: true,
-        itm_2: true,
-        stp_1: true,
+      modifications: {
+        checklist_items: [
+          { item_id: 'itm_1', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'itm_2', checked: true, timestamp: new Date().toISOString() },
+          { item_id: 'stp_1', checked: true, timestamp: new Date().toISOString() },
+        ],
       },
     },
     isSigned: true,

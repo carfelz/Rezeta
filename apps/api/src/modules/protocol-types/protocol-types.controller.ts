@@ -9,11 +9,17 @@ import {
   ApiSecurity,
 } from '@nestjs/swagger'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
-import type { ProtocolTypeDto, CreateProtocolTypeDto, UpdateProtocolTypeDto } from '@rezeta/shared'
-import { CreateProtocolTypeSchema, UpdateProtocolTypeSchema } from '@rezeta/shared'
+import { z } from 'zod'
+import type { ProtocolTypeDto } from './protocol-types.service.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { ProtocolTypesService } from './protocol-types.service.js'
+
+// Temporary local schemas until ProtocolCategory replaces ProtocolType (Plan 02)
+const CreateProtocolTypeSchema = z.object({ name: z.string().min(1).max(200), templateId: z.string().uuid() })
+const UpdateProtocolTypeSchema = z.object({ name: z.string().min(1).max(200) }).strict()
+type CreateProtocolTypeDto = z.infer<typeof CreateProtocolTypeSchema>
+type UpdateProtocolTypeDto = z.infer<typeof UpdateProtocolTypeSchema>
 
 const TYPE_ID = '018e3f2a-3333-7000-8000-000000000001'
 const TEMPLATE_ID = '018e3f2a-5555-7000-8000-000000000001'

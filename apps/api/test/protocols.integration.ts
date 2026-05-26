@@ -99,7 +99,7 @@ describe('Protocols Integration (Slice 2+3)', () => {
 
     await prisma.protocolVersion.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.protocol.deleteMany({ where: { tenantId: { in: tenantIds } } })
-    await prisma.protocolType.deleteMany({ where: { tenantId: { in: tenantIds } } })
+    // ProtocolType removed — no cleanup needed
     await prisma.protocolTemplate.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.user.deleteMany({ where: { firebaseUid: { in: [userA.uid, userB.uid] } } })
     await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } })

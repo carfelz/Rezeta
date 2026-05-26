@@ -5,5 +5,5 @@
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["generated", "src"]
+  "include": ["generated", "src", "prisma/__tests__", "vitest.config.ts"]
 }

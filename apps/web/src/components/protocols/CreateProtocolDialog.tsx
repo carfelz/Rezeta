@@ -18,11 +18,15 @@ import {
   Input,
 } from '@/components/ui'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
-import type { ProtocolTypeDto } from '@rezeta/shared'
 import { createProtocolDialogStrings } from './strings'
 
+interface ProtocolTypeInfo {
+  id: string
+  name: string
+}
+
 interface CreateProtocolDialogProps {
-  type: ProtocolTypeDto | null
+  type: ProtocolTypeInfo | null
   isOpen: boolean
   onClose: () => void
   onSuccess: (id: string) => void
@@ -42,7 +46,7 @@ export function CreateProtocolDialog({
     if (!title.trim() || !type) return
 
     mutate(
-      { typeId: type.id, title: title.trim() },
+      { title: title.trim() },
       {
         onSuccess: (data) => {
           onClose()

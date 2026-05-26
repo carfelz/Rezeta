@@ -30,8 +30,8 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p1',
           title: 'HTA',
-          typeId: 't1',
-          typeName: 'Cardiovascular',
+          categoryId: 'cat1',
+          categoryName: 'Cardiovascular',
           currentVersionNumber: 2,
           lastUsedAt: new Date('2026-04-01T10:00:00Z'),
           usageCount: 3,
@@ -41,7 +41,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
 
-    const result = await repo.findRecommendations(tenantId, doctorUserId, patientId, 1)
+    const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 1)
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       protocolId: 'p1',
@@ -62,8 +62,8 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p2',
           title: 'Asma',
-          typeId: 't2',
-          typeName: 'Respiratorio',
+          categoryId: 'cat2',
+          categoryName: 'Respiratorio',
           currentVersionNumber: 1,
           lastUsedAt: new Date('2026-04-15T10:00:00Z'),
           usageCount: 7,
@@ -71,7 +71,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       ])
       .mockResolvedValueOnce([])
 
-    const result = await repo.findRecommendations(tenantId, doctorUserId, patientId, 5)
+    const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 5)
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       protocolId: 'p2',
@@ -89,8 +89,8 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p2',
           title: 'Asma',
-          typeId: 't2',
-          typeName: 'Respiratorio',
+          categoryId: 'cat2',
+          categoryName: 'Respiratorio',
           currentVersionNumber: 1,
           lastUsedAt: new Date('2026-04-15T10:00:00Z'),
           usageCount: 7,
@@ -98,7 +98,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       ])
       .mockResolvedValueOnce([])
 
-    const result = await repo.findRecommendations(tenantId, doctorUserId, patientId, 5)
+    const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 5)
     expect(result[0].isMostProbable).toBe(false)
   })
 
@@ -110,15 +110,15 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p3',
           title: 'Tos crónica',
-          typeId: 't3',
-          typeName: 'Respiratorio',
+          categoryId: 'cat3',
+          categoryName: 'Respiratorio',
           currentVersionNumber: 1,
           lastUsedAt: null,
           usageCount: 0,
         },
       ])
 
-    const result = await repo.findRecommendations(tenantId, doctorUserId, patientId, 5)
+    const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 5)
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       protocolId: 'p3',
@@ -135,8 +135,8 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p1',
           title: 'HTA',
-          typeId: 't1',
-          typeName: 'Cardiovascular',
+          categoryId: 'cat1',
+          categoryName: 'Cardiovascular',
           currentVersionNumber: 2,
           lastUsedAt: new Date('2026-04-01T10:00:00Z'),
           usageCount: 3,
@@ -146,8 +146,8 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
         {
           protocolId: 'p2',
           title: 'Asma',
-          typeId: 't2',
-          typeName: 'Respiratorio',
+          categoryId: 'cat2',
+          categoryName: 'Respiratorio',
           currentVersionNumber: 1,
           lastUsedAt: new Date('2026-04-15T10:00:00Z'),
           usageCount: 7,
@@ -155,7 +155,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       ])
       .mockResolvedValueOnce([])
 
-    const result = await repo.findRecommendations(tenantId, doctorUserId, patientId, 5)
+    const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 5)
     expect(result).toHaveLength(2)
     expect(result[0]).toMatchObject({
       source: 'patient-history',

@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ProtocolTemplatesRepository } from '../protocol-templates.repository.js'
 
+// ProtocolType removed in schema reset v2.
+// isLocked and getBlockingTypeIds are stubs (always return false / []).
+// findAllWithLockInfo and findById no longer include protocolTypes.
+
 const TENANT_ID = 'tenant-1'
 const TEMPLATE_ID = 'tmpl-1'
 const USER_ID = 'user-1'
@@ -12,10 +16,6 @@ const mockPrisma = {
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
-  },
-  protocolType: {
-    count: vi.fn(),
-    findMany: vi.fn(),
   },
 }
 
@@ -34,11 +34,6 @@ const makeTemplateRow = (overrides = {}) => ({
   ...overrides,
 })
 
-const makeTemplateWithTypes = (typeIds: string[] = []) => ({
-  ...makeTemplateRow(),
-  protocolTypes: typeIds.map((id) => ({ id })),
-})
-
 describe('ProtocolTemplatesRepository', () => {
   let repo: ProtocolTemplatesRepository
 
@@ -51,7 +46,7 @@ describe('ProtocolTemplatesRepository', () => {
 
   describe('findAllWithLockInfo', () => {
     it('calls findMany with tenantId filter and deletedAt null', async () => {
-      mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateWithTypes()])
+      mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateRow()])
       await repo.findAllWithLockInfo(TENANT_ID)
       expect(mockPrisma.protocolTemplate.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -60,20 +55,11 @@ describe('ProtocolTemplatesRepository', () => {
       )
     })
 
-    it('includes protocolTypes in query', async () => {
-      mockPrisma.protocolTemplate.findMany.mockResolvedValue([])
-      await repo.findAllWithLockInfo(TENANT_ID)
-      const call = mockPrisma.protocolTemplate.findMany.mock.calls[0][0] as {
-        include: { protocolTypes: unknown }
-      }
-      expect(call.include).toHaveProperty('protocolTypes')
-    })
-
-    it('returns array of templates with protocolTypes', async () => {
-      mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateWithTypes(['type-a'])])
+    it('returns array of templates', async () => {
+      mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateRow()])
       const result = await repo.findAllWithLockInfo(TENANT_ID)
       expect(result).toHaveLength(1)
-      expect(result[0]!.protocolTypes).toEqual([{ id: 'type-a' }])
+      expect(result[0]!.id).toBe(TEMPLATE_ID)
     })
 
     it('returns empty array when no templates', async () => {
@@ -87,7 +73,7 @@ describe('ProtocolTemplatesRepository', () => {
 
   describe('findById', () => {
     it('calls findFirst with id, tenantId, and deletedAt null', async () => {
-      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(makeTemplateWithTypes())
+      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(makeTemplateRow())
       await repo.findById(TEMPLATE_ID, TENANT_ID)
       expect(mockPrisma.protocolTemplate.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -102,11 +88,11 @@ describe('ProtocolTemplatesRepository', () => {
       expect(result).toBeNull()
     })
 
-    it('returns template with protocolTypes when found', async () => {
-      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(makeTemplateWithTypes(['type-1']))
+    it('returns template when found', async () => {
+      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(makeTemplateRow())
       const result = await repo.findById(TEMPLATE_ID, TENANT_ID)
       expect(result).not.toBeNull()
-      expect(result!.protocolTypes).toEqual([{ id: 'type-1' }])
+      expect(result!.id).toBe(TEMPLATE_ID)
     })
   })
 
@@ -228,63 +214,21 @@ describe('ProtocolTemplatesRepository', () => {
     })
   })
 
-  // ── isLocked ───────────────────────────────────────────────────────────────
+  // ── isLocked (stub — schema reset v2) ─────────────────────────────────────
 
   describe('isLocked', () => {
-    it('returns false when count is 0', async () => {
-      mockPrisma.protocolType.count.mockResolvedValue(0)
+    it('always returns false (ProtocolType removed, locking deferred to Plan 02)', async () => {
       const result = await repo.isLocked(TEMPLATE_ID, TENANT_ID)
       expect(result).toBe(false)
     })
-
-    it('returns true when count > 0', async () => {
-      mockPrisma.protocolType.count.mockResolvedValue(2)
-      const result = await repo.isLocked(TEMPLATE_ID, TENANT_ID)
-      expect(result).toBe(true)
-    })
-
-    it('queries by templateId, tenantId, and deletedAt null', async () => {
-      mockPrisma.protocolType.count.mockResolvedValue(0)
-      await repo.isLocked(TEMPLATE_ID, TENANT_ID)
-      expect(mockPrisma.protocolType.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            templateId: TEMPLATE_ID,
-            tenantId: TENANT_ID,
-            deletedAt: null,
-          }),
-        }),
-      )
-    })
   })
 
-  // ── getBlockingTypeIds ─────────────────────────────────────────────────────
+  // ── getBlockingTypeIds (stub — schema reset v2) ────────────────────────────
 
   describe('getBlockingTypeIds', () => {
-    it('returns empty array when no types reference template', async () => {
-      mockPrisma.protocolType.findMany.mockResolvedValue([])
+    it('returns empty array (ProtocolType removed, blocking deferred to Plan 02)', async () => {
       const result = await repo.getBlockingTypeIds(TEMPLATE_ID, TENANT_ID)
       expect(result).toEqual([])
-    })
-
-    it('returns array of type IDs when types reference template', async () => {
-      mockPrisma.protocolType.findMany.mockResolvedValue([{ id: 'type-a' }, { id: 'type-b' }])
-      const result = await repo.getBlockingTypeIds(TEMPLATE_ID, TENANT_ID)
-      expect(result).toEqual(['type-a', 'type-b'])
-    })
-
-    it('queries by templateId, tenantId, and deletedAt null', async () => {
-      mockPrisma.protocolType.findMany.mockResolvedValue([])
-      await repo.getBlockingTypeIds(TEMPLATE_ID, TENANT_ID)
-      expect(mockPrisma.protocolType.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            templateId: TEMPLATE_ID,
-            tenantId: TENANT_ID,
-            deletedAt: null,
-          }),
-        }),
-      )
     })
   })
 })
