@@ -8,6 +8,8 @@ export const blockTypeStrings = {
   alert: 'Alerta',
   imagingOrder: 'Imagen',
   labOrder: 'Laboratorio',
+  vitals: 'Signos vitales',
+  clinicalNotes: 'Nota clínica',
   unknown: 'Bloque',
 } as const
 
