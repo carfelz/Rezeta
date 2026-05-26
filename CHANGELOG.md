@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — feat(api): atomic sign transaction + combined orders endpoint (feat/consultation-api-redesign)
+
+### Changed
+
+- **`apps/api/src/modules/consultations/consultations.repository.ts`**: Updated `sign()` to use `prisma.$transaction` — atomically completes all `in_progress` protocol usages (`status → completed`, `completedAt` set), signs all `queued` prescriptions, lab orders, and imaging orders (`status → signed`, `signedAt` set), then marks the consultation as `signed`.
+- **`apps/api/src/modules/orders/orders.repository.ts`**: Added `getOrdersForConsultation()` — fetches prescriptions, imaging orders, and lab orders for a consultation in a single `Promise.all`, returning `{ prescriptions, imagingOrders, labOrders }`.
+- **`apps/api/src/modules/orders/orders.service.ts`**: Added `getOrdersForConsultation()` service method — validates consultation exists then delegates to repository.
+- **`apps/api/src/modules/orders/orders.controller.ts`**: Added `GET v1/consultations/:consultationId/orders` endpoint that returns all order types in one request.
+
+### Added
+
+- **`apps/api/src/modules/consultations/__tests__/consultations.repository.spec.ts`**: Added 4 tests covering the atomic sign transaction — verifies protocol usages, prescriptions, lab orders, and imaging orders are all updated via the transaction callback.
+- **`apps/api/src/modules/orders/__tests__/orders.repository.spec.ts`**: Added 3 tests for `getOrdersForConsultation` — returns combined result, filters by `consultationId`/`tenantId`/`deletedAt`, handles empty sets.
+- **`apps/api/src/modules/orders/__tests__/orders.service.spec.ts`**: Added 2 tests for `getOrdersForConsultation` — delegates to repo, throws `NotFoundException` when consultation missing.
+- **`apps/api/src/modules/orders/__tests__/orders.controller.spec.ts`**: Added 1 test for `getOrders` controller method.
+
 ## [2026-06-07] — protocol API simplification (plan 02): types → categories
 
 ### Added
