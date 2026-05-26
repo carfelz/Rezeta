@@ -6,7 +6,7 @@ import { PrismaService } from '../../lib/prisma.service.js'
 export class ProtocolTemplatesRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async findAllWithLockInfo(tenantId: string): Promise<ProtocolTemplate[]> {
+  async findAll(tenantId: string): Promise<ProtocolTemplate[]> {
     return this.prisma.protocolTemplate.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
@@ -65,12 +65,4 @@ export class ProtocolTemplatesRepository {
     })
   }
 
-  // ProtocolType removed — templates are no longer locked by types (Plan 02 will add category locking)
-  isLocked(_id: string, _tenantId: string): Promise<boolean> {
-    return Promise.resolve(false)
-  }
-
-  getBlockingTypeIds(_id: string, _tenantId: string): Promise<string[]> {
-    return Promise.resolve([])
-  }
 }

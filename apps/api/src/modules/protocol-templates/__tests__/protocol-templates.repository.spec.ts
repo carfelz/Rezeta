@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ProtocolTemplatesRepository } from '../protocol-templates.repository.js'
 
-// ProtocolType removed in schema reset v2.
-// isLocked and getBlockingTypeIds are stubs (always return false / []).
-// findAllWithLockInfo and findById no longer include protocolTypes.
+// ProtocolType removed in schema reset v2 (Plan 01).
+// isLocked and getBlockingTypeIds stubs removed in Plan 02.
+// findAll replaces findAllWithLockInfo.
 
 const TENANT_ID = 'tenant-1'
 const TEMPLATE_ID = 'tmpl-1'
@@ -42,12 +42,12 @@ describe('ProtocolTemplatesRepository', () => {
     repo = new ProtocolTemplatesRepository(mockPrisma as never)
   })
 
-  // ── findAllWithLockInfo ────────────────────────────────────────────────────
+  // ── findAll ────────────────────────────────────────────────────────────────
 
-  describe('findAllWithLockInfo', () => {
+  describe('findAll', () => {
     it('calls findMany with tenantId filter and deletedAt null', async () => {
       mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateRow()])
-      await repo.findAllWithLockInfo(TENANT_ID)
+      await repo.findAll(TENANT_ID)
       expect(mockPrisma.protocolTemplate.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ tenantId: TENANT_ID, deletedAt: null }),
@@ -57,14 +57,14 @@ describe('ProtocolTemplatesRepository', () => {
 
     it('returns array of templates', async () => {
       mockPrisma.protocolTemplate.findMany.mockResolvedValue([makeTemplateRow()])
-      const result = await repo.findAllWithLockInfo(TENANT_ID)
+      const result = await repo.findAll(TENANT_ID)
       expect(result).toHaveLength(1)
       expect(result[0]!.id).toBe(TEMPLATE_ID)
     })
 
     it('returns empty array when no templates', async () => {
       mockPrisma.protocolTemplate.findMany.mockResolvedValue([])
-      const result = await repo.findAllWithLockInfo(TENANT_ID)
+      const result = await repo.findAll(TENANT_ID)
       expect(result).toEqual([])
     })
   })
@@ -214,21 +214,5 @@ describe('ProtocolTemplatesRepository', () => {
     })
   })
 
-  // ── isLocked (stub — schema reset v2) ─────────────────────────────────────
 
-  describe('isLocked', () => {
-    it('always returns false (ProtocolType removed, locking deferred to Plan 02)', async () => {
-      const result = await repo.isLocked(TEMPLATE_ID, TENANT_ID)
-      expect(result).toBe(false)
-    })
-  })
-
-  // ── getBlockingTypeIds (stub — schema reset v2) ────────────────────────────
-
-  describe('getBlockingTypeIds', () => {
-    it('returns empty array (ProtocolType removed, blocking deferred to Plan 02)', async () => {
-      const result = await repo.getBlockingTypeIds(TEMPLATE_ID, TENANT_ID)
-      expect(result).toEqual([])
-    })
-  })
 })

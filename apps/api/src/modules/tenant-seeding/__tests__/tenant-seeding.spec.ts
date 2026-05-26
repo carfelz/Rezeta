@@ -12,6 +12,7 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
+  protocolCategory: { createMany: vi.fn() },
 }
 
 const mockPrisma = {
@@ -29,6 +30,7 @@ describe('TenantSeedingService — locale names', () => {
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
     mockTx.tenant.findUnique.mockResolvedValue({ seededAt: null })
     mockTx.tenant.update.mockResolvedValue({})
+    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )

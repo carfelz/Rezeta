@@ -11,6 +11,7 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
+  protocolCategory: { createMany: vi.fn() },
 }
 
 const mockPrisma = {
@@ -29,6 +30,7 @@ describe('TenantSeedingService (unit)', () => {
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
     mockTx.tenant.findUnique.mockResolvedValue({ seededAt: null })
     mockTx.tenant.update.mockResolvedValue({})
+    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
     // Template creates return objects with sequential IDs
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
@@ -53,9 +55,24 @@ describe('TenantSeedingService (unit)', () => {
       await expect(service.seedDefault('t1')).rejects.toThrow(ConflictException)
     })
 
-    it('creates 5 templates for es locale (ProtocolType removed in schema reset v2)', async () => {
+    it('creates 5 templates for es locale', async () => {
       await service.seedDefault('t1', 'es')
       expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(5)
+    })
+
+    it('seeds 5 protocol categories with correct names and colors', async () => {
+      await service.seedDefault('t1', 'es')
+      expect(mockTx.protocolCategory.createMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({ name: 'Emergencias', color: '#EF4444', isSeeded: true }),
+            expect.objectContaining({ name: 'Diagnóstico', color: '#3B82F6', isSeeded: true }),
+            expect.objectContaining({ name: 'Medicación', color: '#22C55E', isSeeded: true }),
+            expect.objectContaining({ name: 'Procedimiento', color: '#F59E0B', isSeeded: true }),
+            expect.objectContaining({ name: 'Rehabilitación', color: '#A855F7', isSeeded: true }),
+          ]),
+        }),
+      )
     })
 
     it('creates 5 templates for en locale', async () => {

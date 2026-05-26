@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common'
+import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
 import type {
   ProtocolTemplateDto,
   CreateProtocolTemplateDto,
@@ -28,7 +28,7 @@ export class ProtocolTemplatesService {
   }
 
   async getTemplates(tenantId: string): Promise<ProtocolTemplateDto[]> {
-    const templates = await this.repo.findAllWithLockInfo(tenantId)
+    const templates = await this.repo.findAll(tenantId)
     return templates.map((t) => this.toDto(t))
   }
 
@@ -61,6 +61,7 @@ export class ProtocolTemplatesService {
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (existing.isSeeded) throw new BadRequestException('Cannot delete a system template')
     setAuditEntityName(existing.name)
     await this.repo.softDelete(id, tenantId)
   }

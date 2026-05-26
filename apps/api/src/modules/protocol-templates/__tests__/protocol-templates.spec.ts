@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException } from '@nestjs/common'
+import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { ProtocolTemplatesService } from '../protocol-templates.service.js'
 
-// ProtocolType removed in schema reset v2.
-// isLocked is always false; blockingTypeIds no longer in DTO.
-// Template locking will be re-implemented via ProtocolCategory in Plan 02.
+// ProtocolType removed in schema reset v2 (Plan 01).
+// Templates are freely editable; seeded templates cannot be deleted (Plan 02).
 
 const TENANT_ID = 'tenant-1'
 const OTHER_TENANT_ID = 'tenant-other'
@@ -27,7 +26,7 @@ const makeTemplateRow = (overrides = {}) => ({
 })
 
 const mockRepo = {
-  findAllWithLockInfo: vi.fn(),
+  findAll: vi.fn(),
   findById: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
@@ -46,14 +45,14 @@ describe('ProtocolTemplatesService', () => {
 
   describe('getTemplates', () => {
     it('returns empty array when no templates exist', async () => {
-      mockRepo.findAllWithLockInfo.mockResolvedValue([])
+      mockRepo.findAll.mockResolvedValue([])
       const result = await service.getTemplates(TENANT_ID)
       expect(result).toEqual([])
-      expect(mockRepo.findAllWithLockInfo).toHaveBeenCalledWith(TENANT_ID)
+      expect(mockRepo.findAll).toHaveBeenCalledWith(TENANT_ID)
     })
 
     it('returns only this tenant templates (cross-tenant via tenantId)', async () => {
-      mockRepo.findAllWithLockInfo.mockResolvedValue([
+      mockRepo.findAll.mockResolvedValue([
         makeTemplateRow({ name: 'Template A', isSeeded: true }),
         makeTemplateRow({ id: 'tmpl-2', name: 'Template B', isSeeded: false }),
       ])
@@ -63,13 +62,13 @@ describe('ProtocolTemplatesService', () => {
     })
 
     it('maps isLocked=false (ProtocolType removed, locking deferred to Plan 02)', async () => {
-      mockRepo.findAllWithLockInfo.mockResolvedValue([makeTemplateRow()])
+      mockRepo.findAll.mockResolvedValue([makeTemplateRow()])
       const [t] = await service.getTemplates(TENANT_ID)
       expect(t!.isLocked).toBe(false)
     })
 
     it('returns template with correct name and schema', async () => {
-      mockRepo.findAllWithLockInfo.mockResolvedValue([makeTemplateRow({ name: 'My Template' })])
+      mockRepo.findAll.mockResolvedValue([makeTemplateRow({ name: 'My Template' })])
       const [t] = await service.getTemplates(TENANT_ID)
       expect(t!.name).toBe('My Template')
       expect(t!.schema).toEqual(MINIMAL_SCHEMA)
@@ -158,20 +157,24 @@ describe('ProtocolTemplatesService', () => {
   // ── delete ─────────────────────────────────────────────────────────────────
 
   describe('delete', () => {
-    it('soft-deletes a template', async () => {
-      mockRepo.findById.mockResolvedValue(makeTemplateRow())
+    it('soft-deletes a non-seeded template', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow({ isSeeded: false }))
       mockRepo.softDelete.mockResolvedValue(undefined)
 
       await service.delete(TEMPLATE_ID, TENANT_ID)
       expect(mockRepo.softDelete).toHaveBeenCalledWith(TEMPLATE_ID, TENANT_ID)
     })
 
-    it('succeeds even when template has existing types (locking removed in schema reset v2)', async () => {
-      mockRepo.findById.mockResolvedValue(makeTemplateRow())
-      mockRepo.softDelete.mockResolvedValue(undefined)
+    it('throws BadRequestException when deleting a seeded template', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow({ isSeeded: true }))
+      await expect(service.delete(TEMPLATE_ID, TENANT_ID)).rejects.toThrow(BadRequestException)
+      expect(mockRepo.softDelete).not.toHaveBeenCalled()
+    })
 
-      await service.delete(TEMPLATE_ID, TENANT_ID)
-      expect(mockRepo.softDelete).toHaveBeenCalled()
+    it('update does not throw when template is referenced by protocols', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow())
+      mockRepo.update.mockResolvedValue(makeTemplateRow({ name: 'Updated' }))
+      await expect(service.update(TEMPLATE_ID, TENANT_ID, { name: 'Updated' })).resolves.not.toThrow()
     })
 
     it('throws 404 TEMPLATE_NOT_FOUND for cross-tenant template', async () => {
@@ -180,11 +183,11 @@ describe('ProtocolTemplatesService', () => {
     })
   })
 
-  // ── isLocked always false (schema reset v2) ───────────────────────────────
+  // ── isLocked always false (schema reset v2 — Plan 02) ────────────────────
 
   describe('isLocked flag in list response', () => {
-    it('isLocked=false for all templates (ProtocolType removed, deferred to Plan 02)', async () => {
-      mockRepo.findAllWithLockInfo.mockResolvedValue([
+    it('isLocked=false for all templates (ProtocolType removed)', async () => {
+      mockRepo.findAll.mockResolvedValue([
         makeTemplateRow({ name: 'Template A' }),
         makeTemplateRow({ id: 'tmpl-2', name: 'Template B' }),
       ])

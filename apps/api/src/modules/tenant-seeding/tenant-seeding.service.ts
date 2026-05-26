@@ -57,7 +57,7 @@ export class TenantSeedingService {
       }
 
       // Insert 5 templates
-      const createdTemplates = await Promise.all(
+      await Promise.all(
         fixtures.map((f) =>
           tx.protocolTemplate.create({
             data: {
@@ -71,8 +71,17 @@ export class TenantSeedingService {
         ),
       )
 
-      // ProtocolType removed — categories will be seeded in Plan 02
-      void createdTemplates // suppress unused warning
+      // Seed 5 default protocol categories
+      await tx.protocolCategory.createMany({
+        skipDuplicates: true,
+        data: [
+          { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
+          { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
+          { tenantId, name: 'Medicación', color: '#22C55E', isSeeded: true },
+          { tenantId, name: 'Procedimiento', color: '#F59E0B', isSeeded: true },
+          { tenantId, name: 'Rehabilitación', color: '#A855F7', isSeeded: true },
+        ],
+      })
 
       await tx.tenant.update({
         where: { id: tenantId },
@@ -133,8 +142,19 @@ export class TenantSeedingService {
         clientIdToServerId.set(t.clientId, created.id)
       }
 
-      // ProtocolType removed — types are now categories (Plan 02 will handle migration)
-      void types // suppress unused warning
+      // Seed 5 default protocol categories (custom path still gets the defaults)
+      await tx.protocolCategory.createMany({
+        skipDuplicates: true,
+        data: [
+          { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
+          { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
+          { tenantId, name: 'Medicación', color: '#22C55E', isSeeded: true },
+          { tenantId, name: 'Procedimiento', color: '#F59E0B', isSeeded: true },
+          { tenantId, name: 'Rehabilitación', color: '#A855F7', isSeeded: true },
+        ],
+      })
+
+      void types
 
       await tx.tenant.update({
         where: { id: tenantId },
