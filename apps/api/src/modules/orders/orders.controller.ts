@@ -71,6 +71,20 @@ import { OrdersService, type GenerateAllOrdersResult } from './orders.service.js
 export class OrdersController {
   constructor(@Inject(OrdersService) private svc: OrdersService) {}
 
+  // ── Combined orders ────────────────────────────────────────────────────────
+
+  @Get('orders')
+  @ApiOperation({ summary: 'Get all orders (prescriptions, imaging, lab) for consultation' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'CONSULTATION_NOT_FOUND' })
+  getOrders(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+  ): Promise<{ prescriptions: Prescription[]; imagingOrders: ImagingOrder[]; labOrders: LabOrder[] }> {
+    return this.svc.getOrdersForConsultation(consultationId, tenantId)
+  }
+
   // ── Prescriptions ──────────────────────────────────────────────────────────
 
   @Get('prescriptions')

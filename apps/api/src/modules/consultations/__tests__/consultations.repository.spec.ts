@@ -50,6 +50,13 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
   }
 }
 
+const mockTx = {
+  protocolUsage: { updateMany: vi.fn() },
+  prescription: { updateMany: vi.fn() },
+  labOrder: { updateMany: vi.fn() },
+  imagingOrder: { updateMany: vi.fn() },
+}
+
 const mockPrisma = {
   consultation: {
     findMany: vi.fn(),
@@ -66,7 +73,12 @@ const mockPrisma = {
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
+  prescription: { updateMany: vi.fn() },
+  labOrder: { updateMany: vi.fn() },
+  imagingOrder: { updateMany: vi.fn() },
+  $transaction: vi.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
 }
 
 describe('ConsultationsRepository', () => {
@@ -201,6 +213,51 @@ describe('ConsultationsRepository', () => {
       const data = mockPrisma.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
       expect(data.signedAt).toBeInstanceOf(Date)
+    })
+
+    it('atomically completes in-progress protocol usages', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      expect(mockTx.protocolUsage.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ consultationId: 'c1', status: 'in_progress' }),
+          data: expect.objectContaining({ status: 'completed' }),
+        }),
+      )
+    })
+
+    it('atomically signs queued prescriptions', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      expect(mockTx.prescription.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ consultationId: 'c1', status: 'queued' }),
+          data: expect.objectContaining({ status: 'signed' }),
+        }),
+      )
+    })
+
+    it('atomically signs queued lab and imaging orders', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      expect(mockTx.labOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ consultationId: 'c1', status: 'queued' }),
+          data: expect.objectContaining({ status: 'signed' }),
+        }),
+      )
+      expect(mockTx.imagingOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ consultationId: 'c1', status: 'queued' }),
+          data: expect.objectContaining({ status: 'signed' }),
+        }),
+      )
     })
   })
 

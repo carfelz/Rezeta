@@ -412,6 +412,34 @@ export class OrdersRepository {
     return rows.map(toLabOrder)
   }
 
+  async getOrdersForConsultation(
+    consultationId: string,
+    tenantId: string,
+  ): Promise<{ prescriptions: Prescription[]; imagingOrders: ImagingOrder[]; labOrders: LabOrder[] }> {
+    const [prescriptions, imagingOrders, labOrders] = await Promise.all([
+      this.prisma.prescription.findMany({
+        where: { consultationId, tenantId, deletedAt: null },
+        include: PRESCRIPTION_INCLUDE,
+        orderBy: { groupOrder: 'asc' },
+      }),
+      this.prisma.imagingOrder.findMany({
+        where: { consultationId, tenantId, deletedAt: null },
+        include: IMAGING_ORDER_INCLUDE,
+        orderBy: [{ groupOrder: 'asc' }, { createdAt: 'asc' }],
+      }),
+      this.prisma.labOrder.findMany({
+        where: { consultationId, tenantId, deletedAt: null },
+        include: LAB_ORDER_INCLUDE,
+        orderBy: [{ groupOrder: 'asc' }, { createdAt: 'asc' }],
+      }),
+    ])
+    return {
+      prescriptions: prescriptions.map(toPrescription),
+      imagingOrders: imagingOrders.map(toImagingOrder),
+      labOrders: labOrders.map(toLabOrder),
+    }
+  }
+
   async softDeletePrescription(id: string, tenantId: string): Promise<void> {
     await this.prisma.prescription.update({
       where: { id, tenantId },

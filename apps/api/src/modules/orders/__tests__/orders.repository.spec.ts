@@ -291,6 +291,43 @@ describe('OrdersRepository', () => {
     })
   })
 
+  // ── getOrdersForConsultation ───────────────────────────────────────────────
+
+  describe('getOrdersForConsultation', () => {
+    it('returns combined prescriptions, imaging orders, and lab orders', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([makeRxRow()])
+      mockPrisma.imagingOrder.findMany.mockResolvedValue([makeImagingRow({ items: [makeImagingItem()] })])
+      mockPrisma.labOrder.findMany.mockResolvedValue([makeLabRow({ items: [makeLabItem()] })])
+      const result = await repo.getOrdersForConsultation('c1', 't1')
+      expect(result.prescriptions).toHaveLength(1)
+      expect(result.imagingOrders).toHaveLength(1)
+      expect(result.labOrders).toHaveLength(1)
+    })
+
+    it('filters by consultationId and tenantId for all order types', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([])
+      mockPrisma.imagingOrder.findMany.mockResolvedValue([])
+      mockPrisma.labOrder.findMany.mockResolvedValue([])
+      await repo.getOrdersForConsultation('c1', 't1')
+      const rxWhere = mockPrisma.prescription.findMany.mock.calls[0][0].where
+      expect(rxWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
+      const imgWhere = mockPrisma.imagingOrder.findMany.mock.calls[0][0].where
+      expect(imgWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
+      const labWhere = mockPrisma.labOrder.findMany.mock.calls[0][0].where
+      expect(labWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
+    })
+
+    it('returns empty arrays when no orders exist', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([])
+      mockPrisma.imagingOrder.findMany.mockResolvedValue([])
+      mockPrisma.labOrder.findMany.mockResolvedValue([])
+      const result = await repo.getOrdersForConsultation('c1', 't1')
+      expect(result.prescriptions).toHaveLength(0)
+      expect(result.imagingOrders).toHaveLength(0)
+      expect(result.labOrders).toHaveLength(0)
+    })
+  })
+
   // ── mapping edge cases ─────────────────────────────────────────────────────
 
   describe('field mapping', () => {

@@ -79,6 +79,14 @@ export class OrdersService {
     return p
   }
 
+  async getOrdersForConsultation(
+    consultationId: string,
+    tenantId: string,
+  ): Promise<{ prescriptions: Prescription[]; imagingOrders: ImagingOrder[]; labOrders: LabOrder[] }> {
+    await this.getConsultationPatient(consultationId, tenantId)
+    return this.repo.getOrdersForConsultation(consultationId, tenantId)
+  }
+
   async createImagingOrder(
     consultationId: string,
     tenantId: string,
