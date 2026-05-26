@@ -68,12 +68,11 @@ describe('OnboardingService', () => {
       expect(starters).toHaveLength(5)
     })
 
-    it('each candidate has clientId, name, typeName, schema', () => {
+    it('each candidate has clientId, name, schema', () => {
       const starters = service.getStarters()
       for (const s of starters) {
         expect(s).toHaveProperty('clientId')
         expect(s).toHaveProperty('name')
-        expect(s).toHaveProperty('typeName')
         expect(s).toHaveProperty('schema')
       }
     })

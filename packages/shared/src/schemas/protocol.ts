@@ -329,7 +329,6 @@ export const ProtocolTemplateDtoSchema = z.object({
   suggestedSpecialty: z.string().nullable(),
   schema: z.any(),
   isSeeded: z.boolean(),
-  isLocked: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })

@@ -21,7 +21,6 @@ export class ProtocolTemplatesService {
       suggestedSpecialty: t.suggestedSpecialty,
       schema: t.schema,
       isSeeded: t.isSeeded,
-      isLocked: false,
       createdAt: t.createdAt.toISOString(),
       updatedAt: t.updatedAt.toISOString(),
     }

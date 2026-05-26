@@ -27,7 +27,6 @@ const authUser = {
 const starterCandidate = {
   clientId: 'starter-0',
   name: 'Intervención de emergencia',
-  typeName: 'Emergencia',
   schema: { version: '1.0', blocks: [] },
 }
 

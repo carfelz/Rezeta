@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
 import {
   useProtocolTemplates,
   useDeleteProtocolTemplate,
@@ -17,10 +16,6 @@ export function Templates(): JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<ProtocolTemplateDto | null>(null)
 
   function handleDelete(t: ProtocolTemplateDto) {
-    if (t.isLocked) {
-      toast.error(templatesStrings.deleteLocked)
-      return
-    }
     setDeleteTarget(t)
   }
 
@@ -111,10 +106,6 @@ export function Templates(): JSX.Element {
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isSeeded ? (
                       <Badge variant="draft">{templatesStrings.listSeededBadge}</Badge>
-                    ) : t.isLocked ? (
-                      <Badge variant="review">
-                        {templatesStrings.listBlockedBy(0)}
-                      </Badge>
                     ) : (
                       <Badge variant="active">Activa</Badge>
                     )}
@@ -133,21 +124,19 @@ export function Templates(): JSX.Element {
                         size="sm"
                         onClick={() => void navigate(`/ajustes/plantillas/${t.id}/edit`)}
                       >
-                        {t.isLocked ? 'Ver' : templatesStrings.listEdit}
+                        {templatesStrings.listEdit}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-[28px] px-0"
                         title={templatesStrings.listDelete}
-                        disabled={t.isLocked || deletingId === t.id}
+                        disabled={deletingId === t.id}
                         onClick={() => handleDelete(t)}
                       >
                         <i
                           className="ph ph-trash text-[15px]"
-                          style={{
-                            color: t.isLocked ? 'var(--color-n-300)' : 'var(--color-danger-text)',
-                          }}
+                          style={{ color: 'var(--color-danger-text)' }}
                         />
                       </Button>
                     </div>

@@ -13,7 +13,6 @@ import { getStarterFixtures } from '../../lib/starter-fixtures/index.js'
 export interface StarterCandidate {
   clientId: string
   name: string
-  typeName: string
   schema: object
 }
 
@@ -29,7 +28,6 @@ export class OnboardingService {
     return getStarterFixtures(locale).map((f, i) => ({
       clientId: `starter-${i}`,
       name: f.name,
-      typeName: f.typeName,
       schema: f.schema,
     }))
   }

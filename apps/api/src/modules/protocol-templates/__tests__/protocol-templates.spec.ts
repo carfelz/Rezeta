@@ -61,10 +61,11 @@ describe('ProtocolTemplatesService', () => {
       expect(result.every((t) => t.tenantId === TENANT_ID)).toBe(true)
     })
 
-    it('maps isLocked=false (ProtocolType removed, locking deferred to Plan 02)', async () => {
+    it('maps template fields correctly (ProtocolType removed in schema reset v2)', async () => {
       mockRepo.findAll.mockResolvedValue([makeTemplateRow()])
       const [t] = await service.getTemplates(TENANT_ID)
-      expect(t!.isLocked).toBe(false)
+      expect(t!.id).toBe(TEMPLATE_ID)
+      expect(t!.tenantId).toBe(TENANT_ID)
     })
 
     it('returns template with correct name and schema', async () => {
@@ -78,12 +79,11 @@ describe('ProtocolTemplatesService', () => {
   // ── findById ───────────────────────────────────────────────────────────────
 
   describe('findById', () => {
-    it('returns template with lock info', async () => {
+    it('returns template with correct fields', async () => {
       mockRepo.findById.mockResolvedValue(makeTemplateRow())
       const t = await service.findById(TEMPLATE_ID, TENANT_ID)
       expect(t.id).toBe(TEMPLATE_ID)
       expect(t.name).toBe('Fetch Me')
-      expect(t.isLocked).toBe(false)
     })
 
     it('throws 404 TEMPLATE_NOT_FOUND for cross-tenant template', async () => {
@@ -112,7 +112,6 @@ describe('ProtocolTemplatesService', () => {
 
       expect(result.name).toBe('New Template')
       expect(result.tenantId).toBe(TENANT_ID)
-      expect(result.isLocked).toBe(false)
     })
 
     it('calls repo.create with correct tenantId and userId', async () => {
@@ -183,16 +182,17 @@ describe('ProtocolTemplatesService', () => {
     })
   })
 
-  // ── isLocked always false (schema reset v2 — Plan 02) ────────────────────
+  // ── list returns correct fields (schema reset v2 — Plan 02) ────────────────
 
-  describe('isLocked flag in list response', () => {
-    it('isLocked=false for all templates (ProtocolType removed)', async () => {
+  describe('template list response fields', () => {
+    it('returns all templates with correct isSeeded values', async () => {
       mockRepo.findAll.mockResolvedValue([
-        makeTemplateRow({ name: 'Template A' }),
-        makeTemplateRow({ id: 'tmpl-2', name: 'Template B' }),
+        makeTemplateRow({ name: 'Template A', isSeeded: true }),
+        makeTemplateRow({ id: 'tmpl-2', name: 'Template B', isSeeded: false }),
       ])
       const result = await service.getTemplates(TENANT_ID)
-      expect(result.every((t) => t.isLocked === false)).toBe(true)
+      expect(result[0]!.isSeeded).toBe(true)
+      expect(result[1]!.isSeeded).toBe(false)
     })
   })
 })

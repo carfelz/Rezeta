@@ -43,11 +43,11 @@ describe('TenantSeedingService — locale names', () => {
       (call) => (call[0] as { data: { name: string } }).data.name,
     )
 
-    expect(names).toContain('Intervención de emergencia')
-    expect(names).toContain('Procedimiento clínico')
-    expect(names).toContain('Referencia farmacológica')
-    expect(names).toContain('Algoritmo diagnóstico')
-    expect(names).toContain('Sesión de fisioterapia')
+    expect(names).toContain('Consulta General')
+    expect(names).toContain('Consulta de Emergencia')
+    expect(names).toContain('Seguimiento Crónico')
+    expect(names).toContain('Procedimiento')
+    expect(names).toContain('Orden de Estudios')
   })
 
   it('seedDefault: English locale creates templates with expected English names', async () => {
@@ -57,8 +57,8 @@ describe('TenantSeedingService — locale names', () => {
       (call) => (call[0] as { data: { name: string } }).data.name,
     )
 
-    expect(names).toContain('Emergency Intervention')
-    expect(names).toContain('Clinical Procedure')
+    expect(names).toContain('General Consultation')
+    expect(names).toContain('Emergency Consultation')
   })
 
   it('seedDefault: sets isSeeded=true on all templates', async () => {

@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(api): resolve spec gaps — remove lock stubs, add vitals/clinical_notes to seeded templates (feat/protocol-api-simplification)
+
+### Changed
+
+- **`apps/api/src/modules/protocol-templates/protocol-templates.controller.ts`**: Removed stale Swagger 409 responses and lock-rule descriptions from `PATCH` and `DELETE` endpoints.
+- **`apps/api/src/modules/protocol-templates/protocol-templates.service.ts`**: Removed `isLocked: false` stub from `toDto()` mapper.
+- **`packages/shared/src/schemas/protocol.ts`**: Removed `isLocked` field from `ProtocolTemplateDtoSchema` and rebuilt the shared package output.
+- **`apps/api/src/lib/starter-fixtures/index.ts`**: Replaced all 5 seeded template schemas with new clinical templates (Consulta General, Consulta de Emergencia, Seguimiento Crónico, Procedimiento, Orden de Estudios) using `vitals`, `clinical_notes`, `steps`, `checklist`, `lab_order`, and `imaging_order` block types. Removed `typeName` from `TemplateFixture` interface.
+- **`apps/api/src/modules/onboarding/onboarding.service.ts`**: Removed `typeName` from `StarterCandidate` interface and `getStarters()` map.
+- **`apps/web/src/pages/settings/Templates.tsx`**: Removed `isLocked`-gated delete logic and status badge; removed unused `toast` import.
+- **`apps/web/src/pages/settings/TemplateEditor.tsx`**: Replaced `template.isLocked` with hardcoded `false` since lock concept is removed.
+
+### Fixed
+
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.spec.ts`**: Updated tests that asserted `isLocked === false` to instead verify correct field presence.
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.controller.spec.ts`**: Removed `isLocked`/`blockingTypeIds` from template DTO fixture.
+- **`apps/api/src/modules/onboarding/__tests__/onboarding.service.spec.ts`**: Removed `typeName` property assertion.
+- **`apps/api/src/modules/onboarding/__tests__/onboarding.controller.spec.ts`**: Removed `typeName` from starter candidate fixture.
+- **`apps/api/src/modules/tenant-seeding/__tests__/tenant-seeding.spec.ts`**: Updated template name assertions to match new seeded template names.
+
 ## [2026-05-26] — Plan 02: replace protocol-types with protocol-categories (feat/protocol-api-simplification)
 
 ### Added

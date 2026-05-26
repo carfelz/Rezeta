@@ -109,7 +109,7 @@ export function TemplateEditor(): JSX.Element {
       <TemplateEditorWidget
         key={template.id}
         initialState={initialState}
-        isLocked={template.isLocked}
+        isLocked={false}
         blockingTypeIds={[]}
         isSaving={updateMutation.isPending}
         onSave={(name, specialty, schema) => {

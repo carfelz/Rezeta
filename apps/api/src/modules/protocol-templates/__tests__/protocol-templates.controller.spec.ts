@@ -33,8 +33,6 @@ const templateDto = {
   suggestedSpecialty: null,
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
-  isLocked: false,
-  blockingTypeIds: [] as string[],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
   createdBy: 'u1',
