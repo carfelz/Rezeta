@@ -185,6 +185,10 @@ export function Protocols(): JSX.Element {
               active={typeId === t.id}
               onClick={() => setTypeId(typeId === t.id ? undefined : t.id)}
             >
+              <span
+                className="inline-block w-2 h-2 rounded-full shrink-0 mr-1"
+                style={{ backgroundColor: t.color }}
+              />
               {t.name}
             </FilterChip>
           ))}
