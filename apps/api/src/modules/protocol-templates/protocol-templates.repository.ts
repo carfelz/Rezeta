@@ -64,13 +64,4 @@ export class ProtocolTemplatesRepository {
       data: { deletedAt: new Date() },
     })
   }
-
-  // ProtocolType removed — templates are no longer locked by types (Plan 02 will add category locking)
-  isLocked(_id: string, _tenantId: string): Promise<boolean> {
-    return Promise.resolve(false)
-  }
-
-  getBlockingTypeIds(_id: string, _tenantId: string): Promise<string[]> {
-    return Promise.resolve([])
-  }
 }

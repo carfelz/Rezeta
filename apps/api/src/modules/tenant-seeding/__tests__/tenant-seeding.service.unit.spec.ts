@@ -11,6 +11,7 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
+  protocolCategory: { createMany: vi.fn() },
 }
 
 const mockPrisma = {
@@ -33,6 +34,7 @@ describe('TenantSeedingService (unit)', () => {
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )
+    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
   })
 
   // ── seedDefault ────────────────────────────────────────────────────────────
@@ -68,6 +70,29 @@ describe('TenantSeedingService (unit)', () => {
       for (const call of mockTx.protocolTemplate.create.mock.calls) {
         expect((call[0] as { data: { isSeeded: boolean } }).data.isSeeded).toBe(true)
       }
+    })
+
+    it('seeds 5 protocol categories for es locale', async () => {
+      await service.seedDefault('t1', 'es')
+      expect(mockTx.protocolCategory.createMany).toHaveBeenCalledTimes(1)
+      const arg = mockTx.protocolCategory.createMany.mock.calls[0][0] as {
+        data: { name: string; color: string; isSeeded: boolean }[]
+      }
+      expect(arg.data).toHaveLength(5)
+      expect(arg.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Emergencias', color: '#EF4444', isSeeded: true }),
+          expect.objectContaining({ name: 'Diagnóstico', color: '#3B82F6', isSeeded: true }),
+        ]),
+      )
+    })
+
+    it('seeds English category names for en locale', async () => {
+      await service.seedDefault('t1', 'en')
+      const arg = mockTx.protocolCategory.createMany.mock.calls[0][0] as {
+        data: { name: string }[]
+      }
+      expect(arg.data.map((c) => c.name)).toContain('Emergencies')
     })
 
     it('updates tenant.seededAt inside the transaction', async () => {

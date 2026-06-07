@@ -121,8 +121,7 @@ export class ProtocolTemplatesController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a template',
-    description:
-      'Updates template name or schema. **Rejected if any ProtocolType references this template (lock rule).**',
+    description: 'Updates template name or schema. Templates are freely editable.',
   })
   @ApiParam({ name: 'id', format: 'uuid', example: TEMPLATE_ID })
   @ApiBody({
@@ -136,7 +135,7 @@ export class ProtocolTemplatesController {
     },
   })
   @ApiResponse({ status: 200, description: 'Updated template.' })
-  @ApiResponse({ status: 409, description: 'Template is locked by one or more ProtocolTypes.' })
+  @ApiResponse({ status: 404, description: 'Template not found.' })
   async updateTemplate(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(UpdateProtocolTemplateSchema)) body: unknown,
@@ -150,12 +149,12 @@ export class ProtocolTemplatesController {
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete a template',
-    description:
-      'Soft-deletes a template. **Rejected if any ProtocolType references it (lock rule).**',
+    description: 'Soft-deletes a template. Seeded system templates cannot be deleted.',
   })
   @ApiParam({ name: 'id', format: 'uuid', example: TEMPLATE_ID })
   @ApiResponse({ status: 204, description: 'Template deleted.' })
-  @ApiResponse({ status: 409, description: 'Template is locked by one or more ProtocolTypes.' })
+  @ApiResponse({ status: 400, description: 'Cannot delete a seeded system template.' })
+  @ApiResponse({ status: 404, description: 'Template not found.' })
   async deleteTemplate(@Param('id') id: string, @TenantId() tenantId: string): Promise<void> {
     return this.service.delete(id, tenantId)
   }

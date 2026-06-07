@@ -213,22 +213,4 @@ describe('ProtocolTemplatesRepository', () => {
       expect(result).toBeUndefined()
     })
   })
-
-  // ── isLocked (stub — schema reset v2) ─────────────────────────────────────
-
-  describe('isLocked', () => {
-    it('always returns false (ProtocolType removed, locking deferred to Plan 02)', async () => {
-      const result = await repo.isLocked(TEMPLATE_ID, TENANT_ID)
-      expect(result).toBe(false)
-    })
-  })
-
-  // ── getBlockingTypeIds (stub — schema reset v2) ────────────────────────────
-
-  describe('getBlockingTypeIds', () => {
-    it('returns empty array (ProtocolType removed, blocking deferred to Plan 02)', async () => {
-      const result = await repo.getBlockingTypeIds(TEMPLATE_ID, TENANT_ID)
-      expect(result).toEqual([])
-    })
-  })
 })

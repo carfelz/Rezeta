@@ -12,6 +12,7 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
+  protocolCategory: { createMany: vi.fn() },
 }
 
 const mockPrisma = {
@@ -32,6 +33,7 @@ describe('TenantSeedingService — locale names', () => {
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )
+    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
   })
 
   it('seedDefault: Spanish locale creates 5 templates with expected Spanish names', async () => {
