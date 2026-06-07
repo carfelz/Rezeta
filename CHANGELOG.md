@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-07] — consultation API redesign (plan 03): atomic sign
+
+### Changed
+
+- **`apps/api/src/modules/consultations/consultations.repository.ts`**: `sign()` now runs a single `$transaction` that completes in-progress `ProtocolUsage` records (`in_progress` → `completed`) and signs all queued orders (`Prescription`/`LabOrder`/`ImagingOrder`: `queued` → `signed`, `signedAt` stamped) before marking the consultation `signed`. Previously only the consultation row was updated, leaving usages and orders in their working state. Matches `specs/updated-specs/01-consultation-workflow.md` §5.
+- **`apps/api/src/modules/consultations/consultations.controller.ts`** / **`consultations.service.ts`**: Refreshed stale `draft` wording in OpenAPI summaries and a comment (consultation status has been `open` since the schema reset).
+
+### Notes
+
+- The rest of plan 03 (walk-in create with optional `appointmentId`, `open → signed → amended` status, `POST/PATCH/DELETE /v1/consultations/:id/protocols` protocol-usage management, and the normalized imaging/lab order group CRUD with item sub-tables) was already implemented during the schema-reset-v2 work; this change closes the remaining sign-cascade gap.
+
 ## [2026-06-07] — protocol API simplification (plan 02): types → categories
 
 ### Added
