@@ -4,6 +4,37 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-07] — protocol API simplification (plan 02): types → categories
+
+### Added
+
+- **`apps/api/src/modules/protocol-categories/`**: New module (repository, service, controller, module, index) exposing `GET/POST/PATCH/DELETE /v1/protocol-categories`. Categories are tenant-scoped, soft-deleted, and seeded categories cannot be deleted (`PROTOCOL_CATEGORY_SEEDED_IMMUTABLE`). Service, controller and repository specs added (per-file coverage ≥95%).
+- **`apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`**: `seedDefault` now seeds 5 locale-aware default protocol categories (Emergencias/Diagnóstico/Medicación/Procedimiento/Rehabilitación and English equivalents) with `isSeeded=true`.
+
+### Changed
+
+- **`apps/api/src/app.module.ts`**: Replaced `ProtocolTypesModule` with `ProtocolCategoriesModule`.
+- **`apps/api/src/modules/protocols/protocols.controller.ts`**: Protocol list filter and create payload now use `categoryId` instead of `typeId` (OpenAPI docs + query param); `categoryId` is optional.
+- **`apps/api/src/modules/protocol-templates/`**: Removed all template lock rules — templates are freely editable. Deleting a seeded system template now returns 400; dead `isLocked`/`getBlockingTypeIds` repository stubs removed.
+- **`packages/shared/src/errors.ts`**: Replaced `PROTOCOL_TYPE_*` error codes with `PROTOCOL_CATEGORY_*`; replaced unused `PROTOCOL_TEMPLATE_LOCKED` with `PROTOCOL_TEMPLATE_SEEDED_IMMUTABLE`.
+- **`apps/api/test/protocols.integration.ts`**: Migrated to `/v1/protocol-categories` + optional `categoryId`; added a scratch-mode (no category) create case; removed type-validation cases that no longer apply.
+
+### Removed
+
+- **`apps/api/src/modules/protocol-types/`**: Deleted the entire ProtocolType module (controller, service, repository, module, tests).
+
+### Notes
+
+- Frontend still references the removed `/v1/protocol-types` endpoints (`apps/web` protocol-types hook, Types settings page, `useGetProtocols` `typeId` filter) and the `ProtocolType` shared type. These are intentionally deferred to the frontend redesign (plan 04); the web app will 404 against those endpoints until then.
+- Starter templates in `starter-fixtures/index.ts` were kept unchanged (user decision); `vitals`/`clinical_notes` block types remain available for authors.
+
+## [2026-06-02] — full dev seed for test@test.com
+
+### Added
+
+- **`tools/seed-test-user.ts`**: Idempotent full-data seed for the dev user `test@test.com` (password `Test12345`). Get-or-creates the Firebase user, tenant and owner doctor, then wipes and rebuilds the tenant's clinical data (FK-safe order) so it is safe to re-run. Populates 2 locations (owned + commissioned) with doctor links, weekly `ScheduleBlock`s and a `ScheduleException`; 8 patients (cedula/passport, allergies, chronic conditions); 2 protocol categories, 1 authoring `ProtocolTemplate`, and 2 active `Protocol`s with approved `ProtocolVersion`s (block-based content: `vitals`, `checklist`, `dosage_table`, `lab_order`, `alert`, `clinical_notes`); 4 completed visits each wiring `Appointment` → signed `Consultation` → `ProtocolUsage` (vitals filled) → signed `Prescription` + `LabOrder` → paid `Invoice`; one in-progress consultation for today; one issued (unpaid) invoice; scheduled/cancelled/no-show appointments; and `AuditLog` entries.
+- **`package.json`**: Added `seed:test-user` script (`tsx --env-file=.env tools/seed-test-user.ts`).
+
 ## [2026-05-26] — fix CI failures on feat/schema-reset-v2: db coverage crash + shared branch coverage
 
 ### Fixed
