@@ -25,6 +25,7 @@
     "db:migrate:dev": "pnpm --filter @rezeta/db migrate:dev",
     "db:seed": "pnpm --filter @rezeta/db seed && tsx --env-file=.env tools/seed-dev-users.ts",
     "seed:dev-users": "tsx --env-file=.env tools/seed-dev-users.ts",
+    "seed:test-user": "tsx --env-file=.env tools/seed-test-user.ts",
     "db:reset": "pnpm --filter @rezeta/db migrate:reset",
     "db:studio": "pnpm --filter @rezeta/db studio",
     "demo:data": "tsx tools/create-demo-data.ts",

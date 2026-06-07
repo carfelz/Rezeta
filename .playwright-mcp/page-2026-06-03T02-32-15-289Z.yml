@@ -1,0 +1,19 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: R
+      - heading "Bienvenido a Rezeta" [level=1] [ref=e7]
+      - paragraph [ref=e8]: Inicia sesión para continuar
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: Correo electrónico
+        - textbox "doctor@ejemplo.com" [ref=e12]
+      - generic [ref=e13]:
+        - generic [ref=e14]: Contraseña
+        - textbox "••••••••" [ref=e15]
+      - button "Iniciar sesión" [ref=e16] [cursor=pointer]
+      - paragraph [ref=e17]:
+        - text: ¿No tienes cuenta?
+        - link "Regístrate" [ref=e18] [cursor=pointer]:
+          - /url: /signup
+  - region "Notifications alt+T"
