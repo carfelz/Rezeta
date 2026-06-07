@@ -45,7 +45,7 @@ import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ProtocolsService } from './protocols.service.js'
 
 const PROTOCOL_ID = '018e3f2a-2222-7000-8000-000000000001'
-const TYPE_ID = '018e3f2a-3333-7000-8000-000000000001'
+const CATEGORY_ID = '018e3f2a-3333-7000-8000-000000000001'
 const VERSION_ID = '018e3f2a-4444-7000-8000-000000000001'
 
 @ApiTags('Protocols')
@@ -59,7 +59,7 @@ export class ProtocolsController {
   @ApiOperation({
     summary: 'List protocols',
     description:
-      'Returns all protocols for the tenant. Supports filtering by type and full-text search.',
+      'Returns all protocols for the tenant. Supports filtering by category and full-text search.',
   })
   @ApiQuery({
     name: 'search',
@@ -68,10 +68,10 @@ export class ProtocolsController {
     example: 'anafilaxia',
   })
   @ApiQuery({
-    name: 'typeId',
+    name: 'categoryId',
     required: false,
-    description: 'Filter by protocol type UUID.',
-    example: TYPE_ID,
+    description: 'Filter by protocol category UUID.',
+    example: CATEGORY_ID,
   })
   @ApiQuery({
     name: 'favorites',
@@ -93,16 +93,16 @@ export class ProtocolsController {
   @ApiOperation({
     summary: 'Create a protocol',
     description:
-      'Creates a new protocol under the given type. The template behind the type seeds the initial version content.',
+      'Creates a new protocol, optionally tagged with a category. Starts with an empty initial version.',
   })
   @ApiBody({
     description: 'Protocol creation payload.',
     schema: {
       type: 'object',
-      required: ['title', 'typeId'],
+      required: ['title'],
       properties: {
         title: { type: 'string', example: 'Manejo de anafilaxia' },
-        typeId: { type: 'string', format: 'uuid', example: TYPE_ID },
+        categoryId: { type: 'string', format: 'uuid', example: CATEGORY_ID },
       },
     },
   })
