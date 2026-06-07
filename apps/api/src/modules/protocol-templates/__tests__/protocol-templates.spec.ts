@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException } from '@nestjs/common'
+import { NotFoundException, BadRequestException } from '@nestjs/common'
 import { ProtocolTemplatesService } from '../protocol-templates.service.js'
 
 // ProtocolType removed in schema reset v2.
@@ -177,6 +177,12 @@ describe('ProtocolTemplatesService', () => {
     it('throws 404 TEMPLATE_NOT_FOUND for cross-tenant template', async () => {
       mockRepo.findById.mockResolvedValue(null)
       await expect(service.delete(TEMPLATE_ID, OTHER_TENANT_ID)).rejects.toThrow(NotFoundException)
+    })
+
+    it('throws 400 when deleting a seeded system template', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow({ isSeeded: true }))
+      await expect(service.delete(TEMPLATE_ID, TENANT_ID)).rejects.toThrow(BadRequestException)
+      expect(mockRepo.softDelete).not.toHaveBeenCalled()
     })
   })
 

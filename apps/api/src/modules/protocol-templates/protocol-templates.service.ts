@@ -1,8 +1,9 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common'
-import type {
-  ProtocolTemplateDto,
-  CreateProtocolTemplateDto,
-  UpdateProtocolTemplateDto,
+import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
+import {
+  ErrorCode,
+  type ProtocolTemplateDto,
+  type CreateProtocolTemplateDto,
+  type UpdateProtocolTemplateDto,
 } from '@rezeta/shared'
 import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolTemplatesRepository } from './protocol-templates.repository.js'
@@ -61,6 +62,12 @@ export class ProtocolTemplatesService {
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (existing.isSeeded) {
+      throw new BadRequestException({
+        code: ErrorCode.PROTOCOL_TEMPLATE_SEEDED_IMMUTABLE,
+        message: 'Cannot delete a system template',
+      })
+    }
     setAuditEntityName(existing.name)
     await this.repo.softDelete(id, tenantId)
   }

@@ -52,7 +52,7 @@ export const ErrorCode = {
 
   // ── Protocol Template ───────────────────────────────────────
   PROTOCOL_TEMPLATE_NOT_FOUND: 'PROTOCOL_TEMPLATE_NOT_FOUND',
-  PROTOCOL_TEMPLATE_LOCKED: 'PROTOCOL_TEMPLATE_LOCKED',
+  PROTOCOL_TEMPLATE_SEEDED_IMMUTABLE: 'PROTOCOL_TEMPLATE_SEEDED_IMMUTABLE',
   PROTOCOL_TEMPLATE_NAME_CONFLICT: 'PROTOCOL_TEMPLATE_NAME_CONFLICT',
 
   // ── Protocol Category ───────────────────────────────────────
