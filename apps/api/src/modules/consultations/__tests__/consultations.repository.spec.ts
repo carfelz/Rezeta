@@ -66,7 +66,12 @@ const mockPrisma = {
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
+  prescription: { updateMany: vi.fn() },
+  labOrder: { updateMany: vi.fn() },
+  imagingOrder: { updateMany: vi.fn() },
+  $transaction: vi.fn(),
 }
 
 describe('ConsultationsRepository', () => {
@@ -192,6 +197,18 @@ describe('ConsultationsRepository', () => {
   // ── sign ───────────────────────────────────────────────────────────────────
 
   describe('sign', () => {
+    // The repository runs the cascade inside a $transaction; the test harness
+    // invokes the callback with the mocked tx client (the same mockPrisma).
+    beforeEach(() => {
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (tx: typeof mockPrisma) => unknown) => cb(mockPrisma),
+      )
+      mockPrisma.protocolUsage.updateMany.mockResolvedValue({ count: 0 })
+      mockPrisma.prescription.updateMany.mockResolvedValue({ count: 0 })
+      mockPrisma.labOrder.updateMany.mockResolvedValue({ count: 0 })
+      mockPrisma.imagingOrder.updateMany.mockResolvedValue({ count: 0 })
+    })
+
     it('signs consultation and sets status to signed', async () => {
       mockPrisma.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
@@ -201,6 +218,52 @@ describe('ConsultationsRepository', () => {
       const data = mockPrisma.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
       expect(data.signedAt).toBeInstanceOf(Date)
+    })
+
+    it('completes in-progress protocol usages for the consultation', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      const call = mockPrisma.protocolUsage.updateMany.mock.calls[0][0]
+      expect(call.where).toMatchObject({
+        consultationId: 'c1',
+        tenantId: 't1',
+        status: 'in_progress',
+        deletedAt: null,
+      })
+      expect(call.data.status).toBe('completed')
+      expect(call.data.completedAt).toBeInstanceOf(Date)
+    })
+
+    it('signs all queued prescriptions, lab orders and imaging orders', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      for (const delegate of [
+        mockPrisma.prescription,
+        mockPrisma.labOrder,
+        mockPrisma.imagingOrder,
+      ]) {
+        const call = delegate.updateMany.mock.calls[0][0]
+        expect(call.where).toMatchObject({
+          consultationId: 'c1',
+          tenantId: 't1',
+          status: 'queued',
+          deletedAt: null,
+        })
+        expect(call.data.status).toBe('signed')
+        expect(call.data.signedAt).toBeInstanceOf(Date)
+      }
+    })
+
+    it('runs the cascade inside a single transaction', async () => {
+      mockPrisma.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1')
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1)
     })
   })
 

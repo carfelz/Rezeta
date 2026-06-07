@@ -101,7 +101,7 @@ export class ConsultationsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateConsultationSchema))
-  @ApiOperation({ summary: 'Create consultation (draft)' })
+  @ApiOperation({ summary: 'Create consultation (open; walk-in if no appointmentId)' })
   @ApiResponse({ status: 201 })
   create(
     @TenantId() tenantId: string,
@@ -113,7 +113,7 @@ export class ConsultationsController {
 
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateConsultationSchema))
-  @ApiOperation({ summary: 'Update draft consultation' })
+  @ApiOperation({ summary: 'Update open consultation' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 409, description: 'CONSULTATION_ALREADY_SIGNED' })
@@ -258,7 +258,7 @@ export class PatientConsultationsController {
 
   @Get('in-progress-consultation')
   @ApiOperation({
-    summary: 'Most recent in-progress (draft) consultation for a patient — for resume banner',
+    summary: 'Most recent in-progress (open) consultation for a patient — for resume banner',
   })
   @ApiParam({ name: 'patientId', type: String, format: 'uuid' })
   @ApiResponse({ status: 200, description: 'Returns ResumableConsultation or null' })

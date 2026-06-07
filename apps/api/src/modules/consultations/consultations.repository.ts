@@ -260,10 +260,34 @@ export class ConsultationsRepository {
     tenantId: string,
     _userId: string,
   ): Promise<ConsultationWithDetails> {
-    const row = await this.prisma.consultation.update({
-      where: { id, tenantId, deletedAt: null },
-      data: { status: 'signed', signedAt: new Date() },
-      include: RELATIONS_INCLUDE,
+    // Signing finalizes the whole encounter atomically (spec §5):
+    // in-progress protocol usages are completed, all queued orders are signed,
+    // then the consultation itself is marked signed.
+    const row = await this.prisma.$transaction(async (tx) => {
+      const signedAt = new Date()
+
+      await tx.protocolUsage.updateMany({
+        where: { consultationId: id, tenantId, status: 'in_progress', deletedAt: null },
+        data: { status: 'completed', completedAt: signedAt },
+      })
+      await tx.prescription.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt },
+      })
+      await tx.labOrder.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt },
+      })
+      await tx.imagingOrder.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt },
+      })
+
+      return tx.consultation.update({
+        where: { id, tenantId, deletedAt: null },
+        data: { status: 'signed', signedAt },
+        include: RELATIONS_INCLUDE,
+      })
     })
     return toConsultationWithDetails(row)
   }

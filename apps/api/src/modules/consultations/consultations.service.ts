@@ -50,7 +50,7 @@ export class ConsultationsService {
    * consultation exists or the latest one is younger than minElapsedMinutes
    * (avoids nagging the doctor right after they save).
    *
-   * Window: status='draft', age ≤ 7 days. Eligibility: elapsed ≥ 10 minutes.
+   * Window: status='open', age ≤ 7 days. Eligibility: elapsed ≥ 10 minutes.
    */
   async getResumableForPatient(
     tenantId: string,
