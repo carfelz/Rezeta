@@ -99,7 +99,7 @@ describe('Protocols Integration (Slice 2+3)', () => {
 
     await prisma.protocolVersion.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.protocol.deleteMany({ where: { tenantId: { in: tenantIds } } })
-    // ProtocolType removed — no cleanup needed
+    await prisma.protocolCategory.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.protocolTemplate.deleteMany({ where: { tenantId: { in: tenantIds } } })
     await prisma.user.deleteMany({ where: { firebaseUid: { in: [userA.uid, userB.uid] } } })
     await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } })
@@ -119,104 +119,92 @@ describe('Protocols Integration (Slice 2+3)', () => {
 
   // ── Create ─────────────────────────────────────────────────────────────────
 
-  it('POST /v1/protocols creates a protocol from a seeded type', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+  it('POST /v1/protocols creates a protocol tagged with a seeded category', async () => {
+    const catsRes = await request
+      .get('/v1/protocol-categories')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string; name: string }[]>
-    expect(typesRes.status).toBe(200)
-    expect(typesBody.data.length).toBeGreaterThan(0)
+    const catsBody = catsRes.body as ApiOk<{ id: string; name: string }[]>
+    expect(catsRes.status).toBe(200)
+    expect(catsBody.data.length).toBeGreaterThan(0)
 
-    const type = typesBody.data[0]!
+    const category = catsBody.data[0]!
     const res = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId: type.id, title: 'Manejo de anafilaxia' })
+      .send({ categoryId: category.id, title: 'Manejo de anafilaxia' })
 
     const body = res.body as ApiOk<{
       id: string
       title: string
-      typeId: string
-      typeName: string
+      categoryId: string | null
+      categoryName: string | null
       status: string
       currentVersion: { versionNumber: number; content: { blocks: unknown[] } } | null
     }>
     expect(res.status).toBe(201)
     expect(body.data.title).toBe('Manejo de anafilaxia')
-    expect(body.data.typeId).toBe(type.id)
+    expect(body.data.categoryId).toBe(category.id)
     expect(body.data.status).toBe('draft')
     expect(body.data.currentVersion).not.toBeNull()
     expect(body.data.currentVersion!.versionNumber).toBe(1)
     expect(Array.isArray(body.data.currentVersion!.content.blocks)).toBe(true)
   })
 
-  it('POST /v1/protocols creates from all 5 seeded types without error', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+  it('POST /v1/protocols creates a protocol without a category (scratch mode)', async () => {
+    const res = await request
+      .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string; name: string }[]>
-    const types = typesBody.data
+      .send({ title: 'Protocolo sin categoría' })
 
-    for (const type of types) {
+    const body = res.body as ApiOk<{ id: string; categoryId: string | null }>
+    expect(res.status).toBe(201)
+    expect(body.data.categoryId).toBeNull()
+  })
+
+  it('POST /v1/protocols can tag with each of the 5 seeded categories', async () => {
+    const catsRes = await request
+      .get('/v1/protocol-categories')
+      .set('Authorization', `Bearer ${userA.idToken}`)
+    const categories = (catsRes.body as ApiOk<{ id: string; name: string }[]>).data
+
+    for (const category of categories) {
       const res = await request
         .post('/v1/protocols')
         .set('Authorization', `Bearer ${userA.idToken}`)
-        .send({ typeId: type.id, title: `Protocolo de prueba — ${type.name}` })
+        .send({ categoryId: category.id, title: `Protocolo de prueba — ${category.name}` })
       expect(res.status).toBe(201)
     }
   })
 
   it('POST /v1/protocols rejects missing title', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
-      .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
-
     const res = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId })
+      .send({})
     expect(res.status).toBe(400)
   })
 
   it('POST /v1/protocols rejects title shorter than 2 chars', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
-      .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
-
     const res = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId, title: 'X' })
+      .send({ title: 'X' })
     expect(res.status).toBe(400)
-  })
-
-  it('POST /v1/protocols rejects an unknown typeId', async () => {
-    const res = await request
-      .post('/v1/protocols')
-      .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId: '00000000-0000-0000-0000-000000000000', title: 'Test' })
-    const body = res.body as ApiErr
-    expect(res.status).toBe(404)
-    expect(body.error.code).toBe('PROTOCOL_TYPE_NOT_FOUND')
   })
 
   // ── Get ────────────────────────────────────────────────────────────────────
 
   it('GET /v1/protocols/:id returns the created protocol with template schema', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+    const catsRes = await request
+      .get('/v1/protocol-categories')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
+    const catsBody = catsRes.body as ApiOk<{ id: string }[]>
+    const categoryId = catsBody.data[0]!.id
 
     const createRes = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId, title: 'Protocolo de lectura' })
+      .send({ categoryId, title: 'Protocolo de lectura' })
     const created = (createRes.body as ApiOk<{ id: string }>).data
 
     const res = await request
@@ -248,12 +236,11 @@ describe('Protocols Integration (Slice 2+3)', () => {
   it("GET /v1/protocols returns only the current tenant's protocols", async () => {
     const res = await request.get('/v1/protocols').set('Authorization', `Bearer ${userA.idToken}`)
     const body = res.body as ApiOk<
-      { id: string; typeName: string; currentVersionNumber: number | null }[]
+      { id: string; categoryName: string | null; currentVersionNumber: number | null }[]
     >
     expect(res.status).toBe(200)
     expect(body.data.length).toBeGreaterThan(0)
     for (const item of body.data) {
-      expect(item.typeName).toBeTruthy()
       expect(item.currentVersionNumber).toBe(1)
     }
   })
@@ -261,16 +248,16 @@ describe('Protocols Integration (Slice 2+3)', () => {
   // ── Rename ─────────────────────────────────────────────────────────────────
 
   it('PATCH /v1/protocols/:id renames the protocol title', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+    const catsRes = await request
+      .get('/v1/protocol-categories')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
+    const catsBody = catsRes.body as ApiOk<{ id: string }[]>
+    const categoryId = catsBody.data[0]!.id
 
     const createRes = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId, title: 'Título original' })
+      .send({ categoryId, title: 'Título original' })
     const { id } = (createRes.body as ApiOk<{ id: string }>).data
 
     const res = await request
@@ -286,16 +273,16 @@ describe('Protocols Integration (Slice 2+3)', () => {
   // ── Save Version ───────────────────────────────────────────────────────────
 
   it('POST /v1/protocols/:id/versions creates a new version', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+    const catsRes = await request
+      .get('/v1/protocol-categories')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
+    const catsBody = catsRes.body as ApiOk<{ id: string }[]>
+    const categoryId = catsBody.data[0]!.id
 
     const createRes = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId, title: 'Protocolo con versiones' })
+      .send({ categoryId, title: 'Protocolo con versiones' })
     const protocol = (
       createRes.body as ApiOk<{
         id: string
@@ -324,16 +311,16 @@ describe('Protocols Integration (Slice 2+3)', () => {
   // ── Cross-tenant isolation ─────────────────────────────────────────────────
 
   it("GET /v1/protocols/:id returns 404 for another tenant's protocol", async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
+    const catsRes = await request
+      .get('/v1/protocol-categories')
       .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const typeId = typesBody.data[0]!.id
+    const catsBody = catsRes.body as ApiOk<{ id: string }[]>
+    const categoryId = catsBody.data[0]!.id
 
     const createRes = await request
       .post('/v1/protocols')
       .set('Authorization', `Bearer ${userA.idToken}`)
-      .send({ typeId, title: 'Protocolo privado de A' })
+      .send({ categoryId, title: 'Protocolo privado de A' })
     const { id } = (createRes.body as ApiOk<{ id: string }>).data
 
     const res = await request
@@ -342,22 +329,6 @@ describe('Protocols Integration (Slice 2+3)', () => {
     const body = res.body as ApiErr
     expect(res.status).toBe(404)
     expect(body.error.code).toBe('PROTOCOL_NOT_FOUND')
-  })
-
-  it('POST /v1/protocols rejects typeId from another tenant', async () => {
-    const typesRes = await request
-      .get('/v1/protocol-types')
-      .set('Authorization', `Bearer ${userA.idToken}`)
-    const typesBody = typesRes.body as ApiOk<{ id: string }[]>
-    const userATypeId = typesBody.data[0]!.id
-
-    const res = await request
-      .post('/v1/protocols')
-      .set('Authorization', `Bearer ${userB.idToken}`)
-      .send({ typeId: userATypeId, title: 'Intento de cross-tenant' })
-    const body = res.body as ApiErr
-    expect(res.status).toBe(404)
-    expect(body.error.code).toBe('PROTOCOL_TYPE_NOT_FOUND')
   })
 
   it('GET /v1/protocols list is isolated per tenant', async () => {

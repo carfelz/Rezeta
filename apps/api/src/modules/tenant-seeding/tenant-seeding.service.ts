@@ -161,8 +161,10 @@ export class TenantSeedingService {
         clientIdToServerId.set(t.clientId, created.id)
       }
 
-      // ProtocolType removed — types are now categories (Plan 02 will handle migration)
-      void types // suppress unused warning
+      // Custom type definitions are no longer persisted: protocols are tagged
+      // with optional categories, not types. The personalizar UI will move to
+      // category selection in the frontend redesign.
+      void types // accepted for API compatibility, intentionally unused
 
       await tx.tenant.update({
         where: { id: tenantId },
