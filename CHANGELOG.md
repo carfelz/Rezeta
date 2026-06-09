@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-09] — ci: bump GitHub Actions to Node 24 runtimes
+
+### Changed
+
+- **`.github/workflows/ci.yml`, `.github/workflows/deploy-dev.yml`**: Bumped all actions off the deprecated Node 20 runtime (forced removal 2026-06-16): `actions/checkout@v4 → v6`, `actions/setup-node@v4 → v6`, `pnpm/action-setup@v4 → v6`, `google-github-actions/auth@v2 → v3`, `google-github-actions/setup-gcloud@v2 → v3`. `pnpm/action-setup@v6` resolves the pnpm version from the `packageManager` field (`pnpm@10.33.0`); builds already use `node-version: '24'`.
+
 ## [2026-06-09] — chore: add implementation plans + test-user seed; ignore debug artifacts
 
 ### Added
