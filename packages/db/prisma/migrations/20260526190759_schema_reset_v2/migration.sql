@@ -36,10 +36,7 @@
   - You are about to drop the column `checked_state` on the `protocol_usages` table. All the data in the column will be lost.
   - You are about to drop the column `type_id` on the `protocols` table. All the data in the column will be lost.
   - You are about to drop the `protocol_types` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `doctor_id` to the `consultations` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `doctor_id` to the `imaging_orders` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `doctor_id` to the `lab_orders` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `doctor_id` to the `prescriptions` table without a default value. This is not possible if the table is not empty.
+  - Adds required column `doctor_id` to `consultations`, `imaging_orders`, `lab_orders`, and `prescriptions`. Backfilled from the existing `user_id` column before `SET NOT NULL`, so this is safe on populated tables (manual edit; see migration body).
 
 */
 -- DropForeignKey
@@ -75,8 +72,11 @@ DROP INDEX "consultations_tenant_id_user_id_consulted_at_idx";
 -- DropIndex
 DROP INDEX "protocols_tenant_id_type_id_idx";
 
--- AlterTable
-ALTER TABLE "consultations" DROP COLUMN "assessment",
+-- AlterTable: backfill doctor_id from user_id before enforcing NOT NULL (survives populated tables)
+ALTER TABLE "consultations" ADD COLUMN "doctor_id" UUID;
+UPDATE "consultations" SET "doctor_id" = "user_id" WHERE "doctor_id" IS NULL;
+ALTER TABLE "consultations" ALTER COLUMN "doctor_id" SET NOT NULL,
+DROP COLUMN "assessment",
 DROP COLUMN "chief_complaint",
 DROP COLUMN "consulted_at",
 DROP COLUMN "content_hash",
@@ -87,12 +87,14 @@ DROP COLUMN "signed_by",
 DROP COLUMN "subjective",
 DROP COLUMN "user_id",
 DROP COLUMN "vitals",
-ADD COLUMN     "doctor_id" UUID NOT NULL,
 ADD COLUMN     "started_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ALTER COLUMN "status" SET DEFAULT 'open';
 
--- AlterTable
-ALTER TABLE "imaging_orders" DROP COLUMN "contrast",
+-- AlterTable: backfill doctor_id from user_id before enforcing NOT NULL (survives populated tables)
+ALTER TABLE "imaging_orders" ADD COLUMN "doctor_id" UUID;
+UPDATE "imaging_orders" SET "doctor_id" = "user_id" WHERE "doctor_id" IS NULL;
+ALTER TABLE "imaging_orders" ALTER COLUMN "doctor_id" SET NOT NULL,
+DROP COLUMN "contrast",
 DROP COLUMN "fasting_required",
 DROP COLUMN "indication",
 DROP COLUMN "source",
@@ -100,11 +102,13 @@ DROP COLUMN "special_instructions",
 DROP COLUMN "study_type",
 DROP COLUMN "urgency",
 DROP COLUMN "user_id",
-ADD COLUMN     "doctor_id" UUID NOT NULL,
 ALTER COLUMN "status" SET DEFAULT 'queued';
 
--- AlterTable
-ALTER TABLE "lab_orders" DROP COLUMN "fasting_required",
+-- AlterTable: backfill doctor_id from user_id before enforcing NOT NULL (survives populated tables)
+ALTER TABLE "lab_orders" ADD COLUMN "doctor_id" UUID;
+UPDATE "lab_orders" SET "doctor_id" = "user_id" WHERE "doctor_id" IS NULL;
+ALTER TABLE "lab_orders" ALTER COLUMN "doctor_id" SET NOT NULL,
+DROP COLUMN "fasting_required",
 DROP COLUMN "indication",
 DROP COLUMN "sample_type",
 DROP COLUMN "source",
@@ -113,17 +117,18 @@ DROP COLUMN "test_code",
 DROP COLUMN "test_name",
 DROP COLUMN "urgency",
 DROP COLUMN "user_id",
-ADD COLUMN     "doctor_id" UUID NOT NULL,
 ALTER COLUMN "status" SET DEFAULT 'queued';
 
 -- AlterTable
 ALTER TABLE "prescription_items" DROP COLUMN "sort_order";
 
--- AlterTable
-ALTER TABLE "prescriptions" DROP COLUMN "items",
+-- AlterTable: backfill doctor_id from user_id before enforcing NOT NULL (survives populated tables)
+ALTER TABLE "prescriptions" ADD COLUMN "doctor_id" UUID;
+UPDATE "prescriptions" SET "doctor_id" = "user_id" WHERE "doctor_id" IS NULL;
+ALTER TABLE "prescriptions" ALTER COLUMN "doctor_id" SET NOT NULL,
+DROP COLUMN "items",
 DROP COLUMN "notes",
 DROP COLUMN "user_id",
-ADD COLUMN     "doctor_id" UUID NOT NULL,
 ALTER COLUMN "status" SET DEFAULT 'queued';
 
 -- AlterTable

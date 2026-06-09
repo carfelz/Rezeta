@@ -4,7 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-05-26] — fix(web): wire amendment/protocol buttons, design tokens, cleanup
+## [2026-06-08] — fix(db): backfill doctor_id in schema_reset_v2 so it survives populated tables
+
+### Fixed
+
+- **`packages/db/prisma/migrations/20260526190759_schema_reset_v2/migration.sql`**: The migration added `doctor_id` as `NOT NULL` with no default in the same `ALTER TABLE` that dropped `user_id`, which Postgres rejects on a non-empty table (error `P3009` — the in-place run against the seeded dev DB failed with 0 steps committed). Reworked `consultations`, `imaging_orders`, `lab_orders`, and `prescriptions` to add `doctor_id` nullable, `UPDATE ... SET doctor_id = user_id` to backfill while `user_id` still exists, then `ALTER COLUMN doctor_id SET NOT NULL` alongside dropping `user_id`. End-state schema is unchanged; now safe on both empty and populated tables. Updated the stale generated warning comments accordingly.
+
+### Notes
+
+- This edits an already-applied migration, so its checksum changes. The dev DB (already wiped via `migrate reset`) must be reset again with the new file so its recorded checksum matches, otherwise `migrate deploy` fails with "migration was modified after it was applied". No live populated-table test was run (no local/Docker Postgres available); verification is by SQL review — end-state matches `schema.prisma`.
 
 ### Fixed
 
