@@ -46,3 +46,7 @@ coverage/
 
 #tmp design system
 /design-system-02/
+
+# local debug/screenshot artifacts
+.playwright-mcp/
+/dashboard.png

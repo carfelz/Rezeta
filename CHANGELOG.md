@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-09] — chore: add implementation plans + test-user seed; ignore debug artifacts
+
+### Added
+
+- **`docs/superpowers/plans/2026-05-26-0{1..4}-*.md`**: The four implementation plans (schema-reset, protocol-api, consultation-api, frontend-redesign) that CLAUDE.md references. They existed only in an unpushed local commit; now in the repo so the references resolve.
+- **`tools/seed-test-user.ts`** + **`package.json`** `seed:test-user` script: seeds a test user (`tsx --env-file=.env tools/seed-test-user.ts`).
+
+### Changed
+
+- **`.gitignore`**: Ignore `.playwright-mcp/` browser-automation snapshots and `/dashboard.png` — local debug artifacts that were being accidentally tracked.
+
 ## [2026-06-08] — docs: reconcile project context with the shipped v2 workflow redesign
 
 ### Changed
