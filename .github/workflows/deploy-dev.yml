@@ -175,8 +175,19 @@ jobs:
           cd apps/web
           pnpm build
 
+      # firebase.json (repo root) serves apps/web/dist and proxies /v1/** to Cloud Run.
+      # firebase-tools picks up the service-account credentials that the auth step
+      # exported via GOOGLE_APPLICATION_CREDENTIALS — no FIREBASE_TOKEN needed.
+      - name: Deploy to Firebase Hosting
+        run: |
+          npx -y firebase-tools deploy \
+            --only hosting \
+            --project "${{ env.PROJECT_ID }}" \
+            --non-interactive \
+            --force
+
       - name: Output URLs
         run: |
           echo "Deployment complete!"
-          echo "Frontend: https://rezeta-dev.web.app"
+          echo "Frontend: https://${{ env.PROJECT_ID }}.web.app"
           echo "API: ${{ needs.deploy-api.outputs.url }}"
