@@ -171,13 +171,12 @@ describe('typesStrings', () => {
     expect(msg).toContain('Emergencia')
   })
 
-  it('lockedBadge singular', () => {
-    expect(typesStrings.lockedBadge(1)).toContain('protocolo')
-    expect(typesStrings.lockedBadge(1)).not.toContain('protocolos')
+  it('deleteSeeded message is defined', () => {
+    expect(typesStrings.deleteSeeded).toBeTruthy()
   })
 
-  it('lockedBadge plural', () => {
-    expect(typesStrings.lockedBadge(5)).toContain('protocolos')
+  it('seededBadge label is defined', () => {
+    expect(typesStrings.seededBadge).toBeTruthy()
   })
 })
 
