@@ -86,6 +86,12 @@ export const toastStrings = {
   protocolTypeDeleted: 'Tipo eliminado',
   errorProtocolTypeSave: 'No se pudo guardar el tipo de protocolo.',
 
+  // ── Protocol Categories ─────────────────────────────────────────────────────
+  protocolCategoryCreated: 'Categoría creada',
+  protocolCategoryUpdated: 'Categoría actualizada',
+  protocolCategoryDeleted: 'Categoría eliminada',
+  errorProtocolCategorySave: 'No se pudo guardar la categoría.',
+
   // ── Templates ───────────────────────────────────────────────────────────────
   templateCreated: 'Plantilla creada',
   templateUpdated: 'Plantilla actualizada',

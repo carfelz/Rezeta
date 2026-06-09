@@ -7,6 +7,8 @@ import {
   ProtocolAlert,
 } from '@/components/ui/ProtocolBlock'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
+import { VitalsBlock } from './blocks/VitalsBlock'
+import { ClinicalNotesBlock } from './blocks/ClinicalNotesBlock'
 import { blockTypeStrings } from './strings'
 
 // Typed shapes matching ProtocolContentSchema (read from Zod types)
@@ -69,6 +71,24 @@ interface LabOrderBlock extends BaseBlock {
   title?: string
   orders: LabOrderItem[]
 }
+interface VitalsField {
+  id: string
+  label: string
+  unit?: string
+  input_type: 'text' | 'number' | 'computed'
+  formula?: string
+}
+interface VitalsBlockType extends BaseBlock {
+  type: 'vitals'
+  title?: string
+  fields: VitalsField[]
+}
+interface ClinicalNotesBlockType extends BaseBlock {
+  type: 'clinical_notes'
+  label: string
+  content: string
+  required?: boolean
+}
 
 export type ProtocolBlock =
   | SectionBlock
@@ -80,6 +100,8 @@ export type ProtocolBlock =
   | AlertBlock
   | ImagingOrderBlock
   | LabOrderBlock
+  | VitalsBlockType
+  | ClinicalNotesBlockType
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
   section: blockTypeStrings.section,
@@ -91,6 +113,8 @@ const BLOCK_TYPE_LABELS: Record<string, string> = {
   alert: blockTypeStrings.alert,
   imaging_order: blockTypeStrings.imagingOrder,
   lab_order: blockTypeStrings.labOrder,
+  vitals: blockTypeStrings.vitals,
+  clinical_notes: blockTypeStrings.clinicalNotes,
 }
 
 function typeLabel(type: string): string {
@@ -220,6 +244,33 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
               </div>
             ))}
           </div>
+        </ProtocolBlock>
+      )
+
+    case 'vitals':
+      return (
+        <ProtocolBlock
+          type={typeLabel('vitals')}
+          title={b.title ?? blockTypeStrings.vitals}
+          nested={nested}
+        >
+          <VitalsBlock fields={b.fields} readOnly />
+        </ProtocolBlock>
+      )
+
+    case 'clinical_notes':
+      return (
+        <ProtocolBlock
+          type={typeLabel('clinical_notes')}
+          title={b.label}
+          nested={nested}
+        >
+          <ClinicalNotesBlock
+            label={b.label}
+            content={b.content}
+            {...(b.required !== undefined ? { required: b.required } : {})}
+            readOnly
+          />
         </ProtocolBlock>
       )
 

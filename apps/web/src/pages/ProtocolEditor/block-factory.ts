@@ -10,6 +10,8 @@ export const PALETTE_ITEMS = [
   { type: 'steps', icon: 'ph-list-numbers', label: 'Pasos', active: true },
   { type: 'imaging_order', icon: 'ph-scan', label: 'Orden de imagen', active: true },
   { type: 'lab_order', icon: 'ph-test-tube', label: 'Orden de laboratorio', active: true },
+  { type: 'vitals', icon: 'ph-heartbeat', label: 'Signos vitales', active: true },
+  { type: 'clinical_notes', icon: 'ph-note-pencil', label: 'Nota clínica', active: true },
 ] as const
 
 function makeid(): string {
@@ -91,6 +93,27 @@ export function makeBlock(type: string): ProtocolBlock | null {
           sample_type: 'blood' as const,
         },
       ],
+    }
+  }
+  if (type === 'vitals') {
+    return {
+      id: makeid(),
+      type: 'vitals',
+      fields: [
+        { id: `vf_${crypto.randomUUID().slice(0, 8)}`, label: 'Presión arterial', unit: 'mmHg', input_type: 'text' as const },
+        { id: `vf_${crypto.randomUUID().slice(0, 8)}`, label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' as const },
+        { id: `vf_${crypto.randomUUID().slice(0, 8)}`, label: 'Temperatura', unit: '°C', input_type: 'number' as const },
+        { id: `vf_${crypto.randomUUID().slice(0, 8)}`, label: 'Peso', unit: 'kg', input_type: 'number' as const },
+        { id: `vf_${crypto.randomUUID().slice(0, 8)}`, label: 'Talla', unit: 'cm', input_type: 'number' as const },
+      ],
+    }
+  }
+  if (type === 'clinical_notes') {
+    return {
+      id: makeid(),
+      type: 'clinical_notes',
+      label: 'Nota clínica',
+      content: '',
     }
   }
   return null

@@ -9,7 +9,6 @@ import { usePatients } from '@/hooks/patients/use-patients'
 import { useAuth } from '@/hooks/use-auth'
 import { useUiStore } from '@/store/ui.store'
 import { ConsultHeader } from '@/components/consultations/ConsultHeader'
-import { ConsultationGate } from '@/components/consultations/ConsultationGate'
 import { ResumeBanner } from '@/components/consultations/ResumeBanner'
 import { Button } from '@/components/ui'
 import { formatConsultationOverline, formatBreadcrumbDate } from '@/lib/format/dates'
@@ -34,10 +33,6 @@ export function NewConsultation(): JSX.Element {
   const [isCreating, setIsCreating] = useState(false)
   const [resumeDismissed, setResumeDismissed] = useState(false)
 
-  // Direction B: gate requires both patientId and locationId. If patientId is
-  // missing, the user is redirected to /pacientes. If locationId is missing,
-  // we fall back to the active or primary owned location and emit a telemetry
-  // log so any unfixed entry point is discoverable.
   const primaryLocationId = user?.preferences?.primaryLocationId
   const fallbackLocationId = useMemo(() => {
     if (locations.length === 0) return ''
@@ -84,7 +79,7 @@ export function NewConsultation(): JSX.Element {
 
   const doctorDisplayName = formatDoctorName(user?.fullName)
 
-  async function handleGateSelect(_protocolId: string | null): Promise<void> {
+  async function handleCreate(): Promise<void> {
     if (!ready) {
       setError(newConsultationStrings.selectPatientLocationError)
       return
@@ -135,12 +130,12 @@ export function NewConsultation(): JSX.Element {
         subtitle={subtitle}
         rightSlot={
           <Button
-            variant="secondary"
+            variant="primary"
             size="sm"
             disabled={isCreating || !ready}
-            onClick={() => void handleGateSelect(null)}
+            onClick={() => void handleCreate()}
           >
-            {newConsultationStrings.openEmptyButton}
+            {isCreating ? newConsultationStrings.creatingButton : newConsultationStrings.openEmptyButton}
           </Button>
         }
       />
@@ -185,14 +180,29 @@ export function NewConsultation(): JSX.Element {
         </div>
       )}
 
-      <ConsultationGate
-        patientId={patientId}
-        {...(patient?.firstName ? { patientFirstName: patient.firstName } : {})}
-        locationId={locationId}
-        onSelect={(id) => void handleGateSelect(id)}
-        isCreating={isCreating}
-        disabled={!ready}
-      />
+      {ready && (!resumable || resumeDismissed || !resumable.protocolUsage) && (
+        <div className="max-w-[880px] mx-auto pt-8">
+          <div className="flex flex-col items-center gap-4 py-16 border border-dashed border-n-200 rounded-md text-center">
+            <i className="ph ph-stethoscope text-[32px] text-n-400" />
+            <div>
+              <p className="text-[15px] font-medium text-n-800 mb-1">
+                {newConsultationStrings.readyTitle}
+              </p>
+              <p className="text-[13px] text-n-500">
+                {newConsultationStrings.readyDescription}
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="md"
+              disabled={isCreating}
+              onClick={() => void handleCreate()}
+            >
+              {isCreating ? newConsultationStrings.creatingButton : newConsultationStrings.openEmptyButton}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

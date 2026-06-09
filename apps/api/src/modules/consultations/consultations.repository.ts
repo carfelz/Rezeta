@@ -111,6 +111,8 @@ function toConsultationWithDetails(row: PrismaConsultationWithRels): Consultatio
     patientName: `${row.patient.firstName} ${row.patient.lastName}`.trim(),
     locationName: row.location.name,
     doctorName: row.doctor.fullName ?? '',
+    patientAllergies: row.patient.allergies as string[],
+    patientChronicConditions: row.patient.chronicConditions as string[],
     amendments: row.amendments.map(toAmendment),
     protocolUsages: row.protocolUsages.map(toProtocolUsage),
   }
@@ -133,7 +135,7 @@ const PROTOCOL_USAGE_INCLUDE = Prisma.validator<Prisma.ProtocolUsageInclude>()({
 })
 
 const RELATIONS_INCLUDE = Prisma.validator<Prisma.ConsultationInclude>()({
-  patient: { select: { firstName: true, lastName: true } },
+  patient: { select: { firstName: true, lastName: true, allergies: true, chronicConditions: true } },
   location: { select: { name: true } },
   doctor: { select: { fullName: true } },
   amendments: { orderBy: { amendmentNumber: 'asc' } },

@@ -4,6 +4,58 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-05-26] — fix(web): wire amendment/protocol buttons, design tokens, cleanup
+
+### Fixed
+
+- `apps/web/src/pages/Consultation/index.tsx`: lifted `showAmend` and `showPicker` state from `ProtocolPanel` to the page level; `onAmend` in `PageHeader` now opens the `AmendmentModal` via `setShowAmend(true)` instead of no-oping.
+- `apps/web/src/pages/Consultation/OrdersRail.tsx`: added `onAddProtocol` prop; passed it through to `ConsultationSidebar` so the "Agregar protocolo" button in the orders rail is no longer a no-op.
+- `apps/web/src/pages/Consultation/ProtocolPanel.tsx`: replaced local `showAmend` / `showPicker` state with lifted props from `index.tsx`; removed unused `updateMutation` and `onSignClick` props and the suppressing `void` statements; removed unused `UseMutationResult` import.
+- `apps/web/src/pages/Consultation/PageHeader.tsx`: replaced raw Tailwind palette classes (`bg-red-50`, `border-red-200`, `text-red-700`, `text-red-500`, `bg-amber-50`, `border-amber-200`, `text-amber-700`, `text-amber-500`) with design-system semantic tokens (`bg-danger-bg`, `border-danger-border`, `text-danger-text`, `bg-warning-bg`, `border-warning-border`, `text-warning-text`).
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`: replaced `bg-white` with `bg-n-0`.
+- `apps/web/src/components/protocols/blocks/ClinicalNotesBlock.tsx`: replaced `bg-white` with `bg-n-0` and `text-red-500` with `text-danger-text`.
+- `apps/web/src/hooks/use-consultation-orders.ts` (renamed from `useConsultationOrders.ts`): updated DTO parameter types from `unknown` to `CreatePrescriptionGroupDto`, `CreateImagingOrderGroupDto`, `CreateLabOrderGroupDto`.
+- `apps/web/src/hooks/__tests__/use-consultation-orders.test.ts` (renamed from `useConsultationOrders.test.ts`): updated import to match new kebab-case filename.
+- `apps/web/src/pages/ProtocolEditor/__tests__/block-factory.test.ts`: removed `.js` extension from import path for consistency with rest of test suite.
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: corrected stale comment from `"Medicamentos"` to `"Recetas"` to reflect the actual displayed string.
+
+## [2026-05-26] — fix(web): allergy alerts in header, PATCH sign verb, Recetas tab, useConsultationOrders hook
+
+### Added
+
+- `apps/web/src/pages/Consultation/PageHeader.tsx`: new `patientAllergies` and `patientChronicConditions` props; renders allergy badges (red) and chronic condition badges (amber) always visible below the patient/doctor line — hard clinical safety requirement.
+- `packages/shared/src/types/consultation.ts`: added `patientAllergies: string[]` and `patientChronicConditions: string[]` to `ConsultationWithDetails`.
+- `apps/api/src/modules/consultations/consultations.repository.ts`: included `allergies` and `chronicConditions` in the patient SELECT and mapped them to the returned `ConsultationWithDetails` shape.
+- `apps/web/src/hooks/useConsultationOrders.ts`: new hook file exposing `useConsultationOrders`, `useCreatePrescriptionGroup`, `useCreateImagingOrderGroup`, `useCreateLabOrderGroup`, and `useDeleteOrderGroup`.
+- `apps/web/src/hooks/__tests__/useConsultationOrders.test.ts`: unit tests for all five new hooks.
+
+### Changed
+
+- `apps/web/src/hooks/consultations/use-consultations.ts`: `useSignConsultation` changed from `apiClient.post` to `apiClient.patch` to match the `PATCH /v1/consultations/:id/sign` backend endpoint.
+- `apps/web/src/hooks/__tests__/use-consultations.test.ts`: updated `useSignConsultation` test to expect `apiClient.patch`.
+- `apps/web/src/components/consultations/strings.ts`: renamed `tabMedications` from `'Medicamentos'` to `'Recetas'` in `orderQueueStrings`.
+- `apps/web/src/pages/Consultation/index.tsx`: passes `patientAllergies` and `patientChronicConditions` from consultation data to `PageHeader`.
+
+## [2026-05-26] — feat(web): frontend redesign plan 04 — vitals blocks, category chips, 3-zone consultation layout
+
+### Added
+
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`: new reusable component for rendering a grid of vitals fields (text/number/computed) in protocol editor and viewer.
+- `apps/web/src/components/protocols/blocks/ClinicalNotesBlock.tsx`: new reusable textarea component for clinical note blocks.
+- `apps/web/src/pages/ProtocolEditor/__tests__/block-factory.test.ts`: tests for `vitals` and `clinical_notes` in `makeBlock` and `PALETTE_ITEMS`.
+- `apps/web/src/pages/Consultation/ProtocolPanel.tsx`: new component encapsulating all protocol usage logic (canvas/SOAP view, protocol picker, modals) for the 3-zone consultation layout.
+- `apps/web/src/pages/Consultation/OrdersRail.tsx`: new right-rail component composing patient alerts, previous consultations, and the full orders queue panel (prescriptions, imaging, labs).
+
+### Changed
+
+- `apps/web/src/pages/ProtocolEditor/block-factory.ts`: added `vitals` and `clinical_notes` entries to `PALETTE_ITEMS` and `makeBlock()`.
+- `apps/web/src/components/protocols/BlockRenderer.tsx`: added `VitalsBlockType` and `ClinicalNotesBlockType` interfaces to the `ProtocolBlock` union; added `vitals` and `clinical_notes` switch cases rendering the new block components.
+- `apps/web/src/components/protocols/strings.ts`: added `vitals` and `clinicalNotes` to `blockTypeStrings`.
+- `apps/web/src/pages/Protocols/index.tsx`: category filter chips now show a color dot using `style={{ backgroundColor: cat.color }}`.
+- `apps/web/src/pages/NewConsultation.tsx`: removed `ConsultationGate` (protocol picker step); page now shows a simple "ready to start" state and creates consultation directly with `{ patientId, locationId }`.
+- `apps/web/src/pages/Consultation/index.tsx`: replaced old grid layout with `flex flex-col h-screen` 3-zone layout — fixed header zone, scrollable main zone (`ProtocolPanel`), and fixed right rail (`OrdersRail`).
+- `apps/web/src/pages/Consultation/strings.ts`: added `creatingButton`, `readyTitle`, `readyDescription` strings; renamed `openEmptyButton` to "Iniciar consulta".
+
 ## [2026-05-26] — fix(api): add tenantId to sign transaction updateMany, add amended/rollback tests
 
 ### Fixed

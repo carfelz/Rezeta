@@ -8,6 +8,8 @@ export interface PageHeaderProps {
   locationName: string
   patientName: string
   doctorName: string
+  patientAllergies?: string[]
+  patientChronicConditions?: string[]
   pageTitle: string
   saveStatus: SaveStatus
   savedAt?: Date
@@ -22,6 +24,8 @@ export function PageHeader({
   locationName,
   patientName,
   doctorName,
+  patientAllergies,
+  patientChronicConditions,
   pageTitle,
   saveStatus,
   savedAt,
@@ -47,6 +51,29 @@ export function PageHeader({
         <p className="text-[13px] font-sans text-n-500">
           {patientName} · {doctorName}
         </p>
+        {((patientAllergies && patientAllergies.length > 0) ||
+          (patientChronicConditions && patientChronicConditions.length > 0)) && (
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            {patientAllergies && patientAllergies.length > 0 && patientAllergies.map((allergy) => (
+              <span
+                key={allergy}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-danger-bg border border-danger-border text-danger-text text-xs font-medium"
+              >
+                <i className="ph ph-warning text-danger-text" />
+                {allergy}
+              </span>
+            ))}
+            {patientChronicConditions && patientChronicConditions.length > 0 && patientChronicConditions.map((condition) => (
+              <span
+                key={condition}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-warning-bg border border-warning-border text-warning-text text-xs font-medium"
+              >
+                <i className="ph ph-heart-break text-warning-text" />
+                {condition}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 shrink-0 pt-1">
