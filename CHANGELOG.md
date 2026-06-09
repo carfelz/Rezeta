@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-08] — ci(deploy): actually deploy the frontend to Firebase Hosting
+
+### Fixed
+
+- **`.github/workflows/deploy-dev.yml`**: The `deploy-frontend` job built the app but never shipped it — its final step only `echo`ed "Deployment complete!" and a wrong URL (`rezeta-dev.web.app`), so the dev site was only ever updated by manual `firebase deploy`. Added a real **Deploy to Firebase Hosting** step (`npx firebase-tools deploy --only hosting --project medical-erp-dev --non-interactive --force`) that reuses the service-account credentials already exported by the existing `google-github-actions/auth` step (`GOOGLE_APPLICATION_CREDENTIALS`) — no `FIREBASE_TOKEN` needed. Corrected the printed URL to the project default site (`https://medical-erp-dev.web.app`).
+- **`.github/workflows/deploy-dev.yml`** (`Build frontend`): Wired all five Firebase web config vars the app actually reads (`apps/web/src/lib/auth/firebase-auth-client.ts`) — previously only three were passed, as unset `secrets.*`, so the build shipped an empty Firebase config. Now sourced from repo **variables** (`vars.*`, since Firebase web config is public and ships in the client bundle), adding the missing `VITE_FIREBASE_APP_ID` and `VITE_FIREBASE_MESSAGING_SENDER_ID`. The five repo variables were created with the dev project values.
+
+### Notes
+
+- Requires the `GCP_SA_KEY` service account to have the **Firebase Hosting Admin** role (`roles/firebasehosting.admin`).
+
 ## [2026-06-08] — fix(db): backfill doctor_id in schema_reset_v2 so it survives populated tables
 
 ### Fixed
