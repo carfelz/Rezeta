@@ -1,6 +1,6 @@
 # Audit Log Specification
 
-> ℹ️ **Entity names updated (2026-06-08).** Where this spec references `ProtocolType`, the audited entity is now `ProtocolCategory`; consultation status values are `open` / `signed` / `amended` (no `draft`). The audit mechanism itself is unchanged. See `specs/updated-specs/`.
+> **STATUS: PARTIAL (2026-06-08)** — Where this spec references `ProtocolType`, the audited entity is now `ProtocolCategory`; consultation status values are `open` / `signed` / `amended` (no `draft`). The audit mechanism itself is unchanged. See `specs/updated-specs/`.
 
 > Living document. Last updated: May 2026.
 >

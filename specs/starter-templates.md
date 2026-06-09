@@ -1,6 +1,6 @@
 # Starter Templates — Protocol Engine
 
-> ℹ️ **Updated (2026-06-08).** Seeded templates no longer carry a `ProtocolType`; tenants are seeded with 5 default `ProtocolCategory` rows instead, and starter templates use `vitals` / `clinical_notes` block types. Current model: `specs/updated-specs/02-protocol-model.md`.
+> **STATUS: PARTIAL (2026-06-08)** — Seeded templates no longer carry a `ProtocolType`; tenants are seeded with 5 default `ProtocolCategory` rows instead, and starter templates use `vitals` / `clinical_notes` block types. Current model: `specs/updated-specs/02-protocol-model.md`.
 
 > Living document. Last updated: April 2026.
 >

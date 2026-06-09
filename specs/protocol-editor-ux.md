@@ -1,6 +1,6 @@
 # Protocol Editor UX
 
-> ℹ️ **Terminology updated (2026-06-08).** Protocols are now organized by `ProtocolCategory` (replaces `ProtocolType`), with no lock rules; block types include `vitals` and `clinical_notes`. Editor UX here is largely still valid — current model: `specs/updated-specs/02-protocol-model.md`.
+> **STATUS: PARTIAL (2026-06-08)** — Protocols are now organized by `ProtocolCategory` (replaces `ProtocolType`), with no lock rules; block types include `vitals` and `clinical_notes`. Editor UX here is largely still valid — current model: `specs/updated-specs/02-protocol-model.md`.
 
 > Living document. Last updated: April 2026.
 >

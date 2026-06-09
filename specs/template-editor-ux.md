@@ -1,6 +1,6 @@
 # Template Editor UX
 
-> ℹ️ **Terminology updated (2026-06-08).** Protocol model is now **2-layer**: `ProtocolType` was replaced by `ProtocolCategory` (a filter, not a hierarchy) and templates have **no lock rules** (freely editable). The editor UX here is largely still valid; for the current model see `specs/updated-specs/02-protocol-model.md`. Block palette now also includes `vitals` and `clinical_notes`.
+> **STATUS: PARTIAL (2026-06-08)** — Protocol model is now **2-layer**: `ProtocolType` was replaced by `ProtocolCategory` (a filter, not a hierarchy) and templates have **no lock rules** (freely editable). The editor UX here is largely still valid; for the current model see `specs/updated-specs/02-protocol-model.md`. Block palette now also includes `vitals` and `clinical_notes`.
 
 > Living document. Last updated: April 2026.
 >

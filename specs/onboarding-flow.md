@@ -1,6 +1,6 @@
 # Onboarding Flow
 
-> ℹ️ **Updated (2026-06-08).** Tenant seeding now creates 5 default `ProtocolCategory` rows (Emergencias / Diagnóstico / Medicación / Procedimiento / Rehabilitación), not `ProtocolType`s. See `specs/updated-specs/02-protocol-model.md`.
+> **STATUS: PARTIAL (2026-06-08)** — Tenant seeding now creates 5 default `ProtocolCategory` rows (Emergencias / Diagnóstico / Medicación / Procedimiento / Rehabilitación), not `ProtocolType`s. See `specs/updated-specs/02-protocol-model.md`.
 
 > Living document. Last updated: April 2026.
 >
