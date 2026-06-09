@@ -1,6 +1,6 @@
 # Full Product Scope — Medical ERP
 
-> ℹ️ **Note (2026-06-08).** The **consultation workflow** and **protocol model** shipped a workflow-first redesign (no gate, walk-in, 2-layer protocol, SOAP removed) — see `specs/updated-specs/` for the current design of those areas. The roadmap/phasing below otherwise stands.
+> **STATUS: PARTIAL (2026-06-08)** — The **consultation workflow** and **protocol model** shipped a workflow-first redesign (no gate, walk-in, 2-layer protocol, SOAP removed) — see `specs/updated-specs/` for the current design of those areas. The roadmap/phasing below otherwise stands.
 
 > Living document. Last updated: April 2026.
 >

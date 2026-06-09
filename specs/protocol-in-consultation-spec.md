@@ -1,6 +1,6 @@
 # Slice 2.5: Protocol-in-Consultation — Full Implementation Specification
 
-> ⚠️ **SUPERSEDED (2026-06-08).** This describes the pre-v2 "hybrid" design (consultation gate, protocol strip, view-mode toggle, multi-protocol canvas) that was **not** shipped. The shipped workflow-first design lives in `specs/updated-specs/01-consultation-workflow.md`. Kept for history — do not implement from this.
+> **STATUS: SUPERSEDED (2026-06-08)** — This describes the pre-v2 "hybrid" design (consultation gate, protocol strip, view-mode toggle, multi-protocol canvas) that was **not** shipped. The shipped workflow-first design lives in `specs/updated-specs/01-consultation-workflow.md`. Kept for history — do not implement from this.
 
 > **Target completion:** 10-12 days
 > **Prerequisites:** Auth, Patients, Locations, Appointments, Consultations modules completed

@@ -61,6 +61,8 @@ These apply to every decision. If a proposed change violates one, flag it.
 
 **Superseded (kept for history — do not treat as current):** `specs/protocol-in-consultation-spec.md`, `specs/protocol-template-schema.md`, `specs/protocol-engine-slices.md`. These describe the pre-v2 design (consultation gate, 3-layer protocol, fixed SOAP) and are replaced by `specs/updated-specs/`.
 
+**Doc currency marker:** every reconciled spec leads with a `STATUS:` banner — `SUPERSEDED` (do not implement from it), `PARTIAL` (some sections stale; banner says which), or `STALE` (diagram out of date). Run `grep -rn "STATUS:" specs/` to audit currency. Specs with no banner predate the marker — verify against `specs/updated-specs/` and `packages/db/prisma/schema.prisma` before trusting consultation/protocol details.
+
 ## Design System
 
 When implementing a design from a handoff bundle, match the visual exactly. Use the exact spacing, colors, and component structure from the bundle. Do not refactor, improve, or simplify. If a deviation is necessary (e.g., a referenced component doesn't exist or there's an accessibility issue), state it explicitly before making the change.

@@ -1,6 +1,6 @@
 # Protocol Template Schema
 
-> ⚠️ **SUPERSEDED (2026-06-08)** by `specs/updated-specs/02-protocol-model.md`. This describes the pre-v2 3-layer model (Template → ProtocolType → Protocol) with lock rules. The shipped model is **2-layer** (Template + Protocol + Category, no ProtocolType, no locks). Kept for history.
+> **STATUS: SUPERSEDED (2026-06-08)** — replaced by `specs/updated-specs/02-protocol-model.md`. This describes the pre-v2 3-layer model (Template → ProtocolType → Protocol) with lock rules. The shipped model is **2-layer** (Template + Protocol + Category, no ProtocolType, no locks). Kept for history.
 
 > Living document. Last updated: April 2026.
 >

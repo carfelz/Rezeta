@@ -1,6 +1,6 @@
 # Protocol Engine — Slice Tracker
 
-> ⚠️ **SUPERSEDED (2026-06-08)** by `specs/updated-specs/02-protocol-model.md`. Describes the pre-v2 protocol engine (3-layer model, ProtocolType, lock rules). The shipped model is 2-layer with categories. Kept for history.
+> **STATUS: SUPERSEDED (2026-06-08)** — replaced by `specs/updated-specs/02-protocol-model.md`. Describes the pre-v2 protocol engine (3-layer model, ProtocolType, lock rules). The shipped model is 2-layer with categories. Kept for history.
 
 > Living document. Last updated: April 2026.
 >
