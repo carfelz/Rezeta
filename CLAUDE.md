@@ -34,7 +34,7 @@ A medical ERP built for Latin American (specifically Dominican Republic) medical
 @./specs/03-claude-design-handoff.md
 @./specs/04-rezeta-improvements.md -->
 
-The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live).
+The ERD is in `specs/medical_erp_erd.mmd` (Mermaid format — view at https://mermaid.live). ⚠️ The ERD is **pre-v2** (shows SOAP columns, `user_id`, 3-layer protocol). The authoritative current schema is `packages/db/prisma/schema.prisma`.
 
 ## Architectural Principles (Non-Negotiable)
 
@@ -51,9 +51,15 @@ These apply to every decision. If a proposed change violates one, flag it.
 
 ## Specs
 
-- Protocol consultation spec: see `specs/protocol-in-consultation-spec.md`
-- Engine slices spec: see `specs/protocol-engine-slices.md`
-- Audit log spec: see `specs/audit-log-spec.md`
+**Canonical (v2, workflow-first redesign — shipped):** `specs/updated-specs/` is the source of truth for the consultation workflow and protocol model. Start here.
+
+- Overview / what changed: `specs/updated-specs/00-overview.md`
+- Consultation workflow (no gate, walk-in + planned, clinical content in blocks): `specs/updated-specs/01-consultation-workflow.md`
+- Protocol model (**2-layer:** Template + Protocol + Category, no ProtocolType): `specs/updated-specs/02-protocol-model.md`
+- Orders & documents: `specs/updated-specs/03-orders-and-documents.md`
+- Audit log spec: `specs/audit-log-spec.md`
+
+**Superseded (kept for history — do not treat as current):** `specs/protocol-in-consultation-spec.md`, `specs/protocol-template-schema.md`, `specs/protocol-engine-slices.md`. These describe the pre-v2 design (consultation gate, 3-layer protocol, fixed SOAP) and are replaced by `specs/updated-specs/`.
 
 ## Design System
 
@@ -108,7 +114,7 @@ Key design decisions:
 - **Currency:** DOP primary, USD secondary.
 - **Document types:** `cedula`, `passport`, `rnc` (for Dominican tax IDs).
 - **No ICD-10 coding** — diagnoses are free-text. Latin American markets do not typically use ICD-10 in ambulatory care.
-- **SOAP note fields:** `subjective`, `objective`, `assessment`, `plan` (plus `chief_complaint`, `vitals`, `diagnoses`).
+- **Clinical documentation (v2):** `Consultation` no longer has fixed SOAP columns. It is an administrative container (status `open` → `signed` → `amended`); all clinical content — notes, vitals, diagnoses — lives in `ProtocolUsage` blocks (e.g. `clinical_notes`, `vitals`). See `specs/updated-specs/01-consultation-workflow.md`. (The legacy `subjective/objective/assessment/plan` SOAP fields were removed in the schema reset.)
 
 ## Current Version
 
@@ -119,13 +125,21 @@ Key design decisions:
 | Patient management                    | ✅ Done |
 | Multi-location management + schedules | ✅ Done |
 | Appointments & calendar               | ✅ Done |
-| Consultations (SOAP notes)            | ✅ Done |
+| Consultations (workflow-first)        | ✅ Done |
 | Prescriptions                         | ✅ Done |
 | Basic billing / invoicing             | ✅ Done |
 | Protocol engine (full)                | ✅ Done |
 | Audit log                             | ✅ Done |
 
-**In progress (Hybrid redesign per `specs/protocol-in-consultation-spec.md`):** consultation gate, protocol strip, view-mode toggle, multi-protocol canvas. See `specs/protocol-in-consultation-spec.md` and the `_preview/*` routes for component previews.
+**Workflow-first redesign — SHIPPED (2026-06-08), deployed to dev.** Plans 01–04 (`docs/superpowers/plans/2026-05-26-0{1..4}-*.md`) are all merged to `main` and live. What shipped:
+
+- **No consultation gate.** Two equal entry paths — planned (from appointment) and walk-in (patient + location only). Protocols are addable at any point during the encounter.
+- **SOAP removed** as fixed columns; clinical content lives in `ProtocolUsage` blocks (`vitals`, `clinical_notes`, checklist, etc.).
+- **3-zone consultation layout:** fixed header (patient + allergy alerts) · scrollable protocol panel · right rail (Recetas / Laboratorio / Imagen orders).
+- **2-layer protocol model:** `ProtocolType` removed; `ProtocolCategory` (name + color) replaces it as a filter, not a hierarchy layer.
+- **Atomic sign:** "Firmar y cerrar" completes all protocol usages and signs all queued orders in one transaction; signed consultations correct via `ConsultationAmendment`.
+
+The old "Hybrid redesign" (consultation gate, protocol strip, view-mode toggle, multi-protocol canvas) was superseded by this. Canonical spec: `specs/updated-specs/`.
 
 Work now targets **v1.5** features (see `specs/full-scope.md` Phase 2). If asked to add a feature, check `specs/full-scope.md` for its target phase before starting. Features explicitly deferred: telemedicine, lab integrations, inventory, patient portal, insurance claims, multi-user, template versioning, cross-tenant sharing.
 

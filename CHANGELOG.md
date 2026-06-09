@@ -4,6 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-08] — docs: reconcile project context with the shipped v2 workflow redesign
+
+### Changed
+
+- **`CLAUDE.md`**: Marked the workflow-first redesign **shipped** (plans 01–04 merged, deployed). Replaced the stale "In progress (Hybrid redesign)" section (consultation gate, protocol strip, view-mode toggle, multi-protocol canvas — never shipped) with the actual v2 design (no gate, walk-in, 3-zone consultation, 2-layer protocol, atomic sign). Repointed the **Specs** section to `specs/updated-specs/` as canonical and listed the superseded docs. Updated the SOAP/clinical-documentation note (SOAP columns removed; content lives in `ProtocolUsage` blocks; status `open`/`signed`/`amended`) and flagged the ERD as pre-v2 (`packages/db/prisma/schema.prisma` is authoritative).
+- **`specs/`**: Added dated banners reconciling docs with v2. Fully superseded (point to `specs/updated-specs/`): `protocol-in-consultation-spec.md`, `protocol-template-schema.md`, `protocol-engine-slices.md`. Partially superseded / terminology notes: `mvp-scope.md`, `full-scope.md`, `protocol-editor-ux.md`, `template-editor-ux.md`, `starter-templates.md`, `onboarding-flow.md`, `audit-log-spec.md`. Stale-diagram banner on `medical_erp_erd.mmd`. Historical audits/handoffs/qa logs left unchanged (point-in-time records).
+
 ## [2026-06-08] — ci(deploy): actually deploy the frontend to Firebase Hosting
 
 ### Fixed

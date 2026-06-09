@@ -1,5 +1,7 @@
 # MVP Scope — Medical ERP
 
+> ℹ️ **Partially superseded (2026-06-08).** The **consultation** and **protocol** sections here describe the original MVP (SOAP-centric consultations, 3-layer protocol). Those areas shipped a workflow-first redesign — see `specs/updated-specs/` for the current design. The rest (patients, multi-location, appointments, prescriptions, billing, audit) is still accurate.
+
 > Living document. Last updated: April 2026.
 
 ## 1. Vision

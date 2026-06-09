@@ -1,5 +1,7 @@
 # Full Product Scope — Medical ERP
 
+> ℹ️ **Note (2026-06-08).** The **consultation workflow** and **protocol model** shipped a workflow-first redesign (no gate, walk-in, 2-layer protocol, SOAP removed) — see `specs/updated-specs/` for the current design of those areas. The roadmap/phasing below otherwise stands.
+
 > Living document. Last updated: April 2026.
 >
 > This document captures the **full vision** for the product across all tiers — solo specialist, small practice, clinic, and enterprise. It is deliberately aspirational. For what ships first, see [`mvp-scope.md`](./mvp-scope.md).

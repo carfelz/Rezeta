@@ -1,5 +1,7 @@
 # Onboarding Flow
 
+> ℹ️ **Updated (2026-06-08).** Tenant seeding now creates 5 default `ProtocolCategory` rows (Emergencias / Diagnóstico / Medicación / Procedimiento / Rehabilitación), not `ProtocolType`s. See `specs/updated-specs/02-protocol-model.md`.
+
 > Living document. Last updated: April 2026.
 >
 > This document specifies the first-run onboarding experience — the `/bienvenido` screen — through which every new tenant must pass before reaching the main application. Onboarding's sole job in MVP is to ensure that every tenant has at least one `ProtocolTemplate` and at least one `ProtocolType` before the doctor can create a protocol.

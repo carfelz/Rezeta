@@ -1,5 +1,7 @@
 # Audit Log Specification
 
+> ℹ️ **Entity names updated (2026-06-08).** Where this spec references `ProtocolType`, the audited entity is now `ProtocolCategory`; consultation status values are `open` / `signed` / `amended` (no `draft`). The audit mechanism itself is unchanged. See `specs/updated-specs/`.
+
 > Living document. Last updated: May 2026.
 >
 > This document specifies the design, schema, write mechanisms, read API, frontend module, and implementation plan for the unified audit log in the Medical ERP. The audit log is the legal and business system of record for every meaningful event in the system — distinct from Cloud Logging (which is an operational debugging and performance tool) and from Sentry (which is an error-tracking tool). All three coexist; none substitutes for the others.
