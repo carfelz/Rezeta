@@ -24,6 +24,7 @@ const mockRepo = {
   listLabOrdersByConsultation: vi.fn(),
   findLabOrderById: vi.fn(),
   softDeleteLabOrder: vi.fn(),
+  getOrdersForConsultation: vi.fn(),
 }
 
 const mockPrisma = {
@@ -232,6 +233,23 @@ describe('OrdersService', () => {
     it('throws NotFoundException when lab order belongs to different consultation', async () => {
       mockRepo.findLabOrderById.mockResolvedValue({ id: 'lab1', consultationId: 'other' })
       await expect(service.deleteLabOrder('c1', 'lab1', 't1')).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  // ── getOrdersForConsultation ───────────────────────────────────────────────
+
+  describe('getOrdersForConsultation', () => {
+    it('returns combined orders for valid consultation', async () => {
+      const combined = { prescriptions: [], imagingOrders: [], labOrders: [] }
+      mockRepo.getOrdersForConsultation.mockResolvedValue(combined)
+      const result = await service.getOrdersForConsultation('c1', 't1')
+      expect(result).toEqual(combined)
+      expect(mockRepo.getOrdersForConsultation).toHaveBeenCalledWith('c1', 't1')
+    })
+
+    it('throws NotFoundException when consultation not found', async () => {
+      mockPrisma.consultation.findFirst.mockResolvedValue(null)
+      await expect(service.getOrdersForConsultation('bad', 't1')).rejects.toThrow(NotFoundException)
     })
   })
 

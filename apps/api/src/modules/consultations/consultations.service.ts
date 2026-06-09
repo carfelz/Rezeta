@@ -176,10 +176,10 @@ export class ConsultationsService {
 
   async sign(id: string, tenantId: string, userId: string): Promise<ConsultationWithDetails> {
     const c = await this.getById(id, tenantId)
-    if (c.status === 'signed') {
+    if (c.status !== 'open') {
       throw new ConflictException({
         code: ErrorCode.CONSULTATION_ALREADY_SIGNED,
-        message: 'Consultation is already signed',
+        message: `Consultation is already ${c.status}`,
       })
     }
 

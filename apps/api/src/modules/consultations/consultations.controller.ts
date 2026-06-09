@@ -125,7 +125,7 @@ export class ConsultationsController {
     return this.svc.update(id, tenantId, dto)
   }
 
-  @Post(':id/sign')
+  @Patch(':id/sign')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign consultation (makes it immutable)' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })

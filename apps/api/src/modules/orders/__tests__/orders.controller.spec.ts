@@ -104,8 +104,17 @@ describe('OrdersController', () => {
       renameLabOrderGroup: vi.fn(),
       getLabOrderGroupPdf: vi.fn(),
       generateAll: vi.fn(),
+      getOrdersForConsultation: vi.fn(),
     } as unknown as OrdersService
     controller = new OrdersController(svc)
+  })
+
+  it('getOrders delegates to service', async () => {
+    const combined = { prescriptions: [], imagingOrders: [], labOrders: [] }
+    vi.mocked(svc.getOrdersForConsultation).mockResolvedValue(combined)
+    const result = await controller.getOrders(tenantId, consultationId)
+    expect(svc.getOrdersForConsultation).toHaveBeenCalledWith(consultationId, tenantId)
+    expect(result).toEqual(combined)
   })
 
   it('downloadPrescriptionPdf streams PDF buffer', async () => {

@@ -260,10 +260,29 @@ export class ConsultationsRepository {
     tenantId: string,
     _userId: string,
   ): Promise<ConsultationWithDetails> {
-    const row = await this.prisma.consultation.update({
-      where: { id, tenantId, deletedAt: null },
-      data: { status: 'signed', signedAt: new Date() },
-      include: RELATIONS_INCLUDE,
+    const now = new Date()
+    const row = await this.prisma.$transaction(async (tx) => {
+      await tx.protocolUsage.updateMany({
+        where: { consultationId: id, tenantId, status: 'in_progress', deletedAt: null },
+        data: { status: 'completed', completedAt: now },
+      })
+      await tx.prescription.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt: now },
+      })
+      await tx.labOrder.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt: now },
+      })
+      await tx.imagingOrder.updateMany({
+        where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
+        data: { status: 'signed', signedAt: now },
+      })
+      return tx.consultation.update({
+        where: { id, tenantId, deletedAt: null },
+        data: { status: 'signed', signedAt: now },
+        include: RELATIONS_INCLUDE,
+      })
     })
     return toConsultationWithDetails(row)
   }
