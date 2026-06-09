@@ -1,5 +1,7 @@
 # Protocol Engine — Slice Tracker
 
+> ⚠️ **SUPERSEDED (2026-06-08)** by `specs/updated-specs/02-protocol-model.md`. Describes the pre-v2 protocol engine (3-layer model, ProtocolType, lock rules). The shipped model is 2-layer with categories. Kept for history.
+
 > Living document. Last updated: April 2026.
 >
 > This document tracks the implementation of the protocol engine across vertical slices. Each slice is small, end-to-end, and demoable on its own. Completed slices are marked; in-progress and pending slices are detailed so they can be picked up without rereading the whole history.

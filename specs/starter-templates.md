@@ -1,5 +1,7 @@
 # Starter Templates — Protocol Engine
 
+> ℹ️ **Updated (2026-06-08).** Seeded templates no longer carry a `ProtocolType`; tenants are seeded with 5 default `ProtocolCategory` rows instead, and starter templates use `vitals` / `clinical_notes` block types. Current model: `specs/updated-specs/02-protocol-model.md`.
+
 > Living document. Last updated: April 2026.
 >
 > This document specifies the pre-built protocol templates that ship with MVP. On tenant creation, these five templates are copied into the tenant's own `ProtocolTemplate` rows, and five matching `ProtocolType` rows are created pointing at them. This gives doctors immediate value without needing to design templates from scratch.

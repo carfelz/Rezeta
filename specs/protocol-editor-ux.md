@@ -1,5 +1,7 @@
 # Protocol Editor UX
 
+> ℹ️ **Terminology updated (2026-06-08).** Protocols are now organized by `ProtocolCategory` (replaces `ProtocolType`), with no lock rules; block types include `vitals` and `clinical_notes`. Editor UX here is largely still valid — current model: `specs/updated-specs/02-protocol-model.md`.
+
 > Living document. Last updated: April 2026.
 >
 > This document specifies the user experience for the **protocol editor and viewer** surfaces — the surfaces a doctor uses to author and consult clinical protocols. The **template editor** is a separate surface with a different design rationale; it is specified in `template-editor-ux.md`.
