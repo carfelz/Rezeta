@@ -7,9 +7,10 @@ import { patientComboboxStrings } from './strings'
 export interface PatientComboboxProps {
   value: string
   onChange: (patientId: string, patientName: string) => void
+  onClear?: () => void
 }
 
-export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.Element {
+export function PatientCombobox({ value, onChange, onClear }: PatientComboboxProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [selectedName, setSelectedName] = useState('')
@@ -21,11 +22,18 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
     function onMouseDown(e: MouseEvent): void {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
+        setSearch('')
+        setSelectedName('')
+        if (onClear) {
+          onClear()
+        } else {
+          onChange('', '')
+        }
       }
     }
     document.addEventListener('mousedown', onMouseDown)
     return () => document.removeEventListener('mousedown', onMouseDown)
-  }, [])
+  }, [onChange, onClear])
 
   function handleSelect(p: Patient): void {
     const name = `${p.firstName} ${p.lastName}`.trim()
@@ -41,7 +49,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
         type="text"
         placeholder={patientComboboxStrings.searchPlaceholder}
         value={value && !open ? selectedName : search}
-        onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         onChange={(e) => {
           setSearch(e.target.value)
           setOpen(true)
@@ -60,7 +68,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
               <Button
                 key={p.id}
                 variant="item"
-                size="sm"
+                size="xl"
                 className="w-full flex flex-col items-start px-3 py-2 text-left"
                 onClick={() => handleSelect(p)}
               >

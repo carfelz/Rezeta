@@ -11,6 +11,7 @@ import {
 } from '@/hooks/schedules/use-schedules'
 import {
   Button,
+  DatePicker,
   EmptyState,
   Callout,
   Field,
@@ -26,6 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TimePicker,
 } from '@/components/ui'
 import { schedulesStrings } from './strings'
 
@@ -120,19 +122,17 @@ function BlockFormModal({ locationId, onClose }: BlockFormModalProps) {
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={schedulesStrings.blockStartTimeLabel} required>
-                <Input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value ? `${e.target.value}:00` : '')}
-                  step="900"
+                <TimePicker
+                  value={startTime.slice(0, 5)}
+                  onChange={(v) => setStartTime(v ? `${v}:00` : '')}
+                  intervalMin={15}
                 />
               </Field>
               <Field label={schedulesStrings.blockEndTimeLabel} required>
-                <Input
-                  type="time"
+                <TimePicker
                   value={endTime.slice(0, 5)}
-                  onChange={(e) => setEndTime(e.target.value ? `${e.target.value}:00` : '')}
-                  step="900"
+                  onChange={(v) => setEndTime(v ? `${v}:00` : '')}
+                  intervalMin={15}
                 />
               </Field>
             </div>
@@ -230,7 +230,7 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
               </Callout>
             )}
             <Field label={schedulesStrings.exceptionDateLabel} required>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker value={date} onChange={setDate} />
             </Field>
             <Field label={schedulesStrings.exceptionTypeLabel} required>
               <Select value={type} onValueChange={(v) => setType(v as 'blocked' | 'available')}>
@@ -250,23 +250,13 @@ function ExceptionFormModal({ locationId, onClose }: ExceptionFormModalProps) {
                 label={schedulesStrings.exceptionStartTimeLabel}
                 helper={schedulesStrings.exceptionStartTimeHelper}
               >
-                <Input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  step="900"
-                />
+                <TimePicker value={startTime} onChange={setStartTime} intervalMin={15} />
               </Field>
               <Field
                 label={schedulesStrings.exceptionEndTimeLabel}
                 helper={schedulesStrings.exceptionEndTimeHelper}
               >
-                <Input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  step="900"
-                />
+                <TimePicker value={endTime} onChange={setEndTime} intervalMin={15} />
               </Field>
             </div>
             <Field

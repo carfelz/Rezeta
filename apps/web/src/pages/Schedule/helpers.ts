@@ -11,7 +11,28 @@ export function formatDate(date: Date): string {
 }
 
 export function toDateInputValue(date: Date): string {
-  return date.toISOString().slice(0, 10)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export function toTimeInputValue(date: Date): string {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+export function nextSlotAfter(reference: Date, intervalMin: number): string {
+  const total = reference.getHours() * 60 + reference.getMinutes()
+  const next = Math.ceil((total + 1) / intervalMin) * intervalMin
+  const clamped = Math.min(next, 23 * 60 + 45)
+  return `${String(Math.floor(clamped / 60)).padStart(2, '0')}:${String(clamped % 60).padStart(2, '0')}`
+}
+
+export function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map((n) => parseInt(n, 10))
+  const total = (h ?? 0) * 60 + (m ?? 0) + minutes
+  const clamped = Math.min(Math.max(total, 0), 24 * 60 - 1)
+  return `${String(Math.floor(clamped / 60)).padStart(2, '0')}:${String(clamped % 60).padStart(2, '0')}`
 }
 
 export function formatTime(isoString: string): string {

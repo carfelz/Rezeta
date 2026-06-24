@@ -9,6 +9,7 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
+    "predev": "pnpm --filter @rezeta/db generate && pnpm --filter @rezeta/shared build",
     "dev": "pnpm --parallel --filter './apps/*' dev",
     "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
     "lint": "eslint .",

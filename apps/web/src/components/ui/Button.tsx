@@ -3,7 +3,7 @@ import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   // Base — every button
   [
     'inline-flex items-center justify-center gap-2',
@@ -63,6 +63,8 @@ const buttonVariants = cva(
         sm: 'h-btn-sm text-[12.5px] px-[10px]',
         md: 'h-btn-md text-[13px] px-[14px]',
         lg: 'h-btn-lg text-body px-[18px]',
+        xl: 'h-btn-xl text-body px-[20px]',
+        icon: 'h-btn-md w-btn-md p-0 [&>svg]:w-[16px] [&>svg]:h-[16px]',
       },
       iconOnly: {
         true: 'px-0',
@@ -73,6 +75,7 @@ const buttonVariants = cva(
       { size: 'sm', iconOnly: true, class: 'w-[28px] [&>svg]:w-[14px] [&>svg]:h-[14px]' },
       { size: 'md', iconOnly: true, class: 'w-[32px] [&>svg]:w-[16px] [&>svg]:h-[16px]' },
       { size: 'lg', iconOnly: true, class: 'w-[40px] [&>svg]:w-[18px] [&>svg]:h-[18px]' },
+      { size: 'xl', iconOnly: true, class: 'w-[44px] [&>svg]:w-[20px] [&>svg]:h-[20px]' },
     ],
     defaultVariants: {
       variant: 'primary',

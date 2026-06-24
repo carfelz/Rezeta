@@ -4,7 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-06-09] — ci: bump GitHub Actions to Node 24 runtimes
+## [2026-06-17] — feat(ui): shadcn date/time picker + slot-aware appointment form
+
+### Added
+
+- **`apps/web/src/components/ui/calendar.tsx`, `popover.tsx`** (shadcn): Installed shadcn Calendar (react-day-picker v10) + Popover primitives. Calendar wired to project Button via `buttonVariants` and design tokens (`bg-primary`, `bg-popover`, etc., already mapped to Rezeta tokens in `src/index.css`).
+- **`apps/web/src/components/ui/DatePicker.tsx`**: Popover-based date picker. Spanish locale, `value` is `YYYY-MM-DD` string, supports `minDate`/`maxDate`. Phosphor `ph-calendar` trigger icon.
+- **`apps/web/src/components/ui/TimePicker.tsx`**: Popover-based time picker with `intervalMin`, `minTime`, `maxTime` props. Renders 12-hour `a.m./p.m.` display, scrolls active slot into view, generates slot list from configured interval.
+- **`apps/web/src/components/ui/Button.tsx`**: Added `icon` size variant (32×32) and exported `buttonVariants` so `calendar.tsx` can reuse the system's Button styling.
+- **`apps/web/src/pages/Schedule/helpers.ts`**: New `toTimeInputValue`, `nextSlotAfter`, `addMinutesToTime` helpers. Fixed `toDateInputValue` to use local date parts instead of `toISOString()` (timezone-safe).
+- **Tests**: `DatePicker.test.tsx`, `TimePicker.test.tsx` (placeholder, value display, popover open, slot generation, selection callback).
+
+### Changed
+
+- **`apps/web/src/pages/Schedule/AppointmentFormModal.tsx`**: Replaced raw `<Input type="date">` and `<Input type="time">` with `DatePicker` + `TimePicker`. Default start time is the next slot after `Date.now()` (based on the active block's `slotDurationMin`). Selecting a start time auto-fills end time = start + interval. Interval is derived from the matching `ScheduleBlock` for `(locationId, dayOfWeek)` via `useGetBlocks`, falling back to 30 min.
+- **`apps/web/src/pages/settings/Schedules.tsx`**: Replaced the block + exception form's date/time inputs with the new pickers (15-min interval for schedule editing).
+
+
 
 ### Changed
 

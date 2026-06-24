@@ -223,7 +223,14 @@
       "Bash(pnpm test:coverage)",
       "Bash(echo \"HOOK_EXIT: $?\")",
       "Bash(echo \"lint-staged exit: $?\")",
-      "mcp__github__list_commits"
+      "mcp__github__list_commits",
+      "Bash(kill %1)",
+      "Bash(pkill -f 'pnpm.*dev')",
+      "Bash(pkill -f 'tsx watch')",
+      "Bash(pkill -f 'vite')",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(lsof -nP -iTCP:5173 -sTCP:LISTEN)",
+      "mcp__shadcn__get_project_registries"
     ]
   }
 }
