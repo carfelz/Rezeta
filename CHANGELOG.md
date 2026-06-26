@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — chore(web): remove orphaned consultation gate and GatePreview scaffolding
+
+### Changed
+
+- **`apps/web/src/components/consultations/ConsultationGate.tsx`**: Deleted — the old consultation gate (protocol-selection step) was superseded by the protocol-first redesign and was no longer reachable from production routes.
+- **`apps/web/src/components/consultations/__tests__/ConsultationGate.test.tsx`**: Deleted — test file for the removed component.
+- **`apps/web/src/components/consultations/__tests__/ConsultationGate.source.test.tsx`**: Deleted — recommendation-source semantics test for the removed component.
+- **`apps/web/src/pages/_preview/GatePreview.tsx`**: Deleted — the only consumer of `ConsultationGate`; a dev-only auth-free preview page with no production path.
+- **`apps/web/src/App.tsx`**: Removed `GatePreview` import and `{ path: '/_preview/gate', element: <GatePreview /> }` route. All other `_preview` routes (strip, edge, canvas, order-queue) remain intact.
+- **`apps/web/src/components/consultations/strings.ts`**: No changes required — `ConsultationGate` used only inline strings; no orphaned string keys remained.
+
 ## [2026-06-26] — refactor: drop off-protocol-note promote-to-soap path
 
 ### Changed

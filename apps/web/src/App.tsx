@@ -27,7 +27,6 @@ import { Signup } from '@/pages/Signup'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
-import { GatePreview } from '@/pages/_preview/GatePreview'
 import { StripPreview } from '@/pages/_preview/StripPreview'
 import { EdgePreview } from '@/pages/_preview/EdgePreview'
 import { CanvasPreview } from '@/pages/_preview/CanvasPreview'
@@ -35,7 +34,6 @@ import { OrderQueuePreview } from '@/pages/_preview/OrderQueuePreview'
 
 const router = createBrowserRouter([
   // ── Dev-only auth-free previews ────────────────────────────────────────────
-  { path: '/_preview/gate', element: <GatePreview /> },
   { path: '/_preview/strip', element: <StripPreview /> },
   { path: '/_preview/edge', element: <EdgePreview /> },
   { path: '/_preview/canvas', element: <CanvasPreview /> },
