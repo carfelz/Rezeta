@@ -230,7 +230,20 @@
       "Bash(pkill -f 'vite')",
       "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
       "Bash(lsof -nP -iTCP:5173 -sTCP:LISTEN)",
-      "mcp__shadcn__get_project_registries"
+      "mcp__shadcn__get_project_registries",
+      "Bash(echo \"TYPECHECK_EXIT=$?\")",
+      "Bash(echo \"LINT_EXIT=$?\")",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "Bash(rm -f dashboard-fixed.png)",
+      "Bash(rm -rf .playwright-mcp apps/web/.playwright-mcp)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ]
 }

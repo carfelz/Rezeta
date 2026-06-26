@@ -34,7 +34,7 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
               variant="item"
               size="sm"
               onClick={() => void navigate(`/protocolos/${proto.id}`)}
-              className={`flex items-center justify-between w-full text-left -mx-1 px-1 py-1 rounded ${
+              className={`flex items-center justify-between w-full h-auto text-left -mx-1 px-1 py-1 rounded ${
                 idx < visible.length - 1 ? 'pb-[10px] border-b border-n-100' : ''
               }`}
             >

@@ -43,7 +43,7 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
       size="sm"
       onClick={() => void navigate('/agenda')}
       className={[
-        'relative flex items-center gap-4 w-full text-left py-[10px] pl-[14px] pr-4',
+        'relative flex items-center gap-4 w-full h-auto text-left py-[10px] pl-[14px] pr-4',
         'border-b border-n-100 last:border-b-0',
         'before:absolute before:left-0 before:top-[12px] before:bottom-[12px] before:w-[2px] before:bg-p-500',
         !isFirst && isCompleted ? 'opacity-70' : '',

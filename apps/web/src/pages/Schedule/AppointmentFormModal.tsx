@@ -195,7 +195,6 @@ export function AppointmentFormModal({
                 <PatientCombobox
                   value={patientId}
                   onChange={(id) => setPatientId(id)}
-                  onClear={clearFields}
                 />
               </Field>
             )}

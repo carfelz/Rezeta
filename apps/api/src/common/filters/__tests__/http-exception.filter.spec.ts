@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common'
 import type { ArgumentsHost } from '@nestjs/common'
+import { Prisma } from '@rezeta/db'
 import { HttpExceptionFilter } from '../http-exception.filter.js'
 import { ErrorCode } from '@rezeta/shared'
 
@@ -122,6 +123,56 @@ describe('HttpExceptionFilter', () => {
   it('handles non-Error thrown value as 500', () => {
     filter.catch('some string error', host)
     expect(statusFn).toHaveBeenCalledWith(500)
+  })
+
+  it('maps Prisma P2002 unique violation to 409 RESOURCE_CONFLICT', () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    try {
+      const exception = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`tenant_id`,`name`)',
+        { code: 'P2002', clientVersion: 'test', meta: { target: ['tenant_id', 'name'] } },
+      )
+      filter.catch(exception, host)
+      expect(statusFn).toHaveBeenCalledWith(409)
+      const arg = jsonFn.mock.calls[0]?.[0] as {
+        error: { code: string; message: string; details?: { target?: unknown } }
+      }
+      expect(arg.error.code).toBe(ErrorCode.RESOURCE_CONFLICT)
+      expect(arg.error.details?.target).toEqual(['tenant_id', 'name'])
+    } finally {
+      process.env.NODE_ENV = prev
+    }
+  })
+
+  it('omits Prisma P2002 target details in production', () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const exception = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+        meta: { target: ['tenant_id', 'name'] },
+      })
+      filter.catch(exception, host)
+      expect(statusFn).toHaveBeenCalledWith(409)
+      const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string; details?: unknown } }
+      expect(arg.error.code).toBe(ErrorCode.RESOURCE_CONFLICT)
+      expect(arg.error.details).toBeUndefined()
+    } finally {
+      process.env.NODE_ENV = prev
+    }
+  })
+
+  it('treats non-P2002 Prisma errors as 500 INTERNAL_ERROR', () => {
+    const exception = new Prisma.PrismaClientKnownRequestError('Record not found', {
+      code: 'P2025',
+      clientVersion: 'test',
+    })
+    filter.catch(exception, host)
+    expect(statusFn).toHaveBeenCalledWith(500)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string } }
+    expect(arg.error.code).toBe(ErrorCode.INTERNAL_ERROR)
   })
 
   it('falls back to exception.message when body is object without code field', () => {

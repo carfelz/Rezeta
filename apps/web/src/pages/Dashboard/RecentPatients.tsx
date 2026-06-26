@@ -43,7 +43,7 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
                 variant="item"
                 size="sm"
                 onClick={() => void navigate(`/pacientes/${p.id}`)}
-                className="flex items-center gap-3 w-full text-left -mx-1 px-1 py-1 rounded"
+                className="flex items-center gap-3 w-full h-auto text-left -mx-1 px-1 py-1 rounded"
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-n-900 truncate">

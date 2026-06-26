@@ -31,12 +31,50 @@ describe('ProtocolCategory model', () => {
   it('exists in schema', () => {
     expect(schema).toContain('model ProtocolCategory')
   })
-  it('has unique tenant+name constraint', () => {
+  it('does NOT declare a full @@unique on (tenantId, name)', () => {
+    // Uniqueness among live rows is enforced by a partial unique index (raw SQL),
+    // so soft-deleted rows do not block reuse. A full @@unique would reintroduce the bug.
     const block = schema.match(/model ProtocolCategory \{[\s\S]*?\n\}/)?.[0] ?? ''
-    expect(block).toContain('@@unique([tenantId, name])')
+    expect(block).not.toContain('@@unique([tenantId, name])')
   })
   it('has color field', () => {
     expect(schema).toMatch(/color\s+String/)
+  })
+})
+
+describe('Partial unique indexes for soft-deletable models', () => {
+  const migration = readFileSync(
+    join(__dirname, '../migrations/20260626000000_partial_unique_soft_delete/migration.sql'),
+    'utf-8',
+  )
+
+  it('schema drops full uniques that would block reuse after soft-delete', () => {
+    const invoice = schema.match(/model Invoice \{[\s\S]*?\n\}/)?.[0] ?? ''
+    const version = schema.match(/model ProtocolVersion \{[\s\S]*?\n\}/)?.[0] ?? ''
+    expect(invoice).not.toContain('@@unique([tenantId, invoiceNumber])')
+    expect(invoice).not.toMatch(/consultationId\s+String\?\s+@unique/)
+    expect(version).not.toContain('@@unique([protocolId, versionNumber])')
+  })
+
+  it('Consultation.invoice is a list (one-to-many) so consultationId need not be @unique', () => {
+    const block = schema.match(/model Consultation \{[\s\S]*?\n\}/)?.[0] ?? ''
+    expect(block).toMatch(/invoices\s+Invoice\[\]/)
+    expect(block).not.toMatch(/invoice\s+Invoice\?/)
+  })
+
+  it('migration creates each unique index with WHERE deleted_at IS NULL', () => {
+    for (const idx of [
+      'protocol_categories_tenant_id_name_key',
+      'invoices_tenant_id_invoice_number_key',
+      'invoices_consultation_id_key',
+      'protocol_versions_protocol_id_version_number_key',
+    ]) {
+      const stmt = migration.match(
+        new RegExp(`CREATE UNIQUE INDEX "${idx}"[\\s\\S]*?;`),
+      )?.[0]
+      expect(stmt, `missing partial index ${idx}`).toBeTruthy()
+      expect(stmt).toContain('WHERE "deleted_at" IS NULL')
+    }
   })
 })
 

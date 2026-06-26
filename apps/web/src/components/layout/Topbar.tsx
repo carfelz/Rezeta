@@ -84,7 +84,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
                 key={loc.id}
                 variant="item"
                 size="sm"
-                className="w-full flex items-center gap-2 px-4 py-3 text-left"
+                className="w-full h-auto flex items-center justify-start gap-2 px-4 py-2 text-left"
                 onClick={() => {
                   setActiveLocation(loc.id)
                   setDropdownOpen(false)

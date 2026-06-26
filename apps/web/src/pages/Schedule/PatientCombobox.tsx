@@ -7,10 +7,9 @@ import { patientComboboxStrings } from './strings'
 export interface PatientComboboxProps {
   value: string
   onChange: (patientId: string, patientName: string) => void
-  onClear?: () => void
 }
 
-export function PatientCombobox({ value, onChange, onClear }: PatientComboboxProps): JSX.Element {
+export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [selectedName, setSelectedName] = useState('')
@@ -18,22 +17,19 @@ export function PatientCombobox({ value, onChange, onClear }: PatientComboboxPro
   const { data } = usePatients({ search })
   const patients: Patient[] = data?.items ?? []
 
+  // Clicking outside only dismisses the dropdown. It must not clear the selected
+  // patient or reset the surrounding form — the patient is cleared explicitly when
+  // the user empties the input (see onChange below).
   useEffect(() => {
     function onMouseDown(e: MouseEvent): void {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
         setSearch('')
-        setSelectedName('')
-        if (onClear) {
-          onClear()
-        } else {
-          onChange('', '')
-        }
       }
     }
     document.addEventListener('mousedown', onMouseDown)
     return () => document.removeEventListener('mousedown', onMouseDown)
-  }, [onChange, onClear])
+  }, [])
 
   function handleSelect(p: Patient): void {
     const name = `${p.firstName} ${p.lastName}`.trim()

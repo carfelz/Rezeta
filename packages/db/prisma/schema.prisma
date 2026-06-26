@@ -265,7 +265,7 @@ model Consultation {
   prescriptions  Prescription[]
   imagingOrders  ImagingOrder[]
   labOrders      LabOrder[]
-  invoice        Invoice?
+  invoices       Invoice[]
   protocolUsages ProtocolUsage[]
 
   @@index([tenantId])
@@ -348,7 +348,7 @@ model Invoice {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
   patientId        String    @map("patient_id") @db.Uuid
-  consultationId   String?   @unique @map("consultation_id") @db.Uuid
+  consultationId   String?   @map("consultation_id") @db.Uuid
   locationId       String    @map("location_id") @db.Uuid
   userId           String    @map("user_id") @db.Uuid
   invoiceNumber    String    @map("invoice_number") @db.VarChar(50)
@@ -376,11 +376,14 @@ model Invoice {
   doctor       User          @relation(fields: [userId], references: [id])
   items        InvoiceItem[]
 
-  @@unique([tenantId, invoiceNumber])
+  // (tenant_id, invoice_number) and consultation_id are unique among *live* rows only,
+  // enforced by partial unique indexes (WHERE deleted_at IS NULL) managed in raw SQL.
+  // Do not re-add @@unique / @unique: soft-deleted invoices would block reuse.
   @@index([tenantId])
   @@index([tenantId, patientId])
   @@index([tenantId, userId])
   @@index([tenantId, deletedAt])
+  @@index([consultationId])
   @@map("invoices")
 }
 
@@ -478,7 +481,9 @@ model ProtocolVersion {
   approver User?           @relation("VersionApprover", fields: [approvedBy], references: [id])
   usages   ProtocolUsage[]
 
-  @@unique([protocolId, versionNumber])
+  // (protocol_id, version_number) is unique among *live* rows only, enforced by a
+  // partial unique index (WHERE deleted_at IS NULL) managed in raw SQL. Do not re-add
+  // @@unique: a soft-deleted version would block reusing its number.
   @@index([tenantId])
   @@index([tenantId, deletedAt])
   @@index([protocolId])
@@ -543,7 +548,10 @@ model ProtocolCategory {
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
   protocols Protocol[]
 
-  @@unique([tenantId, name])
+  // Uniqueness of (tenant_id, name) among *live* rows is enforced by a partial
+  // unique index (WHERE deleted_at IS NULL) managed in raw SQL — PSL cannot express
+  // partial indexes. Do not re-add @@unique here: it would block reuse of names
+  // whose previous holder was soft-deleted.
   @@index([tenantId])
   @@index([tenantId, deletedAt])
   @@map("protocol_categories")

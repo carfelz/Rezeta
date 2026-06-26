@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import type { Response } from 'express'
+import { Prisma } from '@rezeta/db'
 import { ErrorCode, type ApiError } from '@rezeta/shared'
 
 @Catch()
@@ -31,6 +32,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
           code: this.statusToCode(exception.getStatus() as HttpStatus),
           message: typeof body === 'string' ? body : exception.message,
         }
+      }
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2002'
+    ) {
+      // Unique constraint violation — surface as a clean 409 instead of a 500.
+      status = HttpStatus.CONFLICT
+      const isProd = process.env.NODE_ENV === 'production'
+      error = {
+        code: ErrorCode.RESOURCE_CONFLICT,
+        message: 'A record with these values already exists',
+        ...(isProd ? {} : { details: { target: exception.meta?.target } }),
       }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR

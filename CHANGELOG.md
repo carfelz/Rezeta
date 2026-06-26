@@ -4,6 +4,46 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — fix(db): soft-deleted records no longer block reuse of unique values
+
+### Fixed
+
+- **`packages/db/prisma/schema.prisma`** + **`packages/db/prisma/migrations/20260626000000_partial_unique_soft_delete/migration.sql`**: Unique constraints on soft-deletable models counted `deleted_at`-flagged rows, so a soft-deleted record permanently reserved its value. Recreating a `ProtocolCategory` with the name of a previously deleted one failed with a `P2002` unique violation (surfaced as an unhandled 500). Converted these to **partial** unique indexes (`WHERE deleted_at IS NULL`) so uniqueness is enforced only among live rows: `protocol_categories(tenant_id, name)`, `invoices(tenant_id, invoice_number)`, `invoices(consultation_id)`, and `protocol_versions(protocol_id, version_number)`. Prisma's schema language cannot express partial indexes, so the `@@unique`/`@unique` attributes were removed and the indexes are managed in raw SQL (index names reused; migration is idempotent and safe to deploy on existing data). `User.external_uid` and `DoctorLocation` were intentionally left as full uniques (they back `findUnique`/`upsert`).
+
+### Added
+
+- **`apps/api/src/common/filters/http-exception.filter.ts`**: Map Prisma `P2002` (unique violation) to HTTP **409 `RESOURCE_CONFLICT`** instead of letting it fall through to an unhandled 500. `RESOURCE_CONFLICT` added to `packages/shared/src/errors.ts`. Tests added in `http-exception.filter.spec.ts`; schema/migration assertions added in `packages/db/prisma/__tests__/schema-fields.test.ts`.
+
+### Changed
+
+- **`packages/db/prisma/schema.prisma`**: `Consultation.invoice Invoice?` (one-to-one) is now `Consultation.invoices Invoice[]` (one-to-many). Required to drop the `@unique` on `Invoice.consultation_id`; the partial index still guarantees at most one live invoice per consultation. No backend code referenced the old relation accessor.
+
+## [2026-06-24] — fix(ui): dashboard list rows overlapped
+
+### Fixed
+
+- **`apps/web/src/pages/Dashboard/UpcomingRow.tsx`, `RecentPatients.tsx`, `RecentProtocols.tsx`**: Dashboard card rows (Próximas citas, Pacientes recientes, Protocolos recientes) overlapped. Each row stacks two lines (name + reason/document/version) inside a `Button size="sm"`, whose fixed `h-btn-sm` (28px) clipped the content so adjacent rows ran together. Rows now use `h-auto` so the height grows to fit both lines. (Relies on the `tailwind-merge` height-token fix in `src/lib/utils.ts`.)
+
+## [2026-06-24] — fix(ui): location switcher dropdown rows overlapped
+
+### Fixed
+
+- **`apps/web/src/components/layout/Topbar.tsx`**: Location switcher dropdown rows overlapped — each row stacks a name + city (two lines) inside a `Button size="sm"`, whose fixed `h-btn-sm` (28px) clipped the content so adjacent rows ran together. Rows now use `h-auto` (height grows to content) and `justify-start` for proper left-aligned menu items.
+- **`apps/web/src/lib/utils.ts`**: Registered the `btn-{sm,md,lg,xl}` height/width tokens with `tailwind-merge` (`cn`). Without this, twMerge did not recognize `h-btn-sm` as a height utility, so a `className` height override (e.g. `h-auto`) was kept alongside the baked-in size height instead of replacing it — the fixed height won. Component `size` heights are now overridable via `className` as expected.
+
+## [2026-06-24] — fix(ui): date/time pickers in the appointment modal
+
+### Fixed
+
+- **`apps/web/package.json`**: Bumped `@radix-ui/react-dialog` from `^1.1.4` to `^1.1.17` to dedupe the Radix internals it shares with `@radix-ui/react-popover@1.1.17`. The two packages had resolved to different copies of `@radix-ui/react-focus-scope` and `@radix-ui/react-dismissable-layer`, which use module-level focus/layer stacks. As a result the modal `Dialog`'s focus trap never paused for a nested `Popover` and dismissed it on open — so the `DatePicker`/`TimePicker` in `AppointmentFormModal` could not be opened. With aligned versions the shared stacks coordinate correctly and the popovers open (portaling preserved, no clipping).
+- **`apps/web/src/components/ui/popover.tsx`**: Raised `PopoverContent` z-index from `z-50` to `z-[600]` so popovers render above the `Modal` (`z-[500]`), matching the `Select` content convention. The calendar/time list were opening behind the modal — visible state was set but the content was hidden and its day/slot buttons were not clickable (modal intercepted pointer events).
+- **`apps/web/src/pages/Schedule/PatientCombobox.tsx`**, **`AppointmentFormModal.tsx`**: Clicking outside the patient combobox no longer wipes the whole appointment form. The combobox's outside-`mousedown` handler had called an `onClear` callback wired to `clearFields`, so picking a date/time and then clicking any other field reset the form to its defaults. The handler now only dismisses the dropdown; the now-unused `onClear` prop was removed.
+
+### Added
+
+- **`apps/web/src/components/ui/__tests__/PickersInModal.test.tsx`**: Regression test rendering `DatePicker` and `TimePicker` inside a `Modal` and asserting their popovers open on click — guards against future Radix version drift reintroducing the duplicate-package bug.
+- **`apps/web/src/pages/Schedule/__tests__/PatientCombobox.test.tsx`**: Regression test asserting that clicking outside the combobox dismisses the dropdown without emitting a clear — guards against the form-reset bug.
+
 ## [2026-06-17] — feat(ui): shadcn date/time picker + slot-aware appointment form
 
 ### Added
