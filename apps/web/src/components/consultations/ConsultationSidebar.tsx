@@ -23,18 +23,12 @@ export interface ConsultationSidebarProps {
   onAddProtocol: () => void
   onPrevClick: (id: string) => void
   formatDate: (iso: string) => string
-  /**
-   * Active consultation view mode. In canvas mode the protocol step spine is
-   * rendered in the body, so the sidebar hides Consultas previas to reduce
-   * noise. ALERTAS and ÓRDENES stay visible in both modes.
-   */
-  viewMode?: 'soap' | 'canvas'
 }
 
 /**
- * Page-level sidebar shown alongside both SOAP and canvas views in the
- * consultation page. Composes alerts, the protocols empty-state card,
- * the previous-consultations list, and the orders queue panel.
+ * Page-level sidebar shown alongside the consultation protocol panel.
+ * Composes alerts, the protocols empty-state card, the previous-consultations
+ * list, and the orders queue panel.
  */
 export function ConsultationSidebar({
   consultationId,
@@ -45,9 +39,7 @@ export function ConsultationSidebar({
   onAddProtocol,
   onPrevClick,
   formatDate,
-  viewMode = 'soap',
 }: ConsultationSidebarProps): JSX.Element {
-  const isCanvas = viewMode === 'canvas'
   return (
     <div className="flex flex-col gap-4">
       {patient && (patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
@@ -101,7 +93,7 @@ export function ConsultationSidebar({
         </div>
       )}
 
-      {!isCanvas && prevList.length > 0 && (
+      {prevList.length > 0 && (
         <AsideCard title={consultationSidebarStrings.prevConsultationsTitle}>
           <div className="flex flex-col gap-1">
             {prevList.map((c) => (
