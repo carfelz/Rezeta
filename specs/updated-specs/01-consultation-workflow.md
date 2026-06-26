@@ -72,7 +72,7 @@ The consultation view has three zones:
 
 **Main panel (scrollable)**
 - Active protocol block content (vitals, notes, checklists, steps, decisions, dosage tables, lab/imaging orders)
-- If no protocol is active: a prompt to add one, plus a quick-access "Nota libre" option for free-form notes
+- If no protocol is active: a single **"Agregar protocolo"** call-to-action. Protocols are the only content-entry surface — there is no SOAP form and no free-form fallback.
 
 **Right rail (always visible)**
 - **"+ Agregar protocolo"** button — opens protocol picker at any time
@@ -107,12 +107,20 @@ At any point during an open consultation, the doctor taps **"+ Agregar protocolo
 
 ### 4.4 No Protocol Mode
 
-A doctor can document without any structured protocol:
+There is no "no protocol" documentation mode. Clinical content lives only inside a
+`ProtocolUsage` (Design Principle #4), so documenting requires adding a protocol.
 
-- **"Nota libre"** option in the protocol picker opens a blank `clinical_notes` block
-- Doctor writes free-form notes
-- A `ProtocolUsage` is still created (pointing to the system "Nota clínica general" template) to maintain consistent data structure
-- Orders can still be added manually from the orders panel
+- A consultation opens with no protocol attached — patient context is immediately visible
+  and no protocol selection is forced (Design Principle #2, "No mandatory gate").
+- To document anything, the doctor adds a protocol via **"Agregar protocolo"**. If they
+  want unstructured notes, they add a protocol whose template contains a `clinical_notes`
+  block (e.g. a general-notes protocol from their library).
+- A consultation cannot be signed while it has zero `ProtocolUsage` records (see §5).
+- There is no "Nota libre" quick-action and no automatic system-template usage.
+
+> **Why no free-form fallback?** A silent free-text surface that bypasses protocols
+> fragments the clinical record and (in the prior implementation) did not persist at all.
+> Forcing a protocol keeps every encounter's documentation structured and storable.
 
 ### 4.5 Allergy and Condition Alerts
 
@@ -135,7 +143,7 @@ The consultation autosaves every 30 seconds and on every meaningful interaction 
 
 When the doctor taps **"Firmar y cerrar"**:
 
-1. System validates that at least one `ProtocolUsage` exists (or at minimum a "Nota libre").
+1. System validates that at least one `ProtocolUsage` exists. A consultation with zero protocols cannot be signed — the API rejects it with `CONSULTATION_REQUIRES_PROTOCOL`, and the **"Firmar y cerrar"** button is disabled in the UI until a protocol is added.
 2. All in-progress `ProtocolUsage` records are marked `completed`.
 3. All queued orders are finalized:
    - Status changes from `queued` → `signed`
