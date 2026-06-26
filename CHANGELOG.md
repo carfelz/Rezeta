@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — feat(api): block signing consultations with zero protocols
+
+### Added
+
+- **`packages/shared/src/errors.ts`**: New error code `CONSULTATION_REQUIRES_PROTOCOL` added to the `// ── Consultation ──` group.
+- **`apps/api/src/modules/consultations/consultations.service.ts`**: Guard in `sign()` — immediately after the status check, throws `BadRequestException` with `CONSULTATION_REQUIRES_PROTOCOL` when `protocolUsages.length === 0`.
+- **`apps/api/src/modules/consultations/__tests__/consultations.service.spec.ts`**: New test "rejects signing when the consultation has zero protocol usages" (TDD, RED → GREEN). Existing sign tests that previously used empty `protocolUsages` updated to include ≥1 usage.
+
 ## [2026-06-26] — feat(web): edit protocol category color, not just name
 
 ### Changed

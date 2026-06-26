@@ -210,9 +210,17 @@ describe('ConsultationsService', () => {
   // ── sign ───────────────────────────────────────────────────────────────────
 
   describe('sign', () => {
+    it('rejects signing when the consultation has zero protocol usages', async () => {
+      // Arrange: getById returns an OPEN consultation with protocolUsages: []
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'open', protocolUsages: [] }))
+      await expect(service.sign('consult-1', 'tenant-1', 'user-1')).rejects.toMatchObject({
+        response: { code: ErrorCode.CONSULTATION_REQUIRES_PROTOCOL },
+      })
+    })
+
     it('signs an open consultation', async () => {
-      const draft = mockConsultation({ status: 'open' })
-      const signed = mockConsultation({ status: 'signed' })
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
@@ -278,26 +286,32 @@ describe('ConsultationsService', () => {
     })
 
     it('throws ConflictException when already signed', async () => {
-      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] }),
+      )
       await expect(service.sign('consult-1', 'tenant-1', 'user-1')).rejects.toThrow(
         ConflictException,
       )
     })
 
     it('throws ConflictException if consultation is amended', async () => {
-      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ id: 'c-1', status: 'amended' }))
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ id: 'c-1', status: 'amended', protocolUsages: [mockProtocolUsage()] }),
+      )
       await expect(service.sign('c-1', 'tenant-1', 'doc-1')).rejects.toThrow('already')
     })
 
     it('does not call repo.sign when already signed', async () => {
-      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] }),
+      )
       await service.sign('consult-1', 'tenant-1', 'user-1').catch(() => {})
       expect(repo.sign).not.toHaveBeenCalled()
     })
 
     it('triggers auto-invoice creation after signing', async () => {
-      const draft = mockConsultation({ status: 'open' })
-      const signed = mockConsultation({ status: 'signed' })
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       await service.sign('consult-1', 'tenant-1', 'user-1')
@@ -313,8 +327,8 @@ describe('ConsultationsService', () => {
     })
 
     it('sign succeeds even when auto-invoice creation fails', async () => {
-      const draft = mockConsultation({ status: 'open' })
-      const signed = mockConsultation({ status: 'signed' })
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       vi.mocked(invoicesSvc.createFromConsultation).mockRejectedValue(new Error('DB error'))

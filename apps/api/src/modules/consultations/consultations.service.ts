@@ -183,6 +183,14 @@ export class ConsultationsService {
       })
     }
 
+    // Protocol-first: a consultation with no clinical content cannot be signed.
+    if (c.protocolUsages.length === 0) {
+      throw new BadRequestException({
+        code: ErrorCode.CONSULTATION_REQUIRES_PROTOCOL,
+        message: 'Agrega al menos un protocolo antes de firmar la consulta',
+      })
+    }
+
     // ── Required-fields validation (protocol-required blocks) ──────────────
     const missing = computeMissingRequiredFields(c.protocolUsages)
     if (missing.length > 0) {
