@@ -106,9 +106,9 @@ function CreateCategoryModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ─── Rename Modal ─────────────────────────────────────────────────────────────
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
 
-function RenameCategoryModal({
+function EditCategoryModal({
   category,
   onClose,
 }: {
@@ -117,22 +117,24 @@ function RenameCategoryModal({
 }) {
   const updateMutation = useUpdateProtocolCategory(category.id)
   const [name, setName] = useState(category.name)
+  const [color, setColor] = useState(category.color)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (name.trim() === category.name) {
+    const trimmedName = name.trim()
+    if (trimmedName === category.name && color === category.color) {
       onClose()
       return
     }
     setError(null)
     try {
-      await updateMutation.mutateAsync({ name: name.trim() })
+      await updateMutation.mutateAsync({ name: trimmedName, color })
       onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
-      logger.error(error.message, { stack: error.stack, context: 'Types.rename' })
-      setError('No se pudo renombrar la categoría. Verifica que el nombre no esté en uso.')
+      logger.error(error.message, { stack: error.stack, context: 'Types.edit' })
+      setError('No se pudo guardar la categoría. Verifica que el nombre no esté en uso.')
     }
   }
 
@@ -144,37 +146,43 @@ function RenameCategoryModal({
       }}
     >
       <ModalContent>
-        <ModalHeader title={typesStrings.renameTitle} showClose={false} />
+        <ModalHeader title={typesStrings.editTitle} showClose={false} />
         <form
           onSubmit={(e) => {
             void handleSubmit(e)
           }}
         >
-          <ModalBody>
-            <Field label={typesStrings.renameField}>
+          <ModalBody className="flex flex-col gap-4">
+            <Field label={typesStrings.editFieldName} required>
               <Input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
             </Field>
+            <Field label={typesStrings.editFieldColor}>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-9 w-full rounded-sm border border-n-200 cursor-pointer"
+              />
+            </Field>
             {error && (
-              <div className="mt-3">
-                <Callout
-                  variant="danger"
-                  icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}
-                >
-                  {error}
-                </Callout>
-              </div>
+              <Callout
+                variant="danger"
+                icon={<i className="ph ph-warning" style={{ fontSize: 16 }} />}
+              >
+                {error}
+              </Callout>
             )}
           </ModalBody>
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={onClose}>
-              {typesStrings.renameCancel}
+              {typesStrings.editCancel}
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={name.trim().length === 0 || updateMutation.isPending}
             >
-              {updateMutation.isPending ? typesStrings.renameSubmitting : typesStrings.renameSubmit}
+              {updateMutation.isPending ? typesStrings.editSubmitting : typesStrings.editSubmit}
             </Button>
           </ModalFooter>
         </form>
@@ -189,7 +197,7 @@ export function Types(): JSX.Element {
   const { data: categories, isLoading, isError } = useProtocolCategories()
   const deleteMutation = useDeleteProtocolCategory()
   const [showCreate, setShowCreate] = useState(false)
-  const [renaming, setRenaming] = useState<ProtocolCategoryDto | null>(null)
+  const [editing, setEditing] = useState<ProtocolCategoryDto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProtocolCategoryDto | null>(null)
 
@@ -213,7 +221,7 @@ export function Types(): JSX.Element {
   return (
     <div>
       {showCreate && <CreateCategoryModal onClose={() => setShowCreate(false)} />}
-      {renaming && <RenameCategoryModal category={renaming} onClose={() => setRenaming(null)} />}
+      {editing && <EditCategoryModal category={editing} onClose={() => setEditing(null)} />}
       <ConfirmDialog
         open={!!deleteTarget}
         title={typesStrings.listDelete}
@@ -296,7 +304,7 @@ export function Types(): JSX.Element {
                         variant="secondary"
                         size="sm"
                         disabled={c.isSeeded}
-                        onClick={() => setRenaming(c)}
+                        onClick={() => setEditing(c)}
                       >
                         {typesStrings.listEdit}
                       </Button>

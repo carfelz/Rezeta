@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — feat(web): edit protocol category color, not just name
+
+### Changed
+
+- **`apps/web/src/pages/settings/Types.tsx`**, **`strings.ts`**: The category edit modal ("Renombrar") only edited the name, even though the API and spec (`specs/updated-specs/02-protocol-model.md`: "Freely create, rename, delete at any time"; a category "is a name and a color") support recoloring. Renamed it to "Editar categoría" and added a color picker prefilled with the category's current color; saving now sends both `name` and `color` via the existing `PATCH /v1/protocol-categories/:id`. The row action button label changed from "Renombrar" to "Editar". This removes the delete-and-recreate workaround that previously triggered unique-constraint errors. Seeded categories remain locked (unchanged).
+
+### Added
+
+- **`apps/web/src/pages/settings/__tests__/Types.test.tsx`**: Tests covering the edit modal — prefilled name + color, submitting both fields, and the no-op-when-unchanged guard.
+
 ## [2026-06-26] — fix(db): soft-deleted records no longer block reuse of unique values
 
 ### Fixed
