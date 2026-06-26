@@ -21,8 +21,8 @@ describe('ProtocolUsageModifications new kinds', () => {
   it('accepts off_protocol_notes modification', () => {
     const note: OffProtocolNoteEvent = {
       timestamp: new Date().toISOString(),
+      title: 'Hallazgo',
       note: 'Observación adicional',
-      promoted_to_soap_field: 'assessment',
     }
 
     const mods: ProtocolUsageModifications = {
@@ -31,7 +31,7 @@ describe('ProtocolUsageModifications new kinds', () => {
 
     expect(mods.off_protocol_notes).toHaveLength(1)
     expect(mods.off_protocol_notes?.[0].note).toBe('Observación adicional')
-    expect(mods.off_protocol_notes?.[0].promoted_to_soap_field).toBe('assessment')
+    expect(mods.off_protocol_notes?.[0].title).toBe('Hallazgo')
   })
 
   it('accepts conditional_steps_activated modification', () => {
@@ -50,34 +50,17 @@ describe('ProtocolUsageModifications new kinds', () => {
     expect(mods.conditional_steps_activated?.[0].condition).toBe('BP > 180')
   })
 
-  it('accepts off_protocol_notes without promoted_to_soap_field', () => {
+  it('accepts off_protocol_notes without a title', () => {
     const note: OffProtocolNoteEvent = {
       timestamp: new Date().toISOString(),
-      note: 'Nota sin campo SOAP',
+      note: 'Nota simple',
     }
 
     const mods: ProtocolUsageModifications = {
       off_protocol_notes: [note],
     }
 
-    expect(mods.off_protocol_notes?.[0].promoted_to_soap_field).toBeUndefined()
-  })
-
-  it('accepts all promoted_to_soap_field values', () => {
-    const fields: OffProtocolNoteEvent['promoted_to_soap_field'][] = [
-      'subjective',
-      'objective',
-      'assessment',
-      'plan',
-      undefined,
-    ]
-    fields.forEach((f) => {
-      const note: OffProtocolNoteEvent = {
-        timestamp: new Date().toISOString(),
-        note: 'Test',
-        promoted_to_soap_field: f,
-      }
-      expect(note.promoted_to_soap_field).toBe(f)
-    })
+    expect(mods.off_protocol_notes?.[0].title).toBeUndefined()
+    expect(mods.off_protocol_notes?.[0].note).toBe('Nota simple')
   })
 })
