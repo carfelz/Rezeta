@@ -139,36 +139,3 @@ export function RequiredBadge(): JSX.Element {
     </Chip>
   )
 }
-
-// ─── Helper: compute missing fields ────────────────────────────────────────────
-
-export interface ConsultationFieldCheck {
-  chiefComplaint: string
-  subjective: string
-  objective: string
-  assessment: string
-  plan: string
-  diagnoses: string[]
-}
-
-export function computeMissingFields(fields: ConsultationFieldCheck): MissingField[] {
-  const missing: MissingField[] = []
-  if (!fields.chiefComplaint.trim()) {
-    missing.push({ id: 'chiefComplaint', label: missingFieldsStrings.chiefComplaintLabel })
-  }
-  if (!fields.assessment.trim()) {
-    missing.push({
-      id: 'assessment',
-      label: missingFieldsStrings.assessmentLabel,
-      description: missingFieldsStrings.assessmentDescription,
-    })
-  }
-  if (fields.diagnoses.length === 0) {
-    missing.push({
-      id: 'diagnoses',
-      label: missingFieldsStrings.diagnosesLabel,
-      description: missingFieldsStrings.diagnosesDescription,
-    })
-  }
-  return missing
-}

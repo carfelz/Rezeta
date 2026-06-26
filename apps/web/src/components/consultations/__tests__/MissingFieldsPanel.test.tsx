@@ -4,7 +4,6 @@ import {
   MissingFieldsPanel,
   MissingFieldsCallout,
   RequiredBadge,
-  computeMissingFields,
 } from '../MissingFieldsPanel'
 
 const fields = [
@@ -84,50 +83,5 @@ describe('RequiredBadge', () => {
   it('renders the badge text', () => {
     render(<RequiredBadge />)
     expect(screen.getByText('Requerido')).toBeInTheDocument()
-  })
-})
-
-describe('computeMissingFields', () => {
-  const base = {
-    chiefComplaint: 'Dolor de cabeza',
-    subjective: '',
-    objective: '',
-    assessment: 'Migraña',
-    plan: '',
-    diagnoses: ['Migraña'],
-  }
-
-  it('returns empty array when required fields are filled', () => {
-    expect(computeMissingFields(base)).toHaveLength(0)
-  })
-
-  it('includes chiefComplaint when missing', () => {
-    const missing = computeMissingFields({ ...base, chiefComplaint: '' })
-    expect(missing.some((f) => f.id === 'chiefComplaint')).toBe(true)
-  })
-
-  it('includes assessment when missing', () => {
-    const missing = computeMissingFields({ ...base, assessment: '' })
-    expect(missing.some((f) => f.id === 'assessment')).toBe(true)
-  })
-
-  it('includes diagnoses when empty', () => {
-    const missing = computeMissingFields({ ...base, diagnoses: [] })
-    expect(missing.some((f) => f.id === 'diagnoses')).toBe(true)
-  })
-
-  it('returns multiple missing fields at once', () => {
-    const missing = computeMissingFields({
-      ...base,
-      chiefComplaint: '',
-      assessment: '',
-      diagnoses: [],
-    })
-    expect(missing).toHaveLength(3)
-  })
-
-  it('trims whitespace when checking chiefComplaint', () => {
-    const missing = computeMissingFields({ ...base, chiefComplaint: '   ' })
-    expect(missing.some((f) => f.id === 'chiefComplaint')).toBe(true)
   })
 })

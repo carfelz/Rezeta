@@ -227,12 +227,6 @@ export const missingFieldsStrings = {
   // Required badge
   requiredBadge: 'Requerido',
 
-  // computeMissingFields labels
-  chiefComplaintLabel: 'Motivo de consulta',
-  assessmentLabel: 'Evaluación',
-  assessmentDescription: 'Impresión diagnóstica o diagnóstico diferencial',
-  diagnosesLabel: 'Diagnósticos',
-  diagnosesDescription: 'Al menos un diagnóstico registrado',
 } as const
 
 // ── PageHeader ──────────────────────────────────────────────────────────────────
@@ -252,24 +246,6 @@ export const signModalStrings = {
   cancelButton: 'Cancelar',
   signingButton: 'Firmando…',
   signButton: 'Firmar y cerrar',
-} as const
-
-// ── SoapView ────────────────────────────────────────────────────────────────────
-
-export const soapViewStrings = {
-  chiefComplaintTitle: 'Motivo de consulta',
-  chiefComplaintPlaceholder: 'Seguimiento trimestral, motivo de consulta, síntomas principales…',
-  vitalsTitle: 'Signos vitales',
-  subjectiveTitle: 'Subjetivo',
-  subjectivePlaceholder:
-    'Historia del paciente, síntomas, antecedentes relevantes, contexto clínico…',
-  objectiveTitle: 'Examen físico',
-  objectivePlaceholder: 'Hallazgos del examen físico, signos clínicos, datos objetivos…',
-  assessmentTitle: 'Evaluación',
-  assessmentPlaceholder: 'Impresión diagnóstica, diagnóstico diferencial…',
-  planTitle: 'Plan',
-  planPlaceholder: 'Tratamiento, indicaciones, estudios solicitados, seguimiento…',
-  diagnosesTitle: 'Diagnósticos',
 } as const
 
 // ── CanvasView ──────────────────────────────────────────────────────────────────

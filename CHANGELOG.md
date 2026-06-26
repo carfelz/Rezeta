@@ -4,6 +4,48 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — feat(web): remove SOAP view; protocol-first consultation panel with empty state
+
+### Changed
+
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `soap` prop, `handleAutoPopulate`, and `SoapView` fallback. No-protocol state now renders an "Agregar protocolo" empty state (icon + text + primary button). The dashed "add another" button is only shown when an active protocol is present. `handleSaveOffProtocolNote` no longer passes `promoteTo`/`existingSoapValue` to the mutation (Task 4a will clean up the hook and modal).
+- **`apps/web/src/components/consultations/CanvasView.tsx`**: Removed `SoapField` type export and `onAutoPopulate` prop; removed all call sites passing `onAutoPopulate` to `BlockRendererRunMode`.
+- **`apps/web/src/pages/Consultation/index.tsx`**: Removed `useSoapState` import/call and `soap=` prop on `<ProtocolPanel>`. `hasContent` is now `protocolUsages.length > 0`. Missing fields use `computeMissingRequiredFields` from `@rezeta/shared`. `saveStatus` is static `'idle'`.
+- **`apps/web/src/components/consultations/MissingFieldsPanel.tsx`**: Removed `computeMissingFields` function and `ConsultationFieldCheck` interface (SOAP-field-based check); panel now renders pre-computed `MissingField[]`.
+- **`apps/web/src/components/consultations/strings.ts`**: Removed `soapViewStrings` export and orphaned `computeMissingFields` label keys.
+- **`apps/web/src/pages/Consultation/strings.ts`**: Added `protocolPanelStrings` with `noProtocolTitle` and `addProtocol` strings.
+
+### Added
+
+- **`apps/web/src/pages/Consultation/__tests__/ProtocolPanel.test.tsx`**: New TDD test — verifies no-protocol empty state shows "Agregar protocolo" button and no SOAP placeholders; verifies canvas renders when a protocol is active.
+
+### Fixed
+
+- **`apps/web/src/components/consultations/__tests__/CanvasView.test.tsx`**: Removed `onAutoPopulate` test (prop no longer exists).
+- **`apps/web/src/components/consultations/__tests__/MissingFieldsPanel.test.tsx`**: Removed `computeMissingFields` describe block (function removed from component).
+
+### Deleted
+
+- `apps/web/src/components/consultations/SoapView.tsx`
+- `apps/web/src/components/consultations/SoapTextarea.tsx`
+- `apps/web/src/components/consultations/__tests__/SoapTextarea.test.tsx`
+- `apps/web/src/pages/Consultation/use-soap-state.ts`
+
+## [2026-06-26] — refactor(web): remove consultation view-mode toggle (canvas-only)
+
+### Changed
+
+- **`apps/web/src/store/ui.store.ts`**: Removed `ConsultationViewMode` type, `viewMode` field, and `setViewMode` action. Store now only manages `activeLocationId` and `missingFieldsPanelOpen`.
+- **`apps/web/src/components/consultations/ProtocolStrip.tsx`**: Removed `viewMode`/`onViewModeChange` props and the `<ViewModeToggle>` JSX block.
+- **`apps/web/src/pages/Consultation/ProtocolBar.tsx`**: Removed `viewMode`/`onViewModeChange` from interface and forwarding; collapsed signed/unsigned `ProtocolStrip` branches into one.
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `useConsultationViewMode` hook call; panel now always renders `CanvasView` when `activeUsage` is set (SOAP fallback remains as else-branch for Task 4).
+- **`apps/web/src/components/consultations/ConsultationSidebar.tsx`**: Replaced `ConsultationViewMode` import with inline `'soap' | 'canvas'` literal type.
+- **`apps/web/src/pages/_preview/CanvasPreview.tsx`**, **`apps/web/src/pages/_preview/StripPreview.tsx`**: Minimal compile fixes — removed deleted `ConsultationViewMode` import and removed `viewMode`/`onViewModeChange` prop usage.
+
+### Fixed
+
+- **`apps/web/src/store/__tests__/ui.store.test.ts`**: Removed obsolete `viewMode`/`setViewMode` test assertions.
+
 ## [2026-06-26] — feat(web): disable sign button until a protocol is added
 
 ### Added

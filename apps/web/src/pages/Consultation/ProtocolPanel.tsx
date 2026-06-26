@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui'
-import { CanvasView, type SoapField, type BlockModificationEvent } from '@/components/consultations/CanvasView'
-import { SoapView } from '@/components/consultations/SoapView'
+import { CanvasView, type BlockModificationEvent } from '@/components/consultations/CanvasView'
 import { ProtocolPickerModal } from '@/components/protocols/ProtocolPickerModal'
 import { ProtocolBar } from './ProtocolBar'
 import { appendModification } from '@/lib/consultation/modifications'
@@ -14,14 +13,13 @@ import {
   useAddOffProtocolNote,
 } from '@/hooks/consultations/use-consultations'
 import type { ConsultationWithDetails, UpdateProtocolUsageDto } from '@rezeta/shared'
-import type { useSoapState } from './use-soap-state'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 import { ConsultationModals } from './ConsultationModals'
+import { protocolPanelStrings } from './strings'
 
 interface ProtocolPanelProps {
   consultation: ConsultationWithDetails
   readOnly: boolean
-  soap: ReturnType<typeof useSoapState>
   showSign: boolean
   onShowSignChange: (open: boolean) => void
   showAmend: boolean
@@ -33,7 +31,6 @@ interface ProtocolPanelProps {
 export function ProtocolPanel({
   consultation,
   readOnly,
-  soap,
   showSign,
   onShowSignChange,
   showAmend,
@@ -75,21 +72,6 @@ export function ProtocolPanel({
     handleModification({ type: 'checklist_item', item_id: checkId, checked })
   }
 
-  function handleAutoPopulate(field: SoapField, text: string): void {
-    const current: Record<string, string> = {
-      objective: soap.objective,
-      assessment: soap.assessment,
-      plan: soap.plan,
-    }
-    const setters: Record<string, (v: string) => void> = {
-      objective: soap.setObjective,
-      assessment: soap.setAssessment,
-      plan: soap.setPlan,
-    }
-    const existing = current[field] ?? ''
-    setters[field]?.(existing ? `${existing}\n${text}` : text)
-  }
-
   function handleLaunchLinkedProtocol(protocolId: string, triggerBlockId: string): void {
     if (!activeUsage) return
     const parentId = activeUsage.id
@@ -127,19 +109,11 @@ export function ProtocolPanel({
     promoteTo: 'subjective' | 'objective' | 'assessment' | 'plan' | null
   }): void {
     if (!activeUsage) return
-    const fieldMap = {
-      subjective: soap.subjective,
-      objective: soap.objective,
-      assessment: soap.assessment,
-      plan: soap.plan,
-    } as const
     offProtocolNoteMutation.mutate(
       {
         ...(args.title ? { title: args.title } : {}),
         note: args.body,
-        ...(args.promoteTo ? { promoteTo: args.promoteTo } : {}),
         existingNotes: activeUsage.modifications?.off_protocol_notes ?? [],
-        existingSoapValue: args.promoteTo ? (fieldMap[args.promoteTo] ?? '') : '',
       },
       { onSuccess: () => setShowOffProtocolNote(false) },
     )
@@ -185,7 +159,6 @@ export function ProtocolPanel({
         <CanvasView
           usage={activeUsage}
           onCheck={handleCheck}
-          onAutoPopulate={handleAutoPopulate}
           onLaunchLinkedProtocol={handleLaunchLinkedProtocol}
           onModification={handleModification}
           isSigned={readOnly}
@@ -199,33 +172,26 @@ export function ProtocolPanel({
           onEditProtocol={() => void navigate(`/protocolos/${activeUsage.protocolId}/edit`)}
         />
       ) : (
-        <SoapView
-          chiefComplaint={soap.chiefComplaint}
-          onChiefComplaintChange={soap.setChiefComplaint}
-          subjective={soap.subjective}
-          onSubjectiveChange={soap.setSubjective}
-          objective={soap.objective}
-          onObjectiveChange={soap.setObjective}
-          assessment={soap.assessment}
-          onAssessmentChange={soap.setAssessment}
-          plan={soap.plan}
-          onPlanChange={soap.setPlan}
-          vitals={soap.vitals}
-          onVitalsChange={soap.setVitals}
-          diagnoses={soap.diagnoses}
-          onDiagnosesChange={soap.setDiagnoses}
-          isSigned={readOnly}
-        />
+        !readOnly && (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <i className="ph ph-clipboard-text text-[32px] text-n-300" />
+            <p className="text-body text-n-500 m-0">{protocolPanelStrings.noProtocolTitle}</p>
+            <Button variant="primary" onClick={() => onShowPickerChange(true)}>
+              <i className="ph ph-plus mr-2" />
+              {protocolPanelStrings.addProtocol}
+            </Button>
+          </div>
+        )
       )}
 
-      {!readOnly && (
+      {!readOnly && activeUsage && (
         <div className="mt-4 flex justify-center">
           <button
             className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-400 hover:text-p-600 transition-colors justify-center text-[13px]"
             onClick={() => onShowPickerChange(true)}
           >
             <i className="ph ph-plus text-[15px]" />
-            Agregar protocolo
+            {protocolPanelStrings.addProtocol}
           </button>
         </div>
       )}

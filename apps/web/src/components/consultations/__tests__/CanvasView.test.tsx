@@ -94,29 +94,4 @@ describe('CanvasView', () => {
     expect(onContinue).toHaveBeenCalled()
   })
 
-  it('calls onAutoPopulate with plan field when checklist critical item checked', () => {
-    const onAutoPopulate = vi.fn()
-    const usage = makeUsage({
-      content: {
-        version: '1.0',
-        blocks: [
-          {
-            id: 'chk_1',
-            type: 'checklist',
-            items: [{ id: 'itm_1', text: 'Dolor torácico', critical: true }],
-          },
-        ],
-      },
-    })
-    render(
-      <CanvasView
-        usage={usage}
-        onCheck={vi.fn()}
-        isSigned={false}
-        onAutoPopulate={onAutoPopulate}
-      />,
-    )
-    fireEvent.click(screen.getByText('Dolor torácico'))
-    expect(onAutoPopulate).toHaveBeenCalledWith('objective', '✓ Dolor torácico')
-  })
 })
