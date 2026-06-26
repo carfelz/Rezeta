@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — refactor: drop off-protocol-note promote-to-soap path
+
+### Changed
+
+- **`packages/shared/src/types/consultation.ts`**: Removed `promoted_to_soap_field` from `OffProtocolNoteEvent`.
+- **`apps/web/src/hooks/consultations/use-consultations.ts`**: `useAddOffProtocolNote` no longer accepts `promoteTo` or `existingSoapValue`; the dead second PATCH to `/v1/consultations/{id}` (which wrote to non-existent SOAP columns) is removed. Now uses `OffProtocolNoteEvent` type from shared.
+- **`apps/web/src/components/consultations/OffProtocolNote.tsx`**: Removed the `SoapMover` sub-component and the `promoteTo` field; `onSave` callback now carries `{ title, body }` only.
+- **`apps/web/src/components/consultations/strings.ts`**: Removed SOAP field labels (`soapSubjective`, `soapObjective`, `soapAssessment`, `soapPlan`), `moveTo`, `moveToSoap`; updated `bodyPlaceholder` to remove SOAP reference.
+- **`apps/web/src/pages/Consultation/ConsultationModals.tsx`**: Removed `SoapField` local type; updated `onSaveOffProtocolNote` prop signature to match simplified interface.
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `promoteTo` parameter from `handleSaveOffProtocolNote`.
+- **`apps/web/src/components/consultations/__tests__/OffProtocolNote.test.tsx`**: Replaced `promoteTo: null` assertion with plain `{ title, body }`; removed SOAP-mover dropdown test.
+- **`apps/web/src/hooks/__tests__/use-consultations.test.ts`**: Replaced promote-SOAP and "does NOT patch SOAP" tests with a single test asserting exactly one PATCH is made (to the usage endpoint).
+
 ## [2026-06-26] — feat(web): remove SOAP view; protocol-first consultation panel with empty state
 
 ### Changed
