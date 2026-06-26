@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui'
 import { SaveBadge, type SaveStatus } from '@/components/consultations/SaveBadge'
+import { pageHeaderStrings } from '@/components/consultations/strings'
 import { cn } from '@/lib/utils'
 import { formatKicker } from './helpers'
 
@@ -14,6 +15,7 @@ export interface PageHeaderProps {
   saveStatus: SaveStatus
   savedAt?: Date
   isSigned: boolean
+  canSign: boolean
   onAmend: () => void
   onRetry: () => void
   onSignClick: () => void
@@ -30,6 +32,7 @@ export function PageHeader({
   saveStatus,
   savedAt,
   isSigned,
+  canSign,
   onAmend,
   onRetry,
   onSignClick,
@@ -88,9 +91,15 @@ export function PageHeader({
             Enmienda
           </Button>
         ) : (
-          <Button variant="primary" size="sm" onClick={onSignClick}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onSignClick}
+            disabled={!canSign}
+            title={canSign ? undefined : pageHeaderStrings.signRequiresProtocol}
+          >
             <i className="ph ph-check mr-1" />
-            Firmar y cerrar
+            {pageHeaderStrings.signButton}
           </Button>
         )}
       </div>

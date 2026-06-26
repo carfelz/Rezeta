@@ -74,6 +74,7 @@ export function Consultation(): JSX.Element {
   }
 
   const isSigned = consultationSigned
+  const canSign = consultation.protocolUsages.length > 0
   const dateShort = formatBreadcrumbDate(new Date(consultation.startedAt))
   const hasContent = Boolean(
     soap.chiefComplaint.trim() ||
@@ -114,6 +115,7 @@ export function Consultation(): JSX.Element {
           saveStatus={soap.saveStatus}
           {...(soap.savedAt !== undefined ? { savedAt: soap.savedAt } : {})}
           isSigned={isSigned}
+          canSign={canSign}
           onAmend={() => setShowAmend(true)}
           onRetry={soap.saveNow}
           onSignClick={handleSignClick}

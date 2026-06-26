@@ -4,6 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — feat(web): disable sign button until a protocol is added
+
+### Added
+
+- **`apps/web/src/components/consultations/strings.ts`**: New `pageHeaderStrings` object with `signButton` ("Firmar y cerrar") and `signRequiresProtocol` ("Agrega al menos un protocolo para poder firmar") strings.
+- **`apps/web/src/pages/Consultation/PageHeader.tsx`**: New `canSign: boolean` prop. When `canSign` is `false`, the "Firmar y cerrar" button is `disabled` and receives a `title` tooltip with the `signRequiresProtocol` string. Button label now uses `pageHeaderStrings.signButton` (no hardcoded text).
+- **`apps/web/src/pages/Consultation/index.tsx`**: Computes `canSign = consultation.protocolUsages.length > 0` and threads it to `<PageHeader>`.
+- **`apps/web/src/pages/Consultation/__tests__/PageHeader.test.tsx`**: Two new TDD tests — "disables Firmar y cerrar when there are no protocols" and "enables Firmar y cerrar when at least one protocol exists". `baseProps` updated with `canSign: true`.
+
 ## [2026-06-26] — feat(api): block signing consultations with zero protocols
 
 ### Added

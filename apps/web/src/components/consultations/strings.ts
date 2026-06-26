@@ -235,6 +235,13 @@ export const missingFieldsStrings = {
   diagnosesDescription: 'Al menos un diagnóstico registrado',
 } as const
 
+// ── PageHeader ──────────────────────────────────────────────────────────────────
+
+export const pageHeaderStrings = {
+  signButton: 'Firmar y cerrar',
+  signRequiresProtocol: 'Agrega al menos un protocolo para poder firmar',
+} as const
+
 // ── SignModal ───────────────────────────────────────────────────────────────────
 
 export const signModalStrings = {
