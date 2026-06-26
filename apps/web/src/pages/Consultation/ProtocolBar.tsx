@@ -3,14 +3,11 @@ import { ProtocolPills } from '@/components/consultations/ProtocolPills'
 import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
 import { collectUsageCheckableIds, deriveCheckedState } from '@/lib/consultation/usage'
 import type { ConsultationProtocolUsage, ConsultationWithDetails } from '@rezeta/shared'
-import type { ConsultationViewMode } from '@/store/ui.store'
 
 export interface ProtocolBarProps {
   consultation: ConsultationWithDetails
   activeUsage: ConsultationProtocolUsage | undefined
   isSigned: boolean
-  viewMode: ConsultationViewMode
-  onViewModeChange: (mode: ConsultationViewMode) => void
   onSelectUsage: (id: string) => void
   onAddProtocol: () => void
   onSwitchProtocol: () => void
@@ -21,8 +18,6 @@ export function ProtocolBar({
   consultation,
   activeUsage,
   isSigned,
-  viewMode,
-  onViewModeChange,
   onSelectUsage,
   onAddProtocol,
   onSwitchProtocol,
@@ -54,23 +49,12 @@ export function ProtocolBar({
 
       {activeUsage && (
         <div className="-mx-12 mb-5 sticky top-topbar z-20 bg-n-25 border-b border-n-100">
-          {!isSigned ? (
-            <ProtocolStrip
-              key={activeUsage.id}
-              usage={activeUsage}
-              isSigned={isSigned}
-              onChangePicker={onSwitchProtocol}
-              viewMode={viewMode}
-              onViewModeChange={onViewModeChange}
-            />
-          ) : (
-            <ProtocolStrip
-              key={activeUsage.id}
-              usage={activeUsage}
-              isSigned={isSigned}
-              onChangePicker={onSwitchProtocol}
-            />
-          )}
+          <ProtocolStrip
+            key={activeUsage.id}
+            usage={activeUsage}
+            isSigned={isSigned}
+            onChangePicker={onSwitchProtocol}
+          />
         </div>
       )}
 

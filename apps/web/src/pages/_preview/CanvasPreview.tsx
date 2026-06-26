@@ -4,7 +4,6 @@ import { ProtocolPills } from '@/components/consultations/ProtocolPills'
 import { CanvasView } from '@/components/consultations/CanvasView'
 import { RightRail } from '@/components/consultations/RightRail'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
-import type { ConsultationViewMode } from '@/store/ui.store'
 
 const usage: ConsultationProtocolUsage = {
   id: 'u1',
@@ -90,7 +89,6 @@ const usage: ConsultationProtocolUsage = {
 }
 
 export function CanvasPreview(): JSX.Element {
-  const [viewMode, setViewMode] = useState<ConsultationViewMode>('canvas')
   const [activeId, setActiveId] = useState('p1')
 
   return (
@@ -113,8 +111,6 @@ export function CanvasPreview(): JSX.Element {
         usage={usage}
         isSigned={false}
         onChangePicker={() => undefined}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
 
       <div className="grid gap-5 px-7 py-5" style={{ gridTemplateColumns: '1fr 320px' }}>

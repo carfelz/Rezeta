@@ -14,7 +14,6 @@ import {
   useAddOffProtocolNote,
 } from '@/hooks/consultations/use-consultations'
 import type { ConsultationWithDetails, UpdateProtocolUsageDto } from '@rezeta/shared'
-import { useConsultationViewMode } from '@/hooks/consultations/use-consultation-view-mode'
 import type { useSoapState } from './use-soap-state'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 import { ConsultationModals } from './ConsultationModals'
@@ -46,9 +45,6 @@ export function ProtocolPanel({
   const id = consultation.id
   const addUsageMutation = useAddProtocolUsage(id)
   const removeUsageMutation = useRemoveProtocolUsage(id)
-
-  const hasProtocol = Boolean(consultation.protocolUsages?.length)
-  const { viewMode, setViewMode } = useConsultationViewMode(hasProtocol)
 
   const [activeUsageId, setActiveUsageId] = useState<string | null>(null)
   const activeUsage =
@@ -155,15 +151,13 @@ export function ProtocolPanel({
         consultation={consultation}
         activeUsage={activeUsage}
         isSigned={readOnly}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onSelectUsage={setActiveUsageId}
         onAddProtocol={() => onShowPickerChange(true)}
         onSwitchProtocol={() => setShowSwitch(true)}
         onAddOffProtocolNote={() => setShowOffProtocolNote(true)}
       />
 
-      {viewMode === 'canvas' && activeUsage && usageIdStack.length > 0 && (
+      {activeUsage && usageIdStack.length > 0 && (
         <div className="flex items-center gap-3 mb-3 py-2">
           <Button variant="ghost" size="sm" onClick={handleBackInChain}>
             ← {chainBreadcrumbStrings.backButton}
@@ -187,7 +181,7 @@ export function ProtocolPanel({
         </div>
       )}
 
-      {viewMode === 'canvas' && activeUsage ? (
+      {activeUsage ? (
         <CanvasView
           usage={activeUsage}
           onCheck={handleCheck}

@@ -3,8 +3,6 @@ import type { ConsultationProtocolUsage, ProtocolBlock } from '@rezeta/shared'
 import { Caption, Chip, Overline, StepCircle, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { deriveCheckedState } from '@/lib/consultation/usage'
-import { ViewModeToggle } from './ViewModeToggle'
-import type { ConsultationViewMode } from '@/store/ui.store'
 
 // ─── Progress helpers ──────────────────────────────────────────────────────────
 
@@ -116,8 +114,6 @@ export interface ProtocolStripProps {
   usage: ConsultationProtocolUsage
   isSigned: boolean
   onChangePicker: () => void
-  viewMode?: ConsultationViewMode
-  onViewModeChange?: (mode: ConsultationViewMode) => void
   hint?: string
 }
 
@@ -125,8 +121,6 @@ export function ProtocolStrip({
   usage,
   isSigned,
   onChangePicker,
-  viewMode,
-  onViewModeChange,
   hint,
 }: ProtocolStripProps): JSX.Element {
   const [stepListOpen, setStepListOpen] = useState(false)
@@ -201,14 +195,6 @@ export function ProtocolStrip({
           <TextLink tone="primary" size="xs" underline="hover" onClick={onChangePicker}>
             Cambiar
           </TextLink>
-        )}
-        {viewMode && onViewModeChange && (
-          <>
-            <Overline tone="primary" size="md" className="ml-2 tracking-[0.06em]">
-              Vista
-            </Overline>
-            <ViewModeToggle value={viewMode} onChange={onViewModeChange} />
-          </>
         )}
       </div>
     </div>

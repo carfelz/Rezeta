@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui'
-import type { ConsultationViewMode } from '@/store/ui.store'
 import { AsideCard } from './AsideCard'
 import { OrderQueuePanel } from './OrderQueuePanel'
 import { consultationSidebarStrings } from './strings'
@@ -29,7 +28,7 @@ export interface ConsultationSidebarProps {
    * rendered in the body, so the sidebar hides Consultas previas to reduce
    * noise. ALERTAS and ÓRDENES stay visible in both modes.
    */
-  viewMode?: ConsultationViewMode
+  viewMode?: 'soap' | 'canvas'
 }
 
 /**
