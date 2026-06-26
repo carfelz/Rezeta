@@ -106,10 +106,6 @@ export function Consultation(): JSX.Element {
             <MissingFieldsPanel
               fields={missingFields}
               isSigned={isSigned}
-              onFieldClick={(fieldId) => {
-                setShowMissingFields(false)
-                document.getElementById(`field-${fieldId}`)?.scrollIntoView({ behavior: 'smooth' })
-              }}
               onDismiss={() => setShowMissingFields(false)}
               onSign={() => {
                 setShowMissingFields(false)

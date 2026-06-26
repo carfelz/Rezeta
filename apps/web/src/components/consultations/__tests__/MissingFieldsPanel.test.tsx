@@ -13,37 +13,37 @@ const fields = [
 
 describe('MissingFieldsPanel', () => {
   it('renders the FALTANTES header with count', () => {
-    render(<MissingFieldsPanel fields={fields} onFieldClick={vi.fn()} />)
+    render(<MissingFieldsPanel fields={fields} />)
     expect(screen.getByText(/Faltantes \(2\)/)).toBeInTheDocument()
   })
 
   it('renders each field label', () => {
-    render(<MissingFieldsPanel fields={fields} onFieldClick={vi.fn()} />)
+    render(<MissingFieldsPanel fields={fields} />)
     expect(screen.getByText('Motivo de consulta')).toBeInTheDocument()
     expect(screen.getByText('Evaluación')).toBeInTheDocument()
   })
 
-  it('calls onFieldClick with field id when row clicked', () => {
-    const onFieldClick = vi.fn()
-    render(<MissingFieldsPanel fields={fields} onFieldClick={onFieldClick} />)
-    fireEvent.click(screen.getByText('Motivo de consulta'))
-    expect(onFieldClick).toHaveBeenCalledWith('chiefComplaint')
+  it('renders field rows as a static checklist (not interactive buttons)', () => {
+    render(<MissingFieldsPanel fields={fields} />)
+    // Field rows are static <li>; the only button in the panel is the dismiss control.
+    expect(screen.queryByRole('button', { name: /Motivo de consulta/i })).toBeNull()
+    expect(screen.getAllByRole('listitem')).toHaveLength(fields.length)
   })
 
   it('renders dismiss button when onDismiss provided', () => {
     const onDismiss = vi.fn()
-    render(<MissingFieldsPanel fields={fields} onFieldClick={vi.fn()} onDismiss={onDismiss} />)
+    render(<MissingFieldsPanel fields={fields} onDismiss={onDismiss} />)
     fireEvent.click(screen.getByLabelText('Cerrar panel'))
     expect(onDismiss).toHaveBeenCalled()
   })
 
   it('does not render dismiss button when onDismiss not provided', () => {
-    render(<MissingFieldsPanel fields={fields} onFieldClick={vi.fn()} />)
+    render(<MissingFieldsPanel fields={fields} />)
     expect(screen.queryByLabelText('Cerrar panel')).toBeNull()
   })
 
   it('renders nothing when fields is empty', () => {
-    const { container } = render(<MissingFieldsPanel fields={[]} onFieldClick={vi.fn()} />)
+    const { container } = render(<MissingFieldsPanel fields={[]} />)
     expect(container.firstChild).toBeNull()
   })
 })

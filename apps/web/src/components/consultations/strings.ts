@@ -211,8 +211,7 @@ export const missingFieldsStrings = {
   // Panel variant
   panelTitle: (count: number) => `Faltantes (${count})`,
   panelClosePanelLabel: 'Cerrar panel',
-  panelDescription: 'No puedes firmar hasta completarlos. Toca uno para ir directo.',
-  panelGoArrow: 'Ir →',
+  panelDescription: 'No puedes firmar hasta completarlos.',
 
   // Ready callout
   readyMessage: 'Listo · todos los campos requeridos están completos.',

@@ -91,7 +91,6 @@ export function EdgePreview(): JSX.Element {
                   { id: 'peso', label: 'Peso' },
                   { id: 'fecha', label: 'Fecha de seguimiento' },
                 ]}
-                onFieldClick={() => undefined}
                 onDismiss={() => undefined}
               />
             </div>

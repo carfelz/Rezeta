@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — fix(web): make missing-fields panel a static checklist
+
+### Fixed
+
+- **`apps/web/src/components/consultations/MissingFieldsPanel.tsx`**, **`apps/web/src/pages/Consultation/index.tsx`**: The missing-fields panel's "jump to field" rows were a silent no-op after the protocol-first migration — `onFieldClick` scrolled to `getElementById('field-' + id)`, but field ids are now `protocol:<usageId>:<blockId>` and no element renders a matching anchor (the old SOAP `field-*` anchors were removed, and `CanvasView` only renders the active usage). Removed the dead `onFieldClick` handler and rendered the rows as a non-interactive `<ul>` checklist instead of clickable buttons. Removed the now-unused `panelGoArrow` string and corrected `panelDescription`. Updated `MissingFieldsPanel.test.tsx` and the `EdgePreview` usage.
+
 ## [2026-06-26] — chore(web): remove orphaned consultation gate and GatePreview scaffolding
 
 ### Changed
