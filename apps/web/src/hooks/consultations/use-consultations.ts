@@ -17,6 +17,7 @@ import type {
   CreateImagingOrderGroupDto,
   CreateLabOrderGroupDto,
   ResumableConsultation,
+  OffProtocolNoteEvent,
 } from '@rezeta/shared'
 
 // Local stubs for types removed from shared in schema reset v2
@@ -287,8 +288,6 @@ export function useSkipStep(
 
 /**
  * Append an `off_protocol_notes` event to a protocol usage's modifications.
- * If `promoteTo` is set, also append the note text to the corresponding SOAP
- * field via a separate consultation update.
  */
 export function useAddOffProtocolNote(
   consultationId: string,
@@ -299,39 +298,18 @@ export function useAddOffProtocolNote(
   {
     title?: string
     note: string
-    promoteTo?: 'subjective' | 'objective' | 'assessment' | 'plan' | null
-    existingNotes?: {
-      timestamp: string
-      title?: string
-      note: string
-      promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
-    }[]
-    existingSoapValue?: string
+    existingNotes?: OffProtocolNoteEvent[]
   }
 > {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ title, note, promoteTo, existingNotes = [], existingSoapValue = '' }) => {
-      const event: {
-        timestamp: string
-        title?: string
-        note: string
-        promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
-      } = { timestamp: new Date().toISOString(), note }
+    mutationFn: async ({ title, note, existingNotes = [] }) => {
+      const event: OffProtocolNoteEvent = { timestamp: new Date().toISOString(), note }
       if (title) event.title = title
-      if (promoteTo) event.promoted_to_soap_field = promoteTo
       const updated = await apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
         { modifications: { off_protocol_notes: [...existingNotes, event] } },
       )
-      if (promoteTo) {
-        const appended = existingSoapValue
-          ? `${existingSoapValue}\n\n${title ? `[${title}] ` : ''}${note}`
-          : `${title ? `[${title}] ` : ''}${note}`
-        await apiClient.patch(`/v1/consultations/${consultationId}`, {
-          [promoteTo]: appended,
-        })
-      }
       return updated
     },
     onSuccess: () => {

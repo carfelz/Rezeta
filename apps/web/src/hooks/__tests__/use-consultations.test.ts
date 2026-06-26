@@ -503,28 +503,7 @@ describe('useAddOffProtocolNote', () => {
     expect(notes.map((n) => n.note)).toEqual(['Old', 'New'])
   })
 
-  it('also patches the consultation SOAP field when promoteTo is set', async () => {
-    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
-    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
-      wrapper: makeWrapper(),
-    })
-    await act(async () => {
-      await result.current.mutateAsync({
-        title: 'Dolor',
-        note: 'Episodio breve',
-        promoteTo: 'subjective',
-        existingSoapValue: 'Existing subjective',
-      })
-    })
-    expect(apiClient.patch).toHaveBeenCalledTimes(2)
-    const secondCall = vi.mocked(apiClient.patch).mock.calls[1]!
-    expect(secondCall[0]).toBe('/v1/consultations/cons-1')
-    expect(secondCall[1]).toMatchObject({
-      subjective: expect.stringContaining('Episodio breve'),
-    })
-  })
-
-  it('does NOT patch consultation SOAP field when promoteTo is unset', async () => {
+  it('makes exactly one PATCH (no second consultation PATCH)', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
     const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
       wrapper: makeWrapper(),
@@ -533,5 +512,8 @@ describe('useAddOffProtocolNote', () => {
       await result.current.mutateAsync({ note: 'Just a note' })
     })
     expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(apiClient.patch).mock.calls[0]![0]).toBe(
+      '/v1/consultations/cons-1/protocols/usage-1',
+    )
   })
 })

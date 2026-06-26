@@ -103,11 +103,7 @@ export function ProtocolPanel({
     )
   }
 
-  function handleSaveOffProtocolNote(args: {
-    title: string
-    body: string
-    promoteTo: 'subjective' | 'objective' | 'assessment' | 'plan' | null
-  }): void {
+  function handleSaveOffProtocolNote(args: { title: string; body: string }): void {
     if (!activeUsage) return
     offProtocolNoteMutation.mutate(
       {

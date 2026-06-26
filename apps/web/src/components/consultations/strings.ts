@@ -180,15 +180,9 @@ export const resumeBannerStrings = {
 export const offProtocolNoteStrings = {
   chipLabel: 'Fuera de protocolo',
   titlePlaceholder: 'Título del hallazgo (ej. Dolor torácico atípico)',
-  bodyPlaceholder: 'Describe el hallazgo. Anexar a SOAP → [campo].',
+  bodyPlaceholder: 'Describe el hallazgo.',
   convertToStepButton: 'Convertir en paso',
-  moveTo: (field: string) => `Mover a ${field}`,
-  moveToSoap: 'Mover a SOAP',
   cancelButton: 'Cancelar',
-  soapSubjective: 'Subjetivo',
-  soapObjective: 'Examen físico',
-  soapAssessment: 'Evaluación',
-  soapPlan: 'Plan',
 } as const
 
 // ── VitalsSection ───────────────────────────────────────────────────────────────

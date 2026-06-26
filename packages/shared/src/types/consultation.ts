@@ -164,7 +164,6 @@ export interface OffProtocolNoteEvent {
   timestamp: string
   title?: string
   note: string
-  promoted_to_soap_field?: 'subjective' | 'objective' | 'assessment' | 'plan'
 }
 
 export interface ConditionalStepActivated {
