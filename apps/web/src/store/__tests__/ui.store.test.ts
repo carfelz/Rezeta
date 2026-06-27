@@ -7,7 +7,6 @@ describe('useUiStore', () => {
     act(() => {
       useUiStore.setState({
         activeLocationId: null,
-        viewMode: 'soap',
         missingFieldsPanelOpen: false,
       })
     })
@@ -34,26 +33,6 @@ describe('useUiStore', () => {
     act(() => result.current.setActiveLocation('loc-1'))
     act(() => result.current.setActiveLocation('loc-2'))
     expect(result.current.activeLocationId).toBe('loc-2')
-  })
-
-  // ── viewMode ──────────────────────────────────────────────────────────────
-
-  it('initializes with soap viewMode', () => {
-    const { result } = renderHook(() => useUiStore())
-    expect(result.current.viewMode).toBe('soap')
-  })
-
-  it('setViewMode switches to canvas', () => {
-    const { result } = renderHook(() => useUiStore())
-    act(() => result.current.setViewMode('canvas'))
-    expect(result.current.viewMode).toBe('canvas')
-  })
-
-  it('setViewMode switches back to soap', () => {
-    const { result } = renderHook(() => useUiStore())
-    act(() => result.current.setViewMode('canvas'))
-    act(() => result.current.setViewMode('soap'))
-    expect(result.current.viewMode).toBe('soap')
   })
 
   // ── missingFieldsPanelOpen ────────────────────────────────────────────────

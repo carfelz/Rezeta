@@ -7,8 +7,6 @@ import { SkipStepDialog } from '@/components/consultations/SkipStepDialog'
 import { SwitchProtocolDialog } from '@/components/consultations/SwitchProtocolDialog'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
 
-type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
-
 export interface ConsultationModalsProps {
   consultationId: string
   activeUsage: ConsultationProtocolUsage | undefined
@@ -30,11 +28,7 @@ export interface ConsultationModalsProps {
   isSavingOffProtocolNote: boolean
   onAddProtocol: (protocolId: string) => void
   onConfirmSkipStep: (reason: string) => void
-  onSaveOffProtocolNote: (args: {
-    title: string
-    body: string
-    promoteTo: SoapField | null
-  }) => void
+  onSaveOffProtocolNote: (args: { title: string; body: string }) => void
 }
 
 export function ConsultationModals({

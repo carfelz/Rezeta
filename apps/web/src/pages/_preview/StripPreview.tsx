@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
 import { RightRail } from '@/components/consultations/RightRail'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
-import type { ConsultationViewMode } from '@/store/ui.store'
 
 const mockUsage: ConsultationProtocolUsage = {
   id: 'usage-1',
@@ -59,8 +57,6 @@ const mockUsage: ConsultationProtocolUsage = {
 }
 
 export function StripPreview(): JSX.Element {
-  const [viewMode, setViewMode] = useState<ConsultationViewMode>('soap')
-
   return (
     <div className="min-h-screen bg-n-25 font-sans">
       {/* Strip */}
@@ -68,17 +64,12 @@ export function StripPreview(): JSX.Element {
         usage={mockUsage}
         isSigned={false}
         onChangePicker={() => undefined}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
 
       {/* Body 2-col grid */}
       <div className="grid gap-5 px-7 py-5" style={{ gridTemplateColumns: '1fr 320px' }}>
         <div className="bg-n-0 border border-n-200 rounded-md p-5">
           <h2 className="font-serif text-[18px] text-n-800 mb-3">SOAP body placeholder</h2>
-          <p className="text-[13px] text-n-500">
-            Current view mode: <strong>{viewMode}</strong>
-          </p>
         </div>
 
         <RightRail

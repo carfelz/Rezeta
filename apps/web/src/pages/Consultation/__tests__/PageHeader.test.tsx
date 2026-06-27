@@ -11,6 +11,7 @@ const baseProps = {
   pageTitle: 'Nueva consulta',
   saveStatus: 'idle' as const,
   isSigned: false,
+  canSign: true,
   onAmend: vi.fn(),
   onRetry: vi.fn(),
   onSignClick: vi.fn(),
@@ -72,5 +73,15 @@ describe('PageHeader', () => {
     render(<PageHeader {...baseProps} saveStatus="error" onRetry={onRetry} />)
     await user.click(screen.getByRole('button', { name: /Reintentar/i }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('disables "Firmar y cerrar" when there are no protocols', () => {
+    render(<PageHeader {...baseProps} canSign={false} />)
+    expect(screen.getByRole('button', { name: /Firmar y cerrar/i })).toBeDisabled()
+  })
+
+  it('enables "Firmar y cerrar" when at least one protocol exists', () => {
+    render(<PageHeader {...baseProps} canSign={true} />)
+    expect(screen.getByRole('button', { name: /Firmar y cerrar/i })).toBeEnabled()
   })
 })

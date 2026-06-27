@@ -116,7 +116,7 @@ Key design decisions:
 - **Currency:** DOP primary, USD secondary.
 - **Document types:** `cedula`, `passport`, `rnc` (for Dominican tax IDs).
 - **No ICD-10 coding** — diagnoses are free-text. Latin American markets do not typically use ICD-10 in ambulatory care.
-- **Clinical documentation (v2):** `Consultation` no longer has fixed SOAP columns. It is an administrative container (status `open` → `signed` → `amended`); all clinical content — notes, vitals, diagnoses — lives in `ProtocolUsage` blocks (e.g. `clinical_notes`, `vitals`). See `specs/updated-specs/01-consultation-workflow.md`. (The legacy `subjective/objective/assessment/plan` SOAP fields were removed in the schema reset.)
+- **Clinical documentation (v2):** `Consultation` no longer has fixed SOAP columns. It is an administrative container (status `open` → `signed` → `amended`); all clinical content — notes, vitals, diagnoses — lives in `ProtocolUsage` blocks (e.g. `clinical_notes`, `vitals`). See `specs/updated-specs/01-consultation-workflow.md`. (The legacy `subjective/objective/assessment/plan` SOAP fields were removed in the schema reset.) **Protocols are the only content-entry surface** — there is no SOAP form, no view-mode toggle, and no "Nota libre" free-form fallback. To document, a doctor must add a protocol; a consultation with zero `ProtocolUsage` records cannot be signed (`CONSULTATION_REQUIRES_PROTOCOL`).
 
 ## Current Version
 

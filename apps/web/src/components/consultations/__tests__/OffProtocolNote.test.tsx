@@ -14,10 +14,9 @@ describe('OffProtocolNote', () => {
     expect(screen.getByPlaceholderText(/Describe el hallazgo/)).toBeInTheDocument()
   })
 
-  it('disables both action buttons when body is empty', () => {
+  it('disables the save button when body is empty', () => {
     render(<OffProtocolNote onSave={vi.fn()} onCancel={vi.fn()} />)
     expect(screen.getByText('Convertir en paso')).toBeDisabled()
-    expect(screen.getByText(/Mover a/)).toBeDisabled()
   })
 
   it('enables "Convertir en paso" when body has content', () => {
@@ -27,7 +26,7 @@ describe('OffProtocolNote', () => {
     expect(screen.getByText('Convertir en paso')).not.toBeDisabled()
   })
 
-  it('calls onSave with title, body, and null promoteTo on "Convertir en paso"', () => {
+  it('calls onSave with title and body on "Convertir en paso"', () => {
     const onSave = vi.fn()
     render(<OffProtocolNote onSave={onSave} onCancel={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText(/Título del hallazgo/), {
@@ -40,22 +39,6 @@ describe('OffProtocolNote', () => {
     expect(onSave).toHaveBeenCalledWith({
       title: 'Dolor torácico',
       body: 'Episodio breve',
-      promoteTo: null,
-    })
-  })
-
-  it('opens SOAP mover dropdown and saves with selected field', () => {
-    const onSave = vi.fn()
-    render(<OffProtocolNote onSave={onSave} onCancel={vi.fn()} />)
-    fireEvent.change(screen.getByPlaceholderText(/Describe el hallazgo/), {
-      target: { value: 'Body content' },
-    })
-    fireEvent.click(screen.getByText(/Mover a/))
-    fireEvent.click(screen.getByText('Subjetivo'))
-    expect(onSave).toHaveBeenCalledWith({
-      title: '',
-      body: 'Body content',
-      promoteTo: 'subjective',
     })
   })
 

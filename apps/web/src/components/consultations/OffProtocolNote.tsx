@@ -4,19 +4,10 @@ import { useAuth } from '@/hooks/use-auth'
 import { formatDoctorName } from '@/lib/format/names'
 import { offProtocolNoteStrings } from './strings'
 
-export type SoapField = 'subjective' | 'objective' | 'assessment' | 'plan'
-
 export interface OffProtocolNoteProps {
-  onSave: (params: { title: string; body: string; promoteTo: SoapField | null }) => void
+  onSave: (params: { title: string; body: string }) => void
   onCancel: () => void
   isPending?: boolean
-}
-
-const SOAP_FIELD_LABELS: Record<SoapField, string> = {
-  subjective: offProtocolNoteStrings.soapSubjective,
-  objective: offProtocolNoteStrings.soapObjective,
-  assessment: offProtocolNoteStrings.soapAssessment,
-  plan: offProtocolNoteStrings.soapPlan,
 }
 
 export function OffProtocolNote({
@@ -26,7 +17,6 @@ export function OffProtocolNote({
 }: OffProtocolNoteProps): JSX.Element {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [promoteTo, setPromoteTo] = useState<SoapField | null>(null)
   const { user } = useAuth()
 
   const now = new Date()
@@ -66,19 +56,10 @@ export function OffProtocolNote({
           variant="secondary"
           size="sm"
           disabled={!body.trim() || isPending}
-          onClick={() => onSave({ title: title.trim(), body: body.trim(), promoteTo: null })}
+          onClick={() => onSave({ title: title.trim(), body: body.trim() })}
         >
           {offProtocolNoteStrings.convertToStepButton}
         </Button>
-
-        <SoapMover
-          selected={promoteTo}
-          onSelect={setPromoteTo}
-          onConfirm={(field) =>
-            onSave({ title: title.trim(), body: body.trim(), promoteTo: field })
-          }
-          disabled={!body.trim() || isPending}
-        />
 
         <TextLink onClick={onCancel} size="md" className="ml-1">
           {offProtocolNoteStrings.cancelButton}
@@ -88,49 +69,6 @@ export function OffProtocolNote({
           {time} · {doctorName}
         </span>
       </div>
-    </div>
-  )
-}
-
-function SoapMover({
-  selected,
-  onSelect,
-  onConfirm,
-  disabled,
-}: {
-  selected: SoapField | null
-  onSelect: (field: SoapField | null) => void
-  onConfirm: (field: SoapField) => void
-  disabled: boolean
-}): JSX.Element {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <div className="relative">
-      <Button variant="secondary" size="sm" disabled={disabled} onClick={() => setOpen((o) => !o)}>
-        {offProtocolNoteStrings.moveTo(
-          selected ? SOAP_FIELD_LABELS[selected] : offProtocolNoteStrings.moveToSoap,
-        )}
-      </Button>
-      {open && !disabled && (
-        <div className="absolute left-0 bottom-full mb-1 bg-n-0 border border-n-200 rounded-md shadow-floating w-[160px] py-1 z-30">
-          {(Object.keys(SOAP_FIELD_LABELS) as SoapField[]).map((f) => (
-            <Button
-              key={f}
-              variant="item"
-              size="sm"
-              onClick={() => {
-                onSelect(f)
-                setOpen(false)
-                onConfirm(f)
-              }}
-              className="w-full text-left px-3"
-            >
-              {SOAP_FIELD_LABELS[f]}
-            </Button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

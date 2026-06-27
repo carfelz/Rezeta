@@ -4,6 +4,106 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-26] — fix(web): make missing-fields panel a static checklist
+
+### Fixed
+
+- **`apps/web/src/components/consultations/MissingFieldsPanel.tsx`**, **`apps/web/src/pages/Consultation/index.tsx`**: The missing-fields panel's "jump to field" rows were a silent no-op after the protocol-first migration — `onFieldClick` scrolled to `getElementById('field-' + id)`, but field ids are now `protocol:<usageId>:<blockId>` and no element renders a matching anchor (the old SOAP `field-*` anchors were removed, and `CanvasView` only renders the active usage). Removed the dead `onFieldClick` handler and rendered the rows as a non-interactive `<ul>` checklist instead of clickable buttons. Removed the now-unused `panelGoArrow` string and corrected `panelDescription`. Updated `MissingFieldsPanel.test.tsx` and the `EdgePreview` usage.
+
+## [2026-06-26] — chore(web): remove orphaned consultation gate and GatePreview scaffolding
+
+### Changed
+
+- **`apps/web/src/components/consultations/ConsultationGate.tsx`**: Deleted — the old consultation gate (protocol-selection step) was superseded by the protocol-first redesign and was no longer reachable from production routes.
+- **`apps/web/src/components/consultations/__tests__/ConsultationGate.test.tsx`**: Deleted — test file for the removed component.
+- **`apps/web/src/components/consultations/__tests__/ConsultationGate.source.test.tsx`**: Deleted — recommendation-source semantics test for the removed component.
+- **`apps/web/src/pages/_preview/GatePreview.tsx`**: Deleted — the only consumer of `ConsultationGate`; a dev-only auth-free preview page with no production path.
+- **`apps/web/src/App.tsx`**: Removed `GatePreview` import and `{ path: '/_preview/gate', element: <GatePreview /> }` route. All other `_preview` routes (strip, edge, canvas, order-queue) remain intact.
+- **`apps/web/src/components/consultations/strings.ts`**: No changes required — `ConsultationGate` used only inline strings; no orphaned string keys remained.
+
+## [2026-06-26] — refactor: drop off-protocol-note promote-to-soap path
+
+### Changed
+
+- **`packages/shared/src/types/consultation.ts`**: Removed `promoted_to_soap_field` from `OffProtocolNoteEvent`.
+- **`apps/web/src/hooks/consultations/use-consultations.ts`**: `useAddOffProtocolNote` no longer accepts `promoteTo` or `existingSoapValue`; the dead second PATCH to `/v1/consultations/{id}` (which wrote to non-existent SOAP columns) is removed. Now uses `OffProtocolNoteEvent` type from shared.
+- **`apps/web/src/components/consultations/OffProtocolNote.tsx`**: Removed the `SoapMover` sub-component and the `promoteTo` field; `onSave` callback now carries `{ title, body }` only.
+- **`apps/web/src/components/consultations/strings.ts`**: Removed SOAP field labels (`soapSubjective`, `soapObjective`, `soapAssessment`, `soapPlan`), `moveTo`, `moveToSoap`; updated `bodyPlaceholder` to remove SOAP reference.
+- **`apps/web/src/pages/Consultation/ConsultationModals.tsx`**: Removed `SoapField` local type; updated `onSaveOffProtocolNote` prop signature to match simplified interface.
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `promoteTo` parameter from `handleSaveOffProtocolNote`.
+- **`apps/web/src/components/consultations/__tests__/OffProtocolNote.test.tsx`**: Replaced `promoteTo: null` assertion with plain `{ title, body }`; removed SOAP-mover dropdown test.
+- **`apps/web/src/hooks/__tests__/use-consultations.test.ts`**: Replaced promote-SOAP and "does NOT patch SOAP" tests with a single test asserting exactly one PATCH is made (to the usage endpoint).
+
+## [2026-06-26] — feat(web): remove SOAP view; protocol-first consultation panel with empty state
+
+### Changed
+
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `soap` prop, `handleAutoPopulate`, and `SoapView` fallback. No-protocol state now renders an "Agregar protocolo" empty state (icon + text + primary button). The dashed "add another" button is only shown when an active protocol is present. `handleSaveOffProtocolNote` no longer passes `promoteTo`/`existingSoapValue` to the mutation (Task 4a will clean up the hook and modal).
+- **`apps/web/src/components/consultations/CanvasView.tsx`**: Removed `SoapField` type export and `onAutoPopulate` prop; removed all call sites passing `onAutoPopulate` to `BlockRendererRunMode`.
+- **`apps/web/src/components/consultations/ConsultationSidebar.tsx`**: Removed the dead `viewMode?: 'soap' | 'canvas'` prop, the `isCanvas` constant, and the `!isCanvas` guard left over from the view-mode toggle removal. The previous-consultations list now always renders (its only consumer, `OrdersRail.tsx`, already stopped passing `viewMode`).
+- **`apps/web/src/pages/Consultation/index.tsx`**: Removed `useSoapState` import/call and `soap=` prop on `<ProtocolPanel>`. `hasContent` is now `protocolUsages.length > 0`. Missing fields use `computeMissingRequiredFields` from `@rezeta/shared`. `saveStatus` is static `'idle'`.
+- **`apps/web/src/components/consultations/MissingFieldsPanel.tsx`**: Removed `computeMissingFields` function and `ConsultationFieldCheck` interface (SOAP-field-based check); panel now renders pre-computed `MissingField[]`.
+- **`apps/web/src/components/consultations/strings.ts`**: Removed `soapViewStrings` export and orphaned `computeMissingFields` label keys.
+- **`apps/web/src/pages/Consultation/strings.ts`**: Added `protocolPanelStrings` with `noProtocolTitle` and `addProtocol` strings.
+
+### Added
+
+- **`apps/web/src/pages/Consultation/__tests__/ProtocolPanel.test.tsx`**: New TDD test — verifies no-protocol empty state shows "Agregar protocolo" button and no SOAP placeholders; verifies canvas renders when a protocol is active.
+
+### Fixed
+
+- **`apps/web/src/components/consultations/__tests__/CanvasView.test.tsx`**: Removed `onAutoPopulate` test (prop no longer exists).
+- **`apps/web/src/components/consultations/__tests__/MissingFieldsPanel.test.tsx`**: Removed `computeMissingFields` describe block (function removed from component).
+
+### Deleted
+
+- `apps/web/src/components/consultations/SoapView.tsx`
+- `apps/web/src/components/consultations/SoapTextarea.tsx`
+- `apps/web/src/components/consultations/__tests__/SoapTextarea.test.tsx`
+- `apps/web/src/pages/Consultation/use-soap-state.ts`
+
+## [2026-06-26] — refactor(web): remove consultation view-mode toggle (canvas-only)
+
+### Changed
+
+- **`apps/web/src/store/ui.store.ts`**: Removed `ConsultationViewMode` type, `viewMode` field, and `setViewMode` action. Store now only manages `activeLocationId` and `missingFieldsPanelOpen`.
+- **`apps/web/src/components/consultations/ProtocolStrip.tsx`**: Removed `viewMode`/`onViewModeChange` props and the `<ViewModeToggle>` JSX block.
+- **`apps/web/src/pages/Consultation/ProtocolBar.tsx`**: Removed `viewMode`/`onViewModeChange` from interface and forwarding; collapsed signed/unsigned `ProtocolStrip` branches into one.
+- **`apps/web/src/pages/Consultation/ProtocolPanel.tsx`**: Removed `useConsultationViewMode` hook call; panel now always renders `CanvasView` when `activeUsage` is set (SOAP fallback remains as else-branch for Task 4).
+- **`apps/web/src/components/consultations/ConsultationSidebar.tsx`**: Replaced `ConsultationViewMode` import with inline `'soap' | 'canvas'` literal type.
+- **`apps/web/src/pages/_preview/CanvasPreview.tsx`**, **`apps/web/src/pages/_preview/StripPreview.tsx`**: Minimal compile fixes — removed deleted `ConsultationViewMode` import and removed `viewMode`/`onViewModeChange` prop usage.
+
+### Fixed
+
+- **`apps/web/src/store/__tests__/ui.store.test.ts`**: Removed obsolete `viewMode`/`setViewMode` test assertions.
+
+## [2026-06-26] — feat(web): disable sign button until a protocol is added
+
+### Added
+
+- **`apps/web/src/components/consultations/strings.ts`**: New `pageHeaderStrings` object with `signButton` ("Firmar y cerrar") and `signRequiresProtocol` ("Agrega al menos un protocolo para poder firmar") strings.
+- **`apps/web/src/pages/Consultation/PageHeader.tsx`**: New `canSign: boolean` prop. When `canSign` is `false`, the "Firmar y cerrar" button is `disabled` and receives a `title` tooltip with the `signRequiresProtocol` string. Button label now uses `pageHeaderStrings.signButton` (no hardcoded text).
+- **`apps/web/src/pages/Consultation/index.tsx`**: Computes `canSign = consultation.protocolUsages.length > 0` and threads it to `<PageHeader>`.
+- **`apps/web/src/pages/Consultation/__tests__/PageHeader.test.tsx`**: Two new TDD tests — "disables Firmar y cerrar when there are no protocols" and "enables Firmar y cerrar when at least one protocol exists". `baseProps` updated with `canSign: true`.
+
+## [2026-06-26] — feat(api): block signing consultations with zero protocols
+
+### Added
+
+- **`packages/shared/src/errors.ts`**: New error code `CONSULTATION_REQUIRES_PROTOCOL` added to the `// ── Consultation ──` group.
+- **`apps/api/src/modules/consultations/consultations.service.ts`**: Guard in `sign()` — immediately after the status check, throws `BadRequestException` with `CONSULTATION_REQUIRES_PROTOCOL` when `protocolUsages.length === 0`.
+- **`apps/api/src/modules/consultations/__tests__/consultations.service.spec.ts`**: New test "rejects signing when the consultation has zero protocol usages" (TDD, RED → GREEN). Existing sign tests that previously used empty `protocolUsages` updated to include ≥1 usage.
+
+## [2026-06-26] — feat(web): edit protocol category color, not just name
+
+### Changed
+
+- **`apps/web/src/pages/settings/Types.tsx`**, **`strings.ts`**: The category edit modal ("Renombrar") only edited the name, even though the API and spec (`specs/updated-specs/02-protocol-model.md`: "Freely create, rename, delete at any time"; a category "is a name and a color") support recoloring. Renamed it to "Editar categoría" and added a color picker prefilled with the category's current color; saving now sends both `name` and `color` via the existing `PATCH /v1/protocol-categories/:id`. The row action button label changed from "Renombrar" to "Editar". This removes the delete-and-recreate workaround that previously triggered unique-constraint errors. Seeded categories remain locked (unchanged).
+
+### Added
+
+- **`apps/web/src/pages/settings/__tests__/Types.test.tsx`**: Tests covering the edit modal — prefilled name + color, submitting both fields, and the no-op-when-unchanged guard.
+
 ## [2026-06-26] — fix(db): soft-deleted records no longer block reuse of unique values
 
 ### Fixed

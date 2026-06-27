@@ -5,6 +5,11 @@ export const consultationPageStrings = {
   complementaryInfoLabel: 'Información complementaria',
 } as const
 
+export const protocolPanelStrings = {
+  noProtocolTitle: 'Esta consulta aún no tiene protocolos',
+  addProtocol: 'Agregar protocolo',
+} as const
+
 export const newConsultationStrings = {
   pageTitle: 'Nueva consulta',
   openEmptyButton: 'Iniciar consulta',

@@ -42,7 +42,6 @@ export function MissingFieldsCallout({
 
 export interface MissingFieldsPanelProps {
   fields: MissingField[]
-  onFieldClick: (fieldId: string) => void
   onDismiss?: () => void
   /**
    * When true, the panel renders nothing — signed consultations don't surface
@@ -59,7 +58,6 @@ export interface MissingFieldsPanelProps {
 
 export function MissingFieldsPanel({
   fields,
-  onFieldClick,
   onDismiss,
   isSigned = false,
   onSign,
@@ -101,15 +99,13 @@ export function MissingFieldsPanel({
       <p className="px-4 pb-3 text-[12px] text-n-500 leading-snug">
         {missingFieldsStrings.panelDescription}
       </p>
-      <div className="flex flex-col gap-2 px-3 pb-3">
+      <ul className="flex flex-col gap-2 px-3 pb-3 list-none m-0">
         {fields.map((field) => (
-          <Button
+          <li
             key={field.id}
-            variant="item"
-            size="sm"
-            onClick={() => onFieldClick(field.id)}
-            className="flex items-center gap-3 w-full text-left px-3 py-2"
+            className="flex items-center gap-3 px-3 py-2 rounded-sm bg-danger-bg/40"
           >
+            <i className="ph ph-circle text-[12px] text-danger-text shrink-0" aria-hidden />
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-semibold text-danger-text truncate">
                 {field.label}
@@ -120,12 +116,9 @@ export function MissingFieldsPanel({
                 </div>
               )}
             </div>
-            <span className="text-[12px] text-danger-text font-medium shrink-0">
-              {missingFieldsStrings.panelGoArrow}
-            </span>
-          </Button>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }
@@ -138,37 +131,4 @@ export function RequiredBadge(): JSX.Element {
       {missingFieldsStrings.requiredBadge}
     </Chip>
   )
-}
-
-// ─── Helper: compute missing fields ────────────────────────────────────────────
-
-export interface ConsultationFieldCheck {
-  chiefComplaint: string
-  subjective: string
-  objective: string
-  assessment: string
-  plan: string
-  diagnoses: string[]
-}
-
-export function computeMissingFields(fields: ConsultationFieldCheck): MissingField[] {
-  const missing: MissingField[] = []
-  if (!fields.chiefComplaint.trim()) {
-    missing.push({ id: 'chiefComplaint', label: missingFieldsStrings.chiefComplaintLabel })
-  }
-  if (!fields.assessment.trim()) {
-    missing.push({
-      id: 'assessment',
-      label: missingFieldsStrings.assessmentLabel,
-      description: missingFieldsStrings.assessmentDescription,
-    })
-  }
-  if (fields.diagnoses.length === 0) {
-    missing.push({
-      id: 'diagnoses',
-      label: missingFieldsStrings.diagnosesLabel,
-      description: missingFieldsStrings.diagnosesDescription,
-    })
-  }
-  return missing
 }

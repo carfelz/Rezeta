@@ -1,48 +1,32 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  useConsultation,
-  useUpdateConsultation,
-} from '@/hooks/consultations/use-consultations'
+import { useConsultation } from '@/hooks/consultations/use-consultations'
 import { Button } from '@/components/ui'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
-import {
-  MissingFieldsPanel,
-  computeMissingFields,
-} from '@/components/consultations/MissingFieldsPanel'
+import { MissingFieldsPanel } from '@/components/consultations/MissingFieldsPanel'
 import { Breadcrumb } from './Breadcrumb'
 import { PageHeader } from './PageHeader'
 import { SignedBanner } from './SignedBanner'
 import { AmendmentsBanner } from './AmendmentsBanner'
 import { ProtocolPanel } from './ProtocolPanel'
 import { OrdersRail } from './OrdersRail'
-import { useSoapState } from './use-soap-state'
 import { formatBreadcrumbDate } from '@/lib/format/dates'
 import { consultationPageStrings } from './strings'
+import { computeMissingRequiredFields } from '@rezeta/shared'
 
 export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: consultation, isLoading, isError } = useConsultation(id!)
-  const updateMutation = useUpdateConsultation(id!)
-
-  const soap = useSoapState(consultation, updateMutation)
 
   const [showMissingFields, setShowMissingFields] = useState(false)
   const [showSign, setShowSign] = useState(false)
   const [showAmend, setShowAmend] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
 
-  const missingFields = computeMissingFields({
-    chiefComplaint: soap.chiefComplaint,
-    subjective: soap.subjective,
-    objective: soap.objective,
-    assessment: soap.assessment,
-    plan: soap.plan,
-    diagnoses: soap.diagnoses,
-  })
+  const missingFields = computeMissingRequiredFields(consultation?.protocolUsages ?? [])
 
   const consultationSigned = consultation?.status === 'signed'
   const hasUnsavedOrders = useOrderQueueStore(
@@ -74,16 +58,9 @@ export function Consultation(): JSX.Element {
   }
 
   const isSigned = consultationSigned
+  const canSign = consultation.protocolUsages.length > 0
   const dateShort = formatBreadcrumbDate(new Date(consultation.startedAt))
-  const hasContent = Boolean(
-    soap.chiefComplaint.trim() ||
-    soap.subjective.trim() ||
-    soap.objective.trim() ||
-    soap.assessment.trim() ||
-    soap.plan.trim() ||
-    soap.diagnoses.length > 0 ||
-    consultation.protocolUsages.length > 0,
-  )
+  const hasContent = consultation.protocolUsages.length > 0
   const pageTitle = isSigned
     ? `Consulta del ${dateShort} · firmada`
     : hasContent
@@ -111,11 +88,11 @@ export function Consultation(): JSX.Element {
           patientAllergies={consultation.patientAllergies}
           patientChronicConditions={consultation.patientChronicConditions}
           pageTitle={pageTitle}
-          saveStatus={soap.saveStatus}
-          {...(soap.savedAt !== undefined ? { savedAt: soap.savedAt } : {})}
+          saveStatus="idle"
           isSigned={isSigned}
+          canSign={canSign}
           onAmend={() => setShowAmend(true)}
-          onRetry={soap.saveNow}
+          onRetry={() => undefined}
           onSignClick={handleSignClick}
         />
 
@@ -129,10 +106,6 @@ export function Consultation(): JSX.Element {
             <MissingFieldsPanel
               fields={missingFields}
               isSigned={isSigned}
-              onFieldClick={(fieldId) => {
-                setShowMissingFields(false)
-                document.getElementById(`field-${fieldId}`)?.scrollIntoView({ behavior: 'smooth' })
-              }}
               onDismiss={() => setShowMissingFields(false)}
               onSign={() => {
                 setShowMissingFields(false)
@@ -149,7 +122,6 @@ export function Consultation(): JSX.Element {
           <ProtocolPanel
             consultation={consultation}
             readOnly={isSigned}
-            soap={soap}
             showSign={showSign}
             onShowSignChange={setShowSign}
             showAmend={showAmend}
