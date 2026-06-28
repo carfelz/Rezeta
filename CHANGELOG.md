@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-27] — test(web): cover DatePicker/TimePicker/calendar to clear CI threshold
+
+### Added
+
+- **`apps/web/src/components/ui/__tests__/calendar.test.tsx`** (new), **`DatePicker.test.tsx`**, **`TimePicker.test.tsx`**: With the install failure unblocked, CI surfaced a pre-existing coverage failure — `DatePicker.tsx`, `TimePicker.tsx`, and `calendar.tsx` (added 2026-06-24) were below the 95% per-file threshold. Added tests covering: DatePicker date selection (`onChange` + close), `minDate`/`maxDate` disabling, unparseable values, default placeholder, and disabled/error states; TimePicker invalid/midnight formatting, default placeholder, bounds without minutes, the scroll-into-view effect (matching and non-matching value), and disabled/error states; and the calendar's custom `Root`/`Chevron`/`WeekNumber`/`CalendarDayButton` renderers, dropdown caption layout, week numbers, and range modifiers. DatePicker and calendar reach 100%; TimePicker 97% branches (one unreachable `?? 0` defensive branch remains).
+
 ## [2026-06-27] — fix(ci): pin project to public npm registry to unblock install
 
 ### Fixed
