@@ -63,7 +63,7 @@ function ProtocolRow({
       variant="item"
       size="sm"
       onClick={onClick}
-      className="flex items-center gap-4 w-full px-5 py-4 border-b border-n-100 text-left group"
+      className="flex items-center gap-4 w-full h-auto px-5 py-4 border-b border-n-100 text-left group"
     >
       <div className="w-[36px] h-[36px] rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors">
         <i className="ph ph-stack text-[16px]" />

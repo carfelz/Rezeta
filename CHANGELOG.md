@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-27] — fix(web): protocol list cards clip their title
+
+### Fixed
+
+- **`apps/web/src/pages/Protocols/index.tsx`**: Protocol cards on the list page (`/protocolos`) clipped the top of their title. Each card is a `<Button variant="item" size="sm">`, and the `sm` size applies a fixed `h-btn-sm` (28px) height. The card's two-row, `py-4` content is ~51px tall, so the vertically-centered content overflowed the 28px button box and was clipped at the top by the list container's `overflow-hidden`. Added `h-auto` to the `ProtocolRow` button so it sizes to its content (the `cn`/tailwind-merge setup is configured to let `h-auto` override `h-btn-sm`). Verified live: card height now 85px, title no longer clipped. Fix applies to every card on the page (single `ProtocolRow` component).
+
+## [2026-06-27] — fix(web): protocol editor freezes after deleting a block
+
+### Fixed
+
+- **`apps/web/src/components/protocols/EditorBlockRenderer.tsx`**: Deleting a section/block in the protocol editor left the entire page non-interactive (could not click or type) until a refresh. The block actions menu (`BlockContextMenu`) is a Radix `DropdownMenu`, and the "Eliminar" item opens a Radix `Dialog` (`ConfirmDialog`). A *modal* dropdown sets `pointer-events: none` on `<body>` while open; the dialog mounted while that lock was active and Radix's `DismissableLayer` snapshotted `none` as the value to restore on close — so closing the dialog (on **confirm or cancel**) re-applied `pointer-events: none` to `<body>`, cascading to `#root` and freezing the app. Fixed by rendering the dropdown with `modal={false}`, which never locks `<body>`. Root cause confirmed by live DOM inspection (`document.body.style.pointerEvents === 'none'` with zero overlays in the DOM).
+- **`apps/web/src/components/protocols/__tests__/EditorBlockRenderer.delete-focus.test.tsx`**: New regression test — asserts `<body>` is never left with `pointer-events: none` after confirming or cancelling a block delete.
+
 ## [2026-06-26] — fix(web): make missing-fields panel a static checklist
 
 ### Fixed

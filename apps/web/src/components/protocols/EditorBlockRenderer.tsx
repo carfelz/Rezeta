@@ -329,7 +329,12 @@ function BlockContextMenu({
   onDelete,
 }: BlockContextMenuProps): JSX.Element {
   return (
-    <DropdownMenu.Root>
+    // modal={false} is required: a modal dropdown sets `pointer-events: none` on
+    // <body> while open. The "Eliminar" item opens a Dialog synchronously, and
+    // Radix's DismissableLayer snapshots that `none` as the value to restore on
+    // close — leaving the whole page non-interactive until refresh. Non-modal
+    // never locks <body>, so the dialog restores cleanly.
+    <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
         <IconButton
           icon="ph ph-dots-three"
