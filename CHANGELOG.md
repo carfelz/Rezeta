@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-27] — fix(ci): pin project to public npm registry to unblock install
+
+### Fixed
+
+- **`.npmrc`**, **`pnpm-lock.yaml`**: CI had been failing on `main` since 2026-06-24 at the **Install dependencies** step with `ERR_PNPM_FETCH_401` against `gdartifactory1.jfrog.io` (a private Artifactory registry inherited from a developer's user-level `~/.npmrc`). A `pnpm install` on 2026-06-24 baked 3 private jfrog tarball URLs into the lockfile (`@pkgjs/parseargs`, `@testing-library/dom`, `@types/aria-query`), which `pnpm install --frozen-lockfile` in CI could not fetch without private credentials. Added `registry=https://registry.npmjs.org/` to the project `.npmrc` so this repo always resolves against public npm regardless of user/global config, and removed the explicit jfrog `tarball:` from the 3 lockfile entries (integrity hashes unchanged — verified identical on public npm) so pnpm derives the public URL.
+
 ## [2026-06-27] — fix(web): protocol list cards clip their title
 
 ### Fixed
