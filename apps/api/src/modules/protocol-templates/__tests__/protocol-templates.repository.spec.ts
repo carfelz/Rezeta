@@ -4,6 +4,7 @@ import { ProtocolTemplatesRepository } from '../protocol-templates.repository.js
 // ProtocolType removed in schema reset v2.
 // isLocked and getBlockingTypeIds are stubs (always return false / []).
 // findAllWithLockInfo and findById no longer include protocolTypes.
+// categoryId is now REQUIRED on create — the fallback shim has been removed.
 
 const TENANT_ID = 'tenant-1'
 const TEMPLATE_ID = 'tmpl-1'
@@ -11,6 +12,7 @@ const USER_ID = 'user-1'
 const MINIMAL_SCHEMA = { version: '1.0', blocks: [] }
 
 const CATEGORY_ID = 'cat-1'
+const CATEGORY_ROW = { id: CATEGORY_ID, name: 'Emergencias', color: '#EF4444' }
 
 const mockPrisma = {
   protocolTemplate: {
@@ -31,6 +33,7 @@ const makeTemplateRow = (overrides = {}) => ({
   description: null,
   suggestedSpecialty: null,
   categoryId: CATEGORY_ID,
+  category: CATEGORY_ROW,
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
   createdBy: USER_ID,
@@ -46,7 +49,6 @@ describe('ProtocolTemplatesRepository', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     repo = new ProtocolTemplatesRepository(mockPrisma as never)
-    mockPrisma.protocolCategory.findFirst.mockResolvedValue({ id: CATEGORY_ID })
   })
 
   // ── findAllWithLockInfo ────────────────────────────────────────────────────
@@ -58,6 +60,7 @@ describe('ProtocolTemplatesRepository', () => {
       expect(mockPrisma.protocolTemplate.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ tenantId: TENANT_ID, deletedAt: null }),
+          include: { category: true },
         }),
       )
     })
@@ -79,12 +82,13 @@ describe('ProtocolTemplatesRepository', () => {
   // ── findById ───────────────────────────────────────────────────────────────
 
   describe('findById', () => {
-    it('calls findFirst with id, tenantId, and deletedAt null', async () => {
+    it('calls findFirst with id, tenantId, deletedAt null, and category include', async () => {
       mockPrisma.protocolTemplate.findFirst.mockResolvedValue(makeTemplateRow())
       await repo.findById(TEMPLATE_ID, TENANT_ID)
       expect(mockPrisma.protocolTemplate.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ id: TEMPLATE_ID, tenantId: TENANT_ID, deletedAt: null }),
+          include: { category: true },
         }),
       )
     })
@@ -103,22 +107,50 @@ describe('ProtocolTemplatesRepository', () => {
     })
   })
 
+  // ── findCategory ───────────────────────────────────────────────────────────
+
+  describe('findCategory', () => {
+    it('calls protocolCategory.findFirst with id and tenantId', async () => {
+      mockPrisma.protocolCategory.findFirst.mockResolvedValue(CATEGORY_ROW)
+      await repo.findCategory(CATEGORY_ID, TENANT_ID)
+      expect(mockPrisma.protocolCategory.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: CATEGORY_ID, tenantId: TENANT_ID, deletedAt: null }),
+        }),
+      )
+    })
+
+    it('returns category when found', async () => {
+      mockPrisma.protocolCategory.findFirst.mockResolvedValue(CATEGORY_ROW)
+      const result = await repo.findCategory(CATEGORY_ID, TENANT_ID)
+      expect(result).toEqual(CATEGORY_ROW)
+    })
+
+    it('returns null when category not found', async () => {
+      mockPrisma.protocolCategory.findFirst.mockResolvedValue(null)
+      const result = await repo.findCategory('nonexistent', TENANT_ID)
+      expect(result).toBeNull()
+    })
+  })
+
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    it('calls prisma.create with correct data', async () => {
+    it('calls prisma.create with required categoryId and category include', async () => {
       const created = makeTemplateRow({ name: 'My Template' })
       mockPrisma.protocolTemplate.create.mockResolvedValue(created)
-      await repo.create(TENANT_ID, { name: 'My Template', schema: MINIMAL_SCHEMA }, USER_ID)
+      await repo.create(TENANT_ID, { name: 'My Template', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA }, USER_ID)
       expect(mockPrisma.protocolTemplate.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             tenantId: TENANT_ID,
             name: 'My Template',
+            categoryId: CATEGORY_ID,
             schema: MINIMAL_SCHEMA,
             isSeeded: false,
             createdBy: USER_ID,
           }),
+          include: { category: true },
         }),
       )
     })
@@ -127,7 +159,7 @@ describe('ProtocolTemplatesRepository', () => {
       mockPrisma.protocolTemplate.create.mockResolvedValue(makeTemplateRow())
       await repo.create(
         TENANT_ID,
-        { name: 'T', schema: MINIMAL_SCHEMA, suggestedSpecialty: 'cardiology' },
+        { name: 'T', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA, suggestedSpecialty: 'cardiology' },
         USER_ID,
       )
       const call = mockPrisma.protocolTemplate.create.mock.calls[0][0] as {
@@ -138,29 +170,33 @@ describe('ProtocolTemplatesRepository', () => {
 
     it('defaults suggestedSpecialty to null when not provided', async () => {
       mockPrisma.protocolTemplate.create.mockResolvedValue(makeTemplateRow())
-      await repo.create(TENANT_ID, { name: 'T', schema: MINIMAL_SCHEMA }, USER_ID)
+      await repo.create(TENANT_ID, { name: 'T', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA }, USER_ID)
       const call = mockPrisma.protocolTemplate.create.mock.calls[0][0] as {
         data: { suggestedSpecialty: null }
       }
       expect(call.data.suggestedSpecialty).toBeNull()
     })
 
-    it('returns created template row', async () => {
+    it('returns created template row with category', async () => {
       const row = makeTemplateRow({ name: 'New' })
       mockPrisma.protocolTemplate.create.mockResolvedValue(row)
-      const result = await repo.create(TENANT_ID, { name: 'New', schema: MINIMAL_SCHEMA }, USER_ID)
+      const result = await repo.create(TENANT_ID, { name: 'New', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA }, USER_ID)
       expect(result.name).toBe('New')
+      expect(result.category).toEqual(CATEGORY_ROW)
     })
   })
 
   // ── update ─────────────────────────────────────────────────────────────────
 
   describe('update', () => {
-    it('calls prisma.update with correct id', async () => {
+    it('calls prisma.update with correct id and category include', async () => {
       mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow({ name: 'Updated' }))
       await repo.update(TEMPLATE_ID, TENANT_ID, { name: 'Updated' })
       expect(mockPrisma.protocolTemplate.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: TEMPLATE_ID } }),
+        expect.objectContaining({
+          where: { id: TEMPLATE_ID },
+          include: { category: true },
+        }),
       )
     })
 
@@ -171,6 +207,15 @@ describe('ProtocolTemplatesRepository', () => {
         data: { name: string }
       }
       expect(call.data.name).toBe('New Name')
+    })
+
+    it('includes categoryId in update data when provided', async () => {
+      mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow())
+      await repo.update(TEMPLATE_ID, TENANT_ID, { categoryId: CATEGORY_ID })
+      const call = mockPrisma.protocolTemplate.update.mock.calls[0][0] as {
+        data: { categoryId: string }
+      }
+      expect(call.data.categoryId).toBe(CATEGORY_ID)
     })
 
     it('omits name from data when not provided', async () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotFoundException, BadRequestException } from '@nestjs/common'
+import { ErrorCode } from '@rezeta/shared'
 import { ProtocolTemplatesService } from '../protocol-templates.service.js'
 
 // ProtocolType removed in schema reset v2.
@@ -18,6 +19,7 @@ const makeTemplateRow = (overrides = {}) => ({
   description: null,
   suggestedSpecialty: null,
   categoryId: 'cat-1',
+  category: { id: 'cat-1', name: 'Emergencias', color: '#EF4444' },
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
   createdAt: new Date('2026-01-01'),
@@ -30,6 +32,7 @@ const makeTemplateRow = (overrides = {}) => ({
 const mockRepo = {
   findAllWithLockInfo: vi.fn(),
   findById: vi.fn(),
+  findCategory: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   softDelete: vi.fn(),
@@ -104,28 +107,40 @@ describe('ProtocolTemplatesService', () => {
   describe('create', () => {
     it('creates a template and returns dto', async () => {
       const row = makeTemplateRow({ name: 'New Template' })
+      mockRepo.findCategory.mockResolvedValue({ id: 'cat-1', name: 'Emergencias', color: '#EF4444' })
       mockRepo.create.mockResolvedValue(row)
 
       const result = await service.create(
         TENANT_ID,
-        { name: 'New Template', schema: MINIMAL_SCHEMA },
+        { name: 'New Template', categoryId: 'cat-1', schema: MINIMAL_SCHEMA },
         'user-1',
       )
 
       expect(result.name).toBe('New Template')
       expect(result.tenantId).toBe(TENANT_ID)
       expect(result.isLocked).toBe(false)
+      expect(result.categoryId).toBe('cat-1')
+      expect(result.category).toEqual({ id: 'cat-1', name: 'Emergencias', color: '#EF4444' })
     })
 
     it('calls repo.create with correct tenantId and userId', async () => {
       const row = makeTemplateRow()
+      mockRepo.findCategory.mockResolvedValue({ id: 'cat-1', name: 'Emergencias', color: '#EF4444' })
       mockRepo.create.mockResolvedValue(row)
-      await service.create(TENANT_ID, { name: 'T', schema: MINIMAL_SCHEMA }, 'user-99')
+      await service.create(TENANT_ID, { name: 'T', categoryId: 'cat-1', schema: MINIMAL_SCHEMA }, 'user-99')
       expect(mockRepo.create).toHaveBeenCalledWith(
         TENANT_ID,
         expect.objectContaining({ name: 'T' }),
         'user-99',
       )
+    })
+
+    it('throws NotFoundException when categoryId does not exist in tenant', async () => {
+      mockRepo.findCategory.mockResolvedValue(null)
+      await expect(
+        service.create(TENANT_ID, { name: 'T', categoryId: 'nonexistent', schema: MINIMAL_SCHEMA }, 'user-1'),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.PROTOCOL_CATEGORY_NOT_FOUND } })
+      expect(mockRepo.create).not.toHaveBeenCalled()
     })
   })
 
@@ -153,6 +168,31 @@ describe('ProtocolTemplatesService', () => {
       await expect(
         service.update(TEMPLATE_ID, OTHER_TENANT_ID, { name: 'Stolen' }),
       ).rejects.toThrow(NotFoundException)
+    })
+
+    it('updates categoryId when a valid categoryId is provided', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow())
+      mockRepo.findCategory.mockResolvedValue({ id: 'cat-2', name: 'Consulta', color: '#3B82F6' })
+      mockRepo.update.mockResolvedValue(makeTemplateRow({ categoryId: 'cat-2', category: { id: 'cat-2', name: 'Consulta', color: '#3B82F6' } }))
+      const result = await service.update(TEMPLATE_ID, TENANT_ID, { categoryId: 'cat-2' })
+      expect(result.categoryId).toBe('cat-2')
+      expect(mockRepo.findCategory).toHaveBeenCalledWith('cat-2', TENANT_ID)
+    })
+
+    it('throws 404 PROTOCOL_CATEGORY_NOT_FOUND when updating to a nonexistent categoryId', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow())
+      mockRepo.findCategory.mockResolvedValue(null)
+      await expect(
+        service.update(TEMPLATE_ID, TENANT_ID, { categoryId: 'nonexistent' }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.PROTOCOL_CATEGORY_NOT_FOUND } })
+      expect(mockRepo.update).not.toHaveBeenCalled()
+    })
+
+    it('skips category lookup when categoryId is not in the update payload', async () => {
+      mockRepo.findById.mockResolvedValue(makeTemplateRow())
+      mockRepo.update.mockResolvedValue(makeTemplateRow({ name: 'Updated' }))
+      await service.update(TEMPLATE_ID, TENANT_ID, { name: 'Updated' })
+      expect(mockRepo.findCategory).not.toHaveBeenCalled()
     })
   })
 

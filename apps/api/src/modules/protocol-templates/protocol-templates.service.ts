@@ -6,20 +6,21 @@ import {
   type UpdateProtocolTemplateDto,
 } from '@rezeta/shared'
 import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
-import { ProtocolTemplatesRepository } from './protocol-templates.repository.js'
-import type { ProtocolTemplate } from '@rezeta/db'
+import { ProtocolTemplatesRepository, type TemplateWithCategory } from './protocol-templates.repository.js'
 
 @Injectable()
 export class ProtocolTemplatesService {
   constructor(@Inject(ProtocolTemplatesRepository) private repo: ProtocolTemplatesRepository) {}
 
-  private toDto(t: ProtocolTemplate): ProtocolTemplateDto {
+  private toDto(t: TemplateWithCategory): ProtocolTemplateDto {
     return {
       id: t.id,
       tenantId: t.tenantId,
       name: t.name,
       description: t.description,
       suggestedSpecialty: t.suggestedSpecialty,
+      categoryId: t.categoryId,
+      category: { id: t.category.id, name: t.category.name, color: t.category.color },
       schema: t.schema,
       isSeeded: t.isSeeded,
       isLocked: false,
@@ -44,6 +45,13 @@ export class ProtocolTemplatesService {
     dto: CreateProtocolTemplateDto,
     userId: string,
   ): Promise<ProtocolTemplateDto> {
+    const category = await this.repo.findCategory(dto.categoryId, tenantId)
+    if (!category) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_CATEGORY_NOT_FOUND,
+        message: 'Category not found',
+      })
+    }
     const t = await this.repo.create(tenantId, dto, userId)
     return this.toDto(t)
   }
@@ -55,6 +63,15 @@ export class ProtocolTemplatesService {
   ): Promise<ProtocolTemplateDto> {
     const existing = await this.repo.findById(id, tenantId)
     if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (dto.categoryId !== undefined) {
+      const category = await this.repo.findCategory(dto.categoryId, tenantId)
+      if (!category) {
+        throw new NotFoundException({
+          code: ErrorCode.PROTOCOL_CATEGORY_NOT_FOUND,
+          message: 'Category not found',
+        })
+      }
+    }
     const t = await this.repo.update(id, tenantId, dto)
     return this.toDto(t)
   }
