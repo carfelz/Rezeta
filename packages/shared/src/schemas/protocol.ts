@@ -264,7 +264,7 @@ export const ProtocolContentSchema = z.object({
 // ─── Request Schemas ─────────────────────────────────────────────────────────
 
 export const CreateProtocolSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  templateId: z.string().uuid(),
   title: z.string().min(2).max(300),
 })
 

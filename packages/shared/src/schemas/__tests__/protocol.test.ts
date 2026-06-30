@@ -1,8 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import {
+  CreateProtocolSchema,
   CreateProtocolTemplateSchema,
   ProtocolTemplateDtoSchema,
 } from '../protocol.js'
+
+describe('CreateProtocolSchema (template-driven)', () => {
+  it('requires templateId and title', () => {
+    const ok = CreateProtocolSchema.safeParse({
+      templateId: '11111111-1111-1111-1111-111111111111',
+      title: 'Mi protocolo',
+    })
+    expect(ok.success).toBe(true)
+  })
+  it('rejects when templateId is missing', () => {
+    expect(CreateProtocolSchema.safeParse({ title: 'X' }).success).toBe(false)
+  })
+})
 
 describe('CreateProtocolTemplateSchema requires categoryId', () => {
   it('rejects without categoryId', () => {
