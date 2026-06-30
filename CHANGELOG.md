@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-30] — feat: template requires a category end-to-end (slice 3)
+
+### Added
+
+- **`packages/shared/src/schemas/__tests__/protocol.test.ts`** (new): Tests for `CreateProtocolTemplateSchema` requiring `categoryId`, and `ProtocolTemplateDtoSchema` embedding `categoryId` + `category`.
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.service-category.spec.ts`** (new): Service-level tests for category validation in `create` and `update`.
+- **`apps/web/src/pages/settings/__tests__/TemplateEditor.test.tsx`** (new): Component tests for the required category `<select>` in `TemplateEditorNew` and `TemplateEditor` (edit mode): renders options, disables save until a category is chosen, and passes `categoryId` to the create mutation.
+
+### Changed
+
+- **`packages/shared/src/schemas/protocol.ts`**: `CreateProtocolTemplateSchema.categoryId` is now REQUIRED (was `.optional()`). `UpdateProtocolTemplateSchema` gains optional `categoryId`. `ProtocolTemplateDtoSchema` gains required `categoryId: z.string().uuid()` and `category: z.object({ id, name, color })`.
+- **`apps/api/src/modules/protocol-templates/protocol-templates.repository.ts`**: Removed the interim "fallback to first category" shim. `create` now takes a required `categoryId`. `findAllWithLockInfo`, `findById`, `create`, and `update` all include `{ category: true }` and return `TemplateWithCategory`. New `findCategory(id, tenantId)` helper added.
+- **`apps/api/src/modules/protocol-templates/protocol-templates.service.ts`**: `toDto` maps `categoryId` and `category` from the `TemplateWithCategory` type. `create` validates the category exists in-tenant (throws `NotFoundException(PROTOCOL_CATEGORY_NOT_FOUND)`) before persisting. `update` runs the same guard when `categoryId` is present in the DTO. Removed unused `BadRequestException` import.
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.repository.spec.ts`**: Removed fallback-shim behavior tests; updated `create` tests to pass required `categoryId`; added `findCategory` tests; added `include: { category: true }` assertions.
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.spec.ts`**: Updated `makeTemplateRow` to include `category`; updated `create` tests for required `categoryId`; added `update` tests for category validation paths.
+- **`apps/web/src/components/template/TemplateEditor.tsx`**: `TemplateEditorProps` gains optional `isSaveDisabled` prop (defaults `false`); save button respects it.
+- **`apps/web/src/pages/settings/TemplateEditor.tsx`**: Both `TemplateEditorNew` and `TemplateEditor` now call `useProtocolCategories()`, render a required category `<NativeSelect>`, and include `categoryId` in their create/update mutation payloads. Edit mode prefills the select from the loaded template. Save button is gated on category selection.
+- **`apps/web/src/pages/settings/Templates.tsx`**: Templates list table gains a "Categoría" column with a colored dot + category name (same chip style as `TemplatePickerModal`).
+- **`apps/web/src/pages/settings/strings.ts`**: Added `templateEditorStrings.fieldCategory`, `.fieldCategoryPlaceholder`, `.fieldCategoryRequired`; added `templatesStrings.listCategory`.
+
 ## [2026-06-27] — test(web): cover DatePicker/TimePicker/calendar to clear CI threshold
 
 ### Added
