@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, Inject, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common'
 import type { ProtocolCategory } from '@rezeta/db'
 import { ErrorCode } from '@rezeta/shared'
 import type { CreateProtocolCategoryDto, UpdateProtocolCategoryDto } from '@rezeta/shared'
@@ -44,6 +44,14 @@ export class ProtocolCategoriesService {
       throw new BadRequestException({
         code: ErrorCode.PROTOCOL_CATEGORY_SEEDED_IMMUTABLE,
         message: 'Cannot delete a seeded category',
+      })
+    }
+    const count = await this.repo.countTemplates(id, tenantId)
+    if (count > 0) {
+      throw new ConflictException({
+        code: ErrorCode.CATEGORY_IN_USE_BY_TEMPLATES,
+        message: 'Category is in use by templates',
+        details: { count },
       })
     }
     return this.repo.softDelete(id)

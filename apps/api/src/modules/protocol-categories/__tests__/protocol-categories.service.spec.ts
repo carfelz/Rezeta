@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotFoundException, BadRequestException } from '@nestjs/common'
+import { ErrorCode } from '@rezeta/shared'
 import { ProtocolCategoriesService } from '../protocol-categories.service.js'
 import type { ProtocolCategoriesRepository } from '../protocol-categories.repository.js'
 
@@ -9,6 +10,7 @@ const mockRepo = {
   create: vi.fn(),
   update: vi.fn(),
   softDelete: vi.fn(),
+  countTemplates: vi.fn(),
 }
 
 const makeService = () =>
@@ -76,6 +78,7 @@ describe('ProtocolCategoriesService', () => {
 
   it('delete soft-deletes a non-seeded category', async () => {
     mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
+    mockRepo.countTemplates.mockResolvedValue(0)
     mockRepo.softDelete.mockResolvedValue({ id: 'cat-1', deletedAt: new Date() })
     await service.delete('tenant-1', 'cat-1')
     expect(mockRepo.softDelete).toHaveBeenCalledWith('cat-1')
@@ -85,5 +88,21 @@ describe('ProtocolCategoriesService', () => {
     mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: true })
     await expect(service.delete('tenant-1', 'cat-1')).rejects.toBeInstanceOf(BadRequestException)
     expect(mockRepo.softDelete).not.toHaveBeenCalled()
+  })
+
+  it('blocks deletion when active templates reference the category', async () => {
+    mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
+    mockRepo.countTemplates.mockResolvedValue(2)
+    await expect(service.delete('tenant', 'cat-1')).rejects.toMatchObject({
+      response: { code: ErrorCode.CATEGORY_IN_USE_BY_TEMPLATES, details: { count: 2 } },
+    })
+    expect(mockRepo.softDelete).not.toHaveBeenCalled()
+  })
+
+  it('deletes when no templates reference the category', async () => {
+    mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
+    mockRepo.countTemplates.mockResolvedValue(0)
+    mockRepo.softDelete.mockResolvedValue({ id: 'cat-1' })
+    await expect(service.delete('tenant', 'cat-1')).resolves.toEqual({ id: 'cat-1' })
   })
 })
