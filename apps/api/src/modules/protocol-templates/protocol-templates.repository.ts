@@ -32,7 +32,6 @@ export class ProtocolTemplatesRepository {
     data: {
       name: string
       categoryId: string
-      suggestedSpecialty?: string | undefined
       schema: object
     },
     createdBy: string,
@@ -42,7 +41,6 @@ export class ProtocolTemplatesRepository {
         tenantId,
         name: data.name,
         categoryId: data.categoryId,
-        suggestedSpecialty: data.suggestedSpecialty ?? null,
         schema: data.schema,
         isSeeded: false,
         createdBy,
@@ -57,7 +55,6 @@ export class ProtocolTemplatesRepository {
     data: {
       name?: string | undefined
       categoryId?: string | undefined
-      suggestedSpecialty?: string | null | undefined
       schema?: object | undefined
     },
   ): Promise<TemplateWithCategory> {
@@ -66,9 +63,6 @@ export class ProtocolTemplatesRepository {
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
-        ...(data.suggestedSpecialty !== undefined && {
-          suggestedSpecialty: data.suggestedSpecialty,
-        }),
         ...(data.schema !== undefined && { schema: data.schema }),
         updatedAt: new Date(),
       },

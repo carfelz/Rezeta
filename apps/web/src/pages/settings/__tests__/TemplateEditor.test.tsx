@@ -38,7 +38,6 @@ const makeTemplateDto = (overrides: Partial<ProtocolTemplateDto> = {}): Protocol
   tenantId: 'tenant-1',
   name: 'Mi plantilla',
   description: null,
-  suggestedSpecialty: null,
   categoryId: 'cat-1',
   category: { id: 'cat-1', name: 'Emergencias', color: '#EF4444' },
   schema: { version: '1.0', blocks: [] },
@@ -125,7 +124,19 @@ describe('TemplateEditor (edit mode) — category select', () => {
 
   it('renders category options from useProtocolCategories', () => {
     render(<TemplateEditor />)
-    expect(screen.getByText('Emergencias')).toBeInTheDocument()
-    expect(screen.getByText('Consulta')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Emergencias' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Consulta' })).toBeInTheDocument()
+  })
+
+  it('shows the selected category as a colored badge in the header', () => {
+    render(<TemplateEditor />)
+    // The category name appears both as a <option> and as the header Badge.
+    // The Badge is a <span> tinted with the category color.
+    const badge = screen
+      .getAllByText('Emergencias')
+      .find((el) => el.tagName === 'SPAN' && el.style.backgroundColor !== '')
+    expect(badge).toBeTruthy()
+    // #EF4444 → rgb(239, 68, 68)
+    expect(badge!.style.backgroundColor).toBe('rgb(239, 68, 68)')
   })
 })

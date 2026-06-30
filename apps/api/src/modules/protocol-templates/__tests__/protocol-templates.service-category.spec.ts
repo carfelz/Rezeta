@@ -17,7 +17,6 @@ const baseTemplate = {
   tenantId: '44444444-4444-4444-4444-444444444444',
   name: 'T',
   description: null,
-  suggestedSpecialty: null,
   categoryId: '22222222-2222-2222-2222-222222222222',
   category: { id: '22222222-2222-2222-2222-222222222222', name: 'Emergencias', color: '#EF4444' },
   schema: { version: '1.0', blocks: [] },

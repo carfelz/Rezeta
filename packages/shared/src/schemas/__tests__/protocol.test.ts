@@ -3,6 +3,8 @@ import {
   CreateProtocolSchema,
   CreateProtocolTemplateSchema,
   ProtocolTemplateDtoSchema,
+  CreateProtocolCategorySchema,
+  UpdateProtocolCategorySchema,
 } from '../protocol.js'
 
 describe('CreateProtocolSchema (template-driven)', () => {
@@ -36,6 +38,59 @@ describe('CreateProtocolTemplateSchema requires categoryId', () => {
   })
 })
 
+describe('CreateProtocolCategorySchema', () => {
+  it('accepts name only', () => {
+    expect(CreateProtocolCategorySchema.safeParse({ name: 'Emergencias' }).success).toBe(true)
+  })
+
+  it('accepts name + specialty', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({ name: 'Emergencias', specialty: 'cardiología' })
+        .success,
+    ).toBe(true)
+  })
+
+  it('accepts name + color + specialty', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({
+        name: 'Urgencias',
+        color: '#EF4444',
+        specialty: 'medicina interna',
+      }).success,
+    ).toBe(true)
+  })
+
+  it('rejects specialty longer than 100 chars', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({ name: 'X', specialty: 'a'.repeat(101) }).success,
+    ).toBe(false)
+  })
+
+  it('rejects missing name', () => {
+    expect(CreateProtocolCategorySchema.safeParse({ specialty: 'cardiología' }).success).toBe(false)
+  })
+})
+
+describe('UpdateProtocolCategorySchema', () => {
+  it('accepts empty object (all optional)', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({}).success).toBe(true)
+  })
+
+  it('accepts specialty string', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({ specialty: 'pediatría' }).success).toBe(true)
+  })
+
+  it('accepts specialty null (clear the field)', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({ specialty: null }).success).toBe(true)
+  })
+
+  it('rejects specialty longer than 100 chars', () => {
+    expect(
+      UpdateProtocolCategorySchema.safeParse({ specialty: 'b'.repeat(101) }).success,
+    ).toBe(false)
+  })
+})
+
 describe('ProtocolTemplateDtoSchema embeds category', () => {
   it('parses categoryId + category', () => {
     const dto = {
@@ -43,7 +98,6 @@ describe('ProtocolTemplateDtoSchema embeds category', () => {
       tenantId: '44444444-4444-4444-4444-444444444444',
       name: 'T',
       description: null,
-      suggestedSpecialty: null,
       categoryId: '22222222-2222-2222-2222-222222222222',
       category: { id: '22222222-2222-2222-2222-222222222222', name: 'Emergencias', color: '#EF4444' },
       schema: { version: '1.0', blocks: [] },
@@ -61,7 +115,6 @@ describe('ProtocolTemplateDtoSchema embeds category', () => {
       tenantId: '44444444-4444-4444-4444-444444444444',
       name: 'T',
       description: null,
-      suggestedSpecialty: null,
       schema: { version: '1.0', blocks: [] },
       isSeeded: true,
       isLocked: false,

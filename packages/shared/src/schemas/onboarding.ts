@@ -4,7 +4,6 @@ import { ProtocolTemplateSchemaContent } from './protocol.js'
 export const OnboardingCustomTemplateSchema = z.object({
   clientId: z.string().min(1),
   name: z.string().min(1),
-  suggestedSpecialty: z.string().optional(),
   schema: ProtocolTemplateSchemaContent,
 })
 

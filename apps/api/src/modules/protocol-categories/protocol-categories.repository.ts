@@ -26,6 +26,7 @@ export class ProtocolCategoriesRepository {
         tenantId,
         name: dto.name,
         color: dto.color ?? '#6B7280',
+        ...(dto.specialty !== undefined && { specialty: dto.specialty }),
       },
     })
   }
@@ -36,6 +37,7 @@ export class ProtocolCategoriesRepository {
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.color !== undefined && { color: dto.color }),
+        ...(dto.specialty !== undefined && { specialty: dto.specialty }),
       },
     })
   }

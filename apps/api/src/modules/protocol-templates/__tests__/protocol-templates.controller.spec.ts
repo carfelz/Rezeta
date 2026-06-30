@@ -30,7 +30,6 @@ const templateDto = {
   tenantId: TENANT_ID,
   name: 'Intervención de emergencia',
   description: null,
-  suggestedSpecialty: null,
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
   isLocked: false,

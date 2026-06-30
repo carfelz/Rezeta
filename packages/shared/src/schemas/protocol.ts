@@ -298,14 +298,12 @@ export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
 export const CreateProtocolTemplateSchema = z.object({
   name: z.string().min(1).max(300),
   categoryId: z.string().uuid(),
-  suggestedSpecialty: z.string().max(200).optional(),
   schema: ProtocolTemplateSchemaContent,
 })
 
 export const UpdateProtocolTemplateSchema = z.object({
   name: z.string().min(1).max(300).optional(),
   categoryId: z.string().uuid().optional(),
-  suggestedSpecialty: z.string().max(200).nullable().optional(),
   schema: ProtocolTemplateSchemaContent.optional(),
 })
 
@@ -314,11 +312,13 @@ export const UpdateProtocolTemplateSchema = z.object({
 export const CreateProtocolCategorySchema = z.object({
   name: z.string().min(1).max(200),
   color: z.string().max(20).optional(),
+  specialty: z.string().max(100).optional(),
 })
 
 export const UpdateProtocolCategorySchema = z.object({
   name: z.string().min(1).max(200).optional(),
   color: z.string().max(20).optional(),
+  specialty: z.string().max(100).nullable().optional(),
 })
 
 // ─── Response Schemas ────────────────────────────────────────────────────────
@@ -328,7 +328,6 @@ export const ProtocolTemplateDtoSchema = z.object({
   tenantId: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable(),
-  suggestedSpecialty: z.string().nullable(),
   categoryId: z.string().uuid(),
   category: z.object({ id: z.string().uuid(), name: z.string(), color: z.string() }),
   schema: z.any(),

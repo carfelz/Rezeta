@@ -10,6 +10,7 @@ export interface ProtocolCategoryDto {
   tenantId: string
   name: string
   color: string
+  specialty: string | null
   isSeeded: boolean
   deletedAt: string | null
 }

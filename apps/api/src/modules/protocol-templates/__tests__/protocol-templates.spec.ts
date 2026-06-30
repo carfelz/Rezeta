@@ -17,7 +17,6 @@ const makeTemplateRow = (overrides = {}) => ({
   tenantId: TENANT_ID,
   name: 'Fetch Me',
   description: null,
-  suggestedSpecialty: null,
   categoryId: 'cat-1',
   category: { id: 'cat-1', name: 'Emergencias', color: '#EF4444' },
   schema: MINIMAL_SCHEMA,

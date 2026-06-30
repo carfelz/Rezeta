@@ -152,26 +152,5 @@ describe('OnboardingService', () => {
       )
     })
 
-    it('passes suggestedSpecialty when present in template', async () => {
-      const withSpecialty = {
-        templates: [{ clientId: 'c1', name: 'T', suggestedSpecialty: 'cardiology', schema: {} }],
-        types: [{ name: 'Ty', templateClientId: 'c1' }],
-      }
-      await service.seedCustom('fb1', withSpecialty)
-      const callArgs = mockSeeder.seedCustom.mock.calls[0] as [
-        string,
-        Array<{ suggestedSpecialty?: string }>,
-      ]
-      expect(callArgs[1][0]).toHaveProperty('suggestedSpecialty', 'cardiology')
-    })
-
-    it('omits suggestedSpecialty when not present in template', async () => {
-      await service.seedCustom('fb1', validInput)
-      const callArgs = mockSeeder.seedCustom.mock.calls[0] as [
-        string,
-        Array<Record<string, unknown>>,
-      ]
-      expect(callArgs[1][0]).not.toHaveProperty('suggestedSpecialty')
-    })
   })
 })

@@ -7,7 +7,6 @@ export interface SeedCustomTemplateInput {
   /** Client-generated ID used only to cross-reference types in this payload */
   clientId: string
   name: string
-  suggestedSpecialty?: string
   schema: object
 }
 
@@ -91,7 +90,6 @@ export class TenantSeedingService {
               tenantId,
               name: f.name,
               categoryId,
-              suggestedSpecialty: f.suggestedSpecialty,
               schema: f.schema,
               isSeeded: true,
             },
@@ -155,7 +153,6 @@ export class TenantSeedingService {
           data: {
             tenantId,
             name: t.name,
-            suggestedSpecialty: t.suggestedSpecialty ?? null,
             categoryId: defaultCategory.id,
             schema: t.schema,
             isSeeded: true,

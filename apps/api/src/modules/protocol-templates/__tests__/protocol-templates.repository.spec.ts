@@ -31,7 +31,6 @@ const makeTemplateRow = (overrides = {}) => ({
   tenantId: TENANT_ID,
   name: 'Intervención de emergencia',
   description: null,
-  suggestedSpecialty: null,
   categoryId: CATEGORY_ID,
   category: CATEGORY_ROW,
   schema: MINIMAL_SCHEMA,
@@ -153,28 +152,6 @@ describe('ProtocolTemplatesRepository', () => {
           include: { category: true },
         }),
       )
-    })
-
-    it('sets suggestedSpecialty from data', async () => {
-      mockPrisma.protocolTemplate.create.mockResolvedValue(makeTemplateRow())
-      await repo.create(
-        TENANT_ID,
-        { name: 'T', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA, suggestedSpecialty: 'cardiology' },
-        USER_ID,
-      )
-      const call = mockPrisma.protocolTemplate.create.mock.calls[0][0] as {
-        data: { suggestedSpecialty: string }
-      }
-      expect(call.data.suggestedSpecialty).toBe('cardiology')
-    })
-
-    it('defaults suggestedSpecialty to null when not provided', async () => {
-      mockPrisma.protocolTemplate.create.mockResolvedValue(makeTemplateRow())
-      await repo.create(TENANT_ID, { name: 'T', categoryId: CATEGORY_ID, schema: MINIMAL_SCHEMA }, USER_ID)
-      const call = mockPrisma.protocolTemplate.create.mock.calls[0][0] as {
-        data: { suggestedSpecialty: null }
-      }
-      expect(call.data.suggestedSpecialty).toBeNull()
     })
 
     it('returns created template row with category', async () => {

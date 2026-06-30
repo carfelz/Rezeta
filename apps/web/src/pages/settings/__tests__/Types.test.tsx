@@ -42,6 +42,7 @@ const customCategory: ProtocolCategoryDto = {
   tenantId: 'tenant-1',
   name: 'Consulta',
   color: '#112233',
+  specialty: null,
   isSeeded: false,
   deletedAt: null,
 }
@@ -82,13 +83,17 @@ describe('Types — edit category modal', () => {
     expect(colorInput.value).toBe('#112233')
   })
 
-  it('submits both name and color on save', async () => {
+  it('submits name, color, and specialty on save', async () => {
     openEditModal()
     const colorInput = document.querySelector('input[type="color"]') as HTMLInputElement
     fireEvent.change(colorInput, { target: { value: '#445566' } })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     await waitFor(() => {
-      expect(mocks.updateMutateAsync).toHaveBeenCalledWith({ name: 'Consulta', color: '#445566' })
+      expect(mocks.updateMutateAsync).toHaveBeenCalledWith({
+        name: 'Consulta',
+        color: '#445566',
+        specialty: null,
+      })
     })
   })
 
@@ -96,6 +101,86 @@ describe('Types — edit category modal', () => {
     openEditModal()
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     expect(mocks.updateMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('renders the specialty field with the correct label', () => {
+    openEditModal()
+    expect(screen.getByText('Especialidad sugerida')).toBeInTheDocument()
+  })
+
+  it('prefills specialty field with the category specialty value', () => {
+    mocks.useProtocolCategories.mockReturnValue({
+      data: [{ ...customCategory, specialty: 'cardiología' }],
+      isLoading: false,
+      isError: false,
+    })
+    mocks.updateMutateAsync.mockResolvedValue({ ...customCategory, specialty: 'cardiología' })
+    render(<Types />)
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    expect(screen.getByDisplayValue('cardiología')).toBeInTheDocument()
+  })
+
+  it('sends specialty in the update payload when changed', async () => {
+    openEditModal()
+    const specialtyInput = screen.getByPlaceholderText('Ej. cardiología, pediatría')
+    fireEvent.change(specialtyInput, { target: { value: 'neurología' } })
+    // also change color so that "nothing changed" guard doesn't fire
+    const colorInput = document.querySelector('input[type="color"]') as HTMLInputElement
+    fireEvent.change(colorInput, { target: { value: '#778899' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => {
+      expect(mocks.updateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ specialty: 'neurología' }),
+      )
+    })
+  })
+})
+
+describe('Types — create category modal', () => {
+  function openCreateModal() {
+    render(<Types />)
+    fireEvent.click(screen.getByRole('button', { name: /Nueva categoría/i }))
+  }
+
+  it('renders the specialty field in the create modal', () => {
+    openCreateModal()
+    expect(screen.getByText('Especialidad sugerida')).toBeInTheDocument()
+  })
+
+  it('sends specialty in create payload when filled in', async () => {
+    const createMutateAsync = vi.fn().mockResolvedValue({ ...customCategory, id: 'cat-new' })
+    mocks.useCreateProtocolCategory.mockReturnValue({
+      mutateAsync: createMutateAsync,
+      isPending: false,
+    })
+    openCreateModal()
+    const nameInput = screen.getByPlaceholderText('Ej. Emergencia, Procedimiento')
+    fireEvent.change(nameInput, { target: { value: 'Cardiología' } })
+    const specialtyInput = screen.getByPlaceholderText('Ej. cardiología, pediatría')
+    fireEvent.change(specialtyInput, { target: { value: 'cardiología' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear categoría' }))
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Cardiología', specialty: 'cardiología' }),
+      )
+    })
+  })
+
+  it('does not send specialty key when field is left empty', async () => {
+    const createMutateAsync = vi.fn().mockResolvedValue({ ...customCategory, id: 'cat-new' })
+    mocks.useCreateProtocolCategory.mockReturnValue({
+      mutateAsync: createMutateAsync,
+      isPending: false,
+    })
+    openCreateModal()
+    const nameInput = screen.getByPlaceholderText('Ej. Emergencia, Procedimiento')
+    fireEvent.change(nameInput, { target: { value: 'Urgencias' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear categoría' }))
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.not.objectContaining({ specialty: expect.anything() }),
+      )
+    })
   })
 })
 

@@ -82,9 +82,6 @@ export function Templates(): JSX.Element {
                   {templatesStrings.listCategory}
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
-                  Especialidad
-                </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
                 <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
@@ -112,9 +109,6 @@ export function Templates(): JSX.Element {
                       />
                       <span className="text-n-700">{t.category.name}</span>
                     </span>
-                  </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-500">
-                    {t.suggestedSpecialty ?? '—'}
                   </td>
                   <td className="text-[13px] px-4 py-3 border-b border-n-100">
                     {t.isSeeded ? (

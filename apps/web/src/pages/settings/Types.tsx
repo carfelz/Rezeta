@@ -31,13 +31,18 @@ function CreateCategoryModal({ onClose }: { onClose: () => void }) {
   const createMutation = useCreateProtocolCategory()
   const [name, setName] = useState('')
   const [color, setColor] = useState('#6B7280')
+  const [specialty, setSpecialty] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     try {
-      await createMutation.mutateAsync({ name, color })
+      await createMutation.mutateAsync({
+        name,
+        color,
+        ...(specialty.trim() !== '' && { specialty: specialty.trim() }),
+      })
       onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -80,6 +85,14 @@ function CreateCategoryModal({ onClose }: { onClose: () => void }) {
                 className="h-9 w-full rounded-sm border border-n-200 cursor-pointer"
               />
             </Field>
+            <Field label={typesStrings.createFieldSpecialty}>
+              <Input
+                type="text"
+                placeholder={typesStrings.createFieldSpecialtyPlaceholder}
+                value={specialty}
+                onChange={(e) => setSpecialty(e.target.value)}
+              />
+            </Field>
             {error && (
               <Callout
                 variant="danger"
@@ -119,18 +132,25 @@ function EditCategoryModal({
   const updateMutation = useUpdateProtocolCategory(category.id)
   const [name, setName] = useState(category.name)
   const [color, setColor] = useState(category.color)
+  const [specialty, setSpecialty] = useState(category.specialty ?? '')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmedName = name.trim()
-    if (trimmedName === category.name && color === category.color) {
+    const trimmedSpecialty = specialty.trim()
+    const normalizedSpecialty = trimmedSpecialty === '' ? null : trimmedSpecialty
+    if (
+      trimmedName === category.name &&
+      color === category.color &&
+      normalizedSpecialty === category.specialty
+    ) {
       onClose()
       return
     }
     setError(null)
     try {
-      await updateMutation.mutateAsync({ name: trimmedName, color })
+      await updateMutation.mutateAsync({ name: trimmedName, color, specialty: normalizedSpecialty })
       onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -163,6 +183,14 @@ function EditCategoryModal({
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 className="h-9 w-full rounded-sm border border-n-200 cursor-pointer"
+              />
+            </Field>
+            <Field label={typesStrings.editFieldSpecialty}>
+              <Input
+                type="text"
+                placeholder={typesStrings.editFieldSpecialtyPlaceholder}
+                value={specialty}
+                onChange={(e) => setSpecialty(e.target.value)}
               />
             </Field>
             {error && (
