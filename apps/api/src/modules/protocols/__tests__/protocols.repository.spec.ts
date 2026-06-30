@@ -19,6 +19,9 @@ const mockPrisma = {
     findMany: vi.fn(),
     findFirst: vi.fn(),
   },
+  protocolTemplate: {
+    findFirst: vi.fn(),
+  },
   $transaction: vi.fn((cb: (tx: typeof mockTx) => unknown) => cb(mockTx)),
 }
 
@@ -63,6 +66,36 @@ describe('ProtocolsRepository', () => {
     repo = new ProtocolsRepository(mockPrisma as never)
   })
 
+  // ── findTemplateForCreate ──────────────────────────────────────────────────
+
+  describe('findTemplateForCreate', () => {
+    it('returns template when found', async () => {
+      mockPrisma.protocolTemplate.findFirst.mockResolvedValue({
+        id: 'tmpl-1',
+        categoryId: 'cat-1',
+        schema: { version: '1.0', blocks: [] },
+      })
+      const result = await repo.findTemplateForCreate('tmpl-1', 't1')
+      expect(result?.id).toBe('tmpl-1')
+      expect(result?.categoryId).toBe('cat-1')
+    })
+
+    it('returns null when template not found', async () => {
+      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(null)
+      expect(await repo.findTemplateForCreate('bad', 't1')).toBeNull()
+    })
+
+    it('queries by id, tenantId, and deletedAt: null', async () => {
+      mockPrisma.protocolTemplate.findFirst.mockResolvedValue(null)
+      await repo.findTemplateForCreate('tmpl-1', 't1')
+      expect(mockPrisma.protocolTemplate.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'tmpl-1', tenantId: 't1', deletedAt: null }),
+        }),
+      )
+    })
+  })
+
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {
@@ -89,6 +122,29 @@ describe('ProtocolsRepository', () => {
       expect(mockTx.protocol.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ currentVersionId: version.id }),
+        }),
+      )
+    })
+
+    it('passes templateId to protocol.create when provided', async () => {
+      const protocol = makeProtocolRow()
+      const version = makeVersionRow()
+      mockTx.protocol.create.mockResolvedValue({ id: 'proto1' })
+      mockTx.protocolVersion.create.mockResolvedValue(version)
+      mockTx.protocol.update.mockResolvedValue(protocol)
+
+      await repo.create({
+        tenantId: 't1',
+        title: 'From Template',
+        createdBy: 'u1',
+        categoryId: 'cat1',
+        templateId: 'tmpl-1',
+        content: minimalContent,
+      })
+
+      expect(mockTx.protocol.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ templateId: 'tmpl-1' }),
         }),
       )
     })

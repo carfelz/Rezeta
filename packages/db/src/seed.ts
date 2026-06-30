@@ -111,168 +111,6 @@ const STARTER_TEMPLATES = [
     },
   },
   {
-    key: 'clinical-procedure',
-    name: 'Procedimiento Clínico',
-    description:
-      'Para procedimientos de rutina con un flujo definido (cirugías menores, infiltraciones, biopsias, etc.).',
-    suggestedSpecialty: 'general',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'general',
-        intended_use: 'Procedimientos clínicos de rutina con flujo definido',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indicaciones',
-          required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'Cuándo se realiza este procedimiento.' },
-          ],
-        },
-        {
-          id: 'sec_preparation',
-          type: 'section',
-          title: 'Preparación',
-          required: false,
-          description: 'Configuración pre-procedimiento',
-          placeholder_blocks: [
-            { type: 'checklist', placeholder: 'Materiales, equipos y preparación del paciente.' },
-            {
-              type: 'alert',
-              severity: 'info',
-              placeholder: 'Consentimiento, alergias y anticoagulación.',
-            },
-          ],
-        },
-        {
-          id: 'sec_steps',
-          type: 'section',
-          title: 'Pasos del Procedimiento',
-          required: true,
-          description: 'Técnica paso a paso',
-          placeholder_blocks: [
-            { type: 'steps', placeholder: 'Pasos numerados del procedimiento.' },
-          ],
-        },
-        {
-          id: 'sec_complications',
-          type: 'section',
-          title: 'Complicaciones Posibles',
-          required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'Eventos adversos esperados y raros.' },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Signos que requieren atención inmediata.',
-            },
-          ],
-        },
-        {
-          id: 'sec_post',
-          type: 'section',
-          title: 'Indicaciones Post-procedimiento',
-          required: true,
-          description: 'Cuidado después del procedimiento',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Instrucciones al paciente y cuidado de seguimiento.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    key: 'pharmacological-reference',
-    name: 'Referencia Farmacológica',
-    description:
-      'Para protocolos centrados en dosificación de medicamentos (insulina, antibióticos, dosis pediátricas, etc.).',
-    suggestedSpecialty: 'pharmacology',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'pharmacology',
-        intended_use: 'Referencias de dosificación de medicamentos',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indicaciones',
-          required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'Situaciones clínicas que aborda este régimen.' },
-          ],
-        },
-        {
-          id: 'sec_warnings',
-          type: 'section',
-          title: 'Advertencias y Contraindicaciones',
-          required: false,
-          placeholder_blocks: [
-            { type: 'alert', severity: 'danger', placeholder: 'Contraindicaciones absolutas.' },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Contraindicaciones relativas y precauciones.',
-            },
-          ],
-        },
-        {
-          id: 'sec_dosing',
-          type: 'section',
-          title: 'Dosificación',
-          required: true,
-          description: 'Régimen de medicamentos',
-          placeholder_blocks: [
-            {
-              id: 'blk_dose_table',
-              type: 'dosage_table',
-              required: true,
-              placeholder: 'Medicamentos, dosis, vías, frecuencias y notas.',
-            },
-            { type: 'text', placeholder: 'Ajustes de dosis para insuficiencia renal o hepática.' },
-          ],
-        },
-        {
-          id: 'sec_monitoring',
-          type: 'section',
-          title: 'Monitoreo',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Laboratorios, signos vitales o síntomas a vigilar y frecuencia.',
-            },
-          ],
-        },
-        {
-          id: 'sec_decision',
-          type: 'section',
-          title: 'Reglas de Ajuste de Dosis',
-          required: false,
-          placeholder_blocks: [
-            { type: 'decision', placeholder: 'Cuándo ajustar, suspender o escalar la dosis.' },
-          ],
-        },
-        {
-          id: 'sec_adverse',
-          type: 'section',
-          title: 'Efectos Adversos',
-          required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'Efectos adversos comunes y graves a notificar.' },
-          ],
-        },
-      ],
-    },
-  },
-  {
     key: 'diagnostic-algorithm',
     name: 'Algoritmo Diagnóstico',
     description:
@@ -348,98 +186,6 @@ const STARTER_TEMPLATES = [
             {
               type: 'text',
               placeholder: 'Diagnósticos alternativos más comunes y más peligrosos.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    key: 'physiotherapy-session',
-    name: 'Sesión de Fisioterapia',
-    description:
-      'Para protocolos de rehabilitación con evaluación, plan de tratamiento y reglas de progresión.',
-    suggestedSpecialty: 'physiotherapy',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'physiotherapy',
-        intended_use: 'Estructura de sesión de rehabilitación con reglas de progresión',
-      },
-      blocks: [
-        {
-          id: 'sec_goals',
-          type: 'section',
-          title: 'Objetivos del Tratamiento',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Metas a corto y largo plazo para esta fase de rehabilitación.',
-            },
-          ],
-        },
-        {
-          id: 'sec_assessment',
-          type: 'section',
-          title: 'Evaluación',
-          required: true,
-          description: 'Evaluación al inicio de cada sesión',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Dolor, ROM, fuerza, pruebas funcionales a realizar.',
-            },
-            {
-              type: 'text',
-              placeholder: 'Medidas de resultado a registrar a lo largo del tiempo.',
-            },
-          ],
-        },
-        {
-          id: 'sec_progression',
-          type: 'section',
-          title: 'Criterios de Progresión',
-          required: false,
-          description: 'Cuándo avanzar al paciente',
-          placeholder_blocks: [
-            { type: 'decision', placeholder: 'Criterios para progresar a la siguiente fase.' },
-          ],
-        },
-        {
-          id: 'sec_plan',
-          type: 'section',
-          title: 'Plan de Tratamiento',
-          required: true,
-          description: 'Intervenciones para esta fase',
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Ejercicios, técnicas o modalidades (con repeticiones/series/duración).',
-            },
-          ],
-        },
-        {
-          id: 'sec_home',
-          type: 'section',
-          title: 'Programa de Ejercicios en Casa',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Ejercicios que el paciente realiza en casa entre sesiones.',
-            },
-          ],
-        },
-        {
-          id: 'sec_precautions',
-          type: 'section',
-          title: 'Precauciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Movimientos, cargas o actividades a evitar en esta fase.',
             },
           ],
         },
@@ -887,22 +633,33 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
 }
 
 async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
-  // Delete existing seeded templates for idempotency
-  const existingTemplates = await prisma.protocolTemplate.findMany({
-    where: { tenantId, isSeeded: true, deletedAt: null },
+  // Delete existing seeded templates and categories for idempotency
+  await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
+  await prisma.protocolCategory.deleteMany({ where: { tenantId, isSeeded: true } })
+
+  // Seed the 2 default categories first so templates can link to them.
+  const emergenciasCategory = await prisma.protocolCategory.create({
+    data: { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
+  })
+  const diagnosticoCategory = await prisma.protocolCategory.create({
+    data: { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
   })
 
-  if (existingTemplates.length > 0) {
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
-  }
+  const categoryIdByName = new Map([
+    ['Emergencias', emergenciasCategory.id],
+    ['Diagnóstico', diagnosticoCategory.id],
+  ])
 
   for (const t of STARTER_TEMPLATES) {
+    const categoryName = t.key === 'emergency-intervention' ? 'Emergencias' : 'Diagnóstico'
+    const categoryId = categoryIdByName.get(categoryName)!
     await prisma.protocolTemplate.create({
       data: {
         tenantId,
         name: t.name,
         description: t.description,
         suggestedSpecialty: t.suggestedSpecialty,
+        categoryId,
         schema: t.schema,
         isSeeded: true,
         createdBy,
@@ -910,7 +667,7 @@ async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
     })
   }
 
-  console.log(`✓ Seeded ${STARTER_TEMPLATES.length} templates for tenant ${tenantId}`)
+  console.log(`✓ Seeded 2 templates and 2 categories for tenant ${tenantId}`)
 }
 
 async function main() {

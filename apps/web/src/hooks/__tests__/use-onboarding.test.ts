@@ -36,7 +36,7 @@ const mockStarters = [
   {
     clientId: 'c-1',
     name: 'Intervención de emergencia',
-    typeName: 'Emergencia',
+    categoryName: 'Emergencia',
     schema: {},
   },
 ]

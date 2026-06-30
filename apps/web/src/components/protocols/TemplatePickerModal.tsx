@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import type { ProtocolTemplateDto } from '@rezeta/shared'
 import {
   Modal,
   ModalContent,
@@ -13,23 +14,22 @@ import {
   SelectableCard,
   Stack,
 } from '@/components/ui'
-import { useProtocolCategories } from '@/hooks/protocol-categories/use-protocol-categories'
+import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
 import { blockEditorStrings } from './strings'
+
 interface TemplatePickerModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface CategoryCardProps {
-  id: string
-  name: string
-  color: string
+interface TemplateCardProps {
+  template: ProtocolTemplateDto
   selected: boolean
   onSelect: () => void
 }
 
-function CategoryCard({ name, color, selected, onSelect }: CategoryCardProps): JSX.Element {
+function TemplateCard({ template, selected, onSelect }: TemplateCardProps): JSX.Element {
   return (
     <SelectableCard
       density="large"
@@ -40,39 +40,37 @@ function CategoryCard({ name, color, selected, onSelect }: CategoryCardProps): J
       <div className="flex items-center gap-2">
         <span
           className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
-          style={{ backgroundColor: color }}
+          style={{ backgroundColor: template.category.color }}
         />
-        <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">{name}</span>
+        <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">
+          {template.name}
+        </span>
       </div>
+      <span className="block text-caption text-n-500 mt-1">{template.category.name}</span>
     </SelectableCard>
   )
 }
 
 export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProps): JSX.Element {
   const navigate = useNavigate()
-  const { data: categories, isLoading: categoriesLoading } = useProtocolCategories()
+  const { data: templates, isLoading: templatesLoading } = useProtocolTemplates()
   const { useCreateProtocol } = useProtocols()
   const { mutate: createProtocol, isPending } = useCreateProtocol()
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  const [scratchMode, setScratchMode] = useState(false)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [title, setTitle] = useState('')
 
-  const canSubmit = (!!selectedCategoryId || scratchMode) && title.trim().length >= 2 && !isPending
+  const canSubmit = !!selectedTemplateId && title.trim().length >= 2 && !isPending
 
   const handleClose = () => {
-    setSelectedCategoryId(null)
-    setScratchMode(false)
+    setSelectedTemplateId(null)
     setTitle('')
     onClose()
   }
 
   const handleCreate = () => {
-    if (!canSubmit) return
-    const dto = {
-      title: title.trim(),
-      ...(selectedCategoryId !== null && { categoryId: selectedCategoryId }),
-    }
+    if (!canSubmit || !selectedTemplateId) return
+    const dto = { templateId: selectedTemplateId, title: title.trim() }
     createProtocol(dto, {
       onSuccess: (data) => {
         handleClose()
@@ -81,21 +79,11 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
     })
   }
 
-  const handleSelectCategory = (id: string) => {
-    setSelectedCategoryId(id)
-    setScratchMode(false)
-  }
-
-  const handleSelectScratch = () => {
-    setScratchMode(true)
-    setSelectedCategoryId(null)
-  }
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && canSubmit) handleCreate()
   }
 
-  const hasNoCategories = !categoriesLoading && (!categories || categories.length === 0)
+  const hasNoTemplates = !templatesLoading && (!templates || templates.length === 0)
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -106,50 +94,35 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
         />
 
         <ModalBody>
-          {categoriesLoading ? (
+          {templatesLoading ? (
             <div className="flex justify-center py-8">
               <i className="ph ph-spinner animate-spin text-[24px] text-n-400" />
             </div>
-          ) : hasNoCategories ? (
+          ) : hasNoTemplates ? (
             <Stack gap={3} align="center" className="py-8 text-center">
               <i className="ph ph-stack text-[32px] text-n-300" />
               <Caption tone="neutral" size="lg" as="p">
-                {blockEditorStrings.typePickerNoTypes}
+                {blockEditorStrings.templatePickerEmpty}
               </Caption>
               <Link
-                to="/ajustes/tipos"
+                to="/ajustes/plantillas/new"
                 onClick={handleClose}
                 className="text-[13px] text-p-500 hover:text-p-700 transition-colors"
               >
-                {blockEditorStrings.typePickerNoTypesCta} →
+                {blockEditorStrings.templatePickerEmptyCta} →
               </Link>
             </Stack>
           ) : (
             <Stack gap={5}>
               <div className="grid grid-cols-2 gap-2">
-                {(categories ?? []).map((cat) => (
-                  <CategoryCard
-                    key={cat.id}
-                    id={cat.id}
-                    name={cat.name}
-                    color={cat.color}
-                    selected={selectedCategoryId === cat.id}
-                    onSelect={() => handleSelectCategory(cat.id)}
+                {(templates ?? []).map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    selected={selectedTemplateId === template.id}
+                    onSelect={() => setSelectedTemplateId(template.id)}
                   />
                 ))}
-                <SelectableCard
-                  density="large"
-                  state={scratchMode ? 'selected' : 'default'}
-                  onClick={handleSelectScratch}
-                  className="flex-col items-start"
-                >
-                  <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">
-                    {blockEditorStrings.typePickerScratch}
-                  </span>
-                  <Caption tone="muted" size="sm" as="span" className="block mt-1">
-                    {blockEditorStrings.typePickerScratchDescription}
-                  </Caption>
-                </SelectableCard>
               </div>
               <Field label={blockEditorStrings.typePickerNameLabel} required>
                 <Input
@@ -169,7 +142,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
           <Button variant="secondary" onClick={handleClose} disabled={isPending}>
             {blockEditorStrings.typePickerCancel}
           </Button>
-          {!hasNoCategories && (
+          {!hasNoTemplates && (
             <Button variant="primary" onClick={handleCreate} disabled={!canSubmit}>
               {isPending ? (
                 <>

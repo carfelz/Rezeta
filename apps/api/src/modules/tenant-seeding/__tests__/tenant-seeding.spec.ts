@@ -12,7 +12,10 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
-  protocolCategory: { createMany: vi.fn() },
+  protocolCategory: {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+  },
 }
 
 const mockPrisma = {
@@ -33,10 +36,13 @@ describe('TenantSeedingService — locale names', () => {
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )
-    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
+    mockTx.protocolCategory.create.mockImplementation(
+      ({ data }: { data: { name: string } }) =>
+        Promise.resolve({ id: `cat-${data.name}`, name: data.name }),
+    )
   })
 
-  it('seedDefault: Spanish locale creates 5 templates with expected Spanish names', async () => {
+  it('seedDefault: Spanish locale creates 2 templates with expected Spanish names', async () => {
     await service.seedDefault('t1', 'es')
 
     const names = mockTx.protocolTemplate.create.mock.calls.map(
@@ -44,13 +50,11 @@ describe('TenantSeedingService — locale names', () => {
     )
 
     expect(names).toContain('Intervención de emergencia')
-    expect(names).toContain('Procedimiento clínico')
-    expect(names).toContain('Referencia farmacológica')
     expect(names).toContain('Algoritmo diagnóstico')
-    expect(names).toContain('Sesión de fisioterapia')
+    expect(names).toHaveLength(2)
   })
 
-  it('seedDefault: English locale creates templates with expected English names', async () => {
+  it('seedDefault: English locale creates 2 templates with expected English names', async () => {
     await service.seedDefault('t1', 'en')
 
     const names = mockTx.protocolTemplate.create.mock.calls.map(
@@ -58,7 +62,8 @@ describe('TenantSeedingService — locale names', () => {
     )
 
     expect(names).toContain('Emergency Intervention')
-    expect(names).toContain('Clinical Procedure')
+    expect(names).toContain('Diagnostic Algorithm')
+    expect(names).toHaveLength(2)
   })
 
   it('seedDefault: sets isSeeded=true on all templates', async () => {

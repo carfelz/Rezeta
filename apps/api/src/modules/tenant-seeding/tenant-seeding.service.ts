@@ -17,21 +17,15 @@ export interface SeedCustomTypeInput {
   templateClientId: string
 }
 
-/** The 5 default protocol categories seeded for every new tenant, by locale. */
+/** The 2 default protocol categories seeded for every new tenant, by locale. */
 const SEEDED_CATEGORIES: Record<'es' | 'en', { name: string; color: string }[]> = {
   es: [
     { name: 'Emergencias', color: '#EF4444' },
     { name: 'Diagnóstico', color: '#3B82F6' },
-    { name: 'Medicación', color: '#22C55E' },
-    { name: 'Procedimiento', color: '#F59E0B' },
-    { name: 'Rehabilitación', color: '#A855F7' },
   ],
   en: [
     { name: 'Emergencies', color: '#EF4444' },
     { name: 'Diagnosis', color: '#3B82F6' },
-    { name: 'Medication', color: '#22C55E' },
-    { name: 'Procedure', color: '#F59E0B' },
-    { name: 'Rehabilitation', color: '#A855F7' },
   ],
 }
 
@@ -40,7 +34,7 @@ export class TenantSeedingService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   /**
-   * Seeds a tenant with the 5 starter templates and 5 default protocol categories.
+   * Seeds a tenant with 2 starter templates and 2 default protocol categories.
    * Throws ConflictException if the tenant has already been seeded.
    */
   async seedDefault(tenantId: string, locale: 'es' | 'en' = 'es'): Promise<void> {
@@ -74,33 +68,36 @@ export class TenantSeedingService {
         })
       }
 
-      // Insert 5 templates
-      const createdTemplates = await Promise.all(
-        fixtures.map((f) =>
-          tx.protocolTemplate.create({
+      // Seed protocol categories first so templates can link to them.
+      const categories = await Promise.all(
+        SEEDED_CATEGORIES[locale].map((c) =>
+          tx.protocolCategory.create({
+            data: { tenantId, name: c.name, color: c.color, isSeeded: true },
+          }),
+        ),
+      )
+      const categoryIdByName = new Map(categories.map((c) => [c.name, c.id]))
+
+      await Promise.all(
+        fixtures.map((f) => {
+          const categoryId = categoryIdByName.get(f.categoryName)
+          if (!categoryId) {
+            throw new Error(
+              `Seed fixture "${f.name}" references unknown category "${f.categoryName}"`,
+            )
+          }
+          return tx.protocolTemplate.create({
             data: {
               tenantId,
               name: f.name,
+              categoryId,
               suggestedSpecialty: f.suggestedSpecialty,
               schema: f.schema,
               isSeeded: true,
             },
-          }),
-        ),
+          })
+        }),
       )
-
-      void createdTemplates // template rows are not referenced further
-
-      // Seed the 5 default protocol categories (tags applied to protocols)
-      await tx.protocolCategory.createMany({
-        skipDuplicates: true,
-        data: SEEDED_CATEGORIES[locale].map((c) => ({
-          tenantId,
-          name: c.name,
-          color: c.color,
-          isSeeded: true,
-        })),
-      })
 
       await tx.tenant.update({
         where: { id: tenantId },
@@ -146,6 +143,11 @@ export class TenantSeedingService {
         })
       }
 
+      // Create a default category so every custom template has a valid categoryId.
+      const defaultCategory = await tx.protocolCategory.create({
+        data: { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
+      })
+
       // Insert templates and build clientId → server UUID map
       const clientIdToServerId = new Map<string, string>()
       for (const t of templates) {
@@ -154,6 +156,7 @@ export class TenantSeedingService {
             tenantId,
             name: t.name,
             suggestedSpecialty: t.suggestedSpecialty ?? null,
+            categoryId: defaultCategory.id,
             schema: t.schema,
             isSeeded: true,
           },

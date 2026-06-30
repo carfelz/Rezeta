@@ -58,22 +58,22 @@ describe('OnboardingService', () => {
   // ── getStarters ────────────────────────────────────────────────────────────
 
   describe('getStarters', () => {
-    it('returns 5 starter candidates for es locale', () => {
+    it('returns 2 starter candidates for es locale', () => {
       const starters = service.getStarters('es')
-      expect(starters).toHaveLength(5)
+      expect(starters).toHaveLength(2)
     })
 
-    it('returns 5 starter candidates for en locale', () => {
+    it('returns 2 starter candidates for en locale', () => {
       const starters = service.getStarters('en')
-      expect(starters).toHaveLength(5)
+      expect(starters).toHaveLength(2)
     })
 
-    it('each candidate has clientId, name, typeName, schema', () => {
+    it('each candidate has clientId, name, categoryName, schema', () => {
       const starters = service.getStarters()
       for (const s of starters) {
         expect(s).toHaveProperty('clientId')
         expect(s).toHaveProperty('name')
-        expect(s).toHaveProperty('typeName')
+        expect(s).toHaveProperty('categoryName')
         expect(s).toHaveProperty('schema')
       }
     })

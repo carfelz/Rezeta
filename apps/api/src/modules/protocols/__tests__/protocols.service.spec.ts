@@ -5,6 +5,7 @@ import { ProtocolsService } from '../protocols.service.js'
 const now = new Date('2026-01-01T00:00:00Z')
 
 const mockRepo = {
+  findTemplateForCreate: vi.fn(),
   create: vi.fn(),
   list: vi.fn(),
   setFavorite: vi.fn(),
@@ -48,7 +49,40 @@ describe('ProtocolsService', () => {
   // ── create ─────────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    it('creates protocol from category and returns formatted response', async () => {
+    it('throws PROTOCOL_TEMPLATE_NOT_FOUND when template is missing', async () => {
+      mockRepo.findTemplateForCreate.mockResolvedValue(null)
+      await expect(
+        service.create('t1', 'u1', { templateId: 'missing', title: 'New' } as never),
+      ).rejects.toMatchObject({ response: { code: 'PROTOCOL_TEMPLATE_NOT_FOUND' } })
+      expect(mockRepo.create).not.toHaveBeenCalled()
+    })
+
+    it('copies template blocks into content and inherits categoryId + templateId', async () => {
+      mockRepo.findTemplateForCreate.mockResolvedValue({
+        id: 'tmpl-1',
+        categoryId: 'cat-1',
+        schema: { version: '1.0', blocks: [{ id: 's', type: 'section', placeholder_blocks: [] }] },
+      })
+      mockRepo.create.mockResolvedValue({
+        protocol: {
+          id: 'p1',
+          title: 'New',
+          status: 'draft',
+          isFavorite: false,
+          createdAt: now,
+          updatedAt: now,
+          category: { id: 'cat-1', name: 'Emergencias' },
+        },
+        version: { id: 'v1', versionNumber: 1, content: {}, changeSummary: null, createdAt: now },
+      })
+      await service.create('t1', 'u1', { templateId: 'tmpl-1', title: 'New' } as never)
+      const arg = mockRepo.create.mock.calls[0][0] as Record<string, unknown>
+      expect(arg.templateId).toBe('tmpl-1')
+      expect(arg.categoryId).toBe('cat-1')
+      expect((arg.content as { blocks: unknown[] }).blocks).toHaveLength(1)
+    })
+
+    it('creates protocol from template and returns formatted response', async () => {
       const version = {
         id: 'ver1',
         versionNumber: 1,
@@ -56,31 +90,22 @@ describe('ProtocolsService', () => {
         changeSummary: null,
         createdAt: now,
       }
+      mockRepo.findTemplateForCreate.mockResolvedValue({
+        id: 'tmpl-1',
+        categoryId: 'cat1',
+        schema: { version: '1.0', blocks: [] },
+      })
       mockRepo.create.mockResolvedValue({
         protocol: { ...protocolRow, category: { id: 'cat1', name: 'Emergencia' } },
         version,
       })
-      const result = await service.create('t1', 'u1', { categoryId: 'cat1', title: 'Anaphylaxis' })
+      const result = await service.create('t1', 'u1', {
+        templateId: 'tmpl-1',
+        title: 'Anaphylaxis',
+      } as never)
       expect(result.id).toBe('proto1')
       expect(result.categoryName).toBe('Emergencia')
       expect(result.currentVersion?.versionNumber).toBe(1)
-    })
-
-    it('creates without categoryId (scratch mode)', async () => {
-      const version = {
-        id: 'ver1',
-        versionNumber: 1,
-        content: minimalContent,
-        changeSummary: null,
-        createdAt: now,
-      }
-      mockRepo.create.mockResolvedValue({
-        protocol: { ...protocolRow, categoryId: null, category: null },
-        version,
-      })
-      const result = await service.create('t1', 'u1', { title: 'Blank Protocol' })
-      expect(result.categoryId).toBeNull()
-      expect(result.categoryName).toBeNull()
     })
   })
 
@@ -439,26 +464,4 @@ describe('ProtocolsService', () => {
     })
   })
 
-  // ── create without categoryId (scratch mode) ─────────────────────────────
-
-  describe('create without categoryId', () => {
-    it('creates with empty content when categoryId is absent', async () => {
-      const version = {
-        id: 'ver1',
-        versionNumber: 1,
-        content: { version: '1.0', template_version: '1.0', blocks: [] },
-        changeSummary: null,
-        createdAt: now,
-      }
-      mockRepo.create.mockResolvedValue({
-        protocol: { ...protocolRow, categoryId: null, category: null },
-        version,
-      })
-      const result = await service.create('t1', 'u1', { title: 'Blank Protocol' })
-      expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Blank Protocol', tags: [] }),
-      )
-      expect(result.categoryId).toBeNull()
-    })
-  })
 })

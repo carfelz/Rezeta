@@ -11,7 +11,10 @@ const mockTx = {
     update: vi.fn(),
   },
   protocolTemplate: { create: vi.fn() },
-  protocolCategory: { createMany: vi.fn() },
+  protocolCategory: {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+  },
 }
 
 const mockPrisma = {
@@ -34,7 +37,10 @@ describe('TenantSeedingService (unit)', () => {
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>
       Promise.resolve({ id: `tmpl-${data.name}` }),
     )
-    mockTx.protocolCategory.createMany.mockResolvedValue({ count: 5 })
+    mockTx.protocolCategory.create.mockImplementation(
+      ({ data }: { data: { name: string } }) =>
+        Promise.resolve({ id: `cat-${data.name}`, name: data.name }),
+    )
   })
 
   // ── seedDefault ────────────────────────────────────────────────────────────
@@ -55,14 +61,22 @@ describe('TenantSeedingService (unit)', () => {
       await expect(service.seedDefault('t1')).rejects.toThrow(ConflictException)
     })
 
-    it('creates 5 templates for es locale (ProtocolType removed in schema reset v2)', async () => {
-      await service.seedDefault('t1', 'es')
-      expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(5)
+    it('throws Error when a fixture references a category not in the seeded set', async () => {
+      // Return a category with a name that does NOT match any fixture's categoryName
+      mockTx.protocolCategory.create.mockResolvedValue({ id: 'cat-unknown', name: 'Unknown' })
+      await expect(service.seedDefault('t1', 'es')).rejects.toThrow(
+        /references unknown category/,
+      )
     })
 
-    it('creates 5 templates for en locale', async () => {
+    it('creates 2 templates for es locale', async () => {
+      await service.seedDefault('t1', 'es')
+      expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(2)
+    })
+
+    it('creates 2 templates for en locale', async () => {
       await service.seedDefault('t1', 'en')
-      expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(5)
+      expect(mockTx.protocolTemplate.create).toHaveBeenCalledTimes(2)
     })
 
     it('sets isSeeded=true on all template rows', async () => {
@@ -72,14 +86,13 @@ describe('TenantSeedingService (unit)', () => {
       }
     })
 
-    it('seeds 5 protocol categories for es locale', async () => {
+    it('seeds 2 protocol categories for es locale', async () => {
       await service.seedDefault('t1', 'es')
-      expect(mockTx.protocolCategory.createMany).toHaveBeenCalledTimes(1)
-      const arg = mockTx.protocolCategory.createMany.mock.calls[0][0] as {
-        data: { name: string; color: string; isSeeded: boolean }[]
-      }
-      expect(arg.data).toHaveLength(5)
-      expect(arg.data).toEqual(
+      expect(mockTx.protocolCategory.create).toHaveBeenCalledTimes(2)
+      const categoryData = mockTx.protocolCategory.create.mock.calls.map(
+        (call) => (call[0] as { data: { name: string; color: string; isSeeded: boolean } }).data,
+      )
+      expect(categoryData).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: 'Emergencias', color: '#EF4444', isSeeded: true }),
           expect.objectContaining({ name: 'Diagnóstico', color: '#3B82F6', isSeeded: true }),
@@ -87,12 +100,27 @@ describe('TenantSeedingService (unit)', () => {
       )
     })
 
-    it('seeds English category names for en locale', async () => {
+    it('seeds 2 protocol categories for en locale', async () => {
       await service.seedDefault('t1', 'en')
-      const arg = mockTx.protocolCategory.createMany.mock.calls[0][0] as {
-        data: { name: string }[]
-      }
-      expect(arg.data.map((c) => c.name)).toContain('Emergencies')
+      expect(mockTx.protocolCategory.create).toHaveBeenCalledTimes(2)
+      const names = mockTx.protocolCategory.create.mock.calls.map(
+        (call) => (call[0] as { data: { name: string } }).data.name,
+      )
+      expect(names).toContain('Emergencies')
+      expect(names).toContain('Diagnosis')
+    })
+
+    it('each template is linked to its matching category', async () => {
+      await service.seedDefault('t1', 'es')
+      const templateCalls = mockTx.protocolTemplate.create.mock.calls.map(
+        (call) => (call[0] as { data: { name: string; categoryId: string } }).data,
+      )
+      // emergency template -> cat-Emergencias
+      const emergencyTemplate = templateCalls.find((d) => d.name === 'Intervención de emergencia')
+      expect(emergencyTemplate?.categoryId).toBe('cat-Emergencias')
+      // diagnostic template -> cat-Diagnóstico
+      const diagnosticTemplate = templateCalls.find((d) => d.name === 'Algoritmo diagnóstico')
+      expect(diagnosticTemplate?.categoryId).toBe('cat-Diagnóstico')
     })
 
     it('updates tenant.seededAt inside the transaction', async () => {
@@ -153,6 +181,23 @@ describe('TenantSeedingService (unit)', () => {
         mockTx.protocolTemplate.create.mock.calls[0] as [{ data: { isSeeded: boolean } }]
       )[0]
       expect(tmplCall.data.isSeeded).toBe(true)
+    })
+
+    it('creates a default Diagnóstico category for custom templates', async () => {
+      await service.seedCustom('t1', templates, types)
+      expect(mockTx.protocolCategory.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: 'Diagnóstico', color: '#3B82F6', isSeeded: true }),
+        }),
+      )
+    })
+
+    it('links custom templates to the seeded default category', async () => {
+      await service.seedCustom('t1', templates, types)
+      const tmplCall = (
+        mockTx.protocolTemplate.create.mock.calls[0] as [{ data: { categoryId: string } }]
+      )[0]
+      expect(tmplCall.data.categoryId).toBe('cat-Diagnóstico')
     })
 
     it('sets tenant.seededAt inside the transaction', async () => {

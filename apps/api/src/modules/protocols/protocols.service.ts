@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common'
 import { setAuditEntityName } from '../../common/audit-log/audit-context.store.js'
 import { ProtocolsRepository } from './protocols.repository.js'
+import { buildProtocolContentFromTemplate } from './template-to-content.js'
 import {
   type CreateProtocolDto,
   type UpdateProtocolTitleDto,
@@ -25,13 +26,22 @@ export class ProtocolsService {
     userId: string,
     dto: CreateProtocolDto,
   ): Promise<ProtocolResponse> {
-    const content: unknown = { version: '1.0', template_version: '1.0', blocks: [] }
+    const template = await this.repository.findTemplateForCreate(dto.templateId, tenantId)
+    if (!template) {
+      throw new NotFoundException({
+        code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND,
+        message: 'Template not found',
+      })
+    }
+
+    const content = buildProtocolContentFromTemplate(template.schema)
 
     const createResult = await this.repository.create({
       tenantId,
       title: dto.title.trim(),
       createdBy: userId,
-      ...(dto.categoryId ? { categoryId: dto.categoryId } : {}),
+      templateId: template.id,
+      categoryId: template.categoryId,
       tags: [],
       content,
     })

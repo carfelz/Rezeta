@@ -412,6 +412,7 @@ model ProtocolTemplate {
   name               String    @db.VarChar(300)
   description        String?   @db.Text
   suggestedSpecialty String?   @map("suggested_specialty") @db.VarChar(100)
+  categoryId         String    @map("category_id") @db.Uuid
   isSystem           Boolean   @default(false) @map("is_system") // true = global system template
   schema             Json
   isSeeded           Boolean   @default(false) @map("is_seeded")
@@ -420,11 +421,14 @@ model ProtocolTemplate {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   deletedAt          DateTime? @map("deleted_at")
 
-  tenant  Tenant @relation(fields: [tenantId], references: [id])
-  creator User?  @relation(fields: [createdBy], references: [id])
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  creator   User?            @relation(fields: [createdBy], references: [id])
+  category  ProtocolCategory @relation(fields: [categoryId], references: [id])
+  protocols Protocol[]
 
   @@index([tenantId])
   @@index([tenantId, deletedAt])
+  @@index([categoryId])
   @@map("protocol_templates")
 }
 
@@ -432,6 +436,7 @@ model Protocol {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
   categoryId       String?   @map("category_id") @db.Uuid
+  templateId       String?   @map("template_id") @db.Uuid
   title            String    @db.VarChar(300)
   description      String?   @db.Text
   specialty        String?   @db.VarChar(100)
@@ -448,6 +453,7 @@ model Protocol {
 
   tenant      Tenant               @relation(fields: [tenantId], references: [id])
   category    ProtocolCategory?    @relation(fields: [categoryId], references: [id])
+  template    ProtocolTemplate?    @relation(fields: [templateId], references: [id])
   creator     User                 @relation("ProtocolCreator", fields: [createdBy], references: [id])
   versions    ProtocolVersion[]
   usages      ProtocolUsage[]
@@ -545,8 +551,9 @@ model ProtocolCategory {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  tenant    Tenant             @relation(fields: [tenantId], references: [id])
   protocols Protocol[]
+  templates ProtocolTemplate[]
 
   // Uniqueness of (tenant_id, name) among *live* rows is enforced by a partial
   // unique index (WHERE deleted_at IS NULL) managed in raw SQL — PSL cannot express

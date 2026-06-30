@@ -40,6 +40,7 @@ export const templatesStrings = {
   listSeededBadge: 'Sistema',
   listLocked: 'Bloqueada',
   listBlockedBy: (count: number) => `Bloqueada por ${count} tipo${count === 1 ? '' : 's'}`,
+  listCategory: 'Categoría',
   listEdit: 'Editar',
   listDelete: 'Eliminar',
   listDeleteConfirm: (name: string) =>
@@ -62,6 +63,8 @@ export const templateEditorStrings = {
   fieldNamePlaceholder: 'Ej. Intervención de emergencia',
   fieldSpecialty: 'Especialidad sugerida',
   fieldSpecialtyPlaceholder: 'Ej. cardiología, pediatría',
+  fieldCategory: 'Categoría',
+  fieldCategoryPlaceholder: 'Selecciona una categoría',
   statusNew: 'Nueva',
   statusEdited: 'Editada',
   statusLocked: 'Bloqueada',
@@ -104,6 +107,10 @@ export const typesStrings = {
   listDeleteConfirm: (name: string) =>
     `¿Eliminar la categoría "${name}"? Esta acción no se puede deshacer.`,
   deleteSeeded: 'No se puede eliminar una categoría del sistema.',
+  deleteBlockedTitle: 'No se puede eliminar esta categoría',
+  deleteBlockedBody: (count: number) =>
+    `No puedes eliminar esta categoría: ${count} plantilla${count === 1 ? '' : 's'} la usan. Reasígnalas a otra categoría antes de eliminarla.`,
+  deleteBlockedClose: 'Entendido',
   createTitle: 'Nueva categoría',
   createFieldName: 'Nombre',
   createFieldNamePlaceholder: 'Ej. Emergencia, Procedimiento',

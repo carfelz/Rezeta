@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-30] — Template-driven protocol creation
+
+### Added
+
+- `ProtocolTemplate.category_id` (required) and `Protocol.template_id` (informational) with a data-preserving migration (add-nullable → backfill → NOT NULL).
+- `buildProtocolContentFromTemplate` transform that seeds a new protocol's content from its template's block structure.
+- Required category `<Select>` in the template editor; category pill column in the templates list.
+- Blocked category deletion (`CATEGORY_IN_USE_BY_TEMPLATES`) with an explanatory modal when templates reference the category.
+
+### Changed
+
+- Creating a protocol now requires choosing a template; the protocol inherits the template's category. `POST /v1/protocols` takes `{ templateId, title }` (was `{ categoryId?, title }`).
+- `TemplatePickerModal` now lists templates (name + category pill); the "Desde cero" blank-start path was removed.
+- Tenant seeding now creates 2 categories (Emergencias, Diagnóstico) and 2 category-linked templates (Intervención de emergencia, Algoritmo diagnóstico); onboarding starter candidates expose `categoryName` (was `typeName`).
+
 ## [2026-06-27] — test(web): cover DatePicker/TimePicker/calendar to clear CI threshold
 
 ### Added

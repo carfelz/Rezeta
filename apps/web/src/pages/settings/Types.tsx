@@ -9,6 +9,7 @@ import {
 } from '@/hooks/protocol-categories/use-protocol-categories'
 import { typesStrings } from './strings'
 import { logger } from '@/lib/logger'
+import { ApiRequestError } from '@/lib/api-client'
 import {
   Button,
   Badge,
@@ -200,6 +201,7 @@ export function Types(): JSX.Element {
   const [editing, setEditing] = useState<ProtocolCategoryDto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProtocolCategoryDto | null>(null)
+  const [blockedCount, setBlockedCount] = useState<number | null>(null)
 
   function handleDelete(c: ProtocolCategoryDto) {
     if (c.isSeeded) {
@@ -212,16 +214,47 @@ export function Types(): JSX.Element {
   function confirmDelete() {
     if (!deleteTarget) return
     setDeletingId(deleteTarget.id)
-    void deleteMutation.mutateAsync(deleteTarget.id).finally(() => {
-      setDeletingId(null)
-      setDeleteTarget(null)
-    })
+    void deleteMutation
+      .mutateAsync(deleteTarget.id)
+      .catch((err: unknown) => {
+        if (
+          err instanceof ApiRequestError &&
+          err.error.code === 'CATEGORY_IN_USE_BY_TEMPLATES'
+        ) {
+          const count = (err.error.details?.['count'] as number | undefined) ?? 0
+          setBlockedCount(count)
+        } else {
+          toast.error(typesStrings.error)
+          logger.error(err instanceof Error ? err.message : String(err), {
+            context: 'Types.delete',
+          })
+        }
+      })
+      .finally(() => {
+        setDeletingId(null)
+        setDeleteTarget(null)
+      })
   }
 
   return (
     <div>
       {showCreate && <CreateCategoryModal onClose={() => setShowCreate(false)} />}
       {editing && <EditCategoryModal category={editing} onClose={() => setEditing(null)} />}
+      {blockedCount !== null && (
+        <Modal open={true} onOpenChange={(open) => { if (!open) setBlockedCount(null) }}>
+          <ModalContent>
+            <ModalHeader title={typesStrings.deleteBlockedTitle} showClose={false} />
+            <ModalBody>
+              <p className="text-body text-n-700">{typesStrings.deleteBlockedBody(blockedCount)}</p>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="primary" onClick={() => setBlockedCount(null)}>
+                {typesStrings.deleteBlockedClose}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
       <ConfirmDialog
         open={!!deleteTarget}
         title={typesStrings.listDelete}

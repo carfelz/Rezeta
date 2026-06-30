@@ -264,7 +264,7 @@ export const ProtocolContentSchema = z.object({
 // ─── Request Schemas ─────────────────────────────────────────────────────────
 
 export const CreateProtocolSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  templateId: z.string().uuid(),
   title: z.string().min(2).max(300),
 })
 
@@ -297,12 +297,14 @@ export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
 
 export const CreateProtocolTemplateSchema = z.object({
   name: z.string().min(1).max(300),
+  categoryId: z.string().uuid(),
   suggestedSpecialty: z.string().max(200).optional(),
   schema: ProtocolTemplateSchemaContent,
 })
 
 export const UpdateProtocolTemplateSchema = z.object({
   name: z.string().min(1).max(300).optional(),
+  categoryId: z.string().uuid().optional(),
   suggestedSpecialty: z.string().max(200).nullable().optional(),
   schema: ProtocolTemplateSchemaContent.optional(),
 })
@@ -327,6 +329,8 @@ export const ProtocolTemplateDtoSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   suggestedSpecialty: z.string().nullable(),
+  categoryId: z.string().uuid(),
+  category: z.object({ id: z.string().uuid(), name: z.string(), color: z.string() }),
   schema: z.any(),
   isSeeded: z.boolean(),
   isLocked: z.boolean(),

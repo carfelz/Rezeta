@@ -9,7 +9,7 @@ import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
 export interface StarterCandidate {
   clientId: string
   name: string
-  typeName: string
+  categoryName: string
   schema: object
 }
 

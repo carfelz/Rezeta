@@ -98,26 +98,14 @@ export const blockEditorStrings = {
 
   // ── Type picker modal (TemplatePickerModal) ───────────────────────────────
   typePickerTitle: 'Nuevo protocolo',
-  typePickerSubtitle: '¿Qué tipo de protocolo vas a crear?',
+  typePickerSubtitle: 'Elige una plantilla para empezar',
   typePickerNameLabel: 'Nombre del protocolo',
   typePickerNamePlaceholder: 'Ej. Manejo de anafilaxia',
   typePickerSubmit: 'Crear protocolo',
   typePickerCancel: 'Cancelar',
   typePickerCreating: 'Creando...',
-  typePickerNoTypes: 'No tienes tipos de protocolo activos.',
-  typePickerNoTypesCta: 'Ir a Ajustes → Tipos',
-  typePickerScratch: 'Desde cero',
-  typePickerScratchDescription: 'Sin plantilla — empieza con un protocolo en blanco.',
-} as const
-
-export const createProtocolDialogStrings = {
-  title: 'Crear nuevo protocolo',
-  subtypePrefix: 'Tipo:',
-  nameLabel: 'Nombre del protocolo',
-  namePlaceholder: 'Ej. Mi Protocolo de Anafilaxia',
-  cancelButton: 'Cancelar',
-  creatingButton: 'Creando...',
-  createButton: 'Crear protocolo',
+  templatePickerEmpty: 'Aún no tienes plantillas. Crea una primero.',
+  templatePickerEmptyCta: 'Crear plantilla',
 } as const
 
 export const blockRendererRunModeStrings = {

@@ -46,4 +46,10 @@ export class ProtocolCategoriesRepository {
       data: { deletedAt: new Date() },
     })
   }
+
+  countTemplates(categoryId: string, tenantId: string): Promise<number> {
+    return this.prisma.protocolTemplate.count({
+      where: { categoryId, tenantId, deletedAt: null },
+    })
+  }
 }
