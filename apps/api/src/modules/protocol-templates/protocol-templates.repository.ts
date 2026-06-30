@@ -1,5 +1,6 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import type { ProtocolTemplate } from '@rezeta/db'
+import { ErrorCode } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
 @Injectable()
@@ -37,7 +38,10 @@ export class ProtocolTemplatesRepository {
         select: { id: true },
       })
       if (!fallback) {
-        throw new BadRequestException({ code: 'CATEGORY_REQUIRED' })
+        throw new BadRequestException({
+          code: ErrorCode.PROTOCOL_TEMPLATE_CATEGORY_REQUIRED,
+          message: 'No protocol category exists for this tenant',
+        })
       }
       categoryId = fallback.id
     }

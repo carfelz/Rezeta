@@ -408,12 +408,12 @@ model InvoiceItem {
 model ProtocolTemplate {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId           String    @map("tenant_id") @db.Uuid
-  templateKey        String?   @map("template_key") @db.VarChar(100)
+  templateKey        String?   @map("template_key") @db.VarChar(100) // unique slug for system templates
   name               String    @db.VarChar(300)
   description        String?   @db.Text
   suggestedSpecialty String?   @map("suggested_specialty") @db.VarChar(100)
   categoryId         String    @map("category_id") @db.Uuid
-  isSystem           Boolean   @default(false) @map("is_system")
+  isSystem           Boolean   @default(false) @map("is_system") // true = global system template
   schema             Json
   isSeeded           Boolean   @default(false) @map("is_seeded")
   createdBy          String?   @map("created_by") @db.Uuid
