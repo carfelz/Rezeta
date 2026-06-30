@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-30] — fix: enum error code + dead string + explicit category control (slice 3 review)
+
+### Fixed
+
+- **`apps/api/src/modules/protocol-templates/protocol-templates.service.ts`**: All three `TEMPLATE_NOT_FOUND` ad-hoc strings replaced with `ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND` (with message). Applies to `findById`, `update`, and `delete`.
+- **`apps/api/src/modules/protocol-templates/__tests__/protocol-templates.spec.ts`**: `findById` cross-tenant test updated to assert `ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND` instead of the old bare string.
+- **`apps/web/src/pages/settings/strings.ts`**: Removed dead `fieldCategoryRequired` key — it was defined but never referenced.
+- **`apps/web/src/pages/settings/TemplateEditor.tsx`**: Replaced the `''`-as-sentinel `resolvedCategoryId` derivation with a `useEffect` prefill that sets `categoryId` from `template.categoryId` when the template first loads. `NativeSelect`, `isSaveDisabled`, and the mutation payload all use `categoryId` directly.
+- **`apps/web/src/pages/settings/Templates.tsx`**: Category cell `<td>` now uses design token `text-body-sm` instead of the raw `text-[13px]` class.
+
+---
+
 ## [2026-06-30] — feat: template requires a category end-to-end (slice 3)
 
 ### Added
