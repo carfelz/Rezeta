@@ -36,7 +36,7 @@ export class ProtocolTemplatesService {
 
   async findById(id: string, tenantId: string): Promise<ProtocolTemplateDto> {
     const t = await this.repo.findById(id, tenantId)
-    if (!t) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (!t) throw new NotFoundException({ code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND, message: 'Template not found' })
     return this.toDto(t)
   }
 
@@ -62,7 +62,7 @@ export class ProtocolTemplatesService {
     dto: UpdateProtocolTemplateDto,
   ): Promise<ProtocolTemplateDto> {
     const existing = await this.repo.findById(id, tenantId)
-    if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (!existing) throw new NotFoundException({ code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND, message: 'Template not found' })
     if (dto.categoryId !== undefined) {
       const category = await this.repo.findCategory(dto.categoryId, tenantId)
       if (!category) {
@@ -78,7 +78,7 @@ export class ProtocolTemplatesService {
 
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
-    if (!existing) throw new NotFoundException({ code: 'TEMPLATE_NOT_FOUND' })
+    if (!existing) throw new NotFoundException({ code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND, message: 'Template not found' })
     if (existing.isSeeded) {
       throw new BadRequestException({
         code: ErrorCode.PROTOCOL_TEMPLATE_SEEDED_IMMUTABLE,

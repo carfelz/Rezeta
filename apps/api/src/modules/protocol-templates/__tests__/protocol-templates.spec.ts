@@ -97,7 +97,7 @@ describe('ProtocolTemplatesService', () => {
         NotFoundException,
       )
       await expect(service.findById(TEMPLATE_ID, OTHER_TENANT_ID)).rejects.toMatchObject({
-        response: { code: 'TEMPLATE_NOT_FOUND' },
+        response: { code: ErrorCode.PROTOCOL_TEMPLATE_NOT_FOUND },
       })
     })
   })

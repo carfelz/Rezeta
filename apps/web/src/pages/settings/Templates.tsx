@@ -104,7 +104,7 @@ export function Templates(): JSX.Element {
                       </span>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-body-sm px-4 py-3 border-b border-n-100">
                     <span className="inline-flex items-center gap-1.5">
                       <span
                         className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"

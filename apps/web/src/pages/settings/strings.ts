@@ -65,7 +65,6 @@ export const templateEditorStrings = {
   fieldSpecialtyPlaceholder: 'Ej. cardiología, pediatría',
   fieldCategory: 'Categoría',
   fieldCategoryPlaceholder: 'Selecciona una categoría',
-  fieldCategoryRequired: 'La categoría es obligatoria.',
   statusNew: 'Nueva',
   statusEdited: 'Editada',
   statusLocked: 'Bloqueada',

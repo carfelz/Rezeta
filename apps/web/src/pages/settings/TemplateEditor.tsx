@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   useProtocolTemplate,
@@ -92,10 +92,10 @@ export function TemplateEditor(): JSX.Element {
   const { data: categories } = useProtocolCategories()
   const [categoryId, setCategoryId] = useState<string>('')
 
-  // Prefill categoryId once template loads
-  const resolvedCategoryId = template?.categoryId !== undefined && categoryId === ''
-    ? template.categoryId
-    : categoryId
+  // Prefill categoryId once template loads; does not clobber a user's later edit
+  useEffect(() => {
+    if (template) setCategoryId(template.categoryId)
+  }, [template])
 
   if (isLoading) {
     return (
@@ -120,7 +120,7 @@ export function TemplateEditor(): JSX.Element {
   async function handleSave(name: string, suggestedSpecialty: string, schema: TemplateSchema) {
     await updateMutation.mutateAsync({
       name,
-      categoryId: resolvedCategoryId || undefined,
+      categoryId,
       suggestedSpecialty: suggestedSpecialty || null,
       schema,
     })
@@ -138,7 +138,7 @@ export function TemplateEditor(): JSX.Element {
       <div className="mb-4 max-w-xs">
         <Field label={templateEditorStrings.fieldCategory} required>
           <NativeSelect
-            value={resolvedCategoryId}
+            value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             aria-label={templateEditorStrings.fieldCategory}
           >
@@ -157,7 +157,7 @@ export function TemplateEditor(): JSX.Element {
         isLocked={false}
         blockingTypeIds={[]}
         isSaving={updateMutation.isPending}
-        isSaveDisabled={!resolvedCategoryId}
+        isSaveDisabled={!categoryId}
         onSave={(name, specialty, schema) => {
           void handleSave(name, specialty, schema)
         }}
