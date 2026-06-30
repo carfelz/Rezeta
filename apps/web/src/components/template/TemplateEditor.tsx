@@ -33,10 +33,19 @@ import {
   Checkbox,
   Field,
   Input,
+  NativeSelect,
   Textarea,
   AddBlockButton,
   ConfirmDialog,
 } from '@/components/ui'
+
+// ─── Category option (subset of ProtocolCategoryDto needed by the editor) ──────
+
+export interface CategoryOption {
+  id: string
+  name: string
+  color: string
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,7 +72,6 @@ export interface TemplateBlock {
 
 export interface TemplateEditorState {
   name: string
-  suggestedSpecialty: string
   blocks: TemplateBlock[]
   expandedBlockId: string | null
   isDirty: boolean
@@ -73,9 +81,7 @@ export interface TemplateEditorState {
 
 export interface TemplateSchema {
   version: string
-  metadata?:
-    | { suggested_specialty?: string | undefined; intended_use?: string | undefined }
-    | undefined
+  metadata?: { intended_use?: string | undefined } | undefined
   blocks: unknown[]
 }
 
@@ -97,9 +103,6 @@ function blockToSchema(b: TemplateBlock): unknown {
 export function buildSchema(state: TemplateEditorState): TemplateSchema {
   return {
     version: '1.0',
-    ...(state.suggestedSpecialty
-      ? { metadata: { suggested_specialty: state.suggestedSpecialty } }
-      : {}),
     blocks: state.blocks.map(blockToSchema),
   }
 }
@@ -152,7 +155,6 @@ export function stateFromTemplate(template: ProtocolTemplateDto): TemplateEditor
   const schema = template.schema as { blocks?: unknown[] } | null
   return {
     name: template.name,
-    suggestedSpecialty: template.suggestedSpecialty ?? '',
     blocks: parseBlocks(schema?.blocks ?? []),
     expandedBlockId: null,
     isDirty: false,
@@ -172,7 +174,6 @@ export function genId(prefix: string): string {
 
 type Action =
   | { type: 'SET_NAME'; value: string }
-  | { type: 'SET_SPECIALTY'; value: string }
   | { type: 'TOGGLE_EXPAND'; id: string }
   | {
       type: 'UPDATE_BLOCK'
@@ -286,8 +287,6 @@ function reducer(state: TemplateEditorState, action: Action): TemplateEditorStat
   switch (action.type) {
     case 'SET_NAME':
       return { ...state, name: action.value, isDirty: true }
-    case 'SET_SPECIALTY':
-      return { ...state, suggestedSpecialty: action.value, isDirty: true }
     case 'TOGGLE_EXPAND':
       return { ...state, expandedBlockId: state.expandedBlockId === action.id ? null : action.id }
     case 'UPDATE_BLOCK':
@@ -767,7 +766,10 @@ interface TemplateEditorProps {
   blockingTypeIds?: string[] | undefined
   isSaving: boolean
   isSaveDisabled?: boolean
-  onSave: (name: string, suggestedSpecialty: string, schema: TemplateSchema) => void
+  categories: CategoryOption[]
+  categoryId: string
+  onCategoryChange: (categoryId: string) => void
+  onSave: (name: string, schema: TemplateSchema) => void
   onCancel: () => void
 }
 
@@ -777,11 +779,15 @@ export function TemplateEditor({
   blockingTypeIds = [],
   isSaving,
   isSaveDisabled = false,
+  categories,
+  categoryId,
+  onCategoryChange,
   onSave,
   onCancel,
 }: TemplateEditorProps): JSX.Element {
   const [state, dispatch] = useReducer(reducer, initialState)
   const nameRef = useRef<HTMLInputElement>(null)
+  const selectedCategory = categories.find((c) => c.id === categoryId)
 
   useEffect(() => {
     if (!initialState.name && nameRef.current) nameRef.current.focus()
@@ -796,7 +802,7 @@ export function TemplateEditor({
   }, [state.isDirty])
 
   const handleSave = useCallback(() => {
-    onSave(state.name, state.suggestedSpecialty, buildSchema(state))
+    onSave(state.name, buildSchema(state))
     dispatch({ type: 'MARK_CLEAN' })
   }, [state, onSave])
 
@@ -844,6 +850,18 @@ export function TemplateEditor({
         {state.isDirty && !isLocked && (
           <span className="text-[12px] text-n-500">{templateEditorWidgetStrings.unsaved}</span>
         )}
+        {selectedCategory && (
+          <Badge
+            showDot={false}
+            style={{
+              backgroundColor: selectedCategory.color,
+              borderColor: selectedCategory.color,
+              color: 'var(--color-n-0)',
+            }}
+          >
+            {selectedCategory.name}
+          </Badge>
+        )}
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={onCancel}>
             {templateEditorWidgetStrings.cancel}
@@ -888,7 +906,7 @@ export function TemplateEditor({
         </div>
       )}
 
-      {/* Name + Specialty */}
+      {/* Name + Category */}
       <div className="flex flex-col gap-4 mb-6">
         <Field label={templateEditorWidgetStrings.fieldName} required>
           <Input
@@ -899,13 +917,20 @@ export function TemplateEditor({
             placeholder={templateEditorWidgetStrings.fieldNamePlaceholder}
           />
         </Field>
-        <Field label={templateEditorWidgetStrings.fieldSpecialty}>
-          <Input
-            value={state.suggestedSpecialty}
+        <Field label={templateEditorWidgetStrings.fieldCategory} required>
+          <NativeSelect
+            value={categoryId}
             disabled={isLocked}
-            onChange={(e) => dispatch({ type: 'SET_SPECIALTY', value: e.target.value })}
-            placeholder={templateEditorWidgetStrings.fieldSpecialtyPlaceholder}
-          />
+            onChange={(e) => onCategoryChange(e.target.value)}
+            aria-label={templateEditorWidgetStrings.fieldCategory}
+          >
+            <option value="">{templateEditorWidgetStrings.fieldCategoryPlaceholder}</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
       </div>
 

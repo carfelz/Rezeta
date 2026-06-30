@@ -12,7 +12,6 @@ const STARTER_TEMPLATES = [
     key: 'emergency-intervention',
     name: 'Intervención de Emergencia',
     description: 'Para intervenciones agudas y urgentes (anafilaxia, ACV, paro cardíaco, etc.).',
-    suggestedSpecialty: 'emergency_medicine',
     schema: {
       version: '1.0',
       metadata: {
@@ -115,7 +114,6 @@ const STARTER_TEMPLATES = [
     name: 'Algoritmo Diagnóstico',
     description:
       'Para rutas de decisión diagnóstica (dolor torácico, síncope, fiebre pediátrica, etc.).',
-    suggestedSpecialty: 'general',
     schema: {
       version: '1.0',
       metadata: { suggested_specialty: 'general', intended_use: 'Rutas de decisión diagnóstica' },
@@ -658,7 +656,6 @@ async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
         tenantId,
         name: t.name,
         description: t.description,
-        suggestedSpecialty: t.suggestedSpecialty,
         categoryId,
         schema: t.schema,
         isSeeded: true,

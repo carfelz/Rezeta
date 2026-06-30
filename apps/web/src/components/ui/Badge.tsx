@@ -25,11 +25,23 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
   children: React.ReactNode
   showDot?: boolean
   className?: string
+  /**
+   * Inline style override for data-driven colors that have no semantic variant —
+   * e.g. a protocol category's user-chosen color. The dot inherits `currentColor`,
+   * so set `color` to tint both text and dot.
+   */
+  style?: React.CSSProperties
 }
 
-export function Badge({ variant, children, showDot = true, className }: BadgeProps): JSX.Element {
+export function Badge({
+  variant,
+  children,
+  showDot = true,
+  className,
+  style,
+}: BadgeProps): JSX.Element {
   return (
-    <span className={cn(badgeVariants({ variant }), className)}>
+    <span className={cn(badgeVariants({ variant }), className)} style={style}>
       {showDot && (
         <span
           className="inline-block w-[6px] h-[6px] rounded-full shrink-0"

@@ -63,7 +63,6 @@ export class OnboardingService {
       input.templates.map((t) => ({
         clientId: t.clientId,
         name: t.name,
-        ...(t.suggestedSpecialty !== undefined ? { suggestedSpecialty: t.suggestedSpecialty } : {}),
         schema: t.schema,
       })),
       input.types,

@@ -206,28 +206,5 @@ describe('TenantSeedingService (unit)', () => {
         expect.objectContaining({ where: { id: 't1' } }),
       )
     })
-
-    it('passes suggestedSpecialty when provided', async () => {
-      const withSpecialty = [
-        { clientId: 'c1', name: 'T', suggestedSpecialty: 'cardiology', schema: {} },
-      ]
-      await service.seedCustom('t1', withSpecialty, types)
-      const call = (
-        mockTx.protocolTemplate.create.mock.calls[0] as [
-          { data: { suggestedSpecialty: string | null } },
-        ]
-      )[0]
-      expect(call.data.suggestedSpecialty).toBe('cardiology')
-    })
-
-    it('sets suggestedSpecialty to null when not provided', async () => {
-      await service.seedCustom('t1', templates, types)
-      const call = (
-        mockTx.protocolTemplate.create.mock.calls[0] as [
-          { data: { suggestedSpecialty: string | null } },
-        ]
-      )[0]
-      expect(call.data.suggestedSpecialty).toBeNull()
-    })
   })
 })

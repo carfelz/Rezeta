@@ -12,7 +12,7 @@ import {
   type TemplateSchema,
 } from '@/components/template/TemplateEditor'
 import { templatesStrings, templateEditorStrings } from './strings'
-import { Button, Callout, NativeSelect, Field } from '@/components/ui'
+import { Button, Callout } from '@/components/ui'
 import { toast } from 'sonner'
 
 // ─── New template wrapper ─────────────────────────────────────────────────────
@@ -26,7 +26,6 @@ export function TemplateEditorNew(): JSX.Element {
   const initialState = useMemo(
     () => ({
       name: '',
-      suggestedSpecialty: '',
       blocks: [],
       expandedBlockId: null,
       isDirty: false,
@@ -34,13 +33,8 @@ export function TemplateEditorNew(): JSX.Element {
     [],
   )
 
-  async function handleSave(name: string, suggestedSpecialty: string, schema: TemplateSchema) {
-    const created = await createMutation.mutateAsync({
-      name,
-      categoryId,
-      suggestedSpecialty: suggestedSpecialty || undefined,
-      schema,
-    })
+  async function handleSave(name: string, schema: TemplateSchema) {
+    const created = await createMutation.mutateAsync({ name, categoryId, schema })
     void navigate(`/ajustes/plantillas/${created.id}/edit`, { replace: true })
   }
 
@@ -52,29 +46,16 @@ export function TemplateEditorNew(): JSX.Element {
           {templatesStrings.pageTitle}
         </Button>
       </nav>
-      <div className="mb-4 max-w-xs">
-        <Field label={templateEditorStrings.fieldCategory} required>
-          <NativeSelect
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            aria-label={templateEditorStrings.fieldCategory}
-          >
-            <option value="">{templateEditorStrings.fieldCategoryPlaceholder}</option>
-            {categories?.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-      </div>
       <TemplateEditorWidget
         initialState={initialState}
         isLocked={false}
         isSaving={createMutation.isPending}
         isSaveDisabled={!categoryId}
-        onSave={(name, specialty, schema) => {
-          void handleSave(name, specialty, schema)
+        categories={categories ?? []}
+        categoryId={categoryId}
+        onCategoryChange={setCategoryId}
+        onSave={(name, schema) => {
+          void handleSave(name, schema)
         }}
         onCancel={() => void navigate('/ajustes/plantillas')}
       />
@@ -117,13 +98,8 @@ export function TemplateEditor(): JSX.Element {
 
   const initialState = stateFromTemplate(template)
 
-  async function handleSave(name: string, suggestedSpecialty: string, schema: TemplateSchema) {
-    await updateMutation.mutateAsync({
-      name,
-      categoryId,
-      suggestedSpecialty: suggestedSpecialty || null,
-      schema,
-    })
+  async function handleSave(name: string, schema: TemplateSchema) {
+    await updateMutation.mutateAsync({ name, categoryId, schema })
     toast.success(templateEditorStrings.saved)
   }
 
@@ -135,22 +111,6 @@ export function TemplateEditor(): JSX.Element {
           {templatesStrings.pageTitle}
         </Button>
       </nav>
-      <div className="mb-4 max-w-xs">
-        <Field label={templateEditorStrings.fieldCategory} required>
-          <NativeSelect
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            aria-label={templateEditorStrings.fieldCategory}
-          >
-            <option value="">{templateEditorStrings.fieldCategoryPlaceholder}</option>
-            {categories?.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-      </div>
       <TemplateEditorWidget
         key={template.id}
         initialState={initialState}
@@ -158,8 +118,11 @@ export function TemplateEditor(): JSX.Element {
         blockingTypeIds={[]}
         isSaving={updateMutation.isPending}
         isSaveDisabled={!categoryId}
-        onSave={(name, specialty, schema) => {
-          void handleSave(name, specialty, schema)
+        categories={categories ?? []}
+        categoryId={categoryId}
+        onCategoryChange={setCategoryId}
+        onSave={(name, schema) => {
+          void handleSave(name, schema)
         }}
         onCancel={() => void navigate('/ajustes/plantillas')}
       />

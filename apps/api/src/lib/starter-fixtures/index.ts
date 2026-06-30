@@ -2,7 +2,6 @@ export interface TemplateFixture {
   /** Internal key for cross-referencing in the seeder */
   key: string
   name: string
-  suggestedSpecialty: string
   intendedUse: string
   schema: object
   /** Name of the seeded category this template belongs to */
@@ -16,7 +15,6 @@ const esFixtures: TemplateFixture[] = [
   {
     key: 'emergency',
     name: 'Intervención de emergencia',
-    suggestedSpecialty: 'emergency_medicine',
     intendedUse: 'Intervenciones agudas con tiempo crítico',
     categoryName: 'Emergencias',
     schema: {
@@ -135,7 +133,6 @@ const esFixtures: TemplateFixture[] = [
   {
     key: 'diagnostic',
     name: 'Algoritmo diagnóstico',
-    suggestedSpecialty: 'general',
     intendedUse: 'Vías de decisión diagnóstica',
     categoryName: 'Diagnóstico',
     schema: {
@@ -232,7 +229,6 @@ const enFixtures: TemplateFixture[] = [
   {
     key: 'emergency',
     name: 'Emergency Intervention',
-    suggestedSpecialty: 'emergency_medicine',
     intendedUse: 'Time-sensitive acute interventions',
     categoryName: 'Emergencies',
     schema: {
@@ -351,7 +347,6 @@ const enFixtures: TemplateFixture[] = [
   {
     key: 'diagnostic',
     name: 'Diagnostic Algorithm',
-    suggestedSpecialty: 'general',
     intendedUse: 'Diagnostic decision pathways',
     categoryName: 'Diagnosis',
     schema: {

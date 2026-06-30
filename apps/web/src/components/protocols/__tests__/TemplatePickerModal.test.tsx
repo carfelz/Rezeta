@@ -30,7 +30,6 @@ function makeTemplate(overrides: Partial<ProtocolTemplateDto> = {}): ProtocolTem
     tenantId: 'tenant-1',
     name: 'Manejo de anafilaxia',
     description: null,
-    suggestedSpecialty: null,
     categoryId: 'cat-1',
     category: { id: 'cat-1', name: 'Emergencias', color: '#EF4444' },
     schema: { version: '1.0', blocks: [] },

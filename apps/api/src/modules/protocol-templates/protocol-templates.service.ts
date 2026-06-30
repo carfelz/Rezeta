@@ -18,7 +18,6 @@ export class ProtocolTemplatesService {
       tenantId: t.tenantId,
       name: t.name,
       description: t.description,
-      suggestedSpecialty: t.suggestedSpecialty,
       categoryId: t.categoryId,
       category: { id: t.category.id, name: t.category.name, color: t.category.color },
       schema: t.schema,

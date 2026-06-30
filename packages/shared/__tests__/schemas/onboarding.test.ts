@@ -14,7 +14,6 @@ describe('OnboardingCustomTemplateSchema', () => {
   const validTemplate = {
     clientId: 'template-hta',
     name: 'Hipertensión Arterial',
-    suggestedSpecialty: 'Cardiología',
     schema: validSchema,
   }
 
@@ -22,12 +21,6 @@ describe('OnboardingCustomTemplateSchema', () => {
     const result = OnboardingCustomTemplateSchema.parse(validTemplate)
     expect(result.clientId).toBe('template-hta')
     expect(result.name).toBe('Hipertensión Arterial')
-  })
-
-  it('accepts template without optional suggestedSpecialty', () => {
-    const { suggestedSpecialty: _, ...rest } = validTemplate
-    const result = OnboardingCustomTemplateSchema.parse(rest)
-    expect(result.suggestedSpecialty).toBeUndefined()
   })
 
   it('rejects empty clientId', () => {

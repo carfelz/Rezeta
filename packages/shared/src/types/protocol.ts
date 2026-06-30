@@ -231,7 +231,6 @@ export interface ProtocolTemplate {
   isSeeded: boolean
   name: string
   description: string | null
-  suggestedSpecialty: string | null
   schema: ProtocolContent
   createdAt: string
   updatedAt: string
