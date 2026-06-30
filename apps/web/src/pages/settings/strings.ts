@@ -40,6 +40,7 @@ export const templatesStrings = {
   listSeededBadge: 'Sistema',
   listLocked: 'Bloqueada',
   listBlockedBy: (count: number) => `Bloqueada por ${count} tipo${count === 1 ? '' : 's'}`,
+  listCategory: 'Categoría',
   listEdit: 'Editar',
   listDelete: 'Eliminar',
   listDeleteConfirm: (name: string) =>
@@ -62,6 +63,9 @@ export const templateEditorStrings = {
   fieldNamePlaceholder: 'Ej. Intervención de emergencia',
   fieldSpecialty: 'Especialidad sugerida',
   fieldSpecialtyPlaceholder: 'Ej. cardiología, pediatría',
+  fieldCategory: 'Categoría',
+  fieldCategoryPlaceholder: 'Selecciona una categoría',
+  fieldCategoryRequired: 'La categoría es obligatoria.',
   statusNew: 'Nueva',
   statusEdited: 'Editada',
   statusLocked: 'Bloqueada',

@@ -766,6 +766,7 @@ interface TemplateEditorProps {
   isLocked: boolean
   blockingTypeIds?: string[] | undefined
   isSaving: boolean
+  isSaveDisabled?: boolean
   onSave: (name: string, suggestedSpecialty: string, schema: TemplateSchema) => void
   onCancel: () => void
 }
@@ -775,6 +776,7 @@ export function TemplateEditor({
   isLocked,
   blockingTypeIds = [],
   isSaving,
+  isSaveDisabled = false,
   onSave,
   onCancel,
 }: TemplateEditorProps): JSX.Element {
@@ -851,7 +853,7 @@ export function TemplateEditor({
               variant="primary"
               size="sm"
               onClick={handleSave}
-              disabled={isSaving || !state.name.trim()}
+              disabled={isSaving || !state.name.trim() || isSaveDisabled}
             >
               {isSaving ? templateEditorWidgetStrings.saving : templateEditorWidgetStrings.save}
             </Button>
