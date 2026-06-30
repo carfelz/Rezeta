@@ -185,11 +185,24 @@ jobs:
       # exported via GOOGLE_APPLICATION_CREDENTIALS — no FIREBASE_TOKEN needed.
       - name: Deploy to Firebase Hosting
         run: |
-          npx -y firebase-tools deploy \
+          # firebase-tools finalizes the new hosting version and effectively
+          # releases it; the follow-up release call then returns
+          # "400 ... is the current active version". The upload/release has
+          # already succeeded at that point, so treat that specific message as
+          # success instead of failing the job.
+          set +e
+          out=$(npx -y firebase-tools deploy \
             --only hosting \
             --project "${{ env.PROJECT_ID }}" \
             --non-interactive \
-            --force
+            --force 2>&1)
+          code=$?
+          echo "$out"
+          if [ $code -ne 0 ] && grep -q "is the current active version" <<<"$out"; then
+            echo "Hosting is already at this version — treating as success."
+            exit 0
+          fi
+          exit $code
 
       - name: Output URLs
         run: |
