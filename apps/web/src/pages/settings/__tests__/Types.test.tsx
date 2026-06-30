@@ -1,6 +1,23 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ProtocolCategoryDto } from '@/hooks/protocol-categories/use-protocol-categories'
+import { ApiRequestError } from '@/lib/api-client'
+
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn() },
+}))
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+  ApiRequestError: class ApiRequestError extends Error {
+    error: { code: string; message: string; details?: Record<string, unknown> }
+    constructor(error: { code: string; message: string; details?: Record<string, unknown> }) {
+      super(error.message)
+      this.name = 'ApiRequestError'
+      this.error = error
+    }
+  },
+}))
 
 const mocks = vi.hoisted(() => ({
   useProtocolCategories: vi.fn(),
@@ -8,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   useUpdateProtocolCategory: vi.fn(),
   useDeleteProtocolCategory: vi.fn(),
   updateMutateAsync: vi.fn(),
+  deleteMutateAsync: vi.fn(),
 }))
 
 vi.mock('@/hooks/protocol-categories/use-protocol-categories', () => ({
@@ -31,6 +49,7 @@ const customCategory: ProtocolCategoryDto = {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.updateMutateAsync.mockResolvedValue(customCategory)
+  mocks.deleteMutateAsync.mockResolvedValue(undefined)
   mocks.useProtocolCategories.mockReturnValue({
     data: [customCategory],
     isLoading: false,
@@ -41,7 +60,10 @@ beforeEach(() => {
     mutateAsync: mocks.updateMutateAsync,
     isPending: false,
   })
-  mocks.useDeleteProtocolCategory.mockReturnValue({ mutateAsync: vi.fn(), isPending: false })
+  mocks.useDeleteProtocolCategory.mockReturnValue({
+    mutateAsync: mocks.deleteMutateAsync,
+    isPending: false,
+  })
 })
 
 describe('Types — edit category modal', () => {
@@ -74,5 +96,38 @@ describe('Types — edit category modal', () => {
     openEditModal()
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     expect(mocks.updateMutateAsync).not.toHaveBeenCalled()
+  })
+})
+
+describe('Types — delete category blocked by templates', () => {
+  it('shows an explanatory modal when delete fails with CATEGORY_IN_USE_BY_TEMPLATES', async () => {
+    mocks.deleteMutateAsync.mockRejectedValue(
+      new ApiRequestError({
+        code: 'CATEGORY_IN_USE_BY_TEMPLATES',
+        message: 'Category is in use by templates',
+        details: { count: 2 },
+      }),
+    )
+    render(<Types />)
+
+    // Open the confirm dialog
+    fireEvent.click(screen.getByTitle('Eliminar'))
+    await waitFor(() => {
+      expect(screen.getByText(/¿Eliminar la categoría/)).toBeInTheDocument()
+    })
+
+    // Confirm the delete
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }))
+
+    // Wait for the blocked modal to appear
+    await waitFor(() => {
+      expect(screen.getByText('No se puede eliminar esta categoría')).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText(/No puedes eliminar esta categoría: 2 plantillas la usan/),
+    ).toBeInTheDocument()
+
+    // Category still visible in the list
+    expect(screen.getByText('Consulta')).toBeInTheDocument()
   })
 })

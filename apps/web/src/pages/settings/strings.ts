@@ -107,6 +107,10 @@ export const typesStrings = {
   listDeleteConfirm: (name: string) =>
     `¿Eliminar la categoría "${name}"? Esta acción no se puede deshacer.`,
   deleteSeeded: 'No se puede eliminar una categoría del sistema.',
+  deleteBlockedTitle: 'No se puede eliminar esta categoría',
+  deleteBlockedBody: (count: number) =>
+    `No puedes eliminar esta categoría: ${count} plantilla${count === 1 ? '' : 's'} la usan. Reasígnalas a otra categoría antes de eliminarla.`,
+  deleteBlockedClose: 'Entendido',
   createTitle: 'Nueva categoría',
   createFieldName: 'Nombre',
   createFieldNamePlaceholder: 'Ej. Emergencia, Procedimiento',
