@@ -5,8 +5,8 @@ export interface TemplateFixture {
   suggestedSpecialty: string
   intendedUse: string
   schema: object
-  /** Default type name that points at this template */
-  typeName: string
+  /** Name of the seeded category this template belongs to */
+  categoryName: string
 }
 
 // Fixtures defined inline as typed constants — avoids JSON import headaches
@@ -18,7 +18,7 @@ const esFixtures: TemplateFixture[] = [
     name: 'Intervención de emergencia',
     suggestedSpecialty: 'emergency_medicine',
     intendedUse: 'Intervenciones agudas con tiempo crítico',
-    typeName: 'Emergencia',
+    categoryName: 'Emergencias',
     schema: {
       version: '1.0',
       metadata: {
@@ -133,201 +133,11 @@ const esFixtures: TemplateFixture[] = [
     },
   },
   {
-    key: 'procedure',
-    name: 'Procedimiento clínico',
-    suggestedSpecialty: 'general',
-    intendedUse: 'Procedimientos clínicos de rutina con flujo de trabajo definido',
-    typeName: 'Procedimiento',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'general',
-        intended_use: 'Procedimientos clínicos de rutina con flujo de trabajo definido',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indicaciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Cuándo se realiza este procedimiento.',
-            },
-          ],
-        },
-        {
-          id: 'sec_preparation',
-          type: 'section',
-          title: 'Preparación',
-          required: false,
-          description: 'Preparación previa al procedimiento',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Materiales, equipo y preparación del paciente.',
-            },
-            {
-              type: 'alert',
-              severity: 'info',
-              placeholder: 'Consentimiento, alergias y estado de anticoagulación.',
-            },
-          ],
-        },
-        {
-          id: 'sec_steps',
-          type: 'section',
-          title: 'Pasos del procedimiento',
-          required: true,
-          description: 'Técnica paso a paso',
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Pasos numerados del procedimiento.',
-            },
-          ],
-        },
-        {
-          id: 'sec_complications',
-          type: 'section',
-          title: 'Posibles complicaciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Eventos adversos esperados y raros.',
-            },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Signos que requieren atención inmediata.',
-            },
-          ],
-        },
-        {
-          id: 'sec_post',
-          type: 'section',
-          title: 'Instrucciones post-procedimiento',
-          required: true,
-          description: 'Cuidados después del procedimiento',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Instrucciones al paciente y cuidados de seguimiento.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    key: 'pharmacology',
-    name: 'Referencia farmacológica',
-    suggestedSpecialty: 'pharmacology',
-    intendedUse: 'Referencias de dosificación de medicamentos',
-    typeName: 'Medicación',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'pharmacology',
-        intended_use: 'Referencias de dosificación de medicamentos',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indicaciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Situaciones clínicas que aborda este régimen.',
-            },
-          ],
-        },
-        {
-          id: 'sec_warnings',
-          type: 'section',
-          title: 'Advertencias y contraindicaciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'alert',
-              severity: 'danger',
-              placeholder: 'Contraindicaciones absolutas.',
-            },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Contraindicaciones relativas y precauciones.',
-            },
-          ],
-        },
-        {
-          id: 'sec_dosing',
-          type: 'section',
-          title: 'Dosificación',
-          required: true,
-          description: 'Régimen de medicación',
-          placeholder_blocks: [
-            {
-              id: 'blk_dose_table',
-              type: 'dosage_table',
-              required: true,
-              placeholder: 'Medicamentos, dosis, vías, frecuencias y notas.',
-            },
-            {
-              type: 'text',
-              placeholder: 'Ajustes de dosis por insuficiencia renal/hepática.',
-            },
-          ],
-        },
-        {
-          id: 'sec_monitoring',
-          type: 'section',
-          title: 'Monitoreo',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Laboratorios, signos vitales o síntomas a monitorear; frecuencia.',
-            },
-          ],
-        },
-        {
-          id: 'sec_decision',
-          type: 'section',
-          title: 'Reglas de ajuste de dosis',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'decision',
-              placeholder: 'Cuándo ajustar, suspender o escalar la dosis.',
-            },
-          ],
-        },
-        {
-          id: 'sec_adverse',
-          type: 'section',
-          title: 'Efectos adversos',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Efectos adversos comunes y graves a comunicar al paciente.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
     key: 'diagnostic',
     name: 'Algoritmo diagnóstico',
     suggestedSpecialty: 'general',
     intendedUse: 'Vías de decisión diagnóstica',
-    typeName: 'Diagnóstico',
+    categoryName: 'Diagnóstico',
     schema: {
       version: '1.0',
       metadata: {
@@ -416,101 +226,6 @@ const esFixtures: TemplateFixture[] = [
       ],
     },
   },
-  {
-    key: 'physiotherapy',
-    name: 'Sesión de fisioterapia',
-    suggestedSpecialty: 'physiotherapy',
-    intendedUse: 'Estructura de sesión de rehabilitación con reglas de progresión',
-    typeName: 'Fisioterapia',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'physiotherapy',
-        intended_use: 'Estructura de sesión de rehabilitación con reglas de progresión',
-      },
-      blocks: [
-        {
-          id: 'sec_goals',
-          type: 'section',
-          title: 'Objetivos del tratamiento',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Objetivos a corto y largo plazo para esta fase de rehabilitación.',
-            },
-          ],
-        },
-        {
-          id: 'sec_assessment',
-          type: 'section',
-          title: 'Evaluación',
-          required: true,
-          description: 'Evaluación al inicio de cada sesión',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Dolor, rango de movimiento, fuerza, pruebas funcionales a realizar.',
-            },
-            {
-              type: 'text',
-              placeholder: 'Medidas de resultados a seguir en el tiempo.',
-            },
-          ],
-        },
-        {
-          id: 'sec_progression',
-          type: 'section',
-          title: 'Criterios de progresión',
-          required: false,
-          description: 'Cuándo avanzar al paciente',
-          placeholder_blocks: [
-            {
-              type: 'decision',
-              placeholder: 'Criterios para progresar a la siguiente fase.',
-            },
-          ],
-        },
-        {
-          id: 'sec_plan',
-          type: 'section',
-          title: 'Plan de tratamiento',
-          required: true,
-          description: 'Intervenciones para esta fase',
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Ejercicios, técnicas o modalidades (con repeticiones/series/duración).',
-            },
-          ],
-        },
-        {
-          id: 'sec_home',
-          type: 'section',
-          title: 'Programa de ejercicios en casa',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Ejercicios que el paciente realiza en casa entre sesiones.',
-            },
-          ],
-        },
-        {
-          id: 'sec_precautions',
-          type: 'section',
-          title: 'Precauciones',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Movimientos, cargas o actividades a evitar en esta fase.',
-            },
-          ],
-        },
-      ],
-    },
-  },
 ]
 
 const enFixtures: TemplateFixture[] = [
@@ -519,7 +234,7 @@ const enFixtures: TemplateFixture[] = [
     name: 'Emergency Intervention',
     suggestedSpecialty: 'emergency_medicine',
     intendedUse: 'Time-sensitive acute interventions',
-    typeName: 'Emergency',
+    categoryName: 'Emergencies',
     schema: {
       version: '1.0',
       metadata: {
@@ -634,188 +349,11 @@ const enFixtures: TemplateFixture[] = [
     },
   },
   {
-    key: 'procedure',
-    name: 'Clinical Procedure',
-    suggestedSpecialty: 'general',
-    intendedUse: 'Routine clinical procedures with defined workflow',
-    typeName: 'Procedure',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'general',
-        intended_use: 'Routine clinical procedures with defined workflow',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indications',
-          required: false,
-          placeholder_blocks: [{ type: 'text', placeholder: 'When this procedure is performed.' }],
-        },
-        {
-          id: 'sec_preparation',
-          type: 'section',
-          title: 'Preparation',
-          required: false,
-          description: 'Pre-procedure setup',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Materials, equipment, and patient prep.',
-            },
-            {
-              type: 'alert',
-              severity: 'info',
-              placeholder: 'Consent, allergies, and anticoagulation status.',
-            },
-          ],
-        },
-        {
-          id: 'sec_steps',
-          type: 'section',
-          title: 'Procedure Steps',
-          required: true,
-          description: 'Step-by-step technique',
-          placeholder_blocks: [{ type: 'steps', placeholder: 'Numbered steps of the procedure.' }],
-        },
-        {
-          id: 'sec_complications',
-          type: 'section',
-          title: 'Possible Complications',
-          required: false,
-          placeholder_blocks: [
-            { type: 'text', placeholder: 'Expected and rare adverse events.' },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Signs that require immediate attention.',
-            },
-          ],
-        },
-        {
-          id: 'sec_post',
-          type: 'section',
-          title: 'Post-procedure Instructions',
-          required: true,
-          description: 'Care after the procedure',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Patient instructions and follow-up care.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    key: 'pharmacology',
-    name: 'Pharmacological Reference',
-    suggestedSpecialty: 'pharmacology',
-    intendedUse: 'Medication dosing references',
-    typeName: 'Medication',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'pharmacology',
-        intended_use: 'Medication dosing references',
-      },
-      blocks: [
-        {
-          id: 'sec_indications',
-          type: 'section',
-          title: 'Indications',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Clinical situations this regimen addresses.',
-            },
-          ],
-        },
-        {
-          id: 'sec_warnings',
-          type: 'section',
-          title: 'Warnings & Contraindications',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'alert',
-              severity: 'danger',
-              placeholder: 'Absolute contraindications.',
-            },
-            {
-              type: 'alert',
-              severity: 'warning',
-              placeholder: 'Relative contraindications and cautions.',
-            },
-          ],
-        },
-        {
-          id: 'sec_dosing',
-          type: 'section',
-          title: 'Dosing',
-          required: true,
-          description: 'Medication regimen',
-          placeholder_blocks: [
-            {
-              id: 'blk_dose_table',
-              type: 'dosage_table',
-              required: true,
-              placeholder: 'Drugs, doses, routes, frequencies, and notes.',
-            },
-            {
-              type: 'text',
-              placeholder: 'Dose adjustments for renal/hepatic impairment.',
-            },
-          ],
-        },
-        {
-          id: 'sec_monitoring',
-          type: 'section',
-          title: 'Monitoring',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Labs, vitals, or symptoms to monitor; frequency.',
-            },
-          ],
-        },
-        {
-          id: 'sec_decision',
-          type: 'section',
-          title: 'Dose Adjustment Rules',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'decision',
-              placeholder: 'When to adjust, hold, or escalate the dose.',
-            },
-          ],
-        },
-        {
-          id: 'sec_adverse',
-          type: 'section',
-          title: 'Adverse Effects',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Common and serious adverse effects to counsel about.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
     key: 'diagnostic',
     name: 'Diagnostic Algorithm',
     suggestedSpecialty: 'general',
     intendedUse: 'Diagnostic decision pathways',
-    typeName: 'Diagnosis',
+    categoryName: 'Diagnosis',
     schema: {
       version: '1.0',
       metadata: {
@@ -892,101 +430,6 @@ const enFixtures: TemplateFixture[] = [
             {
               type: 'text',
               placeholder: 'Most common and most dangerous alternative diagnoses.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    key: 'physiotherapy',
-    name: 'Physiotherapy Session',
-    suggestedSpecialty: 'physiotherapy',
-    intendedUse: 'Rehabilitation session structure with progression rules',
-    typeName: 'Physiotherapy',
-    schema: {
-      version: '1.0',
-      metadata: {
-        suggested_specialty: 'physiotherapy',
-        intended_use: 'Rehabilitation session structure with progression rules',
-      },
-      blocks: [
-        {
-          id: 'sec_goals',
-          type: 'section',
-          title: 'Treatment Goals',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Short- and long-term goals for this phase of rehab.',
-            },
-          ],
-        },
-        {
-          id: 'sec_assessment',
-          type: 'section',
-          title: 'Assessment',
-          required: true,
-          description: 'Evaluation at the start of each session',
-          placeholder_blocks: [
-            {
-              type: 'checklist',
-              placeholder: 'Pain, ROM, strength, function tests to perform.',
-            },
-            {
-              type: 'text',
-              placeholder: 'Outcome measures to track over time.',
-            },
-          ],
-        },
-        {
-          id: 'sec_progression',
-          type: 'section',
-          title: 'Progression Criteria',
-          required: false,
-          description: 'When to advance the patient',
-          placeholder_blocks: [
-            {
-              type: 'decision',
-              placeholder: 'Criteria to progress to the next phase.',
-            },
-          ],
-        },
-        {
-          id: 'sec_plan',
-          type: 'section',
-          title: 'Treatment Plan',
-          required: true,
-          description: 'Interventions for this phase',
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Exercises, techniques, or modalities (with reps/sets/duration).',
-            },
-          ],
-        },
-        {
-          id: 'sec_home',
-          type: 'section',
-          title: 'Home Exercise Program',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'steps',
-              placeholder: 'Exercises patient does at home between sessions.',
-            },
-          ],
-        },
-        {
-          id: 'sec_precautions',
-          type: 'section',
-          title: 'Precautions',
-          required: false,
-          placeholder_blocks: [
-            {
-              type: 'text',
-              placeholder: 'Movements, loads, or activities to avoid in this phase.',
             },
           ],
         },

@@ -887,34 +887,38 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
 }
 
 async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
-  // Delete existing seeded templates for idempotency
-  const existingTemplates = await prisma.protocolTemplate.findMany({
-    where: { tenantId, isSeeded: true, deletedAt: null },
+  // Delete existing seeded templates and categories for idempotency
+  await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
+  await prisma.protocolCategory.deleteMany({ where: { tenantId, isSeeded: true } })
+
+  // Seed the 2 default categories first so templates can link to them.
+  const emergenciasCategory = await prisma.protocolCategory.create({
+    data: { tenantId, name: 'Emergencias', color: '#EF4444', isSeeded: true },
+  })
+  const diagnosticoCategory = await prisma.protocolCategory.create({
+    data: { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
   })
 
-  if (existingTemplates.length > 0) {
-    await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
-  }
+  const categoryIdByName = new Map([
+    ['Emergencias', emergenciasCategory.id],
+    ['Diagnóstico', diagnosticoCategory.id],
+  ])
 
-  // Find or create a default seeded category for this tenant.
-  let defaultCategory = await prisma.protocolCategory.findFirst({
-    where: { tenantId, isSeeded: true, deletedAt: null },
-    orderBy: { createdAt: 'asc' },
-  })
-  if (!defaultCategory) {
-    defaultCategory = await prisma.protocolCategory.create({
-      data: { tenantId, name: 'General', color: '#6B7280', isSeeded: true },
-    })
-  }
+  // Use the 2 starter templates that match the seeded categories.
+  const devTemplates = STARTER_TEMPLATES.filter((t) =>
+    ['emergency-intervention', 'diagnostic-algorithm'].includes(t.key),
+  )
 
-  for (const t of STARTER_TEMPLATES) {
+  for (const t of devTemplates) {
+    const categoryName = t.key === 'emergency-intervention' ? 'Emergencias' : 'Diagnóstico'
+    const categoryId = categoryIdByName.get(categoryName)!
     await prisma.protocolTemplate.create({
       data: {
         tenantId,
         name: t.name,
         description: t.description,
         suggestedSpecialty: t.suggestedSpecialty,
-        categoryId: defaultCategory.id,
+        categoryId,
         schema: t.schema,
         isSeeded: true,
         createdBy,
@@ -922,7 +926,7 @@ async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
     })
   }
 
-  console.log(`✓ Seeded ${STARTER_TEMPLATES.length} templates for tenant ${tenantId}`)
+  console.log(`✓ Seeded 2 templates and 2 categories for tenant ${tenantId}`)
 }
 
 async function main() {
