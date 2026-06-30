@@ -896,6 +896,17 @@ async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
     await prisma.protocolTemplate.deleteMany({ where: { tenantId, isSeeded: true } })
   }
 
+  // Find or create a default seeded category for this tenant.
+  let defaultCategory = await prisma.protocolCategory.findFirst({
+    where: { tenantId, isSeeded: true, deletedAt: null },
+    orderBy: { createdAt: 'asc' },
+  })
+  if (!defaultCategory) {
+    defaultCategory = await prisma.protocolCategory.create({
+      data: { tenantId, name: 'General', color: '#6B7280', isSeeded: true },
+    })
+  }
+
   for (const t of STARTER_TEMPLATES) {
     await prisma.protocolTemplate.create({
       data: {
@@ -903,6 +914,7 @@ async function seedTenantTemplates(tenantId: string, createdBy: string | null) {
         name: t.name,
         description: t.description,
         suggestedSpecialty: t.suggestedSpecialty,
+        categoryId: defaultCategory.id,
         schema: t.schema,
         isSeeded: true,
         createdBy,

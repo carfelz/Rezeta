@@ -10,12 +10,17 @@ const TEMPLATE_ID = 'tmpl-1'
 const USER_ID = 'user-1'
 const MINIMAL_SCHEMA = { version: '1.0', blocks: [] }
 
+const CATEGORY_ID = 'cat-1'
+
 const mockPrisma = {
   protocolTemplate: {
     findMany: vi.fn(),
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+  },
+  protocolCategory: {
+    findFirst: vi.fn(),
   },
 }
 
@@ -25,6 +30,7 @@ const makeTemplateRow = (overrides = {}) => ({
   name: 'Intervención de emergencia',
   description: null,
   suggestedSpecialty: null,
+  categoryId: CATEGORY_ID,
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
   createdBy: USER_ID,
@@ -40,6 +46,7 @@ describe('ProtocolTemplatesRepository', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     repo = new ProtocolTemplatesRepository(mockPrisma as never)
+    mockPrisma.protocolCategory.findFirst.mockResolvedValue({ id: CATEGORY_ID })
   })
 
   // ── findAllWithLockInfo ────────────────────────────────────────────────────

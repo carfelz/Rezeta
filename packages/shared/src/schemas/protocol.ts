@@ -298,6 +298,7 @@ export const SaveProtocolVersionSchema = SaveVersionSchema.extend({
 export const CreateProtocolTemplateSchema = z.object({
   name: z.string().min(1).max(300),
   suggestedSpecialty: z.string().max(200).optional(),
+  categoryId: z.string().uuid().optional(),
   schema: ProtocolTemplateSchemaContent,
 })
 

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common'
+import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import type { ProtocolTemplate } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 
@@ -21,14 +21,32 @@ export class ProtocolTemplatesRepository {
 
   async create(
     tenantId: string,
-    data: { name: string; suggestedSpecialty?: string | undefined; schema: object },
+    data: {
+      name: string
+      suggestedSpecialty?: string | undefined
+      schema: object
+      categoryId?: string | undefined
+    },
     createdBy: string,
   ): Promise<ProtocolTemplate> {
+    let categoryId = data.categoryId
+    if (!categoryId) {
+      const fallback = await this.prisma.protocolCategory.findFirst({
+        where: { tenantId, deletedAt: null },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      })
+      if (!fallback) {
+        throw new BadRequestException({ code: 'CATEGORY_REQUIRED' })
+      }
+      categoryId = fallback.id
+    }
     return this.prisma.protocolTemplate.create({
       data: {
         tenantId,
         name: data.name,
         suggestedSpecialty: data.suggestedSpecialty ?? null,
+        categoryId,
         schema: data.schema,
         isSeeded: false,
         createdBy,

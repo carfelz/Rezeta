@@ -17,6 +17,7 @@ const makeTemplateRow = (overrides = {}) => ({
   name: 'Fetch Me',
   description: null,
   suggestedSpecialty: null,
+  categoryId: 'cat-1',
   schema: MINIMAL_SCHEMA,
   isSeeded: false,
   createdAt: new Date('2026-01-01'),

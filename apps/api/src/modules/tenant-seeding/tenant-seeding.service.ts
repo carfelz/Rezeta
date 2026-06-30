@@ -74,33 +74,31 @@ export class TenantSeedingService {
         })
       }
 
-      // Insert 5 templates
-      const createdTemplates = await Promise.all(
+      // Seed the 5 default protocol categories before templates (templates require a categoryId).
+      const categoryRows = await Promise.all(
+        SEEDED_CATEGORIES[locale].map((c) =>
+          tx.protocolCategory.create({
+            data: { tenantId, name: c.name, color: c.color, isSeeded: true },
+          }),
+        ),
+      )
+      const defaultCategoryId = categoryRows[0]!.id
+
+      // Insert 5 templates, each assigned to the first seeded category.
+      await Promise.all(
         fixtures.map((f) =>
           tx.protocolTemplate.create({
             data: {
               tenantId,
               name: f.name,
               suggestedSpecialty: f.suggestedSpecialty,
+              categoryId: defaultCategoryId,
               schema: f.schema,
               isSeeded: true,
             },
           }),
         ),
       )
-
-      void createdTemplates // template rows are not referenced further
-
-      // Seed the 5 default protocol categories (tags applied to protocols)
-      await tx.protocolCategory.createMany({
-        skipDuplicates: true,
-        data: SEEDED_CATEGORIES[locale].map((c) => ({
-          tenantId,
-          name: c.name,
-          color: c.color,
-          isSeeded: true,
-        })),
-      })
 
       await tx.tenant.update({
         where: { id: tenantId },
@@ -146,6 +144,22 @@ export class TenantSeedingService {
         })
       }
 
+      // Ensure the tenant has at least one category before inserting templates.
+      let defaultCategoryId: string
+      const existingCategory = await tx.protocolCategory.findFirst({
+        where: { tenantId, deletedAt: null },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      })
+      if (existingCategory) {
+        defaultCategoryId = existingCategory.id
+      } else {
+        const created = await tx.protocolCategory.create({
+          data: { tenantId, name: 'General', color: '#6B7280', isSeeded: true },
+        })
+        defaultCategoryId = created.id
+      }
+
       // Insert templates and build clientId → server UUID map
       const clientIdToServerId = new Map<string, string>()
       for (const t of templates) {
@@ -154,6 +168,7 @@ export class TenantSeedingService {
             tenantId,
             name: t.name,
             suggestedSpecialty: t.suggestedSpecialty ?? null,
+            categoryId: defaultCategoryId,
             schema: t.schema,
             isSeeded: true,
           },
