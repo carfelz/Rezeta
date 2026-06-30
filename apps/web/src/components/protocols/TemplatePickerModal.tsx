@@ -46,7 +46,7 @@ function TemplateCard({ template, selected, onSelect }: TemplateCardProps): JSX.
           {template.name}
         </span>
       </div>
-      <span className="block text-[12px] text-n-500 mt-1">{template.category.name}</span>
+      <span className="block text-caption text-n-500 mt-1">{template.category.name}</span>
     </SelectableCard>
   )
 }
