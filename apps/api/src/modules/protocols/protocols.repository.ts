@@ -19,11 +19,23 @@ type ProtocolListEntry = Protocol & {
 export class ProtocolsRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
+  async findTemplateForCreate(
+    templateId: string,
+    tenantId: string,
+  ): Promise<{ id: string; categoryId: string; schema: unknown } | null> {
+    const t = await this.prisma.protocolTemplate.findFirst({
+      where: { id: templateId, tenantId, deletedAt: null },
+      select: { id: true, categoryId: true, schema: true },
+    })
+    return t
+  }
+
   async create(data: {
     tenantId: string
     title: string
     createdBy: string
     categoryId?: string
+    templateId?: string
     tags?: string[]
     content: unknown
   }): Promise<ProtocolCreateResult> {
@@ -34,6 +46,7 @@ export class ProtocolsRepository {
           title: data.title,
           createdBy: data.createdBy,
           ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
+          ...(data.templateId !== undefined ? { templateId: data.templateId } : {}),
           tags: data.tags ?? [],
           status: 'draft',
         },

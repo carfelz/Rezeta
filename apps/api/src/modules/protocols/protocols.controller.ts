@@ -46,6 +46,7 @@ import { ProtocolsService } from './protocols.service.js'
 
 const PROTOCOL_ID = '018e3f2a-2222-7000-8000-000000000001'
 const CATEGORY_ID = '018e3f2a-3333-7000-8000-000000000001'
+const TEMPLATE_ID = '018e3f2a-5555-7000-8000-000000000001'
 const VERSION_ID = '018e3f2a-4444-7000-8000-000000000001'
 
 @ApiTags('Protocols')
@@ -91,18 +92,18 @@ export class ProtocolsController {
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateProtocolSchema))
   @ApiOperation({
-    summary: 'Create a protocol',
+    summary: 'Create a protocol from a template',
     description:
-      'Creates a new protocol, optionally tagged with a category. Starts with an empty initial version.',
+      'Creates a new protocol by copying blocks from the specified template. The template\'s category is inherited.',
   })
   @ApiBody({
     description: 'Protocol creation payload.',
     schema: {
       type: 'object',
-      required: ['title'],
+      required: ['templateId', 'title'],
       properties: {
+        templateId: { type: 'string', format: 'uuid', example: TEMPLATE_ID },
         title: { type: 'string', example: 'Manejo de anafilaxia' },
-        categoryId: { type: 'string', format: 'uuid', example: CATEGORY_ID },
       },
     },
   })
