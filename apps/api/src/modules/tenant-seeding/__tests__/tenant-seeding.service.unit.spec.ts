@@ -41,7 +41,6 @@ describe('TenantSeedingService (unit)', () => {
       ({ data }: { data: { name: string } }) =>
         Promise.resolve({ id: `cat-${data.name}`, name: data.name }),
     )
-    mockTx.protocolCategory.findFirst.mockResolvedValue({ id: 'cat-fallback' })
   })
 
   // ── seedDefault ────────────────────────────────────────────────────────────

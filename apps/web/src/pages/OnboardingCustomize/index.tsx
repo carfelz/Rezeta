@@ -28,7 +28,7 @@ export function OnboardingCustomize(): JSX.Element {
   function handleStep1Continue(updated: TemplateCandidate[]): void {
     setTemplates(updated)
     const defaultTypes: TypeCandidate[] = updated.map((t, i) => ({
-      name: starters?.[i]?.typeName ?? t.name,
+      name: starters?.[i]?.categoryName ?? t.name,
       templateClientId: t.clientId,
     }))
     setTypes(defaultTypes)

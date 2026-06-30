@@ -40,7 +40,6 @@ describe('TenantSeedingService — locale names', () => {
       ({ data }: { data: { name: string } }) =>
         Promise.resolve({ id: `cat-${data.name}`, name: data.name }),
     )
-    mockTx.protocolCategory.findFirst.mockResolvedValue({ id: 'cat-fallback' })
   })
 
   it('seedDefault: Spanish locale creates 2 templates with expected Spanish names', async () => {

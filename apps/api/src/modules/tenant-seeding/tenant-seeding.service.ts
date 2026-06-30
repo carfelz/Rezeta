@@ -144,11 +144,9 @@ export class TenantSeedingService {
       }
 
       // Create a default category so every custom template has a valid categoryId.
-      const [defaultCategory] = await Promise.all([
-        tx.protocolCategory.create({
-          data: { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
-        }),
-      ])
+      const defaultCategory = await tx.protocolCategory.create({
+        data: { tenantId, name: 'Diagnóstico', color: '#3B82F6', isSeeded: true },
+      })
 
       // Insert templates and build clientId → server UUID map
       const clientIdToServerId = new Map<string, string>()
