@@ -49,6 +49,7 @@ describe('ProtocolCategoriesService', () => {
       tenantId: 'tenant-1',
       name: 'Emergencias',
       color: '#EF4444',
+      specialty: null,
       isSeeded: false,
     }
     mockRepo.create.mockResolvedValue(created)
@@ -60,12 +61,55 @@ describe('ProtocolCategoriesService', () => {
     expect(result).toEqual(created)
   })
 
+  it('create passes specialty when provided', async () => {
+    const created = {
+      id: 'cat-2',
+      tenantId: 'tenant-1',
+      name: 'Cardiología',
+      color: '#6B7280',
+      specialty: 'cardiología',
+      isSeeded: false,
+    }
+    mockRepo.create.mockResolvedValue(created)
+    const result = await service.create('tenant-1', {
+      name: 'Cardiología',
+      specialty: 'cardiología',
+    })
+    expect(mockRepo.create).toHaveBeenCalledWith('tenant-1', {
+      name: 'Cardiología',
+      specialty: 'cardiología',
+    })
+    expect(result.specialty).toBe('cardiología')
+  })
+
   it('update checks existence then delegates', async () => {
     mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
-    mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Renamed' })
+    mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Renamed', specialty: null })
     const result = await service.update('tenant-1', 'cat-1', { name: 'Renamed' })
     expect(mockRepo.update).toHaveBeenCalledWith('cat-1', { name: 'Renamed' })
     expect(result.name).toBe('Renamed')
+  })
+
+  it('update passes specialty through', async () => {
+    mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
+    mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Urgencias', specialty: 'pediatría' })
+    const result = await service.update('tenant-1', 'cat-1', {
+      name: 'Urgencias',
+      specialty: 'pediatría',
+    })
+    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', {
+      name: 'Urgencias',
+      specialty: 'pediatría',
+    })
+    expect(result.specialty).toBe('pediatría')
+  })
+
+  it('update accepts null specialty to clear the field', async () => {
+    mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
+    mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Urgencias', specialty: null })
+    const result = await service.update('tenant-1', 'cat-1', { specialty: null })
+    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', { specialty: null })
+    expect(result.specialty).toBeNull()
   })
 
   it('update throws NotFound when category missing', async () => {

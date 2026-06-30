@@ -3,6 +3,8 @@ import {
   CreateProtocolSchema,
   CreateProtocolTemplateSchema,
   ProtocolTemplateDtoSchema,
+  CreateProtocolCategorySchema,
+  UpdateProtocolCategorySchema,
 } from '../protocol.js'
 
 describe('CreateProtocolSchema (template-driven)', () => {
@@ -33,6 +35,59 @@ describe('CreateProtocolTemplateSchema requires categoryId', () => {
         schema: { version: '1.0', blocks: [] },
       }).success,
     ).toBe(true)
+  })
+})
+
+describe('CreateProtocolCategorySchema', () => {
+  it('accepts name only', () => {
+    expect(CreateProtocolCategorySchema.safeParse({ name: 'Emergencias' }).success).toBe(true)
+  })
+
+  it('accepts name + specialty', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({ name: 'Emergencias', specialty: 'cardiología' })
+        .success,
+    ).toBe(true)
+  })
+
+  it('accepts name + color + specialty', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({
+        name: 'Urgencias',
+        color: '#EF4444',
+        specialty: 'medicina interna',
+      }).success,
+    ).toBe(true)
+  })
+
+  it('rejects specialty longer than 100 chars', () => {
+    expect(
+      CreateProtocolCategorySchema.safeParse({ name: 'X', specialty: 'a'.repeat(101) }).success,
+    ).toBe(false)
+  })
+
+  it('rejects missing name', () => {
+    expect(CreateProtocolCategorySchema.safeParse({ specialty: 'cardiología' }).success).toBe(false)
+  })
+})
+
+describe('UpdateProtocolCategorySchema', () => {
+  it('accepts empty object (all optional)', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({}).success).toBe(true)
+  })
+
+  it('accepts specialty string', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({ specialty: 'pediatría' }).success).toBe(true)
+  })
+
+  it('accepts specialty null (clear the field)', () => {
+    expect(UpdateProtocolCategorySchema.safeParse({ specialty: null }).success).toBe(true)
+  })
+
+  it('rejects specialty longer than 100 chars', () => {
+    expect(
+      UpdateProtocolCategorySchema.safeParse({ specialty: 'b'.repeat(101) }).success,
+    ).toBe(false)
   })
 })
 
