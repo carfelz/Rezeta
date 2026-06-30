@@ -1,5 +1,7 @@
 // Template-only hint fields that must NOT appear in protocol content.
-const HINT_FIELDS = new Set(['required', 'placeholder', 'description', 'placeholder_blocks'])
+// `required` is intentionally discarded for all blocks (including `clinical_notes`) because
+// it is a template-authoring hint per the protocol-model spec, not protocol content.
+const HINT_FIELDS = new Set(['required', 'placeholder', 'placeholder_blocks'])
 
 interface RawBlock {
   id?: string
@@ -36,6 +38,7 @@ function transformBlock(block: RawBlock, counter: { n: number }): Record<string,
   const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(block)) {
     if (HINT_FIELDS.has(key) || key === 'blocks') continue
+    if (key === 'description' && block.type !== 'section') continue
     out[key] = value
   }
   out.id = typeof block.id === 'string' && block.id.length > 0 ? block.id : nextId(block.type, counter)

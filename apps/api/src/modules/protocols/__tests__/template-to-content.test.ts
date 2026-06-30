@@ -65,4 +65,17 @@ describe('buildProtocolContentFromTemplate', () => {
     expect(buildProtocolContentFromTemplate({ version: '2.3', blocks: [] }).template_version).toBe('2.3')
     expect(buildProtocolContentFromTemplate({ blocks: [] }).template_version).toBe('1.0')
   })
+
+  it('preserves description on section blocks but strips it from non-section blocks', () => {
+    const out = buildProtocolContentFromTemplate({
+      version: '1.0',
+      blocks: [
+        { id: 'sec', type: 'section', title: 'S', description: 'keep me', placeholder_blocks: [] },
+        { type: 'text', description: 'drop me' },
+      ],
+    })
+    const blocks = out.blocks as Array<Record<string, unknown>>
+    expect(blocks[0].description).toBe('keep me')
+    expect(blocks[1]).not.toHaveProperty('description')
+  })
 })
