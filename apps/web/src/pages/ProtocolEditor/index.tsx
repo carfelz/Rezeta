@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
-import { AddBlockButton } from '@/components/ui'
+import { AddBlockButton, ConfirmDialog } from '@/components/ui'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
@@ -115,13 +115,9 @@ export function ProtocolEditor(): JSX.Element {
   }, [])
 
   // ── Navigation guard ────────────────────────────────────────────────────
+  // The blocker stays in `blocked` state while the ConfirmDialog (rendered
+  // below) is open; the dialog resolves it via proceed()/reset().
   const blocker = useBlocker(isDirty)
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      if (window.confirm(protocolEditorStrings.navigateAway)) blocker.proceed()
-      else blocker.reset()
-    }
-  }, [blocker])
 
   if (!id) {
     void navigate('/protocolos', { replace: true })
@@ -403,6 +399,16 @@ export function ProtocolEditor(): JSX.Element {
         onSaveDraft={() => handleSaveDraft(saveSummary)}
         onPublish={handleSaveModalPublish}
         isSaving={isSaving}
+      />
+
+      <ConfirmDialog
+        open={blocker.state === 'blocked'}
+        title={protocolEditorStrings.navigateAwayTitle}
+        description={protocolEditorStrings.navigateAwayBody}
+        confirmLabel={protocolEditorStrings.navigateAwayConfirm}
+        cancelLabel={protocolEditorStrings.navigateAwayCancel}
+        onConfirm={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
       />
     </div>
   )

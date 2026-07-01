@@ -1,6 +1,6 @@
 import {
   Button,
-  Input,
+  Textarea,
   Modal,
   ModalBody,
   ModalContent,
@@ -30,7 +30,7 @@ export function SaveModal({
 }: SaveModalProps): JSX.Element {
   return (
     <Modal open={open} onOpenChange={(o) => !o && onClose()}>
-      <ModalContent>
+      <ModalContent className="w-auto">
         <ModalHeader
           title={protocolEditorStrings.saveModalTitle}
           subtitle={protocolEditorStrings.saveModalSubtitle}
@@ -40,8 +40,10 @@ export function SaveModal({
             <label className="text-[12.5px] font-sans font-medium text-n-700">
               {protocolEditorStrings.saveModalLabel}
             </label>
-            <Input
-              type="text"
+            <Textarea
+              rows={3}
+              cols={3}
+              className="w-auto resize-none"
               value={changeSummary}
               onChange={(e) => onChangeSummary(e.target.value)}
               placeholder={protocolEditorStrings.saveModalPlaceholder}

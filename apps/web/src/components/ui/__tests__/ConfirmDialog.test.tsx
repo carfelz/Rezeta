@@ -22,6 +22,12 @@ describe('ConfirmDialog', () => {
     expect(screen.getByText('Esta acción no se puede deshacer.')).toBeInTheDocument()
   })
 
+  it('renders an optional subtitle alongside the description', () => {
+    renderDialog({ subtitle: 'Paciente: Juan Pérez' })
+    expect(screen.getByText('Paciente: Juan Pérez')).toBeInTheDocument()
+    expect(screen.getByText('Esta acción no se puede deshacer.')).toBeInTheDocument()
+  })
+
   it('does not render when closed', () => {
     renderDialog({ open: false })
     expect(screen.queryByText('Archivar paciente')).not.toBeInTheDocument()

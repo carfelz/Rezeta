@@ -69,7 +69,10 @@ export const protocolEditorStrings = {
   draftRecovered: 'Se recuperó un borrador no guardado.',
   draftUse: 'Usar borrador',
   draftDiscard: 'Descartar',
-  navigateAway: 'Tienes cambios sin guardar. ¿Descartar y salir?',
+  navigateAwayTitle: 'Cambios sin guardar',
+  navigateAwayBody: 'Tienes cambios sin guardar. ¿Descartar y salir?',
+  navigateAwayConfirm: 'Descartar y salir',
+  navigateAwayCancel: 'Seguir editando',
 
   // ── Mobile gate ───────────────────────────────────────────────────────────────
   mobileGateTitle: 'Editor no disponible en móvil',

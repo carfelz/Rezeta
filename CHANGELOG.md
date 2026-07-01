@@ -4,6 +4,30 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-06-30] — Multiline summary + description fields
+
+### Changed
+
+- Change-summary fields in the protocol editor's Save and Publish modals are now `Textarea`s (fixed 3 rows × 3 cols, no resize) instead of single-line `Input`s (`apps/web/src/pages/ProtocolEditor/SaveModal.tsx`, `PublishModal.tsx`). Removed the Enter-to-submit handler from the publish field so newlines are accepted.
+- Template section description field is now a fixed 3×3 `Textarea` instead of an `Input` (`apps/web/src/components/template/TemplateEditor.tsx`).
+
+## [2026-06-30] — ConfirmDialog body + subtitle
+
+### Added
+
+- Optional `subtitle` prop on `ConfirmDialog` — renders as a secondary line under the title in the header (`apps/web/src/components/ui/ConfirmDialog.tsx`).
+
+### Changed
+
+- `ConfirmDialog` now renders `description` in the modal body (via `ModalBody`) instead of the header subtitle. To keep `aria-describedby` valid with exactly one `Dialog.Description`, the subtitle owns the description id when present, otherwise the body description does.
+
+## [2026-06-30] — Replace native confirm in protocol editor
+
+### Changed
+
+- `ProtocolEditor` unsaved-changes navigation guard now uses the custom `ConfirmDialog` component instead of the native `window.confirm()`. The dialog is driven by the `useBlocker` state and resolves via `proceed()`/`reset()` callbacks. This removes the last native browser popup in the app (`apps/web/src/pages/ProtocolEditor/index.tsx`).
+- Split the single `navigateAway` string into `navigateAwayTitle` / `navigateAwayBody` / `navigateAwayConfirm` / `navigateAwayCancel` to populate the dialog (`apps/web/src/pages/ProtocolEditor/strings.ts`).
+
 ## [2026-06-30] — Template-driven protocol creation
 
 ### Added

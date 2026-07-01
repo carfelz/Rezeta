@@ -1,6 +1,6 @@
 import {
   Button,
-  Input,
+  Textarea,
   Modal,
   ModalBody,
   ModalContent,
@@ -40,12 +40,13 @@ export function PublishModal({
             <label className="text-[12.5px] font-sans font-medium text-n-700">
               {protocolEditorStrings.publishModalLabel}
             </label>
-            <Input
-              type="text"
+            <Textarea
+              rows={3}
+              cols={3}
+              className="w-auto resize-none"
               value={changeSummary}
               onChange={(e) => onChangeSummary(e.target.value)}
               placeholder={protocolEditorStrings.publishModalPlaceholder}
-              onKeyDown={(e) => e.key === 'Enter' && onConfirm()}
               autoFocus
             />
           </div>

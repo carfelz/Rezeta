@@ -1,4 +1,5 @@
-import { Modal, ModalContent, ModalHeader, ModalFooter } from './Modal'
+import * as Dialog from '@radix-ui/react-dialog'
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from './Modal'
 import { Button } from './Button'
 
 export interface ConfirmDialogProps {
@@ -6,7 +7,10 @@ export interface ConfirmDialogProps {
   onConfirm: () => void
   onCancel: () => void
   title: string
+  /** Main body copy of the dialog. */
   description: string
+  /** Optional secondary line shown under the title in the header. */
+  subtitle?: string
   confirmLabel?: string
   cancelLabel?: string
   variant?: 'danger' | 'primary'
@@ -16,6 +20,12 @@ export interface ConfirmDialogProps {
 /**
  * Async, state-driven replacement for window.confirm(). Built on the
  * Modal + ModalHeader pattern used across the app (see DeleteConfirmModal).
+ *
+ * `description` is the body of the modal. `subtitle`, when provided, is the
+ * header line under the title. Radix wires `aria-describedby` to a single
+ * `Dialog.Description`: the subtitle owns it when present, otherwise the body
+ * description does — so the description is always announced and the id is never
+ * duplicated.
  */
 export function ConfirmDialog({
   open,
@@ -23,6 +33,7 @@ export function ConfirmDialog({
   onCancel,
   title,
   description,
+  subtitle,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
   variant = 'danger',
@@ -39,10 +50,19 @@ export function ConfirmDialog({
       <ModalContent>
         <ModalHeader
           title={title}
-          subtitle={description}
+          {...(subtitle ? { subtitle } : {})}
           icon={<i className={`ph ph-${variant === 'danger' ? 'trash' : 'question'}`} />}
           iconVariant={variant === 'danger' ? 'danger' : 'default'}
         />
+        <ModalBody>
+          {subtitle ? (
+            <p className="text-[14px] font-sans text-n-700 leading-normal">{description}</p>
+          ) : (
+            <Dialog.Description className="text-[14px] font-sans text-n-700 leading-normal">
+              {description}
+            </Dialog.Description>
+          )}
+        </ModalBody>
         <ModalFooter>
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
             {cancelLabel}

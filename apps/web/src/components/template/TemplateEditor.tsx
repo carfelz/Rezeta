@@ -603,7 +603,10 @@ function BlockRow({
                 />
               </Field>
               <Field label={templateEditorWidgetStrings.sectionDescLabel}>
-                <Input
+                <Textarea
+                  rows={3}
+                  cols={3}
+                  className="w-auto resize-none"
                   value={block.description ?? ''}
                   disabled={isLocked}
                   onChange={(e) =>

@@ -76,7 +76,7 @@ export function ModalHeader({
 
   return (
     <div
-      className={cn('flex items-start gap-4 px-6 pt-5 pb-[14px] border-b border-n-100', className)}
+      className={cn('flex items-center gap-4 px-6 pt-5 pb-[14px] border-b border-n-100', className)}
     >
       {icon && (
         <span
