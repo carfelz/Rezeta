@@ -34,6 +34,7 @@ import {
   type ConsultationListParams,
 } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
 import { ProtocolRecommendationsService } from '../protocol-recommendations/protocol-recommendations.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
@@ -44,6 +45,7 @@ export class ConsultationsService {
   constructor(
     @Inject(ConsultationsRepository) private repo: ConsultationsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ReferenceGuardService) private references: ReferenceGuardService,
     @Inject(InvoicesService) private invoicesSvc: InvoicesService,
     @Inject(ProtocolRecommendationsService)
     private recommendationsSvc: ProtocolRecommendationsService,
@@ -136,6 +138,13 @@ export class ConsultationsService {
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
+    // Verify every client-supplied FK belongs to this tenant before linking it,
+    // otherwise a consultation stamped with our tenantId could point at another
+    // tenant's patient/location and leak their PHI back in the response.
+    // The appointment is asserted by the tenant-scoped status lookup below.
+    await this.references.assertPatient(dto.patientId, tenantId)
+    await this.references.assertLocation(dto.locationId, tenantId)
+
     let apptStatusBefore: string | null = null
     if (dto.appointmentId != null) {
       const appt = await this.prisma.appointment.findFirst({

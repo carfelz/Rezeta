@@ -30,6 +30,32 @@ recetas y facturas.
 - **TOCTOU-hardened consultation start.** The create-transaction's appointment update is now a status-filtered `updateMany` (`status ∈ {scheduled, in_progress}`); a count of 0 (a concurrent cancel/complete racing the pre-check) throws inside the transaction and rolls the consultation create back, surfaced to the caller as `APPOINTMENT_NOT_STARTABLE` (`apps/api/src/modules/consultations/consultations.repository.ts`, `consultations.service.ts`).
 - **Appointment reads carry consultation link data.** `AppointmentWithDetails` now includes `consultationId`/`consultationStatus` (latest live consultation) via a shared `DETAILS_INCLUDE` across findMany/findById/create/update/updateStatus (`apps/api/src/modules/appointments/appointments.repository.ts`). `useAppointments` accepts an optional `patientId` param, and `AppointmentFormModal` gains an optional `defaultPatientId` prop.
 
+## [2026-07-01] — Security audit fixes (cross-tenant isolation, PHI redaction, XSS, clinical immutability)
+
+### Fixed
+
+- **Cross-tenant foreign-key injection (High).** `ConsultationsService.create`, `AppointmentsService.create`/`update`, and `InvoicesService.create` now verify that every client-supplied `patientId`/`locationId`/`appointmentId`/`consultationId` belongs to the caller's tenant before linking it. Previously a row stamped with the caller's `tenantId` could reference another tenant's patient and leak PHI (name, allergies, chronic conditions) back in the response. New shared `ReferenceGuardService` (`apps/api/src/common/references/reference-guard.service.ts`, provided globally in `app.module.ts`).
+- **Patient document numbers were not redacted in audit rows (Medium).** `apps/api/src/common/audit-log/redact.ts` keyed on `cedula`/`rnc`/`passport` but the actual Patient column is `documentNumber`, so full national-ID numbers were stored unmasked. Added `documentNumber` to the Patient redaction rules with last-4 partial masking (audit-log-spec §8).
+- **Stored XSS in the dashboard activity feed (Medium).** `describeAuditEntry` built an HTML string from the user-controlled `fullName` and `ActivityItem` rendered it via `dangerouslySetInnerHTML`. Refactored to return structured `{ actor, detail }` parts rendered as React text nodes; removed the `dangerouslySetInnerHTML` sink (`apps/web/src/pages/Dashboard/helpers.ts`, `ActivityItem.tsx`, `ActivityFeed.tsx`).
+- **Signed clinical orders could be soft-deleted (Medium).** `OrdersService.deletePrescription`/`deleteImagingOrder`/`deleteLabOrder` now reject deletion of `signed` orders (immutable clinical records — corrections go through amendment). Added `IMAGING_ORDER_ALREADY_SIGNED` / `LAB_ORDER_ALREADY_SIGNED` to `packages/shared/src/errors.ts`.
+
+- **Unclamped list `limit` (Medium DoS).** `GET /v1/patients` and `GET /v1/invoices` parsed `limit` with a bare `parseInt` and passed it straight to Prisma `take`, allowing an unbounded/NaN fetch. Both now route through the new shared `parseLimit` helper (clamps to 1–100, default 50).
+
+### Added
+
+- **Guardrail — `ReferenceGuardService`** (`apps/api/src/common/references/`): reusable tenant-scoped FK ownership checks (`assertPatient`/`assertLocation`/`assertAppointment`/`assertConsultation`), so cross-tenant reference injection is prevented in one audited place.
+- **Guardrail — `parseLimit`** (`apps/api/src/common/pagination/parse-limit.ts`): shared list-limit parser/clamp for every paginated endpoint.
+- **Guardrail — ESLint ban on `dangerouslySetInnerHTML`** (`eslint.config.js`): fails CI on the stored-XSS sink; bypass requires an inline disable documenting why the HTML is trusted.
+- **Guardrail — audit-redaction coverage test** (`apps/api/src/common/audit-log/__tests__/redaction-coverage.spec.ts`): fails CI if a curated Patient identifier column is missing from the schema or not masked by the redactor, catching future `documentNumber`-style drift.
+- **Guardrail — tenant-scoping architectural test** (`apps/api/src/common/repository/__tests__/tenant-scoping.arch.spec.ts`): parses every `*.repository.ts` and fails CI on any Prisma `update`/`updateMany`/`delete`/`deleteMany`/`upsert` whose `where` omits `tenantId`/`userId` (tenant-less models allow-listed). Prevents the unscoped-mutation class behind the cross-tenant finding from returning.
+- **Guardrail — ESLint ErrorCode enforcement** (`eslint.config.js`): bans raw string / template-literal messages in `new *Exception(...)`, forcing the closed-enum `{ code, message }` form (relaxed in test files).
+
+### Changed
+
+- **Tenant-scoped every repository write.** Added `tenantId` (or a parent relation filter) to 15 previously `id`-only Prisma mutations across `invoices`, `orders`, `protocols`, `protocol-categories`, `protocol-templates`, and `protocol-improvements` repositories — closing the defense-in-depth gap and satisfying the new architectural guardrail. Threaded `tenantId` through the affected repository method signatures (`ProtocolCategoriesRepository.update`/`softDelete`, `ProtocolImprovementsRepository.markApplied`/`markDismissed`).
+- **Standardized error throwing on the `ErrorCode` enum.** Converted the remaining raw-string `NotFoundException`/`BadRequestException`/`ForbiddenException`/`InternalServerErrorException` messages in `invoices`, `auth`, and `onboarding` to the `{ code, message }` form. Added `INVOICE_NOT_EDITABLE` to `packages/shared/src/errors.ts`.
+- `InvoicesService.create` location-not-found error now uses `ErrorCode.LOCATION_NOT_FOUND` instead of a raw string.
+
 ## [2026-06-30] — Multiline summary + description fields
 
 ### Changed

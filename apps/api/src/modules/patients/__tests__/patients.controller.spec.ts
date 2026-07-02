@@ -49,11 +49,17 @@ describe('PatientsController', () => {
     controller = new PatientsController(service)
   })
 
-  it('list delegates to service without optional params', async () => {
+  it('list delegates to service with a clamped default limit', async () => {
     vi.mocked(service.list).mockResolvedValue({ items: [makePatient()], hasMore: false })
     const result = await controller.list(tenantId, mockUser)
-    expect(service.list).toHaveBeenCalledWith({ tenantId, ownerId: 'user-1' })
+    expect(service.list).toHaveBeenCalledWith({ tenantId, ownerId: 'user-1', limit: 50 })
     expect(result.items).toHaveLength(1)
+  })
+
+  it('list clamps an oversized limit to the max (DoS protection)', async () => {
+    vi.mocked(service.list).mockResolvedValue({ items: [], hasMore: false })
+    await controller.list(tenantId, mockUser, undefined, undefined, '100000000')
+    expect(service.list).toHaveBeenCalledWith(expect.objectContaining({ limit: 100 }))
   })
 
   it('list passes search, cursor, and limit when provided', async () => {

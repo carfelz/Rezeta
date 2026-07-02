@@ -1,8 +1,21 @@
 const FIELD_REDACT_RULES: Record<string, Set<string>> = {
   User: new Set(['passwordHash', 'password', 'externalUid']),
-  Patient: new Set(['cedula', 'rnc', 'passport', 'ssn', 'nationalId']),
+  // `documentNumber` is the actual Patient column holding the cédula / passport /
+  // RNC (with `documentType` as the discriminator); the legacy per-type keys are
+  // kept for defence in depth in case a payload uses them.
+  Patient: new Set(['documentNumber', 'cedula', 'rnc', 'passport', 'ssn', 'nationalId']),
   Tenant: new Set(['stripeCustomerId', 'stripeSubscriptionId']),
 }
+
+// Document-ID fields are partially masked (last 4 shown) rather than fully
+// redacted, per audit-log-spec §8.
+const PARTIAL_MASK_FIELDS = new Set([
+  'documentNumber',
+  'cedula',
+  'rnc',
+  'passport',
+  'nationalId',
+])
 
 const GLOBALLY_BLOCKED = new Set([
   'password',
@@ -40,11 +53,8 @@ export function redactForAudit(
       continue
     }
     if (entityRules.has(key)) {
-      // Partial mask for document IDs (show last 4)
-      result[key] =
-        key === 'cedula' || key === 'rnc' || key === 'passport' || key === 'nationalId'
-          ? maskPartial(value)
-          : '[REDACTED]'
+      // Partial mask for document IDs (show last 4); full redaction otherwise.
+      result[key] = PARTIAL_MASK_FIELDS.has(key) ? maskPartial(value) : '[REDACTED]'
       continue
     }
     result[key] = value

@@ -7,6 +7,7 @@ import { configuration } from './config/configuration.js'
 import { PrismaService } from './lib/prisma.service.js'
 import { AuthModule } from './lib/auth/index.js'
 import { PdfService } from './lib/pdf.service.js'
+import { ReferenceGuardService } from './common/references/reference-guard.service.js'
 import { AuthGuard } from './common/guards/auth.guard.js'
 import { TenantGuard } from './common/guards/tenant.guard.js'
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js'
@@ -84,7 +85,8 @@ class AppController {
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     // Shared services
     PdfService,
+    ReferenceGuardService,
   ],
-  exports: [PrismaService, PdfService],
+  exports: [PrismaService, PdfService, ReferenceGuardService],
 })
 export class AppModule {}

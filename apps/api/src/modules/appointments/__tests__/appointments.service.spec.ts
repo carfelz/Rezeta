@@ -3,8 +3,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common'
 import { AppointmentsService } from '../appointments.service.js'
 import type { AppointmentsRepository } from '../appointments.repository.js'
+import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { AppointmentWithDetails } from '@rezeta/shared'
+
+function makeReferencesMock(): ReferenceGuardService {
+  return {
+    assertPatient: vi.fn().mockResolvedValue(undefined),
+    assertLocation: vi.fn().mockResolvedValue(undefined),
+    assertAppointment: vi.fn().mockResolvedValue(undefined),
+    assertConsultation: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ReferenceGuardService
+}
 
 const STARTS = '2026-05-01T09:00:00.000Z'
 const ENDS = '2026-05-01T10:00:00.000Z'
@@ -36,6 +46,7 @@ function mockAppt(overrides: Partial<AppointmentWithDetails> = {}): AppointmentW
 
 describe('AppointmentsService', () => {
   let repo: AppointmentsRepository
+  let references: ReferenceGuardService
   let service: AppointmentsService
 
   beforeEach(() => {
@@ -49,7 +60,8 @@ describe('AppointmentsService', () => {
       hasConflict: vi.fn(),
       findLiveConsultation: vi.fn(),
     } as unknown as AppointmentsRepository
-    service = new AppointmentsService(repo)
+    references = makeReferencesMock()
+    service = new AppointmentsService(repo, references)
   })
 
   // ── list ─────────────────────────────────────────────────────────────────────
@@ -127,6 +139,23 @@ describe('AppointmentsService', () => {
       await service.create('tenant-1', 'user-1', dto).catch(() => {})
       expect(repo.create).not.toHaveBeenCalled()
     })
+
+    it('verifies patient and location belong to the tenant', async () => {
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.create).mockResolvedValue(mockAppt())
+      await service.create('tenant-1', 'user-1', dto)
+      expect(references.assertPatient).toHaveBeenCalledWith('p-1', 'tenant-1')
+      expect(references.assertLocation).toHaveBeenCalledWith('l-1', 'tenant-1')
+    })
+
+    it('rejects a cross-tenant patient before checking conflicts or creating', async () => {
+      vi.mocked(references.assertPatient).mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' }),
+      )
+      await expect(service.create('tenant-1', 'user-1', dto)).rejects.toThrow(NotFoundException)
+      expect(repo.hasConflict).not.toHaveBeenCalled()
+      expect(repo.create).not.toHaveBeenCalled()
+    })
   })
 
   // ── update ───────────────────────────────────────────────────────────────────
@@ -145,6 +174,28 @@ describe('AppointmentsService', () => {
       await expect(
         service.update('bad', 'tenant-1', 'user-1', { startsAt: STARTS }),
       ).rejects.toThrow(NotFoundException)
+    })
+
+    it('verifies a reassigned patient/location belong to the tenant', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+      await service.update('appt-1', 'tenant-1', 'user-1', {
+        patientId: 'p-2',
+        locationId: 'l-2',
+      })
+      expect(references.assertPatient).toHaveBeenCalledWith('p-2', 'tenant-1')
+      expect(references.assertLocation).toHaveBeenCalledWith('l-2', 'tenant-1')
+    })
+
+    it('rejects a cross-tenant patient on update before writing', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(references.assertPatient).mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' }),
+      )
+      await expect(
+        service.update('appt-1', 'tenant-1', 'user-1', { patientId: 'other-tenant' }),
+      ).rejects.toThrow(NotFoundException)
+      expect(repo.update).not.toHaveBeenCalled()
     })
 
     it('throws BadRequestException when endsAt is before startsAt in update', async () => {

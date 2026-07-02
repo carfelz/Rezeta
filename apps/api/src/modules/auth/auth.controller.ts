@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger'
 import type { Request } from 'express'
 import type { AuthUser } from '@rezeta/shared'
+import { ErrorCode } from '@rezeta/shared'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { ProvisionRoute } from '../../common/decorators/provision-route.decorator.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -87,7 +88,10 @@ export class AuthController {
     const email = body['username'] ?? body['email']
     const password = body['password']
     if (!email || !password) {
-      throw new BadRequestException('email and password are required')
+      throw new BadRequestException({
+        code: ErrorCode.VALIDATION_ERROR,
+        message: 'email and password are required',
+      })
     }
     return this.service.devGetToken(email, password)
   }

@@ -4,8 +4,19 @@ import { NotFoundException, BadRequestException, Logger } from '@nestjs/common'
 import { InvoicesService } from '../invoices.service.js'
 import type { InvoicesRepository, InvoiceRow } from '../invoices.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
+import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
+import { ErrorCode } from '@rezeta/shared'
 import { Prisma } from '@rezeta/db'
 const { Decimal } = Prisma
+
+function makeReferencesMock(): ReferenceGuardService {
+  return {
+    assertPatient: vi.fn().mockResolvedValue(undefined),
+    assertLocation: vi.fn().mockResolvedValue(undefined),
+    assertAppointment: vi.fn().mockResolvedValue(undefined),
+    assertConsultation: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ReferenceGuardService
+}
 
 vi.mock('../../../lib/pdf.service.js', () => ({
   PdfService: class {
@@ -58,6 +69,7 @@ function makeRow(overrides: Partial<InvoiceRow> = {}): InvoiceRow {
 describe('InvoicesService', () => {
   let repo: InvoicesRepository
   let prisma: PrismaService
+  let references: ReferenceGuardService
   let service: InvoicesService
   let auditLog: { record: ReturnType<typeof vi.fn> }
   let pdfService: {
@@ -87,8 +99,15 @@ describe('InvoicesService', () => {
     }
 
     auditLog = { record: vi.fn().mockResolvedValue(undefined) }
+    references = makeReferencesMock()
 
-    service = new InvoicesService(repo, prisma, pdfService as never, auditLog as never)
+    service = new InvoicesService(
+      repo,
+      prisma,
+      pdfService as never,
+      auditLog as never,
+      references,
+    )
   })
 
   // ── list ────────────────────────────────────────────────────────────────────
@@ -177,6 +196,32 @@ describe('InvoicesService', () => {
     it('does not call repo.create when location not found', async () => {
       vi.mocked(prisma.location.findFirst).mockResolvedValue(null)
       await service.create('tenant-1', 'user-1', dto).catch(() => {})
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('verifies the patient belongs to the tenant', async () => {
+      vi.mocked(prisma.location.findFirst).mockResolvedValue({
+        commissionPercent: new Decimal(10),
+      } as never)
+      vi.mocked(repo.create).mockResolvedValue(makeRow())
+      await service.create('tenant-1', 'user-1', dto)
+      expect(references.assertPatient).toHaveBeenCalledWith('patient-1', 'tenant-1')
+    })
+
+    it('verifies the consultation when consultationId is supplied', async () => {
+      vi.mocked(prisma.location.findFirst).mockResolvedValue({
+        commissionPercent: new Decimal(10),
+      } as never)
+      vi.mocked(repo.create).mockResolvedValue(makeRow())
+      await service.create('tenant-1', 'user-1', { ...dto, consultationId: 'c-1' })
+      expect(references.assertConsultation).toHaveBeenCalledWith('c-1', 'tenant-1')
+    })
+
+    it('rejects a cross-tenant patient before creating', async () => {
+      vi.mocked(references.assertPatient).mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' }),
+      )
+      await expect(service.create('tenant-1', 'user-1', dto)).rejects.toThrow(NotFoundException)
       expect(repo.create).not.toHaveBeenCalled()
     })
   })

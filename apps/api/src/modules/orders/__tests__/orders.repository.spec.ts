@@ -187,7 +187,7 @@ describe('OrdersRepository', () => {
       mockPrisma.prescription.update.mockResolvedValue({})
       await repo.updatePrescriptionPdfUrl('rx1', 't1', 'https://example.com/rx.pdf')
       expect(mockPrisma.prescription.update).toHaveBeenCalledWith({
-        where: { id: 'rx1' },
+        where: { id: 'rx1', tenantId: 't1' },
         data: { pdfUrl: 'https://example.com/rx.pdf' },
       })
     })

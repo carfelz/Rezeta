@@ -79,17 +79,17 @@ export class ProtocolImprovementsRepository {
     return toSuggestion(row)
   }
 
-  async markApplied(id: string): Promise<ProtocolSuggestion> {
+  async markApplied(id: string, tenantId: string): Promise<ProtocolSuggestion> {
     const row = await this.prisma.protocolSuggestion.update({
-      where: { id },
+      where: { id, tenantId },
       data: { status: 'applied', appliedAt: new Date() },
     })
     return toSuggestion(row)
   }
 
-  async markDismissed(id: string): Promise<ProtocolSuggestion> {
+  async markDismissed(id: string, tenantId: string): Promise<ProtocolSuggestion> {
     const row = await this.prisma.protocolSuggestion.update({
-      where: { id },
+      where: { id, tenantId },
       data: { status: 'dismissed', dismissedAt: new Date() },
     })
     return toSuggestion(row)

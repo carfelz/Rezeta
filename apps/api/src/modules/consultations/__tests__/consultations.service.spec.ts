@@ -4,6 +4,7 @@ import { NotFoundException, ConflictException, BadRequestException } from '@nest
 import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
+import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
 import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
@@ -12,6 +13,15 @@ import { ErrorCode } from '@rezeta/shared'
 import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
 
 const VALID_UUID = '00000000-0000-0000-0000-000000000001'
+
+function makeReferencesMock(): ReferenceGuardService {
+  return {
+    assertPatient: vi.fn().mockResolvedValue(undefined),
+    assertLocation: vi.fn().mockResolvedValue(undefined),
+    assertAppointment: vi.fn().mockResolvedValue(undefined),
+    assertConsultation: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ReferenceGuardService
+}
 
 function mockConsultation(
   overrides: Partial<ConsultationWithDetails> = {},
@@ -68,6 +78,7 @@ function mockProtocolUsage(
 describe('ConsultationsService', () => {
   let repo: ConsultationsRepository
   let prisma: PrismaService
+  let references: ReferenceGuardService
   let invoicesSvc: InvoicesService
   let service: ConsultationsService
   let recommendationsSvc: { invalidate: ReturnType<typeof vi.fn> }
@@ -104,11 +115,13 @@ describe('ConsultationsService', () => {
       createFromConsultation: vi.fn().mockResolvedValue({ status: 'skipped_no_fee' }),
     } as unknown as InvoicesService
 
+    references = makeReferencesMock()
     recommendationsSvc = { invalidate: vi.fn() }
     auditLog = { record: vi.fn().mockResolvedValue(undefined) }
     service = new ConsultationsService(
       repo,
       prisma,
+      references,
       invoicesSvc,
       recommendationsSvc as unknown as ProtocolRecommendationsService,
       auditLog as unknown as AuditLogService,
@@ -169,6 +182,42 @@ describe('ConsultationsService', () => {
       })
       expect(result).toEqual(c)
       expect(repo.create).toHaveBeenCalledTimes(1)
+    })
+
+    it('verifies patient and location belong to the tenant before creating', async () => {
+      vi.mocked(repo.create).mockResolvedValue(mockConsultation())
+      await service.create('tenant-1', 'user-1', { patientId: 'p-1', locationId: 'l-1' })
+      expect(references.assertPatient).toHaveBeenCalledWith('p-1', 'tenant-1')
+      expect(references.assertLocation).toHaveBeenCalledWith('l-1', 'tenant-1')
+      expect(references.assertAppointment).not.toHaveBeenCalled()
+    })
+
+    it('verifies the appointment via the tenant-scoped status lookup when appointmentId is supplied', async () => {
+      // assertAppointment is deliberately skipped here: the status lookup below
+      // performs the same tenant-scoped existence check in a single query.
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'scheduled' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      vi.mocked(repo.create).mockResolvedValue(mockConsultation())
+      await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId: 'a-1',
+      } as never)
+      expect(prisma.appointment.findFirst).toHaveBeenCalledWith({
+        where: { id: 'a-1', tenantId: 'tenant-1', deletedAt: null },
+        select: { status: true },
+      })
+      expect(references.assertAppointment).not.toHaveBeenCalled()
+    })
+
+    it('rejects a cross-tenant patient and never creates the row', async () => {
+      vi.mocked(references.assertPatient).mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' }),
+      )
+      await expect(
+        service.create('tenant-1', 'user-1', { patientId: 'other-tenant-patient', locationId: 'l-1' }),
+      ).rejects.toThrow(NotFoundException)
+      expect(repo.create).not.toHaveBeenCalled()
     })
 
     describe('with protocolId (schema reset v2 — create delegates to repo, protocol launched separately)', () => {

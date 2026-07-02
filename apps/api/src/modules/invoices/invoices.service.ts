@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger, NotFoundException, BadRequestException } fr
 import { PrismaService } from '../../lib/prisma.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 import {
   InvoicesRepository,
@@ -17,6 +18,7 @@ import type {
   Currency,
   InvoiceOutcome,
 } from '@rezeta/shared'
+import { ErrorCode } from '@rezeta/shared'
 
 interface InvoiceListResult {
   items: InvoiceWithDetails[]
@@ -33,6 +35,7 @@ export class InvoicesService {
     @Inject(PrismaService) private prisma: PrismaService,
     @Inject(PdfService) private pdf: PdfService,
     @Inject(AuditLogService) private auditLog: AuditLogService,
+    @Inject(ReferenceGuardService) private references: ReferenceGuardService,
   ) {}
 
   async list(params: InvoiceListParams): Promise<InvoiceListResult> {
@@ -46,7 +49,7 @@ export class InvoicesService {
 
   async getById(id: string, tenantId: string): Promise<InvoiceWithDetails> {
     const row = await this.repo.findById(id, tenantId)
-    if (!row) throw new NotFoundException('Invoice not found')
+    if (!row) throw new NotFoundException({ code: ErrorCode.INVOICE_NOT_FOUND, message: 'Invoice not found' })
     return this.toDto(row)
   }
 
@@ -55,11 +58,22 @@ export class InvoicesService {
     userId: string,
     dto: CreateInvoiceDto,
   ): Promise<InvoiceWithDetails> {
+    // Every client-supplied FK must belong to this tenant before it is linked.
+    await this.references.assertPatient(dto.patientId, tenantId)
+    if (dto.consultationId != null) {
+      await this.references.assertConsultation(dto.consultationId, tenantId)
+    }
+
     const location = await this.prisma.location.findFirst({
       where: { id: dto.locationId, tenantId, deletedAt: null },
       select: { commissionPercent: true },
     })
-    if (!location) throw new NotFoundException('Location not found')
+    if (!location) {
+      throw new NotFoundException({
+        code: ErrorCode.LOCATION_NOT_FOUND,
+        message: 'Location not found',
+      })
+    }
 
     const commissionPct = Number(location.commissionPercent)
     const row = await this.repo.create(tenantId, userId, dto, commissionPct)
@@ -68,9 +82,12 @@ export class InvoicesService {
 
   async update(id: string, tenantId: string, dto: UpdateInvoiceDto): Promise<InvoiceWithDetails> {
     const existing = await this.repo.findById(id, tenantId)
-    if (!existing) throw new NotFoundException('Invoice not found')
+    if (!existing) throw new NotFoundException({ code: ErrorCode.INVOICE_NOT_FOUND, message: 'Invoice not found' })
     if (existing.status !== 'draft') {
-      throw new BadRequestException('Only draft invoices can be edited')
+      throw new BadRequestException({
+        code: ErrorCode.INVOICE_NOT_EDITABLE,
+        message: 'Only draft invoices can be edited',
+      })
     }
     const row = await this.repo.update(id, tenantId, dto)
     return this.toDto(row)
@@ -82,13 +99,14 @@ export class InvoicesService {
     dto: UpdateInvoiceStatusDto,
   ): Promise<InvoiceWithDetails> {
     const existing = await this.repo.findById(id, tenantId)
-    if (!existing) throw new NotFoundException('Invoice not found')
+    if (!existing) throw new NotFoundException({ code: ErrorCode.INVOICE_NOT_FOUND, message: 'Invoice not found' })
 
     const allowed = this.allowedTransitions(existing.status)
     if (!allowed.includes(dto.status)) {
-      throw new BadRequestException(
-        `Cannot transition from '${existing.status}' to '${dto.status}'`,
-      )
+      throw new BadRequestException({
+        code: ErrorCode.INVOICE_NOT_EDITABLE,
+        message: `Cannot transition from '${existing.status}' to '${dto.status}'`,
+      })
     }
 
     const row = await this.repo.updateStatus(id, tenantId, dto.status, dto.paymentMethod)
@@ -125,9 +143,12 @@ export class InvoicesService {
 
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await this.repo.findById(id, tenantId)
-    if (!existing) throw new NotFoundException('Invoice not found')
+    if (!existing) throw new NotFoundException({ code: ErrorCode.INVOICE_NOT_FOUND, message: 'Invoice not found' })
     if (existing.status === 'issued' || existing.status === 'paid') {
-      throw new BadRequestException('Cannot delete issued or paid invoices')
+      throw new BadRequestException({
+        code: ErrorCode.INVOICE_ALREADY_ISSUED,
+        message: 'Cannot delete issued or paid invoices',
+      })
     }
     await this.repo.softDelete(id, tenantId)
   }
