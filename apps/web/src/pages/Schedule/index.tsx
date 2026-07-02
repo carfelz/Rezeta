@@ -3,6 +3,8 @@ import { Button, Callout, EmptyState } from '@/components/ui'
 import { useAppointments, useDeleteAppointment } from '@/hooks/appointments/use-appointments'
 import { useUiStore } from '@/store/ui.store'
 import type { AppointmentWithDetails } from '@rezeta/shared'
+import { NewConsultationDialog } from '@/components/consultations/NewConsultationDialog'
+import { newConsultationDialogStrings } from '@/components/consultations/newConsultationDialogStrings'
 import { AppointmentCardWithMutation } from './AppointmentCardWithMutation'
 import { AppointmentFormModal } from './AppointmentFormModal'
 import { DateNavigation } from './DateNavigation'
@@ -14,6 +16,7 @@ export function Schedule(): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showCreate, setShowCreate] = useState(false)
+  const [showNewConsultation, setShowNewConsultation] = useState(false)
   const [editing, setEditing] = useState<AppointmentWithDetails | null>(null)
   const [deleting, setDeleting] = useState<AppointmentWithDetails | null>(null)
 
@@ -90,12 +93,25 @@ export function Schedule(): JSX.Element {
         />
       )}
 
+      {showNewConsultation && (
+        <NewConsultationDialog
+          open={showNewConsultation}
+          onClose={() => setShowNewConsultation(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between mb-6 gap-4">
         <h1 className="text-h1 m-0">{schedulePageStrings.pageTitle}</h1>
-        <Button variant="primary" onClick={() => setShowCreate(true)}>
-          <i className="ph ph-plus mr-2" />
-          {schedulePageStrings.newAppointmentButton}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setShowCreate(true)}>
+            <i className="ph ph-plus mr-2" />
+            {schedulePageStrings.newAppointmentButton}
+          </Button>
+          <Button variant="primary" onClick={() => setShowNewConsultation(true)}>
+            <i className="ph ph-plus mr-2" />
+            {newConsultationDialogStrings.title}
+          </Button>
+        </div>
       </div>
 
       <DateNavigation

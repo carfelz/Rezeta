@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Global "Nueva consulta" walk-in dialog with inline minimal patient creation (Slice G)
+
+### Added
+
+- `NewConsultationDialog` (`apps/web/src/components/consultations/NewConsultationDialog.tsx`) — modal with two modes: `search` (find an existing patient via the reused `PatientCombobox`) and `create-patient` (inline minimal mini-form: `Nombre`, `Apellido`, `Fecha de nacimiento`). Location defaults to `useUiStore.activeLocationId`. Submit is disabled until a patient (selected or a valid mini-form) and a location are set. On submit it creates the patient when in create mode, then creates a walk-in consultation (`appointmentId` omitted) and navigates to `/consultas/{id}`; the create chain terminates with `.catch(() => undefined)` so a failed mutation leaves the dialog open without an unhandled rejection (hooks' `onError` toasts surface the error). Strings colocated in `newConsultationDialogStrings.ts`.
+- Tests: `apps/web/src/components/consultations/__tests__/NewConsultationDialog.test.tsx` (existing-patient walk-in + navigate, create-patient path, disabled-until-ready, failure keeps dialog open).
+- Header entry points: primary `Nueva consulta` button on the Agenda page header (`apps/web/src/pages/Schedule/index.tsx`) and repurposed the Dashboard `PageHeader` primary button (`apps/web/src/pages/Dashboard/PageHeader.tsx`) to open the dialog instead of navigating to `/consultas/nueva`.
+
+### Changed
+
+- `PatientCombobox` (`apps/web/src/pages/Schedule/PatientCombobox.tsx`) accepts an optional `placeholder` prop (defaults to the existing string) so the dialog can show `Buscar por nombre o cédula`.
+
+### Notes
+
+- `CreatePatientSchema` (`packages/shared`) requires `fullName` (not separate `firstName`/`lastName`); the mini-form collects `Nombre` + `Apellido` and joins them into `fullName` for the create DTO. `dateOfBirth` is optional and omitted when blank.
+
 ## [2026-07-02] — Dashboard upcoming rows start/continue consultations via shared hook (Slice F)
 
 ### Added
