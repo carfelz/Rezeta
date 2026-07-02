@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException, BadRequestException } from '@nestjs/common'
+import { NotFoundException, BadRequestException, Logger } from '@nestjs/common'
 import { InvoicesService } from '../invoices.service.js'
 import type { InvoicesRepository, InvoiceRow } from '../invoices.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
@@ -477,6 +477,21 @@ describe('InvoicesService', () => {
       ).mockRejectedValue(new Error('DB error'))
       const outcome = await service.createFromConsultation(params)
       expect(outcome).toEqual({ status: 'failed' })
+    })
+
+    it('logs the swallowed error before returning failed', async () => {
+      const logSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockRejectedValue(new Error('DB error'))
+      const outcome = await service.createFromConsultation(params)
+      expect(outcome).toEqual({ status: 'failed' })
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('consult-1'),
+        expect.anything(),
+      )
+      logSpy.mockRestore()
     })
 
     it('returns failed (never throws) when repo.create throws', async () => {

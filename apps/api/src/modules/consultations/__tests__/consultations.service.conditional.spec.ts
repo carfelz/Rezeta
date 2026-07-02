@@ -4,6 +4,7 @@ import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
 import type {
   ConsultationWithDetails,
   ConsultationProtocolUsage,
@@ -74,6 +75,7 @@ describe('ConsultationsService — conditional rule activation on update', () =>
       {} as unknown as PrismaService,
       {} as unknown as InvoicesService,
       { invalidate: vi.fn() } as unknown as ProtocolRecommendationsService,
+      { record: vi.fn() } as unknown as AuditLogService,
     )
   })
 

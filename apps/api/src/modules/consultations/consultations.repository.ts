@@ -20,6 +20,26 @@ type UpdateConsultationDto = Record<string, never>
 import type { ProtocolContent } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
+/**
+ * Thrown inside the create transaction when the status-filtered appointment
+ * update matches no row (a concurrent cancel/complete raced the pre-check).
+ * The service maps this to a ConflictException (APPOINTMENT_NOT_STARTABLE).
+ */
+export class AppointmentNotStartableError extends Error {
+  constructor() {
+    super('Appointment is no longer startable')
+    this.name = 'AppointmentNotStartableError'
+  }
+}
+
+/** Result of signing: the signed consultation plus whether the linked
+ * appointment actually transitioned to `completed` (false when there was no
+ * appointment or its status-filtered update no-op'd). */
+export interface SignResult {
+  consultation: ConsultationWithDetails
+  appointmentCompleted: boolean
+}
+
 type PrismaConsultation = {
   id: string
   tenantId: string
@@ -337,10 +357,21 @@ export class ConsultationsRepository {
         include: RELATIONS_INCLUDE,
       })
       if (dto.appointmentId != null) {
-        await tx.appointment.update({
-          where: { id: dto.appointmentId, tenantId, deletedAt: null },
+        // Status-filtered so a concurrent cancel between the service pre-check
+        // and this commit is a no-op (count 0) rather than being flipped back to
+        // in_progress. Count 0 throws to roll the consultation create back.
+        const { count } = await tx.appointment.updateMany({
+          where: {
+            id: dto.appointmentId,
+            tenantId,
+            deletedAt: null,
+            status: { in: ['scheduled', 'in_progress'] },
+          },
           data: { status: 'in_progress' },
         })
+        if (count === 0) {
+          throw new AppointmentNotStartableError()
+        }
       }
       return created
     })
@@ -365,9 +396,9 @@ export class ConsultationsRepository {
     tenantId: string,
     _userId: string,
     appointmentId: string | null,
-  ): Promise<ConsultationWithDetails> {
+  ): Promise<SignResult> {
     const now = new Date()
-    const row = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.protocolUsage.updateMany({
         where: { consultationId: id, tenantId, status: 'in_progress', deletedAt: null },
         data: { status: 'completed', completedAt: now },
@@ -386,19 +417,25 @@ export class ConsultationsRepository {
       })
       // Complete the linked appointment. `updateMany` filtered on `in_progress`
       // keeps this idempotent and never touches manually completed/cancelled rows.
+      let appointmentCompleted = false
       if (appointmentId != null) {
-        await tx.appointment.updateMany({
+        const { count } = await tx.appointment.updateMany({
           where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
           data: { status: 'completed' },
         })
+        appointmentCompleted = count > 0
       }
-      return tx.consultation.update({
+      const consultation = await tx.consultation.update({
         where: { id, tenantId, deletedAt: null },
         data: { status: 'signed', signedAt: now },
         include: RELATIONS_INCLUDE,
       })
+      return { consultation, appointmentCompleted }
     })
-    return toConsultationWithDetails(row)
+    return {
+      consultation: toConsultationWithDetails(result.consultation),
+      appointmentCompleted: result.appointmentCompleted,
+    }
   }
 
   async createAmendment(
@@ -435,20 +472,27 @@ export class ConsultationsRepository {
     return toConsultationWithDetails(row)
   }
 
-  async softDelete(id: string, tenantId: string, appointmentId: string | null): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+  async softDelete(
+    id: string,
+    tenantId: string,
+    appointmentId: string | null,
+  ): Promise<{ appointmentReverted: boolean }> {
+    return this.prisma.$transaction(async (tx) => {
       await tx.consultation.update({
         where: { id, tenantId, deletedAt: null },
         data: { deletedAt: new Date() },
       })
       // Revert the linked appointment. `updateMany` filtered on `in_progress`
       // keeps this idempotent and never touches manually completed/cancelled rows.
+      let appointmentReverted = false
       if (appointmentId != null) {
-        await tx.appointment.updateMany({
+        const { count } = await tx.appointment.updateMany({
           where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
           data: { status: 'scheduled' },
         })
+        appointmentReverted = count > 0
       }
+      return { appointmentReverted }
     })
   }
 

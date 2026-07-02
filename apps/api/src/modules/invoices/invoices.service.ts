@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
@@ -26,6 +26,8 @@ interface InvoiceListResult {
 
 @Injectable()
 export class InvoicesService {
+  private readonly logger = new Logger(InvoicesService.name)
+
   constructor(
     @Inject(InvoicesRepository) private repo: InvoicesRepository,
     @Inject(PrismaService) private prisma: PrismaService,
@@ -166,7 +168,11 @@ export class InvoicesService {
         total: Number(row.total),
         currency: row.currency,
       }
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `Auto-invoice creation failed for consultation ${params.consultationId}`,
+        err instanceof Error ? err.stack : String(err),
+      )
       return { status: 'failed' }
     }
   }

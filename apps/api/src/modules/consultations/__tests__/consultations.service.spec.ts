@@ -6,6 +6,8 @@ import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
+import { AppointmentNotStartableError } from '../consultations.repository.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
 
@@ -69,6 +71,7 @@ describe('ConsultationsService', () => {
   let invoicesSvc: InvoicesService
   let service: ConsultationsService
   let recommendationsSvc: { invalidate: ReturnType<typeof vi.fn> }
+  let auditLog: { record: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     repo = {
@@ -102,11 +105,13 @@ describe('ConsultationsService', () => {
     } as unknown as InvoicesService
 
     recommendationsSvc = { invalidate: vi.fn() }
+    auditLog = { record: vi.fn().mockResolvedValue(undefined) }
     service = new ConsultationsService(
       repo,
       prisma,
       invoicesSvc,
       recommendationsSvc as unknown as ProtocolRecommendationsService,
+      auditLog as unknown as AuditLogService,
     )
   })
 
@@ -311,6 +316,60 @@ describe('ConsultationsService', () => {
       expect(repo.findOpenByAppointment).not.toHaveBeenCalled()
       expect(repo.create).toHaveBeenCalledTimes(1)
     })
+
+    it('audits the scheduled→in_progress transition when starting from a scheduled appointment', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'scheduled' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      vi.mocked(repo.create).mockResolvedValue(mockConsultation({ appointmentId }))
+
+      await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'Appointment',
+          entityId: appointmentId,
+          category: 'entity',
+          action: 'update',
+          changes: { status: { before: 'scheduled', after: 'in_progress' } },
+        }),
+      )
+    })
+
+    it('does NOT audit for a walk-in (no appointment)', async () => {
+      vi.mocked(repo.create).mockResolvedValue(mockConsultation({ appointmentId: null }))
+      await service.create('tenant-1', 'user-1', { patientId: 'p-1', locationId: 'l-1' })
+      expect(auditLog.record).not.toHaveBeenCalled()
+    })
+
+    it('does NOT audit when the appointment was already in_progress (idempotent restart)', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'in_progress' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      vi.mocked(repo.create).mockResolvedValue(mockConsultation({ appointmentId }))
+      await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+      expect(auditLog.record).not.toHaveBeenCalled()
+    })
+
+    it('maps AppointmentNotStartableError (TOCTOU race) to APPOINTMENT_NOT_STARTABLE', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'scheduled' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      vi.mocked(repo.create).mockRejectedValue(new AppointmentNotStartableError())
+      await expect(
+        service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          appointmentId,
+        }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_NOT_STARTABLE } })
+      expect(auditLog.record).not.toHaveBeenCalled()
+    })
   })
 
   // ── update ─────────────────────────────────────────────────────────────────
@@ -356,7 +415,7 @@ describe('ConsultationsService', () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
       const signCall = vi.mocked(repo.sign).mock.calls[0]
@@ -447,7 +506,7 @@ describe('ConsultationsService', () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(invoicesSvc.createFromConsultation).toHaveBeenCalledWith({
         consultationId: 'consult-1',
@@ -466,7 +525,7 @@ describe('ConsultationsService', () => {
       })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(repo.sign).toHaveBeenCalledWith('consult-1', 'tenant-1', 'user-1', 'appt-1')
     })
@@ -479,17 +538,62 @@ describe('ConsultationsService', () => {
       })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
       expect(repo.sign).toHaveBeenCalledWith('consult-1', 'tenant-1', 'user-1', null)
+    })
+
+    it('audits the in_progress→completed transition when the appointment was completed', async () => {
+      const draft = mockConsultation({
+        status: 'open',
+        appointmentId: 'appt-1',
+        protocolUsages: [mockProtocolUsage()],
+      })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: true })
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'Appointment',
+          entityId: 'appt-1',
+          changes: { status: { before: 'in_progress', after: 'completed' } },
+        }),
+      )
+    })
+
+    it('does NOT audit the appointment when the status-filtered update no-op\'d', async () => {
+      const draft = mockConsultation({
+        status: 'open',
+        appointmentId: 'appt-1',
+        protocolUsages: [mockProtocolUsage()],
+      })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(auditLog.record).not.toHaveBeenCalled()
+    })
+
+    it('does NOT audit the appointment for a walk-in sign', async () => {
+      const draft = mockConsultation({
+        status: 'open',
+        appointmentId: null,
+        protocolUsages: [mockProtocolUsage()],
+      })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(auditLog.record).not.toHaveBeenCalled()
     })
 
     it('returns the invoice outcome when an invoice is created', async () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({
         status: 'created',
         invoiceId: 'inv-1',
@@ -509,7 +613,7 @@ describe('ConsultationsService', () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({ status: 'skipped_no_fee' })
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.invoiceOutcome).toEqual({ status: 'skipped_no_fee' })
@@ -519,7 +623,7 @@ describe('ConsultationsService', () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
-      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
       vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({ status: 'failed' })
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
@@ -552,7 +656,7 @@ describe('ConsultationsService', () => {
   describe('remove', () => {
     it('soft-deletes an open consultation', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'open' }))
-      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: false })
       await service.remove('consult-1', 'tenant-1')
       expect(repo.softDelete).toHaveBeenCalledOnce()
     })
@@ -561,16 +665,49 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(
         mockConsultation({ status: 'open', appointmentId: 'appt-1' }),
       )
-      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: false })
       await service.remove('consult-1', 'tenant-1')
       expect(repo.softDelete).toHaveBeenCalledWith('consult-1', 'tenant-1', 'appt-1')
+    })
+
+    it('audits the in_progress→scheduled revert when the appointment was reverted', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'open', appointmentId: 'appt-1' }),
+      )
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: true })
+      await service.remove('consult-1', 'tenant-1')
+      expect(auditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'Appointment',
+          entityId: 'appt-1',
+          changes: { status: { before: 'in_progress', after: 'scheduled' } },
+        }),
+      )
+    })
+
+    it('does NOT audit the appointment revert when the update no-op\'d', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'open', appointmentId: 'appt-1' }),
+      )
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: false })
+      await service.remove('consult-1', 'tenant-1')
+      expect(auditLog.record).not.toHaveBeenCalled()
+    })
+
+    it('does NOT audit for a walk-in delete (null appointmentId)', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'open', appointmentId: null }),
+      )
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: false })
+      await service.remove('consult-1', 'tenant-1')
+      expect(auditLog.record).not.toHaveBeenCalled()
     })
 
     it('passes null appointmentId for a walk-in consultation', async () => {
       vi.mocked(repo.findById).mockResolvedValue(
         mockConsultation({ status: 'open', appointmentId: null }),
       )
-      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      vi.mocked(repo.softDelete).mockResolvedValue({ appointmentReverted: false })
       await service.remove('consult-1', 'tenant-1')
       expect(repo.softDelete).toHaveBeenCalledWith('consult-1', 'tenant-1', null)
     })

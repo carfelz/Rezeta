@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ConsultationsRepository } from '../consultations.repository.js'
+import { ConsultationsRepository, AppointmentNotStartableError } from '../consultations.repository.js'
 
 const now = new Date('2026-01-01T10:00:00Z')
 
@@ -88,6 +88,13 @@ describe('ConsultationsRepository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // updateMany calls default to a matched row so sign/softDelete/create
+    // report their appointment transition as applied unless a test overrides.
+    mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
+    mockTx.protocolUsage.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.prescription.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.labOrder.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.imagingOrder.updateMany.mockResolvedValue({ count: 0 })
     repo = new ConsultationsRepository(mockPrisma as never)
   })
 
@@ -251,11 +258,12 @@ describe('ConsultationsRepository', () => {
     it('does not touch appointment when no appointmentId (walk-in)', async () => {
       mockTx.consultation.create.mockResolvedValue(makeConsultationRow())
       await repo.create('t1', 'u1', { patientId: 'p1', locationId: 'loc1' } as never)
-      expect(mockTx.appointment.update).not.toHaveBeenCalled()
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
     })
 
     it('includes optional appointmentId when provided', async () => {
       mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
       await repo.create('t1', 'u1', {
         patientId: 'p1',
         locationId: 'loc1',
@@ -266,19 +274,37 @@ describe('ConsultationsRepository', () => {
       expect(data.status).toBe('open')
     })
 
-    it('moves the appointment to in_progress in the same transaction', async () => {
+    it('moves the appointment to in_progress via a status-filtered updateMany', async () => {
       mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
       await repo.create('t1', 'u1', {
         patientId: 'p1',
         locationId: 'loc1',
         appointmentId: 'apt1',
       } as never)
-      expect(mockTx.appointment.update).toHaveBeenCalledWith(
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ id: 'apt1', tenantId: 't1', deletedAt: null }),
+          where: expect.objectContaining({
+            id: 'apt1',
+            tenantId: 't1',
+            deletedAt: null,
+            status: { in: ['scheduled', 'in_progress'] },
+          }),
           data: expect.objectContaining({ status: 'in_progress' }),
         }),
       )
+    })
+
+    it('throws AppointmentNotStartableError and rolls back when the update no-ops (count 0)', async () => {
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      await expect(
+        repo.create('t1', 'u1', {
+          patientId: 'p1',
+          locationId: 'loc1',
+          appointmentId: 'apt1',
+        } as never),
+      ).rejects.toThrow(AppointmentNotStartableError)
     })
   })
 
@@ -325,7 +351,7 @@ describe('ConsultationsRepository', () => {
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       const result = await repo.sign('c1', 't1', 'u1')
-      expect(result.id).toBe('c1')
+      expect(result.consultation.id).toBe('c1')
       const data = mockTx.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
       expect(data.signedAt).toBeInstanceOf(Date)
@@ -380,19 +406,30 @@ describe('ConsultationsRepository', () => {
       mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
-      await repo.sign('c1', 't1', 'u1', 'apt1')
+      const result = await repo.sign('c1', 't1', 'u1', 'apt1')
       expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
         where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
         data: { status: 'completed' },
       })
+      expect(result.appointmentCompleted).toBe(true)
+    })
+
+    it('reports appointmentCompleted false when the status-filtered update no-ops', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      const result = await repo.sign('c1', 't1', 'u1', 'apt1')
+      expect(result.appointmentCompleted).toBe(false)
     })
 
     it('does not touch any appointment when appointmentId is null (walk-in)', async () => {
       mockTx.consultation.update.mockResolvedValue(
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
-      await repo.sign('c1', 't1', 'u1', null)
+      const result = await repo.sign('c1', 't1', 'u1', null)
       expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+      expect(result.appointmentCompleted).toBe(false)
     })
 
     it('rolls back if consultation update throws', async () => {
@@ -402,7 +439,7 @@ describe('ConsultationsRepository', () => {
           prescription: { updateMany: vi.fn() },
           labOrder: { updateMany: vi.fn() },
           imagingOrder: { updateMany: vi.fn() },
-          appointment: { updateMany: vi.fn() },
+          appointment: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
           consultation: {
             update: vi.fn().mockRejectedValue(new Error('DB error')),
           },
@@ -467,17 +504,26 @@ describe('ConsultationsRepository', () => {
 
     it('reverts the linked in_progress appointment back to scheduled', async () => {
       mockTx.consultation.update.mockResolvedValue({})
-      await repo.softDelete('c1', 't1', 'apt1')
+      const result = await repo.softDelete('c1', 't1', 'apt1')
       expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
         where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
         data: { status: 'scheduled' },
       })
+      expect(result.appointmentReverted).toBe(true)
+    })
+
+    it('reports appointmentReverted false when the status-filtered update no-ops', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      const result = await repo.softDelete('c1', 't1', 'apt1')
+      expect(result.appointmentReverted).toBe(false)
     })
 
     it('does not touch any appointment for a walk-in consultation (null appointmentId)', async () => {
       mockTx.consultation.update.mockResolvedValue({})
-      await repo.softDelete('c1', 't1', null)
+      const result = await repo.softDelete('c1', 't1', null)
       expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+      expect(result.appointmentReverted).toBe(false)
     })
   })
 

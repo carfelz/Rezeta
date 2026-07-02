@@ -104,14 +104,24 @@ export class AppointmentsService {
       })
     }
 
+    // `in_progress` is a machine-owned status, set only by starting a
+    // consultation. Allowing a manual set risks stranding an appointment
+    // whose later status-filtered transitions silently no-op.
+    if (dto.status === 'in_progress') {
+      throw new ConflictException({
+        code: ErrorCode.APPOINTMENT_STATUS_MACHINE_OWNED,
+        message: 'The in_progress status is set automatically when a consultation starts',
+      })
+    }
+
     // An appointment linked to a consultation follows the consultation's
     // lifecycle — manual completion/cancellation would desync the two.
     const linked = await this.repo.findLiveConsultation(id, tenantId)
     if (linked) {
-      if (dto.status === 'completed') {
+      if (dto.status === 'completed' || dto.status === 'scheduled') {
         throw new ConflictException({
           code: ErrorCode.APPOINTMENT_HAS_CONSULTATION,
-          message: 'Appointment status follows its consultation and cannot be completed manually',
+          message: 'Appointment status follows its consultation and cannot be set manually',
         })
       }
       if ((dto.status === 'cancelled' || dto.status === 'no_show') && linked.status === 'open') {
@@ -127,6 +137,15 @@ export class AppointmentsService {
 
   async remove(id: string, tenantId: string): Promise<void> {
     await this.getById(id, tenantId)
+    // Deleting an appointment with an open consultation would orphan live
+    // clinical work. Signed consultations are safe to detach.
+    const linked = await this.repo.findLiveConsultation(id, tenantId)
+    if (linked && linked.status === 'open') {
+      throw new ConflictException({
+        code: ErrorCode.APPOINTMENT_HAS_OPEN_CONSULTATION,
+        message: 'Cannot delete an appointment with an open consultation',
+      })
+    }
     await this.repo.softDelete(id, tenantId)
   }
 }

@@ -90,8 +90,11 @@ export class AuditLogInterceptor implements NestInterceptor {
       }
     }
 
-    // Wrap subscription inside the async context so Prisma's $use backstop
-    // sees the store and skips writing its own audit row.
+    // Run the subscription inside the async-local store so service-layer
+    // explicit audit records (e.g. Invoice/Appointment status transitions) can
+    // read the acting user/request context. Audit coverage is interceptor-only
+    // for the request-scoped row plus those explicit service-layer records —
+    // there is no Prisma middleware backstop.
     return new Observable((subscriber) => {
       httpAuditContextStore.run(httpCtx, () => {
         next
