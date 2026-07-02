@@ -127,6 +127,7 @@ export function useSignConsultation(
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       void qc.invalidateQueries({ queryKey: ['appointments'] })
+      void qc.invalidateQueries({ queryKey: ['invoices'] })
       toast.success(toastStrings.consultationSigned)
     },
     onError: () => {
