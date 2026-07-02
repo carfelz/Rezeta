@@ -98,6 +98,26 @@ export class ConsultationsService {
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
+    if (dto.appointmentId != null) {
+      const appt = await this.prisma.appointment.findFirst({
+        where: { id: dto.appointmentId, tenantId, deletedAt: null },
+        select: { status: true },
+      })
+      if (!appt) {
+        throw new NotFoundException({
+          code: ErrorCode.APPOINTMENT_NOT_FOUND,
+          message: 'Appointment not found',
+        })
+      }
+      if (appt.status !== 'scheduled' && appt.status !== 'in_progress') {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_NOT_STARTABLE,
+          message: `Cannot start a consultation on a ${appt.status} appointment`,
+        })
+      }
+      const existing = await this.repo.findOpenByAppointment(dto.appointmentId, tenantId)
+      if (existing) return existing
+    }
     const result = await this.repo.create(tenantId, userId, dto)
     this.recommendationsSvc.invalidate(tenantId, userId, dto.patientId)
     return result

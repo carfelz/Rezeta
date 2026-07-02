@@ -74,6 +74,7 @@ describe('ConsultationsService', () => {
     repo = {
       findMany: vi.fn(),
       findById: vi.fn(),
+      findOpenByAppointment: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       sign: vi.fn(),
@@ -90,6 +91,7 @@ describe('ConsultationsService', () => {
     prisma = {
       protocol: { findFirst: vi.fn() },
       protocolVersion: { findFirst: vi.fn() },
+      appointment: { findFirst: vi.fn() },
       auditLog: { create: vi.fn() },
       $transaction: vi.fn(),
     } as unknown as PrismaService
@@ -176,6 +178,128 @@ describe('ConsultationsService', () => {
         await service.create('tenant-1', 'user-1', { patientId: 'p-1', locationId: 'l-1' })
         expect(recommendationsSvc.invalidate).toHaveBeenCalledWith('tenant-1', 'user-1', 'p-1')
       })
+    })
+  })
+
+  // ── create from appointment ──────────────────────────────────────────────────
+
+  describe('create consultation from appointment', () => {
+    const appointmentId = 'appt-1'
+
+    it('delegates to repo.create for a scheduled appointment (repo moves it to in_progress)', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'scheduled' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      const created = mockConsultation({ appointmentId })
+      vi.mocked(repo.create).mockResolvedValue(created)
+
+      const result = await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+
+      expect(result.appointmentId).toBe(appointmentId)
+      expect(repo.create).toHaveBeenCalledTimes(1)
+      expect(repo.create).toHaveBeenCalledWith('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+    })
+
+    it('starts on an already in_progress appointment (scheduled or in_progress allowed)', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'in_progress' } as never)
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(null)
+      const created = mockConsultation({ appointmentId })
+      vi.mocked(repo.create).mockResolvedValue(created)
+
+      const result = await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+
+      expect(result.appointmentId).toBe(appointmentId)
+      expect(repo.create).toHaveBeenCalledTimes(1)
+    })
+
+    it('is idempotent: returns the existing open consultation instead of creating a second', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'in_progress' } as never)
+      const existing = mockConsultation({ id: 'consult-existing', appointmentId })
+      vi.mocked(repo.findOpenByAppointment).mockResolvedValue(existing)
+
+      const result = await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+        appointmentId,
+      })
+
+      expect(result.id).toBe('consult-existing')
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('rejects starting on a cancelled appointment with APPOINTMENT_NOT_STARTABLE', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'cancelled' } as never)
+      await expect(
+        service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          appointmentId,
+        }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_NOT_STARTABLE } })
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('rejects starting on a completed appointment with APPOINTMENT_NOT_STARTABLE', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'completed' } as never)
+      await expect(
+        service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          appointmentId,
+        }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_NOT_STARTABLE } })
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('rejects starting on a no_show appointment with APPOINTMENT_NOT_STARTABLE', async () => {
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ status: 'no_show' } as never)
+      await expect(
+        service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          appointmentId,
+        }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_NOT_STARTABLE } })
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('rejects an appointment from another tenant with APPOINTMENT_NOT_FOUND', async () => {
+      // tenant-scoped lookup misses → treated as not found
+      vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null)
+      await expect(
+        service.create('tenant-1', 'user-1', {
+          patientId: 'p-1',
+          locationId: 'l-1',
+          appointmentId: 'other-tenant-appt',
+        }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_NOT_FOUND } })
+      expect(repo.create).not.toHaveBeenCalled()
+    })
+
+    it('walk-in (no appointmentId) is unchanged — no appointment lookup', async () => {
+      const created = mockConsultation({ appointmentId: null })
+      vi.mocked(repo.create).mockResolvedValue(created)
+
+      const result = await service.create('tenant-1', 'user-1', {
+        patientId: 'p-1',
+        locationId: 'l-1',
+      })
+
+      expect(result.appointmentId).toBeNull()
+      expect(prisma.appointment.findFirst).not.toHaveBeenCalled()
+      expect(repo.findOpenByAppointment).not.toHaveBeenCalled()
+      expect(repo.create).toHaveBeenCalledTimes(1)
     })
   })
 

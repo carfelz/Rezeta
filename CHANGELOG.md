@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Start a consultation from an appointment (Slice B)
+
+### Added
+
+- `ConsultationsRepository.findOpenByAppointment(appointmentId, tenantId)` — tenant-scoped lookup of the open consultation attached to an appointment, used to make appointment-driven creation idempotent (`apps/api/src/modules/consultations/consultations.repository.ts`).
+
+### Changed
+
+- `ConsultationsService.create` now guards appointment-driven creation: tenant-scoped appointment lookup → `APPOINTMENT_NOT_FOUND`; status not `scheduled`/`in_progress` → `APPOINTMENT_NOT_STARTABLE`; an existing open consultation is returned instead of creating a duplicate (idempotent). Walk-in (no `appointmentId`) is unchanged (`apps/api/src/modules/consultations/consultations.service.ts`).
+- `ConsultationsRepository.create` now runs consultation-create and the appointment `scheduled → in_progress` transition in one `$transaction` (`apps/api/src/modules/consultations/consultations.repository.ts`).
+
 ## [2026-07-02] — Workflow interconnection foundations (Slice A)
 
 ### Added

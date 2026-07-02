@@ -225,21 +225,45 @@ export class ConsultationsRepository {
     return row ? toConsultationWithDetails(row) : null
   }
 
+  /**
+   * Returns the open consultation already attached to an appointment, if any.
+   * Used to make appointment-driven consultation creation idempotent.
+   */
+  async findOpenByAppointment(
+    appointmentId: string,
+    tenantId: string,
+  ): Promise<ConsultationWithDetails | null> {
+    const row = await this.prisma.consultation.findFirst({
+      where: { appointmentId, tenantId, status: 'open', deletedAt: null },
+      include: RELATIONS_INCLUDE,
+    })
+    return row ? toConsultationWithDetails(row) : null
+  }
+
   async create(
     tenantId: string,
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
-    const row = await this.prisma.consultation.create({
-      data: {
-        tenantId,
-        doctorId: userId,
-        patientId: dto.patientId,
-        locationId: dto.locationId,
-        ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
-        status: 'open',
-      },
-      include: RELATIONS_INCLUDE,
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.consultation.create({
+        data: {
+          tenantId,
+          doctorId: userId,
+          patientId: dto.patientId,
+          locationId: dto.locationId,
+          ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
+          status: 'open',
+        },
+        include: RELATIONS_INCLUDE,
+      })
+      if (dto.appointmentId != null) {
+        await tx.appointment.update({
+          where: { id: dto.appointmentId, tenantId, deletedAt: null },
+          data: { status: 'in_progress' },
+        })
+      }
+      return created
     })
     return toConsultationWithDetails(row)
   }
