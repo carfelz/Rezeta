@@ -21,6 +21,9 @@ export const postSignPanelStrings = {
   configureFeeLink: 'Configurar tarifa',
   createManualLink: 'Crear factura manual',
   failedMessage: 'No se pudo crear la factura.',
+  followUpHeading: 'Seguimiento',
+  followUpCaption: 'Agenda la próxima cita de este paciente.',
+  scheduleFollowUpButton: 'Agendar seguimiento',
 } as const
 
 export const newConsultationStrings = {

@@ -37,6 +37,7 @@ export interface AppointmentFormModalProps {
   appointment?: AppointmentWithDetails
   defaultDate: string
   defaultLocationId: string
+  defaultPatientId?: string
   onClose: () => void
 }
 
@@ -44,6 +45,7 @@ export function AppointmentFormModal({
   appointment,
   defaultDate,
   defaultLocationId,
+  defaultPatientId,
   onClose,
 }: AppointmentFormModalProps): JSX.Element {
   const createMutation = useCreateAppointment()
@@ -57,7 +59,7 @@ export function AppointmentFormModal({
   const existingStart = appointment ? new Date(appointment.startsAt) : null
   const existingEnd = appointment ? new Date(appointment.endsAt) : null
 
-  const initialPatientId = appointment?.patientId ?? ''
+  const initialPatientId = appointment?.patientId ?? defaultPatientId ?? ''
   const initialLocationId = appointment?.locationId ?? defaultLocationId
   const initialDate = existingStart ? toDateInputValue(existingStart) : defaultDate
   const initialStartTime = existingStart

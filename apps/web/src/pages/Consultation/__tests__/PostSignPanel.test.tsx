@@ -16,10 +16,31 @@ vi.mock('@/hooks/invoices/use-invoices', () => ({
   }),
 }))
 
+// The follow-up block opens the appointment form modal, which depends on these
+// hooks. Stub them so the modal renders in isolation.
+vi.mock('@/hooks/appointments/use-appointments', () => ({
+  useCreateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/hooks/locations/use-locations', () => ({
+  useLocations: () => ({ data: [{ id: 'loc-1', name: 'Consultorio' }] }),
+}))
+
+vi.mock('@/hooks/schedules/use-schedules', () => ({
+  useGetBlocks: () => ({ data: [] }),
+}))
+
+vi.mock('@/hooks/patients/use-patients', () => ({
+  usePatients: () => ({ data: { items: [] } }),
+}))
+
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
 
 const consultation = {
   id: 'consult-1',
+  patientId: 'p1',
+  locationId: 'loc-1',
   patientName: 'Ana Reyes',
   locationName: 'Consultorio',
 } as unknown as ConsultationWithDetails
@@ -87,5 +108,24 @@ describe('PostSignPanel invoice card', () => {
     )
     expect(screen.queryByText('Factura emitida')).not.toBeInTheDocument()
     expect(screen.getByText('Emitir factura')).toBeInTheDocument()
+  })
+})
+
+describe('PostSignPanel follow-up block', () => {
+  beforeEach(() => {
+    updateInvoiceStatusMock.mockReset()
+    updateInvoiceStatusMock.mockResolvedValue(undefined)
+  })
+
+  it('renders the follow-up block regardless of the invoice outcome', () => {
+    renderPanel({ status: 'skipped_no_fee' })
+    expect(screen.getByText('Agendar seguimiento')).toBeInTheDocument()
+  })
+
+  it('opens the appointment form modal pre-filled for the patient', async () => {
+    const user = userEvent.setup()
+    renderPanel({ status: 'skipped_no_fee' })
+    await user.click(screen.getByText('Agendar seguimiento'))
+    expect(screen.getByText('Nueva cita')).toBeInTheDocument()
   })
 })

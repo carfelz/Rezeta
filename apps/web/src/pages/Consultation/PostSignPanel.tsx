@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { Button, Callout, Overline } from '@/components/ui'
 import { useUpdateInvoiceStatus } from '@/hooks/invoices/use-invoices'
 import { formatCurrency } from '@/pages/Billing/helpers'
+import { AppointmentFormModal } from '@/pages/Schedule/AppointmentFormModal'
+import { toDateInputValue } from '@/pages/Schedule/helpers'
 import type { ConsultationWithDetails, InvoiceOutcome } from '@rezeta/shared'
 import { postSignPanelStrings } from './strings'
 
@@ -27,13 +29,37 @@ export interface PostSignPanelProps {
  *
  * Structured so Slice I can append a follow-up block below the invoice card.
  */
-export function PostSignPanel({ invoiceOutcome }: PostSignPanelProps): JSX.Element {
+export function PostSignPanel({ invoiceOutcome, consultation }: PostSignPanelProps): JSX.Element {
+  const [showFollowUp, setShowFollowUp] = useState(false)
+
   return (
     <div className="border border-n-200 rounded-md bg-n-0 p-5 mb-5">
       <Overline as="p" size="sm" className="mb-3">
         {postSignPanelStrings.header}
       </Overline>
       <InvoiceCard invoiceOutcome={invoiceOutcome} />
+
+      <div className="mt-4 flex items-center justify-between border-t border-n-100 pt-4">
+        <div>
+          <div className="text-[14px] font-semibold text-n-800">
+            {postSignPanelStrings.followUpHeading}
+          </div>
+          <div className="text-[12px] text-n-500">{postSignPanelStrings.followUpCaption}</div>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => setShowFollowUp(true)}>
+          <i className="ph ph-calendar-plus" />
+          {postSignPanelStrings.scheduleFollowUpButton}
+        </Button>
+      </div>
+
+      {showFollowUp && (
+        <AppointmentFormModal
+          defaultDate={toDateInputValue(new Date())}
+          defaultLocationId={consultation.locationId}
+          defaultPatientId={consultation.patientId}
+          onClose={() => setShowFollowUp(false)}
+        />
+      )}
     </div>
   )
 }

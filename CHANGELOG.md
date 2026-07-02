@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Post-sign follow-up card "Agendar seguimiento" (Slice I)
+
+### Added
+
+- Follow-up block in `PostSignPanel` (`apps/web/src/pages/Consultation/PostSignPanel.tsx`) — a **Seguimiento** heading with the caption `Agenda la próxima cita de este paciente.` and an **Agendar seguimiento** secondary button (`ph-calendar-plus`). Clicking opens `AppointmentFormModal` pre-filled for the just-signed consultation: `defaultDate` today, `defaultLocationId={consultation.locationId}`, `defaultPatientId={consultation.patientId}`. Optional — skipping remains the default path. Strings colocated in `postSignPanelStrings` (`followUpHeading`, `followUpCaption`, `scheduleFollowUpButton`).
+- Tests: follow-up cases in `apps/web/src/pages/Consultation/__tests__/PostSignPanel.test.tsx` (block renders regardless of invoice outcome; button opens the pre-filled modal) and new `apps/web/src/pages/Schedule/__tests__/AppointmentFormModal.test.tsx` (patient initializes from `defaultPatientId`; empty when omitted).
+
+### Changed
+
+- `AppointmentFormModal` (`apps/web/src/pages/Schedule/AppointmentFormModal.tsx`) gains an optional `defaultPatientId` prop; when creating (not editing) the patient field initializes to `appointment?.patientId ?? defaultPatientId ?? ''`. Existing usages are unaffected.
+
 ## [2026-07-02] — Post-sign panel surfaces the auto-invoice outcome (Slice H)
 
 ### Added
