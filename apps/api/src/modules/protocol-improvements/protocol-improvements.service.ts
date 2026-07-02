@@ -81,7 +81,7 @@ export class ProtocolImprovementsService {
       })
     }
 
-    return this.repo.markApplied(suggestionId)
+    return this.repo.markApplied(suggestionId, tenantId)
   }
 
   async createVariant(
@@ -139,12 +139,12 @@ export class ProtocolImprovementsService {
       })
     }
 
-    return this.repo.markApplied(suggestionId)
+    return this.repo.markApplied(suggestionId, tenantId)
   }
 
   async dismiss(protocolId: string, suggestionId: string, tenantId: string): Promise<void> {
     await this.assertProtocolExists(protocolId, tenantId)
     await this.getSuggestionOrThrow(protocolId, suggestionId, tenantId)
-    await this.repo.markDismissed(suggestionId)
+    await this.repo.markDismissed(suggestionId, tenantId)
   }
 }

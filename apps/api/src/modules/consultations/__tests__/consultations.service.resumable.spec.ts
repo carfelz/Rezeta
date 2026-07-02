@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
+import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
 import type { ConsultationWithDetails } from '@rezeta/shared'
@@ -40,6 +41,7 @@ describe('ConsultationsService.getResumableForPatient', () => {
     svc = new ConsultationsService(
       repo as unknown as ConsultationsRepository,
       {} as unknown as PrismaService,
+      {} as unknown as ReferenceGuardService,
       {} as unknown as InvoicesService,
       { invalidate: vi.fn() } as unknown as ProtocolRecommendationsService,
     )

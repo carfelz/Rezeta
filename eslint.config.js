@@ -60,6 +60,29 @@ export default [
         'error',
         { terms: ['todo', 'fixme', 'hack', 'xxx'], location: 'anywhere' },
       ],
+
+      // Guardrail: no `dangerouslySetInnerHTML`. Building HTML from any
+      // app/user-derived value (patient names, protocol content, audit actors)
+      // is a stored-XSS sink. Render values as React text nodes instead.
+      // If a genuinely-trusted, sanitized HTML string is unavoidable, disable
+      // this rule inline with an explanation of why the input is safe.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            'dangerouslySetInnerHTML is a stored-XSS sink. Render values as React text nodes; only bypass with an inline eslint-disable that documents why the HTML is trusted.',
+        },
+        {
+          // Guardrail: HTTP exceptions must carry a closed-enum ErrorCode, not a
+          // bare string. Use `new XException({ code: ErrorCode.X, message })` so
+          // clients can branch on a stable code instead of parsing prose.
+          selector:
+            "NewExpression[callee.name=/Exception$/]:matches([arguments.0.type='Literal'], [arguments.0.type='TemplateLiteral'])",
+          message:
+            'Throw HTTP exceptions with an ErrorCode object: new XException({ code: ErrorCode.X, message }). Raw string messages bypass the closed error-code enum.',
+        },
+      ],
     },
   },
 
@@ -67,6 +90,16 @@ export default [
   {
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.test.tsx'],
     rules: {
+      // Tests throw bare exceptions to exercise error paths; keep the XSS ban
+      // but drop the ErrorCode-object requirement here.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            'dangerouslySetInnerHTML is a stored-XSS sink. Render values as React text nodes; only bypass with an inline eslint-disable that documents why the HTML is trusted.',
+        },
+      ],
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',

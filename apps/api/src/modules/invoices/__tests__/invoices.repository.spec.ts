@@ -234,7 +234,7 @@ describe('InvoicesRepository', () => {
         items: [{ description: 'Nuevo servicio', quantity: 1, unitPrice: 2000, total: 2000 }],
       })
       expect(mockPrisma.invoiceItem.deleteMany).toHaveBeenCalledWith({
-        where: { invoiceId: 'inv-1' },
+        where: { invoiceId: 'inv-1', invoice: { tenantId: 'tenant-1' } },
       })
       const data = mockPrisma.invoice.update.mock.calls[0][0].data
       expect(data.subtotal).toBe(2000)

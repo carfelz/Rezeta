@@ -28,6 +28,7 @@ type UpdateCheckedStateDto = {
 }
 import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
+import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
 import { ProtocolRecommendationsService } from '../protocol-recommendations/protocol-recommendations.service.js'
 
@@ -36,6 +37,7 @@ export class ConsultationsService {
   constructor(
     @Inject(ConsultationsRepository) private repo: ConsultationsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ReferenceGuardService) private references: ReferenceGuardService,
     @Inject(InvoicesService) private invoicesSvc: InvoicesService,
     @Inject(ProtocolRecommendationsService)
     private recommendationsSvc: ProtocolRecommendationsService,
@@ -98,6 +100,15 @@ export class ConsultationsService {
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
+    // Verify every client-supplied FK belongs to this tenant before linking it,
+    // otherwise a consultation stamped with our tenantId could point at another
+    // tenant's patient/location and leak their PHI back in the response.
+    await this.references.assertPatient(dto.patientId, tenantId)
+    await this.references.assertLocation(dto.locationId, tenantId)
+    if (dto.appointmentId != null) {
+      await this.references.assertAppointment(dto.appointmentId, tenantId)
+    }
+
     const result = await this.repo.create(tenantId, userId, dto)
     this.recommendationsSvc.invalidate(tenantId, userId, dto.patientId)
     return result

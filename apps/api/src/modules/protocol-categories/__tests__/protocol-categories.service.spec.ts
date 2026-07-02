@@ -86,7 +86,7 @@ describe('ProtocolCategoriesService', () => {
     mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
     mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Renamed', specialty: null })
     const result = await service.update('tenant-1', 'cat-1', { name: 'Renamed' })
-    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', { name: 'Renamed' })
+    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', 'tenant-1', { name: 'Renamed' })
     expect(result.name).toBe('Renamed')
   })
 
@@ -97,7 +97,7 @@ describe('ProtocolCategoriesService', () => {
       name: 'Urgencias',
       specialty: 'pediatría',
     })
-    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', {
+    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', 'tenant-1', {
       name: 'Urgencias',
       specialty: 'pediatría',
     })
@@ -108,7 +108,7 @@ describe('ProtocolCategoriesService', () => {
     mockRepo.findById.mockResolvedValue({ id: 'cat-1', isSeeded: false })
     mockRepo.update.mockResolvedValue({ id: 'cat-1', name: 'Urgencias', specialty: null })
     const result = await service.update('tenant-1', 'cat-1', { specialty: null })
-    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', { specialty: null })
+    expect(mockRepo.update).toHaveBeenCalledWith('cat-1', 'tenant-1', { specialty: null })
     expect(result.specialty).toBeNull()
   })
 
@@ -125,7 +125,7 @@ describe('ProtocolCategoriesService', () => {
     mockRepo.countTemplates.mockResolvedValue(0)
     mockRepo.softDelete.mockResolvedValue({ id: 'cat-1', deletedAt: new Date() })
     await service.delete('tenant-1', 'cat-1')
-    expect(mockRepo.softDelete).toHaveBeenCalledWith('cat-1')
+    expect(mockRepo.softDelete).toHaveBeenCalledWith('cat-1', 'tenant-1')
   })
 
   it('delete throws if category is seeded', async () => {

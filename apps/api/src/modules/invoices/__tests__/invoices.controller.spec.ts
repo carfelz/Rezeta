@@ -127,7 +127,7 @@ describe('InvoicesController', () => {
       )
     })
 
-    it('omits limit from params when limit param is absent', async () => {
+    it('applies a clamped default limit when limit param is absent', async () => {
       vi.mocked(service.list).mockResolvedValue({
         items: [],
         hasMore: false,
@@ -142,7 +142,25 @@ describe('InvoicesController', () => {
         undefined,
         undefined,
       )
-      expect(service.list).toHaveBeenCalledWith({ tenantId, userId: 'user-1' })
+      expect(service.list).toHaveBeenCalledWith({ tenantId, userId: 'user-1', limit: 50 })
+    })
+
+    it('clamps an oversized limit to the max (DoS protection)', async () => {
+      vi.mocked(service.list).mockResolvedValue({
+        items: [],
+        hasMore: false,
+        nextCursor: undefined,
+      })
+      await controller.list(
+        tenantId,
+        mockUser,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '100000000',
+      )
+      expect(service.list).toHaveBeenCalledWith(expect.objectContaining({ limit: 100 }))
     })
   })
 
