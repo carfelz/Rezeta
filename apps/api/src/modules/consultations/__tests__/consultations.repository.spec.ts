@@ -389,12 +389,27 @@ describe('ConsultationsRepository', () => {
   // ── softDelete ─────────────────────────────────────────────────────────────
 
   describe('softDelete', () => {
-    it('sets deletedAt', async () => {
-      mockPrisma.consultation.update.mockResolvedValue({})
-      await repo.softDelete('c1', 't1')
-      expect(mockPrisma.consultation.update).toHaveBeenCalledWith(
+    it('sets deletedAt on the consultation', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      await repo.softDelete('c1', 't1', null)
+      expect(mockTx.consultation.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ deletedAt: expect.any(Date) }) }),
       )
+    })
+
+    it('reverts the linked in_progress appointment back to scheduled', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      await repo.softDelete('c1', 't1', 'apt1')
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
+        where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
+        data: { status: 'scheduled' },
+      })
+    })
+
+    it('does not touch any appointment for a walk-in consultation (null appointmentId)', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      await repo.softDelete('c1', 't1', null)
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
     })
   })
 

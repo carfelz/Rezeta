@@ -547,6 +547,24 @@ describe('ConsultationsService', () => {
       expect(repo.softDelete).toHaveBeenCalledOnce()
     })
 
+    it('passes the linked appointmentId so the appointment can be reverted', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'open', appointmentId: 'appt-1' }),
+      )
+      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      await service.remove('consult-1', 'tenant-1')
+      expect(repo.softDelete).toHaveBeenCalledWith('consult-1', 'tenant-1', 'appt-1')
+    })
+
+    it('passes null appointmentId for a walk-in consultation', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(
+        mockConsultation({ status: 'open', appointmentId: null }),
+      )
+      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      await service.remove('consult-1', 'tenant-1')
+      expect(repo.softDelete).toHaveBeenCalledWith('consult-1', 'tenant-1', null)
+    })
+
     it('throws ConflictException when trying to delete signed consultation', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
       await expect(service.remove('consult-1', 'tenant-1')).rejects.toThrow(ConflictException)

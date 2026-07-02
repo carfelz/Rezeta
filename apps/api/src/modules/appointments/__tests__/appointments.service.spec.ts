@@ -47,6 +47,7 @@ describe('AppointmentsService', () => {
       updateStatus: vi.fn(),
       softDelete: vi.fn(),
       hasConflict: vi.fn(),
+      findLiveConsultation: vi.fn(),
     } as unknown as AppointmentsRepository
     service = new AppointmentsService(repo)
   })
@@ -221,6 +222,48 @@ describe('AppointmentsService', () => {
       vi.mocked(repo.updateStatus).mockResolvedValue(mockAppt({ status: 'scheduled' }))
       const result = await service.updateStatus('appt-1', 'tenant-1', { status: 'scheduled' })
       expect(result.status).toBe('scheduled')
+    })
+
+    it('blocks manual completed when a live consultation is linked', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt({ status: 'in_progress' }))
+      vi.mocked(repo.findLiveConsultation).mockResolvedValue({ id: 'c-1', status: 'open' })
+      await expect(
+        service.updateStatus('appt-1', 'tenant-1', { status: 'completed' }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_HAS_CONSULTATION } })
+    })
+
+    it('blocks manual completed even when the linked consultation is signed', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt({ status: 'in_progress' }))
+      vi.mocked(repo.findLiveConsultation).mockResolvedValue({ id: 'c-1', status: 'signed' })
+      await expect(
+        service.updateStatus('appt-1', 'tenant-1', { status: 'completed' }),
+      ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_HAS_CONSULTATION } })
+    })
+
+    it('blocks cancelled and no_show while an open consultation exists', async () => {
+      for (const status of ['cancelled', 'no_show'] as const) {
+        vi.mocked(repo.findById).mockResolvedValue(mockAppt({ status: 'in_progress' }))
+        vi.mocked(repo.findLiveConsultation).mockResolvedValue({ id: 'c-1', status: 'open' })
+        await expect(
+          service.updateStatus('appt-1', 'tenant-1', { status }),
+        ).rejects.toMatchObject({ response: { code: ErrorCode.APPOINTMENT_HAS_OPEN_CONSULTATION } })
+      }
+    })
+
+    it('allows cancelled when the linked consultation is not open (signed)', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt({ status: 'scheduled' }))
+      vi.mocked(repo.findLiveConsultation).mockResolvedValue({ id: 'c-1', status: 'signed' })
+      vi.mocked(repo.updateStatus).mockResolvedValue(mockAppt({ status: 'cancelled' }))
+      const result = await service.updateStatus('appt-1', 'tenant-1', { status: 'cancelled' })
+      expect(result.status).toBe('cancelled')
+    })
+
+    it('still allows manual completed when no consultation is linked', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt({ status: 'scheduled' }))
+      vi.mocked(repo.findLiveConsultation).mockResolvedValue(null)
+      vi.mocked(repo.updateStatus).mockResolvedValue(mockAppt({ status: 'completed' }))
+      const result = await service.updateStatus('appt-1', 'tenant-1', { status: 'completed' })
+      expect(result.status).toBe('completed')
     })
   })
 

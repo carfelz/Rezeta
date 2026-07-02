@@ -262,7 +262,9 @@ export class ConsultationsService {
         message: 'Signed consultations cannot be deleted',
       })
     }
-    await this.repo.softDelete(id, tenantId)
+    // Signed consultations can't reach here, so any surviving link is an open
+    // consultation whose appointment should revert to `scheduled`.
+    await this.repo.softDelete(id, tenantId, c.appointmentId ?? null)
   }
 
   // ── Protocol usages ──────────────────────────────────────────────────────

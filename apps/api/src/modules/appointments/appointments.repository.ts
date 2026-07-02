@@ -179,6 +179,21 @@ export class AppointmentsRepository {
     })
   }
 
+  /**
+   * Returns the newest non-deleted consultation linked to this appointment, or
+   * null. Used to guard manual status changes while a consultation is attached.
+   */
+  async findLiveConsultation(
+    appointmentId: string,
+    tenantId: string,
+  ): Promise<{ id: string; status: string } | null> {
+    return this.prisma.consultation.findFirst({
+      where: { appointmentId, tenantId, deletedAt: null },
+      select: { id: true, status: true },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
   async hasConflict(
     userId: string,
     tenantId: string,

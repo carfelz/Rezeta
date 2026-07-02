@@ -34,6 +34,9 @@ const mockPrisma = {
     update: vi.fn(),
     count: vi.fn(),
   },
+  consultation: {
+    findFirst: vi.fn(),
+  },
 }
 
 describe('AppointmentsRepository', () => {
@@ -210,6 +213,23 @@ describe('AppointmentsRepository', () => {
       await repo.hasConflict('u1', 't1', now, later)
       const where = mockPrisma.appointment.count.mock.calls[0][0].where
       expect(where.id).toBeUndefined()
+    })
+  })
+
+  describe('findLiveConsultation', () => {
+    it('returns the newest non-deleted consultation for the appointment', async () => {
+      mockPrisma.consultation.findFirst.mockResolvedValue({ id: 'c1', status: 'open' })
+      const result = await repo.findLiveConsultation('apt1', 't1')
+      expect(result).toEqual({ id: 'c1', status: 'open' })
+      const args = mockPrisma.consultation.findFirst.mock.calls[0][0]
+      expect(args.where).toEqual({ appointmentId: 'apt1', tenantId: 't1', deletedAt: null })
+      expect(args.orderBy).toEqual({ createdAt: 'desc' })
+      expect(args.select).toEqual({ id: true, status: true })
+    })
+
+    it('returns null when no live consultation is linked', async () => {
+      mockPrisma.consultation.findFirst.mockResolvedValue(null)
+      expect(await repo.findLiveConsultation('apt1', 't1')).toBeNull()
     })
   })
 

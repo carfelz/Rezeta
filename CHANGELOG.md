@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Deleting an open consultation reverts its appointment; manual status guards (Slice D)
+
+### Added
+
+- `AppointmentsRepository.findLiveConsultation(appointmentId, tenantId)` returns the newest non-deleted consultation (`{ id, status }`) linked to an appointment, or null (`apps/api/src/modules/appointments/appointments.repository.ts`).
+
+### Changed
+
+- `ConsultationsRepository.softDelete(id, tenantId, appointmentId)` now wraps the soft-delete in a `$transaction` and, when an `appointmentId` is given, reverts the linked appointment from `in_progress` back to `scheduled` via `updateMany` (idempotent; never touches manually completed/cancelled rows) (`apps/api/src/modules/consultations/consultations.repository.ts`).
+- `ConsultationsService.remove` passes the consultation's `appointmentId ?? null` to the repository so deleting an open consultation reverts its appointment (`apps/api/src/modules/consultations/consultations.service.ts`).
+- `AppointmentsService.updateStatus` now guards manual status changes when a live consultation is linked: manual `completed` throws `APPOINTMENT_HAS_CONSULTATION`; manual `cancelled`/`no_show` while the consultation is `open` throws `APPOINTMENT_HAS_OPEN_CONSULTATION`. Unlinked appointments are unaffected (`apps/api/src/modules/appointments/appointments.service.ts`).
+
 ## [2026-07-02] — Signing completes the appointment and reports the invoice outcome (Slice C)
 
 ### Added

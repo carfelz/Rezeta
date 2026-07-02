@@ -103,6 +103,25 @@ export class AppointmentsService {
         message: 'Cannot change status of a cancelled appointment',
       })
     }
+
+    // An appointment linked to a consultation follows the consultation's
+    // lifecycle — manual completion/cancellation would desync the two.
+    const linked = await this.repo.findLiveConsultation(id, tenantId)
+    if (linked) {
+      if (dto.status === 'completed') {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_HAS_CONSULTATION,
+          message: 'Appointment status follows its consultation and cannot be completed manually',
+        })
+      }
+      if ((dto.status === 'cancelled' || dto.status === 'no_show') && linked.status === 'open') {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_HAS_OPEN_CONSULTATION,
+          message: 'Cannot cancel or no-show an appointment with an open consultation',
+        })
+      }
+    }
+
     return this.repo.updateStatus(id, tenantId, dto.status)
   }
 

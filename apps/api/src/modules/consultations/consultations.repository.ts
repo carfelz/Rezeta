@@ -356,10 +356,20 @@ export class ConsultationsRepository {
     return toConsultationWithDetails(row)
   }
 
-  async softDelete(id: string, tenantId: string): Promise<void> {
-    await this.prisma.consultation.update({
-      where: { id, tenantId, deletedAt: null },
-      data: { deletedAt: new Date() },
+  async softDelete(id: string, tenantId: string, appointmentId: string | null): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.consultation.update({
+        where: { id, tenantId, deletedAt: null },
+        data: { deletedAt: new Date() },
+      })
+      // Revert the linked appointment. `updateMany` filtered on `in_progress`
+      // keeps this idempotent and never touches manually completed/cancelled rows.
+      if (appointmentId != null) {
+        await tx.appointment.updateMany({
+          where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
+          data: { status: 'scheduled' },
+        })
+      }
     })
   }
 
