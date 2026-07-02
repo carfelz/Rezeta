@@ -89,7 +89,10 @@ function CreatedInvoiceCard({
   const updateStatus = useUpdateInvoiceStatus(invoiceId)
 
   function handleIssue(): void {
-    void updateStatus.mutateAsync({ status: 'issued' }).then(() => setIssued(true))
+    void updateStatus
+      .mutateAsync({ status: 'issued' })
+      .then(() => setIssued(true))
+      .catch(() => undefined)
   }
 
   return (

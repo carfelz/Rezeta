@@ -73,4 +73,19 @@ describe('PostSignPanel invoice card', () => {
     expect(await screen.findByText('Factura emitida')).toBeInTheDocument()
     expect(screen.queryByText('Emitir factura')).not.toBeInTheDocument()
   })
+
+  it('does not flip to Factura emitida when issuing rejects', async () => {
+    const user = userEvent.setup()
+    // The hook's onError toasts; the panel must terminate the promise chain so
+    // the rejection does not surface as an unhandled rejection (vitest fails on
+    // those) and the card stays in the pre-issue state.
+    updateInvoiceStatusMock.mockRejectedValue(new Error('issue failed'))
+    renderPanel({ status: 'created', invoiceId: 'i1', total: 1500, currency: 'DOP' })
+    await user.click(screen.getByText('Emitir factura'))
+    expect(updateInvoiceStatusMock).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'issued' }),
+    )
+    expect(screen.queryByText('Factura emitida')).not.toBeInTheDocument()
+    expect(screen.getByText('Emitir factura')).toBeInTheDocument()
+  })
 })
