@@ -83,6 +83,7 @@ export function useCreateConsultation(): UseMutationResult<
       apiClient.post<ConsultationWithDetails>('/v1/consultations', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      void qc.invalidateQueries({ queryKey: ['appointments'] })
       toast.success(toastStrings.consultationCreated)
     },
     onError: () => {
@@ -114,6 +115,7 @@ export function useSignConsultation(
     mutationFn: () => apiClient.patch<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      void qc.invalidateQueries({ queryKey: ['appointments'] })
       toast.success(toastStrings.consultationSigned)
     },
     onError: () => {

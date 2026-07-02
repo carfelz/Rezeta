@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — State-aware appointment card: Iniciar / Continuar / Ver consulta (Slice E)
+
+### Added
+
+- Agenda appointment card renders a state-driven primary action: **Iniciar consulta** (`scheduled`, no linked consultation), **Continuar consulta** (`in_progress`, consultation `open`), **Ver consulta** (`completed` with a consultation). Card props `AppointmentCard` gains `onStartConsultation` and `isStartingConsultation` (`apps/web/src/pages/Schedule/AppointmentCard.tsx`, `strings.ts`).
+- `AppointmentCardWithMutation` wires start/continue/view via `useNavigate` + `useCreateConsultation`: navigates to `/consultas/:id` when a consultation is already linked, otherwise creates one (`{ patientId, locationId, appointmentId }`) and routes to the new consultation (`apps/web/src/pages/Schedule/AppointmentCardWithMutation.tsx`).
+- Component tests for all card states and the start-consultation click (`apps/web/src/pages/Schedule/__tests__/AppointmentCard.test.tsx`).
+
+### Changed
+
+- `useCreateConsultation` and `useSignConsultation` now also invalidate the `['appointments']` query key so the agenda refetches after a consultation is created or signed (`apps/web/src/hooks/consultations/use-consultations.ts`).
+- Appointment card hides **Completar** whenever a consultation is linked and hides **Eliminar** for `in_progress` appointments.
+
 ## [2026-07-02] — Deleting an open consultation reverts its appointment; manual status guards (Slice D)
 
 ### Added

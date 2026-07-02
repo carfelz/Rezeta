@@ -1,3 +1,13 @@
+export const appointmentCardStrings = {
+  startConsultation: 'Iniciar consulta',
+  continueConsultation: 'Continuar consulta',
+  viewConsultation: 'Ver consulta',
+  complete: 'Completar',
+  noShow: 'No asistió',
+  edit: 'Editar',
+  delete: 'Eliminar',
+} as const
+
 export const schedulePageStrings = {
   pageTitle: 'Agenda',
   newAppointmentButton: 'Nueva cita',
