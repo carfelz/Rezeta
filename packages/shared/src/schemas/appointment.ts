@@ -1,6 +1,12 @@
 import { z } from 'zod'
 
-export const AppointmentStatusSchema = z.enum(['scheduled', 'completed', 'cancelled', 'no_show'])
+export const AppointmentStatusSchema = z.enum([
+  'scheduled',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'no_show',
+])
 
 export const CreateAppointmentSchema = z.object({
   patientId: z.string().uuid(),

@@ -21,6 +21,7 @@ function makeApptRow(overrides: Record<string, unknown> = {}) {
     deletedAt: null,
     patient: { firstName: 'Ana', lastName: 'Reyes', documentNumber: '001-123' },
     location: { name: 'Clínica Central' },
+    consultations: [],
     ...overrides,
   }
 }
@@ -92,6 +93,40 @@ describe('AppointmentsRepository', () => {
       await repo.findMany({ tenantId: 't1', userId: 'u1', to })
       const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
       expect(where.startsAt.lte).toBe(to)
+    })
+
+    it('adds patientId filter when provided', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([])
+      await repo.findMany({ tenantId: 't1', userId: 'u1', patientId: 'p1' })
+      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      expect(where.patientId).toBe('p1')
+    })
+  })
+
+  describe('consultation link', () => {
+    it('maps the latest live consultation onto the appointment', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([
+        makeApptRow({ consultations: [{ id: 'cons-live', status: 'open' }] }),
+      ])
+      const [appt] = await repo.findMany({ tenantId: 't1', userId: 'u1' })
+      expect(appt.consultationId).toBe('cons-live')
+      expect(appt.consultationStatus).toBe('open')
+    })
+
+    it('returns null link fields when no live consultation exists', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([makeApptRow({ consultations: [] })])
+      const [appt] = await repo.findMany({ tenantId: 't1', userId: 'u1' })
+      expect(appt.consultationId).toBeNull()
+      expect(appt.consultationStatus).toBeNull()
+    })
+
+    it('scopes the consultations include to live records, newest first', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([])
+      await repo.findMany({ tenantId: 't1', userId: 'u1' })
+      const include = mockPrisma.appointment.findMany.mock.calls[0][0].include
+      expect(include.consultations.where).toEqual({ deletedAt: null })
+      expect(include.consultations.orderBy).toEqual({ createdAt: 'desc' })
+      expect(include.consultations.take).toBe(1)
     })
   })
 

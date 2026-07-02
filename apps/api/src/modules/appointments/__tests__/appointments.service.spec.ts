@@ -25,6 +25,8 @@ function mockAppt(overrides: Partial<AppointmentWithDetails> = {}): AppointmentW
     patientName: 'María García',
     patientDocumentNumber: null,
     locationName: 'Clínica Centro',
+    consultationId: null,
+    consultationStatus: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     deletedAt: null,

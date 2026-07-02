@@ -45,6 +45,8 @@ export function formatTime(isoString: string): string {
 
 export function statusBadgeVariant(status: AppointmentStatus): BadgeProps['variant'] {
   switch (status) {
+    case 'in_progress':
+      return 'signed'
     case 'completed':
       return 'active'
     case 'cancelled':
@@ -60,6 +62,8 @@ export function statusLabel(status: AppointmentStatus): string {
   switch (status) {
     case 'scheduled':
       return 'Programada'
+    case 'in_progress':
+      return 'En consulta'
     case 'completed':
       return 'Completada'
     case 'cancelled':

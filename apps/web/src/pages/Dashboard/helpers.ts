@@ -57,6 +57,8 @@ export function statusLabel(status: AppointmentStatus): string {
   switch (status) {
     case 'scheduled':
       return 'Confirmada'
+    case 'in_progress':
+      return 'En consulta'
     case 'completed':
       return 'Completada'
     case 'cancelled':

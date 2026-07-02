@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Workflow interconnection foundations (Slice A)
+
+### Added
+
+- `in_progress` appointment status across the stack: `AppointmentStatusSchema` enum, `AppointmentStatus` type, Prisma column comment, and Spanish labels ("En consulta") in `apps/web/src/pages/Schedule/helpers.ts` and `apps/web/src/pages/Dashboard/helpers.ts`.
+- `AppointmentConsultationStatus` type and `consultationId`/`consultationStatus` fields on `AppointmentWithDetails` (`packages/shared/src/types/appointment.ts`) — latest live consultation linked to an appointment.
+- Workflow guard error codes `APPOINTMENT_NOT_STARTABLE`, `APPOINTMENT_HAS_CONSULTATION`, `APPOINTMENT_HAS_OPEN_CONSULTATION` (`packages/shared/src/errors.ts`).
+- `patientId` list filter on appointments: `AppointmentListParams.patientId` and `GET /v1/appointments?patientId=` query param (`apps/api/src/modules/appointments/appointments.repository.ts`, `appointments.controller.ts`).
+
+### Changed
+
+- Appointment reads now include the latest live consultation via a shared `DETAILS_INCLUDE` (findMany/findById/create/update/updateStatus), mapping `consultationId`/`consultationStatus` onto every `AppointmentWithDetails` (`apps/api/src/modules/appointments/appointments.repository.ts`).
+
 ## [2026-06-30] — Multiline summary + description fields
 
 ### Changed

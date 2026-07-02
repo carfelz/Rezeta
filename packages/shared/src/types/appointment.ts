@@ -1,4 +1,6 @@
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+export type AppointmentStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+
+export type AppointmentConsultationStatus = 'open' | 'signed' | 'amended'
 
 export interface Appointment {
   id: string
@@ -20,4 +22,7 @@ export interface AppointmentWithDetails extends Appointment {
   patientName: string
   patientDocumentNumber: string | null
   locationName: string
+  /** Latest live consultation linked to this appointment (null = none). */
+  consultationId: string | null
+  consultationStatus: AppointmentConsultationStatus | null
 }
