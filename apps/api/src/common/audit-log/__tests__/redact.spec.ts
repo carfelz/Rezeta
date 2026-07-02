@@ -65,6 +65,24 @@ describe('redactForAudit', () => {
     expect(result['passport']).toBe('**** 3456')
   })
 
+  it('masks last-4 of documentNumber — the real Patient column', () => {
+    // The Patient model stores the ID in `documentNumber`, not `cedula`.
+    const result = redactForAudit('Patient', { documentNumber: '001-1234567-8' })
+    expect(result['documentNumber']).toBe('**** 67-8')
+  })
+
+  it('does not apply the documentNumber rule to other entities', () => {
+    const result = redactForAudit('Invoice', { documentNumber: '001-1234567-8' })
+    expect(result['documentNumber']).toBe('001-1234567-8')
+  })
+
+  it('redacts documentNumber in change sets', () => {
+    const result = redactChangesForAudit('Patient', {
+      documentNumber: { before: '001-0000000-1', after: '001-0000000-2' },
+    })
+    expect(result['documentNumber']).toEqual({ before: '[REDACTED]', after: '[REDACTED]' })
+  })
+
   it('fully redacts externalUid for User entity', () => {
     const result = redactForAudit('User', { externalUid: 'firebase-uid-xyz' })
     expect(result['externalUid']).toBe('[REDACTED]')

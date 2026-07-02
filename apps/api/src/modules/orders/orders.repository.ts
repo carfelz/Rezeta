@@ -304,7 +304,7 @@ export class OrdersRepository {
 
   async updatePrescriptionPdfUrl(id: string, tenantId: string, pdfUrl: string): Promise<void> {
     await this.prisma.prescription.update({
-      where: { id },
+      where: { id, tenantId },
       data: { pdfUrl },
     })
   }

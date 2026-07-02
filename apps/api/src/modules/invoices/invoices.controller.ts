@@ -38,6 +38,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { InvoicesService } from './invoices.service.js'
 
 interface InvoiceListResult {
@@ -77,7 +78,7 @@ export class InvoicesController {
       ...(patientId ? { patientId } : {}),
       ...(locationId ? { locationId } : {}),
       ...(cursor ? { cursor } : {}),
-      ...(limit ? { limit: parseInt(limit, 10) } : {}),
+      limit: parseLimit(limit),
     })
   }
 

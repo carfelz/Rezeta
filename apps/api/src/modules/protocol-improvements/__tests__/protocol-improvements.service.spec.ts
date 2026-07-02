@@ -183,7 +183,7 @@ describe('ProtocolImprovementsService', () => {
       mockRepo.findById.mockResolvedValue(suggestion)
       mockRepo.markDismissed.mockResolvedValue({ ...suggestion, status: 'dismissed' })
       await service.dismiss('proto1', 'sug1', 't1')
-      expect(mockRepo.markDismissed).toHaveBeenCalledWith('sug1')
+      expect(mockRepo.markDismissed).toHaveBeenCalledWith('sug1', 't1')
     })
 
     it('throws NotFoundException when protocol not found', async () => {

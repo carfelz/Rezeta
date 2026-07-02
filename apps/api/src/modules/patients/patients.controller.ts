@@ -35,6 +35,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { PatientsService } from './patients.service.js'
 
 const PATIENT_EXAMPLE = {
@@ -107,7 +108,7 @@ export class PatientsController {
       ownerId: user.id,
       ...(search ? { search } : {}),
       ...(cursor ? { cursor } : {}),
-      ...(limit ? { limit: parseInt(limit, 10) } : {}),
+      limit: parseLimit(limit),
     })
   }
 

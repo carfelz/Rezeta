@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException } from '@nestjs/common'
+import { NotFoundException, ConflictException } from '@nestjs/common'
 import { OrdersService } from '../orders.service.js'
 
 vi.mock('../../../lib/pdf.service.js', () => ({
@@ -121,6 +121,16 @@ describe('OrdersService', () => {
       mockRepo.findPrescriptionById.mockResolvedValue({ id: 'rx1', consultationId: 'other' })
       await expect(service.deletePrescription('c1', 'rx1', 't1')).rejects.toThrow(NotFoundException)
     })
+
+    it('refuses to delete a signed prescription (immutable clinical record)', async () => {
+      mockRepo.findPrescriptionById.mockResolvedValue({
+        id: 'rx1',
+        consultationId: 'c1',
+        status: 'signed',
+      })
+      await expect(service.deletePrescription('c1', 'rx1', 't1')).rejects.toThrow(ConflictException)
+      expect(mockRepo.softDeletePrescription).not.toHaveBeenCalled()
+    })
   })
 
   // ── Imaging orders ─────────────────────────────────────────────────────────
@@ -179,6 +189,18 @@ describe('OrdersService', () => {
         NotFoundException,
       )
     })
+
+    it('refuses to delete a signed imaging order (immutable clinical record)', async () => {
+      mockRepo.findImagingOrderById.mockResolvedValue({
+        id: 'img1',
+        consultationId: 'c1',
+        status: 'signed',
+      })
+      await expect(service.deleteImagingOrder('c1', 'img1', 't1')).rejects.toThrow(
+        ConflictException,
+      )
+      expect(mockRepo.softDeleteImagingOrder).not.toHaveBeenCalled()
+    })
   })
 
   // ── Lab orders ─────────────────────────────────────────────────────────────
@@ -233,6 +255,16 @@ describe('OrdersService', () => {
     it('throws NotFoundException when lab order belongs to different consultation', async () => {
       mockRepo.findLabOrderById.mockResolvedValue({ id: 'lab1', consultationId: 'other' })
       await expect(service.deleteLabOrder('c1', 'lab1', 't1')).rejects.toThrow(NotFoundException)
+    })
+
+    it('refuses to delete a signed lab order (immutable clinical record)', async () => {
+      mockRepo.findLabOrderById.mockResolvedValue({
+        id: 'lab1',
+        consultationId: 'c1',
+        status: 'signed',
+      })
+      await expect(service.deleteLabOrder('c1', 'lab1', 't1')).rejects.toThrow(ConflictException)
+      expect(mockRepo.softDeleteLabOrder).not.toHaveBeenCalled()
     })
   })
 

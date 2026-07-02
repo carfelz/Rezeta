@@ -63,7 +63,7 @@ export class ProtocolsRepository {
       })
 
       const updated = await tx.protocol.update({
-        where: { id: protocol.id },
+        where: { id: protocol.id, tenantId: data.tenantId },
         data: { currentVersionId: version.id },
         include: { category: true },
       })
@@ -144,7 +144,7 @@ export class ProtocolsRepository {
       where: { id, tenantId, deletedAt: null },
     })
     if (!existing) return false
-    await this.prisma.protocol.update({ where: { id }, data: { isFavorite } })
+    await this.prisma.protocol.update({ where: { id, tenantId }, data: { isFavorite } })
     return true
   }
 
@@ -153,7 +153,7 @@ export class ProtocolsRepository {
       where: { id, tenantId, deletedAt: null },
     })
     if (!existing) return false
-    await this.prisma.protocol.update({ where: { id }, data: { status: 'archived' } })
+    await this.prisma.protocol.update({ where: { id, tenantId }, data: { status: 'archived' } })
     return true
   }
 
@@ -164,7 +164,7 @@ export class ProtocolsRepository {
     if (!existing) return null
 
     return this.prisma.protocol.update({
-      where: { id },
+      where: { id, tenantId },
       data: { title },
     })
   }
@@ -238,7 +238,7 @@ export class ProtocolsRepository {
       })
 
       await tx.protocol.update({
-        where: { id: data.protocolId },
+        where: { id: data.protocolId, tenantId: data.tenantId },
         data: {
           currentVersionId: version.id,
           ...(data.publish ? { status: 'active' } : {}),

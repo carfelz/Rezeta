@@ -13,10 +13,14 @@ import type {
 } from '@rezeta/shared'
 import { ErrorCode } from '@rezeta/shared'
 import { AppointmentsRepository, type AppointmentListParams } from './appointments.repository.js'
+import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 
 @Injectable()
 export class AppointmentsService {
-  constructor(@Inject(AppointmentsRepository) private repo: AppointmentsRepository) {}
+  constructor(
+    @Inject(AppointmentsRepository) private repo: AppointmentsRepository,
+    @Inject(ReferenceGuardService) private references: ReferenceGuardService,
+  ) {}
 
   list(params: AppointmentListParams): Promise<AppointmentWithDetails[]> {
     return this.repo.findMany(params)
@@ -38,6 +42,9 @@ export class AppointmentsService {
     userId: string,
     dto: CreateAppointmentDto,
   ): Promise<AppointmentWithDetails> {
+    await this.references.assertPatient(dto.patientId, tenantId)
+    await this.references.assertLocation(dto.locationId, tenantId)
+
     const startsAt = new Date(dto.startsAt)
     const endsAt = new Date(dto.endsAt)
 
@@ -66,6 +73,13 @@ export class AppointmentsService {
     dto: UpdateAppointmentDto,
   ): Promise<AppointmentWithDetails> {
     await this.getById(id, tenantId)
+
+    if (dto.patientId != null) {
+      await this.references.assertPatient(dto.patientId, tenantId)
+    }
+    if (dto.locationId != null) {
+      await this.references.assertLocation(dto.locationId, tenantId)
+    }
 
     if (dto.startsAt || dto.endsAt) {
       const existing = await this.getById(id, tenantId)

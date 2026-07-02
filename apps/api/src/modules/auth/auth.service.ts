@@ -1,7 +1,7 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { AuthUser, UserPreferences } from '@rezeta/shared'
-import { UserPreferencesSchema } from '@rezeta/shared'
+import { UserPreferencesSchema, ErrorCode } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
@@ -58,7 +58,10 @@ export class AuthService {
    */
   async devGetToken(email: string, password: string): Promise<DevTokenResponse> {
     if (this.config.get('nodeEnv', { infer: true }) === 'production') {
-      throw new ForbiddenException('Not available in production')
+      throw new ForbiddenException({
+        code: ErrorCode.FORBIDDEN,
+        message: 'Not available in production',
+      })
     }
     const signed = await this.authProvider.signInWithPassword(email, password)
     return {

@@ -22,14 +22,18 @@ export function ActivityFeed({ entries }: ActivityFeedProps): JSX.Element {
         </Caption>
       ) : (
         <div className="flex flex-col gap-3">
-          {entries.slice(0, 5).map((entry) => (
-            <ActivityItem
-              key={entry.id}
-              initials={initialsForActor(entry.actor?.fullName ?? null)}
-              html={describeAuditEntry(entry)}
-              time={timeAgo(entry.createdAt)}
-            />
-          ))}
+          {entries.slice(0, 5).map((entry) => {
+            const { actor, detail } = describeAuditEntry(entry)
+            return (
+              <ActivityItem
+                key={entry.id}
+                initials={initialsForActor(entry.actor?.fullName ?? null)}
+                actor={actor}
+                detail={detail}
+                time={timeAgo(entry.createdAt)}
+              />
+            )
+          })}
         </div>
       )}
     </div>

@@ -59,7 +59,7 @@ export class ProtocolTemplatesRepository {
     },
   ): Promise<TemplateWithCategory> {
     return this.prisma.protocolTemplate.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
@@ -70,9 +70,9 @@ export class ProtocolTemplatesRepository {
     }) as Promise<TemplateWithCategory>
   }
 
-  async softDelete(id: string, _tenantId: string): Promise<void> {
+  async softDelete(id: string, tenantId: string): Promise<void> {
     await this.prisma.protocolTemplate.update({
-      where: { id },
+      where: { id, tenantId },
       data: { deletedAt: new Date() },
     })
   }

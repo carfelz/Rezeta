@@ -119,7 +119,9 @@ export class InvoicesRepository {
       data['netToDoctor'] = subtotal - commissionAmount
       data['total'] = subtotal
 
-      await this.prisma.invoiceItem.deleteMany({ where: { invoiceId: id } })
+      await this.prisma.invoiceItem.deleteMany({
+        where: { invoiceId: id, invoice: { tenantId } },
+      })
       data['items'] = {
         create: dto.items.map((it) => ({
           description: it.description,
@@ -131,7 +133,7 @@ export class InvoicesRepository {
     }
 
     return this.prisma.invoice.update({
-      where: { id },
+      where: { id, tenantId },
       data,
       include: BASE_INCLUDE,
     })
@@ -139,12 +141,12 @@ export class InvoicesRepository {
 
   async updateStatus(
     id: string,
-    _tenantId: string,
+    tenantId: string,
     status: string,
     paymentMethod?: string | null,
   ): Promise<InvoiceRow> {
     return this.prisma.invoice.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         status,
         ...(status === 'issued' ? { issuedAt: new Date() } : {}),

@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import type { AuthUser, OnboardingCustomInput } from '@rezeta/shared'
+import { ErrorCode } from '@rezeta/shared'
 import { TenantSeedingService } from '../tenant-seeding/tenant-seeding.service.js'
 import { AuthService } from '../auth/auth.service.js'
 import { UsersRepository } from '../users/users.repository.js'
@@ -37,10 +38,16 @@ export class OnboardingService {
   async seedDefault(externalUid: string, locale: 'es' | 'en' = 'es'): Promise<AuthUser> {
     // Resolve tenantId from the authenticated user's tenant
     const user = await this.users.findByExternalUid(externalUid)
-    if (!user) throw new InternalServerErrorException('User not found after auth')
+    if (!user) throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'User not found after auth',
+      })
     await this.seeder.seedDefault(user.tenantId, locale)
     const refreshed = await this.users.findByExternalUid(externalUid)
-    if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
+    if (!refreshed) throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'User not found after seeding',
+      })
     return this.authService.toAuthUser(refreshed)
   }
 
@@ -57,7 +64,10 @@ export class OnboardingService {
     }
 
     const user = await this.users.findByExternalUid(externalUid)
-    if (!user) throw new InternalServerErrorException('User not found after auth')
+    if (!user) throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'User not found after auth',
+      })
     await this.seeder.seedCustom(
       user.tenantId,
       input.templates.map((t) => ({
@@ -68,7 +78,10 @@ export class OnboardingService {
       input.types,
     )
     const refreshed = await this.users.findByExternalUid(externalUid)
-    if (!refreshed) throw new InternalServerErrorException('User not found after seeding')
+    if (!refreshed) throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'User not found after seeding',
+      })
     return this.authService.toAuthUser(refreshed)
   }
 }

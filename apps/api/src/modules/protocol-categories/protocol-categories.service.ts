@@ -35,7 +35,7 @@ export class ProtocolCategoriesService {
     dto: UpdateProtocolCategoryDto,
   ): Promise<ProtocolCategory> {
     await this.findById(tenantId, id)
-    return this.repo.update(id, dto)
+    return this.repo.update(id, tenantId, dto)
   }
 
   async delete(tenantId: string, id: string): Promise<ProtocolCategory> {
@@ -54,6 +54,6 @@ export class ProtocolCategoriesService {
         details: { count },
       })
     }
-    return this.repo.softDelete(id)
+    return this.repo.softDelete(id, tenantId)
   }
 }

@@ -93,16 +93,32 @@ function friendlyEntity(t: string): string {
   return map[t] ?? `un registro (${t})`
 }
 
-export function describeAuditEntry(entry: AuditLogItem): string {
+export interface AuditEntryDescription {
+  /** Actor display name — user-controlled, must be rendered as a text node. */
+  actor: string
+  /** Descriptive suffix (leading space included) built from safe enum values. */
+  detail: string
+}
+
+/**
+ * Splits an audit entry into an actor name and a descriptive suffix so the
+ * consumer can render them as React text nodes. Returning an HTML string here
+ * (and rendering via dangerouslySetInnerHTML) would be a stored-XSS sink,
+ * because `actor` comes from the user-controlled `fullName`.
+ */
+export function describeAuditEntry(entry: AuditLogItem): AuditEntryDescription {
   const actor = entry.actor?.fullName ?? 'Sistema'
   const entityType = entry.entityType ?? 'registro'
   const action = entry.action.toLowerCase()
-  if (action.includes('create')) return `<b>${actor}</b> creó ${friendlyEntity(entityType)}`
-  if (action.includes('update')) return `<b>${actor}</b> actualizó ${friendlyEntity(entityType)}`
-  if (action.includes('delete')) return `<b>${actor}</b> eliminó ${friendlyEntity(entityType)}`
-  if (action.includes('sign')) return `<b>${actor}</b> firmó ${friendlyEntity(entityType)}`
-  if (action.includes('login') || action.includes('signin')) return `<b>${actor}</b> inició sesión`
-  return `<b>${actor}</b> ${entry.action} (${entityType})`
+  if (action.includes('create')) return { actor, detail: ` creó ${friendlyEntity(entityType)}` }
+  if (action.includes('update'))
+    return { actor, detail: ` actualizó ${friendlyEntity(entityType)}` }
+  if (action.includes('delete'))
+    return { actor, detail: ` eliminó ${friendlyEntity(entityType)}` }
+  if (action.includes('sign')) return { actor, detail: ` firmó ${friendlyEntity(entityType)}` }
+  if (action.includes('login') || action.includes('signin'))
+    return { actor, detail: ' inició sesión' }
+  return { actor, detail: ` ${entry.action} (${entityType})` }
 }
 
 export function timeAgo(iso: string): string {

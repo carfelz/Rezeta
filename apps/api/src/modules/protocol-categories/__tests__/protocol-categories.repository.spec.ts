@@ -57,30 +57,30 @@ describe('ProtocolCategoriesRepository', () => {
 
   it('update only sets provided fields', async () => {
     mockPrisma.protocolCategory.update.mockResolvedValue({ id: 'c1' })
-    await repo.update('c1', { name: 'Renamed' })
+    await repo.update('c1', 't1', { name: 'Renamed' })
     expect(mockPrisma.protocolCategory.update).toHaveBeenCalledWith({
-      where: { id: 'c1' },
+      where: { id: 'c1', tenantId: 't1' },
       data: { name: 'Renamed' },
     })
   })
 
   it('update can set color only', async () => {
     mockPrisma.protocolCategory.update.mockResolvedValue({ id: 'c1' })
-    await repo.update('c1', { color: '#000000' })
+    await repo.update('c1', 't1', { color: '#000000' })
     expect(mockPrisma.protocolCategory.update).toHaveBeenCalledWith({
-      where: { id: 'c1' },
+      where: { id: 'c1', tenantId: 't1' },
       data: { color: '#000000' },
     })
   })
 
   it('softDelete stamps deletedAt', async () => {
     mockPrisma.protocolCategory.update.mockResolvedValue({ id: 'c1' })
-    await repo.softDelete('c1')
+    await repo.softDelete('c1', 't1')
     const arg = mockPrisma.protocolCategory.update.mock.calls[0][0] as {
-      where: { id: string }
+      where: { id: string; tenantId: string }
       data: { deletedAt: Date }
     }
-    expect(arg.where).toEqual({ id: 'c1' })
+    expect(arg.where).toEqual({ id: 'c1', tenantId: 't1' })
     expect(arg.data.deletedAt).toBeInstanceOf(Date)
   })
 })

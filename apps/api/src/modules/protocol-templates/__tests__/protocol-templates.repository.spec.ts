@@ -171,7 +171,7 @@ describe('ProtocolTemplatesRepository', () => {
       await repo.update(TEMPLATE_ID, TENANT_ID, { name: 'Updated' })
       expect(mockPrisma.protocolTemplate.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: TEMPLATE_ID },
+          where: { id: TEMPLATE_ID, tenantId: TENANT_ID },
           include: { category: true },
         }),
       )
@@ -230,7 +230,7 @@ describe('ProtocolTemplatesRepository', () => {
       await repo.softDelete(TEMPLATE_ID, TENANT_ID)
       expect(mockPrisma.protocolTemplate.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: TEMPLATE_ID },
+          where: { id: TEMPLATE_ID, tenantId: TENANT_ID },
           data: expect.objectContaining({ deletedAt: expect.any(Date) }),
         }),
       )

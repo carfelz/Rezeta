@@ -38,7 +38,9 @@ export const ErrorCode = {
 
   // ── Orders ──────────────────────────────────────────────────
   IMAGING_ORDER_NOT_FOUND: 'IMAGING_ORDER_NOT_FOUND',
+  IMAGING_ORDER_ALREADY_SIGNED: 'IMAGING_ORDER_ALREADY_SIGNED',
   LAB_ORDER_NOT_FOUND: 'LAB_ORDER_NOT_FOUND',
+  LAB_ORDER_ALREADY_SIGNED: 'LAB_ORDER_ALREADY_SIGNED',
 
   // ── Suggestions ─────────────────────────────────────────────
   SUGGESTION_NOT_FOUND: 'SUGGESTION_NOT_FOUND',
@@ -50,6 +52,7 @@ export const ErrorCode = {
   // ── Invoice ─────────────────────────────────────────────────
   INVOICE_NOT_FOUND: 'INVOICE_NOT_FOUND',
   INVOICE_ALREADY_ISSUED: 'INVOICE_ALREADY_ISSUED',
+  INVOICE_NOT_EDITABLE: 'INVOICE_NOT_EDITABLE',
 
   // ── Protocol Template ───────────────────────────────────────
   PROTOCOL_TEMPLATE_NOT_FOUND: 'PROTOCOL_TEMPLATE_NOT_FOUND',

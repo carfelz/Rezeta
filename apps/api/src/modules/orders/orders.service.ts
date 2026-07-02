@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common'
+import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common'
 import type { Prescription, ImagingOrder, LabOrder } from '@rezeta/shared'
 import type {
   CreatePrescriptionGroupDto,
@@ -190,6 +190,12 @@ export class OrdersService {
         message: 'Prescription not found',
       })
     }
+    if (p.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.PRESCRIPTION_ALREADY_SIGNED,
+        message: 'Cannot delete a signed prescription — use an amendment instead',
+      })
+    }
     await this.repo.softDeletePrescription(prescriptionId, tenantId)
   }
 
@@ -205,6 +211,12 @@ export class OrdersService {
         message: 'Imaging order not found',
       })
     }
+    if (order.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.IMAGING_ORDER_ALREADY_SIGNED,
+        message: 'Cannot delete a signed imaging order — use an amendment instead',
+      })
+    }
     await this.repo.softDeleteImagingOrder(orderId, tenantId)
   }
 
@@ -214,6 +226,12 @@ export class OrdersService {
       throw new NotFoundException({
         code: ErrorCode.LAB_ORDER_NOT_FOUND,
         message: 'Lab order not found',
+      })
+    }
+    if (order.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.LAB_ORDER_ALREADY_SIGNED,
+        message: 'Cannot delete a signed lab order — use an amendment instead',
       })
     }
     await this.repo.softDeleteLabOrder(orderId, tenantId)
