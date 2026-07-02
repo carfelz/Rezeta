@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Post-sign panel surfaces the auto-invoice outcome (Slice H)
+
+### Added
+
+- `PostSignPanel` (`apps/web/src/pages/Consultation/PostSignPanel.tsx`) — bordered card with an `Overline` header `DESPUÉS DE FIRMAR`, rendered once below `SignedBanner` in the just-signed session. Its invoice card handles the three `InvoiceOutcome` states: `created` shows `Factura borrador creada · {total}` with an **Emitir factura** button (issues via `useUpdateInvoiceStatus`, then flips to a `Factura emitida` state) and a **Ver en Facturación** link (`/facturacion`); `skipped_no_fee` shows an info `Callout` plus **Configurar tarifa** (`/ajustes/ubicaciones`) and **Crear factura manual** (`/facturacion`) links; `failed` shows a danger `Callout` plus **Crear factura manual**. Structured so Slice I can append a follow-up block. Strings colocated in `apps/web/src/pages/Consultation/strings.ts` (`postSignPanelStrings`).
+- Tests: `apps/web/src/pages/Consultation/__tests__/PostSignPanel.test.tsx` (created/skipped/failed states, issue action fires the status mutation with `issued`, issued-state transition).
+
+### Changed
+
+- `useSignConsultation` (`apps/web/src/hooks/consultations/use-consultations.ts`) result type is now `SignConsultationResponse` (consultation + `invoiceOutcome`).
+- Threaded an `onSigned` callback from `SignModal` → `ConsultationModals` → `ProtocolPanel` → `Consultation/index.tsx`, which captures the sign response in page-level `signResult` state (not persisted; only the just-signed session shows the panel).
+
 ## [2026-07-02] — Global "Nueva consulta" walk-in dialog with inline minimal patient creation (Slice G)
 
 ### Added

@@ -10,6 +10,19 @@ export const protocolPanelStrings = {
   addProtocol: 'Agregar protocolo',
 } as const
 
+export const postSignPanelStrings = {
+  header: 'Después de firmar',
+  invoiceCreatedLabel: (total: string) => `Factura borrador creada · ${total}`,
+  issueButton: 'Emitir factura',
+  issuingButton: 'Emitiendo…',
+  issuedLabel: 'Factura emitida',
+  viewInBillingLink: 'Ver en Facturación',
+  skippedNoFeeMessage: 'No se creó factura: no hay tarifa configurada para esta ubicación.',
+  configureFeeLink: 'Configurar tarifa',
+  createManualLink: 'Crear factura manual',
+  failedMessage: 'No se pudo crear la factura.',
+} as const
+
 export const newConsultationStrings = {
   pageTitle: 'Nueva consulta',
   openEmptyButton: 'Iniciar consulta',

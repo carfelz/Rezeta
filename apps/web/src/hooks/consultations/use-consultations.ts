@@ -18,6 +18,7 @@ import type {
   CreateLabOrderGroupDto,
   ResumableConsultation,
   OffProtocolNoteEvent,
+  SignConsultationResponse,
 } from '@rezeta/shared'
 
 // Local stubs for types removed from shared in schema reset v2
@@ -109,10 +110,10 @@ export function useUpdateConsultation(
 
 export function useSignConsultation(
   id: string,
-): UseMutationResult<ConsultationWithDetails, Error, void> {
+): UseMutationResult<SignConsultationResponse, Error, void> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => apiClient.patch<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
+    mutationFn: () => apiClient.patch<SignConsultationResponse>(`/v1/consultations/${id}/sign`, {}),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
       void qc.invalidateQueries({ queryKey: ['appointments'] })

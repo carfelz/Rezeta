@@ -1,0 +1,125 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Button, Callout, Overline } from '@/components/ui'
+import { useUpdateInvoiceStatus } from '@/hooks/invoices/use-invoices'
+import { formatCurrency } from '@/pages/Billing/helpers'
+import type { ConsultationWithDetails, InvoiceOutcome } from '@rezeta/shared'
+import { postSignPanelStrings } from './strings'
+
+const BILLING_PATH = '/facturacion'
+const LOCATIONS_SETTINGS_PATH = '/ajustes/ubicaciones'
+
+const navLinkClass = 'text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline'
+
+export interface PostSignPanelProps {
+  invoiceOutcome: InvoiceOutcome
+  /**
+   * The just-signed consultation. Currently unused by the invoice card, but
+   * kept on the panel so Slice I can append a follow-up block that needs it.
+   */
+  consultation: ConsultationWithDetails
+}
+
+/**
+ * Panel shown once — right after signing — surfacing the auto-invoice outcome.
+ * Only rendered in the just-signed session; it is not part of the consultation
+ * GET payload, so revisiting a signed consultation later shows no panel.
+ *
+ * Structured so Slice I can append a follow-up block below the invoice card.
+ */
+export function PostSignPanel({ invoiceOutcome }: PostSignPanelProps): JSX.Element {
+  return (
+    <div className="border border-n-200 rounded-md bg-n-0 p-5 mb-5">
+      <Overline as="p" size="sm" className="mb-3">
+        {postSignPanelStrings.header}
+      </Overline>
+      <InvoiceCard invoiceOutcome={invoiceOutcome} />
+    </div>
+  )
+}
+
+function InvoiceCard({ invoiceOutcome }: { invoiceOutcome: InvoiceOutcome }): JSX.Element {
+  if (invoiceOutcome.status === 'created') {
+    return (
+      <CreatedInvoiceCard
+        invoiceId={invoiceOutcome.invoiceId}
+        total={invoiceOutcome.total}
+        currency={invoiceOutcome.currency}
+      />
+    )
+  }
+
+  if (invoiceOutcome.status === 'skipped_no_fee') {
+    return (
+      <Callout tone="info" icon="ph ph-info">
+        <p className="m-0 mb-2">{postSignPanelStrings.skippedNoFeeMessage}</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link to={LOCATIONS_SETTINGS_PATH} className={navLinkClass}>
+            {postSignPanelStrings.configureFeeLink}
+          </Link>
+          <Link to={BILLING_PATH} className={navLinkClass}>
+            {postSignPanelStrings.createManualLink}
+          </Link>
+        </div>
+      </Callout>
+    )
+  }
+
+  // status === 'failed'
+  return (
+    <Callout tone="danger" icon="ph ph-warning-circle">
+      <p className="m-0 mb-2">{postSignPanelStrings.failedMessage}</p>
+      <Link to={BILLING_PATH} className={navLinkClass}>
+        {postSignPanelStrings.createManualLink}
+      </Link>
+    </Callout>
+  )
+}
+
+function CreatedInvoiceCard({
+  invoiceId,
+  total,
+  currency,
+}: {
+  invoiceId: string
+  total: number
+  currency: string
+}): JSX.Element {
+  const [issued, setIssued] = useState(false)
+  const updateStatus = useUpdateInvoiceStatus(invoiceId)
+
+  function handleIssue(): void {
+    void updateStatus.mutateAsync({ status: 'issued' }).then(() => setIssued(true))
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-[13px] text-n-700">
+        <i className="ph ph-receipt text-[16px] text-p-500" />
+        <span>{postSignPanelStrings.invoiceCreatedLabel(formatCurrency(total, currency))}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        {issued ? (
+          <span className="flex items-center gap-1.5 text-[13px] text-success-text">
+            <i className="ph ph-check-circle text-[15px]" />
+            {postSignPanelStrings.issuedLabel}
+          </span>
+        ) : (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleIssue}
+            disabled={updateStatus.isPending}
+          >
+            {updateStatus.isPending
+              ? postSignPanelStrings.issuingButton
+              : postSignPanelStrings.issueButton}
+          </Button>
+        )}
+        <Link to={BILLING_PATH} className={navLinkClass}>
+          {postSignPanelStrings.viewInBillingLink}
+        </Link>
+      </div>
+    </div>
+  )
+}
