@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Dashboard upcoming rows start/continue consultations via shared hook (Slice F)
+
+### Added
+
+- `useStartConsultation` hook (`apps/web/src/hooks/consultations/use-start-consultation.ts`) — shared start/continue logic: navigates to `/consultas/:id` when the appointment already has a consultation, otherwise creates one (`{ patientId, locationId, appointmentId }`) and routes to the new one. The create-then-navigate chain terminates with `.catch(() => undefined)` so a failed creation doesn't surface an unhandled rejection (the mutation's `onError` already toasts). Exposes `{ start, isStarting }`.
+- Dashboard `UpcomingRow` renders a trailing `TextLink` action — **Iniciar** (`scheduled`, no consultation) / **Continuar** (`in_progress`, consultation `open`), nothing otherwise — driving `useStartConsultation` (`apps/web/src/pages/Dashboard/UpcomingRow.tsx`, `strings.ts`).
+- Tests for the hook (`apps/web/src/hooks/consultations/__tests__/use-start-consultation.test.tsx`) and the row action (`apps/web/src/pages/Dashboard/__tests__/UpcomingRow.test.tsx`).
+
+### Changed
+
+- `AppointmentCardWithMutation` refactored to consume `useStartConsultation` instead of inlining `useNavigate` + `useCreateConsultation` (`apps/web/src/pages/Schedule/AppointmentCardWithMutation.tsx`).
+- Dashboard `UpcomingRow` row body rendered as a `div` (via `Button asChild`, with `role="button"`/`tabIndex`/`onKeyDown`) so the trailing action button nests without invalid button-in-button markup.
+
+### Fixed
+
+- Dashboard `statusBadgeVariant` now maps `in_progress` to the `signed` badge variant explicitly, matching the Schedule agenda (`apps/web/src/pages/Dashboard/helpers.ts`).
+
 ## [2026-07-02] — State-aware appointment card: Iniciar / Continuar / Ver consulta (Slice E)
 
 ### Added

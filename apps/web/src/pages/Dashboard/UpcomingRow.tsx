@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { Badge, Button } from '@/components/ui'
+import { Badge, Button, TextLink } from '@/components/ui'
 import type { BadgeProps } from '@/components/ui'
+import { useStartConsultation } from '@/hooks/consultations/use-start-consultation'
 import type { AppointmentWithDetails } from '@rezeta/shared'
 import { formatTime, minutesUntil, statusBadgeVariant, statusLabel } from './helpers'
 import { dashboardStrings } from './strings'
@@ -12,6 +13,15 @@ export interface UpcomingRowProps {
 
 export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
   const navigate = useNavigate()
+  const { start, isStarting } = useStartConsultation()
+
+  const canStart = appt.status === 'scheduled' && !appt.consultationId
+  const canContinue = appt.status === 'in_progress' && appt.consultationStatus === 'open'
+  const actionLabel = canStart
+    ? dashboardStrings.upcomingRowStart
+    : canContinue
+      ? dashboardStrings.upcomingRowContinue
+      : null
   const initials = appt.patientName
     .split(' ')
     .slice(0, 2)
@@ -37,11 +47,16 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
     badgeVariant = statusBadgeVariant(appt.status)
   }
 
+  const goToAgenda = (): void => void navigate('/agenda')
+
   return (
+    // Rendered as a div (asChild) rather than a native button so the trailing
+    // TextLink action button can nest without producing invalid button-in-button
+    // markup. Keyboard accessibility is preserved via role/tabIndex/onKeyDown.
     <Button
+      asChild
       variant="item"
       size="sm"
-      onClick={() => void navigate('/agenda')}
       className={[
         'relative flex items-center gap-4 w-full h-auto text-left py-[10px] pl-[14px] pr-4',
         'border-b border-n-100 last:border-b-0',
@@ -49,6 +64,17 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
         !isFirst && isCompleted ? 'opacity-70' : '',
       ].join(' ')}
     >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={goToAgenda}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            goToAgenda()
+          }
+        }}
+      >
       <div className="w-[28px] h-[28px] rounded-full bg-p-50 text-p-700 text-[10px] font-semibold flex items-center justify-center shrink-0">
         {initials}
       </div>
@@ -61,6 +87,20 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
         <Badge variant={badgeVariant} showDot>
           {badgeLabel}
         </Badge>
+        {actionLabel && (
+          <TextLink
+            tone="primary"
+            size="md"
+            disabled={isStarting}
+            onClick={(e) => {
+              e.stopPropagation()
+              start(appt)
+            }}
+          >
+            {actionLabel}
+          </TextLink>
+        )}
+      </div>
       </div>
     </Button>
   )
