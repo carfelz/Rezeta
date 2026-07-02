@@ -5,6 +5,7 @@ import type { PrismaService } from '../../../lib/prisma.service.js'
 import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
 import type { ConsultationWithDetails } from '@rezeta/shared'
 
 function makeConsultation(
@@ -44,6 +45,7 @@ describe('ConsultationsService.getResumableForPatient', () => {
       {} as unknown as ReferenceGuardService,
       {} as unknown as InvoicesService,
       { invalidate: vi.fn() } as unknown as ProtocolRecommendationsService,
+      { record: vi.fn() } as unknown as AuditLogService,
     )
   })
 

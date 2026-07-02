@@ -49,6 +49,8 @@ export const dashboardStrings = {
 
   // UpcomingRow
   upcomingRowPending: 'En espera',
+  upcomingRowStart: 'Iniciar',
+  upcomingRowContinue: 'Continuar',
 
   // RecentPatients
   recentPatientsTitle: 'Pacientes recientes',

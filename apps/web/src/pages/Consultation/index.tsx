@@ -9,12 +9,14 @@ import { MissingFieldsPanel } from '@/components/consultations/MissingFieldsPane
 import { Breadcrumb } from './Breadcrumb'
 import { PageHeader } from './PageHeader'
 import { SignedBanner } from './SignedBanner'
+import { PostSignPanel } from './PostSignPanel'
 import { AmendmentsBanner } from './AmendmentsBanner'
 import { ProtocolPanel } from './ProtocolPanel'
 import { OrdersRail } from './OrdersRail'
 import { formatBreadcrumbDate } from '@/lib/format/dates'
 import { consultationPageStrings } from './strings'
 import { computeMissingRequiredFields } from '@rezeta/shared'
+import type { SignConsultationResponse } from '@rezeta/shared'
 
 export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -25,6 +27,10 @@ export function Consultation(): JSX.Element {
   const [showSign, setShowSign] = useState(false)
   const [showAmend, setShowAmend] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  // Sign response (incl. invoice outcome) captured for the just-signed session
+  // only — it is not part of the consultation GET payload, so revisiting a
+  // signed consultation later shows the banner without the post-sign panel.
+  const [signResult, setSignResult] = useState<SignConsultationResponse | null>(null)
 
   const missingFields = computeMissingRequiredFields(consultation?.protocolUsages ?? [])
 
@@ -99,6 +105,12 @@ export function Consultation(): JSX.Element {
         {isSigned && consultation.signedAt && (
           <SignedBanner signedAt={consultation.signedAt} doctorName={consultation.doctorName} />
         )}
+        {signResult && (
+          <PostSignPanel
+            invoiceOutcome={signResult.invoiceOutcome}
+            consultation={consultation}
+          />
+        )}
         <AmendmentsBanner amendments={consultation.amendments} />
 
         {showMissingFields && (
@@ -124,6 +136,7 @@ export function Consultation(): JSX.Element {
             readOnly={isSigned}
             showSign={showSign}
             onShowSignChange={setShowSign}
+            onSigned={setSignResult}
             showAmend={showAmend}
             onShowAmendChange={setShowAmend}
             showPicker={showPicker}

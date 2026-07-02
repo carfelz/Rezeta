@@ -160,6 +160,21 @@ describe('useSignConsultation', () => {
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/v1/consultations/cons-1/sign', {})
   })
+
+  it('invalidates consultations, appointments and invoices on success', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue({ ...mockConsultation, status: 'signed' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useSignConsultation('cons-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync()
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultations'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['appointments'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['invoices'] })
+  })
 })
 
 describe('useAmendConsultation', () => {

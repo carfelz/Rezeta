@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ConsultationsRepository } from '../consultations.repository.js'
+import { ConsultationsRepository, AppointmentNotStartableError } from '../consultations.repository.js'
 
 const now = new Date('2026-01-01T10:00:00Z')
 
@@ -51,7 +51,8 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
 }
 
 const mockTx = {
-  consultation: { update: vi.fn() },
+  consultation: { create: vi.fn(), update: vi.fn() },
+  appointment: { update: vi.fn(), updateMany: vi.fn() },
   protocolUsage: { updateMany: vi.fn() },
   prescription: { updateMany: vi.fn() },
   labOrder: { updateMany: vi.fn() },
@@ -76,7 +77,7 @@ const mockPrisma = {
     update: vi.fn(),
     updateMany: vi.fn(),
   },
-  prescription: { updateMany: vi.fn() },
+  prescription: { updateMany: vi.fn(), findMany: vi.fn() },
   labOrder: { updateMany: vi.fn() },
   imagingOrder: { updateMany: vi.fn() },
   $transaction: vi.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
@@ -87,6 +88,13 @@ describe('ConsultationsRepository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // updateMany calls default to a matched row so sign/softDelete/create
+    // report their appointment transition as applied unless a test overrides.
+    mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
+    mockTx.protocolUsage.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.prescription.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.labOrder.updateMany.mockResolvedValue({ count: 0 })
+    mockTx.imagingOrder.updateMany.mockResolvedValue({ count: 0 })
     repo = new ConsultationsRepository(mockPrisma as never)
   })
 
@@ -153,6 +161,74 @@ describe('ConsultationsRepository', () => {
     })
   })
 
+  // ── listPatientPrescriptions ─────────────────────────────────────────────────
+
+  describe('listPatientPrescriptions', () => {
+    function makePrescriptionRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'rx1',
+        tenantId: 't1',
+        consultationId: 'c1',
+        patientId: 'p1',
+        doctorId: 'u1',
+        groupTitle: 'Antibióticos',
+        groupOrder: 1,
+        status: 'signed',
+        signedAt: now,
+        pdfUrl: null,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        prescriptionItems: [
+          {
+            id: 'item1',
+            prescriptionId: 'rx1',
+            drug: 'Amoxicilina',
+            dose: '500mg',
+            route: 'oral',
+            frequency: 'c/8h',
+            duration: '7 días',
+            notes: null,
+            source: 'manual',
+            createdAt: now,
+          },
+        ],
+        ...overrides,
+      }
+    }
+
+    it('queries by patientId, tenantId, deletedAt null, newest first', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([makePrescriptionRow()])
+      await repo.listPatientPrescriptions('p1', 't1')
+      const arg = mockPrisma.prescription.findMany.mock.calls[0][0]
+      expect(arg.where).toEqual({ patientId: 'p1', tenantId: 't1', deletedAt: null })
+      expect(arg.orderBy).toEqual({ createdAt: 'desc' })
+    })
+
+    it('maps rows to Prescription DTOs including items', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([makePrescriptionRow()])
+      const result = await repo.listPatientPrescriptions('p1', 't1')
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe('rx1')
+      expect(result[0].consultationId).toBe('c1')
+      expect(result[0].doctorUserId).toBe('u1')
+      expect(result[0].status).toBe('signed')
+      expect(result[0].createdAt).toBe(now.toISOString())
+      expect(result[0].prescriptionItems).toHaveLength(1)
+      expect(result[0].prescriptionItems[0].drug).toBe('Amoxicilina')
+    })
+
+    it('maps a queued prescription with null consultation', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([
+        makePrescriptionRow({ status: 'queued', consultationId: null, signedAt: null }),
+      ])
+      const result = await repo.listPatientPrescriptions('p1', 't1')
+      expect(result[0].status).toBe('queued')
+      expect(result[0].consultationId).toBeNull()
+      expect(result[0].signedAt).toBeNull()
+    })
+  })
+
   // ── findById ───────────────────────────────────────────────────────────────
 
   describe('findById', () => {
@@ -173,22 +249,87 @@ describe('ConsultationsRepository', () => {
 
   describe('create', () => {
     it('creates consultation with required fields', async () => {
-      mockPrisma.consultation.create.mockResolvedValue(makeConsultationRow())
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow())
       const result = await repo.create('t1', 'u1', { patientId: 'p1', locationId: 'loc1' } as never)
       expect(result.id).toBe('c1')
       expect(result.status).toBe('open')
     })
 
+    it('does not touch appointment when no appointmentId (walk-in)', async () => {
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow())
+      await repo.create('t1', 'u1', { patientId: 'p1', locationId: 'loc1' } as never)
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+    })
+
     it('includes optional appointmentId when provided', async () => {
-      mockPrisma.consultation.create.mockResolvedValue(makeConsultationRow())
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
       await repo.create('t1', 'u1', {
         patientId: 'p1',
         locationId: 'loc1',
         appointmentId: 'apt1',
       } as never)
-      const data = mockPrisma.consultation.create.mock.calls[0][0].data
+      const data = mockTx.consultation.create.mock.calls[0][0].data
       expect(data.appointmentId).toBe('apt1')
       expect(data.status).toBe('open')
+    })
+
+    it('moves the appointment to in_progress via a status-filtered updateMany', async () => {
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 1 })
+      await repo.create('t1', 'u1', {
+        patientId: 'p1',
+        locationId: 'loc1',
+        appointmentId: 'apt1',
+      } as never)
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'apt1',
+            tenantId: 't1',
+            deletedAt: null,
+            status: { in: ['scheduled', 'in_progress'] },
+          }),
+          data: expect.objectContaining({ status: 'in_progress' }),
+        }),
+      )
+    })
+
+    it('throws AppointmentNotStartableError and rolls back when the update no-ops (count 0)', async () => {
+      mockTx.consultation.create.mockResolvedValue(makeConsultationRow({ appointmentId: 'apt1' }))
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      await expect(
+        repo.create('t1', 'u1', {
+          patientId: 'p1',
+          locationId: 'loc1',
+          appointmentId: 'apt1',
+        } as never),
+      ).rejects.toThrow(AppointmentNotStartableError)
+    })
+  })
+
+  // ── findOpenByAppointment ────────────────────────────────────────────────────
+
+  describe('findOpenByAppointment', () => {
+    it('returns the mapped open consultation for the appointment', async () => {
+      mockPrisma.consultation.findFirst.mockResolvedValue(
+        makeConsultationRow({ appointmentId: 'apt1' }),
+      )
+      const result = await repo.findOpenByAppointment('apt1', 't1')
+      expect(result?.id).toBe('c1')
+      const where = mockPrisma.consultation.findFirst.mock.calls[0][0].where
+      expect(where).toMatchObject({
+        appointmentId: 'apt1',
+        tenantId: 't1',
+        status: 'open',
+        deletedAt: null,
+      })
+    })
+
+    it('returns null when no open consultation exists', async () => {
+      mockPrisma.consultation.findFirst.mockResolvedValue(null)
+      const result = await repo.findOpenByAppointment('apt1', 't1')
+      expect(result).toBeNull()
     })
   })
 
@@ -210,7 +351,7 @@ describe('ConsultationsRepository', () => {
         makeConsultationRow({ status: 'signed', signedAt: now }),
       )
       const result = await repo.sign('c1', 't1', 'u1')
-      expect(result.id).toBe('c1')
+      expect(result.consultation.id).toBe('c1')
       const data = mockTx.consultation.update.mock.calls[0][0].data
       expect(data.status).toBe('signed')
       expect(data.signedAt).toBeInstanceOf(Date)
@@ -261,6 +402,36 @@ describe('ConsultationsRepository', () => {
       )
     })
 
+    it('completes the linked appointment in the same transaction when appointmentId given', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      const result = await repo.sign('c1', 't1', 'u1', 'apt1')
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
+        where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
+        data: { status: 'completed' },
+      })
+      expect(result.appointmentCompleted).toBe(true)
+    })
+
+    it('reports appointmentCompleted false when the status-filtered update no-ops', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      const result = await repo.sign('c1', 't1', 'u1', 'apt1')
+      expect(result.appointmentCompleted).toBe(false)
+    })
+
+    it('does not touch any appointment when appointmentId is null (walk-in)', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      const result = await repo.sign('c1', 't1', 'u1', null)
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+      expect(result.appointmentCompleted).toBe(false)
+    })
+
     it('rolls back if consultation update throws', async () => {
       mockPrisma.$transaction.mockImplementationOnce(async (fn) => {
         await fn({
@@ -268,12 +439,13 @@ describe('ConsultationsRepository', () => {
           prescription: { updateMany: vi.fn() },
           labOrder: { updateMany: vi.fn() },
           imagingOrder: { updateMany: vi.fn() },
+          appointment: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
           consultation: {
             update: vi.fn().mockRejectedValue(new Error('DB error')),
           },
         })
       })
-      await expect(repo.sign('tenant-1', 'c-1', 'u1')).rejects.toThrow('DB error')
+      await expect(repo.sign('tenant-1', 'c-1', 'u1', null)).rejects.toThrow('DB error')
     })
   })
 
@@ -322,12 +494,36 @@ describe('ConsultationsRepository', () => {
   // ── softDelete ─────────────────────────────────────────────────────────────
 
   describe('softDelete', () => {
-    it('sets deletedAt', async () => {
-      mockPrisma.consultation.update.mockResolvedValue({})
-      await repo.softDelete('c1', 't1')
-      expect(mockPrisma.consultation.update).toHaveBeenCalledWith(
+    it('sets deletedAt on the consultation', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      await repo.softDelete('c1', 't1', null)
+      expect(mockTx.consultation.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ deletedAt: expect.any(Date) }) }),
       )
+    })
+
+    it('reverts the linked in_progress appointment back to scheduled', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      const result = await repo.softDelete('c1', 't1', 'apt1')
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
+        where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
+        data: { status: 'scheduled' },
+      })
+      expect(result.appointmentReverted).toBe(true)
+    })
+
+    it('reports appointmentReverted false when the status-filtered update no-ops', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      mockTx.appointment.updateMany.mockResolvedValue({ count: 0 })
+      const result = await repo.softDelete('c1', 't1', 'apt1')
+      expect(result.appointmentReverted).toBe(false)
+    })
+
+    it('does not touch any appointment for a walk-in consultation (null appointmentId)', async () => {
+      mockTx.consultation.update.mockResolvedValue({})
+      const result = await repo.softDelete('c1', 't1', null)
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+      expect(result.appointmentReverted).toBe(false)
     })
   })
 

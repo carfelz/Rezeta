@@ -6,6 +6,8 @@ import type {
   ConsultationAmendment,
   ConsultationProtocolUsage,
   ProtocolUsageModifications,
+  Prescription,
+  PrescriptionItemRow,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -17,6 +19,26 @@ import type {
 type UpdateConsultationDto = Record<string, never>
 import type { ProtocolContent } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
+
+/**
+ * Thrown inside the create transaction when the status-filtered appointment
+ * update matches no row (a concurrent cancel/complete raced the pre-check).
+ * The service maps this to a ConflictException (APPOINTMENT_NOT_STARTABLE).
+ */
+export class AppointmentNotStartableError extends Error {
+  constructor() {
+    super('Appointment is no longer startable')
+    this.name = 'AppointmentNotStartableError'
+  }
+}
+
+/** Result of signing: the signed consultation plus whether the linked
+ * appointment actually transitioned to `completed` (false when there was no
+ * appointment or its status-filtered update no-op'd). */
+export interface SignResult {
+  consultation: ConsultationWithDetails
+  appointmentCompleted: boolean
+}
 
 type PrismaConsultation = {
   id: string
@@ -102,6 +124,70 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
         depth: c.depth,
         status: c.status as ConsultationProtocolUsage['status'],
       })) ?? [],
+  }
+}
+
+type PrismaPrescriptionRow = {
+  id: string
+  tenantId: string
+  consultationId: string | null
+  patientId: string
+  doctorId: string
+  groupTitle: string | null
+  groupOrder: number
+  status: string
+  signedAt: Date | null
+  pdfUrl: string | null
+  createdAt: Date
+  updatedAt: Date
+  deletedAt: Date | null
+  prescriptionItems: {
+    id: string
+    prescriptionId: string
+    drug: string
+    dose: string
+    route: string
+    frequency: string
+    duration: string
+    notes: string | null
+    source: string | null
+    createdAt: Date
+  }[]
+}
+
+function toPrescriptionItemRow(
+  row: PrismaPrescriptionRow['prescriptionItems'][number],
+): PrescriptionItemRow {
+  return {
+    id: row.id,
+    prescriptionId: row.prescriptionId,
+    drug: row.drug,
+    dose: row.dose,
+    route: row.route,
+    frequency: row.frequency,
+    duration: row.duration,
+    notes: row.notes,
+    source: row.source,
+    createdAt: row.createdAt.toISOString(),
+  }
+}
+
+function toPrescription(row: PrismaPrescriptionRow): Prescription {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    patientId: row.patientId,
+    doctorUserId: row.doctorId,
+    consultationId: row.consultationId,
+    groupTitle: row.groupTitle,
+    groupOrder: row.groupOrder,
+    status: row.status as Prescription['status'],
+    prescriptionItems: row.prescriptionItems.map(toPrescriptionItemRow),
+    pdfUrl: row.pdfUrl,
+    signedAt: row.signedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    deletedAt: row.deletedAt?.toISOString() ?? null,
   }
 }
 
@@ -191,6 +277,19 @@ export class ConsultationsRepository {
   }
 
   /**
+   * All live prescriptions for a patient, newest first. Tenant-scoped and
+   * soft-delete filtered. Powers the patient page's "Recetas" tab.
+   */
+  async listPatientPrescriptions(patientId: string, tenantId: string): Promise<Prescription[]> {
+    const rows = await this.prisma.prescription.findMany({
+      where: { patientId, tenantId, deletedAt: null },
+      include: { prescriptionItems: { orderBy: { createdAt: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    })
+    return rows.map((r) => toPrescription(r as unknown as PrismaPrescriptionRow))
+  }
+
+  /**
    * Returns the most recent draft (in-progress) consultation for a patient
    * within the eligibility window. The caller decides whether to surface a
    * resume banner based on `elapsedMinutes`.
@@ -225,21 +324,56 @@ export class ConsultationsRepository {
     return row ? toConsultationWithDetails(row) : null
   }
 
+  /**
+   * Returns the open consultation already attached to an appointment, if any.
+   * Used to make appointment-driven consultation creation idempotent.
+   */
+  async findOpenByAppointment(
+    appointmentId: string,
+    tenantId: string,
+  ): Promise<ConsultationWithDetails | null> {
+    const row = await this.prisma.consultation.findFirst({
+      where: { appointmentId, tenantId, status: 'open', deletedAt: null },
+      include: RELATIONS_INCLUDE,
+    })
+    return row ? toConsultationWithDetails(row) : null
+  }
+
   async create(
     tenantId: string,
     userId: string,
     dto: CreateConsultationDto,
   ): Promise<ConsultationWithDetails> {
-    const row = await this.prisma.consultation.create({
-      data: {
-        tenantId,
-        doctorId: userId,
-        patientId: dto.patientId,
-        locationId: dto.locationId,
-        ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
-        status: 'open',
-      },
-      include: RELATIONS_INCLUDE,
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.consultation.create({
+        data: {
+          tenantId,
+          doctorId: userId,
+          patientId: dto.patientId,
+          locationId: dto.locationId,
+          ...(dto.appointmentId != null ? { appointmentId: dto.appointmentId } : {}),
+          status: 'open',
+        },
+        include: RELATIONS_INCLUDE,
+      })
+      if (dto.appointmentId != null) {
+        // Status-filtered so a concurrent cancel between the service pre-check
+        // and this commit is a no-op (count 0) rather than being flipped back to
+        // in_progress. Count 0 throws to roll the consultation create back.
+        const { count } = await tx.appointment.updateMany({
+          where: {
+            id: dto.appointmentId,
+            tenantId,
+            deletedAt: null,
+            status: { in: ['scheduled', 'in_progress'] },
+          },
+          data: { status: 'in_progress' },
+        })
+        if (count === 0) {
+          throw new AppointmentNotStartableError()
+        }
+      }
+      return created
     })
     return toConsultationWithDetails(row)
   }
@@ -261,9 +395,10 @@ export class ConsultationsRepository {
     id: string,
     tenantId: string,
     _userId: string,
-  ): Promise<ConsultationWithDetails> {
+    appointmentId: string | null,
+  ): Promise<SignResult> {
     const now = new Date()
-    const row = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.protocolUsage.updateMany({
         where: { consultationId: id, tenantId, status: 'in_progress', deletedAt: null },
         data: { status: 'completed', completedAt: now },
@@ -280,13 +415,27 @@ export class ConsultationsRepository {
         where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
         data: { status: 'signed', signedAt: now },
       })
-      return tx.consultation.update({
+      // Complete the linked appointment. `updateMany` filtered on `in_progress`
+      // keeps this idempotent and never touches manually completed/cancelled rows.
+      let appointmentCompleted = false
+      if (appointmentId != null) {
+        const { count } = await tx.appointment.updateMany({
+          where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
+          data: { status: 'completed' },
+        })
+        appointmentCompleted = count > 0
+      }
+      const consultation = await tx.consultation.update({
         where: { id, tenantId, deletedAt: null },
         data: { status: 'signed', signedAt: now },
         include: RELATIONS_INCLUDE,
       })
+      return { consultation, appointmentCompleted }
     })
-    return toConsultationWithDetails(row)
+    return {
+      consultation: toConsultationWithDetails(result.consultation),
+      appointmentCompleted: result.appointmentCompleted,
+    }
   }
 
   async createAmendment(
@@ -323,10 +472,27 @@ export class ConsultationsRepository {
     return toConsultationWithDetails(row)
   }
 
-  async softDelete(id: string, tenantId: string): Promise<void> {
-    await this.prisma.consultation.update({
-      where: { id, tenantId, deletedAt: null },
-      data: { deletedAt: new Date() },
+  async softDelete(
+    id: string,
+    tenantId: string,
+    appointmentId: string | null,
+  ): Promise<{ appointmentReverted: boolean }> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.consultation.update({
+        where: { id, tenantId, deletedAt: null },
+        data: { deletedAt: new Date() },
+      })
+      // Revert the linked appointment. `updateMany` filtered on `in_progress`
+      // keeps this idempotent and never touches manually completed/cancelled rows.
+      let appointmentReverted = false
+      if (appointmentId != null) {
+        const { count } = await tx.appointment.updateMany({
+          where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
+          data: { status: 'scheduled' },
+        })
+        appointmentReverted = count > 0
+      }
+      return { appointmentReverted }
     })
   }
 

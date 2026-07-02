@@ -5,7 +5,7 @@ import { ProtocolPickerModal } from '@/components/protocols/ProtocolPickerModal'
 import { SignModal } from '@/components/consultations/SignModal'
 import { SkipStepDialog } from '@/components/consultations/SkipStepDialog'
 import { SwitchProtocolDialog } from '@/components/consultations/SwitchProtocolDialog'
-import type { ConsultationProtocolUsage } from '@rezeta/shared'
+import type { ConsultationProtocolUsage, SignConsultationResponse } from '@rezeta/shared'
 
 export interface ConsultationModalsProps {
   consultationId: string
@@ -13,6 +13,7 @@ export interface ConsultationModalsProps {
   protocolIds: string[]
   showSign: boolean
   onShowSignChange: (open: boolean) => void
+  onSigned?: ((result: SignConsultationResponse) => void) | undefined
   showAmend: boolean
   onShowAmendChange: (open: boolean) => void
   showPicker: boolean
@@ -37,6 +38,7 @@ export function ConsultationModals({
   protocolIds,
   showSign,
   onShowSignChange,
+  onSigned,
   showAmend,
   onShowAmendChange,
   showPicker,
@@ -58,7 +60,11 @@ export function ConsultationModals({
     <>
       <Modal open={showSign} onOpenChange={onShowSignChange}>
         {showSign && (
-          <SignModal consultationId={consultationId} onClose={() => onShowSignChange(false)} />
+          <SignModal
+            consultationId={consultationId}
+            onClose={() => onShowSignChange(false)}
+            onSigned={onSigned}
+          />
         )}
       </Modal>
       <Modal open={showAmend} onOpenChange={onShowAmendChange}>

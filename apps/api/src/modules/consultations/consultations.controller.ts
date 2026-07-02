@@ -28,6 +28,8 @@ import type {
   ConsultationProtocolUsage,
   AuthUser,
   ResumableConsultation,
+  SignConsultationResponse,
+  Prescription,
 } from '@rezeta/shared'
 import {
   CreateConsultationSchema,
@@ -135,7 +137,7 @@ export class ConsultationsController {
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ConsultationWithDetails> {
+  ): Promise<SignConsultationResponse> {
     return this.svc.sign(id, tenantId, user.id)
   }
 
@@ -268,5 +270,16 @@ export class PatientConsultationsController {
     @Param('patientId', ParseUUIDPipe) patientId: string,
   ): Promise<ResumableConsultation | null> {
     return this.svc.getResumableForPatient(tenantId, user.id, patientId)
+  }
+
+  @Get('prescriptions')
+  @ApiOperation({ summary: 'List prescriptions for a patient (newest first)' })
+  @ApiParam({ name: 'patientId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Returns Prescription[]' })
+  listPatientPrescriptions(
+    @TenantId() tenantId: string,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<Prescription[]> {
+    return this.svc.listPatientPrescriptions(patientId, tenantId)
   }
 }

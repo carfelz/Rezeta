@@ -7,9 +7,14 @@ import { patientComboboxStrings } from './strings'
 export interface PatientComboboxProps {
   value: string
   onChange: (patientId: string, patientName: string) => void
+  placeholder?: string
 }
 
-export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.Element {
+export function PatientCombobox({
+  value,
+  onChange,
+  placeholder = patientComboboxStrings.searchPlaceholder,
+}: PatientComboboxProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [selectedName, setSelectedName] = useState('')
@@ -43,7 +48,7 @@ export function PatientCombobox({ value, onChange }: PatientComboboxProps): JSX.
     <div className="relative" ref={containerRef}>
       <Input
         type="text"
-        placeholder={patientComboboxStrings.searchPlaceholder}
+        placeholder={placeholder}
         value={value && !open ? selectedName : search}
         onClick={() => setOpen(true)}
         onChange={(e) => {

@@ -14,6 +14,7 @@ const QK = 'appointments'
 
 export interface AppointmentListParams {
   locationId?: string
+  patientId?: string
   from?: string
   to?: string
   status?: string
@@ -25,6 +26,7 @@ export function useAppointments(
 ): UseQueryResult<AppointmentWithDetails[], Error> {
   const search = new URLSearchParams()
   if (params.locationId) search.set('locationId', params.locationId)
+  if (params.patientId) search.set('patientId', params.patientId)
   if (params.from) search.set('from', params.from)
   if (params.to) search.set('to', params.to)
   if (params.status) search.set('status', params.status)
@@ -33,7 +35,7 @@ export function useAppointments(
   return useQuery({
     queryKey: [QK, params],
     queryFn: () => apiClient.get<AppointmentWithDetails[]>(`/v1/appointments${qs ? `?${qs}` : ''}`),
-    enabled: options?.enabled ?? Boolean(params.locationId),
+    enabled: options?.enabled ?? Boolean(params.locationId || params.patientId),
   })
 }
 

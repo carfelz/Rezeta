@@ -12,7 +12,11 @@ import {
   useSkipStep,
   useAddOffProtocolNote,
 } from '@/hooks/consultations/use-consultations'
-import type { ConsultationWithDetails, UpdateProtocolUsageDto } from '@rezeta/shared'
+import type {
+  ConsultationWithDetails,
+  SignConsultationResponse,
+  UpdateProtocolUsageDto,
+} from '@rezeta/shared'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 import { ConsultationModals } from './ConsultationModals'
 import { protocolPanelStrings } from './strings'
@@ -22,6 +26,7 @@ interface ProtocolPanelProps {
   readOnly: boolean
   showSign: boolean
   onShowSignChange: (open: boolean) => void
+  onSigned?: ((result: SignConsultationResponse) => void) | undefined
   showAmend: boolean
   onShowAmendChange: (open: boolean) => void
   showPicker: boolean
@@ -33,6 +38,7 @@ export function ProtocolPanel({
   readOnly,
   showSign,
   onShowSignChange,
+  onSigned,
   showAmend,
   onShowAmendChange,
   showPicker,
@@ -211,6 +217,7 @@ export function ProtocolPanel({
         protocolIds={protocolIds}
         showSign={showSign}
         onShowSignChange={onShowSignChange}
+        onSigned={onSigned}
         showAmend={showAmend}
         onShowAmendChange={onShowAmendChange}
         showPicker={showPicker}

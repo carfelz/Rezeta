@@ -7,14 +7,17 @@ import {
   ModalHeader,
 } from '@/components/ui'
 import { useSignConsultation } from '@/hooks/consultations/use-consultations'
+import type { SignConsultationResponse } from '@rezeta/shared'
 import { signModalStrings } from './strings'
 
 export interface SignModalProps {
   consultationId: string
   onClose: () => void
+  /** Fires with the sign response (incl. invoice outcome) once signing succeeds. */
+  onSigned?: ((result: SignConsultationResponse) => void) | undefined
 }
 
-export function SignModal({ consultationId, onClose }: SignModalProps): JSX.Element {
+export function SignModal({ consultationId, onClose, onSigned }: SignModalProps): JSX.Element {
   const signMutation = useSignConsultation(consultationId)
   return (
     <ModalContent>
@@ -35,7 +38,14 @@ export function SignModal({ consultationId, onClose }: SignModalProps): JSX.Elem
         </ModalClose>
         <Button
           variant="primary"
-          onClick={() => signMutation.mutate(undefined, { onSuccess: onClose })}
+          onClick={() =>
+            signMutation.mutate(undefined, {
+              onSuccess: (result) => {
+                onSigned?.(result)
+                onClose()
+              },
+            })
+          }
           disabled={signMutation.isPending}
         >
           {signMutation.isPending ? signModalStrings.signingButton : signModalStrings.signButton}

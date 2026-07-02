@@ -10,6 +10,8 @@ import type {
   ConsultationProtocolUsage,
   ResumableConsultation,
   ProtocolBlock,
+  SignConsultationResponse,
+  Prescription,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -26,11 +28,17 @@ type UpdateCheckedStateDto = {
   completedAt?: string | null | undefined
   notes?: string | null | undefined
 }
-import { ConsultationsRepository, type ConsultationListParams } from './consultations.repository.js'
+import {
+  ConsultationsRepository,
+  AppointmentNotStartableError,
+  type ConsultationListParams,
+} from './consultations.repository.js'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 import { InvoicesService } from '../invoices/invoices.service.js'
 import { ProtocolRecommendationsService } from '../protocol-recommendations/protocol-recommendations.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 
 @Injectable()
 export class ConsultationsService {
@@ -41,10 +49,40 @@ export class ConsultationsService {
     @Inject(InvoicesService) private invoicesSvc: InvoicesService,
     @Inject(ProtocolRecommendationsService)
     private recommendationsSvc: ProtocolRecommendationsService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
+
+  /**
+   * Records an explicit audit row for a consultation-driven appointment status
+   * transition. Non-fatal — a failed audit write never fails the operation.
+   * Mirrors the invoices-service pattern (reads actor from the HTTP store).
+   */
+  private recordAppointmentTransition(
+    tenantId: string,
+    appointmentId: string,
+    before: string,
+    after: string,
+  ): void {
+    const httpCtx = httpAuditContextStore.getStore()
+    void this.auditLog.record({
+      tenantId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
+      actorType: httpCtx ? 'user' : 'system',
+      category: 'entity',
+      action: 'update',
+      entityType: 'Appointment',
+      entityId: appointmentId,
+      changes: { status: { before, after } },
+      status: 'success',
+    })
+  }
 
   list(params: ConsultationListParams): Promise<ConsultationWithDetails[]> {
     return this.repo.findMany(params)
+  }
+
+  listPatientPrescriptions(patientId: string, tenantId: string): Promise<Prescription[]> {
+    return this.repo.listPatientPrescriptions(patientId, tenantId)
   }
 
   /**
@@ -103,13 +141,52 @@ export class ConsultationsService {
     // Verify every client-supplied FK belongs to this tenant before linking it,
     // otherwise a consultation stamped with our tenantId could point at another
     // tenant's patient/location and leak their PHI back in the response.
+    // The appointment is asserted by the tenant-scoped status lookup below.
     await this.references.assertPatient(dto.patientId, tenantId)
     await this.references.assertLocation(dto.locationId, tenantId)
-    if (dto.appointmentId != null) {
-      await this.references.assertAppointment(dto.appointmentId, tenantId)
-    }
 
-    const result = await this.repo.create(tenantId, userId, dto)
+    let apptStatusBefore: string | null = null
+    if (dto.appointmentId != null) {
+      const appt = await this.prisma.appointment.findFirst({
+        where: { id: dto.appointmentId, tenantId, deletedAt: null },
+        select: { status: true },
+      })
+      if (!appt) {
+        throw new NotFoundException({
+          code: ErrorCode.APPOINTMENT_NOT_FOUND,
+          message: 'Appointment not found',
+        })
+      }
+      if (appt.status !== 'scheduled' && appt.status !== 'in_progress') {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_NOT_STARTABLE,
+          message: `Cannot start a consultation on a ${appt.status} appointment`,
+        })
+      }
+      apptStatusBefore = appt.status
+      const existing = await this.repo.findOpenByAppointment(dto.appointmentId, tenantId)
+      if (existing) return existing
+    }
+    let result: ConsultationWithDetails
+    try {
+      result = await this.repo.create(tenantId, userId, dto)
+    } catch (err) {
+      // Race backstop: a concurrent cancel/complete slipped between the
+      // pre-check and the commit, so the status-filtered update no-op'd and the
+      // create rolled back.
+      if (err instanceof AppointmentNotStartableError) {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_NOT_STARTABLE,
+          message: 'Appointment is no longer startable',
+        })
+      }
+      throw err
+    }
+    // Only audit a real transition: skip when the appointment was already
+    // in_progress (idempotent restart, no status change).
+    if (dto.appointmentId != null && apptStatusBefore === 'scheduled') {
+      this.recordAppointmentTransition(tenantId, dto.appointmentId, 'scheduled', 'in_progress')
+    }
     this.recommendationsSvc.invalidate(tenantId, userId, dto.patientId)
     return result
   }
@@ -185,7 +262,7 @@ export class ConsultationsService {
     return { ...c, protocolUsages: updatedUsages }
   }
 
-  async sign(id: string, tenantId: string, userId: string): Promise<ConsultationWithDetails> {
+  async sign(id: string, tenantId: string, userId: string): Promise<SignConsultationResponse> {
     const c = await this.getById(id, tenantId)
     if (c.status !== 'open') {
       throw new ConflictException({
@@ -212,20 +289,31 @@ export class ConsultationsService {
       })
     }
 
-    const result = await this.repo.sign(id, tenantId, userId)
+    // Signs the consultation and completes the linked appointment atomically.
+    const { consultation, appointmentCompleted } = await this.repo.sign(
+      id,
+      tenantId,
+      userId,
+      c.appointmentId ?? null,
+    )
 
-    // Auto-create draft invoice from DoctorLocation fee — non-fatal if it fails
-    void this.invoicesSvc
-      .createFromConsultation({
-        consultationId: id,
-        patientId: c.patientId,
-        locationId: c.locationId,
-        userId,
-        tenantId,
-      })
-      .catch(() => undefined)
+    // Audit the appointment transition only when it actually applied (the
+    // status-filtered update can no-op if the appointment was already moved).
+    if (c.appointmentId != null && appointmentCompleted) {
+      this.recordAppointmentTransition(tenantId, c.appointmentId, 'in_progress', 'completed')
+    }
 
-    return result
+    // Auto-create draft invoice from DoctorLocation fee. Invoice failure never
+    // fails the sign — the outcome is reported back instead.
+    const invoiceOutcome = await this.invoicesSvc.createFromConsultation({
+      consultationId: id,
+      patientId: c.patientId,
+      locationId: c.locationId,
+      userId,
+      tenantId,
+    })
+
+    return { ...consultation, invoiceOutcome }
   }
 
   async amend(
@@ -252,7 +340,16 @@ export class ConsultationsService {
         message: 'Signed consultations cannot be deleted',
       })
     }
-    await this.repo.softDelete(id, tenantId)
+    // Signed consultations can't reach here, so any surviving link is an open
+    // consultation whose appointment should revert to `scheduled`.
+    const { appointmentReverted } = await this.repo.softDelete(
+      id,
+      tenantId,
+      c.appointmentId ?? null,
+    )
+    if (c.appointmentId != null && appointmentReverted) {
+      this.recordAppointmentTransition(tenantId, c.appointmentId, 'in_progress', 'scheduled')
+    }
   }
 
   // ── Protocol usages ──────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import type {
   CreateLabOrderGroupDto,
   ResumableConsultation,
   OffProtocolNoteEvent,
+  SignConsultationResponse,
 } from '@rezeta/shared'
 
 // Local stubs for types removed from shared in schema reset v2
@@ -43,6 +44,16 @@ export function usePatientConsultations(
     queryKey: [QK, { patientId }],
     queryFn: () =>
       apiClient.get<ConsultationWithDetails[]>(`/v1/consultations?patientId=${patientId}`),
+    enabled: Boolean(patientId),
+  })
+}
+
+export function usePatientPrescriptions(
+  patientId: string,
+): UseQueryResult<Prescription[], Error> {
+  return useQuery({
+    queryKey: [QK, 'prescriptions', { patientId }],
+    queryFn: () => apiClient.get<Prescription[]>(`/v1/patients/${patientId}/prescriptions`),
     enabled: Boolean(patientId),
   })
 }
@@ -83,6 +94,7 @@ export function useCreateConsultation(): UseMutationResult<
       apiClient.post<ConsultationWithDetails>('/v1/consultations', dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      void qc.invalidateQueries({ queryKey: ['appointments'] })
       toast.success(toastStrings.consultationCreated)
     },
     onError: () => {
@@ -108,12 +120,14 @@ export function useUpdateConsultation(
 
 export function useSignConsultation(
   id: string,
-): UseMutationResult<ConsultationWithDetails, Error, void> {
+): UseMutationResult<SignConsultationResponse, Error, void> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => apiClient.patch<ConsultationWithDetails>(`/v1/consultations/${id}/sign`, {}),
+    mutationFn: () => apiClient.patch<SignConsultationResponse>(`/v1/consultations/${id}/sign`, {}),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK] })
+      void qc.invalidateQueries({ queryKey: ['appointments'] })
+      void qc.invalidateQueries({ queryKey: ['invoices'] })
       toast.success(toastStrings.consultationSigned)
     },
     onError: () => {

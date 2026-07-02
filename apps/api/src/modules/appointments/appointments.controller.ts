@@ -48,12 +48,13 @@ export class AppointmentsController {
   @Get()
   @ApiOperation({ summary: 'List appointments' })
   @ApiQuery({ name: 'locationId', required: false, type: String })
+  @ApiQuery({ name: 'patientId', required: false, type: String })
   @ApiQuery({ name: 'from', required: false, type: String, description: 'ISO datetime' })
   @ApiQuery({ name: 'to', required: false, type: String, description: 'ISO datetime' })
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['scheduled', 'completed', 'cancelled', 'no_show'],
+    enum: ['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'],
   })
   @ApiResponse({
     status: 200,
@@ -63,6 +64,7 @@ export class AppointmentsController {
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
     @Query('locationId') locationId?: string,
+    @Query('patientId') patientId?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('status') status?: string,
@@ -71,6 +73,7 @@ export class AppointmentsController {
       tenantId,
       userId: user.id,
       ...(locationId ? { locationId } : {}),
+      ...(patientId ? { patientId } : {}),
       ...(from ? { from: new Date(from) } : {}),
       ...(to ? { to: new Date(to) } : {}),
       ...(status ? { status } : {}),
@@ -142,7 +145,10 @@ export class AppointmentsController {
       type: 'object',
       required: ['status'],
       properties: {
-        status: { type: 'string', enum: ['scheduled', 'completed', 'cancelled', 'no_show'] },
+        status: {
+          type: 'string',
+          enum: ['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'],
+        },
       },
     },
   })

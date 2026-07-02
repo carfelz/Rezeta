@@ -44,6 +44,8 @@ export function statusBadgeVariant(status: AppointmentStatus): BadgeProps['varia
   switch (status) {
     case 'completed':
       return 'active'
+    case 'in_progress':
+      return 'signed'
     case 'cancelled':
       return 'archived'
     case 'no_show':
@@ -57,6 +59,8 @@ export function statusLabel(status: AppointmentStatus): string {
   switch (status) {
     case 'scheduled':
       return 'Confirmada'
+    case 'in_progress':
+      return 'En consulta'
     case 'completed':
       return 'Completada'
     case 'cancelled':

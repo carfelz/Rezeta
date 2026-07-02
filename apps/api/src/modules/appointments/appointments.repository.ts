@@ -1,7 +1,23 @@
 import { Injectable, Inject } from '@nestjs/common'
-import type { Appointment, AppointmentWithDetails } from '@rezeta/shared'
+import type {
+  Appointment,
+  AppointmentConsultationStatus,
+  AppointmentWithDetails,
+} from '@rezeta/shared'
 import type { CreateAppointmentDto, UpdateAppointmentDto } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
+
+/** Shared relations loaded on every appointment read that returns AppointmentWithDetails. */
+const DETAILS_INCLUDE = {
+  patient: { select: { firstName: true, lastName: true, documentNumber: true } },
+  location: { select: { name: true } },
+  consultations: {
+    where: { deletedAt: null },
+    select: { id: true, status: true },
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+  },
+}
 
 type PrismaAppointment = {
   id: string
@@ -22,6 +38,7 @@ type PrismaAppointment = {
 type PrismaAppointmentWithRelations = PrismaAppointment & {
   patient: { firstName: string; lastName: string; documentNumber: string | null }
   location: { name: string }
+  consultations?: { id: string; status: string }[]
 }
 
 function toAppointment(row: PrismaAppointment): Appointment {
@@ -43,11 +60,14 @@ function toAppointment(row: PrismaAppointment): Appointment {
 }
 
 function toAppointmentWithDetails(row: PrismaAppointmentWithRelations): AppointmentWithDetails {
+  const linked = row.consultations?.[0] ?? null
   return {
     ...toAppointment(row),
     patientName: `${row.patient.firstName} ${row.patient.lastName}`.trim(),
     patientDocumentNumber: row.patient.documentNumber,
     locationName: row.location.name,
+    consultationId: linked?.id ?? null,
+    consultationStatus: (linked?.status as AppointmentConsultationStatus | undefined) ?? null,
   }
 }
 
@@ -55,6 +75,7 @@ export interface AppointmentListParams {
   tenantId: string
   userId: string
   locationId?: string
+  patientId?: string
   from?: Date
   to?: Date
   status?: string
@@ -71,6 +92,7 @@ export class AppointmentsRepository {
         userId: params.userId,
         deletedAt: null,
         ...(params.locationId ? { locationId: params.locationId } : {}),
+        ...(params.patientId ? { patientId: params.patientId } : {}),
         ...(params.status ? { status: params.status } : {}),
         ...(params.from || params.to
           ? {
@@ -81,10 +103,7 @@ export class AppointmentsRepository {
             }
           : {}),
       },
-      include: {
-        patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-        location: { select: { name: true } },
-      },
+      include: DETAILS_INCLUDE,
       orderBy: { startsAt: 'asc' },
     })
     return rows.map((r) => toAppointmentWithDetails(r as PrismaAppointmentWithRelations))
@@ -93,10 +112,7 @@ export class AppointmentsRepository {
   async findById(id: string, tenantId: string): Promise<AppointmentWithDetails | null> {
     const row = await this.prisma.appointment.findFirst({
       where: { id, tenantId, deletedAt: null },
-      include: {
-        patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-        location: { select: { name: true } },
-      },
+      include: DETAILS_INCLUDE,
     })
     return row ? toAppointmentWithDetails(row as PrismaAppointmentWithRelations) : null
   }
@@ -118,10 +134,7 @@ export class AppointmentsRepository {
         notes: dto.notes ?? null,
         status: 'scheduled',
       },
-      include: {
-        patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-        location: { select: { name: true } },
-      },
+      include: DETAILS_INCLUDE,
     })
     return toAppointmentWithDetails(row as PrismaAppointmentWithRelations)
   }
@@ -141,10 +154,7 @@ export class AppointmentsRepository {
         ...(dto.reason !== undefined ? { reason: dto.reason } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
       },
-      include: {
-        patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-        location: { select: { name: true } },
-      },
+      include: DETAILS_INCLUDE,
     })
     return toAppointmentWithDetails(row as PrismaAppointmentWithRelations)
   }
@@ -157,10 +167,7 @@ export class AppointmentsRepository {
     const row = await this.prisma.appointment.update({
       where: { id, tenantId, deletedAt: null },
       data: { status },
-      include: {
-        patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-        location: { select: { name: true } },
-      },
+      include: DETAILS_INCLUDE,
     })
     return toAppointmentWithDetails(row as PrismaAppointmentWithRelations)
   }
@@ -169,6 +176,21 @@ export class AppointmentsRepository {
     await this.prisma.appointment.update({
       where: { id, tenantId, deletedAt: null },
       data: { deletedAt: new Date() },
+    })
+  }
+
+  /**
+   * Returns the newest non-deleted consultation linked to this appointment, or
+   * null. Used to guard manual status changes while a consultation is attached.
+   */
+  async findLiveConsultation(
+    appointmentId: string,
+    tenantId: string,
+  ): Promise<{ id: string; status: string } | null> {
+    return this.prisma.consultation.findFirst({
+      where: { appointmentId, tenantId, deletedAt: null },
+      select: { id: true, status: true },
+      orderBy: { createdAt: 'desc' },
     })
   }
 

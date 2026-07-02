@@ -1,6 +1,7 @@
 import { Badge, Stack, TextLink } from '@/components/ui'
 import type { AppointmentStatus, AppointmentWithDetails } from '@rezeta/shared'
 import { formatTime, statusBadgeVariant, statusLabel } from './helpers'
+import { appointmentCardStrings } from './strings'
 
 export interface AppointmentCardProps {
   appt: AppointmentWithDetails
@@ -8,6 +9,8 @@ export interface AppointmentCardProps {
   onDelete: () => void
   onStatusChange: (status: AppointmentStatus) => void
   isUpdatingStatus: boolean
+  onStartConsultation: () => void
+  isStartingConsultation: boolean
 }
 
 export function AppointmentCard({
@@ -16,6 +19,8 @@ export function AppointmentCard({
   onDelete,
   onStatusChange,
   isUpdatingStatus,
+  onStartConsultation,
+  isStartingConsultation,
 }: AppointmentCardProps): JSX.Element {
   return (
     <div className="bg-n-0 border border-n-200 rounded-md p-4 flex gap-4 hover:border-n-300 transition-colors duration-[100ms]">
@@ -51,19 +56,45 @@ export function AppointmentCard({
       </div>
 
       <Stack gap={1} className="shrink-0">
+        {appt.status === 'scheduled' && appt.consultationId === null && (
+          <TextLink
+            tone="primary"
+            size="md"
+            underline="hover"
+            onClick={onStartConsultation}
+            disabled={isStartingConsultation}
+          >
+            <i className="ph ph-play-circle text-[14px]" />
+            {appointmentCardStrings.startConsultation}
+          </TextLink>
+        )}
+        {appt.status === 'in_progress' && appt.consultationStatus === 'open' && (
+          <TextLink tone="primary" size="md" underline="hover" onClick={onStartConsultation}>
+            <i className="ph ph-arrow-right text-[14px]" />
+            {appointmentCardStrings.continueConsultation}
+          </TextLink>
+        )}
+        {appt.status === 'completed' && appt.consultationId !== null && (
+          <TextLink tone="primary" size="md" underline="hover" onClick={onStartConsultation}>
+            <i className="ph ph-file-text text-[14px]" />
+            {appointmentCardStrings.viewConsultation}
+          </TextLink>
+        )}
         {appt.status === 'scheduled' && (
           <>
-            <TextLink
-              tone="primary"
-              size="md"
-              underline="hover"
-              onClick={() => onStatusChange('completed')}
-              disabled={isUpdatingStatus}
-              className="text-success-text hover:text-success-text"
-            >
-              <i className="ph ph-check-circle text-[14px]" />
-              Completar
-            </TextLink>
+            {appt.consultationId === null && (
+              <TextLink
+                tone="primary"
+                size="md"
+                underline="hover"
+                onClick={() => onStatusChange('completed')}
+                disabled={isUpdatingStatus}
+                className="text-success-text hover:text-success-text"
+              >
+                <i className="ph ph-check-circle text-[14px]" />
+                {appointmentCardStrings.complete}
+              </TextLink>
+            )}
             <TextLink
               tone="warning"
               size="md"
@@ -72,18 +103,20 @@ export function AppointmentCard({
               disabled={isUpdatingStatus}
             >
               <i className="ph ph-user-x text-[14px]" />
-              No asistió
+              {appointmentCardStrings.noShow}
             </TextLink>
             <TextLink tone="neutral" size="md" underline="hover" onClick={onEdit}>
               <i className="ph ph-pencil-simple text-[14px]" />
-              Editar
+              {appointmentCardStrings.edit}
             </TextLink>
           </>
         )}
-        <TextLink tone="danger" size="md" underline="hover" onClick={onDelete} className="mt-1">
-          <i className="ph ph-trash text-[14px]" />
-          Eliminar
-        </TextLink>
+        {appt.status !== 'in_progress' && (
+          <TextLink tone="danger" size="md" underline="hover" onClick={onDelete} className="mt-1">
+            <i className="ph ph-trash text-[14px]" />
+            {appointmentCardStrings.delete}
+          </TextLink>
+        )}
       </Stack>
     </div>
   )
