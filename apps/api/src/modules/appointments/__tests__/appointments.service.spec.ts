@@ -173,6 +173,28 @@ describe('AppointmentsService', () => {
       ).rejects.toThrow(NotFoundException)
     })
 
+    it('verifies a reassigned patient/location belong to the tenant', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+      await service.update('appt-1', 'tenant-1', 'user-1', {
+        patientId: 'p-2',
+        locationId: 'l-2',
+      })
+      expect(references.assertPatient).toHaveBeenCalledWith('p-2', 'tenant-1')
+      expect(references.assertLocation).toHaveBeenCalledWith('l-2', 'tenant-1')
+    })
+
+    it('rejects a cross-tenant patient on update before writing', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(references.assertPatient).mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.PATIENT_NOT_FOUND, message: 'Patient not found' }),
+      )
+      await expect(
+        service.update('appt-1', 'tenant-1', 'user-1', { patientId: 'other-tenant' }),
+      ).rejects.toThrow(NotFoundException)
+      expect(repo.update).not.toHaveBeenCalled()
+    })
+
     it('throws BadRequestException when endsAt is before startsAt in update', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockAppt())
       await expect(
