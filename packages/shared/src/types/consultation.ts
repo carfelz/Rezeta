@@ -255,6 +255,24 @@ export interface ConsultationWithDetails extends Consultation {
 }
 
 /**
+ * Outcome of the auto-invoice attempt when a consultation is signed. Invoice
+ * failure never fails the sign, so the response reports what happened instead
+ * of throwing.
+ */
+export type InvoiceOutcome =
+  | { status: 'created'; invoiceId: string; total: number; currency: string }
+  | { status: 'skipped_no_fee' }
+  | { status: 'failed' }
+
+/**
+ * Response of `PATCH /consultations/:id/sign` — the signed consultation plus
+ * the invoice outcome so the client can surface the billing result inline.
+ */
+export interface SignConsultationResponse extends ConsultationWithDetails {
+  invoiceOutcome: InvoiceOutcome
+}
+
+/**
  * Resume-banner payload — surfaces an in-progress consultation a doctor left
  * mid-edit. Returned by `GET /v1/patients/:id/in-progress-consultation`.
  *

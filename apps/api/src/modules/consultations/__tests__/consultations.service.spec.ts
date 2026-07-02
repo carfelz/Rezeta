@@ -97,7 +97,7 @@ describe('ConsultationsService', () => {
     } as unknown as PrismaService
 
     invoicesSvc = {
-      createFromConsultation: vi.fn().mockResolvedValue(undefined),
+      createFromConsultation: vi.fn().mockResolvedValue({ status: 'skipped_no_fee' }),
     } as unknown as InvoicesService
 
     recommendationsSvc = { invalidate: vi.fn() }
@@ -439,8 +439,6 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
       await service.sign('consult-1', 'tenant-1', 'user-1')
-      // Allow fire-and-forget to settle
-      await Promise.resolve()
       expect(invoicesSvc.createFromConsultation).toHaveBeenCalledWith({
         consultationId: 'consult-1',
         patientId: draft.patientId,
@@ -450,14 +448,72 @@ describe('ConsultationsService', () => {
       })
     })
 
-    it('sign succeeds even when auto-invoice creation fails', async () => {
+    it('passes the linked appointmentId to repo.sign so it completes the appointment', async () => {
+      const draft = mockConsultation({
+        status: 'open',
+        appointmentId: 'appt-1',
+        protocolUsages: [mockProtocolUsage()],
+      })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(repo.sign).toHaveBeenCalledWith('consult-1', 'tenant-1', 'user-1', 'appt-1')
+    })
+
+    it('passes null appointmentId for a walk-in consultation', async () => {
+      const draft = mockConsultation({
+        status: 'open',
+        appointmentId: null,
+        protocolUsages: [mockProtocolUsage()],
+      })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.status).toBe('signed')
+      expect(repo.sign).toHaveBeenCalledWith('consult-1', 'tenant-1', 'user-1', null)
+    })
+
+    it('returns the invoice outcome when an invoice is created', async () => {
       const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
       const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
       vi.mocked(repo.findById).mockResolvedValue(draft)
       vi.mocked(repo.sign).mockResolvedValue(signed)
-      vi.mocked(invoicesSvc.createFromConsultation).mockRejectedValue(new Error('DB error'))
+      vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({
+        status: 'created',
+        invoiceId: 'inv-1',
+        total: 2000,
+        currency: 'DOP',
+      })
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.invoiceOutcome).toEqual({
+        status: 'created',
+        invoiceId: 'inv-1',
+        total: 2000,
+        currency: 'DOP',
+      })
+    })
+
+    it('returns skipped_no_fee outcome when no fee is configured', async () => {
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({ status: 'skipped_no_fee' })
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.invoiceOutcome).toEqual({ status: 'skipped_no_fee' })
+    })
+
+    it('returns failed outcome (and still signs) when invoice creation reports failure', async () => {
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue(signed)
+      vi.mocked(invoicesSvc.createFromConsultation).mockResolvedValue({ status: 'failed' })
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
+      expect(result.invoiceOutcome).toEqual({ status: 'failed' })
     })
   })
 

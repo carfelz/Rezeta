@@ -28,6 +28,7 @@ import type {
   ConsultationProtocolUsage,
   AuthUser,
   ResumableConsultation,
+  SignConsultationResponse,
 } from '@rezeta/shared'
 import {
   CreateConsultationSchema,
@@ -135,7 +136,7 @@ export class ConsultationsController {
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ConsultationWithDetails> {
+  ): Promise<SignConsultationResponse> {
     return this.svc.sign(id, tenantId, user.id)
   }
 

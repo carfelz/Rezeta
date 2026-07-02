@@ -285,6 +285,7 @@ export class ConsultationsRepository {
     id: string,
     tenantId: string,
     _userId: string,
+    appointmentId: string | null,
   ): Promise<ConsultationWithDetails> {
     const now = new Date()
     const row = await this.prisma.$transaction(async (tx) => {
@@ -304,6 +305,14 @@ export class ConsultationsRepository {
         where: { consultationId: id, tenantId, status: 'queued', deletedAt: null },
         data: { status: 'signed', signedAt: now },
       })
+      // Complete the linked appointment. `updateMany` filtered on `in_progress`
+      // keeps this idempotent and never touches manually completed/cancelled rows.
+      if (appointmentId != null) {
+        await tx.appointment.updateMany({
+          where: { id: appointmentId, tenantId, deletedAt: null, status: 'in_progress' },
+          data: { status: 'completed' },
+        })
+      }
       return tx.consultation.update({
         where: { id, tenantId, deletedAt: null },
         data: { status: 'signed', signedAt: now },

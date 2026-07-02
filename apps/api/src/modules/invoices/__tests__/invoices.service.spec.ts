@@ -429,7 +429,25 @@ describe('InvoicesService', () => {
       )
     })
 
-    it('skips creation when consultationFee is 0', async () => {
+    it('returns created outcome with invoiceId, total and currency', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue({
+        consultationFee: new Decimal(2000),
+        commissionPct: new Decimal(15),
+      } as never)
+      vi.mocked(repo.create).mockResolvedValue(makeRow({ id: 'inv-9', total: new Decimal(2000) }))
+      const outcome = await service.createFromConsultation(params)
+      expect(outcome).toEqual({
+        status: 'created',
+        invoiceId: 'inv-9',
+        total: 2000,
+        currency: 'DOP',
+      })
+    })
+
+    it('returns skipped_no_fee and does not create when consultationFee is 0', async () => {
       vi.mocked(
         (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
           .doctorLocation.findFirst,
@@ -437,17 +455,41 @@ describe('InvoicesService', () => {
         consultationFee: new Decimal(0),
         commissionPct: new Decimal(10),
       } as never)
-      await service.createFromConsultation(params)
+      const outcome = await service.createFromConsultation(params)
       expect(repo.create).not.toHaveBeenCalled()
+      expect(outcome).toEqual({ status: 'skipped_no_fee' })
     })
 
-    it('skips creation when DoctorLocation not found', async () => {
+    it('returns skipped_no_fee when DoctorLocation not found', async () => {
       vi.mocked(
         (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
           .doctorLocation.findFirst,
       ).mockResolvedValue(null)
-      await service.createFromConsultation(params)
+      const outcome = await service.createFromConsultation(params)
       expect(repo.create).not.toHaveBeenCalled()
+      expect(outcome).toEqual({ status: 'skipped_no_fee' })
+    })
+
+    it('returns failed (never throws) when the lookup throws', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockRejectedValue(new Error('DB error'))
+      const outcome = await service.createFromConsultation(params)
+      expect(outcome).toEqual({ status: 'failed' })
+    })
+
+    it('returns failed (never throws) when repo.create throws', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue({
+        consultationFee: new Decimal(2000),
+        commissionPct: new Decimal(15),
+      } as never)
+      vi.mocked(repo.create).mockRejectedValue(new Error('DB error'))
+      const outcome = await service.createFromConsultation(params)
+      expect(outcome).toEqual({ status: 'failed' })
     })
   })
 })

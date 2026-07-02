@@ -52,7 +52,7 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
 
 const mockTx = {
   consultation: { create: vi.fn(), update: vi.fn() },
-  appointment: { update: vi.fn() },
+  appointment: { update: vi.fn(), updateMany: vi.fn() },
   protocolUsage: { updateMany: vi.fn() },
   prescription: { updateMany: vi.fn() },
   labOrder: { updateMany: vi.fn() },
@@ -308,6 +308,25 @@ describe('ConsultationsRepository', () => {
       )
     })
 
+    it('completes the linked appointment in the same transaction when appointmentId given', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1', 'apt1')
+      expect(mockTx.appointment.updateMany).toHaveBeenCalledWith({
+        where: { id: 'apt1', tenantId: 't1', deletedAt: null, status: 'in_progress' },
+        data: { status: 'completed' },
+      })
+    })
+
+    it('does not touch any appointment when appointmentId is null (walk-in)', async () => {
+      mockTx.consultation.update.mockResolvedValue(
+        makeConsultationRow({ status: 'signed', signedAt: now }),
+      )
+      await repo.sign('c1', 't1', 'u1', null)
+      expect(mockTx.appointment.updateMany).not.toHaveBeenCalled()
+    })
+
     it('rolls back if consultation update throws', async () => {
       mockPrisma.$transaction.mockImplementationOnce(async (fn) => {
         await fn({
@@ -315,12 +334,13 @@ describe('ConsultationsRepository', () => {
           prescription: { updateMany: vi.fn() },
           labOrder: { updateMany: vi.fn() },
           imagingOrder: { updateMany: vi.fn() },
+          appointment: { updateMany: vi.fn() },
           consultation: {
             update: vi.fn().mockRejectedValue(new Error('DB error')),
           },
         })
       })
-      await expect(repo.sign('tenant-1', 'c-1', 'u1')).rejects.toThrow('DB error')
+      await expect(repo.sign('tenant-1', 'c-1', 'u1', null)).rejects.toThrow('DB error')
     })
   })
 

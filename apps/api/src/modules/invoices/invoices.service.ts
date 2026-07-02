@@ -15,6 +15,7 @@ import type {
   InvoiceWithDetails,
   InvoiceStatus,
   Currency,
+  InvoiceOutcome,
 } from '@rezeta/shared'
 
 interface InvoiceListResult {
@@ -135,29 +136,39 @@ export class InvoicesService {
     locationId: string
     userId: string
     tenantId: string
-  }): Promise<void> {
-    const dl = await this.prisma.doctorLocation.findFirst({
-      where: { userId: params.userId, locationId: params.locationId },
-      select: { consultationFee: true, commissionPct: true },
-    })
+  }): Promise<InvoiceOutcome> {
+    try {
+      const dl = await this.prisma.doctorLocation.findFirst({
+        where: { userId: params.userId, locationId: params.locationId },
+        select: { consultationFee: true, commissionPct: true },
+      })
 
-    if (!dl || Number(dl.consultationFee) === 0) return
+      if (!dl || Number(dl.consultationFee) === 0) return { status: 'skipped_no_fee' }
 
-    const fee = Number(dl.consultationFee)
-    const commissionPct = Number(dl.commissionPct)
+      const fee = Number(dl.consultationFee)
+      const commissionPct = Number(dl.commissionPct)
 
-    await this.repo.create(
-      params.tenantId,
-      params.userId,
-      {
-        patientId: params.patientId,
-        locationId: params.locationId,
-        consultationId: params.consultationId,
-        currency: 'DOP',
-        items: [{ description: 'Consulta médica', quantity: 1, unitPrice: fee, total: fee }],
-      },
-      commissionPct,
-    )
+      const row = await this.repo.create(
+        params.tenantId,
+        params.userId,
+        {
+          patientId: params.patientId,
+          locationId: params.locationId,
+          consultationId: params.consultationId,
+          currency: 'DOP',
+          items: [{ description: 'Consulta médica', quantity: 1, unitPrice: fee, total: fee }],
+        },
+        commissionPct,
+      )
+      return {
+        status: 'created',
+        invoiceId: row.id,
+        total: Number(row.total),
+        currency: row.currency,
+      }
+    } catch {
+      return { status: 'failed' }
+    }
   }
 
   async getInvoicePdf(id: string, tenantId: string): Promise<Buffer> {

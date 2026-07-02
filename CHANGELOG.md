@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Signing completes the appointment and reports the invoice outcome (Slice C)
+
+### Added
+
+- `InvoiceOutcome` and `SignConsultationResponse` types in `packages/shared/src/types/consultation.ts` (exported from the package index). `InvoiceOutcome` is a discriminated union — `created` (with `invoiceId`/`total`/`currency`), `skipped_no_fee`, or `failed`; the sign response extends `ConsultationWithDetails` with `invoiceOutcome`.
+
+### Changed
+
+- `ConsultationsService.sign` now awaits the invoice attempt and returns `SignConsultationResponse` including the `invoiceOutcome` (was fire-and-forget). It passes the linked `appointmentId` to the repository so the appointment is completed atomically (`apps/api/src/modules/consultations/consultations.service.ts`).
+- `ConsultationsRepository.sign(id, tenantId, userId, appointmentId)` now completes the linked appointment inside the existing sign `$transaction` via `updateMany` filtered on `status: 'in_progress'` — idempotent, never touching manually completed/cancelled rows (`apps/api/src/modules/consultations/consultations.repository.ts`).
+- `InvoicesService.createFromConsultation` now returns `InvoiceOutcome` and never throws — internal errors resolve to `{ status: 'failed' }`, so invoice failure never fails the sign (`apps/api/src/modules/invoices/invoices.service.ts`).
+- Consultations controller `sign` handler return type updated to `SignConsultationResponse` (`apps/api/src/modules/consultations/consultations.controller.ts`).
+
 ## [2026-07-02] — Start a consultation from an appointment (Slice B)
 
 ### Added

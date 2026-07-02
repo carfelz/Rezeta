@@ -10,6 +10,7 @@ import type {
   ConsultationProtocolUsage,
   ResumableConsultation,
   ProtocolBlock,
+  SignConsultationResponse,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -194,7 +195,7 @@ export class ConsultationsService {
     return { ...c, protocolUsages: updatedUsages }
   }
 
-  async sign(id: string, tenantId: string, userId: string): Promise<ConsultationWithDetails> {
+  async sign(id: string, tenantId: string, userId: string): Promise<SignConsultationResponse> {
     const c = await this.getById(id, tenantId)
     if (c.status !== 'open') {
       throw new ConflictException({
@@ -221,20 +222,20 @@ export class ConsultationsService {
       })
     }
 
-    const result = await this.repo.sign(id, tenantId, userId)
+    // Signs the consultation and completes the linked appointment atomically.
+    const result = await this.repo.sign(id, tenantId, userId, c.appointmentId ?? null)
 
-    // Auto-create draft invoice from DoctorLocation fee — non-fatal if it fails
-    void this.invoicesSvc
-      .createFromConsultation({
-        consultationId: id,
-        patientId: c.patientId,
-        locationId: c.locationId,
-        userId,
-        tenantId,
-      })
-      .catch(() => undefined)
+    // Auto-create draft invoice from DoctorLocation fee. Invoice failure never
+    // fails the sign — the outcome is reported back instead.
+    const invoiceOutcome = await this.invoicesSvc.createFromConsultation({
+      consultationId: id,
+      patientId: c.patientId,
+      locationId: c.locationId,
+      userId,
+      tenantId,
+    })
 
-    return result
+    return { ...result, invoiceOutcome }
   }
 
   async amend(

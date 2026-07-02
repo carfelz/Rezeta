@@ -119,7 +119,10 @@ describe('ConsultationsController', () => {
   })
 
   it('sign delegates to service', async () => {
-    vi.mocked(svc.sign).mockResolvedValue(makeConsultation())
+    vi.mocked(svc.sign).mockResolvedValue({
+      ...makeConsultation(),
+      invoiceOutcome: { status: 'skipped_no_fee' },
+    })
     await controller.sign(tenantId, mockUser, 'c1')
     expect(svc.sign).toHaveBeenCalledWith('c1', tenantId, 'user-1')
   })
