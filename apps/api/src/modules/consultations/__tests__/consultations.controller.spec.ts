@@ -182,4 +182,14 @@ describe('ConsultationsController', () => {
     expect(mock).toHaveBeenCalledWith(tenantId, 'user-1', 'pat-1')
     expect(result).toBeNull()
   })
+
+  it('PatientConsultationsController.listPatientPrescriptions delegates to svc', async () => {
+    const { PatientConsultationsController } = await import('../consultations.controller.js')
+    const mock = vi.fn().mockResolvedValue([])
+    const subSvc = { listPatientPrescriptions: mock } as unknown as ConsultationsService
+    const sub = new PatientConsultationsController(subSvc)
+    const result = await sub.listPatientPrescriptions(tenantId, 'pat-1')
+    expect(mock).toHaveBeenCalledWith('pat-1', tenantId)
+    expect(result).toEqual([])
+  })
 })

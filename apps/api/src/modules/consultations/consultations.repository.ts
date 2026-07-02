@@ -6,6 +6,8 @@ import type {
   ConsultationAmendment,
   ConsultationProtocolUsage,
   ProtocolUsageModifications,
+  Prescription,
+  PrescriptionItemRow,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -105,6 +107,70 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
   }
 }
 
+type PrismaPrescriptionRow = {
+  id: string
+  tenantId: string
+  consultationId: string | null
+  patientId: string
+  doctorId: string
+  groupTitle: string | null
+  groupOrder: number
+  status: string
+  signedAt: Date | null
+  pdfUrl: string | null
+  createdAt: Date
+  updatedAt: Date
+  deletedAt: Date | null
+  prescriptionItems: {
+    id: string
+    prescriptionId: string
+    drug: string
+    dose: string
+    route: string
+    frequency: string
+    duration: string
+    notes: string | null
+    source: string | null
+    createdAt: Date
+  }[]
+}
+
+function toPrescriptionItemRow(
+  row: PrismaPrescriptionRow['prescriptionItems'][number],
+): PrescriptionItemRow {
+  return {
+    id: row.id,
+    prescriptionId: row.prescriptionId,
+    drug: row.drug,
+    dose: row.dose,
+    route: row.route,
+    frequency: row.frequency,
+    duration: row.duration,
+    notes: row.notes,
+    source: row.source,
+    createdAt: row.createdAt.toISOString(),
+  }
+}
+
+function toPrescription(row: PrismaPrescriptionRow): Prescription {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    patientId: row.patientId,
+    doctorUserId: row.doctorId,
+    consultationId: row.consultationId,
+    groupTitle: row.groupTitle,
+    groupOrder: row.groupOrder,
+    status: row.status as Prescription['status'],
+    prescriptionItems: row.prescriptionItems.map(toPrescriptionItemRow),
+    pdfUrl: row.pdfUrl,
+    signedAt: row.signedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    deletedAt: row.deletedAt?.toISOString() ?? null,
+  }
+}
+
 function toConsultationWithDetails(row: PrismaConsultationWithRels): ConsultationWithDetails {
   return {
     ...toConsultation(row),
@@ -188,6 +254,19 @@ export class ConsultationsRepository {
       orderBy: { startedAt: 'desc' },
     })
     return rows.map((r) => toConsultationWithDetails(r))
+  }
+
+  /**
+   * All live prescriptions for a patient, newest first. Tenant-scoped and
+   * soft-delete filtered. Powers the patient page's "Recetas" tab.
+   */
+  async listPatientPrescriptions(patientId: string, tenantId: string): Promise<Prescription[]> {
+    const rows = await this.prisma.prescription.findMany({
+      where: { patientId, tenantId, deletedAt: null },
+      include: { prescriptionItems: { orderBy: { createdAt: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    })
+    return rows.map((r) => toPrescription(r as unknown as PrismaPrescriptionRow))
   }
 
   /**

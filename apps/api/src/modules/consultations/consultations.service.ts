@@ -11,6 +11,7 @@ import type {
   ResumableConsultation,
   ProtocolBlock,
   SignConsultationResponse,
+  Prescription,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -44,6 +45,10 @@ export class ConsultationsService {
 
   list(params: ConsultationListParams): Promise<ConsultationWithDetails[]> {
     return this.repo.findMany(params)
+  }
+
+  listPatientPrescriptions(patientId: string, tenantId: string): Promise<Prescription[]> {
+    return this.repo.listPatientPrescriptions(patientId, tenantId)
   }
 
   /**

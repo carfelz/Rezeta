@@ -86,6 +86,7 @@ describe('ConsultationsService', () => {
       updateCheckedState: vi.fn(),
       removeProtocolUsage: vi.fn(),
       getUsageDepth: vi.fn(),
+      listPatientPrescriptions: vi.fn(),
     } as unknown as ConsultationsRepository
 
     prisma = {
@@ -116,6 +117,15 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findMany).mockResolvedValue([mockConsultation()])
       const result = await service.list({ tenantId: 'tenant-1', userId: 'user-1' })
       expect(result).toHaveLength(1)
+    })
+  })
+
+  describe('listPatientPrescriptions', () => {
+    it('delegates to repository with patientId and tenantId', async () => {
+      vi.mocked(repo.listPatientPrescriptions).mockResolvedValue([])
+      const result = await service.listPatientPrescriptions('patient-1', 'tenant-1')
+      expect(repo.listPatientPrescriptions).toHaveBeenCalledWith('patient-1', 'tenant-1')
+      expect(result).toEqual([])
     })
   })
 

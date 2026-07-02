@@ -77,7 +77,7 @@ const mockPrisma = {
     update: vi.fn(),
     updateMany: vi.fn(),
   },
-  prescription: { updateMany: vi.fn() },
+  prescription: { updateMany: vi.fn(), findMany: vi.fn() },
   labOrder: { updateMany: vi.fn() },
   imagingOrder: { updateMany: vi.fn() },
   $transaction: vi.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
@@ -151,6 +151,74 @@ describe('ConsultationsRepository', () => {
       expect(result[0].protocolUsages).toHaveLength(1)
       expect(result[0].protocolUsages[0].protocolTitle).toBe('Anaphylaxis')
       expect(result[0].protocolUsages[0].protocolTypeName).toBeNull()
+    })
+  })
+
+  // ── listPatientPrescriptions ─────────────────────────────────────────────────
+
+  describe('listPatientPrescriptions', () => {
+    function makePrescriptionRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'rx1',
+        tenantId: 't1',
+        consultationId: 'c1',
+        patientId: 'p1',
+        doctorId: 'u1',
+        groupTitle: 'Antibióticos',
+        groupOrder: 1,
+        status: 'signed',
+        signedAt: now,
+        pdfUrl: null,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        prescriptionItems: [
+          {
+            id: 'item1',
+            prescriptionId: 'rx1',
+            drug: 'Amoxicilina',
+            dose: '500mg',
+            route: 'oral',
+            frequency: 'c/8h',
+            duration: '7 días',
+            notes: null,
+            source: 'manual',
+            createdAt: now,
+          },
+        ],
+        ...overrides,
+      }
+    }
+
+    it('queries by patientId, tenantId, deletedAt null, newest first', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([makePrescriptionRow()])
+      await repo.listPatientPrescriptions('p1', 't1')
+      const arg = mockPrisma.prescription.findMany.mock.calls[0][0]
+      expect(arg.where).toEqual({ patientId: 'p1', tenantId: 't1', deletedAt: null })
+      expect(arg.orderBy).toEqual({ createdAt: 'desc' })
+    })
+
+    it('maps rows to Prescription DTOs including items', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([makePrescriptionRow()])
+      const result = await repo.listPatientPrescriptions('p1', 't1')
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe('rx1')
+      expect(result[0].consultationId).toBe('c1')
+      expect(result[0].doctorUserId).toBe('u1')
+      expect(result[0].status).toBe('signed')
+      expect(result[0].createdAt).toBe(now.toISOString())
+      expect(result[0].prescriptionItems).toHaveLength(1)
+      expect(result[0].prescriptionItems[0].drug).toBe('Amoxicilina')
+    })
+
+    it('maps a queued prescription with null consultation', async () => {
+      mockPrisma.prescription.findMany.mockResolvedValue([
+        makePrescriptionRow({ status: 'queued', consultationId: null, signedAt: null }),
+      ])
+      const result = await repo.listPatientPrescriptions('p1', 't1')
+      expect(result[0].status).toBe('queued')
+      expect(result[0].consultationId).toBeNull()
+      expect(result[0].signedAt).toBeNull()
     })
   })
 
