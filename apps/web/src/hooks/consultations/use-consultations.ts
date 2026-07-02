@@ -48,6 +48,16 @@ export function usePatientConsultations(
   })
 }
 
+export function usePatientPrescriptions(
+  patientId: string,
+): UseQueryResult<Prescription[], Error> {
+  return useQuery({
+    queryKey: [QK, 'prescriptions', { patientId }],
+    queryFn: () => apiClient.get<Prescription[]>(`/v1/patients/${patientId}/prescriptions`),
+    enabled: Boolean(patientId),
+  })
+}
+
 export function useConsultations(
   params: ConsultationListParams,
 ): UseQueryResult<ConsultationWithDetails[], Error> {

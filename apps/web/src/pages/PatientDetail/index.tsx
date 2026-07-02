@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useUiStore } from '@/store/ui.store'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
 import { ClinicalHistory } from '@/pages/Patients/ClinicalHistory'
+import { AppointmentsTab } from './AppointmentsTab'
 import { DemographicsBlock } from './DemographicsBlock'
 import { EditModal } from './EditModal'
+import { InvoicesTab } from './InvoicesTab'
 import { MedicalInfoBlock } from './MedicalInfoBlock'
 import { PageHeader } from './PageHeader'
+import { PrescriptionsTab } from './PrescriptionsTab'
+import { patientDetailStrings as s } from './strings'
 
 export function PatientDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -48,12 +53,32 @@ export function PatientDetail(): JSX.Element {
       <DemographicsBlock patient={patient} />
       <MedicalInfoBlock patient={patient} />
 
-      <div className="border border-n-200 rounded-md bg-n-0 p-5">
-        <ClinicalHistory
-          patientId={patient.id}
-          {...(activeLocationId ? { locationId: activeLocationId } : {})}
-        />
-      </div>
+      <Tabs defaultValue="historia">
+        <TabsList>
+          <TabsTrigger value="historia">{s.tabHistory}</TabsTrigger>
+          <TabsTrigger value="citas">{s.tabAppointments}</TabsTrigger>
+          <TabsTrigger value="recetas">{s.tabPrescriptions}</TabsTrigger>
+          <TabsTrigger value="facturas">{s.tabInvoices}</TabsTrigger>
+        </TabsList>
+
+        <div className="border border-n-200 rounded-md bg-n-0 p-5 mt-4">
+          <TabsContent value="historia">
+            <ClinicalHistory
+              patientId={patient.id}
+              {...(activeLocationId ? { locationId: activeLocationId } : {})}
+            />
+          </TabsContent>
+          <TabsContent value="citas">
+            <AppointmentsTab patientId={patient.id} />
+          </TabsContent>
+          <TabsContent value="recetas">
+            <PrescriptionsTab patientId={patient.id} />
+          </TabsContent>
+          <TabsContent value="facturas">
+            <InvoicesTab patientId={patient.id} />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }

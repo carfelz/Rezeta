@@ -32,4 +32,29 @@ export const patientDetailStrings = {
   savingButton: 'Guardando...',
   saveButton: 'Guardar cambios',
   errorMessage: 'No se pudo actualizar el paciente. Intenta de nuevo.',
+
+  // ── Tabs ────────────────────────────────────────────────────────────────────
+  tabHistory: 'Historia clínica',
+  tabAppointments: 'Citas',
+  tabPrescriptions: 'Recetas',
+  tabInvoices: 'Facturas',
+
+  // ── AppointmentsTab ─────────────────────────────────────────────────────────
+  appointmentsEmpty: 'Sin citas registradas',
+  startConsultation: 'Iniciar consulta',
+  viewConsultation: 'Ver consulta',
+
+  // ── PrescriptionsTab ────────────────────────────────────────────────────────
+  prescriptionsEmpty: 'Sin recetas registradas',
+  prescriptionStatusDraft: 'Borrador',
+  prescriptionStatusSigned: 'Firmada',
+  prescriptionItemsCount: (n: number): string =>
+    n === 1 ? '1 medicamento' : `${n} medicamentos`,
+
+  // ── InvoicesTab ─────────────────────────────────────────────────────────────
+  invoicesEmpty: 'Sin facturas registradas',
+  viewInvoice: 'Ver en facturación',
+
+  // ── Shared ──────────────────────────────────────────────────────────────────
+  loadError: 'No se pudo cargar la información. Intenta de nuevo.',
 } as const

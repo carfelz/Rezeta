@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-02] — Patient page tabs: Citas / Recetas / Facturas with cross-links (Slice J)
+
+### Added
+
+- `GET /v1/patients/:patientId/prescriptions` on the existing `PatientConsultationsController` (`apps/api/src/modules/consultations/consultations.controller.ts`) → `Prescription[]`, tenant- and soft-delete-filtered, newest first. Backed by `ConsultationsService.listPatientPrescriptions` and `ConsultationsRepository.listPatientPrescriptions` (includes `prescriptionItems`).
+- Patient detail page (`apps/web/src/pages/PatientDetail/index.tsx`) now renders a Radix `Tabs` bar: **Historia clínica** (default, existing `ClinicalHistory` unchanged), **Citas**, **Recetas**, **Facturas**. New tab components `AppointmentsTab.tsx`, `PrescriptionsTab.tsx`, `InvoicesTab.tsx`, each with an `EmptyState` (`Sin citas registradas` / `Sin recetas registradas` / `Sin facturas registradas`) and cross-links: Citas rows link to `/consultas/{id}` (linked) or offer **Iniciar consulta** via `useStartConsultation` (scheduled); Recetas rows link to the consultation when linked; Facturas rows link to `/facturacion` and to the consultation when linked. Citas list is patient-scoped only — no active-location filter. Strings colocated in `apps/web/src/pages/PatientDetail/strings.ts`.
+- `usePatientPrescriptions(patientId)` hook (`apps/web/src/hooks/consultations/use-consultations.ts`).
+- Tests: API endpoint/service/repo cases (tenant + soft-delete filtering, newest first, item mapping) in the consultations spec files; web tab tests `apps/web/src/pages/PatientDetail/__tests__/PatientDetailTabs.test.tsx` (four tabs, default active, status badges, cross-links, per-tab empty states, patient-only appointment fetch).
+
+### Changed
+
+- `useAppointments` (`apps/web/src/hooks/appointments/use-appointments.ts`) accepts an optional `patientId` param (forwarded as a query param); the query auto-enables when `patientId` is provided.
+
 ## [2026-07-02] — Post-sign follow-up card "Agendar seguimiento" (Slice I)
 
 ### Added
