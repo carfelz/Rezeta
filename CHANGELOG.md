@@ -4,136 +4,29 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-02] — Patient page tabs: Citas / Recetas / Facturas with cross-links (Slice J)
+## [2026-07-02] Workflow interconnection — full clinical loop
+
+Connects appointments, consultations, invoices, and the patient record into one
+continuous workflow: start a consultation from an appointment, drive the
+appointment's status from the consultation lifecycle, surface the auto-invoice
+outcome after signing, schedule a follow-up, and browse a patient's citas,
+recetas y facturas.
 
 ### Added
 
-- `GET /v1/patients/:patientId/prescriptions` on the existing `PatientConsultationsController` (`apps/api/src/modules/consultations/consultations.controller.ts`) → `Prescription[]`, tenant- and soft-delete-filtered, newest first. Backed by `ConsultationsService.listPatientPrescriptions` and `ConsultationsRepository.listPatientPrescriptions` (includes `prescriptionItems`).
-- Patient detail page (`apps/web/src/pages/PatientDetail/index.tsx`) now renders a Radix `Tabs` bar: **Historia clínica** (default, existing `ClinicalHistory` unchanged), **Citas**, **Recetas**, **Facturas**. New tab components `AppointmentsTab.tsx`, `PrescriptionsTab.tsx`, `InvoicesTab.tsx`, each with an `EmptyState` (`Sin citas registradas` / `Sin recetas registradas` / `Sin facturas registradas`) and cross-links: Citas rows link to `/consultas/{id}` (linked) or offer **Iniciar consulta** via `useStartConsultation` (scheduled); Recetas rows link to the consultation when linked; Facturas rows link to `/facturacion` and to the consultation when linked. Citas list is patient-scoped only — no active-location filter. Strings colocated in `apps/web/src/pages/PatientDetail/strings.ts`.
-- `usePatientPrescriptions(patientId)` hook (`apps/web/src/hooks/consultations/use-consultations.ts`).
-- Tests: API endpoint/service/repo cases (tenant + soft-delete filtering, newest first, item mapping) in the consultations spec files; web tab tests `apps/web/src/pages/PatientDetail/__tests__/PatientDetailTabs.test.tsx` (four tabs, default active, status badges, cross-links, per-tab empty states, patient-only appointment fetch).
+- **Start/continue/view consultation from the agenda and dashboard.** State-driven action on the agenda appointment card and dashboard upcoming rows: **Iniciar consulta** (`scheduled`, no linked consultation), **Continuar consulta** (`in_progress`, consultation `open`), **Ver consulta** (`completed` with a consultation). Shared via the `useStartConsultation` hook, which navigates to `/consultas/:id` when a consultation is already linked, otherwise creates one (`{ patientId, locationId, appointmentId }`) and routes to it (`apps/web/src/hooks/consultations/use-start-consultation.ts`, `apps/web/src/pages/Schedule/AppointmentCard.tsx`, `AppointmentCardWithMutation.tsx`, `apps/web/src/pages/Dashboard/UpcomingRow.tsx`).
+- **`in_progress` appointment status** across the stack (`AppointmentStatusSchema` enum, `AppointmentStatus` type, Prisma column comment, Spanish "En consulta" labels in `apps/web/src/pages/Schedule/helpers.ts` and `apps/web/src/pages/Dashboard/helpers.ts`). The consultation lifecycle drives appointment status one-way: create → `in_progress`, sign → `completed`, delete open → `scheduled` (`consultations.service.ts` / `consultations.repository.ts`). Appointment-driven creation is idempotent (an existing open consultation is returned instead of a duplicate) and the appointment transition runs inside the consultation-create/sign/delete `$transaction`.
+- **Global "Nueva consulta" walk-in dialog** with patient search and inline minimal patient creation (`apps/web/src/components/consultations/NewConsultationDialog.tsx`): a `search` mode (find an existing patient via `PatientCombobox`) and a `create-patient` mode (mini-form: `Nombre`, `Apellido`, `Fecha de nacimiento`). Location defaults to `useUiStore.activeLocationId`; on submit it creates the patient (when in create mode) then a walk-in consultation (`appointmentId` omitted) and navigates to `/consultas/{id}`. Reachable from the Agenda page header and the Dashboard `PageHeader` primary button.
+- **Post-sign panel** rendered once below `SignedBanner` in the just-signed session (`apps/web/src/pages/Consultation/PostSignPanel.tsx`): an **invoice outcome card** handling all three `InvoiceOutcome` states — `created` shows `Factura borrador creada · {total}` with **Emitir factura** (issues via `useUpdateInvoiceStatus`) and a **Ver en Facturación** link; `skipped_no_fee` shows an info callout with **Configurar tarifa** / **Crear factura manual**; `failed` shows a danger callout with **Crear factura manual** — plus a **Seguimiento** block with **Agendar seguimiento** that opens `AppointmentFormModal` pre-filled for the just-signed consultation (today's date, `consultation.locationId`, `consultation.patientId`).
+- **Patient page tabs — Citas / Recetas / Facturas** with cross-links (`apps/web/src/pages/PatientDetail/index.tsx`, `AppointmentsTab.tsx`, `PrescriptionsTab.tsx`, `InvoicesTab.tsx`): Citas rows link to `/consultas/{id}` or offer **Iniciar consulta**; Recetas rows link to the linked consultation; Facturas rows link to `/facturacion` and to the linked consultation. Each tab has its own empty state. Backed by new `GET /v1/patients/:patientId/prescriptions` (tenant- and soft-delete-filtered, newest first, includes `prescriptionItems`) and a `patientId` filter on `GET /v1/appointments`.
+- **Types** `InvoiceOutcome` and `SignConsultationResponse` (`packages/shared/src/types/consultation.ts`); `AppointmentConsultationStatus` plus `consultationId`/`consultationStatus` on `AppointmentWithDetails` (`packages/shared/src/types/appointment.ts`).
+- **Error codes** `APPOINTMENT_NOT_STARTABLE`, `APPOINTMENT_HAS_CONSULTATION`, `APPOINTMENT_HAS_OPEN_CONSULTATION` (`packages/shared/src/errors.ts`).
 
 ### Changed
 
-- `useAppointments` (`apps/web/src/hooks/appointments/use-appointments.ts`) accepts an optional `patientId` param (forwarded as a query param); the query auto-enables when `patientId` is provided.
-
-## [2026-07-02] — Post-sign follow-up card "Agendar seguimiento" (Slice I)
-
-### Added
-
-- Follow-up block in `PostSignPanel` (`apps/web/src/pages/Consultation/PostSignPanel.tsx`) — a **Seguimiento** heading with the caption `Agenda la próxima cita de este paciente.` and an **Agendar seguimiento** secondary button (`ph-calendar-plus`). Clicking opens `AppointmentFormModal` pre-filled for the just-signed consultation: `defaultDate` today, `defaultLocationId={consultation.locationId}`, `defaultPatientId={consultation.patientId}`. Optional — skipping remains the default path. Strings colocated in `postSignPanelStrings` (`followUpHeading`, `followUpCaption`, `scheduleFollowUpButton`).
-- Tests: follow-up cases in `apps/web/src/pages/Consultation/__tests__/PostSignPanel.test.tsx` (block renders regardless of invoice outcome; button opens the pre-filled modal) and new `apps/web/src/pages/Schedule/__tests__/AppointmentFormModal.test.tsx` (patient initializes from `defaultPatientId`; empty when omitted).
-
-### Changed
-
-- `AppointmentFormModal` (`apps/web/src/pages/Schedule/AppointmentFormModal.tsx`) gains an optional `defaultPatientId` prop; when creating (not editing) the patient field initializes to `appointment?.patientId ?? defaultPatientId ?? ''`. Existing usages are unaffected.
-
-## [2026-07-02] — Post-sign panel surfaces the auto-invoice outcome (Slice H)
-
-### Added
-
-- `PostSignPanel` (`apps/web/src/pages/Consultation/PostSignPanel.tsx`) — bordered card with an `Overline` header `DESPUÉS DE FIRMAR`, rendered once below `SignedBanner` in the just-signed session. Its invoice card handles the three `InvoiceOutcome` states: `created` shows `Factura borrador creada · {total}` with an **Emitir factura** button (issues via `useUpdateInvoiceStatus`, then flips to a `Factura emitida` state) and a **Ver en Facturación** link (`/facturacion`); `skipped_no_fee` shows an info `Callout` plus **Configurar tarifa** (`/ajustes/ubicaciones`) and **Crear factura manual** (`/facturacion`) links; `failed` shows a danger `Callout` plus **Crear factura manual**. Structured so Slice I can append a follow-up block. Strings colocated in `apps/web/src/pages/Consultation/strings.ts` (`postSignPanelStrings`).
-- Tests: `apps/web/src/pages/Consultation/__tests__/PostSignPanel.test.tsx` (created/skipped/failed states, issue action fires the status mutation with `issued`, issued-state transition).
-
-### Changed
-
-- `useSignConsultation` (`apps/web/src/hooks/consultations/use-consultations.ts`) result type is now `SignConsultationResponse` (consultation + `invoiceOutcome`).
-- Threaded an `onSigned` callback from `SignModal` → `ConsultationModals` → `ProtocolPanel` → `Consultation/index.tsx`, which captures the sign response in page-level `signResult` state (not persisted; only the just-signed session shows the panel).
-
-## [2026-07-02] — Global "Nueva consulta" walk-in dialog with inline minimal patient creation (Slice G)
-
-### Added
-
-- `NewConsultationDialog` (`apps/web/src/components/consultations/NewConsultationDialog.tsx`) — modal with two modes: `search` (find an existing patient via the reused `PatientCombobox`) and `create-patient` (inline minimal mini-form: `Nombre`, `Apellido`, `Fecha de nacimiento`). Location defaults to `useUiStore.activeLocationId`. Submit is disabled until a patient (selected or a valid mini-form) and a location are set. On submit it creates the patient when in create mode, then creates a walk-in consultation (`appointmentId` omitted) and navigates to `/consultas/{id}`; the create chain terminates with `.catch(() => undefined)` so a failed mutation leaves the dialog open without an unhandled rejection (hooks' `onError` toasts surface the error). Strings colocated in `newConsultationDialogStrings.ts`.
-- Tests: `apps/web/src/components/consultations/__tests__/NewConsultationDialog.test.tsx` (existing-patient walk-in + navigate, create-patient path, disabled-until-ready, failure keeps dialog open).
-- Header entry points: primary `Nueva consulta` button on the Agenda page header (`apps/web/src/pages/Schedule/index.tsx`) and repurposed the Dashboard `PageHeader` primary button (`apps/web/src/pages/Dashboard/PageHeader.tsx`) to open the dialog instead of navigating to `/consultas/nueva`.
-
-### Changed
-
-- `PatientCombobox` (`apps/web/src/pages/Schedule/PatientCombobox.tsx`) accepts an optional `placeholder` prop (defaults to the existing string) so the dialog can show `Buscar por nombre o cédula`.
-
-### Notes
-
-- `CreatePatientSchema` (`packages/shared`) requires `fullName` (not separate `firstName`/`lastName`); the mini-form collects `Nombre` + `Apellido` and joins them into `fullName` for the create DTO. `dateOfBirth` is optional and omitted when blank.
-
-## [2026-07-02] — Dashboard upcoming rows start/continue consultations via shared hook (Slice F)
-
-### Added
-
-- `useStartConsultation` hook (`apps/web/src/hooks/consultations/use-start-consultation.ts`) — shared start/continue logic: navigates to `/consultas/:id` when the appointment already has a consultation, otherwise creates one (`{ patientId, locationId, appointmentId }`) and routes to the new one. The create-then-navigate chain terminates with `.catch(() => undefined)` so a failed creation doesn't surface an unhandled rejection (the mutation's `onError` already toasts). Exposes `{ start, isStarting }`.
-- Dashboard `UpcomingRow` renders a trailing `TextLink` action — **Iniciar** (`scheduled`, no consultation) / **Continuar** (`in_progress`, consultation `open`), nothing otherwise — driving `useStartConsultation` (`apps/web/src/pages/Dashboard/UpcomingRow.tsx`, `strings.ts`).
-- Tests for the hook (`apps/web/src/hooks/consultations/__tests__/use-start-consultation.test.tsx`) and the row action (`apps/web/src/pages/Dashboard/__tests__/UpcomingRow.test.tsx`).
-
-### Changed
-
-- `AppointmentCardWithMutation` refactored to consume `useStartConsultation` instead of inlining `useNavigate` + `useCreateConsultation` (`apps/web/src/pages/Schedule/AppointmentCardWithMutation.tsx`).
-- Dashboard `UpcomingRow` row body rendered as a `div` (via `Button asChild`, with `role="button"`/`tabIndex`/`onKeyDown`) so the trailing action button nests without invalid button-in-button markup.
-
-### Fixed
-
-- Dashboard `statusBadgeVariant` now maps `in_progress` to the `signed` badge variant explicitly, matching the Schedule agenda (`apps/web/src/pages/Dashboard/helpers.ts`).
-
-## [2026-07-02] — State-aware appointment card: Iniciar / Continuar / Ver consulta (Slice E)
-
-### Added
-
-- Agenda appointment card renders a state-driven primary action: **Iniciar consulta** (`scheduled`, no linked consultation), **Continuar consulta** (`in_progress`, consultation `open`), **Ver consulta** (`completed` with a consultation). Card props `AppointmentCard` gains `onStartConsultation` and `isStartingConsultation` (`apps/web/src/pages/Schedule/AppointmentCard.tsx`, `strings.ts`).
-- `AppointmentCardWithMutation` wires start/continue/view via `useNavigate` + `useCreateConsultation`: navigates to `/consultas/:id` when a consultation is already linked, otherwise creates one (`{ patientId, locationId, appointmentId }`) and routes to the new consultation (`apps/web/src/pages/Schedule/AppointmentCardWithMutation.tsx`).
-- Component tests for all card states and the start-consultation click (`apps/web/src/pages/Schedule/__tests__/AppointmentCard.test.tsx`).
-
-### Changed
-
-- `useCreateConsultation` and `useSignConsultation` now also invalidate the `['appointments']` query key so the agenda refetches after a consultation is created or signed (`apps/web/src/hooks/consultations/use-consultations.ts`).
-- Appointment card hides **Completar** whenever a consultation is linked and hides **Eliminar** for `in_progress` appointments.
-
-## [2026-07-02] — Deleting an open consultation reverts its appointment; manual status guards (Slice D)
-
-### Added
-
-- `AppointmentsRepository.findLiveConsultation(appointmentId, tenantId)` returns the newest non-deleted consultation (`{ id, status }`) linked to an appointment, or null (`apps/api/src/modules/appointments/appointments.repository.ts`).
-
-### Changed
-
-- `ConsultationsRepository.softDelete(id, tenantId, appointmentId)` now wraps the soft-delete in a `$transaction` and, when an `appointmentId` is given, reverts the linked appointment from `in_progress` back to `scheduled` via `updateMany` (idempotent; never touches manually completed/cancelled rows) (`apps/api/src/modules/consultations/consultations.repository.ts`).
-- `ConsultationsService.remove` passes the consultation's `appointmentId ?? null` to the repository so deleting an open consultation reverts its appointment (`apps/api/src/modules/consultations/consultations.service.ts`).
-- `AppointmentsService.updateStatus` now guards manual status changes when a live consultation is linked: manual `completed` throws `APPOINTMENT_HAS_CONSULTATION`; manual `cancelled`/`no_show` while the consultation is `open` throws `APPOINTMENT_HAS_OPEN_CONSULTATION`. Unlinked appointments are unaffected (`apps/api/src/modules/appointments/appointments.service.ts`).
-
-## [2026-07-02] — Signing completes the appointment and reports the invoice outcome (Slice C)
-
-### Added
-
-- `InvoiceOutcome` and `SignConsultationResponse` types in `packages/shared/src/types/consultation.ts` (exported from the package index). `InvoiceOutcome` is a discriminated union — `created` (with `invoiceId`/`total`/`currency`), `skipped_no_fee`, or `failed`; the sign response extends `ConsultationWithDetails` with `invoiceOutcome`.
-
-### Changed
-
-- `ConsultationsService.sign` now awaits the invoice attempt and returns `SignConsultationResponse` including the `invoiceOutcome` (was fire-and-forget). It passes the linked `appointmentId` to the repository so the appointment is completed atomically (`apps/api/src/modules/consultations/consultations.service.ts`).
-- `ConsultationsRepository.sign(id, tenantId, userId, appointmentId)` now completes the linked appointment inside the existing sign `$transaction` via `updateMany` filtered on `status: 'in_progress'` — idempotent, never touching manually completed/cancelled rows (`apps/api/src/modules/consultations/consultations.repository.ts`).
-- `InvoicesService.createFromConsultation` now returns `InvoiceOutcome` and never throws — internal errors resolve to `{ status: 'failed' }`, so invoice failure never fails the sign (`apps/api/src/modules/invoices/invoices.service.ts`).
-- Consultations controller `sign` handler return type updated to `SignConsultationResponse` (`apps/api/src/modules/consultations/consultations.controller.ts`).
-
-## [2026-07-02] — Start a consultation from an appointment (Slice B)
-
-### Added
-
-- `ConsultationsRepository.findOpenByAppointment(appointmentId, tenantId)` — tenant-scoped lookup of the open consultation attached to an appointment, used to make appointment-driven creation idempotent (`apps/api/src/modules/consultations/consultations.repository.ts`).
-
-### Changed
-
-- `ConsultationsService.create` now guards appointment-driven creation: tenant-scoped appointment lookup → `APPOINTMENT_NOT_FOUND`; status not `scheduled`/`in_progress` → `APPOINTMENT_NOT_STARTABLE`; an existing open consultation is returned instead of creating a duplicate (idempotent). Walk-in (no `appointmentId`) is unchanged (`apps/api/src/modules/consultations/consultations.service.ts`).
-- `ConsultationsRepository.create` now runs consultation-create and the appointment `scheduled → in_progress` transition in one `$transaction` (`apps/api/src/modules/consultations/consultations.repository.ts`).
-
-## [2026-07-02] — Workflow interconnection foundations (Slice A)
-
-### Added
-
-- `in_progress` appointment status across the stack: `AppointmentStatusSchema` enum, `AppointmentStatus` type, Prisma column comment, and Spanish labels ("En consulta") in `apps/web/src/pages/Schedule/helpers.ts` and `apps/web/src/pages/Dashboard/helpers.ts`.
-- `AppointmentConsultationStatus` type and `consultationId`/`consultationStatus` fields on `AppointmentWithDetails` (`packages/shared/src/types/appointment.ts`) — latest live consultation linked to an appointment.
-- Workflow guard error codes `APPOINTMENT_NOT_STARTABLE`, `APPOINTMENT_HAS_CONSULTATION`, `APPOINTMENT_HAS_OPEN_CONSULTATION` (`packages/shared/src/errors.ts`).
-- `patientId` list filter on appointments: `AppointmentListParams.patientId` and `GET /v1/appointments?patientId=` query param (`apps/api/src/modules/appointments/appointments.repository.ts`, `appointments.controller.ts`).
-
-### Changed
-
-- Appointment reads now include the latest live consultation via a shared `DETAILS_INCLUDE` (findMany/findById/create/update/updateStatus), mapping `consultationId`/`consultationStatus` onto every `AppointmentWithDetails` (`apps/api/src/modules/appointments/appointments.repository.ts`).
+- **Signing awaits invoice auto-creation** and returns `invoiceOutcome` (`SignConsultationResponse`); previously fire-and-forget. `InvoicesService.createFromConsultation` now returns an `InvoiceOutcome` and never throws — internal errors resolve to `{ status: 'failed' }`, so invoice failure never fails the sign (`apps/api/src/modules/consultations/consultations.service.ts`, `consultations.repository.ts`, `apps/api/src/modules/invoices/invoices.service.ts`). `useSignConsultation`/`useCreateConsultation` also invalidate the `['appointments']` query so the agenda refetches (`apps/web/src/hooks/consultations/use-consultations.ts`).
+- **Manual appointment status guards.** Manual **Completar** is only available when no consultation is linked (`APPOINTMENT_HAS_CONSULTATION`); manual cancel/no-show is blocked while the linked consultation is `open` (`APPOINTMENT_HAS_OPEN_CONSULTATION`). Unlinked appointments are unaffected (`apps/api/src/modules/appointments/appointments.service.ts`). The appointment card hides **Completar** whenever a consultation is linked and hides **Eliminar** for `in_progress` appointments.
+- **Appointment reads carry consultation link data.** `AppointmentWithDetails` now includes `consultationId`/`consultationStatus` (latest live consultation) via a shared `DETAILS_INCLUDE` across findMany/findById/create/update/updateStatus (`apps/api/src/modules/appointments/appointments.repository.ts`). `useAppointments` accepts an optional `patientId` param, and `AppointmentFormModal` gains an optional `defaultPatientId` prop.
 
 ## [2026-06-30] — Multiline summary + description fields
 
