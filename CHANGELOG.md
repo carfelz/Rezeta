@@ -12,6 +12,10 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - **`Spinner` ui component.** New `apps/web/src/components/ui/Spinner.tsx` — a CVA-driven Phosphor `ph-spinner` + `animate-spin` icon with `sm`/`md`/`lg` size variants (`text-[14px]`/`text-[20px]`/`text-[32px]`, default `md`), `role="status"`, and a default Spanish `aria-label="Cargando"` (overridable). Color inherits `currentColor`. Exported from the ui barrel; covered by `apps/web/src/components/ui/__tests__/Spinner.test.tsx` and demoed in `Spinner.stories.tsx`.
 - **`GlobalLoadingIndicator`** — non-blocking bottom-right chip mounted once in `AppLayout` (`apps/web/src/components/layout/GlobalLoadingIndicator.tsx`); appears after 250 ms of sustained loading, uses `aria-live="polite"` and `pointer-events-none`, and renders the `Spinner` beside a `Cargando…` label (`apps/web/src/components/layout/strings.ts`). Covered by `apps/web/src/components/layout/__tests__/GlobalLoadingIndicator.test.tsx`.
 
+### Fixed
+
+- **Autosave success no longer triggers a loud consultation refetch.** `useUpdateProtocolUsage` and `useUpdateCheckedState` in `apps/web/src/hooks/consultations/use-consultations.ts` previously invalidated `[consultations, consultationId]` on success, which refetched `useConsultation` via a loud `apiClient.get` and pulsed the global loading chip on every checkbox toggle — defeating the `{ silent: true }` flag on their PATCH. Both now do a targeted `qc.setQueryData` cache write that replaces the matching `protocolUsages` entry instead. Covered by new cases in `apps/web/src/hooks/__tests__/use-consultations.test.ts`.
+
 ## [2026-07-02] Workflow interconnection — full clinical loop
 
 Connects appointments, consultations, invoices, and the patient record into one

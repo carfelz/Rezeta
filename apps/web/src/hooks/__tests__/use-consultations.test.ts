@@ -249,6 +249,45 @@ describe('useUpdateCheckedState', () => {
       { silent: true },
     )
   })
+
+  it('writes the updated usage into the consultation cache without a loud refetch', async () => {
+    const updatedUsage = { ...mockUsage, checkedItems: ['itm-1'] }
+    vi.mocked(apiClient.patch).mockResolvedValue(updatedUsage)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['consultations', 'cons-1'], {
+      ...mockConsultation,
+      protocolUsages: [mockUsage, { id: 'usage-2', consultationId: 'cons-1', checkedItems: [] }],
+    })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useUpdateCheckedState('cons-1', 'usage-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ checkedItems: ['itm-1'] } as Parameters<
+        typeof result.current.mutateAsync
+      >[0])
+    })
+    const cached = client.getQueryData(['consultations', 'cons-1']) as {
+      protocolUsages: { id: string; checkedItems: string[] }[]
+    }
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')).toEqual(updatedUsage)
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-2')?.checkedItems).toEqual([])
+    expect(invalidateSpy).not.toHaveBeenCalled()
+  })
+
+  it('leaves the cache untouched when no consultation entry is present', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useUpdateCheckedState('cons-1', 'usage-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ checkedItems: ['itm-1'] } as Parameters<
+        typeof result.current.mutateAsync
+      >[0])
+    })
+    expect(client.getQueryData(['consultations', 'cons-1'])).toBeUndefined()
+  })
 })
 
 describe('useRemoveProtocolUsage', () => {
@@ -286,6 +325,30 @@ describe('useUpdateProtocolUsage', () => {
       },
       { silent: true },
     )
+  })
+
+  it('writes the updated usage into the consultation cache without a loud refetch', async () => {
+    const updatedUsage = { ...mockUsage, checkedItems: ['itm-9'] }
+    vi.mocked(apiClient.patch).mockResolvedValue(updatedUsage)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['consultations', 'cons-1'], {
+      ...mockConsultation,
+      protocolUsages: [mockUsage],
+    })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useUpdateProtocolUsage('cons-1', 'usage-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ checkedItems: ['itm-9'] } as Parameters<
+        typeof result.current.mutateAsync
+      >[0])
+    })
+    const cached = client.getQueryData(['consultations', 'cons-1']) as {
+      protocolUsages: { id: string; checkedItems: string[] }[]
+    }
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')).toEqual(updatedUsage)
+    expect(invalidateSpy).not.toHaveBeenCalled()
   })
 })
 

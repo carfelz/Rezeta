@@ -201,8 +201,18 @@ export function useUpdateCheckedState(
         dto,
         { silent: true },
       ),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    // Targeted cache write instead of invalidation: the loud `useConsultation`
+    // refetch would pulse the global loading chip on every checkbox toggle,
+    // defeating the { silent: true } flag on this autosave PATCH.
+    onSuccess: (usage) => {
+      qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
+        prev
+          ? {
+              ...prev,
+              protocolUsages: prev.protocolUsages.map((u) => (u.id === usage.id ? usage : u)),
+            }
+          : prev,
+      )
     },
   })
 }
@@ -239,8 +249,18 @@ export function useUpdateProtocolUsage(
         dto,
         { silent: true },
       ),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+    // Targeted cache write instead of invalidation: the loud `useConsultation`
+    // refetch would pulse the global loading chip on every autosave PATCH,
+    // defeating the { silent: true } flag above.
+    onSuccess: (usage) => {
+      qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
+        prev
+          ? {
+              ...prev,
+              protocolUsages: prev.protocolUsages.map((u) => (u.id === usage.id ? usage : u)),
+            }
+          : prev,
+      )
     },
   })
 }
