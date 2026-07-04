@@ -13,6 +13,7 @@ vi.mock('@/lib/auth', () => ({
 
 import { apiClient, ApiRequestError, triggerDownload } from '../api-client'
 import { authClient } from '@/lib/auth'
+import { useLoadingStore } from '@/store/loading.store'
 
 const mockAuth = authClient as unknown as {
   getToken: ReturnType<typeof vi.fn>
@@ -239,6 +240,63 @@ describe('apiClient', () => {
       expect(createObjectURL).toHaveBeenCalledWith(blob)
       expect(clickSpy).toHaveBeenCalled()
       expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake')
+    })
+  })
+
+  describe('global loading interception', () => {
+    beforeEach(() => {
+      useLoadingStore.setState({ pendingCount: 0, isLoading: false })
+    })
+
+    const okResponse = (): Response =>
+      ({ ok: true, status: 200, json: () => Promise.resolve({ data: { id: '1' } }) }) as never
+
+    it('increments while a request is in flight and settles after success', async () => {
+      let midFlight = -1
+      fetchMock.mockImplementation(() => {
+        midFlight = useLoadingStore.getState().pendingCount
+        return Promise.resolve(okResponse())
+      })
+      await apiClient.get('/v1/patients')
+      expect(midFlight).toBe(1)
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+
+    it('decrements on API error responses', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: { code: 'ERR', message: 'bad' } }),
+      } as never)
+      await expect(apiClient.get('/v1/patients')).rejects.toThrow()
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+
+    it('decrements on network failure', async () => {
+      fetchMock.mockRejectedValue(new Error('network down'))
+      await expect(apiClient.get('/v1/patients')).rejects.toThrow('network down')
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+
+    it('decrements on 204 responses', async () => {
+      fetchMock.mockResolvedValue({ ok: true, status: 204 } as never)
+      await apiClient.delete('/v1/appointments/a1')
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+
+    it('silent requests never touch the store', async () => {
+      fetchMock.mockImplementation(() => {
+        expect(useLoadingStore.getState().pendingCount).toBe(0)
+        return Promise.resolve(okResponse())
+      })
+      await apiClient.patch('/v1/consultations/c1/protocols/u1', {}, { silent: true })
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+
+    it('download participates too', async () => {
+      fetchMock.mockResolvedValue({ ok: true, blob: () => Promise.resolve(new Blob()) } as never)
+      await apiClient.download('/v1/invoices/i1/pdf')
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
     })
   })
 })

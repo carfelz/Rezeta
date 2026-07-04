@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Global loading indicator
+
+### Added
+
+- **Global `isLoading` state fed by every `apiClient` request.** A counter-based Zustand store (`apps/web/src/store/loading.store.ts`), exposed through `useGlobalLoading()`. `request()` and `downloadBlob()` in `apps/web/src/lib/api-client.ts` wrap their bodies in a `withLoading` helper that calls `requestStarted()` before and `requestFinished()` after (in a `finally`, so error and network-failure paths still settle). All `apiClient` methods (`get`/`post`/`patch`/`delete`/`download`) accept a new optional `RequestOptions` argument; per-request opt-out with `{ silent: true }` used by the consultation autosave write paths (`useUpdateProtocolUsage`, `useUpdateCheckedState` in `apps/web/src/hooks/consultations/use-consultations.ts`). Loud by default — no other call site changes. Covered by new `global loading interception` tests in `apps/web/src/lib/__tests__/api-client.test.ts`.
+- **`Spinner` ui component.** New `apps/web/src/components/ui/Spinner.tsx` — a CVA-driven Phosphor `ph-spinner` + `animate-spin` icon with `sm`/`md`/`lg` size variants (`text-[14px]`/`text-[20px]`/`text-[32px]`, default `md`), `role="status"`, and a default Spanish `aria-label="Cargando"` (overridable). Color inherits `currentColor`. Exported from the ui barrel; covered by `apps/web/src/components/ui/__tests__/Spinner.test.tsx` and demoed in `Spinner.stories.tsx`.
+- **`GlobalLoadingIndicator`** — non-blocking bottom-right chip mounted once in `AppLayout` (`apps/web/src/components/layout/GlobalLoadingIndicator.tsx`); appears after 250 ms of sustained loading, uses `aria-live="polite"` and `pointer-events-none`, and renders the `Spinner` beside a `Cargando…` label (`apps/web/src/components/layout/strings.ts`). Covered by `apps/web/src/components/layout/__tests__/GlobalLoadingIndicator.test.tsx`.
+
+### Fixed
+
+- **Autosave success no longer triggers a loud consultation refetch.** `useUpdateProtocolUsage` and `useUpdateCheckedState` in `apps/web/src/hooks/consultations/use-consultations.ts` previously invalidated `[consultations, consultationId]` on success, which refetched `useConsultation` via a loud `apiClient.get` and pulsed the global loading chip on every checkbox toggle — defeating the `{ silent: true }` flag on their PATCH. Both now do a targeted `qc.setQueryData` cache write that replaces the matching `protocolUsages` entry instead. Covered by new cases in `apps/web/src/hooks/__tests__/use-consultations.test.ts`.
+
 ## [2026-07-02] Workflow interconnection — full clinical loop
 
 Connects appointments, consultations, invoices, and the patient record into one
