@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Loading indicator a11y hardening
+
+### Changed
+
+- **`GlobalLoadingIndicator` now keeps a permanently-mounted `aria-live="polite"` container** (`apps/web/src/components/layout/GlobalLoadingIndicator.tsx`). The chip content (spinner + `Cargando…` label) toggles inside the live region based on the existing 250 ms delayed-visibility state, so screen readers reliably announce content that arrives after the region is already present. The container is visually empty when idle (chip styling moved onto an inner element rendered only while visible); 250 ms show-delay, immediate hide, and `pointer-events-none` are unchanged. The chip renders the spinner as `decorative` and relies on the visible `Cargando…` text for the announcement, removing the duplicate live semantics from the nested `role="status"`.
+- **`Spinner` gained a `decorative?: boolean` prop** (`apps/web/src/components/ui/Spinner.tsx`). When true, it renders `aria-hidden="true"` with no `role="status"` and no accessible name. Default (non-decorative) mode now wraps a decorative `<i>` glyph in a `role="status"` span alongside an `sr-only` label, so screen readers have real text content even if the Phosphor icon font fails to load.
+
+### Fixed
+
+- Tests updated in `apps/web/src/components/layout/__tests__/GlobalLoadingIndicator.test.tsx` (added an idle aria-live container assertion) and `apps/web/src/components/ui/__tests__/Spinner.test.tsx` (added decorative-mode and sr-only-label assertions).
+
 ## [2026-07-04] Global loading indicator
 
 ### Added
