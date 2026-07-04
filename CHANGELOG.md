@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Global loading indicator — API client interception
+
+### Added
+
+- **`apiClient` feeds the global loading store.** `request()` and `downloadBlob()` in `apps/web/src/lib/api-client.ts` now wrap their existing bodies in a `withLoading` helper that calls `useLoadingStore.requestStarted()` before and `requestFinished()` after (in a `finally`, so error and network-failure paths still settle). All `apiClient` methods (`get`/`post`/`patch`/`delete`/`download`) accept a new optional `RequestOptions` argument; `{ silent: true }` opts a request out of the indicator (for autosave/polling traffic). Loud by default — no existing call site changes. Covered by new `global loading interception` tests in `apps/web/src/lib/__tests__/api-client.test.ts`.
+
 ## [2026-07-02] Workflow interconnection — full clinical loop
 
 Connects appointments, consultations, invoices, and the patient record into one
