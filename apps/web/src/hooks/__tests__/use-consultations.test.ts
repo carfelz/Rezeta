@@ -241,9 +241,13 @@ describe('useUpdateCheckedState', () => {
         typeof result.current.mutateAsync
       >[0])
     })
-    expect(apiClient.patch).toHaveBeenCalledWith('/v1/consultations/cons-1/protocols/usage-1', {
-      checkedItems: ['itm-1'],
-    })
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/v1/consultations/cons-1/protocols/usage-1',
+      {
+        checkedItems: ['itm-1'],
+      },
+      { silent: true },
+    )
   })
 })
 
@@ -275,9 +279,13 @@ describe('useUpdateProtocolUsage', () => {
         typeof result.current.mutateAsync
       >[0])
     })
-    expect(apiClient.patch).toHaveBeenCalledWith('/v1/consultations/cons-1/protocols/usage-1', {
-      checkedItems: [],
-    })
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/v1/consultations/cons-1/protocols/usage-1',
+      {
+        checkedItems: [],
+      },
+      { silent: true },
+    )
   })
 })
 

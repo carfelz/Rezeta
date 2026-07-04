@@ -4,12 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-04] Global loading indicator — API client interception
+## [2026-07-04] Global loading indicator
 
 ### Added
 
-- **`apiClient` feeds the global loading store.** `request()` and `downloadBlob()` in `apps/web/src/lib/api-client.ts` now wrap their existing bodies in a `withLoading` helper that calls `useLoadingStore.requestStarted()` before and `requestFinished()` after (in a `finally`, so error and network-failure paths still settle). All `apiClient` methods (`get`/`post`/`patch`/`delete`/`download`) accept a new optional `RequestOptions` argument; `{ silent: true }` opts a request out of the indicator (for autosave/polling traffic). Loud by default — no existing call site changes. Covered by new `global loading interception` tests in `apps/web/src/lib/__tests__/api-client.test.ts`.
+- **Global `isLoading` state fed by every `apiClient` request.** A counter-based Zustand store (`apps/web/src/store/loading.store.ts`), exposed through `useGlobalLoading()`. `request()` and `downloadBlob()` in `apps/web/src/lib/api-client.ts` wrap their bodies in a `withLoading` helper that calls `requestStarted()` before and `requestFinished()` after (in a `finally`, so error and network-failure paths still settle). All `apiClient` methods (`get`/`post`/`patch`/`delete`/`download`) accept a new optional `RequestOptions` argument; per-request opt-out with `{ silent: true }` used by the consultation autosave write paths (`useUpdateProtocolUsage`, `useUpdateCheckedState` in `apps/web/src/hooks/consultations/use-consultations.ts`). Loud by default — no other call site changes. Covered by new `global loading interception` tests in `apps/web/src/lib/__tests__/api-client.test.ts`.
 - **`Spinner` ui component.** New `apps/web/src/components/ui/Spinner.tsx` — a CVA-driven Phosphor `ph-spinner` + `animate-spin` icon with `sm`/`md`/`lg` size variants (`text-[14px]`/`text-[20px]`/`text-[32px]`, default `md`), `role="status"`, and a default Spanish `aria-label="Cargando"` (overridable). Color inherits `currentColor`. Exported from the ui barrel; covered by `apps/web/src/components/ui/__tests__/Spinner.test.tsx` and demoed in `Spinner.stories.tsx`.
+- **`GlobalLoadingIndicator`** — non-blocking bottom-right chip mounted once in `AppLayout` (`apps/web/src/components/layout/GlobalLoadingIndicator.tsx`); appears after 250 ms of sustained loading, uses `aria-live="polite"` and `pointer-events-none`, and renders the `Spinner` beside a `Cargando…` label (`apps/web/src/components/layout/strings.ts`). Covered by `apps/web/src/components/layout/__tests__/GlobalLoadingIndicator.test.tsx`.
 
 ## [2026-07-02] Workflow interconnection — full clinical loop
 

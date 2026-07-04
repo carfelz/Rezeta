@@ -199,6 +199,7 @@ export function useUpdateCheckedState(
       apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
         dto,
+        { silent: true },
       ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
@@ -236,6 +237,7 @@ export function useUpdateProtocolUsage(
       apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
         dto,
+        { silent: true },
       ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })

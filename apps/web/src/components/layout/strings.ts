@@ -6,6 +6,10 @@ export const topbarStrings = {
   openMenuLabel: 'Abrir menú',
 } as const
 
+export const globalLoadingStrings = {
+  loadingLabel: 'Cargando…',
+} as const
+
 export const sidebarStrings = {
   navTodayLabel: 'Hoy',
   navClinicalLabel: 'Trabajo Clínico',
