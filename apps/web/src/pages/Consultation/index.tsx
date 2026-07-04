@@ -45,7 +45,7 @@ export function Consultation(): JSX.Element {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-[13px] text-n-500 flex items-center gap-2">
-          <Spinner decorative /> {consultationPageStrings.loading}
+          <Spinner decorative size="sm" /> {consultationPageStrings.loading}
         </div>
       </div>
     )

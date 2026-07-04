@@ -94,7 +94,7 @@ export function EditorHeader({
           {protocolEditorStrings.preview}
         </Button>
         <Button variant="secondary" size="sm" onClick={onSaveDraft} disabled={isSaving}>
-          {isSaving ? <Spinner className="mr-2" decorative /> : null}
+          {isSaving ? <Spinner className="mr-2" decorative size="sm" /> : null}
           {protocolEditorStrings.save}
         </Button>
         <Button variant="primary" size="sm" onClick={onPublishClick} disabled={isSaving}>

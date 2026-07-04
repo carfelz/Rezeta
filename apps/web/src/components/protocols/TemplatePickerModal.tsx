@@ -147,7 +147,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
             <Button variant="primary" onClick={handleCreate} disabled={!canSubmit}>
               {isPending ? (
                 <>
-                  <Spinner className="mr-2" decorative />
+                  <Spinner className="mr-2" decorative size="sm" />
                   {blockEditorStrings.typePickerCreating}
                 </>
               ) : (

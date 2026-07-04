@@ -21,9 +21,9 @@ describe('GlobalLoadingIndicator', () => {
     const { container } = render(<GlobalLoadingIndicator />)
     const liveRegion = container.querySelector('[aria-live="polite"]')
     expect(liveRegion).toBeInTheDocument()
-    // Container is visually empty when idle: no chip styling, no content.
+    // Container is visually empty when idle: no chip child rendered.
     expect(liveRegion?.textContent).toBe('')
-    expect(liveRegion?.className).not.toContain('border')
+    expect(liveRegion).toBeEmptyDOMElement()
   })
 
   it('appears only after loading persists 250ms', () => {

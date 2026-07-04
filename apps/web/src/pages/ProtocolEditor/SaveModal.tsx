@@ -60,7 +60,7 @@ export function SaveModal({
           <Button variant="secondary" onClick={onSaveDraft} disabled={isSaving}>
             {isSaving ? (
               <>
-                <Spinner className="mr-2" decorative />
+                <Spinner className="mr-2" decorative size="sm" />
                 {protocolEditorStrings.saving}
               </>
             ) : (
@@ -70,7 +70,7 @@ export function SaveModal({
           <Button variant="primary" onClick={onPublish} disabled={isSaving}>
             {isSaving ? (
               <>
-                <Spinner className="mr-2" decorative />
+                <Spinner className="mr-2" decorative size="sm" />
                 {protocolEditorStrings.saving}
               </>
             ) : (

@@ -59,7 +59,7 @@ export function PublishModal({
           <Button variant="primary" onClick={onConfirm} disabled={isSaving}>
             {isSaving ? (
               <>
-                <Spinner className="mr-2" decorative />
+                <Spinner className="mr-2" decorative size="sm" />
                 {protocolEditorStrings.saving}
               </>
             ) : (
