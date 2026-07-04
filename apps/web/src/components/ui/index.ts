@@ -40,6 +40,7 @@ export type {
   FieldProps,
 } from './Input'
 export { Badge, type BadgeProps } from './Badge'
+export { Spinner, type SpinnerProps } from './Spinner'
 export { Avatar, type AvatarProps } from './Avatar'
 export { Card, CardTitle, CardSubtitle, CardItem } from './Card'
 export type { CardProps, CardItemProps } from './Card'
