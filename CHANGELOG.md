@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Migrate inline spinners to shared `<Spinner>`
+
+### Changed
+
+- **Migrated 27 inline `ph ph-spinner animate-spin` glyphs to the shared `<Spinner>` component** across 15 web files (`OrderQueuePanel`, `SaveBadge`, `TemplatePickerModal`, `ClinicalHistory`, `Consultation/index`, `ProtocolEditor/{EditorHeader,EditorPalette,index,HistoryDrawer,SaveModal,PublishModal}`, `PatientDetail/{index,PrescriptionsTab,InvoicesTab,AppointmentsTab}`, `ProtocolViewer/index`, `Protocols/index`, `Onboarding/index`). Spinners adjacent to visible loading text use `decorative`; bare centered loaders use default status mode with the `Cargando` sr-only label. Font-size classes mapped to `size` variants (`sm`/`md`/`lg`), with off-scale sizes (`11/13/18/24px`) rounded to the closest variant. `pages/Billing/InvoiceRow.tsx` left unchanged — it passes the spinner as a class-name string to `IconButton`'s `icon` prop, not as JSX.
+
 ## [2026-07-04] Loading indicator a11y hardening
 
 ### Changed

@@ -19,6 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
 } from '@/components/ui'
 import { TemplatePickerModal } from '@/components/protocols/TemplatePickerModal'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
@@ -225,7 +226,7 @@ export function Protocols(): JSX.Element {
 
       {isLoading ? (
         <div className="flex justify-center p-12">
-          <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
+          <Spinner size="lg" className="text-n-400" />
         </div>
       ) : error ? (
         <EmptyState

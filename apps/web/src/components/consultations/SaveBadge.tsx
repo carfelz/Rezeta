@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { TextLink } from '@/components/ui'
+import { Spinner, TextLink } from '@/components/ui'
 import { saveBadgeStrings } from './strings'
 
 export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
@@ -38,7 +38,7 @@ export function SaveBadge({
       )}
       {status === 'saving' && (
         <>
-          <i className="ph ph-spinner animate-spin text-[11px]" />
+          <Spinner size="sm" decorative />
           {saveBadgeStrings.saving}
         </>
       )}

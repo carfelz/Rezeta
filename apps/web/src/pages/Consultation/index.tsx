@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConsultation } from '@/hooks/consultations/use-consultations'
-import { Button } from '@/components/ui'
+import { Button, Spinner } from '@/components/ui'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
@@ -45,7 +45,7 @@ export function Consultation(): JSX.Element {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-[13px] text-n-500 flex items-center gap-2">
-          <i className="ph ph-spinner animate-spin" /> {consultationPageStrings.loading}
+          <Spinner decorative /> {consultationPageStrings.loading}
         </div>
       </div>
     )

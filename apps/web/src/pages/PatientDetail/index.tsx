@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { useUiStore } from '@/store/ui.store'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
+import { Spinner, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
 import { ClinicalHistory } from '@/pages/Patients/ClinicalHistory'
 import { AppointmentsTab } from './AppointmentsTab'
 import { DemographicsBlock } from './DemographicsBlock'
@@ -29,7 +29,7 @@ export function PatientDetail(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[256px]">
-        <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
+        <Spinner size="lg" className="text-n-400" />
       </div>
     )
   }

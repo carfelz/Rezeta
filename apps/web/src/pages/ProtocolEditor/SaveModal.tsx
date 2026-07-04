@@ -6,6 +6,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Spinner,
 } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 
@@ -59,7 +60,7 @@ export function SaveModal({
           <Button variant="secondary" onClick={onSaveDraft} disabled={isSaving}>
             {isSaving ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-2" />
+                <Spinner className="mr-2" decorative />
                 {protocolEditorStrings.saving}
               </>
             ) : (
@@ -69,7 +70,7 @@ export function SaveModal({
           <Button variant="primary" onClick={onPublish} disabled={isSaving}>
             {isSaving ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-2" />
+                <Spinner className="mr-2" decorative />
                 {protocolEditorStrings.saving}
               </>
             ) : (

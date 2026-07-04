@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AppointmentWithDetails } from '@rezeta/shared'
-import { Badge, EmptyState, TextLink } from '@/components/ui'
+import { Badge, EmptyState, Spinner, TextLink } from '@/components/ui'
 import { useAppointments } from '@/hooks/appointments/use-appointments'
 import { useStartConsultation } from '@/hooks/consultations/use-start-consultation'
 import { statusBadgeVariant, statusLabel, formatTime } from '@/pages/Schedule/helpers'
@@ -101,7 +101,7 @@ function AppointmentRow({ appt, onStart, isStarting }: AppointmentRowProps): JSX
 function TabSpinner(): JSX.Element {
   return (
     <div className="flex items-center justify-center py-10">
-      <i className="ph ph-spinner animate-spin text-[24px] text-n-400" />
+      <Spinner size="md" className="text-n-400" />
     </div>
   )
 }

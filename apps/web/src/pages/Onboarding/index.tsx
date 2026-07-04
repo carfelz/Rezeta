@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { useOnboardingDefault } from '@/hooks/onboarding/use-onboarding'
 import { onboardingStrings } from './strings'
-import { Button, Callout } from '@/components/ui'
+import { Button, Callout, Spinner } from '@/components/ui'
 
 export function Onboarding(): JSX.Element {
   const user = useAuthStore((s) => s.user)
@@ -61,7 +61,7 @@ export function Onboarding(): JSX.Element {
         <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6 mx-auto">
           R
         </div>
-        <i className="ph ph-spinner animate-spin text-[32px] text-p-400 mb-4 block" />
+        <Spinner size="lg" className="text-p-400 mb-4 block" decorative />
         <p className="text-body-sm text-n-500">{onboardingStrings.loading}</p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Spinner,
 } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 
@@ -58,7 +59,7 @@ export function PublishModal({
           <Button variant="primary" onClick={onConfirm} disabled={isSaving}>
             {isSaving ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-2" />
+                <Spinner className="mr-2" decorative />
                 {protocolEditorStrings.saving}
               </>
             ) : (

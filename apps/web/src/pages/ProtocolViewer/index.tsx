@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Badge, Button } from '@/components/ui'
+import { Badge, Button, Spinner } from '@/components/ui'
 import { ProtocolContainer } from '@/components/ui/ProtocolBlock'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
@@ -28,7 +28,7 @@ export function ProtocolViewer(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[256px]">
-        <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
+        <Spinner size="lg" className="text-n-400" />
       </div>
     )
   }

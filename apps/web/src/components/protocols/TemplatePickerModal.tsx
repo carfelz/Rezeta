@@ -12,6 +12,7 @@ import {
   Field,
   Input,
   SelectableCard,
+  Spinner,
   Stack,
 } from '@/components/ui'
 import { useProtocolTemplates } from '@/hooks/protocol-templates/use-protocol-templates'
@@ -96,7 +97,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
         <ModalBody>
           {templatesLoading ? (
             <div className="flex justify-center py-8">
-              <i className="ph ph-spinner animate-spin text-[24px] text-n-400" />
+              <Spinner size="md" className="text-n-400" />
             </div>
           ) : hasNoTemplates ? (
             <Stack gap={3} align="center" className="py-8 text-center">
@@ -146,7 +147,7 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
             <Button variant="primary" onClick={handleCreate} disabled={!canSubmit}>
               {isPending ? (
                 <>
-                  <i className="ph ph-spinner animate-spin mr-2" />
+                  <Spinner className="mr-2" decorative />
                   {blockEditorStrings.typePickerCreating}
                 </>
               ) : (
