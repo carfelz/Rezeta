@@ -8,6 +8,7 @@ import type {
   ImagingOrderItemRow,
   LabOrder,
   LabOrderItemRow,
+  ConsultationRecordDto,
 } from '@rezeta/shared'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -803,6 +804,100 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
   }
 }
 
+// ─── Historia médica PDF data types ───────────────────────────────────────────
+export interface HistoriaMedicaPdfData {
+  record: Pick<
+    ConsultationRecordDto,
+    'kind' | 'status' | 'sections' | 'versionNumber' | 'generatedAt' | 'signedAt'
+  >
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+  patient: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string | null
+    documentNumber: string | null
+    documentType: string | null
+  }
+  location: { name: string; address: string | null } | null
+  startedAt: string
+}
+
+// ─── Historia médica PDF ──────────────────────────────────────────────────────
+function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfData): void {
+  const { record, doctor, patient, location } = data
+  const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
+  const kindTitle =
+    record.kind === 'first_visit'
+      ? 'Historia médica — Primera consulta'
+      : 'Historia médica — Nota de evolución'
+  const startedDate = new Date(data.startedAt)
+  const hour = `${String(startedDate.getHours()).padStart(2, '0')}:${String(
+    startedDate.getMinutes(),
+  ).padStart(2, '0')}`
+
+  // Header (same visual language as prescriptions)
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctor.fullName ?? 'Médico'}`, MARGIN, MARGIN)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) doc.text(doctor.specialty)
+  if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
+  if (location) doc.text(location.name)
+  doc.text(`${formatDate(data.startedAt)} · ${hour}`, MARGIN, MARGIN + 2, {
+    width: CONTENT_W,
+    align: 'right',
+  })
+  doc.moveDown(0.5)
+  strokeLine(doc, MARGIN, doc.y, MARGIN + CONTENT_W, doc.y, T.teal, 2)
+  doc.moveDown(0.8)
+
+  // Title + patient line
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900).text(kindTitle, MARGIN)
+  const docId = patient.documentNumber
+    ? `${(patient.documentType ?? 'Doc.').toUpperCase()} ${patient.documentNumber}`
+    : null
+  doc.font('Helvetica').fontSize(10).fillColor(T.n600)
+  doc.text([patientFullName, calcAge(patient.dateOfBirth), docId].filter(Boolean).join('  ·  '))
+  doc.moveDown(1)
+
+  // Draft banner
+  if (record.status === 'draft') {
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(T.warnText)
+    doc.text('BORRADOR — PENDIENTE DE FIRMA', MARGIN)
+    doc.moveDown(0.6)
+  }
+
+  // Sections
+  for (const section of record.sections) {
+    if (!section.content.trim()) continue
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(T.teal)
+    doc.text(section.title.toUpperCase(), MARGIN, doc.y)
+    doc.moveDown(0.2)
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(section.content, MARGIN + 10, doc.y, { width: CONTENT_W - 10 })
+    doc.moveDown(0.8)
+  }
+
+  // Signature footer
+  doc.moveDown(1.5)
+  strokeLine(doc, MARGIN, doc.y, MARGIN + 200, doc.y, T.n300, 1)
+  doc.moveDown(0.3)
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n800)
+  doc.text(`Dr. ${doctor.fullName ?? ''}`, MARGIN)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
+  if (record.signedAt) {
+    const signed = new Date(record.signedAt)
+    const signedHour = `${String(signed.getHours()).padStart(2, '0')}:${String(
+      signed.getMinutes(),
+    ).padStart(2, '0')}`
+    doc.text(`Firmada: ${formatDate(record.signedAt)} · ${signedHour} · v${record.versionNumber}`)
+  }
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 @Injectable()
 export class PdfService {
@@ -843,6 +938,16 @@ export class PdfService {
       info: { Title: `Orden de laboratorio — ${data.patient.firstName} ${data.patient.lastName}` },
     })
     buildLabOrderGroup(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateHistoriaMedica(data: HistoriaMedicaPdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: MARGIN,
+      info: { Title: `Historia médica — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildHistoriaMedica(doc, data)
     return toBuffer(doc)
   }
 }

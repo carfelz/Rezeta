@@ -10,8 +10,11 @@ const mockSvc = {
   regenerate: vi.fn(),
   updateSections: vi.fn(),
   sign: vi.fn(),
+  getPdfData: vi.fn(),
 }
-const mockPdf = {}
+const mockPdf = {
+  generateHistoriaMedica: vi.fn(),
+}
 
 const mockUser: AuthUser = {
   id: 'u1',
@@ -62,5 +65,25 @@ describe('ConsultationRecordsController', () => {
     const result = await controller.sign('t1', mockUser, 'c1')
     expect(mockSvc.sign).toHaveBeenCalledWith('c1', 't1', 'u1')
     expect(result).toEqual({ id: 'rec1', status: 'signed' })
+  })
+
+  it('GET pdf streams the generated pdf buffer', async () => {
+    const pdfData = { record: { id: 'rec1' } }
+    const buffer = Buffer.from('%PDF-1.4 fake')
+    mockSvc.getPdfData.mockResolvedValue(pdfData)
+    mockPdf.generateHistoriaMedica.mockResolvedValue(buffer)
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await controller.pdfDownload('t1', 'c1', res as never)
+
+    expect(mockSvc.getPdfData).toHaveBeenCalledWith('c1', 't1')
+    expect(mockPdf.generateHistoriaMedica).toHaveBeenCalledWith(pdfData)
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="historia-c1.pdf"',
+      }),
+    )
+    expect(res.end).toHaveBeenCalledWith(buffer)
   })
 })

@@ -18,6 +18,7 @@ import { ConsultationRecordsRepository } from './consultation-records.repository
 import { PrismaService } from '../../lib/prisma.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
+import type { HistoriaMedicaPdfData } from '../../lib/pdf.service.js'
 
 @Injectable()
 export class ConsultationRecordsService {
@@ -160,6 +161,37 @@ export class ConsultationRecordsService {
     }
     this.audit(tenantId, latest.id, 'update')
     return signed
+  }
+
+  async getPdfData(consultationId: string, tenantId: string): Promise<HistoriaMedicaPdfData> {
+    const record = await this.getLatest(consultationId, tenantId)
+    const c = await this.prisma.consultation.findFirst({
+      where: { id: consultationId, tenantId, deletedAt: null },
+      include: { patient: true, doctor: true, location: true },
+    })
+    if (!c) {
+      throw new NotFoundException({
+        code: ErrorCode.CONSULTATION_NOT_FOUND,
+        message: 'Consultation not found',
+      })
+    }
+    return {
+      record,
+      doctor: {
+        fullName: c.doctor.fullName,
+        specialty: c.doctor.specialty,
+        licenseNumber: c.doctor.licenseNumber,
+      },
+      patient: {
+        firstName: c.patient.firstName,
+        lastName: c.patient.lastName,
+        dateOfBirth: c.patient.dateOfBirth ? c.patient.dateOfBirth.toISOString() : null,
+        documentNumber: c.patient.documentNumber,
+        documentType: c.patient.documentType,
+      },
+      location: c.location ? { name: c.location.name, address: c.location.address } : null,
+      startedAt: c.startedAt.toISOString(),
+    }
   }
 
   /** Loads everything the mapper needs. Throws if the consultation is missing or unsigned. */

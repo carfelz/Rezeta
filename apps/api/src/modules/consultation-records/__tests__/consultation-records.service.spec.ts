@@ -311,6 +311,61 @@ describe('sign', () => {
   })
 })
 
+describe('getPdfData', () => {
+  it('throws RECORD_NOT_FOUND when no record exists', async () => {
+    mockRepo.findLatest.mockResolvedValue(null)
+    await expect(svc.getPdfData('c1', 't1')).rejects.toMatchObject({
+      response: { code: 'RECORD_NOT_FOUND' },
+    })
+  })
+
+  it('throws CONSULTATION_NOT_FOUND when the consultation row is missing', async () => {
+    mockRepo.findLatest.mockResolvedValue(makeRecord())
+    mockPrisma.consultation.findFirst.mockResolvedValue(null)
+    await expect(svc.getPdfData('c1', 't1')).rejects.toMatchObject({
+      response: { code: 'CONSULTATION_NOT_FOUND' },
+    })
+  })
+
+  it('assembles doctor, patient, and location data for the pdf', async () => {
+    mockRepo.findLatest.mockResolvedValue(makeRecord())
+    mockPrisma.consultation.findFirst.mockResolvedValue({
+      ...makeConsultationRow(),
+      doctor: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+      location: { name: 'Centro Médico Naco', address: 'Av. Tiradentes 45' },
+    })
+    const result = await svc.getPdfData('c1', 't1')
+    expect(result.record.id).toBe('rec1')
+    expect(result.doctor).toEqual({
+      fullName: 'Ana Herrera',
+      specialty: 'Cardiología',
+      licenseNumber: '145-23',
+    })
+    expect(result.patient).toEqual({
+      firstName: 'María',
+      lastName: 'Peña',
+      dateOfBirth: new Date('1972-03-15').toISOString(),
+      documentNumber: '001-1234567-8',
+      documentType: 'cedula',
+    })
+    expect(result.location).toEqual({ name: 'Centro Médico Naco', address: 'Av. Tiradentes 45' })
+    expect(result.startedAt).toBe(now.toISOString())
+  })
+
+  it('defaults location to null and dateOfBirth to null when absent', async () => {
+    mockRepo.findLatest.mockResolvedValue(makeRecord())
+    mockPrisma.consultation.findFirst.mockResolvedValue({
+      ...makeConsultationRow(),
+      doctor: { fullName: null, specialty: null, licenseNumber: null },
+      location: null,
+      patient: { ...makeConsultationRow().patient, dateOfBirth: null },
+    })
+    const result = await svc.getPdfData('c1', 't1')
+    expect(result.location).toBeNull()
+    expect(result.patient.dateOfBirth).toBeNull()
+  })
+})
+
 describe('buildGenerationInput (via ensureDraft)', () => {
   it('throws CONSULTATION_NOT_FOUND when the consultation row does not exist', async () => {
     mockRepo.findLatest.mockResolvedValue(null)

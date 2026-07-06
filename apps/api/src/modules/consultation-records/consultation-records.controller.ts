@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Patch, Param, Body, Inject, ParseUUIDPipe, HttpCode, HttpStatus, UsePipes } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Inject,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+  UsePipes,
+  Res,
+} from '@nestjs/common'
+import type { Response } from 'express'
 import { ApiTags, ApiBearerAuth, ApiSecurity, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ConsultationRecordDto, AuthUser, UpdateRecordSectionsDto } from '@rezeta/shared'
@@ -84,5 +98,25 @@ export class ConsultationRecordsController {
     @Param('consultationId', ParseUUIDPipe) consultationId: string,
   ): Promise<ConsultationRecordDto> {
     return this.svc.sign(consultationId, tenantId, user.id)
+  }
+
+  @Get('pdf')
+  @ApiOperation({ summary: 'Download the latest consultation record as PDF' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404, description: 'RECORD_NOT_FOUND' })
+  async pdfDownload(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const data = await this.svc.getPdfData(consultationId, tenantId)
+    const buffer = await this.pdf.generateHistoriaMedica(data)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historia-${consultationId}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
   }
 }
