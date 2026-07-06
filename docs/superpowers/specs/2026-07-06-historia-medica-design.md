@@ -68,7 +68,6 @@ model ConsultationRecord {
   generatedAt    DateTime  @map("generated_at")
   signedAt       DateTime? @map("signed_at")
   signedBy       String?   @map("signed_by") @db.Uuid
-  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
@@ -136,12 +135,14 @@ blocks):
 | -------------------------------- | ------------------------------------------------------------------ |
 | `vitals`                          | `examen_fisico` — formatted line "PA 140/90 mmHg · FC 78 lpm · …" from `values` |
 | `clinical_notes`                  | matched by normalized label: motivo→`motivo_consulta`, antecedentes→`antecedentes`, examen/físico/exploración→`examen_fisico`, diagnóstico→`diagnosticos`, plan→`plan_tratamiento`; unmatched → `enfermedad_actual` (first visit) / `evolucion` (evolution) |
-| `checklist`                       | `evolucion` — checked/critical items summarized                    |
-| `steps`                           | `evolucion` — completed/skipped summary                            |
-| `decision`                        | `evolucion` — "Decisión: {condition} → {selected branch}"          |
+| `checklist`                       | narrative section¹ — checked/critical items summarized             |
+| `steps`                           | narrative section¹ — completed/skipped summary                     |
+| `decision`                        | narrative section¹ — "Decisión: {condition} → {selected branch}"   |
 | `dosage_table` / `lab_order` / `imaging_order` | **ignored** — plan content comes from actual order records |
 | `alert` / `text`                  | excluded (reference material)                                      |
 
+- ¹ *Narrative section* = `evolucion` on evolution visits, `enfermedad_actual` on first visits
+  (`evolucion` does not exist on a first-visit record, and vice versa — see §5).
 - `plan_tratamiento` is composed from the consultation's signed `PrescriptionItem`s
   (drug + dose + route + frequency + duration), plus ordered studies ("Laboratorio: …",
   "Imágenes: …") from `LabOrderItem`/`ImagingOrderItem`.
@@ -169,12 +170,14 @@ All under the existing consultations/patients modules, tenant-scoped, standard a
    **and** the consultation has amendments, creates the next version (draft) with `enmiendas`.
    Also the path for generating a historia for consultations signed before this feature shipped.
 5. **`POST /v1/consultations/:id/record/sign`** — validates required sections non-empty
-   (`RECORD_REQUIRED_SECTIONS_MISSING` with keys), freezes, generates the PDF
-   (`generateHistoriaMedica` in `apps/api/src/lib/pdf.service.ts`, same visual language as the
-   prescription PDF), uploads to GCS, sets `pdfUrl`, `signedAt`, `signedBy`.
-6. **`POST /v1/patients/:id/record-export`** (phase 3) — compiles all signed historias
+   (`RECORD_REQUIRED_SECTIONS_MISSING` with keys), freezes, sets `signedAt`, `signedBy`.
+6. **`GET /v1/consultations/:id/record/pdf`** — generates and streams the historia PDF on
+   demand (`generateHistoriaMedica` in `apps/api/src/lib/pdf.service.ts`, same visual language
+   and streaming pattern as the existing order PDF endpoints — no GCS storage; the PDF is a
+   deterministic render of the frozen sections).
+7. **`GET /v1/patients/:id/record-export`** (phase 3) — compiles all signed historias
    (newest-first) into one expediente PDF with a cover page (patient identification, doctor,
-   generation date, consultation count). Synchronous for MVP.
+   generation date, consultation count) and streams it. Synchronous for MVP.
 
 New error codes (closed enum, `packages/shared/src/errors.ts`): `RECORD_NOT_FOUND`,
 `RECORD_ALREADY_SIGNED`, `RECORD_NOT_DRAFT`, `RECORD_REQUIRED_SECTIONS_MISSING`,
@@ -188,7 +191,8 @@ Spanish UI strings, colocated per convention. See mockups for both screens.
 - **Historia review (draft):** amber bar "Borrador — editable hasta la firma" with Regenerar /
   Editar / Firmar historia. Sections rendered with the 2px teal rule; per-section "Editado" flag
   when `source === 'edited'`. Editar switches sections to textareas (single save).
-- **Historia review (signed):** green strip, read-only, Imprimir / Descargar (pdfUrl).
+- **Historia review (signed):** green strip, read-only, Descargar PDF (printing happens from the
+  downloaded PDF; no separate print action in phase 1).
 - **Patient detail → "Historia" tab:** consultation list with status chips (Borrador ámbar /
   Firmada verde / "Generar historia" for pre-feature consultations), selected item marked with
   the teal rule; document pane on the right; **Exportar expediente** button at panel top.
