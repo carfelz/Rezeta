@@ -841,18 +841,22 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
 
   // Header (same visual language as prescriptions)
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctor.fullName ?? 'Médico'}`, MARGIN, MARGIN)
+  doc.text(`Dr. ${doctor.fullName ?? 'Médico'}`, MARGIN, MARGIN, { width: CONTENT_W - 150 })
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.specialty) doc.text(doctor.specialty)
   if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
   if (location) doc.text(location.name)
+  // Left column's bottom, before the right-aligned date/hour repositions doc.y.
+  const leftColumnBottom = doc.y
   doc.text(`${formatDate(data.startedAt)} · ${hour}`, MARGIN, MARGIN + 2, {
     width: CONTENT_W,
     align: 'right',
   })
-  doc.moveDown(0.5)
+  // Divider goes below the max of both columns (mirrors buildPrescription).
+  doc.x = MARGIN
+  doc.y = Math.max(leftColumnBottom, doc.y) + 10
   strokeLine(doc, MARGIN, doc.y, MARGIN + CONTENT_W, doc.y, T.teal, 2)
-  doc.moveDown(0.8)
+  doc.y += 14
 
   // Title + patient line
   doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900).text(kindTitle, MARGIN)
