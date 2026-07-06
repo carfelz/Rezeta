@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import type { ConsultationProtocolUsage, ProtocolBlock } from '@rezeta/shared'
-import { collectUsageCheckableIds } from '../usage'
+import type {
+  ChecklistItemEvent,
+  ConsultationProtocolUsage,
+  ProtocolBlock,
+} from '@rezeta/shared'
+import { collectUsageCheckableIds, deriveCheckedState } from '../usage'
 
 function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
   return {
@@ -90,5 +94,41 @@ describe('collectUsageCheckableIds', () => {
       } as ProtocolBlock,
     ])
     expect(collectUsageCheckableIds(usage)).toEqual(['i1'])
+  })
+})
+
+describe('deriveCheckedState', () => {
+  function withEvents(events: ChecklistItemEvent[] | null): ConsultationProtocolUsage {
+    return {
+      ...makeUsage([]),
+      modifications: events
+        ? ({ checklist_items: events } as ConsultationProtocolUsage['modifications'])
+        : null,
+    }
+  }
+
+  it('returns an empty map when modifications is null', () => {
+    expect(deriveCheckedState(withEvents(null))).toEqual({})
+  })
+
+  it('returns an empty map when there are no checklist events', () => {
+    const usage = { ...makeUsage([]), modifications: {} as ConsultationProtocolUsage['modifications'] }
+    expect(deriveCheckedState(usage)).toEqual({})
+  })
+
+  it('builds a checked-state map from checklist_items events', () => {
+    const usage = withEvents([
+      { item_id: 'i1', checked: true, timestamp: '2026-07-06T00:00:00Z' },
+      { item_id: 'i2', checked: false, timestamp: '2026-07-06T00:00:01Z' },
+    ])
+    expect(deriveCheckedState(usage)).toEqual({ i1: true, i2: false })
+  })
+
+  it('lets the last event for an item_id win (toggle)', () => {
+    const usage = withEvents([
+      { item_id: 'i1', checked: true, timestamp: '2026-07-06T00:00:00Z' },
+      { item_id: 'i1', checked: false, timestamp: '2026-07-06T00:00:02Z' },
+    ])
+    expect(deriveCheckedState(usage)).toEqual({ i1: false })
   })
 })
