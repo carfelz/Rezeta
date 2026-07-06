@@ -311,33 +311,6 @@ export function useAddOffProtocolNote(
   })
 }
 
-export function useSwitchProtocolUsage(
-  consultationId: string,
-): UseMutationResult<ConsultationProtocolUsage, Error, { usageId: string; newProtocolId: string }> {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ usageId, newProtocolId }: { usageId: string; newProtocolId: string }) =>
-      apiClient
-        .patch<ConsultationProtocolUsage>(
-          `/v1/consultations/${consultationId}/protocols/${usageId}`,
-          { status: 'switched' as const },
-        )
-        .then(() =>
-          apiClient.post<ConsultationProtocolUsage>(
-            `/v1/consultations/${consultationId}/protocols`,
-            { protocolId: newProtocolId },
-          ),
-        ),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [QK, consultationId] })
-      toast.success(toastStrings.protocolSwitched)
-    },
-    onError: () => {
-      toast.error(toastStrings.errorProtocolUsage)
-    },
-  })
-}
-
 export function useCreatePrescription(
   consultationId: string,
 ): UseMutationResult<Prescription, Error, CreatePrescriptionGroupDto> {

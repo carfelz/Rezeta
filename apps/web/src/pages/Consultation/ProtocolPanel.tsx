@@ -56,7 +56,6 @@ export function ProtocolPanel({
 
   const [usageIdStack, setUsageIdStack] = useState<string[]>([])
 
-  const [showSwitch, setShowSwitch] = useState(false)
   const [skipStepTarget, setSkipStepTarget] = useState<{ id: string; title: string } | null>(null)
   const [showOffProtocolNote, setShowOffProtocolNote] = useState(false)
 
@@ -213,8 +212,6 @@ export function ProtocolPanel({
         onShowAmendChange={onShowAmendChange}
         showPicker={showPicker}
         onShowPickerChange={onShowPickerChange}
-        showSwitch={showSwitch}
-        onShowSwitchChange={setShowSwitch}
         skipStepTarget={skipStepTarget}
         onSkipStepTargetChange={setSkipStepTarget}
         showOffProtocolNote={showOffProtocolNote}

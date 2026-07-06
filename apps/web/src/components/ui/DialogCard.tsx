@@ -45,8 +45,8 @@ export interface DialogCardProps
  * Card-shaped dialog frame: overline + serif h2 + optional description +
  * body (children) + optional footer row.
  *
- * Used by: SkipStepDialog, SwitchProtocolDialog, ResumeBanner, gate empty
- * state, OffProtocolNote header pattern (when used in modal).
+ * Used by: SkipStepDialog, ResumeBanner, gate empty state, OffProtocolNote
+ * header pattern (when used in modal).
  */
 export const DialogCard = forwardRef<HTMLDivElement, DialogCardProps>(
   (

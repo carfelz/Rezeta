@@ -89,35 +89,6 @@ export const amendmentModalStrings = {
   saveButton: 'Guardar enmienda',
 } as const
 
-// ── SwitchProtocolDialog ────────────────────────────────────────────────────────
-
-export const switchProtocolStrings = {
-  overline: 'Cambio de protocolo',
-  descriptionSelectBelow: 'Selecciona el nuevo protocolo abajo.',
-  descriptionProgress: (completed: number, total: number) =>
-    `Has completado ${completed} de ${total} pasos. Esto es lo que pasa con el progreso actual:`,
-  descriptionNoTarget: (completed: number, total: number) =>
-    `Has completado ${completed} de ${total} pasos. Selecciona el nuevo protocolo abajo.`,
-  searchPlaceholder: 'Buscar protocolo…',
-  noResults: 'Sin resultados.',
-  noOtherProtocols: 'No hay otros protocolos activos.',
-  keptTitle: 'Motivo, vitales, subjetivo',
-  keptDetail: 'Se conservan — son compatibles',
-  movedTitle: (step: number) => `Examen físico (paso ${step})`,
-  movedDetail: 'Se mueve a "fuera de protocolo"',
-  discardedTitle: 'Decisión, tratamiento, etc.',
-  discardedDetail: 'Se descartan — no aplican',
-  dialogTitle: (currentTitle: string, targetTitle: string) =>
-    `Cambiar ${currentTitle} → ${targetTitle}`,
-  dialogTitleNoTarget: (currentTitle: string) => `Cambiar ${currentTitle}`,
-  keepDraftLabel: (protocolTitle: string) =>
-    `Conservar borrador del protocolo ${protocolTitle} por 24h (puedes volver)`,
-  errorMessage: 'No se pudo cambiar el protocolo. Inténtalo de nuevo.',
-  cancelButton: 'Cancelar',
-  switchingButton: 'Cambiando…',
-  switchButton: 'Cambiar protocolo',
-} as const
-
 // ── SkipStepDialog ──────────────────────────────────────────────────────────────
 
 export const skipStepStrings = {

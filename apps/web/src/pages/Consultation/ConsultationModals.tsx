@@ -4,7 +4,6 @@ import { OffProtocolNote } from '@/components/consultations/OffProtocolNote'
 import { ProtocolPickerModal } from '@/components/protocols/ProtocolPickerModal'
 import { SignModal } from '@/components/consultations/SignModal'
 import { SkipStepDialog } from '@/components/consultations/SkipStepDialog'
-import { SwitchProtocolDialog } from '@/components/consultations/SwitchProtocolDialog'
 import type { ConsultationProtocolUsage, SignConsultationResponse } from '@rezeta/shared'
 
 export interface ConsultationModalsProps {
@@ -20,8 +19,6 @@ export interface ConsultationModalsProps {
   onShowAmendChange: (open: boolean) => void
   showPicker: boolean
   onShowPickerChange: (open: boolean) => void
-  showSwitch: boolean
-  onShowSwitchChange: (open: boolean) => void
   skipStepTarget: { id: string; title: string } | null
   onSkipStepTargetChange: (t: { id: string; title: string } | null) => void
   showOffProtocolNote: boolean
@@ -46,8 +43,6 @@ export function ConsultationModals({
   onShowAmendChange,
   showPicker,
   onShowPickerChange,
-  showSwitch,
-  onShowSwitchChange,
   skipStepTarget,
   onSkipStepTargetChange,
   showOffProtocolNote,
@@ -86,19 +81,6 @@ export function ConsultationModals({
         isPending={isAddingProtocol}
         onSelect={(p) => onAddProtocol(p.id)}
       />
-      <Modal open={showSwitch} onOpenChange={onShowSwitchChange}>
-        {showSwitch && activeUsage && (
-          <SwitchProtocolDialog
-            consultationId={consultationId}
-            currentUsageId={activeUsage.id}
-            currentProtocolId={activeUsage.protocolId}
-            currentProtocolTitle={activeUsage.protocolTitle}
-            completedSteps={0}
-            totalSteps={0}
-            onClose={() => onShowSwitchChange(false)}
-          />
-        )}
-      </Modal>
       <Modal
         open={skipStepTarget !== null}
         onOpenChange={(o) => {
