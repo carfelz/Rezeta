@@ -24,6 +24,7 @@ import { ProtocolCategoriesModule } from './modules/protocol-categories/index.js
 import { OnboardingModule } from './modules/onboarding/index.js'
 import { AppointmentsModule } from './modules/appointments/index.js'
 import { ConsultationsModule } from './modules/consultations/index.js'
+import { ConsultationRecordsModule } from './modules/consultation-records/index.js'
 import { OrdersModule } from './modules/orders/index.js'
 import { ProtocolImprovementsModule } from './modules/protocol-improvements/index.js'
 import { ProtocolRecommendationsModule } from './modules/protocol-recommendations/index.js'
@@ -65,6 +66,7 @@ class AppController {
     OnboardingModule,
     AppointmentsModule,
     ConsultationsModule,
+    ConsultationRecordsModule,
     OrdersModule,
     ProtocolImprovementsModule,
     ProtocolRecommendationsModule,
