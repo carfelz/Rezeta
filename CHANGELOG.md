@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Dead-code sweep (part 2) — dev previews, legacy design system, unwired integration tests
+
+### Removed
+
+- **`_preview/*` dev routes.** Deleted the four auth-free preview pages (`StripPreview`, `EdgePreview`, `CanvasPreview`, `OrderQueuePreview`) and their route registrations in `apps/web/src/App.tsx`. They were registered unconditionally in the production router (no `DEV` gate), shipping internal UI prototypes to prod without auth. Cascade: `ProtocolStrip` (component + story + test) and `RightRail` were used **only** by these previews, so both are deleted, along with the now-unused `rightRailStrings` (`apps/web/src/components/consultations/strings.ts`; also corrected a stale `// ── RightRail` header that actually sat above `saveBadgeStrings`). Verified no cascade beyond these two — `CanvasView`, `OrderQueuePanel`, `ProtocolPills`, `OffProtocolNote`, `SkipStepDialog`, and `ResumeBanner` all remain in production use.
+- **Legacy `old_design-system/`** (352K) — superseded by `design-system/`, unreferenced anywhere in code or specs, last touched 2026-05-19. Preserved in git history.
+- **Unwired API integration tests.** Deleted `apps/api/test/auth.integration.ts` and `protocols.integration.ts` — never executed (the vitest config only globs `src/**/*.{spec,test}.ts`) and pinned to `@nestjs/testing@11` against a NestJS 10 app. Removed their now-unused deps `@nestjs/testing`, `supertest`, and `@types/supertest` (`apps/api/package.json`), which also clears the install-time peer-dependency mismatch warning.
+
 ## [2026-07-05] Dead-code sweep — unused UI components, hooks, and deps
 
 ### Removed
