@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui'
 import { AsideCard } from './AsideCard'
-import { OrderQueuePanel } from './OrderQueuePanel'
 import { consultationSidebarStrings } from './strings'
 
 interface PatientLite {
@@ -15,7 +14,6 @@ interface PrevConsultation {
 }
 
 export interface ConsultationSidebarProps {
-  consultationId: string
   isSigned: boolean
   hasProtocols: boolean
   patient: PatientLite | null | undefined
@@ -27,11 +25,11 @@ export interface ConsultationSidebarProps {
 
 /**
  * Page-level sidebar shown alongside the consultation protocol panel.
- * Composes alerts, the protocols empty-state card, the previous-consultations
- * list, and the orders queue panel.
+ * Composes alerts, the protocols empty-state card, and the
+ * previous-consultations list. The orders queue panel is rendered by the
+ * parent rail (OrdersRail) below this sidebar.
  */
 export function ConsultationSidebar({
-  consultationId,
   isSigned,
   hasProtocols,
   patient,
@@ -115,8 +113,6 @@ export function ConsultationSidebar({
           </div>
         </AsideCard>
       )}
-
-      <OrderQueuePanel consultationId={consultationId} isSigned={isSigned} />
     </div>
   )
 }

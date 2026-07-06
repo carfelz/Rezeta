@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Consultation module bug sweep — layout, duplicate orders panel, batched saves
+
+### Changed
+
+- **Consultation page is now full-bleed with no topbar.** `AppLayout` gained a `fullBleed` prop (`apps/web/src/components/layout/AppLayout.tsx`) that renders only the sidebar plus an `h-dvh overflow-hidden` main — no `Topbar`, no `pt-topbar`/`py-8` gutters, no `max-w-layout`. `consultas/:id` moved into its own full-bleed route group in `apps/web/src/App.tsx`; the page root switched from `h-screen` to `h-full` (`apps/web/src/pages/Consultation/index.tsx`). Together this removes the ~112px of stacked top offset and the permanent vertical/horizontal scrollbars on the page (the old `h-screen` inside a topbar-padded layout always overflowed the viewport). Note: the mobile hamburger lived in the topbar, so on small screens the consultation page relies on the breadcrumb for navigation.
+- **Protocol edits no longer PATCH per interaction.** New `usePendingModifications` hook (`apps/web/src/hooks/consultations/use-pending-modifications.ts`) buffers `ProtocolUsage` modification events locally, overlays them onto the server-truth consultation at render time (query cache stays pure, so refetches can't wipe unsaved edits), and flushes delta-only PATCHes when the doctor signs (aborting the sign if persistence fails), navigates away (unmount), or before tab close (`useBeforeUnloadGuard` now also covers pending edits). `ProtocolPanel` records events via the new `onRecordModification` prop; `SignModal` awaits a new `onBeforeSign` callback; the `SaveBadge` shows `dirty` while edits are buffered. The now-unused `useUpdateProtocolUsage` hook was removed.
+- **`useSkipStep` / `useAddOffProtocolNote` send only the new event.** The API appends modification arrays onto stored ones (`ConsultationsRepository.updateProtocolUsage`), so resending the existing entries duplicated every prior skip/note server-side on each call. The `existingSkipped`/`existingNotes` params were dropped (`apps/web/src/hooks/consultations/use-consultations.ts`).
+
+### Fixed
+
+- **Duplicated "Órdenes médicas" panel.** `OrdersRail` rendered `OrderQueuePanel` directly and again via `ConsultationSidebar`; the sidebar's copy was removed along with its `consultationId` prop (`apps/web/src/components/consultations/ConsultationSidebar.tsx`, `apps/web/src/pages/Consultation/OrdersRail.tsx`).
+- **Horizontal scrollbar inside the protocol section.** `ProtocolBar`'s pills/strip wrappers used `-mx-12` (sized for the old `lg:px-12` layout gutter) inside the `p-6` scroll container, overhanging it by 24px per side; changed to `-mx-6`, and the strip's `sticky top-topbar` became `sticky top-0` since the topbar is gone (`apps/web/src/pages/Consultation/ProtocolBar.tsx`).
+- **Checklist clicks double-logged their event.** `ChecklistRunMode` emitted `onModification` for an event `onCheck` already records upstream, appending every toggle twice to the modifications audit log (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`).
+- Tests: added `apps/web/src/hooks/consultations/__tests__/use-pending-modifications.test.tsx` (8 cases: buffering, delta-only flush, cache fold-back, failure re-buffer/retry, flush-on-unmount); updated `ProtocolPanel` and `use-consultations` tests for the new props and delta-only payloads.
+
 ## [2026-07-04] Migrate inline spinners to shared `<Spinner>`
 
 ### Changed

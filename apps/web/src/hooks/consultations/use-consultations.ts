@@ -9,7 +9,6 @@ import type {
   CreateConsultationDto,
   AmendConsultationDto,
   AddProtocolUsageDto,
-  UpdateProtocolUsageDto,
   Prescription,
   ImagingOrder,
   LabOrder,
@@ -234,37 +233,6 @@ export function useRemoveProtocolUsage(
   })
 }
 
-export function useUpdateProtocolUsage(
-  consultationId: string,
-  usageId: string,
-): UseMutationResult<ConsultationProtocolUsage, Error, UpdateProtocolUsageDto> {
-  const qc = useQueryClient()
-  return useMutation({
-    // Silent — low-level protocol-usage PATCH primitive. Meaningful user actions
-    // (switch, skip step, off-protocol note) use their own dedicated mutations
-    // below, which carry their own toasts.
-    mutationFn: (dto: UpdateProtocolUsageDto) =>
-      apiClient.patch<ConsultationProtocolUsage>(
-        `/v1/consultations/${consultationId}/protocols/${usageId}`,
-        dto,
-        { silent: true },
-      ),
-    // Targeted cache write instead of invalidation: the loud `useConsultation`
-    // refetch would pulse the global loading chip on every autosave PATCH,
-    // defeating the { silent: true } flag above.
-    onSuccess: (usage) => {
-      qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
-        prev
-          ? {
-              ...prev,
-              protocolUsages: prev.protocolUsages.map((u) => (u.id === usage.id ? usage : u)),
-            }
-          : prev,
-      )
-    },
-  })
-}
-
 /**
  * Returns the most recent in-progress (draft) consultation for a patient,
  * eligible for the resume banner. Endpoint returns null when no eligible
@@ -284,34 +252,26 @@ export function useResumableForPatient(
 }
 
 /**
- * Append a `steps_skipped` event with reason to a protocol usage's modifications.
- * Server merges into existing array; client-side passes the entire next array
- * to keep the existing PATCH endpoint contract (overwrite modifications).
+ * Append a `steps_skipped` event with reason to a protocol usage's
+ * modifications. The server appends the payload onto the stored arrays, so
+ * only the new event is sent — resending existing entries would duplicate
+ * them.
  */
 export function useSkipStep(
   consultationId: string,
   usageId: string,
-): UseMutationResult<
-  ConsultationProtocolUsage,
-  Error,
-  {
-    stepId: string
-    reason: string
-    existingSkipped?: { step_id: string; timestamp: string; reason?: string }[]
-  }
-> {
+): UseMutationResult<ConsultationProtocolUsage, Error, { stepId: string; reason: string }> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ stepId, reason, existingSkipped = [] }) => {
-      const next = [
-        ...existingSkipped,
-        { step_id: stepId, timestamp: new Date().toISOString(), reason },
-      ]
-      return apiClient.patch<ConsultationProtocolUsage>(
+    mutationFn: ({ stepId, reason }) =>
+      apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
-        { modifications: { steps_skipped: next } },
-      )
-    },
+        {
+          modifications: {
+            steps_skipped: [{ step_id: stepId, timestamp: new Date().toISOString(), reason }],
+          },
+        },
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
       toast.success(toastStrings.stepSkipped)
@@ -324,27 +284,20 @@ export function useSkipStep(
 
 /**
  * Append an `off_protocol_notes` event to a protocol usage's modifications.
+ * The server appends onto the stored array, so only the new event is sent.
  */
 export function useAddOffProtocolNote(
   consultationId: string,
   usageId: string,
-): UseMutationResult<
-  ConsultationProtocolUsage,
-  Error,
-  {
-    title?: string
-    note: string
-    existingNotes?: OffProtocolNoteEvent[]
-  }
-> {
+): UseMutationResult<ConsultationProtocolUsage, Error, { title?: string; note: string }> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ title, note, existingNotes = [] }) => {
+    mutationFn: async ({ title, note }) => {
       const event: OffProtocolNoteEvent = { timestamp: new Date().toISOString(), note }
       if (title) event.title = title
       const updated = await apiClient.patch<ConsultationProtocolUsage>(
         `/v1/consultations/${consultationId}/protocols/${usageId}`,
-        { modifications: { off_protocol_notes: [...existingNotes, event] } },
+        { modifications: { off_protocol_notes: [event] } },
       )
       return updated
     },

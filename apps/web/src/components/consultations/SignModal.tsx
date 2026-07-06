@@ -12,12 +12,23 @@ import { signModalStrings } from './strings'
 
 export interface SignModalProps {
   consultationId: string
+  /**
+   * Persists any locally-buffered protocol modifications before the sign
+   * request fires. Resolving false aborts the sign so an immutable record is
+   * never created from partially-saved content.
+   */
+  onBeforeSign?: (() => Promise<boolean>) | undefined
   onClose: () => void
   /** Fires with the sign response (incl. invoice outcome) once signing succeeds. */
   onSigned?: ((result: SignConsultationResponse) => void) | undefined
 }
 
-export function SignModal({ consultationId, onClose, onSigned }: SignModalProps): JSX.Element {
+export function SignModal({
+  consultationId,
+  onBeforeSign,
+  onClose,
+  onSigned,
+}: SignModalProps): JSX.Element {
   const signMutation = useSignConsultation(consultationId)
   return (
     <ModalContent>
@@ -38,14 +49,17 @@ export function SignModal({ consultationId, onClose, onSigned }: SignModalProps)
         </ModalClose>
         <Button
           variant="primary"
-          onClick={() =>
-            signMutation.mutate(undefined, {
-              onSuccess: (result) => {
-                onSigned?.(result)
-                onClose()
-              },
-            })
-          }
+          onClick={() => {
+            void (async () => {
+              if (onBeforeSign && !(await onBeforeSign())) return
+              signMutation.mutate(undefined, {
+                onSuccess: (result) => {
+                  onSigned?.(result)
+                  onClose()
+                },
+              })
+            })()
+          }}
           disabled={signMutation.isPending}
         >
           {signMutation.isPending ? signModalStrings.signingButton : signModalStrings.signButton}

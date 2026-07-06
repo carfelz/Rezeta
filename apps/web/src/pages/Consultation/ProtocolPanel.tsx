@@ -4,19 +4,13 @@ import { Button } from '@/components/ui'
 import { CanvasView, type BlockModificationEvent } from '@/components/consultations/CanvasView'
 import { ProtocolPickerModal } from '@/components/protocols/ProtocolPickerModal'
 import { ProtocolBar } from './ProtocolBar'
-import { appendModification } from '@/lib/consultation/modifications'
 import {
   useAddProtocolUsage,
   useRemoveProtocolUsage,
-  useUpdateProtocolUsage,
   useSkipStep,
   useAddOffProtocolNote,
 } from '@/hooks/consultations/use-consultations'
-import type {
-  ConsultationWithDetails,
-  SignConsultationResponse,
-  UpdateProtocolUsageDto,
-} from '@rezeta/shared'
+import type { ConsultationWithDetails, SignConsultationResponse } from '@rezeta/shared'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
 import { ConsultationModals } from './ConsultationModals'
 import { protocolPanelStrings } from './strings'
@@ -24,6 +18,10 @@ import { protocolPanelStrings } from './strings'
 interface ProtocolPanelProps {
   consultation: ConsultationWithDetails
   readOnly: boolean
+  /** Buffers a block modification locally; persisted on sign or page change. */
+  onRecordModification: (usageId: string, event: BlockModificationEvent) => void
+  /** Persists buffered modifications; resolves false if any PATCH failed. */
+  onFlushPending: () => Promise<boolean>
   showSign: boolean
   onShowSignChange: (open: boolean) => void
   onSigned?: ((result: SignConsultationResponse) => void) | undefined
@@ -36,6 +34,8 @@ interface ProtocolPanelProps {
 export function ProtocolPanel({
   consultation,
   readOnly,
+  onRecordModification,
+  onFlushPending,
   showSign,
   onShowSignChange,
   onSigned,
@@ -54,7 +54,6 @@ export function ProtocolPanel({
     (activeUsageId && consultation.protocolUsages?.find((u) => u.id === activeUsageId)) ||
     consultation.protocolUsages?.[0]
 
-  const updateProtocolUsage = useUpdateProtocolUsage(id, activeUsage?.id ?? '')
   const [usageIdStack, setUsageIdStack] = useState<string[]>([])
 
   const [showSwitch, setShowSwitch] = useState(false)
@@ -68,10 +67,7 @@ export function ProtocolPanel({
 
   function handleModification(event: BlockModificationEvent): void {
     if (!activeUsage) return
-    const next = appendModification(activeUsage.modifications ?? {}, event)
-    updateProtocolUsage.mutate({
-      modifications: next as unknown as UpdateProtocolUsageDto['modifications'],
-    })
+    onRecordModification(activeUsage.id, event)
   }
 
   function handleCheck(checkId: string, checked: boolean): void {
@@ -100,11 +96,7 @@ export function ProtocolPanel({
   function handleConfirmSkipStep(reason: string): void {
     if (!skipStepTarget || !activeUsage) return
     skipStepMutation.mutate(
-      {
-        stepId: skipStepTarget.id,
-        reason,
-        existingSkipped: activeUsage.modifications?.steps_skipped ?? [],
-      },
+      { stepId: skipStepTarget.id, reason },
       { onSuccess: () => setSkipStepTarget(null) },
     )
   }
@@ -115,7 +107,6 @@ export function ProtocolPanel({
       {
         ...(args.title ? { title: args.title } : {}),
         note: args.body,
-        existingNotes: activeUsage.modifications?.off_protocol_notes ?? [],
       },
       { onSuccess: () => setShowOffProtocolNote(false) },
     )
@@ -129,7 +120,6 @@ export function ProtocolPanel({
         isSigned={readOnly}
         onSelectUsage={setActiveUsageId}
         onAddProtocol={() => onShowPickerChange(true)}
-        onSwitchProtocol={() => setShowSwitch(true)}
         onAddOffProtocolNote={() => setShowOffProtocolNote(true)}
       />
 
@@ -216,6 +206,7 @@ export function ProtocolPanel({
         activeUsage={activeUsage}
         protocolIds={protocolIds}
         showSign={showSign}
+        onBeforeSign={onFlushPending}
         onShowSignChange={onShowSignChange}
         onSigned={onSigned}
         showAmend={showAmend}

@@ -25,7 +25,6 @@ import {
   useAddProtocolUsage,
   useUpdateCheckedState,
   useRemoveProtocolUsage,
-  useUpdateProtocolUsage,
   useCreatePrescription,
   useListPrescriptions,
   useCreateImagingOrder,
@@ -305,53 +304,6 @@ describe('useRemoveProtocolUsage', () => {
   })
 })
 
-describe('useUpdateProtocolUsage', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('patches protocol usage', async () => {
-    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
-    const { result } = renderHook(() => useUpdateProtocolUsage('cons-1', 'usage-1'), {
-      wrapper: makeWrapper(),
-    })
-    await act(async () => {
-      await result.current.mutateAsync({ checkedItems: [] } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
-    })
-    expect(apiClient.patch).toHaveBeenCalledWith(
-      '/v1/consultations/cons-1/protocols/usage-1',
-      {
-        checkedItems: [],
-      },
-      { silent: true },
-    )
-  })
-
-  it('writes the updated usage into the consultation cache without a loud refetch', async () => {
-    const updatedUsage = { ...mockUsage, checkedItems: ['itm-9'] }
-    vi.mocked(apiClient.patch).mockResolvedValue(updatedUsage)
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    client.setQueryData(['consultations', 'cons-1'], {
-      ...mockConsultation,
-      protocolUsages: [mockUsage],
-    })
-    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
-    const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(QueryClientProvider, { client }, children)
-    const { result } = renderHook(() => useUpdateProtocolUsage('cons-1', 'usage-1'), { wrapper })
-    await act(async () => {
-      await result.current.mutateAsync({ checkedItems: ['itm-9'] } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
-    })
-    const cached = client.getQueryData(['consultations', 'cons-1']) as {
-      protocolUsages: { id: string; checkedItems: string[] }[]
-    }
-    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')).toEqual(updatedUsage)
-    expect(invalidateSpy).not.toHaveBeenCalled()
-  })
-})
-
 describe('useCreatePrescription', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -529,24 +481,20 @@ describe('useSkipStep', () => {
     expect(skipped[0]).toMatchObject({ step_id: 'step-1', reason: 'No aplica hoy' })
   })
 
-  it('preserves existingSkipped entries when appending', async () => {
+  it('sends only the new event (server appends onto stored arrays)', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
     const { result } = renderHook(() => useSkipStep('cons-1', 'usage-1'), {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({
-        stepId: 'step-2',
-        reason: 'Otro',
-        existingSkipped: [{ step_id: 'step-0', timestamp: 'past', reason: 'old' }],
-      })
+      await result.current.mutateAsync({ stepId: 'step-2', reason: 'Otro' })
     })
     const skipped = (
       vi.mocked(apiClient.patch).mock.calls[0]![1] as {
         modifications: { steps_skipped: { step_id: string }[] }
       }
     ).modifications.steps_skipped
-    expect(skipped.map((s) => s.step_id)).toEqual(['step-0', 'step-2'])
+    expect(skipped.map((s) => s.step_id)).toEqual(['step-2'])
   })
 })
 
@@ -570,23 +518,20 @@ describe('useAddOffProtocolNote', () => {
     expect(notes[0]?.note).toBe('Hallazgo extra')
   })
 
-  it('appends note to existingNotes', async () => {
+  it('sends only the new note (server appends onto stored arrays)', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
     const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({
-        note: 'New',
-        existingNotes: [{ timestamp: 'past', note: 'Old' }],
-      })
+      await result.current.mutateAsync({ note: 'New' })
     })
     const notes = (
       vi.mocked(apiClient.patch).mock.calls[0]![1] as {
         modifications: { off_protocol_notes: { note: string }[] }
       }
     ).modifications.off_protocol_notes
-    expect(notes.map((n) => n.note)).toEqual(['Old', 'New'])
+    expect(notes.map((n) => n.note)).toEqual(['New'])
   })
 
   it('makes exactly one PATCH (no second consultation PATCH)', async () => {
