@@ -1,7 +1,6 @@
 import type { BadgeProps } from '@/components/ui'
 import type { AppointmentStatus, AuditLogItem } from '@rezeta/shared'
 
-export const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 export const MONTHS_ES = [
   'enero',
   'febrero',

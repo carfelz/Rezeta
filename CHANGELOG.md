@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-05] Dead-code sweep — unused UI components, hooks, and deps
+
+### Removed
+
+- **Unused UI components.** `SegmentedControl` (`apps/web/src/components/ui/SegmentedControl.tsx` + story + test) and `CardItem`/`CardItemProps` (`apps/web/src/components/ui/Card.tsx`) — both had zero app-page consumers (only their own Storybook stories and tests). Dropped from the `components/ui` barrel and their stories/tests removed. `CardSubtitle` was kept: it composes the retained `Card` Storybook examples, so it is design-system API rather than dead code.
+- **Unused hooks / constant.** The singular `useAuditLog` (`apps/web/src/hooks/audit-logs/use-audit-logs.ts`) and `useInvoice` (`apps/web/src/hooks/invoices/use-invoices.ts`) — zero call sites; only the plural `useAuditLogs`/`useInvoices` are used. Also removed the unused `DAYS_ES` constant (`apps/web/src/pages/Dashboard/helpers.ts`). `CalendarDayButton` was un-exported (it is used internally by `Calendar` but imported nowhere else).
+- **Unused dependencies.** Removed `i18next`, `react-i18next`, and `next-themes` from `apps/web/package.json` — zero imports; i18n/theming was never wired up. (`swagger-ui-express` was left in place: `@nestjs/swagger`'s `SwaggerModule.setup` can serve the `/docs` UI through it at runtime, a transitive use static analysis misses.)
+
 ## [2026-07-05] Remove unreachable switch-protocol modal
 
 ### Removed
