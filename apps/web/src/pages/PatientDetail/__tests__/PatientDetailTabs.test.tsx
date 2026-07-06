@@ -30,8 +30,8 @@ vi.mock('@/hooks/consultations/use-start-consultation', () => ({
   useStartConsultation: mocks.useStartConsultation,
 }))
 vi.mock('@/store/ui.store', () => ({ useUiStore: mocks.useUiStore }))
-vi.mock('@/pages/Patients/ClinicalHistory', () => ({
-  ClinicalHistory: () => <div data-testid="clinical-history">Historia</div>,
+vi.mock('../HistoriaTab', () => ({
+  HistoriaTab: () => <div data-testid="historia-tab">Historia</div>,
 }))
 
 import { PatientDetail } from '../index'
@@ -192,7 +192,7 @@ describe('PatientDetail tabs', () => {
     for (const t of ['Historia clínica', 'Citas', 'Recetas', 'Facturas']) {
       expect(screen.getByRole('tab', { name: t })).toBeInTheDocument()
     }
-    expect(screen.getByTestId('clinical-history')).toBeInTheDocument()
+    expect(screen.getByTestId('historia-tab')).toBeInTheDocument()
   })
 
   it('fetches appointments by patientId only (no active-location filter)', async () => {
