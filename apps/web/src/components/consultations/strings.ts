@@ -229,7 +229,7 @@ export const chainBreadcrumbStrings = {
   backButton: 'Atrás',
 } as const
 
-// ── RightRail ───────────────────────────────────────────────────────────────────
+// ── SaveBadge ───────────────────────────────────────────────────────────────────
 
 export const saveBadgeStrings = {
   unsaved: 'Sin guardar',
@@ -239,11 +239,4 @@ export const saveBadgeStrings = {
   savedElapsedMins: (m: number) => `hace ${m} min`,
   error: 'Error al guardar',
   retry: 'Reintentar',
-} as const
-
-export const rightRailStrings = {
-  alertsLabel: 'Alertas',
-  protocolStepsLabel: 'Pasos del protocolo',
-  ordersLabel: 'Órdenes',
-  stepInProgress: 'en curso',
 } as const
