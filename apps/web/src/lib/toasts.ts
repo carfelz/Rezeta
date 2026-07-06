@@ -76,7 +76,6 @@ export const toastStrings = {
   protocolVersionPublished: 'Nueva versión publicada',
   protocolUsageAdded: 'Protocolo aplicado a la consulta',
   protocolUsageRemoved: 'Protocolo removido de la consulta',
-  protocolSwitched: 'Protocolo cambiado',
   errorProtocolSave: 'No se pudo guardar el protocolo.',
   errorProtocolUsage: 'No se pudo actualizar el protocolo de la consulta.',
 

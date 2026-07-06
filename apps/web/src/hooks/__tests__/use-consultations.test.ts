@@ -414,7 +414,6 @@ describe('useListLabOrders', () => {
 // Import the new hooks added in the latest backend integration pass
 import {
   useResumableForPatient,
-  useSwitchProtocolUsage,
   useSkipStep,
   useAddOffProtocolNote,
 } from '../consultations/use-consultations'
@@ -434,29 +433,6 @@ describe('useResumableForPatient', () => {
   it('is disabled when patientId is null', () => {
     const { result } = renderHook(() => useResumableForPatient(null), { wrapper: makeWrapper() })
     expect(result.current.fetchStatus).toBe('idle')
-  })
-})
-
-describe('useSwitchProtocolUsage', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('PATCHes the old usage status=switched, then POSTs the new protocol', async () => {
-    vi.mocked(apiClient.patch).mockResolvedValue(mockUsage)
-    vi.mocked(apiClient.post).mockResolvedValue(mockUsage)
-    const { result } = renderHook(() => useSwitchProtocolUsage('cons-1'), {
-      wrapper: makeWrapper(),
-    })
-    await act(async () => {
-      await result.current.mutateAsync({ usageId: 'u-old', newProtocolId: 'proto-new' })
-    })
-    expect(apiClient.patch).toHaveBeenCalledWith(
-      '/v1/consultations/cons-1/protocols/u-old',
-      expect.objectContaining({ status: 'switched' }),
-    )
-    expect(apiClient.post).toHaveBeenCalledWith(
-      '/v1/consultations/cons-1/protocols',
-      expect.objectContaining({ protocolId: 'proto-new' }),
-    )
   })
 })
 

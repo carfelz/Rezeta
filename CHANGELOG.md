@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-05] Remove unreachable switch-protocol modal
+
+### Removed
+
+- **Switch-protocol feature (dead code).** Removing the `ProtocolStrip` block in the prior consultation bug sweep also removed the only trigger that opened the "Cambiar protocolo" modal, leaving `showSwitch` in `ProtocolPanel` permanently `false`. Removed the now-unreachable chain: the `showSwitch`/`setShowSwitch` state and the `showSwitch`/`onShowSwitchChange` props threaded through `ConsultationModals` (`apps/web/src/pages/Consultation/ProtocolPanel.tsx`, `ConsultationModals.tsx`); the `SwitchProtocolDialog` component (`apps/web/src/components/consultations/SwitchProtocolDialog.tsx`, deleted); its `switchProtocolStrings` (`apps/web/src/components/consultations/strings.ts`); the `useSwitchProtocolUsage` hook plus its unit test (`apps/web/src/hooks/consultations/use-consultations.ts`, `apps/web/src/hooks/__tests__/use-consultations.test.ts`); and the now-unused `protocolSwitched` toast string (`apps/web/src/lib/toasts.ts`). Updated the `DialogCard` "Used by" doc comment. No backend endpoints were touched — the hook reused the generic protocol-usage PATCH and add-protocol POST; the `switched` `ProtocolUsageStatus` enum value is left in place (data/migration concern). Kept `ProtocolStrip` itself: it is still rendered by the routed dev preview pages (`/_preview/strip`, `/_preview/canvas`) and covered by its own tests/story, so it is not unreachable.
+
 ## [2026-07-04] Consultation module bug sweep — layout, duplicate orders panel, batched saves
 
 ### Changed
@@ -15,7 +21,7 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 ### Fixed
 
 - **Duplicated "Órdenes médicas" panel.** `OrdersRail` rendered `OrderQueuePanel` directly and again via `ConsultationSidebar`; the sidebar's copy was removed along with its `consultationId` prop (`apps/web/src/components/consultations/ConsultationSidebar.tsx`, `apps/web/src/pages/Consultation/OrdersRail.tsx`).
-- **Horizontal scrollbar inside the protocol section.** `ProtocolBar`'s pills/strip wrappers used `-mx-12` (sized for the old `lg:px-12` layout gutter) inside the `p-6` scroll container, overhanging it by 24px per side; changed to `-mx-6`, and the strip's `sticky top-topbar` became `sticky top-0` since the topbar is gone (`apps/web/src/pages/Consultation/ProtocolBar.tsx`).
+- **Horizontal scrollbar inside the protocol section.** `ProtocolBar`'s pills wrapper used `-mx-12` (sized for the old `lg:px-12` layout gutter) inside the `p-6` scroll container, overhanging it by 24px per side; changed to `-mx-6`. The sticky `ProtocolStrip` block was removed from `ProtocolBar` entirely, which orphaned its `ProtocolStrip` import and the `onSwitchProtocol` prop — both dropped (`apps/web/src/pages/Consultation/ProtocolBar.tsx`).
 - **Checklist clicks double-logged their event.** `ChecklistRunMode` emitted `onModification` for an event `onCheck` already records upstream, appending every toggle twice to the modifications audit log (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`).
 - Tests: added `apps/web/src/hooks/consultations/__tests__/use-pending-modifications.test.tsx` (8 cases: buffering, delta-only flush, cache fold-back, failure re-buffer/retry, flush-on-unmount); updated `ProtocolPanel` and `use-consultations` tests for the new props and delta-only payloads.
 
