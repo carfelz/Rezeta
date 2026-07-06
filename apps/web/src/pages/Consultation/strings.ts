@@ -24,6 +24,11 @@ export const postSignPanelStrings = {
   followUpHeading: 'Seguimiento',
   followUpCaption: 'Agenda la próxima cita de este paciente.',
   scheduleFollowUpButton: 'Agendar seguimiento',
+  historiaHeading: 'Historia médica',
+  historiaCreated: 'Borrador generado — revísala y fírmala en la ficha del paciente.',
+  historiaFailed: 'No se pudo generar la historia médica.',
+  historiaRetry: 'Generar historia',
+  historiaOpen: 'Ver historia',
 } as const
 
 export const newConsultationStrings = {
