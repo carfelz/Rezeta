@@ -12,6 +12,7 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - **Edit schema** (`packages/shared/src/schemas/consultation-record.ts`): `UpdateRecordSectionsSchema`/`UpdateRecordSectionsDto` — validates a non-empty array of `{ key, content }` edits, restricting `key` to `RECORD_SECTION_KEYS` and `content` to ≤20,000 chars.
 - **Error codes** (`packages/shared/src/errors.ts`): `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
 - Wired both new modules into the `@rezeta/shared` barrels (`types/index.ts`, `schemas/index.ts`).
+- Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones de la historia médica del contenido de protocolos (primera consulta vs. evolución).
 
 ### Changed
 

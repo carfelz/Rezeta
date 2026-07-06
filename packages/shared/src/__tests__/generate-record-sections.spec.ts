@@ -209,4 +209,315 @@ describe('generateRecordSections', () => {
     expect(keys.indexOf('diagnosticos')).toBeLessThan(keys.indexOf('plan_tratamiento'))
     expect(keys[0]).toBe('ficha_identificacion')
   })
+
+  it('routes clinical_notes labels mentioning resultado/estudio to resultados_estudios', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'r1',
+        type: 'clinical_notes',
+        label: 'Resultado de laboratorio',
+        content: 'Hemoglobina 13.2 g/dL.',
+      } as ProtocolBlock,
+      {
+        id: 'r2',
+        type: 'clinical_notes',
+        label: 'Estudio de imagen',
+        content: 'Rx tórax sin hallazgos.',
+      } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    const results = section(out, 'resultados_estudios')?.content ?? ''
+    expect(results).toContain('Hemoglobina 13.2 g/dL.')
+    expect(results).toContain('Rx tórax sin hallazgos.')
+  })
+
+  it('renders ficha_identificacion without optional lines when patient fields are null/empty', () => {
+    const minimalPatient = {
+      firstName: 'Juan',
+      lastName: 'Solo',
+      dateOfBirth: null,
+      sex: null,
+      documentType: null,
+      documentNumber: null,
+      phone: null,
+      address: null,
+      allergies: [],
+      chronicConditions: [],
+    }
+    const out = generateRecordSections(makeInput({ patient: minimalPatient }))
+    const ficha = section(out, 'ficha_identificacion')?.content ?? ''
+    expect(ficha).toBe('Juan Solo')
+    expect(ficha).not.toContain('años')
+    expect(ficha).not.toContain('Teléfono')
+    expect(ficha).not.toContain('Dirección')
+    expect(ficha).not.toContain('Alergias')
+    expect(ficha).not.toContain('Condiciones crónicas')
+    expect(ficha).not.toMatch(/^(cedula|passport|rnc|doc):/i)
+  })
+
+  it('renders a patient sex value outside the known label map as-is', () => {
+    const patientWithUnknownSex = { ...patient, sex: 'unknown' }
+    const out = generateRecordSections(makeInput({ patient: patientWithUnknownSex }))
+    const ficha = section(out, 'ficha_identificacion')?.content ?? ''
+    expect(ficha).toContain('unknown')
+  })
+
+  it('renders a vitals field without a unit as just "label value"', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'v2',
+        type: 'vitals',
+        fields: [{ id: 'wt', label: 'Peso', input_type: 'number' }],
+        values: { wt: 70 },
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'examen_fisico')?.content).toContain('Peso 70')
+    expect(section(out, 'examen_fisico')?.content).not.toMatch(/Peso 70 \S+$/m)
+  })
+
+  it('produces no output for a checklist with zero checked items', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck2',
+        type: 'checklist',
+        title: 'Sin marcar',
+        items: [{ id: 'i1', text: 'Nada marcado', checked: false }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Sin marcar')
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Nada marcado')
+  })
+
+  it('produces no output for a steps block with no completed or skipped steps', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'st2',
+        type: 'steps',
+        title: 'Pendiente',
+        steps: [{ id: 's1', order: 1, title: 'Paso sin tocar' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Pendiente')
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Paso sin tocar')
+  })
+
+  it('produces no output for a decision block with no recorded branch', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd2',
+        type: 'decision',
+        condition: '¿Fiebre > 38.5?',
+        branches: [{ id: 'br1', label: 'Sí', action: 'Antipirético' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Fiebre')
+  })
+
+  it('resolves a decision branch label from block.branches when only branch_id is recorded', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd3',
+        type: 'decision',
+        condition: '¿Requiere referencia?',
+        branches: [
+          { id: 'br1', label: 'Referir a especialista', action: 'Referir' },
+          { id: 'br2', label: 'Manejo ambulatorio', action: 'Continuar' },
+        ],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { decision_branches: [{ block_id: 'd3', branch_id: 'br1' }] },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').toContain(
+      '¿Requiere referencia? → Referir a especialista',
+    )
+  })
+
+  it('produces no output when a decision has neither branch_label nor a matching branch_id', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd4',
+        type: 'decision',
+        condition: '¿Alergia confirmada?',
+        branches: [{ id: 'br1', label: 'Sí', action: 'Suspender' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { decision_branches: [{ block_id: 'd4', branch_id: 'no-such-branch' }] },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Alergia confirmada')
+  })
+
+  it('emits an empty required plan_tratamiento section when usages have no blocks and orders are empty', () => {
+    const out = generateRecordSections(
+      makeInput({ usages: [{ blocks: [], modifications: {} }], orders: emptyOrders }),
+    )
+    const plan = section(out, 'plan_tratamiento')
+    expect(plan).toBeDefined()
+    expect(plan?.content).toBe('')
+    expect(plan?.required).toBe(true)
+  })
+
+  it('routes a clinical_notes label matching only "antecedente" to antecedentes', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'a1', type: 'clinical_notes', label: 'Antecedentes familiares', content: 'Madre diabética.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ kind: 'first_visit', usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'antecedentes')?.content).toContain('Madre diabética.')
+  })
+
+  it('routes a clinical_notes label matching only "tratamiento" (no "plan") to plan_tratamiento', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'p1', type: 'clinical_notes', label: 'Tratamiento indicado', content: 'Reposo relativo.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'plan_tratamiento')?.content).toContain('Reposo relativo.')
+  })
+
+  it('routes a clinical_notes label matching "evolución" to evolucion', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'e1', type: 'clinical_notes', label: 'Evolución del cuadro', content: 'Mejoría notable.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content).toContain('Mejoría notable.')
+  })
+
+  it('defaults the document type label to "DOC" when documentNumber is set but documentType is null', () => {
+    const patientNoDocType = { ...patient, documentType: null }
+    const out = generateRecordSections(makeInput({ patient: patientNoDocType }))
+    expect(section(out, 'ficha_identificacion')?.content).toContain('DOC: 001-1234567-8')
+  })
+
+  it('treats a section block missing its own blocks array as having no children', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'sec2', type: 'section', title: 'Vacía' } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(out.every((s) => !s.content.includes('Vacía'))).toBe(true)
+  })
+
+  it('treats a clinical_notes block missing content/label as empty and emits nothing', () => {
+    const blocks: ProtocolBlock[] = [{ id: 'cn1', type: 'clinical_notes' } as unknown as ProtocolBlock]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    // No section should contain undefined/garbage text from the missing fields.
+    const all = out.map((s) => s.content).join('\n')
+    expect(all).not.toContain('undefined')
+  })
+
+  it('treats a vitals block missing values/fields as having nothing to render', () => {
+    const blocks: ProtocolBlock[] = [{ id: 'v3', type: 'vitals' } as unknown as ProtocolBlock]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    const all = out.map((s) => s.content).join('\n')
+    expect(all).not.toContain('undefined')
+  })
+
+  it('treats a checklist block missing items as having nothing to render', () => {
+    const blocks: ProtocolBlock[] = [{ id: 'ck3', type: 'checklist', title: 'Sin items' } as unknown as ProtocolBlock]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Sin items')
+  })
+
+  it('defaults a checklist title to "Verificación" when title is missing', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck4',
+        type: 'checklist',
+        items: [{ id: 'i1', text: 'Ítem confirmado', checked: true }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content).toContain('Verificación: Ítem confirmado')
+  })
+
+  it('treats a steps block missing steps as having nothing to render', () => {
+    const blocks: ProtocolBlock[] = [{ id: 'st3', type: 'steps', title: 'Sin pasos' } as unknown as ProtocolBlock]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Sin pasos')
+  })
+
+  it('renders a skipped step without a reason as just "(omitido)"', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'st4',
+        type: 'steps',
+        title: 'Manejo',
+        steps: [{ id: 's1', order: 1, title: 'Paso omitido sin razón' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: { steps_skipped: [{ step_id: 's1' }] } }],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Paso omitido sin razón (omitido)')
+    expect(section(out, 'evolucion')?.content).not.toContain('(omitido:')
+  })
+
+  it('defaults a steps block title to "Pasos" when title is missing', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'st5',
+        type: 'steps',
+        steps: [{ id: 's1', order: 1, title: 'Paso completado' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({ usages: [{ blocks, modifications: { steps_completed: [{ step_id: 's1' }] } }] }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Pasos: Paso completado')
+  })
+
+  it('treats a decision block missing branches as unresolvable when only branch_id is given', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'd5', type: 'decision', condition: '¿Sin ramas?' } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          { blocks, modifications: { decision_branches: [{ block_id: 'd5', branch_id: 'br1' }] } },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Sin ramas')
+  })
+
+  it('produces no output when the resolved decision label is an empty string', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd6',
+        type: 'decision',
+        condition: '¿Etiqueta vacía?',
+        branches: [{ id: 'br1', label: '', action: 'Nada' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { decision_branches: [{ block_id: 'd6', branch_id: 'br1', branch_label: '' }] },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Etiqueta vacía')
+  })
 })
