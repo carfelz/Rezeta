@@ -12,11 +12,6 @@ export { Caption, type CaptionProps } from './Caption'
 export { Chip, type ChipProps } from './Chip'
 export { StepCircle, type StepCircleProps } from './StepCircle'
 export { SearchInput, type SearchInputProps } from './SearchInput'
-export {
-  SegmentedControl,
-  type SegmentedControlProps,
-  type SegmentedControlOption,
-} from './SegmentedControl'
 export { NativeSelect, type NativeSelectProps } from './NativeSelect'
 export { SelectableCard, type SelectableCardProps } from './SelectableCard'
 export { RadioCard, type RadioCardProps } from './RadioCard'
@@ -42,8 +37,8 @@ export type {
 export { Badge, type BadgeProps } from './Badge'
 export { Spinner, type SpinnerProps } from './Spinner'
 export { Avatar, type AvatarProps } from './Avatar'
-export { Card, CardTitle, CardSubtitle, CardItem } from './Card'
-export type { CardProps, CardItemProps } from './Card'
+export { Card, CardTitle, CardSubtitle } from './Card'
+export type { CardProps } from './Card'
 export { Callout, type CalloutProps } from './Callout'
 export {
   Modal,

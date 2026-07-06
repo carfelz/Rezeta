@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi } from 'vitest'
-import { Card, CardTitle, CardSubtitle, CardItem } from '../Card'
+import { describe, it, expect } from 'vitest'
+import { Card, CardTitle, CardSubtitle } from '../Card'
 
 describe('Card', () => {
   it('renders children', () => {
@@ -49,42 +48,3 @@ describe('CardSubtitle', () => {
   })
 })
 
-describe('CardItem', () => {
-  it('renders name', () => {
-    render(<CardItem name="Ana García" />)
-    expect(screen.getByText('Ana García')).toBeInTheDocument()
-  })
-
-  it('renders meta when provided', () => {
-    render(<CardItem name="Ana García" meta="Cédula · 001-234" />)
-    expect(screen.getByText('Cédula · 001-234')).toBeInTheDocument()
-  })
-
-  it('renders leading element', () => {
-    render(<CardItem name="Ana" leading={<span data-testid="avatar">AV</span>} />)
-    expect(screen.getByTestId('avatar')).toBeInTheDocument()
-  })
-
-  it('renders trailing element', () => {
-    render(<CardItem name="Ana" trailing={<span data-testid="badge">Active</span>} />)
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
-  })
-
-  it('calls onClick when clicked', async () => {
-    const user = userEvent.setup()
-    const onClick = vi.fn()
-    render(<CardItem name="Clickable" onClick={onClick} />)
-    await user.click(screen.getByText('Clickable'))
-    expect(onClick).toHaveBeenCalledTimes(1)
-  })
-
-  it('has button role when onClick provided', () => {
-    render(<CardItem name="Clickable" onClick={vi.fn()} />)
-    expect(screen.getByRole('button')).toBeInTheDocument()
-  })
-
-  it('has no role when onClick not provided', () => {
-    render(<CardItem name="Static" />)
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
-  })
-})

@@ -43,13 +43,6 @@ export function useInvoices(
   })
 }
 
-export function useInvoice(id: string): UseQueryResult<InvoiceWithDetails, Error> {
-  return useQuery({
-    queryKey: [QK, id],
-    queryFn: () => apiClient.get<InvoiceWithDetails>(`/v1/invoices/${id}`),
-    enabled: Boolean(id),
-  })
-}
 
 export function useCreateInvoice(): UseMutationResult<InvoiceWithDetails, Error, CreateInvoiceDto> {
   const qc = useQueryClient()

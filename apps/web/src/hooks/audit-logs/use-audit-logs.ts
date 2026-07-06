@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { AuditLogItem, AuditLogListResponse } from '@rezeta/shared'
+import type { AuditLogListResponse } from '@rezeta/shared'
 
 const QK = 'audit-logs'
 
@@ -40,14 +40,6 @@ export function useAuditLogs(
   return useQuery({
     queryKey: [QK, params],
     queryFn: () => apiClient.get<AuditLogListResponse>(`/v1/audit-logs${qs ? `?${qs}` : ''}`),
-  })
-}
-
-export function useAuditLog(id: string): UseQueryResult<AuditLogItem, Error> {
-  return useQuery({
-    queryKey: [QK, id],
-    queryFn: () => apiClient.get<AuditLogItem>(`/v1/audit-logs/${id}`),
-    enabled: !!id,
   })
 }
 
