@@ -13,6 +13,7 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - **Error codes** (`packages/shared/src/errors.ts`): `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
 - Wired both new modules into the `@rezeta/shared` barrels (`types/index.ts`, `schemas/index.ts`).
 - Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones de la historia médica del contenido de protocolos (primera consulta vs. evolución).
+- Tabla `consultation_records` (modelo `ConsultationRecord`): historia médica versionada por consulta.
 
 ### Changed
 
