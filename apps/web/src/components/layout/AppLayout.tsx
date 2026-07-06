@@ -5,7 +5,16 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { GlobalLoadingIndicator } from './GlobalLoadingIndicator'
 
-export function AppLayout(): JSX.Element {
+export interface AppLayoutProps {
+  /**
+   * Full-bleed pages (e.g. the consultation workspace) own their entire
+   * viewport: no Topbar, no main gutters, and the content area is exactly
+   * one viewport tall so the page itself never scrolls.
+   */
+  fullBleed?: boolean
+}
+
+export function AppLayout({ fullBleed = false }: AppLayoutProps): JSX.Element {
   const { isAuthenticated, isLoading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -28,6 +37,18 @@ export function AppLayout(): JSX.Element {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (fullBleed) {
+    return (
+      <div className="flex h-dvh overflow-hidden">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <GlobalLoadingIndicator />
+        <main className="flex-1 lg:ml-sidebar min-w-0 h-dvh overflow-hidden">
+          <Outlet />
+        </main>
+      </div>
+    )
   }
 
   return (

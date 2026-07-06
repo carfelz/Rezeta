@@ -4,6 +4,38 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-04] Consultation module bug sweep — layout, duplicate orders panel, batched saves
+
+### Changed
+
+- **Consultation page is now full-bleed with no topbar.** `AppLayout` gained a `fullBleed` prop (`apps/web/src/components/layout/AppLayout.tsx`) that renders only the sidebar plus an `h-dvh overflow-hidden` main — no `Topbar`, no `pt-topbar`/`py-8` gutters, no `max-w-layout`. `consultas/:id` moved into its own full-bleed route group in `apps/web/src/App.tsx`; the page root switched from `h-screen` to `h-full` (`apps/web/src/pages/Consultation/index.tsx`). Together this removes the ~112px of stacked top offset and the permanent vertical/horizontal scrollbars on the page (the old `h-screen` inside a topbar-padded layout always overflowed the viewport). Note: the mobile hamburger lived in the topbar, so on small screens the consultation page relies on the breadcrumb for navigation.
+- **Protocol edits no longer PATCH per interaction.** New `usePendingModifications` hook (`apps/web/src/hooks/consultations/use-pending-modifications.ts`) buffers `ProtocolUsage` modification events locally, overlays them onto the server-truth consultation at render time (query cache stays pure, so refetches can't wipe unsaved edits), and flushes delta-only PATCHes when the doctor signs (aborting the sign if persistence fails), navigates away (unmount), or before tab close (`useBeforeUnloadGuard` now also covers pending edits). `ProtocolPanel` records events via the new `onRecordModification` prop; `SignModal` awaits a new `onBeforeSign` callback; the `SaveBadge` shows `dirty` while edits are buffered. The now-unused `useUpdateProtocolUsage` hook was removed.
+- **`useSkipStep` / `useAddOffProtocolNote` send only the new event.** The API appends modification arrays onto stored ones (`ConsultationsRepository.updateProtocolUsage`), so resending the existing entries duplicated every prior skip/note server-side on each call. The `existingSkipped`/`existingNotes` params were dropped (`apps/web/src/hooks/consultations/use-consultations.ts`).
+
+### Fixed
+
+- **Duplicated "Órdenes médicas" panel.** `OrdersRail` rendered `OrderQueuePanel` directly and again via `ConsultationSidebar`; the sidebar's copy was removed along with its `consultationId` prop (`apps/web/src/components/consultations/ConsultationSidebar.tsx`, `apps/web/src/pages/Consultation/OrdersRail.tsx`).
+- **Horizontal scrollbar inside the protocol section.** `ProtocolBar`'s pills/strip wrappers used `-mx-12` (sized for the old `lg:px-12` layout gutter) inside the `p-6` scroll container, overhanging it by 24px per side; changed to `-mx-6`, and the strip's `sticky top-topbar` became `sticky top-0` since the topbar is gone (`apps/web/src/pages/Consultation/ProtocolBar.tsx`).
+- **Checklist clicks double-logged their event.** `ChecklistRunMode` emitted `onModification` for an event `onCheck` already records upstream, appending every toggle twice to the modifications audit log (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`).
+- Tests: added `apps/web/src/hooks/consultations/__tests__/use-pending-modifications.test.tsx` (8 cases: buffering, delta-only flush, cache fold-back, failure re-buffer/retry, flush-on-unmount); updated `ProtocolPanel` and `use-consultations` tests for the new props and delta-only payloads.
+
+## [2026-07-04] Migrate inline spinners to shared `<Spinner>`
+
+### Changed
+
+- **Migrated 26 inline `ph ph-spinner animate-spin` glyphs to the shared `<Spinner>` component** across 18 web files (`OrderQueuePanel`, `SaveBadge`, `TemplatePickerModal`, `ClinicalHistory`, `Consultation/index`, `ProtocolEditor/{EditorHeader,EditorPalette,index,HistoryDrawer,SaveModal,PublishModal}`, `PatientDetail/{index,PrescriptionsTab,InvoicesTab,AppointmentsTab}`, `ProtocolViewer/index`, `Protocols/index`, `Onboarding/index`). Spinners adjacent to visible loading text use `decorative`; bare centered loaders use default status mode with the `Cargando` sr-only label. Font-size classes mapped to `size` variants (`sm`/`md`/`lg`), with off-scale sizes (`11/13/18/24px`) rounded to the closest variant. `pages/Billing/InvoiceRow.tsx` left unchanged — it passes the spinner as a class-name string to `IconButton`'s `icon` prop, not as JSX.
+
+## [2026-07-04] Loading indicator a11y hardening
+
+### Changed
+
+- **`GlobalLoadingIndicator` now keeps a permanently-mounted `aria-live="polite"` container** (`apps/web/src/components/layout/GlobalLoadingIndicator.tsx`). The chip content (spinner + `Cargando…` label) toggles inside the live region based on the existing 250 ms delayed-visibility state, so screen readers reliably announce content that arrives after the region is already present. The container is visually empty when idle (chip styling moved onto an inner element rendered only while visible); 250 ms show-delay, immediate hide, and `pointer-events-none` are unchanged. The chip renders the spinner as `decorative` and relies on the visible `Cargando…` text for the announcement, removing the duplicate live semantics from the nested `role="status"`.
+- **`Spinner` gained a `decorative?: boolean` prop** (`apps/web/src/components/ui/Spinner.tsx`). When true, it renders `aria-hidden="true"` with no `role="status"` and no accessible name. Default (non-decorative) mode now wraps a decorative `<i>` glyph in a `role="status"` span alongside an `sr-only` label, so screen readers have real text content even if the Phosphor icon font fails to load.
+
+### Fixed
+
+- Tests updated in `apps/web/src/components/layout/__tests__/GlobalLoadingIndicator.test.tsx` (added an idle aria-live container assertion) and `apps/web/src/components/ui/__tests__/Spinner.test.tsx` (added decorative-mode and sr-only-label assertions).
+
 ## [2026-07-04] Global loading indicator
 
 ### Added

@@ -89,7 +89,6 @@ const router = createBrowserRouter([
       { path: 'pacientes', element: <Patients /> },
       { path: 'pacientes/:id', element: <PatientDetail /> },
       { path: 'consultas/nueva', element: <NewConsultation /> },
-      { path: 'consultas/:id', element: <Consultation /> },
       { path: 'protocolos', element: <Protocols /> },
       { path: 'protocolos/:id', element: <ProtocolViewer /> },
       { path: 'protocolos/:id/edit', element: <ProtocolEditor /> },
@@ -105,6 +104,17 @@ const router = createBrowserRouter([
       { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
       { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
     ],
+  },
+
+  // ── Full-bleed protected routes (no topbar, page owns the viewport) ────────
+  {
+    element: (
+      <AuthGate>
+        <AppLayout fullBleed />
+      </AuthGate>
+    ),
+    errorElement: <NotFound />,
+    children: [{ path: 'consultas/:id', element: <Consultation /> }],
   },
 
   // ── Catch-all 404 ──────────────────────────────────────────────────────────

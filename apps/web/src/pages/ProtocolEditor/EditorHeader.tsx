@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Badge, Button, Input } from '@/components/ui'
+import { Badge, Button, Input, Spinner } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 import { formatRelativeTime, statusToBadgeVariant, labelForProtocolStatus } from './helpers'
 
@@ -94,7 +94,7 @@ export function EditorHeader({
           {protocolEditorStrings.preview}
         </Button>
         <Button variant="secondary" size="sm" onClick={onSaveDraft} disabled={isSaving}>
-          {isSaving ? <i className="ph ph-spinner animate-spin mr-2" /> : null}
+          {isSaving ? <Spinner className="mr-2" decorative size="sm" /> : null}
           {protocolEditorStrings.save}
         </Button>
         <Button variant="primary" size="sm" onClick={onPublishClick} disabled={isSaving}>

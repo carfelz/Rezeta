@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { ProtocolPanel } from '../ProtocolPanel'
@@ -12,7 +12,6 @@ const mockMutation = { mutate: mockMutate, isPending: false }
 vi.mock('@/hooks/consultations/use-consultations', () => ({
   useAddProtocolUsage: () => mockMutation,
   useRemoveProtocolUsage: () => mockMutation,
-  useUpdateProtocolUsage: () => mockMutation,
   useSkipStep: () => mockMutation,
   useAddOffProtocolNote: () => mockMutation,
 }))
@@ -104,6 +103,8 @@ function renderPanel(
       <ProtocolPanel
         consultation={makeConsultation()}
         readOnly={false}
+        onRecordModification={vi.fn()}
+        onFlushPending={vi.fn(async () => true)}
         showSign={false}
         onShowSignChange={vi.fn()}
         showAmend={false}
@@ -140,5 +141,21 @@ describe('ProtocolPanel', () => {
     expect(
       screen.queryByPlaceholderText(/subjetivo|objetivo|análisis|plan/i),
     ).not.toBeInTheDocument()
+  })
+
+  it('records checklist toggles locally instead of firing a mutation', () => {
+    const onRecordModification = vi.fn()
+    const usage = makeUsage()
+    renderPanel({ consultation: makeConsultation([usage]), onRecordModification })
+
+    fireEvent.click(screen.getByText('Cefalea'))
+
+    expect(onRecordModification).toHaveBeenCalledTimes(1)
+    expect(onRecordModification).toHaveBeenCalledWith('usage-1', {
+      type: 'checklist_item',
+      item_id: 'itm_1',
+      checked: true,
+    })
+    expect(mockMutate).not.toHaveBeenCalled()
   })
 })

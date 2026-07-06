@@ -29,7 +29,6 @@ export function OrdersRail({ consultation, readOnly, onAddProtocol }: OrdersRail
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         <ConsultationSidebar
-          consultationId={consultation.id}
           isSigned={readOnly}
           hasProtocols={consultation.protocolUsages.length > 0}
           patient={patient ?? null}

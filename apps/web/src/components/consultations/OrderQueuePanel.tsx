@@ -17,6 +17,7 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
+  Spinner,
 } from '@/components/ui'
 import type { Prescription, ImagingOrder, LabOrder } from '@rezeta/shared'
 import {
@@ -139,7 +140,7 @@ function SavedPrescriptionCard({
           >
             {downloading ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.downloadingPdf}
               </>
             ) : (
@@ -279,7 +280,7 @@ function SavedImagingGroupCard({
           >
             {downloading ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.downloadingImagingPdf}
               </>
             ) : (
@@ -457,7 +458,7 @@ function SavedLabGroupCard({
           >
             {downloading ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.downloadingImagingPdf}
               </>
             ) : (
@@ -605,7 +606,7 @@ function MedicationGroup({
           >
             {createPrescription.isPending ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.generatingPdf}
               </>
             ) : (
@@ -731,7 +732,7 @@ function ImagingGroup({
           >
             {createImagingOrder.isPending ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.generatingPdf}
               </>
             ) : (
@@ -861,7 +862,7 @@ function LabGroup({
           >
             {createLabOrder.isPending ? (
               <>
-                <i className="ph ph-spinner animate-spin mr-1 text-[11px]" />
+                <Spinner size="sm" className="mr-1" decorative />
                 {orderQueueStrings.generatingPdf}
               </>
             ) : (

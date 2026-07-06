@@ -1,4 +1,4 @@
-import { IconButton, Button } from '@/components/ui'
+import { IconButton, Button, Spinner } from '@/components/ui'
 import { BlockRenderer } from '@/components/protocols/BlockRenderer'
 import { protocolEditorStrings } from './strings'
 import type { VersionDetailResponse, VersionListItem } from '@rezeta/shared'
@@ -51,7 +51,7 @@ export function HistoryDrawer({
       <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">
         {historyLoading ? (
           <div className="flex justify-center py-6">
-            <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+            <Spinner size="md" className="text-n-400" />
           </div>
         ) : !versionHistory || versionHistory.length === 0 ? (
           <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
@@ -134,7 +134,7 @@ export function HistoryDrawer({
           </div>
         ) : versionPreviewLoading ? (
           <div className="flex justify-center py-8">
-            <i className="ph ph-spinner animate-spin text-[20px] text-n-400" />
+            <Spinner size="md" className="text-n-400" />
           </div>
         ) : (
           <div className="p-4 flex flex-col gap-2">

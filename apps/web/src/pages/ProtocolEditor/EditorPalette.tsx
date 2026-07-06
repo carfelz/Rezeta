@@ -1,4 +1,4 @@
-import { Button, TextLink } from '@/components/ui'
+import { Button, Spinner, TextLink } from '@/components/ui'
 import { protocolEditorStrings } from './strings'
 import type { VersionListItem } from '@rezeta/shared'
 import { PALETTE_ITEMS } from './block-factory'
@@ -59,7 +59,7 @@ export function EditorPalette({
       </h4>
       {historyLoading ? (
         <div className="flex justify-center py-3">
-          <i className="ph ph-spinner animate-spin text-[18px] text-n-400" />
+          <Spinner size="md" className="text-n-400" />
         </div>
       ) : !versionHistory || versionHistory.length === 0 ? (
         <p className="text-[12px] font-sans text-n-400 italic">

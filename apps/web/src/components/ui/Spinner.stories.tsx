@@ -10,6 +10,9 @@ const meta: Meta<typeof Spinner> = {
       control: 'select',
       options: ['sm', 'md', 'lg'],
     },
+    decorative: {
+      control: 'boolean',
+    },
   },
 }
 
@@ -33,3 +36,5 @@ export const AllSizes: Story = {
 export const Colored: Story = {
   render: () => <Spinner size="lg" className="text-p-500" />,
 }
+
+export const Decorative: Story = { args: { size: 'sm', decorative: true } }

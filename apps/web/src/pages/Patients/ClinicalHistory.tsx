@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { TextLink } from '@/components/ui'
+import { Spinner, TextLink } from '@/components/ui'
 import { usePatientConsultations } from '@/hooks/consultations/use-consultations'
 import { ConsultationListItem } from './ConsultationListItem'
 
@@ -42,7 +42,7 @@ export function ClinicalHistory({
 
       {isLoading ? (
         <div className="flex items-center gap-2 py-6 text-[12.5px] text-n-400 justify-center">
-          <i className="ph ph-spinner animate-spin text-[13px]" /> Cargando…
+          <Spinner size="sm" decorative /> Cargando…
         </div>
       ) : consultations.length === 0 ? (
         <div className="flex flex-col items-center py-8 border border-dashed border-n-200 rounded-md">

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
-import { AddBlockButton, ConfirmDialog } from '@/components/ui'
+import { AddBlockButton, ConfirmDialog, Spinner } from '@/components/ui'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
@@ -127,7 +127,7 @@ export function ProtocolEditor(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[256px]">
-        <i className="ph ph-spinner animate-spin text-[32px] text-n-400" />
+        <Spinner size="lg" className="text-n-400" />
       </div>
     )
   }

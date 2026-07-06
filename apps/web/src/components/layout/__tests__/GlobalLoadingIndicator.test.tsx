@@ -12,9 +12,18 @@ describe('GlobalLoadingIndicator', () => {
     vi.useRealTimers()
   })
 
-  it('renders nothing while idle', () => {
+  it('renders no chip content while idle', () => {
     render(<GlobalLoadingIndicator />)
     expect(screen.queryByText('Cargando…')).not.toBeInTheDocument()
+  })
+
+  it('keeps a permanently-mounted aria-live container even while idle', () => {
+    const { container } = render(<GlobalLoadingIndicator />)
+    const liveRegion = container.querySelector('[aria-live="polite"]')
+    expect(liveRegion).toBeInTheDocument()
+    // Container is visually empty when idle: no chip child rendered.
+    expect(liveRegion?.textContent).toBe('')
+    expect(liveRegion).toBeEmptyDOMElement()
   })
 
   it('appears only after loading persists 250ms', () => {
@@ -43,10 +52,10 @@ describe('GlobalLoadingIndicator', () => {
   })
 
   it('does not intercept pointer events', () => {
-    render(<GlobalLoadingIndicator />)
+    const { container } = render(<GlobalLoadingIndicator />)
     act(() => useLoadingStore.getState().requestStarted())
     act(() => vi.advanceTimersByTime(250))
-    const chip = screen.getByText('Cargando…').closest('div')
-    expect(chip?.className).toContain('pointer-events-none')
+    const liveRegion = container.querySelector('[aria-live="polite"]')
+    expect(liveRegion?.className).toContain('pointer-events-none')
   })
 })

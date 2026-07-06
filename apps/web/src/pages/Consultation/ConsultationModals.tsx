@@ -12,6 +12,8 @@ export interface ConsultationModalsProps {
   activeUsage: ConsultationProtocolUsage | undefined
   protocolIds: string[]
   showSign: boolean
+  /** Persists pending modifications before signing; false aborts the sign. */
+  onBeforeSign?: (() => Promise<boolean>) | undefined
   onShowSignChange: (open: boolean) => void
   onSigned?: ((result: SignConsultationResponse) => void) | undefined
   showAmend: boolean
@@ -37,6 +39,7 @@ export function ConsultationModals({
   activeUsage,
   protocolIds,
   showSign,
+  onBeforeSign,
   onShowSignChange,
   onSigned,
   showAmend,
@@ -62,6 +65,7 @@ export function ConsultationModals({
         {showSign && (
           <SignModal
             consultationId={consultationId}
+            onBeforeSign={onBeforeSign}
             onClose={() => onShowSignChange(false)}
             onSigned={onSigned}
           />

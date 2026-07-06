@@ -1,6 +1,5 @@
 import { Button, Row } from '@/components/ui'
 import { ProtocolPills } from '@/components/consultations/ProtocolPills'
-import { ProtocolStrip } from '@/components/consultations/ProtocolStrip'
 import { collectUsageCheckableIds, deriveCheckedState } from '@/lib/consultation/usage'
 import type { ConsultationProtocolUsage, ConsultationWithDetails } from '@rezeta/shared'
 
@@ -10,7 +9,6 @@ export interface ProtocolBarProps {
   isSigned: boolean
   onSelectUsage: (id: string) => void
   onAddProtocol: () => void
-  onSwitchProtocol: () => void
   onAddOffProtocolNote: () => void
 }
 
@@ -20,13 +18,12 @@ export function ProtocolBar({
   isSigned,
   onSelectUsage,
   onAddProtocol,
-  onSwitchProtocol,
   onAddOffProtocolNote,
 }: ProtocolBarProps): JSX.Element {
   return (
     <>
       {consultation.protocolUsages.length > 1 && activeUsage && (
-        <div className="-mx-12">
+        <div className="-mx-6">
           <ProtocolPills
             pills={consultation.protocolUsages.map((u) => {
               const ids = collectUsageCheckableIds(u)
@@ -43,17 +40,6 @@ export function ProtocolBar({
             onSelect={onSelectUsage}
             onAdd={onAddProtocol}
             showAdd={!isSigned}
-          />
-        </div>
-      )}
-
-      {activeUsage && (
-        <div className="-mx-12 mb-5 sticky top-topbar z-20 bg-n-25 border-b border-n-100">
-          <ProtocolStrip
-            key={activeUsage.id}
-            usage={activeUsage}
-            isSigned={isSigned}
-            onChangePicker={onSwitchProtocol}
           />
         </div>
       )}

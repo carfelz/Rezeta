@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { InvoiceWithDetails } from '@rezeta/shared'
-import { Badge, EmptyState } from '@/components/ui'
+import { Badge, EmptyState, Spinner } from '@/components/ui'
 import { useInvoices } from '@/hooks/invoices/use-invoices'
 import { formatCurrency, formatDate, statusLabel, statusVariant } from '@/pages/Billing/helpers'
 import { patientDetailStrings as s } from './strings'
@@ -74,7 +74,7 @@ function InvoiceRow({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element {
 function TabSpinner(): JSX.Element {
   return (
     <div className="flex items-center justify-center py-10">
-      <i className="ph ph-spinner animate-spin text-[24px] text-n-400" />
+      <Spinner size="md" className="text-n-400" />
     </div>
   )
 }

@@ -124,14 +124,12 @@ function ChecklistRunMode({
   items,
   checkedState,
   onCheck,
-  onModification,
   onAutoPopulate,
   isSigned,
 }: {
   items: Array<{ id: string; text: string; critical?: boolean }>
   checkedState: Record<string, boolean>
   onCheck: (id: string, checked: boolean) => void
-  onModification?: (event: BlockModificationEvent) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
   isSigned?: boolean
 }): JSX.Element {
@@ -150,8 +148,9 @@ function ChecklistRunMode({
             onClick={() => {
               if (isSigned) return
               const next = !done
+              // onCheck records the checklist_item event upstream — emitting it
+              // here too would double-append it to the modifications log.
               onCheck(item.id, next)
-              onModification?.({ type: 'checklist_item', item_id: item.id, checked: next })
               if (next && item.critical) {
                 onAutoPopulate?.('objective', `✓ ${item.text}`)
               }
@@ -548,7 +547,6 @@ export function BlockRendererRunMode({
             onCheck={onCheck}
             {...(onAutoPopulate ? { onAutoPopulate } : {})}
             {...(isSigned !== undefined ? { isSigned } : {})}
-            {...(onModification ? { onModification } : {})}
           />
         </ProtocolBlock>
       )

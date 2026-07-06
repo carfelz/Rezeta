@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConsultation } from '@/hooks/consultations/use-consultations'
-import { Button } from '@/components/ui'
+import { usePendingModifications } from '@/hooks/consultations/use-pending-modifications'
+import { Button, Spinner } from '@/components/ui'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
@@ -21,7 +22,16 @@ import type { SignConsultationResponse } from '@rezeta/shared'
 export function Consultation(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data: consultation, isLoading, isError } = useConsultation(id!)
+  const { data: serverConsultation, isLoading, isError } = useConsultation(id!)
+  const {
+    hasPending,
+    record: recordModification,
+    withPending,
+    flush: flushPendingModifications,
+  } = usePendingModifications(id!)
+  // Server truth + not-yet-persisted modification deltas. Everything below
+  // renders from this merged view so batched edits show up immediately.
+  const consultation = serverConsultation ? withPending(serverConsultation) : serverConsultation
 
   const [showMissingFields, setShowMissingFields] = useState(false)
   const [showSign, setShowSign] = useState(false)
@@ -39,13 +49,13 @@ export function Consultation(): JSX.Element {
     (s) => s.medications.length > 0 || s.imagingOrders.length > 0 || s.labOrders.length > 0,
   )
   useOrderQueueSession(id ?? '', consultationSigned)
-  useBeforeUnloadGuard(hasUnsavedOrders && !consultationSigned)
+  useBeforeUnloadGuard((hasUnsavedOrders || hasPending) && !consultationSigned)
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-[13px] text-n-500 flex items-center gap-2">
-          <i className="ph ph-spinner animate-spin" /> {consultationPageStrings.loading}
+          <Spinner decorative size="sm" /> {consultationPageStrings.loading}
         </div>
       </div>
     )
@@ -82,7 +92,7 @@ export function Consultation(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Zone 1: Header — never scrolls */}
       <div className="shrink-0 px-8 pt-6 pb-0">
         <Breadcrumb patientName={consultation.patientName} consultedAt={consultation.startedAt} />
@@ -94,7 +104,7 @@ export function Consultation(): JSX.Element {
           patientAllergies={consultation.patientAllergies}
           patientChronicConditions={consultation.patientChronicConditions}
           pageTitle={pageTitle}
-          saveStatus="idle"
+          saveStatus={hasPending ? 'dirty' : 'idle'}
           isSigned={isSigned}
           canSign={canSign}
           onAmend={() => setShowAmend(true)}
@@ -134,6 +144,8 @@ export function Consultation(): JSX.Element {
           <ProtocolPanel
             consultation={consultation}
             readOnly={isSigned}
+            onRecordModification={recordModification}
+            onFlushPending={flushPendingModifications}
             showSign={showSign}
             onShowSignChange={setShowSign}
             onSigned={setSignResult}
