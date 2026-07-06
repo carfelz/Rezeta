@@ -12,6 +12,7 @@ import type {
   ProtocolBlock,
   SignConsultationResponse,
   Prescription,
+  RecordOutcome,
 } from '@rezeta/shared'
 import type {
   CreateConsultationDto,
@@ -39,6 +40,7 @@ import { InvoicesService } from '../invoices/invoices.service.js'
 import { ProtocolRecommendationsService } from '../protocol-recommendations/protocol-recommendations.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
+import { ConsultationRecordsService } from '../consultation-records/index.js'
 
 @Injectable()
 export class ConsultationsService {
@@ -50,6 +52,7 @@ export class ConsultationsService {
     @Inject(ProtocolRecommendationsService)
     private recommendationsSvc: ProtocolRecommendationsService,
     @Inject(AuditLogService) private auditLog: AuditLogService,
+    @Inject(ConsultationRecordsService) private recordsSvc: ConsultationRecordsService,
   ) {}
 
   /**
@@ -313,7 +316,17 @@ export class ConsultationsService {
       tenantId,
     })
 
-    return { ...consultation, invoiceOutcome, recordOutcome: { status: 'failed' as const } }
+    // Auto-generate the historia médica draft. Failure never fails the sign —
+    // the outcome is reported back so the client can offer "Generar historia".
+    let recordOutcome: RecordOutcome
+    try {
+      const record = await this.recordsSvc.ensureDraft(id, tenantId)
+      recordOutcome = { status: 'created', recordId: record.id }
+    } catch {
+      recordOutcome = { status: 'failed' }
+    }
+
+    return { ...consultation, invoiceOutcome, recordOutcome }
   }
 
   async amend(
