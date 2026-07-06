@@ -179,6 +179,25 @@ describe('PostSignPanel historia card', () => {
     const user = userEvent.setup()
     renderPanel({ status: 'skipped_no_fee' }, { status: 'failed' })
     await user.click(screen.getByRole('button', { name: /Generar historia/ }))
-    expect(ensureRecordMutateMock).toHaveBeenCalledWith(consultation.id)
+    expect(ensureRecordMutateMock).toHaveBeenCalledWith(
+      consultation.id,
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    )
+  })
+
+  it('updates the card to show success after retry succeeds', async () => {
+    const user = userEvent.setup()
+    ensureRecordMutateMock.mockImplementation((_consultationId, options) => {
+      if (options?.onSuccess) {
+        options.onSuccess({ id: 'rec1' })
+      }
+    })
+    renderPanel({ status: 'skipped_no_fee' }, { status: 'failed' })
+    expect(screen.getByText('No se pudo generar la historia médica.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generar historia/ })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Generar historia/ }))
+    expect(await screen.findByText('Borrador generado — revísala y fírmala en la ficha del paciente.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver historia/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Generar historia/ })).not.toBeInTheDocument()
   })
 })

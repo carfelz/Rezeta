@@ -117,6 +117,7 @@ function RecordCard({
   recordOutcome: RecordOutcome
   consultation: ConsultationWithDetails
 }): JSX.Element {
+  const [outcome, setOutcome] = useState(recordOutcome)
   const ensure = useEnsureRecord()
 
   return (
@@ -126,12 +127,12 @@ function RecordCard({
           {postSignPanelStrings.historiaHeading}
         </div>
         <div className="text-[12px] text-n-500">
-          {recordOutcome.status === 'created'
+          {outcome.status === 'created'
             ? postSignPanelStrings.historiaCreated
             : postSignPanelStrings.historiaFailed}
         </div>
       </div>
-      {recordOutcome.status === 'created' ? (
+      {outcome.status === 'created' ? (
         <Link to={`/pacientes/${consultation.patientId}`} className={navLinkClass}>
           {postSignPanelStrings.historiaOpen}
         </Link>
@@ -139,7 +140,7 @@ function RecordCard({
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => ensure.mutate(consultation.id)}
+          onClick={() => ensure.mutate(consultation.id, { onSuccess: (record) => setOutcome({ status: 'created', recordId: record.id }) })}
           disabled={ensure.isPending}
         >
           {postSignPanelStrings.historiaRetry}
