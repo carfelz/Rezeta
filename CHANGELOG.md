@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Historia médica — shared contracts (types, edit schema, error codes)
+
+### Added
+
+- **Consultation record types** (`packages/shared/src/types/consultation-record.ts`): `RECORD_SECTION_KEYS` (the fixed §6.3 legal skeleton — `ficha_identificacion`, `motivo_consulta`, `antecedentes`, `enfermedad_actual`, `examen_fisico`, `evolucion`, `resultados_estudios`, `diagnosticos`, `plan_tratamiento`, `enmiendas`), `RecordSectionKey`, `RecordSection`, `ConsultationRecordKind`, `ConsultationRecordStatus`, `ConsultationRecordDto`, and `RecordOutcome` (the auto-draft outcome reported when a consultation is signed).
+- **Edit schema** (`packages/shared/src/schemas/consultation-record.ts`): `UpdateRecordSectionsSchema`/`UpdateRecordSectionsDto` — validates a non-empty array of `{ key, content }` edits, restricting `key` to `RECORD_SECTION_KEYS` and `content` to ≤20,000 chars.
+- **Error codes** (`packages/shared/src/errors.ts`): `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
+- Wired both new modules into the `@rezeta/shared` barrels (`types/index.ts`, `schemas/index.ts`).
+
+### Changed
+
+- `SignConsultationResponse` (`packages/shared/src/types/consultation.ts`) now includes `recordOutcome: RecordOutcome` alongside the existing `invoiceOutcome`.
+- `consultations.service.ts` `sign()` (`apps/api`) temporarily returns `recordOutcome: { status: 'failed' }` to satisfy the new required field — Task 7 replaces this with the real auto-draft call.
+- Added `recordOutcome: { status: 'failed' }` to the `SignConsultationResponse` fixture in `consultations.controller.spec.ts` (`apps/api`) to match the extended type.
+
 ## [2026-07-06] Dead-code sweep (part 2) — dev previews, legacy design system, unwired integration tests
 
 ### Removed

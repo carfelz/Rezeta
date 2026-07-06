@@ -313,7 +313,7 @@ export class ConsultationsService {
       tenantId,
     })
 
-    return { ...consultation, invoiceOutcome }
+    return { ...consultation, invoiceOutcome, recordOutcome: { status: 'failed' as const } }
   }
 
   async amend(
