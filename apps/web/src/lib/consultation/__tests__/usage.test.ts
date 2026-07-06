@@ -9,23 +9,23 @@ import { collectUsageCheckableIds, deriveCheckedState } from '../usage'
 function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
   return {
     id: 'u-1',
-    consultationId: 'c-1',
     tenantId: 't-1',
-    userId: 'doc-1',
+    consultationId: 'c-1',
     protocolId: 'p-1',
     protocolVersionId: 'v-1',
     content: { version: '1.0', blocks } as ConsultationProtocolUsage['content'],
+    modifications: {},
+    modificationSummary: null,
     parentUsageId: null,
     triggerBlockId: null,
     depth: 0,
     status: 'in_progress',
-    checkedState: {},
     completedAt: null,
     notes: null,
-    modifications: null,
-    modificationSummary: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    appliedAt: new Date().toISOString(),
+    protocolTitle: 'Test Protocol',
+    protocolTypeName: null,
+    versionNumber: 1,
   }
 }
 
@@ -99,11 +99,13 @@ describe('collectUsageCheckableIds', () => {
 
 describe('deriveCheckedState', () => {
   function withEvents(events: ChecklistItemEvent[] | null): ConsultationProtocolUsage {
+    // The type says modifications is non-null, but the DB column is nullable
+    // and deriveCheckedState guards with `?.`, so exercise the null path too.
     return {
       ...makeUsage([]),
-      modifications: events
-        ? ({ checklist_items: events } as ConsultationProtocolUsage['modifications'])
-        : null,
+      modifications: (events
+        ? { checklist_items: events }
+        : null) as ConsultationProtocolUsage['modifications'],
     }
   }
 
@@ -112,7 +114,7 @@ describe('deriveCheckedState', () => {
   })
 
   it('returns an empty map when there are no checklist events', () => {
-    const usage = { ...makeUsage([]), modifications: {} as ConsultationProtocolUsage['modifications'] }
+    const usage = { ...makeUsage([]), modifications: {} }
     expect(deriveCheckedState(usage)).toEqual({})
   })
 
