@@ -11,6 +11,8 @@ import {
   useEnsureRecord,
 } from '../use-consultation-record'
 import { apiClient, ApiRequestError, triggerDownload } from '@/lib/api-client'
+import { toast } from 'sonner'
+import { toastStrings } from '@/lib/toasts'
 
 vi.mock('@/lib/api-client', () => {
   class MockApiRequestError extends Error {
@@ -25,6 +27,10 @@ vi.mock('@/lib/api-client', () => {
     triggerDownload: vi.fn(),
   }
 })
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}))
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -65,6 +71,14 @@ describe('useSignRecord', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/c1/record/sign', {})
   })
+
+  it('toasts an error when the sign request fails', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useSignRecord('c1'), { wrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSign)
+  })
 })
 
 describe('useEnsureRecord', () => {
@@ -75,6 +89,14 @@ describe('useEnsureRecord', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/c1/record', {})
     expect(result.current.data).toMatchObject({ id: 'rec1' })
+  })
+
+  it('toasts an error when the ensure request fails', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useEnsureRecord(), { wrapper })
+    result.current.mutate('c1')
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSave)
   })
 })
 
@@ -87,6 +109,14 @@ describe('useUpdateRecordSections', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(apiClient.patch).toHaveBeenCalledWith('/v1/consultations/c1/record', dto)
   })
+
+  it('toasts an error when the update request fails', async () => {
+    vi.mocked(apiClient.patch).mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useUpdateRecordSections('c1'), { wrapper })
+    result.current.mutate({ sections: [{ key: 'diagnosticos' as const, content: 'Updated' }] })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSave)
+  })
 })
 
 describe('useRegenerateRecord', () => {
@@ -96,6 +126,14 @@ describe('useRegenerateRecord', () => {
     result.current.mutate()
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/c1/record/regenerate', {})
+  })
+
+  it('toasts an error when the regenerate request fails', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useRegenerateRecord('c1'), { wrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSave)
   })
 })
 

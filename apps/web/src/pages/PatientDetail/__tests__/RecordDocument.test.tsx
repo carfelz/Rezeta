@@ -88,6 +88,18 @@ describe('RecordDocument', () => {
     expect(vi.mocked((update as { mutate: ReturnType<typeof vi.fn> }).mutate)).toHaveBeenCalled()
   })
 
+  it('exits edit mode without mutating when saving with no changes', () => {
+    const update = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false } as never
+    vi.mocked(recordHooks.useUpdateRecordSections).mockReturnValue(update)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+    fireEvent.click(screen.getByRole('button', { name: /Editar/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios/ }))
+    expect(
+      vi.mocked((update as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).not.toHaveBeenCalled()
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0)
+  })
+
   it('cancels edit mode without saving', () => {
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Editar/ }))
@@ -102,7 +114,9 @@ describe('RecordDocument', () => {
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Regenerar/ }))
     expect(window.confirm).toHaveBeenCalled()
-    expect(vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate)).toHaveBeenCalled()
+    expect(
+      vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).toHaveBeenCalled()
   })
 
   it('does not regenerate when confirmation is declined', () => {
@@ -111,7 +125,9 @@ describe('RecordDocument', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Regenerar/ }))
-    expect(vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate)).not.toHaveBeenCalled()
+    expect(
+      vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).not.toHaveBeenCalled()
   })
 
   it('signs the record when Firmar historia is clicked', () => {
@@ -119,7 +135,9 @@ describe('RecordDocument', () => {
     vi.mocked(recordHooks.useSignRecord).mockReturnValue(signRecord)
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Firmar historia/ }))
-    expect(vi.mocked((signRecord as { mutate: ReturnType<typeof vi.fn> }).mutate)).toHaveBeenCalled()
+    expect(
+      vi.mocked((signRecord as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).toHaveBeenCalled()
   })
 
   it('renders read-only signed state with download action', () => {
@@ -179,7 +197,9 @@ describe('RecordDocument', () => {
     } as never)
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Generar historia/ }))
-    expect(vi.mocked((ensure as { mutate: ReturnType<typeof vi.fn> }).mutate)).toHaveBeenCalledWith('c1')
+    expect(vi.mocked((ensure as { mutate: ReturnType<typeof vi.fn> }).mutate)).toHaveBeenCalledWith(
+      'c1',
+    )
   })
 
   it('shows the loading state', () => {

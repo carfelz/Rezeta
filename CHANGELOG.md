@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Historia tab — review fixes (stale edit state, silent errors, empty-changeset save, a11y)
+
+### Fixed
+
+- **Stale edit state across consultation switch.** `HistoriaTab.tsx` now passes `key={active.id}` to `<RecordDocument>` so switching the active consultation remounts the pane instead of reusing local `editing`/`draftTexts` state from the previous one.
+- **Silent mutation failures.** Added `onError` toasts (via `sonner` + `toastStrings`) to all four mutations in `apps/web/src/hooks/consultations/use-consultation-record.ts` (`useEnsureRecord`, `useUpdateRecordSections`, `useRegenerateRecord`, `useSignRecord`), mirroring the convention in `use-consultations.ts`. Added `errorHistoriaSave` and `errorHistoriaSign` to `apps/web/src/lib/toasts.ts`.
+- **Empty-changeset save 400s.** `RecordDocument.saveEdit` now exits edit mode without calling `update.mutate` when there are no changed sections, avoiding an empty `{ sections: [] }` payload that fails the shared schema's `.min(1)` validation.
+
+### Added
+
+- `aria-current` on the consultation list row buttons in `HistoriaTab.tsx`, reflecting the currently selected consultation.
+
 ## [2026-07-06] Historia médica — shared contracts (types, edit schema, error codes)
 
 ### Added

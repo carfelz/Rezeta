@@ -73,7 +73,9 @@ describe('HistoriaTab', () => {
       isLoading: false,
     } as never)
     render(<HistoriaTab patientId="p1" />)
-    expect(screen.getByText('Selecciona una consulta para ver su historia médica.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Selecciona una consulta para ver su historia médica.'),
+    ).toBeInTheDocument()
   })
 
   it('switches the active consultation when a row is clicked', () => {
@@ -89,5 +91,59 @@ describe('HistoriaTab', () => {
     } as never)
     render(<HistoriaTab patientId="p1" />)
     expect(vi.mocked(recordHooks.useConsultationRecord)).toHaveBeenCalledWith('c2')
+  })
+
+  it('marks aria-current on the selected consultation row only', () => {
+    render(<HistoriaTab patientId="p1" />)
+    const list = screen.getByTestId('historia-consultation-list')
+    const buttons = within(list).getAllByRole('button')
+    const selected = buttons.filter((btn) => btn.getAttribute('aria-current') === 'true')
+    expect(selected).toHaveLength(1)
+    expect(within(selected[0]!).getByText(/6 jul/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText(/5 jul/i))
+    const reselected = within(list)
+      .getAllByRole('button')
+      .filter((btn) => btn.getAttribute('aria-current') === 'true')
+    expect(reselected).toHaveLength(1)
+    expect(within(reselected[0]!).getByText(/5 jul/i)).toBeInTheDocument()
+  })
+
+  it('resets edit mode when switching to a different consultation row', () => {
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: {
+        id: 'rec1',
+        consultationId: 'c1',
+        patientId: 'p1',
+        versionNumber: 1,
+        kind: 'evolution',
+        status: 'draft',
+        sections: [
+          {
+            key: 'motivo_consulta',
+            title: 'Motivo de consulta',
+            content: 'Control.',
+            source: 'generated',
+            required: true,
+          },
+        ],
+        generatedAt: '2026-07-06T10:42:00Z',
+        signedAt: null,
+        signedBy: null,
+        createdAt: '2026-07-06T10:42:00Z',
+        updatedAt: '2026-07-06T10:42:00Z',
+      },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+
+    render(<HistoriaTab patientId="p1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Editar/ }))
+    expect(screen.getAllByRole('textbox').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByText(/5 jul/i))
+
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0)
   })
 })

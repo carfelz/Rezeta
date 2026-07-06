@@ -44,6 +44,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
             key={c.id}
             type="button"
             onClick={() => setSelectedId(c.id)}
+            aria-current={c.id === activeId ? true : undefined}
             className={`block w-full text-left px-4 py-3 border-b border-n-100 border-l-2 ${
               c.id === activeId ? 'border-l-p-500 bg-n-0' : 'border-l-transparent'
             }`}
@@ -67,7 +68,11 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
         ))}
       </div>
       <div>
-        <RecordDocument consultationId={active.id} consultationStatus={active.status} />
+        <RecordDocument
+          key={active.id}
+          consultationId={active.id}
+          consultationStatus={active.status}
+        />
       </div>
     </div>
   )

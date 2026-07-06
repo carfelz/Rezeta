@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient, ApiRequestError, triggerDownload } from '@/lib/api-client'
+import { toastStrings } from '@/lib/toasts'
 import type { ConsultationRecordDto, UpdateRecordSectionsDto } from '@rezeta/shared'
 
 const QK = 'consultation-record'
@@ -12,7 +14,9 @@ export function useConsultationRecord(
     queryKey: [QK, consultationId],
     queryFn: async () => {
       try {
-        return await apiClient.get<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record`)
+        return await apiClient.get<ConsultationRecordDto>(
+          `/v1/consultations/${consultationId}/record`,
+        )
       } catch (err) {
         if (err instanceof ApiRequestError && err.error.code === 'RECORD_NOT_FOUND') return null
         throw err
@@ -32,6 +36,9 @@ function useRecordMutation<TVars>(
     onSuccess: (record) => {
       qc.setQueryData([QK, consultationId], record)
     },
+    onError: () => {
+      toast.error(toastStrings.errorHistoriaSave)
+    },
   })
 }
 
@@ -42,6 +49,9 @@ export function useEnsureRecord(): UseMutationResult<ConsultationRecordDto, Erro
       apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record`, {}),
     onSuccess: (record, consultationId) => {
       qc.setQueryData([QK, consultationId], record)
+    },
+    onError: () => {
+      toast.error(toastStrings.errorHistoriaSave)
     },
   })
 }
@@ -58,16 +68,27 @@ export function useRegenerateRecord(
   consultationId: string,
 ): UseMutationResult<ConsultationRecordDto, Error, void> {
   return useRecordMutation(consultationId, () =>
-    apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record/regenerate`, {}),
+    apiClient.post<ConsultationRecordDto>(
+      `/v1/consultations/${consultationId}/record/regenerate`,
+      {},
+    ),
   )
 }
 
 export function useSignRecord(
   consultationId: string,
 ): UseMutationResult<ConsultationRecordDto, Error, void> {
-  return useRecordMutation(consultationId, () =>
-    apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record/sign`, {}),
-  )
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record/sign`, {}),
+    onSuccess: (record) => {
+      qc.setQueryData([QK, consultationId], record)
+    },
+    onError: () => {
+      toast.error(toastStrings.errorHistoriaSign)
+    },
+  })
 }
 
 export async function downloadRecordPdf(consultationId: string): Promise<void> {

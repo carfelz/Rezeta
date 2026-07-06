@@ -63,14 +63,16 @@ export function RecordDocument({
   }
 
   function saveEdit(): void {
-    update.mutate(
-      {
-        sections: editableSections
-          .filter((sec) => draftTexts[sec.key] !== sec.content)
-          .map((sec) => ({ key: sec.key, content: draftTexts[sec.key] as string })),
-      },
-      { onSuccess: () => setEditing(false) },
-    )
+    const changed = editableSections
+      .filter((sec) => draftTexts[sec.key] !== sec.content)
+      .map((sec) => ({ key: sec.key, content: draftTexts[sec.key] as string }))
+
+    if (changed.length === 0) {
+      setEditing(false)
+      return
+    }
+
+    update.mutate({ sections: changed }, { onSuccess: () => setEditing(false) })
   }
 
   function confirmRegenerate(): void {
