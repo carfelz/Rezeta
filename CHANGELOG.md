@@ -4,34 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-06] Historia tab — review fixes (stale edit state, silent errors, empty-changeset save, a11y)
-
-### Fixed
-
-- **Stale edit state across consultation switch.** `HistoriaTab.tsx` now passes `key={active.id}` to `<RecordDocument>` so switching the active consultation remounts the pane instead of reusing local `editing`/`draftTexts` state from the previous one.
-- **Silent mutation failures.** Added `onError` toasts (via `sonner` + `toastStrings`) to all four mutations in `apps/web/src/hooks/consultations/use-consultation-record.ts` (`useEnsureRecord`, `useUpdateRecordSections`, `useRegenerateRecord`, `useSignRecord`), mirroring the convention in `use-consultations.ts`. Added `errorHistoriaSave` and `errorHistoriaSign` to `apps/web/src/lib/toasts.ts`.
-- **Empty-changeset save 400s.** `RecordDocument.saveEdit` now exits edit mode without calling `update.mutate` when there are no changed sections, avoiding an empty `{ sections: [] }` payload that fails the shared schema's `.min(1)` validation.
+## [2026-07-06] Historia médica — registro por consulta (fase 1)
 
 ### Added
 
-- `aria-current` on the consultation list row buttons in `HistoriaTab.tsx`, reflecting the currently selected consultation.
-
-## [2026-07-06] Historia médica — shared contracts (types, edit schema, error codes)
-
-### Added
-
-- **Consultation record types** (`packages/shared/src/types/consultation-record.ts`): `RECORD_SECTION_KEYS` (the fixed §6.3 legal skeleton — `ficha_identificacion`, `motivo_consulta`, `antecedentes`, `enfermedad_actual`, `examen_fisico`, `evolucion`, `resultados_estudios`, `diagnosticos`, `plan_tratamiento`, `enmiendas`), `RecordSectionKey`, `RecordSection`, `ConsultationRecordKind`, `ConsultationRecordStatus`, `ConsultationRecordDto`, and `RecordOutcome` (the auto-draft outcome reported when a consultation is signed).
-- **Edit schema** (`packages/shared/src/schemas/consultation-record.ts`): `UpdateRecordSectionsSchema`/`UpdateRecordSectionsDto` — validates a non-empty array of `{ key, content }` edits, restricting `key` to `RECORD_SECTION_KEYS` and `content` to ≤20,000 chars.
-- **Error codes** (`packages/shared/src/errors.ts`): `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
-- Wired both new modules into the `@rezeta/shared` barrels (`types/index.ts`, `schemas/index.ts`).
-- Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones de la historia médica del contenido de protocolos (primera consulta vs. evolución).
-- Tabla `consultation_records` (modelo `ConsultationRecord`): historia médica versionada por consulta.
+- `ConsultationRecord` model (`consultation_records`): historia médica versionada por consulta con secciones estructuradas (draft → signed, append-only).
+- Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones legales (Reglamento MISPAS 2023 §6.3) del contenido de protocolos, con distinción primera consulta / nota de evolución.
+- Endpoints `GET/POST/PATCH /v1/consultations/:id/record`, `POST …/record/regenerate`, `POST …/record/sign`, `GET …/record/pdf` (PDF con PDFKit, streaming).
+- El firmado de consulta genera el borrador automáticamente (`recordOutcome` en la respuesta).
+- Pestaña «Historia» del detalle de paciente: lista de consultas + documento con editar/regenerar/firmar/descargar (`HistoriaTab`, `RecordDocument`).
+- Tarjeta de historia médica en el panel post-firma de la consulta.
 
 ### Changed
 
-- `SignConsultationResponse` (`packages/shared/src/types/consultation.ts`) now includes `recordOutcome: RecordOutcome` alongside the existing `invoiceOutcome`.
-- `consultations.service.ts` `sign()` (`apps/api`) temporarily returns `recordOutcome: { status: 'failed' }` to satisfy the new required field — Task 7 replaces this with the real auto-draft call.
-- Added `recordOutcome: { status: 'failed' }` to the `SignConsultationResponse` fixture in `consultations.controller.spec.ts` (`apps/api`) to match the extended type.
+- `SignConsultationResponse` ahora incluye `recordOutcome`.
+- Nuevos códigos de error: `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
 
 ## [2026-07-06] Dead-code sweep (part 2) — dev previews, legacy design system, unwired integration tests
 
