@@ -961,6 +961,33 @@ describe('ConsultationsService', () => {
         }),
       ).rejects.toThrow(NotFoundException)
     })
+
+    it('rejects with CONSULTATION_ALREADY_SIGNED when the consultation is signed', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      await expect(
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          content: {},
+          modifications: {},
+        }),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.CONSULTATION_ALREADY_SIGNED },
+      })
+      expect(repo.findProtocolUsageById).not.toHaveBeenCalled()
+      expect(repo.updateProtocolUsage).not.toHaveBeenCalled()
+    })
+
+    it('still updates the usage when the consultation is open', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'open' }))
+      vi.mocked(repo.findProtocolUsageById).mockResolvedValue(mockProtocolUsage())
+      vi.mocked(repo.updateProtocolUsage).mockResolvedValue(
+        mockProtocolUsage({ modificationSummary: 'Updated' }),
+      )
+      const result = await service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+        content: {},
+        modifications: {},
+      })
+      expect(result.modificationSummary).toBe('Updated')
+    })
   })
 
   // ── getProtocolUsage ──────────────────────────────────────────────────────
