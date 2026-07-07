@@ -14,6 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TagInput,
   Textarea,
 } from '@/components/ui'
 import { useUpdatePatient } from '@/hooks/patients/use-patients'
@@ -37,6 +38,8 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
   const [phone, setPhone] = useState(patient.phone ?? '')
   const [email, setEmail] = useState(patient.email ?? '')
   const [notes, setNotes] = useState(patient.notes ?? '')
+  const [allergies, setAllergies] = useState<string[]>(patient.allergies)
+  const [chronicConditions, setChronicConditions] = useState<string[]>(patient.chronicConditions)
   const [error, setError] = useState<string | null>(null)
 
   const canSubmit = fullName.trim().length >= 2
@@ -54,8 +57,8 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
         phone: phone.trim() || null,
         email: email.trim() || null,
         notes: notes.trim() || null,
-        allergies: patient.allergies,
-        chronicConditions: patient.chronicConditions,
+        allergies,
+        chronicConditions,
       })
       onClose()
     } catch (err) {
@@ -163,6 +166,30 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
                 className="min-h-[60px]"
               />
             </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={patientDetailStrings.allergiesLabel} id="edit-patient-allergies">
+                <TagInput
+                  id="edit-patient-allergies"
+                  value={allergies}
+                  onChange={setAllergies}
+                  placeholder={patientDetailStrings.tagInputPlaceholder}
+                  removeAriaLabel={patientDetailStrings.tagRemoveAria}
+                />
+              </Field>
+              <Field
+                label={patientDetailStrings.chronicConditionsLabel}
+                id="edit-patient-chronic-conditions"
+              >
+                <TagInput
+                  id="edit-patient-chronic-conditions"
+                  value={chronicConditions}
+                  onChange={setChronicConditions}
+                  placeholder={patientDetailStrings.tagInputPlaceholder}
+                  removeAriaLabel={patientDetailStrings.tagRemoveAria}
+                />
+              </Field>
+            </div>
 
             {error && (
               <Callout

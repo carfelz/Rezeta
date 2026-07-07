@@ -15,6 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TagInput,
   Textarea,
 } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
@@ -64,6 +65,10 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
   const [phone, setPhone] = useState(patient?.phone ?? '')
   const [email, setEmail] = useState(patient?.email ?? '')
   const [notes, setNotes] = useState(patient?.notes ?? '')
+  const [allergies, setAllergies] = useState<string[]>(patient?.allergies ?? [])
+  const [chronicConditions, setChronicConditions] = useState<string[]>(
+    patient?.chronicConditions ?? [],
+  )
   const [error, setError] = useState<string | null>(null)
 
   const canSubmit = fullName.trim().length >= 2
@@ -86,8 +91,8 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
       phone: phone.trim() || null,
       email: email.trim() || null,
       notes: notes.trim() || null,
-      allergies: patient?.allergies ?? [],
-      chronicConditions: patient?.chronicConditions ?? [],
+      allergies,
+      chronicConditions,
     }
     try {
       if (isEdit && patient) {
@@ -272,6 +277,30 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
                   className="min-h-[60px]"
                 />
               </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={patientModalStrings.allergiesLabel} id="patient-allergies">
+                  <TagInput
+                    id="patient-allergies"
+                    value={allergies}
+                    onChange={setAllergies}
+                    placeholder={patientModalStrings.tagInputPlaceholder}
+                    removeAriaLabel={patientModalStrings.tagRemoveAria}
+                  />
+                </Field>
+                <Field
+                  label={patientModalStrings.chronicConditionsLabel}
+                  id="patient-chronic-conditions"
+                >
+                  <TagInput
+                    id="patient-chronic-conditions"
+                    value={chronicConditions}
+                    onChange={setChronicConditions}
+                    placeholder={patientModalStrings.tagInputPlaceholder}
+                    removeAriaLabel={patientModalStrings.tagRemoveAria}
+                  />
+                </Field>
+              </div>
 
               {error && (
                 <Callout
