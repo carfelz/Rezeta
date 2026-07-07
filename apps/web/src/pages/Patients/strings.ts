@@ -67,4 +67,6 @@ export const patientModalStrings = {
   readNotesLabel: 'Notas',
   allergiesLabel: 'Alergias',
   chronicConditionsLabel: 'Condiciones crónicas',
+  tagInputPlaceholder: 'Escribir y presionar Enter…',
+  tagRemoveAria: (tag: string): string => `Quitar ${tag}`,
 } as const

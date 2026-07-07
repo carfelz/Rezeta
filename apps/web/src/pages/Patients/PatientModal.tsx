@@ -15,6 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TagInput,
   Textarea,
 } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
@@ -33,9 +34,15 @@ export interface PatientModalProps {
   mode: PatientModalMode
   patient?: Patient
   onClose: () => void
+  onCreated?: (patient: Patient) => void
 }
 
-export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX.Element {
+export function PatientModal({
+  mode,
+  patient,
+  onClose,
+  onCreated,
+}: PatientModalProps): JSX.Element {
   const createMutation = useCreatePatient()
   const updateMutation = useUpdatePatient(patient?.id ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
@@ -64,6 +71,10 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
   const [phone, setPhone] = useState(patient?.phone ?? '')
   const [email, setEmail] = useState(patient?.email ?? '')
   const [notes, setNotes] = useState(patient?.notes ?? '')
+  const [allergies, setAllergies] = useState<string[]>(patient?.allergies ?? [])
+  const [chronicConditions, setChronicConditions] = useState<string[]>(
+    patient?.chronicConditions ?? [],
+  )
   const [error, setError] = useState<string | null>(null)
 
   const canSubmit = fullName.trim().length >= 2
@@ -76,6 +87,12 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
+    // PatientModal can be rendered from within another page's <form> (e.g. the
+    // booking PatientCombobox's "Nuevo paciente" flow inside AppointmentFormModal).
+    // React's synthetic events bubble through the React tree, not the DOM tree, so
+    // even though this form is portaled elsewhere in the DOM it would otherwise
+    // also submit that ancestor form. Stop it here.
+    e.stopPropagation()
     setError(null)
     const payload = {
       fullName: fullName.trim(),
@@ -86,16 +103,21 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
       phone: phone.trim() || null,
       email: email.trim() || null,
       notes: notes.trim() || null,
-      allergies: patient?.allergies ?? [],
-      chronicConditions: patient?.chronicConditions ?? [],
+      allergies,
+      chronicConditions,
     }
     try {
       if (isEdit && patient) {
         await updateMutation.mutateAsync(payload)
+        onClose()
       } else {
-        await createMutation.mutateAsync(payload)
+        const created = await createMutation.mutateAsync(payload)
+        if (onCreated) {
+          onCreated(created)
+        } else {
+          onClose()
+        }
       }
-      onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       logger.error(error.message, { stack: error.stack, context: 'PatientModal.submit' })
@@ -272,6 +294,30 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
                   className="min-h-[60px]"
                 />
               </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={patientModalStrings.allergiesLabel} id="patient-allergies">
+                  <TagInput
+                    id="patient-allergies"
+                    value={allergies}
+                    onChange={setAllergies}
+                    placeholder={patientModalStrings.tagInputPlaceholder}
+                    removeAriaLabel={patientModalStrings.tagRemoveAria}
+                  />
+                </Field>
+                <Field
+                  label={patientModalStrings.chronicConditionsLabel}
+                  id="patient-chronic-conditions"
+                >
+                  <TagInput
+                    id="patient-chronic-conditions"
+                    value={chronicConditions}
+                    onChange={setChronicConditions}
+                    placeholder={patientModalStrings.tagInputPlaceholder}
+                    removeAriaLabel={patientModalStrings.tagRemoveAria}
+                  />
+                </Field>
+              </div>
 
               {error && (
                 <Callout
