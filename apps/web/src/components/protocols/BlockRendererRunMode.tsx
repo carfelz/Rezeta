@@ -1,11 +1,15 @@
+import { useRef } from 'react'
 import { ProtocolBlock, ProtocolAlert } from '@/components/ui/ProtocolBlock'
 import { Button, Checkbox, Row, SelectableCard, TextLink } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useOrderQueueStore } from '@/store/order-queue.store'
+import { VitalsBlock } from './blocks/VitalsBlock'
+import { ClinicalNotesBlock } from './blocks/ClinicalNotesBlock'
 import type { ProtocolBlock as Block } from './BlockRenderer'
 import type { ImagingOrderItem, LabOrderItem } from '@rezeta/shared'
 import { blockRendererRunModeStrings } from './strings'
 import type { BlockModificationEvent } from '@/lib/consultation/modifications'
+import type { ContentEdit } from '@/lib/consultation/content-edits'
 
 export type { BlockModificationEvent }
 export type SoapField = 'objective' | 'assessment' | 'plan'
@@ -16,6 +20,7 @@ export interface RunModeProps {
   onModification?: (event: BlockModificationEvent) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onAutoPopulate?: (field: SoapField, text: string) => void
+  onContentEdit?: (blockId: string, edit: ContentEdit) => void
   isSigned?: boolean
 }
 
@@ -426,6 +431,152 @@ function DosageTableRunMode({
   )
 }
 
+type VitalsFieldDef = {
+  id: string
+  label: string
+  unit?: string
+  input_type: 'text' | 'number' | 'computed'
+  formula?: string
+}
+
+/**
+ * Recomputes BMI (decision 2: mirrors `computeBMI` in
+ * `lib/consultation/vitals.ts`) when the block defines a `bmi` field with
+ * `input_type: 'computed'` and both `weight`/`height` hold numeric values.
+ * Returns `nextValues` with `bmi` set to one decimal place, or with `bmi`
+ * cleared (omitted) when weight/height aren't both numeric.
+ */
+function withDerivedBMI(
+  fields: VitalsFieldDef[],
+  nextValues: Record<string, string | number>,
+): Record<string, string | number> {
+  const bmiField = fields.find((f) => f.id === 'bmi' && f.input_type === 'computed')
+  if (!bmiField) return nextValues
+
+  const weight = parseFloat(String(nextValues.weight ?? ''))
+  const height = parseFloat(String(nextValues.height ?? ''))
+  const result = { ...nextValues }
+  if (!isNaN(weight) && !isNaN(height) && height > 0) {
+    const bmi = weight / Math.pow(height / 100, 2)
+    result.bmi = bmi.toFixed(1)
+  } else {
+    delete result.bmi
+  }
+  return result
+}
+
+function VitalsRunMode({
+  blockId,
+  fields,
+  values,
+  onModification,
+  onContentEdit,
+  isSigned,
+}: {
+  blockId: string
+  fields: VitalsFieldDef[]
+  values: Record<string, string | number>
+  onModification?: (event: BlockModificationEvent) => void
+  onContentEdit?: (blockId: string, edit: ContentEdit) => void
+  isSigned?: boolean
+}): JSX.Element {
+  // Tracks the latest merged values across an editing burst so the blur
+  // handler (which fires once per field, not per keystroke) can emit a
+  // single `vitals_entered` modification event with the final values.
+  // `onChange` alone would fire per keystroke, and `onModification` must
+  // only ever append once per burst. This can't just read the `values` prop
+  // at blur time: the parent only re-renders with the merged values once its
+  // own state updates (e.g. usePendingModifications' recordContentEdit),
+  // which may not have happened yet in the same tick as a fast burst, so the
+  // ref is updated directly from every onChange call as the source of truth
+  // for "what should flush on blur." `onContentEdit` still fires on every
+  // change so the buffered edit (last-write-wins per block) always reflects
+  // the latest keystroke even if the field never blurs before a flush.
+  const latestValues = useRef(values)
+  latestValues.current = values
+
+  return (
+    <div
+      onBlur={() => {
+        if (isSigned) return
+        onModification?.({
+          type: 'vitals_entered',
+          block_id: blockId,
+          values: latestValues.current,
+        })
+      }}
+    >
+      <VitalsBlock
+        fields={fields}
+        values={values}
+        {...(isSigned !== undefined ? { readOnly: isSigned } : {})}
+        onChange={(fieldId, raw) => {
+          // Defense in depth: `VitalsBlock`'s disabled `<input>` shouldn't
+          // fire onChange in a real browser, but guard explicitly anyway —
+          // isSigned must never propagate an edit or modification event.
+          if (isSigned) return
+          const merged = withDerivedBMI(fields, { ...latestValues.current, [fieldId]: raw })
+          latestValues.current = merged
+          onContentEdit?.(blockId, { kind: 'vitals', values: merged })
+        }}
+      />
+    </div>
+  )
+}
+
+function ClinicalNotesRunMode({
+  blockId,
+  label,
+  content,
+  required,
+  onModification,
+  onContentEdit,
+  isSigned,
+}: {
+  blockId: string
+  label: string
+  content: string
+  required?: boolean
+  onModification?: (event: BlockModificationEvent) => void
+  onContentEdit?: (blockId: string, edit: ContentEdit) => void
+  isSigned?: boolean
+}): JSX.Element {
+  // Same burst-coalescing rationale as VitalsRunMode: onChange propagates
+  // every keystroke via onContentEdit, but onModification (notes_edited)
+  // fires once, on blur, with the final content length. The ref is updated
+  // directly in onChange (not just synced from the `content` prop) so blur
+  // reflects the latest keystroke even if the parent hasn't re-rendered with
+  // it yet.
+  const latestContent = useRef(content)
+  latestContent.current = content
+
+  return (
+    <div
+      onBlur={() => {
+        if (isSigned) return
+        onModification?.({
+          type: 'notes_edited',
+          block_id: blockId,
+          length: latestContent.current.length,
+        })
+      }}
+    >
+      <ClinicalNotesBlock
+        label={label}
+        content={content}
+        {...(required !== undefined ? { required } : {})}
+        {...(isSigned !== undefined ? { readOnly: isSigned } : {})}
+        onChange={(nextContent) => {
+          // Defense in depth, same rationale as VitalsRunMode above.
+          if (isSigned) return
+          latestContent.current = nextContent
+          onContentEdit?.(blockId, { kind: 'notes', content: nextContent })
+        }}
+      />
+    </div>
+  )
+}
+
 function LabOrderRunMode({
   orders,
   onModification,
@@ -501,6 +652,7 @@ export function BlockRendererRunMode({
     onAutoPopulate,
     isSigned,
     onModification,
+    onContentEdit,
   } = runMode
 
   switch (b.type) {
@@ -657,6 +809,59 @@ export function BlockRendererRunMode({
         </ProtocolBlock>
       )
     }
+
+    case 'vitals': {
+      // The local `Block` union (from BlockRenderer.tsx) omits `values` on the
+      // vitals variant even though the shared runtime schema
+      // (ProtocolBlockSchema in packages/shared) carries it — widen locally,
+      // matching the imaging/lab_order cast pattern above.
+      const vitalsBlock = b as unknown as {
+        title?: string
+        fields: Array<{
+          id: string
+          label: string
+          unit?: string
+          input_type: 'text' | 'number' | 'computed'
+          formula?: string
+        }>
+        values?: Record<string, string | number>
+      }
+      return (
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.vitalsType}
+          title={vitalsBlock.title ?? blockRendererRunModeStrings.vitalsDefaultTitle}
+          nested={nested}
+        >
+          <VitalsRunMode
+            blockId={b.id}
+            fields={vitalsBlock.fields}
+            values={vitalsBlock.values ?? {}}
+            {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
+            {...(onContentEdit ? { onContentEdit } : {})}
+          />
+        </ProtocolBlock>
+      )
+    }
+
+    case 'clinical_notes':
+      return (
+        <ProtocolBlock
+          type={blockRendererRunModeStrings.clinicalNotesType}
+          title={b.label}
+          nested={nested}
+        >
+          <ClinicalNotesRunMode
+            blockId={b.id}
+            label={b.label}
+            content={b.content}
+            {...(b.required !== undefined ? { required: b.required } : {})}
+            {...(isSigned !== undefined ? { isSigned } : {})}
+            {...(onModification ? { onModification } : {})}
+            {...(onContentEdit ? { onContentEdit } : {})}
+          />
+        </ProtocolBlock>
+      )
 
     default:
       return null
