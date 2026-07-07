@@ -6,10 +6,21 @@ import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import type { ProtocolResponse } from '@rezeta/shared'
 import { ProtocolEditor } from '../index'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
+import { loadLocalDraft } from '@/store/editor.store'
+import type * as EditorStoreModule from '@/store/editor.store'
+import { protocolEditorStrings } from '../strings'
 
 vi.mock('@/hooks/protocols/use-protocols', () => ({
   useProtocols: vi.fn(),
 }))
+
+vi.mock('@/store/editor.store', async (importOriginal) => {
+  const actual = await importOriginal<typeof EditorStoreModule>()
+  return {
+    ...actual,
+    loadLocalDraft: vi.fn(actual.loadLocalDraft),
+  }
+})
 
 const protocol: ProtocolResponse = {
   id: 'proto-1',
@@ -38,7 +49,10 @@ function makeQuery<T>(data: T): UseQueryResult<T> {
   return { data, isLoading: false, isError: false, error: null } as unknown as UseQueryResult<T>
 }
 
-function makeMutation<T, V>(mutate: ReturnType<typeof vi.fn>): UseMutationResult<T, Error, V> {
+function makeMutation<T, V>(
+  mutate: ReturnType<typeof vi.fn>,
+  overrides: Partial<UseMutationResult<T, Error, V>> = {},
+): UseMutationResult<T, Error, V> {
   return {
     mutate,
     isPending: false,
@@ -47,14 +61,16 @@ function makeMutation<T, V>(mutate: ReturnType<typeof vi.fn>): UseMutationResult
     error: null,
     data: undefined,
     reset: vi.fn(),
+    ...overrides,
   } as unknown as UseMutationResult<T, Error, V>
 }
 
-function setup(saveVersion = vi.fn()) {
+function setup(saveVersion = vi.fn(), options: { saveVersionPending?: boolean } = {}) {
   vi.mocked(useProtocols).mockReturnValue({
     useGetProtocol: () => makeQuery(protocol),
     useRenameProtocol: () => makeMutation(vi.fn()),
-    useSaveVersion: () => makeMutation(saveVersion),
+    useSaveVersion: () =>
+      makeMutation(saveVersion, { isPending: options.saveVersionPending ?? false }),
     useGetVersionHistory: () => makeQuery([]),
     useGetVersion: () => makeQuery(undefined),
     useRestoreVersion: () => makeMutation(vi.fn()),
@@ -109,5 +125,34 @@ describe('ProtocolEditor save-path wiring', () => {
     await waitFor(() => expect(saveVersion).toHaveBeenCalled())
     const [payload] = saveVersion.mock.calls[0] as [{ content: Record<string, unknown> }, unknown]
     expect(payload.content).not.toHaveProperty('historia_mapping')
+  })
+
+  it('shows pending saving/publishing labels and disables the header buttons while a save is in flight', () => {
+    setup(vi.fn(), { saveVersionPending: true })
+
+    const saveButton = screen.getByRole('button', { name: protocolEditorStrings.saving })
+    const publishButton = screen.getByRole('button', { name: protocolEditorStrings.publishing })
+    expect(saveButton).toBeDisabled()
+    expect(publishButton).toBeDisabled()
+  })
+
+  it('clears the recovered-draft banner once a save succeeds', async () => {
+    vi.mocked(loadLocalDraft).mockReturnValue({
+      blocks: [{ id: 'b1', type: 'clinical_notes', label: 'Motivo de consulta', content: 'x' }],
+      savedAt: Date.now(),
+    })
+    const saveVersion = vi.fn((_vars: unknown, opts: { onSuccess?: () => void }) => {
+      opts.onSuccess?.()
+    })
+    setup(saveVersion)
+    const user = userEvent.setup()
+
+    expect(screen.getByText(protocolEditorStrings.draftRecovered)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+    await user.click(await screen.findByRole('button', { name: 'Guardar como borrador' }))
+
+    await waitFor(() => expect(saveVersion).toHaveBeenCalled())
+    expect(screen.queryByText(protocolEditorStrings.draftRecovered)).not.toBeInTheDocument()
   })
 })

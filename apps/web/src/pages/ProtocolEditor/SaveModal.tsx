@@ -71,7 +71,7 @@ export function SaveModal({
             {isSaving ? (
               <>
                 <Spinner className="mr-2" decorative size="sm" />
-                {protocolEditorStrings.saving}
+                {protocolEditorStrings.publishing}
               </>
             ) : (
               <>

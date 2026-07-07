@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Editor de protocolos — feedback visible al guardar
+
+### Fixed
+
+- `EditorHeader.tsx`, `SaveModal.tsx`, `PublishModal.tsx`: mientras un guardado está en curso, los botones «Guardar» y «Publicar»/«Guardar y publicar» ahora muestran `Spinner` + las etiquetas «Guardando…»/«Publicando…» (antes el botón de publicar no daba ninguna señal de carga).
+- `index.tsx`: los tres flujos de guardado (`handleSaveDraft`, `handleSaveModalPublish`, `handlePublishConfirm`) ahora limpian el banner de «Se recuperó un borrador no guardado» (`setDraftBanner(null)`) en su `onSuccess`; antes el banner sobrevivía a un guardado exitoso.
+- `strings.ts`: se agregó `publishing: 'Publicando…'` y se normalizó `saving` a `'Guardando…'` (elipsis unicode, consistente con el resto de la app).
+
 ## [2026-07-07] Antecedentes del paciente y alta desde agenda
 
 ### Added
