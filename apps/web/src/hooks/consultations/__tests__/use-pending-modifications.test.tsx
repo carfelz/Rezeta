@@ -32,6 +32,21 @@ const usage = {
   modifications: {
     checklist_items: [{ item_id: 'itm-0', checked: true, timestamp: 'past' }],
   },
+  content: {
+    version: '1',
+    template_version: '2',
+    historia_mapping: { 'vit-1': { section: 'examen_fisico' } },
+    blocks: [
+      { id: 'vit-1', type: 'vitals', fields: [], values: { temp: 36.5 } },
+      { id: 'notes-1', type: 'clinical_notes', label: 'Notas', content: 'original' },
+      {
+        id: 'sec-1',
+        type: 'section',
+        title: 'Sección',
+        blocks: [{ id: 'vit-nested', type: 'vitals', fields: [], values: {} }],
+      },
+    ],
+  },
 } as unknown as ConsultationProtocolUsage
 
 const consultation = {
@@ -188,5 +203,168 @@ describe('usePendingModifications', () => {
     expect(vi.mocked(apiClient.patch).mock.calls[0]![0]).toBe(
       '/v1/consultations/cons-1/protocols/usage-1',
     )
+  })
+
+  it('recordContentEdit overlays a vitals edit into the usage content blocks', () => {
+    const { wrapper } = makeClientAndWrapper()
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.recordContentEdit('usage-1', 'vit-1', {
+        kind: 'vitals',
+        values: { temp: 39.1 },
+      })
+    })
+
+    expect(apiClient.patch).not.toHaveBeenCalled()
+    expect(result.current.hasPending).toBe(true)
+    const merged = result.current.withPending(consultation)
+    const block = merged.protocolUsages[0]!.content.blocks[0] as unknown as {
+      values: Record<string, number>
+    }
+    expect(block.values).toEqual({ temp: 39.1 })
+  })
+
+  it('recordContentEdit overlays a notes edit into the usage content blocks', () => {
+    const { wrapper } = makeClientAndWrapper()
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.recordContentEdit('usage-1', 'notes-1', {
+        kind: 'notes',
+        content: 'updated note text',
+      })
+    })
+
+    const merged = result.current.withPending(consultation)
+    const block = merged.protocolUsages[0]!.content.blocks[1] as unknown as { content: string }
+    expect(block.content).toBe('updated note text')
+  })
+
+  it('recordContentEdit is last-write-wins per block', () => {
+    const { wrapper } = makeClientAndWrapper()
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.recordContentEdit('usage-1', 'notes-1', { kind: 'notes', content: 'first' })
+      result.current.recordContentEdit('usage-1', 'notes-1', { kind: 'notes', content: 'second' })
+    })
+
+    const merged = result.current.withPending(consultation)
+    const block = merged.protocolUsages[0]!.content.blocks[1] as unknown as { content: string }
+    expect(block.content).toBe('second')
+  })
+
+  it('flush sends the full merged content alongside the modifications delta in one PATCH', async () => {
+    const serverUsage = { ...usage, id: 'usage-1' }
+    vi.mocked(apiClient.patch).mockResolvedValue(serverUsage)
+    const { result } = renderHook(() => usePendingModifications('cons-1'), {
+      wrapper: makeClientAndWrapper().wrapper,
+    })
+
+    act(() => {
+      result.current.record('usage-1', { type: 'checklist_item', item_id: 'itm-1', checked: true })
+      result.current.recordContentEdit('usage-1', 'vit-1', {
+        kind: 'vitals',
+        values: { temp: 40 },
+      })
+    })
+
+    let ok = false
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+
+    expect(ok).toBe(true)
+    expect(result.current.hasPending).toBe(false)
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    const [, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    const { content, modifications } = body as {
+      content: { version: string; blocks: { id: string; values?: Record<string, number> }[] }
+      modifications: { checklist_items: { item_id: string }[] }
+    }
+    expect(modifications.checklist_items.map((e) => e.item_id)).toEqual(['itm-1'])
+    // Unknown content keys (version, template_version, historia_mapping) survive the merge
+    expect(content).toEqual(
+      expect.objectContaining({ version: '1', template_version: '2' }),
+    )
+    expect(content).toHaveProperty('historia_mapping')
+    expect(content.blocks[0]).toEqual({ id: 'vit-1', type: 'vitals', fields: [], values: { temp: 40 } })
+  })
+
+  it('flush sends content-only (no modifications key) when only content edits are pending', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(usage)
+    const { result } = renderHook(() => usePendingModifications('cons-1'), {
+      wrapper: makeClientAndWrapper().wrapper,
+    })
+
+    act(() => {
+      result.current.recordContentEdit('usage-1', 'notes-1', {
+        kind: 'notes',
+        content: 'content only',
+      })
+    })
+
+    await act(async () => {
+      await result.current.flush()
+    })
+
+    const [, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(body).not.toHaveProperty('modifications')
+    expect(body).toHaveProperty('content')
+  })
+
+  it('flush omits the content key when only events are pending', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue(usage)
+    const { result } = renderHook(() => usePendingModifications('cons-1'), {
+      wrapper: makeClientAndWrapper().wrapper,
+    })
+
+    act(() => {
+      result.current.record('usage-1', { type: 'checklist_item', item_id: 'itm-1', checked: true })
+    })
+
+    await act(async () => {
+      await result.current.flush()
+    })
+
+    const [, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(body).not.toHaveProperty('content')
+    expect(body).toHaveProperty('modifications')
+  })
+
+  it('flush does not clear the content buffer when the PATCH fails', async () => {
+    vi.mocked(apiClient.patch).mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => usePendingModifications('cons-1'), {
+      wrapper: makeClientAndWrapper().wrapper,
+    })
+
+    act(() => {
+      result.current.recordContentEdit('usage-1', 'notes-1', {
+        kind: 'notes',
+        content: 'will fail',
+      })
+    })
+
+    let ok = true
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+
+    expect(ok).toBe(false)
+    expect(result.current.hasPending).toBe(true)
+    const merged = result.current.withPending(consultation)
+    const block = merged.protocolUsages[0]!.content.blocks[1] as unknown as { content: string }
+    expect(block.content).toBe('will fail')
+
+    // A retry flush resends the same content edit
+    vi.mocked(apiClient.patch).mockResolvedValue(usage)
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+    expect(ok).toBe(true)
+    expect(vi.mocked(apiClient.patch).mock.calls).toHaveLength(2)
+    const [, retryBody] = vi.mocked(apiClient.patch).mock.calls[1]!
+    expect(retryBody).toHaveProperty('content')
   })
 })
