@@ -4,6 +4,28 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Historia médica — correcciones de revisión final
+
+### Fixed
+
+- `generateRecordSections` (`packages/shared/src/record/generate-record-sections.ts`): el mapeador ahora deriva el estado de checklist/decisiones desde `modifications.checklist_items`/`modifications.decision_branches` (los eventos reales que escribe la app vía `appendModification`), en vez de campos que la app nunca produce (`items[].checked` embebido y `block_id`/`branch_label`). Mantiene el flag `checked` embebido como respaldo cuando no hay evento de modificación para ese ítem.
+- `resolveSection` ahora se aplica a todo destino (también al match por etiqueta por defecto, no solo a los overrides de `historia_mapping`), evitando que contenido caiga en una sección excluida por tipo de consulta.
+- Las notas fuera de protocolo (`modifications.off_protocol_notes`) ahora se incluyen en la historia médica (evolución/enfermedad actual según el tipo de consulta), con la marca de tiempo removida del texto.
+- Las secciones opcionales válidas para el tipo de consulta ya no se omiten cuando quedan vacías al generar la historia; se emiten vacías y editables (excepto `enmiendas`, que solo aparece si hay enmiendas).
+- La fecha y hora legal en el PDF de historia médica y expediente (`apps/api/src/lib/pdf.service.ts`) ahora se formatea en hora dominicana (`America/Santo_Domingo`) sin importar la zona horaria del servidor — nuevo helper exportado `formatDominicanDateTime`.
+- Las descargas de PDF clínico (`GET /v1/consultations/:id/record/pdf`, `GET /v1/patients/:id/record-export`) ahora registran un evento de auditoría no bloqueante (`category: 'system'`, `action: 'export_generated'`).
+- Filas de bloques `alert`/`text` en `HistoriaMappingTab` ahora están bloqueadas igual que `dosage_table`/`lab_order`/`imaging_order`: el interruptor de inclusión se deshabilita y no puede escribir un mapeo sin efecto.
+- Barra de historia firmada (`RecordDocument`) ahora muestra «Regenerar» cuando la consulta tiene una enmienda registrada, con confirmación específica antes de crear una nueva versión firmada.
+- Error de `ensureDraft` silenciado en `ConsultationsService.sign()` ahora se registra con `Logger.error` antes de reportar `recordOutcome: 'failed'`.
+- Fallo de firma por secciones requeridas faltantes (`RECORD_REQUIRED_SECTIONS_MISSING`) ahora muestra un mensaje específico en vez del error genérico.
+- Descargas de historia/expediente que fallan ahora muestran un toast de error en vez de fallar en silencio.
+- `getExpedienteData` ahora excluye historias cuya consulta fue eliminada (soft-delete).
+
+### Changed
+
+- `HistoriaMappingEntrySchema.section` (`packages/shared/src/schemas/protocol.ts`) ahora restringe las secciones seleccionables (excluye `ficha_identificacion`, `enmiendas`, `plan_tratamiento`), igual que el selector de la UI.
+- `historiaMissingSections` se movió de `apps/web/src/pages/PatientDetail/strings.ts` a `apps/web/src/lib/toasts.ts` por capas (lo usa un hook, no un componente de página).
+
 ## [2026-07-06] Historia médica — exportación del expediente (fase 3)
 
 ### Added
