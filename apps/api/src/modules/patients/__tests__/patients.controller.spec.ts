@@ -146,8 +146,8 @@ describe('PatientsController', () => {
       expect.objectContaining({
         tenantId,
         actorType: 'system',
-        category: 'system',
-        action: 'export_generated',
+        category: 'communication',
+        action: 'pdf_generated',
         entityType: 'Patient',
         entityId: 'p1',
         status: 'success',

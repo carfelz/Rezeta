@@ -102,8 +102,8 @@ describe('ConsultationRecordsController', () => {
       expect.objectContaining({
         tenantId: 't1',
         actorType: 'system',
-        category: 'system',
-        action: 'export_generated',
+        category: 'communication',
+        action: 'pdf_generated',
         entityType: 'ConsultationRecord',
         entityId: 'c1',
         status: 'success',
