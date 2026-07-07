@@ -265,6 +265,46 @@ describe('BlockRendererRunMode — vitals', () => {
     fireEvent.blur(weightInput)
     expect(onModification).toHaveBeenCalledTimes(1)
   })
+
+  it('emits one vitals_entered event per editing burst: two separate bursts emit two events with correct final values', () => {
+    const onModification = vi.fn()
+    const block = vitalsBlock({ values: { weight: '70' } })
+    const { rerender } = render(
+      <BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />,
+    )
+
+    const heightInput = getNumberInput(1)
+
+    // First editing burst: enter height 175, blur out
+    fireEvent.change(heightInput, { target: { value: '175' } })
+    fireEvent.blur(heightInput, { relatedTarget: null })
+
+    expect(onModification).toHaveBeenCalledTimes(1)
+    expect(onModification).toHaveBeenCalledWith({
+      type: 'vitals_entered',
+      block_id: 'vitals-1',
+      values: { weight: '70', height: '175', bmi: '22.9' },
+    })
+
+    // Simulate parent re-rendering with the first burst's values
+    rerender(
+      <BlockRendererRunMode
+        block={vitalsBlock({ values: { weight: '70', height: '175', bmi: '22.9' } })}
+        runMode={baseRunMode({ onModification })}
+      />,
+    )
+
+    // Second editing burst: change height to 180, blur out
+    fireEvent.change(heightInput, { target: { value: '180' } })
+    fireEvent.blur(heightInput, { relatedTarget: null })
+
+    expect(onModification).toHaveBeenCalledTimes(2)
+    expect(onModification).toHaveBeenLastCalledWith({
+      type: 'vitals_entered',
+      block_id: 'vitals-1',
+      values: { weight: '70', height: '180', bmi: '21.6' },
+    })
+  })
 })
 
 describe('BlockRendererRunMode — clinical_notes', () => {
@@ -384,5 +424,45 @@ describe('BlockRendererRunMode — clinical_notes', () => {
     fireEvent.focus(textarea)
     fireEvent.blur(textarea)
     expect(onModification).toHaveBeenCalledTimes(1)
+  })
+
+  it('emits one notes_edited event per editing burst: two separate bursts emit two events with correct final lengths', () => {
+    const onModification = vi.fn()
+    const block = notesBlock({ content: '' })
+    const { rerender } = render(
+      <BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />,
+    )
+
+    const textarea = screen.getByRole('textbox')
+
+    // First editing burst: type "hello", blur out
+    fireEvent.change(textarea, { target: { value: 'hello' } })
+    fireEvent.blur(textarea)
+
+    expect(onModification).toHaveBeenCalledTimes(1)
+    expect(onModification).toHaveBeenCalledWith({
+      type: 'notes_edited',
+      block_id: 'notes-1',
+      length: 5,
+    })
+
+    // Simulate parent re-rendering with the first burst's content
+    rerender(
+      <BlockRendererRunMode
+        block={notesBlock({ content: 'hello' })}
+        runMode={baseRunMode({ onModification })}
+      />,
+    )
+
+    // Second editing burst: append " world", blur out
+    fireEvent.change(textarea, { target: { value: 'hello world' } })
+    fireEvent.blur(textarea)
+
+    expect(onModification).toHaveBeenCalledTimes(2)
+    expect(onModification).toHaveBeenLastCalledWith({
+      type: 'notes_edited',
+      block_id: 'notes-1',
+      length: 11,
+    })
   })
 })
