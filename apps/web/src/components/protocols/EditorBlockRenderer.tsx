@@ -9,6 +9,8 @@ import { ChecklistBlockEditor } from './ChecklistBlockEditor'
 import { StepsBlockEditor } from './StepsBlockEditor'
 import { DecisionBlockEditor } from './DecisionBlockEditor'
 import { DosageTableEditor } from './DosageTableEditor'
+import { ClinicalNotesBlockEditor } from './ClinicalNotesBlockEditor'
+import { VitalsBlockEditor } from './VitalsBlockEditor'
 import { useEditorStore } from '@/store/editor.store'
 import {
   blockEditorStrings,
@@ -43,6 +45,8 @@ const EDITABLE_BLOCK_TYPES = new Set([
   'dosage_table',
   'imaging_order',
   'lab_order',
+  'vitals',
+  'clinical_notes',
 ])
 
 interface EditorBlockRendererProps {
@@ -436,6 +440,14 @@ function EditForm({ block }: { block: ProtocolBlock }): JSX.Element | null {
   if (block.type === 'lab_order') {
     return <LabOrderBlockEditor id={block.id} title={block.title ?? ''} orders={block.orders} />
   }
+  if (block.type === 'vitals') {
+    return <VitalsBlockEditor id={block.id} title={block.title ?? ''} fields={block.fields} />
+  }
+  if (block.type === 'clinical_notes') {
+    return (
+      <ClinicalNotesBlockEditor id={block.id} label={block.label} required={block.required} />
+    )
+  }
   return null
 }
 
@@ -767,6 +779,8 @@ function blockTypeLabel(type: string): string {
     section: blockTypeStrings.section,
     imaging_order: blockTypeStrings.imagingOrder,
     lab_order: blockTypeStrings.labOrder,
+    vitals: blockTypeStrings.vitals,
+    clinical_notes: blockTypeStrings.clinicalNotes,
   }
   return labels[type] ?? blockTypeStrings.unknown
 }
@@ -799,6 +813,10 @@ function blockDisplayTitle(block: ProtocolBlock): string {
         block.title ??
         `${block.orders.length} prueba${block.orders.length !== 1 ? 's' : ''} de laboratorio`
       )
+    case 'vitals':
+      return block.title ?? blockTypeStrings.vitals
+    case 'clinical_notes':
+      return block.label
     default:
       return blockTypeStrings.unknown
   }

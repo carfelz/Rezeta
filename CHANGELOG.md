@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Editar para bloques de nota clínica y signos vitales en el editor de protocolos
+
+### Added
+
+- `EDITABLE_BLOCK_TYPES` (`apps/web/src/components/protocols/EditorBlockRenderer.tsx`) ahora incluye `vitals` y `clinical_notes`, habilitando el ítem «Editar» del menú contextual y el swap a `EditForm` para ambos tipos (antes no tenían ninguna acción de edición).
+- Nuevo `ClinicalNotesBlockEditor.tsx`: edita `label` (campo «Etiqueta») y `required` (checkbox «Obligatorio») con el mismo patrón de borrador local + `updateBlock`/`selectBlock(null)` que `DosageTableEditor`. Una etiqueta editable es lo que permite que la historia médica enrute el contenido de la nota a la sección correcta (el mapeo se hace por `block.label`).
+- Nuevo `VitalsBlockEditor.tsx`: edita el título del bloque y las filas de `fields` (etiqueta, unidad, tipo); permite añadir/quitar campos. Los campos `input_type: 'computed'` (p. ej. IMC) se renderizan bloqueados — sin botón de eliminar y sin selector de tipo — para proteger fórmulas derivadas.
+- `strings.ts`: nuevas claves `notesLabelField`, `notesRequiredField`, `vitalsTitleField`, `vitalsFieldLabel`, `vitalsFieldUnit`, `vitalsFieldType`, `vitalsTypeText`, `vitalsTypeNumber`, `vitalsTypeComputed`, `vitalsAddField`, `vitalsRemoveField(label)`.
+- `blockTypeLabel`/`blockDisplayTitle` (`EditorBlockRenderer.tsx`) ahora tienen entradas para `vitals` y `clinical_notes` en vez de caer al rótulo genérico "Bloque".
+
 ## [2026-07-07] Órdenes en cola se persisten al firmar la consulta
 
 ### Fixed

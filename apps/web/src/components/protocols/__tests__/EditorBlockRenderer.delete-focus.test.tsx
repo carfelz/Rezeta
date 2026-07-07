@@ -20,6 +20,16 @@ function makeTextBlock(): ProtocolBlock {
   return { id: 'blk-1', type: 'text', content: 'Hola' } as ProtocolBlock
 }
 
+function makeClinicalNotesBlock(): ProtocolBlock {
+  return {
+    id: 'blk-notes',
+    type: 'clinical_notes',
+    label: 'Nota clínica',
+    content: '',
+    required: false,
+  } as ProtocolBlock
+}
+
 function initStore(block: ProtocolBlock) {
   useEditorStore.getState().initEditor('protocol-1', [block], new Set())
 }
@@ -68,5 +78,22 @@ describe('EditorBlockRenderer — delete does not freeze the page', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
     expect(document.body.style.pointerEvents).not.toBe('none')
+  })
+})
+
+describe('EditorBlockRenderer — clinical_notes blocks are editable', () => {
+  afterEach(() => {
+    useEditorStore.getState().resetEditor()
+  })
+
+  it('shows an "Editar" context menu item for a clinical_notes block', async () => {
+    const user = userEvent.setup()
+    const block = makeClinicalNotesBlock()
+    initStore(block)
+    render(<EditorBlockRenderer block={block} />)
+
+    await user.click(screen.getByRole('button', { name: 'Más acciones' }))
+
+    expect(screen.getByRole('menuitem', { name: 'Editar' })).toBeInTheDocument()
   })
 })
