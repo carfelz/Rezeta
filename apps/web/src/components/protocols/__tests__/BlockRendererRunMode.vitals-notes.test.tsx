@@ -119,6 +119,20 @@ describe('BlockRendererRunMode — vitals', () => {
     })
   })
 
+  it('clears/omits bmi when weight is "0" even though height is a valid positive number', () => {
+    const onContentEdit = vi.fn()
+    const block = vitalsBlock({ values: { weight: '0', height: '175', bmi: '0.0' } })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode({ onContentEdit })} />)
+
+    // Trigger a recompute by editing height (weight stays '0').
+    fireEvent.change(getNumberInput(1), { target: { value: '180' } })
+
+    expect(onContentEdit).toHaveBeenCalledWith('vitals-1', {
+      kind: 'vitals',
+      values: { weight: '0', height: '180' },
+    })
+  })
+
   it('renders a computed non-bmi field as read-only, showing its current value', () => {
     const block = vitalsBlock({
       fields: [

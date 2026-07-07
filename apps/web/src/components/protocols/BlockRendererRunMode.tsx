@@ -442,9 +442,10 @@ type VitalsFieldDef = {
 /**
  * Recomputes BMI (decision 2: mirrors `computeBMI` in
  * `lib/consultation/vitals.ts`) when the block defines a `bmi` field with
- * `input_type: 'computed'` and both `weight`/`height` hold numeric values.
- * Returns `nextValues` with `bmi` set to one decimal place, or with `bmi`
- * cleared (omitted) when weight/height aren't both numeric.
+ * `input_type: 'computed'` and both `weight`/`height` hold positive numeric
+ * values. Returns `nextValues` with `bmi` set to one decimal place, or with
+ * `bmi` cleared (omitted) when weight/height aren't both positive numbers
+ * (mirrors `computeBMI`'s falsy-weight/height guard, so `0` doesn't divide).
  */
 function withDerivedBMI(
   fields: VitalsFieldDef[],
@@ -456,7 +457,7 @@ function withDerivedBMI(
   const weight = parseFloat(String(nextValues.weight ?? ''))
   const height = parseFloat(String(nextValues.height ?? ''))
   const result = { ...nextValues }
-  if (!isNaN(weight) && !isNaN(height) && height > 0) {
+  if (!isNaN(weight) && !isNaN(height) && weight > 0 && height > 0) {
     const bmi = weight / Math.pow(height / 100, 2)
     result.bmi = bmi.toFixed(1)
   } else {
