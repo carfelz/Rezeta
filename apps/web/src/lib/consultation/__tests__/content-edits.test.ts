@@ -72,6 +72,56 @@ describe('applyContentEdits', () => {
     expect(result[1]).toBe(checklistBlock)
   })
 
+  it('returns an untouched nested section by the same reference (no clone) when no edit targets it', () => {
+    const nested: ProtocolBlock = {
+      id: 'sec-outer',
+      type: 'section',
+      title: 'Outer',
+      blocks: [
+        {
+          id: 'sec-inner',
+          type: 'section',
+          title: 'Inner',
+          blocks: [vitalsBlock, notesBlock],
+        },
+      ],
+    }
+
+    const result = applyContentEdits([nested], {})
+
+    expect(result[0]).toBe(nested)
+  })
+
+  it('clones only the section(s) on the path to an edit, leaving sibling sections referentially unchanged', () => {
+    const untouchedInner: ProtocolBlock = {
+      id: 'sec-untouched',
+      type: 'section',
+      title: 'Untouched',
+      blocks: [vitalsBlock],
+    }
+    const editedInner: ProtocolBlock = {
+      id: 'sec-edited',
+      type: 'section',
+      title: 'Edited',
+      blocks: [notesBlock],
+    }
+    const outer: ProtocolBlock = {
+      id: 'sec-outer',
+      type: 'section',
+      title: 'Outer',
+      blocks: [untouchedInner, editedInner],
+    }
+
+    const result = applyContentEdits([outer], {
+      'notes-1': { kind: 'notes', content: 'changed' },
+    })
+
+    expect(result[0]).not.toBe(outer)
+    const resultOuter = result[0] as Extract<ProtocolBlock, { type: 'section' }>
+    expect(resultOuter.blocks[0]).toBe(untouchedInner)
+    expect(resultOuter.blocks[1]).not.toBe(editedInner)
+  })
+
   it('ignores an edit whose kind does not match the target block type', () => {
     const result = applyContentEdits([checklistBlock], {
       'chk-1': { kind: 'vitals', values: { temp: 1 } },

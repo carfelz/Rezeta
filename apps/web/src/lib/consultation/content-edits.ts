@@ -26,7 +26,14 @@ export function applyContentEdits(
 ): ProtocolBlock[] {
   return blocks.map((block) => {
     if (block.type === 'section') {
-      return { ...block, blocks: applyContentEdits(block.blocks, editsByBlockId) }
+      const nextChildren = applyContentEdits(block.blocks, editsByBlockId)
+      // Every child came back referentially unchanged, so this section has no
+      // edits anywhere beneath it — return the original object rather than a
+      // clone, preserving referential equality up the tree for callers.
+      const unchanged =
+        nextChildren.length === block.blocks.length &&
+        nextChildren.every((child, i) => child === block.blocks[i])
+      return unchanged ? block : { ...block, blocks: nextChildren }
     }
 
     const edit = editsByBlockId[block.id]
