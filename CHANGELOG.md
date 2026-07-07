@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Órdenes en cola se persisten al firmar la consulta
+
+### Fixed
+
+- Las órdenes agregadas con «+ Añadir a receta» (medicamentos, laboratorio, imagen) vivían solo en el store cliente `useOrderQueueStore` y se descartaban silenciosamente al firmar, dejando vacías la pestaña Recetas del paciente y el plan de tratamiento de la historia médica. Nuevo hook `useFlushOrderQueue` (`apps/web/src/hooks/consultations/use-flush-order-queue.ts`) que persiste cada grupo en cola vía los endpoints de creación existentes antes del `PATCH` de firma.
+- `Consultation/index.tsx`: `onBeforeSign` ahora compone la persistencia de modificaciones pendientes seguida del volcado de la cola de órdenes; si cualquier creación falla se aborta la firma (no se crea un registro inmutable a partir de contenido a medio guardar) y la cola queda intacta para reintentar (`toastStrings.errorFlushOrders`).
+- `Consultation/index.tsx`: al firmar con éxito se resetea `useOrderQueueStore`, evitando el desajuste entre el chip «Recetas 1» y la lista «Sin recetas en esta consulta».
+
 ## [2026-07-07] Editor de protocolos — feedback visible al guardar
 
 ### Fixed

@@ -45,6 +45,7 @@ export const toastStrings = {
   labOrderDeleted: 'Orden de laboratorio eliminada',
   errorPrescriptionSave: 'No se pudo guardar la receta.',
   errorOrderSave: 'No se pudo guardar la orden.',
+  errorFlushOrders: 'No se pudieron guardar las órdenes pendientes. No se firmó la consulta.',
 
   // ── Invoices ────────────────────────────────────────────────────────────────
   invoiceCreated: 'Factura creada',

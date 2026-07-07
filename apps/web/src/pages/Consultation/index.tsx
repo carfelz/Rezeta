@@ -5,6 +5,7 @@ import { usePendingModifications } from '@/hooks/consultations/use-pending-modif
 import { Button, Spinner } from '@/components/ui'
 import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
+import { useFlushOrderQueue } from '@/hooks/consultations/use-flush-order-queue'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
 import { MissingFieldsPanel } from '@/components/consultations/MissingFieldsPanel'
 import { Breadcrumb } from './Breadcrumb'
@@ -50,7 +51,25 @@ export function Consultation(): JSX.Element {
   const hasUnsavedOrders = useOrderQueueStore(
     (s) => s.medications.length > 0 || s.imagingOrders.length > 0 || s.labOrders.length > 0,
   )
+  const resetOrderQueue = useOrderQueueStore((s) => s.reset)
+  const { flush: flushOrderQueue } = useFlushOrderQueue(id ?? '')
   useOrderQueueSession(id ?? '', consultationSigned)
+
+  // Sign-time flush: persist pending protocol modifications first, then the
+  // in-memory order queue. Either failing aborts the sign so an immutable
+  // record is never created from partially-saved content.
+  async function handleBeforeSign(): Promise<boolean> {
+    const modificationsPersisted = await flushPendingModifications()
+    if (!modificationsPersisted) return false
+    return flushOrderQueue()
+  }
+
+  // Clear the in-memory queue on a successful sign so a stale entry cannot
+  // produce a "Recetas 1" chip against an empty saved-orders list.
+  function handleSigned(result: SignConsultationResponse): void {
+    setSignResult(result)
+    resetOrderQueue()
+  }
   useBeforeUnloadGuard((hasUnsavedOrders || hasPending) && !consultationSigned)
 
   if (isLoading) {
@@ -148,12 +167,12 @@ export function Consultation(): JSX.Element {
             consultation={consultation}
             readOnly={isSigned}
             onRecordModification={recordModification}
-            onFlushPending={flushPendingModifications}
+            onFlushPending={handleBeforeSign}
             onUsageRemoved={discardUsage}
             onRecordContentEdit={recordContentEdit}
             showSign={showSign}
             onShowSignChange={setShowSign}
-            onSigned={setSignResult}
+            onSigned={handleSigned}
             showAmend={showAmend}
             onShowAmendChange={setShowAmend}
             showPicker={showPicker}
