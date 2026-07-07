@@ -78,13 +78,15 @@ describe('PatientCombobox', () => {
     expect(screen.getByRole('button', { name: /nuevo paciente/i })).toBeInTheDocument()
   })
 
+  // Renders the full real PatientModal — slow under coverage instrumentation,
+  // so this integration test gets an explicit timeout.
   it('opens the creation modal when "Nuevo paciente" is clicked', async () => {
     const user = userEvent.setup()
     render(<PatientCombobox value="" onChange={vi.fn()} />)
     await user.click(screen.getByPlaceholderText(/buscar paciente/i))
     await user.click(screen.getByRole('button', { name: /nuevo paciente/i }))
     expect(screen.getByRole('heading', { name: 'Registrar paciente' })).toBeInTheDocument()
-  })
+  }, 20_000)
 
   it('selects the newly created patient and closes the modal on success', async () => {
     const user = userEvent.setup()

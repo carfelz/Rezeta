@@ -84,5 +84,6 @@ describe('AppointmentFormModal + PatientCombobox integration', () => {
     // (appointmentMocks.createMutateAsync gets called) without the fix.
     expect(appointmentMocks.createMutateAsync).not.toHaveBeenCalled()
     expect(onClose).not.toHaveBeenCalled()
-  })
+    // Full modal-in-modal render — explicit timeout for coverage-instrumented runs.
+  }, 20_000)
 })
