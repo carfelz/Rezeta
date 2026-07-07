@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom'
-import { AddBlockButton, ConfirmDialog, Spinner } from '@/components/ui'
+import {
+  AddBlockButton,
+  ConfirmDialog,
+  Spinner,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui'
 import { EditorBlockRenderer } from '@/components/protocols/EditorBlockRenderer'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
 import { useProtocols } from '@/hooks/protocols/use-protocols'
+import type { HistoriaMapping } from '@rezeta/shared'
 import { protocolEditorStrings } from './strings'
 import {
   useEditorStore,
@@ -18,6 +27,7 @@ import { DraftBanner } from './DraftBanner'
 import { EditorHeader } from './EditorHeader'
 import { EditorTOC } from './EditorTOC'
 import { EditorPalette } from './EditorPalette'
+import { HistoriaMappingTab } from './HistoriaMappingTab'
 import { HistoryDrawer } from './HistoryDrawer'
 import { PublishModal } from './PublishModal'
 import { SaveModal } from './SaveModal'
@@ -54,6 +64,8 @@ export function ProtocolEditor(): JSX.Element {
     savedAt: number
   } | null>(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+  const [historiaMapping, setHistoriaMapping] = useState<HistoriaMapping>({})
+  const [savedHistoriaMapping, setSavedHistoriaMapping] = useState<HistoriaMapping>({})
 
   const { data: versionHistory, isLoading: historyLoading } = useGetVersionHistory(id ?? '')
   const { data: selectedVersion, isLoading: versionPreviewLoading } = useGetVersion(
@@ -61,6 +73,10 @@ export function ProtocolEditor(): JSX.Element {
     selectedVersionId,
   )
   const { mutate: restoreVersion, isPending: isRestoring } = useRestoreVersion(id ?? '')
+
+  const isHistoriaMappingDirty =
+    JSON.stringify(historiaMapping) !== JSON.stringify(savedHistoriaMapping)
+  const combinedIsDirty = isDirty || isHistoriaMappingDirty
 
   // ── Initialize editor ───────────────────────────────────────────────────
   const initialized = useRef(false)
@@ -74,6 +90,9 @@ export function ProtocolEditor(): JSX.Element {
     const draft = id ? loadLocalDraft(id) : null
     if (draft) setDraftBanner(draft)
     initEditor(id!, serverBlocks, requiredIds)
+    const initialMapping = protocol.currentVersion?.content?.historia_mapping ?? {}
+    setHistoriaMapping(initialMapping)
+    setSavedHistoriaMapping(initialMapping)
 
     return () => {
       resetEditor()
@@ -84,8 +103,8 @@ export function ProtocolEditor(): JSX.Element {
   // ── Autosave ────────────────────────────────────────────────────────────
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
-  const isDirtyRef = useRef(isDirty)
-  isDirtyRef.current = isDirty
+  const isDirtyRef = useRef(combinedIsDirty)
+  isDirtyRef.current = combinedIsDirty
 
   useEffect(() => {
     if (!id) return
@@ -117,7 +136,7 @@ export function ProtocolEditor(): JSX.Element {
   // ── Navigation guard ────────────────────────────────────────────────────
   // The blocker stays in `blocked` state while the ConfirmDialog (rendered
   // below) is open; the dialog resolves it via proceed()/reset().
-  const blocker = useBlocker(isDirty)
+  const blocker = useBlocker(combinedIsDirty)
 
   if (!id) {
     void navigate('/protocolos', { replace: true })
@@ -169,10 +188,12 @@ export function ProtocolEditor(): JSX.Element {
     version: string
     template_version: string
     blocks: ProtocolBlock[]
+    historia_mapping?: HistoriaMapping
   } => ({
     version: '1.0',
     template_version: '1.0',
     blocks,
+    ...(Object.keys(historiaMapping).length > 0 ? { historia_mapping: historiaMapping } : {}),
   })
 
   const handleSaveDraft = (summary?: string): void => {
@@ -183,6 +204,7 @@ export function ProtocolEditor(): JSX.Element {
           setSaveModalOpen(false)
           setSaveSummary('')
           markSaved()
+          setSavedHistoriaMapping(historiaMapping)
           if (id) clearLocalDraft(id)
         },
       },
@@ -197,6 +219,7 @@ export function ProtocolEditor(): JSX.Element {
           setSaveModalOpen(false)
           setSaveSummary('')
           markSaved()
+          setSavedHistoriaMapping(historiaMapping)
           if (id) clearLocalDraft(id)
         },
       },
@@ -211,6 +234,7 @@ export function ProtocolEditor(): JSX.Element {
           setPublishModalOpen(false)
           setChangeSummary('')
           markSaved()
+          setSavedHistoriaMapping(historiaMapping)
           if (id) clearLocalDraft(id)
         },
       },
@@ -305,7 +329,7 @@ export function ProtocolEditor(): JSX.Element {
         totalBlocks={totalBlocks}
         sectionCount={sectionCount}
         status={protocol.status}
-        isDirty={isDirty}
+        isDirty={combinedIsDirty}
         isSaving={isSaving}
         isRenaming={isRenaming}
         editingTitle={editingTitle}
@@ -320,48 +344,65 @@ export function ProtocolEditor(): JSX.Element {
         onPublishClick={() => setPublishModalOpen(true)}
       />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '220px 1fr 260px',
-          gap: '20px',
-          alignItems: 'start',
-        }}
-      >
-        <EditorTOC sections={topLevelSections} onSectionClick={scrollToSection} />
+      <Tabs defaultValue="contenido">
+        <TabsList className="mb-5">
+          <TabsTrigger value="contenido">{protocolEditorStrings.contentTabLabel}</TabsTrigger>
+          <TabsTrigger value="historia">{protocolEditorStrings.historiaTabLabel}</TabsTrigger>
+        </TabsList>
 
-        <div>
-          {blocks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-              <i className="ph ph-file-text text-[36px] text-n-300" />
-              <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
-                {protocolEditorStrings.noContent}
-              </p>
-            </div>
-          ) : (
-            blocks.map((block, idx) => (
-              <EditorBlockRenderer
-                key={block.id}
-                block={block}
-                isFirst={idx === 0}
-                isLast={idx === blocks.length - 1}
+        <TabsContent value="contenido">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '220px 1fr 260px',
+              gap: '20px',
+              alignItems: 'start',
+            }}
+          >
+            <EditorTOC sections={topLevelSections} onSectionClick={scrollToSection} />
+
+            <div>
+              {blocks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                  <i className="ph ph-file-text text-[36px] text-n-300" />
+                  <p className="text-[13px] font-sans text-n-400 max-w-[28ch]">
+                    {protocolEditorStrings.noContent}
+                  </p>
+                </div>
+              ) : (
+                blocks.map((block, idx) => (
+                  <EditorBlockRenderer
+                    key={block.id}
+                    block={block}
+                    isFirst={idx === 0}
+                    isLast={idx === blocks.length - 1}
+                  />
+                ))
+              )}
+
+              <AddBlockButton
+                onClick={() => handlePaletteClick('section')}
+                label={protocolEditorStrings.addBlockFooter}
               />
-            ))
-          )}
+            </div>
 
-          <AddBlockButton
-            onClick={() => handlePaletteClick('section')}
-            label={protocolEditorStrings.addBlockFooter}
+            <EditorPalette
+              onPaletteClick={handlePaletteClick}
+              versionHistory={versionHistory}
+              historyLoading={historyLoading}
+              onShowFullHistory={() => setHistoryOpen(true)}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="historia">
+          <HistoriaMappingTab
+            blocks={blocks}
+            mapping={Object.keys(historiaMapping).length > 0 ? historiaMapping : undefined}
+            onChange={setHistoriaMapping}
           />
-        </div>
-
-        <EditorPalette
-          onPaletteClick={handlePaletteClick}
-          versionHistory={versionHistory}
-          historyLoading={historyLoading}
-          onShowFullHistory={() => setHistoryOpen(true)}
-        />
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {historyOpen && (
         <HistoryDrawer
