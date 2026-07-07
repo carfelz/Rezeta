@@ -4,6 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Consultas — descartar ediciones pendientes al remover un protocolo
+
+### Fixed
+
+- `usePendingModifications` (`apps/web/src/hooks/consultations/use-pending-modifications.ts`) ahora expone `discardUsage(usageId)`, que elimina de ambos buffers (eventos y ediciones de contenido) las entradas de un `ProtocolUsage`. Antes, remover un protocolo a mitad de consulta ("Continuar sin protocolo", `ProtocolPanel.tsx`) dejaba huérfanas las ediciones bufferizadas de ese usage: el siguiente flush hacía PATCH a un usage eliminado (404 tratado como fallo, re-bufferizado indefinidamente) u omitía silenciosamente el contenido.
+- `ProtocolPanel` (`apps/web/src/pages/Consultation/ProtocolPanel.tsx`) ahora recibe un prop `onUsageRemoved` y lo invoca en el `onSuccess` de `useRemoveProtocolUsage`. La página `Consultation` (`apps/web/src/pages/Consultation/index.tsx`), que ya compone `usePendingModifications`, pasa `discardUsage` como ese callback — mismo patrón de composición usado para `onRecordModification`/`onFlushPending`.
+
 ## [2026-07-06] Historia médica — correcciones de revisión final
 
 ### Fixed
