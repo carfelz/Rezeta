@@ -114,6 +114,7 @@ function renderPanel(
         onRecordModification={vi.fn()}
         onFlushPending={vi.fn(async () => true)}
         onUsageRemoved={vi.fn()}
+        onRecordContentEdit={vi.fn()}
         showSign={false}
         onShowSignChange={vi.fn()}
         showAmend={false}
@@ -166,6 +167,26 @@ describe('ProtocolPanel', () => {
       checked: true,
     })
     expect(mockMutate).not.toHaveBeenCalled()
+  })
+
+  it('binds onContentEdit to the active usage id when a clinical_notes field changes', () => {
+    const onRecordContentEdit = vi.fn()
+    const usage = makeUsage({
+      content: {
+        version: '1.0',
+        blocks: [{ id: 'notes_1', type: 'clinical_notes', label: 'Notas', content: '' }],
+      } as never,
+    })
+    renderPanel({ consultation: makeConsultation([usage]), onRecordContentEdit })
+
+    fireEvent.change(screen.getByPlaceholderText('Escribir notas…'), {
+      target: { value: 'Sin alergias conocidas' },
+    })
+
+    expect(onRecordContentEdit).toHaveBeenCalledWith('usage-1', 'notes_1', {
+      kind: 'notes',
+      content: 'Sin alergias conocidas',
+    })
   })
 
   it('discards pending buffers for the removed usage once removal succeeds', () => {

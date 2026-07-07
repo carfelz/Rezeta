@@ -29,6 +29,7 @@ export function Consultation(): JSX.Element {
     withPending,
     flush: flushPendingModifications,
     discardUsage,
+    recordContentEdit,
   } = usePendingModifications(id!)
   // Server truth + not-yet-persisted modification deltas. Everything below
   // renders from this merged view so batched edits show up immediately.
@@ -149,6 +150,7 @@ export function Consultation(): JSX.Element {
             onRecordModification={recordModification}
             onFlushPending={flushPendingModifications}
             onUsageRemoved={discardUsage}
+            onRecordContentEdit={recordContentEdit}
             showSign={showSign}
             onShowSignChange={setShowSign}
             onSigned={setSignResult}

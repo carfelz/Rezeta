@@ -5,6 +5,7 @@ import {
 } from '@/components/protocols/BlockRendererRunMode'
 import type { ConsultationProtocolUsage } from '@rezeta/shared'
 import { deriveCheckedState } from '@/lib/consultation/usage'
+import type { ContentEdit } from '@/lib/consultation/content-edits'
 import { canvasViewStrings } from './strings'
 
 export type { BlockModificationEvent }
@@ -14,6 +15,7 @@ export interface CanvasViewProps {
   onCheck: (id: string, checked: boolean) => void
   onLaunchLinkedProtocol?: (protocolId: string, triggerBlockId: string) => void
   onModification?: (event: BlockModificationEvent) => void
+  onContentEdit?: (blockId: string, edit: ContentEdit) => void
   isSigned: boolean
   onContinueWithoutProtocol?: () => void
   onEditProtocol?: () => void
@@ -24,6 +26,7 @@ export function CanvasView({
   onCheck,
   onLaunchLinkedProtocol,
   onModification,
+  onContentEdit,
   isSigned,
   onContinueWithoutProtocol,
   onEditProtocol,
@@ -73,6 +76,7 @@ export function CanvasView({
             isSigned,
             ...(onLaunchLinkedProtocol ? { onLaunchLinkedProtocol } : {}),
             ...(onModification ? { onModification } : {}),
+            ...(onContentEdit ? { onContentEdit } : {}),
           }}
         />
       ))}

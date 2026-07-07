@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
+import { CanvasView } from '@/components/consultations/CanvasView'
+import { computeMissingRequiredFields } from '@rezeta/shared'
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -438,5 +440,123 @@ describe('usePendingModifications', () => {
     expect(result.current.hasPending).toBe(true)
     const overlaid = result.current.withPending(consultation)
     expect(overlaid.protocolUsages[0]!.modifications?.checklist_items).toHaveLength(1)
+  })
+})
+
+/**
+ * Verifies the full run-mode live loop end to end: typing in a rendered
+ * `CanvasView` calls `onContentEdit` -> `recordContentEdit` buffers the edit
+ * -> `withPending` overlays it onto the server-truth usage -> the re-rendered
+ * `CanvasView` shows the new value. This must come from the overlay, not from
+ * local component state (VitalsBlock/ClinicalNotesBlock are controlled and
+ * hold no state of their own), so a stale overlay would surface here as the
+ * input reverting to its previous value after the parent re-renders.
+ */
+describe('usePendingModifications live loop with CanvasView', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  // Local usage/consultation fixtures with a real vitals field def — the
+  // module-level `usage` fixture uses `fields: []` (irrelevant to the
+  // PATCH-body tests above), which renders no input for VitalsBlock to type
+  // into.
+  const usageWithVitalsField = {
+    ...usage,
+    content: {
+      ...usage.content,
+      blocks: [
+        {
+          id: 'vit-1',
+          type: 'vitals',
+          fields: [{ id: 'temp', label: 'Temperatura', input_type: 'number' }],
+          values: { temp: 36.5 },
+        },
+        usage.content.blocks[1],
+        usage.content.blocks[2],
+      ],
+    },
+  } as unknown as ConsultationProtocolUsage
+  const consultationWithVitalsField = {
+    ...consultation,
+    protocolUsages: [usageWithVitalsField],
+  } as unknown as ConsultationWithDetails
+
+  function Harness({ initial }: { initial: ConsultationWithDetails }): React.ReactElement {
+    const { record, withPending, recordContentEdit } = usePendingModifications('cons-1')
+    const overlaid = withPending(initial)
+    const activeUsage = overlaid.protocolUsages[0]!
+    return (
+      <CanvasView
+        usage={activeUsage}
+        onCheck={() => {}}
+        onModification={(event) => record(activeUsage.id, event)}
+        onContentEdit={(blockId, edit) => recordContentEdit(activeUsage.id, blockId, edit)}
+        isSigned={false}
+      />
+    )
+  }
+
+  it('round-trips a typed vitals value through the overlay back into the input', () => {
+    const { wrapper } = makeClientAndWrapper()
+    render(<Harness initial={consultationWithVitalsField} />, { wrapper })
+
+    const tempInput = screen.getByDisplayValue('36.5')
+    fireEvent.change(tempInput, { target: { value: '39.2' } })
+
+    expect(screen.getByDisplayValue('39.2')).toBeInTheDocument()
+  })
+
+  it('round-trips typed clinical notes text through the overlay back into the textarea', () => {
+    const { wrapper } = makeClientAndWrapper()
+    render(<Harness initial={consultation} />, { wrapper })
+
+    const textarea = screen.getByDisplayValue('original')
+    fireEvent.change(textarea, { target: { value: 'Paciente refiere mejoría' } })
+
+    expect(screen.getByDisplayValue('Paciente refiere mejoría')).toBeInTheDocument()
+  })
+})
+
+describe('computeMissingRequiredFields liveness against the pending overlay', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const usageWithRequiredNotes = {
+    ...usage,
+    id: 'usage-req',
+    status: 'in_progress',
+    modifications: {},
+    content: {
+      version: '1',
+      blocks: [
+        { id: 'notes-req', type: 'clinical_notes', label: 'Notas', content: '', required: true },
+      ],
+    },
+  } as unknown as ConsultationProtocolUsage
+
+  const consultationWithRequiredNotes = {
+    id: 'cons-1',
+    status: 'open',
+    protocolUsages: [usageWithRequiredNotes],
+  } as unknown as ConsultationWithDetails
+
+  it('lists the required clinical_notes block as missing while empty, and clears it once recordContentEdit fills it', () => {
+    const { wrapper } = makeClientAndWrapper()
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    const beforeMissing = computeMissingRequiredFields(
+      result.current.withPending(consultationWithRequiredNotes).protocolUsages,
+    )
+    expect(beforeMissing.map((f) => f.id)).toContain('protocol:usage-req:notes-req')
+
+    act(() => {
+      result.current.recordContentEdit('usage-req', 'notes-req', {
+        kind: 'notes',
+        content: 'Sin hallazgos relevantes',
+      })
+    })
+
+    const afterMissing = computeMissingRequiredFields(
+      result.current.withPending(consultationWithRequiredNotes).protocolUsages,
+    )
+    expect(afterMissing.map((f) => f.id)).not.toContain('protocol:usage-req:notes-req')
   })
 })

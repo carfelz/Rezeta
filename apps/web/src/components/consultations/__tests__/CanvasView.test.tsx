@@ -94,4 +94,23 @@ describe('CanvasView', () => {
     expect(onContinue).toHaveBeenCalled()
   })
 
+  it('threads onContentEdit into a clinical_notes block so typing invokes it', () => {
+    const onContentEdit = vi.fn()
+    const usage = makeUsage({
+      content: {
+        version: '1.0',
+        blocks: [{ id: 'notes_1', type: 'clinical_notes', label: 'Notas', content: '' }],
+      },
+    })
+    render(
+      <CanvasView usage={usage} onCheck={vi.fn()} isSigned={false} onContentEdit={onContentEdit} />,
+    )
+    fireEvent.change(screen.getByPlaceholderText('Escribir notas…'), {
+      target: { value: 'Paciente estable' },
+    })
+    expect(onContentEdit).toHaveBeenCalledWith('notes_1', {
+      kind: 'notes',
+      content: 'Paciente estable',
+    })
+  })
 })
