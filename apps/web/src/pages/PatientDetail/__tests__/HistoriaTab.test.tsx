@@ -146,4 +146,11 @@ describe('HistoriaTab', () => {
 
     expect(screen.queryAllByRole('textbox')).toHaveLength(0)
   })
+
+  it('renders the expediente export button and triggers the download', () => {
+    const spy = vi.spyOn(recordHooks, 'downloadExpediente').mockResolvedValue()
+    render(<HistoriaTab patientId="p1" />)
+    fireEvent.click(screen.getByRole('button', { name: /Exportar expediente/ }))
+    expect(spy).toHaveBeenCalledWith('p1')
+  })
 })

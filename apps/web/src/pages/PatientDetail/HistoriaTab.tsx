@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Badge, Overline, Spinner } from '@/components/ui'
+import { Badge, Button, Spinner } from '@/components/ui'
 import { usePatientConsultations } from '@/hooks/consultations/use-consultations'
+import { downloadExpediente } from '@/hooks/consultations/use-consultation-record'
 import { RecordDocument } from './RecordDocument'
 import { patientDetailStrings as s } from './strings'
 
@@ -34,10 +35,13 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
   return (
     <div className="grid grid-cols-[280px_1fr] min-h-[400px] -m-5">
       <div className="border-r border-n-200 bg-n-25" data-testid="historia-consultation-list">
-        <div className="px-4 py-3 border-b border-n-100">
-          <Overline size="sm" tone="neutral">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
+          <span className="font-mono text-[11px] uppercase tracking-[0.10em] text-n-400">
             {s.historiaListTitle}
-          </Overline>
+          </span>
+          <Button variant="secondary" size="sm" onClick={() => void downloadExpediente(patientId)}>
+            <i className="ph ph-download-simple" /> {s.historiaExport}
+          </Button>
         </div>
         {list.map((c) => (
           <button

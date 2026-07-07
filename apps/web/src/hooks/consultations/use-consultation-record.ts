@@ -95,3 +95,8 @@ export async function downloadRecordPdf(consultationId: string): Promise<void> {
   const blob = await apiClient.download(`/v1/consultations/${consultationId}/record/pdf`)
   triggerDownload(blob, `historia-${consultationId}.pdf`)
 }
+
+export async function downloadExpediente(patientId: string): Promise<void> {
+  const blob = await apiClient.download(`/v1/patients/${patientId}/record-export`)
+  triggerDownload(blob, `expediente-${patientId}.pdf`)
+}

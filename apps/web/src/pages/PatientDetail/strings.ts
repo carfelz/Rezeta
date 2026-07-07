@@ -77,6 +77,7 @@ export const patientDetailStrings = {
   historiaEmpty: 'Selecciona una consulta para ver su historia médica.',
   historiaOnlySigned: 'La historia se genera al firmar la consulta.',
   historiaMissingSections: 'Completa las secciones requeridas antes de firmar.',
+  historiaExport: 'Exportar expediente',
 
   // ── Shared ──────────────────────────────────────────────────────────────────
   loadError: 'No se pudo cargar la información. Intenta de nuevo.',
