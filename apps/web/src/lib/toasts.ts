@@ -34,6 +34,8 @@ export const toastStrings = {
   errorHistoriaSign: 'No se pudo firmar la historia médica.',
   errorHistoriaDownload: 'No se pudo descargar el documento.',
   historiaMissingSections: 'Completa las secciones requeridas antes de firmar.',
+  historiaMissingSectionsNamed: (names: string[]) =>
+    `Completa las secciones requeridas: ${names.join(', ')}`,
 
   // ── Prescriptions & Orders ──────────────────────────────────────────────────
   prescriptionCreated: 'Receta generada',

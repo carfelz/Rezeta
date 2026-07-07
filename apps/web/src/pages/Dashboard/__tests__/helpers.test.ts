@@ -42,4 +42,10 @@ describe('describeAuditEntry', () => {
     expect(describeAuditEntry(entry({ action: 'consultation.sign' })).detail).toContain('firmó')
     expect(describeAuditEntry(entry({ action: 'auth.login' })).detail).toBe(' inició sesión')
   })
+
+  it('maps the Onboarding entityType to a friendly Spanish label', () => {
+    expect(
+      describeAuditEntry(entry({ action: 'onboarding.create', entityType: 'Onboarding' })).detail,
+    ).toBe(' creó la configuración inicial')
+  })
 })

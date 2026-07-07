@@ -92,6 +92,7 @@ function friendlyEntity(t: string): string {
     Location: 'una ubicación',
     ProtocolType: 'un tipo de protocolo',
     ProtocolTemplate: 'una plantilla',
+    Onboarding: 'la configuración inicial',
   }
   return map[t] ?? `un registro (${t})`
 }

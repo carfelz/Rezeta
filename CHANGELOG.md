@@ -4,6 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Nombre de entidad de auditoría y secciones faltantes al firmar historia
+
+### Fixed
+
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: el singularizador de segmentos de URL usaba `slice(1, -1)`, que le quitaba la última letra a cualquier segmento no-plural (`onboarding` → `Onboardin`). Ahora `toEntityType` solo recorta la `s` final cuando el segmento realmente termina en plural (`patients` → `Patient`); segmentos como `onboarding` se capitalizan sin recortar.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` ganó la entrada `Onboarding: 'la configuración inicial'`, que antes no existía y caía al formato genérico «un registro (Onboarding)» en el feed de actividad del dashboard.
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: el `onError` de `useSignRecord` ahora lee `err.error.details.missing` (ya provisto por la API, `consultation-records.service.ts`) y arma el toast con los títulos en español de las secciones faltantes (`RECORD_SECTION_TITLES` de `@rezeta/shared`), en vez del genérico «Completa las secciones requeridas antes de firmar.» que no indicaba cuáles. Se mantiene el mensaje genérico como fallback si `details` viene ausente o vacío. Nueva cadena `historiaMissingSectionsNamed` en `apps/web/src/lib/toasts.ts`.
+- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` (segmento plural vs. no-plural), `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` (mapeo de `Onboarding`), `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx` (toast con nombres de sección vs. genérico sin `details`).
+
 ## [2026-07-07] Corregida fecha de nacimiento desfasada un día (F8)
 
 ### Added

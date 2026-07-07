@@ -16,7 +16,9 @@ import { toastStrings } from '@/lib/toasts'
 
 vi.mock('@/lib/api-client', () => {
   class MockApiRequestError extends Error {
-    constructor(public readonly error: { code: string; message: string }) {
+    constructor(
+      public readonly error: { code: string; message: string; details?: Record<string, unknown> },
+    ) {
       super(error.message)
       this.name = 'ApiRequestError'
     }
@@ -80,7 +82,7 @@ describe('useSignRecord', () => {
     expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSign)
   })
 
-  it('toasts the missing-sections string when the API rejects with RECORD_REQUIRED_SECTIONS_MISSING', async () => {
+  it('toasts the generic missing-sections string when the API rejects without details', async () => {
     vi.mocked(apiClient.post).mockRejectedValue(
       new ApiRequestError({ code: 'RECORD_REQUIRED_SECTIONS_MISSING', message: 'x' }),
     )
@@ -89,6 +91,23 @@ describe('useSignRecord', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(toast.error).toHaveBeenCalledWith(toastStrings.historiaMissingSections)
     expect(toast.error).not.toHaveBeenCalledWith(toastStrings.errorHistoriaSign)
+  })
+
+  it('toasts the missing section names when the API rejects with details.missing', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(
+      new ApiRequestError({
+        code: 'RECORD_REQUIRED_SECTIONS_MISSING',
+        message: 'x',
+        details: { missing: ['motivo_consulta', 'plan_tratamiento'] },
+      }),
+    )
+    const { result } = renderHook(() => useSignRecord('c1'), { wrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    const [message] = vi.mocked(toast.error).mock.calls[0] as [string]
+    expect(message).toContain('Motivo de consulta')
+    expect(message).toContain('Plan de tratamiento')
+    expect(toast.error).not.toHaveBeenCalledWith(toastStrings.historiaMissingSections)
   })
 })
 

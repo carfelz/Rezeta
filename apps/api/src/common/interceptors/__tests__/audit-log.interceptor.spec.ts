@@ -180,6 +180,22 @@ describe('AuditLogInterceptor', () => {
     expect(event['requestId']).toBe('req-abc-123')
   })
 
+  it('singularizes a plural resource segment for entityType', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/patients', params: {} })
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler()))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['entityType']).toBe('Patient')
+  })
+
+  it('does not chop the trailing letter off a non-plural resource segment', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/onboarding', params: {} })
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler()))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['entityType']).toBe('Onboarding')
+  })
+
   it('resolves action as "archive" for PATCH /archive path', async () => {
     const req = makeRequest({
       method: 'PATCH',
