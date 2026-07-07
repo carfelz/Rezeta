@@ -445,7 +445,13 @@ export class ConsultationsService {
     tenantId: string,
     dto: UpdateProtocolUsageDto,
   ): Promise<ConsultationProtocolUsage> {
-    await this.getById(consultationId, tenantId)
+    const c = await this.getById(consultationId, tenantId)
+    if (c.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.CONSULTATION_ALREADY_SIGNED,
+        message: 'Cannot edit a signed consultation — use amend instead',
+      })
+    }
     const usage = await this.repo.findProtocolUsageById(usageId, tenantId)
     if (!usage || usage.consultationId !== consultationId) {
       throw new NotFoundException({

@@ -9,9 +9,17 @@ import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta
 const mockMutate = vi.fn()
 const mockMutation = { mutate: mockMutate, isPending: false }
 
+// removeUsageMutation.mutate signature: (usageId, { onSuccess }) — invoke onSuccess
+// synchronously so wiring tests can assert on the removal success path.
+const mockRemoveMutate = vi.fn(
+  (usageId: string, opts?: { onSuccess?: (usageId: string) => void }) =>
+    opts?.onSuccess?.(usageId),
+)
+const mockRemoveMutation = { mutate: mockRemoveMutate, isPending: false }
+
 vi.mock('@/hooks/consultations/use-consultations', () => ({
   useAddProtocolUsage: () => mockMutation,
-  useRemoveProtocolUsage: () => mockMutation,
+  useRemoveProtocolUsage: () => mockRemoveMutation,
   useSkipStep: () => mockMutation,
   useAddOffProtocolNote: () => mockMutation,
 }))
@@ -105,6 +113,8 @@ function renderPanel(
         readOnly={false}
         onRecordModification={vi.fn()}
         onFlushPending={vi.fn(async () => true)}
+        onUsageRemoved={vi.fn()}
+        onRecordContentEdit={vi.fn()}
         showSign={false}
         onShowSignChange={vi.fn()}
         showAmend={false}
@@ -157,5 +167,37 @@ describe('ProtocolPanel', () => {
       checked: true,
     })
     expect(mockMutate).not.toHaveBeenCalled()
+  })
+
+  it('binds onContentEdit to the active usage id when a clinical_notes field changes', () => {
+    const onRecordContentEdit = vi.fn()
+    const usage = makeUsage({
+      content: {
+        version: '1.0',
+        blocks: [{ id: 'notes_1', type: 'clinical_notes', label: 'Notas', content: '' }],
+      } as never,
+    })
+    renderPanel({ consultation: makeConsultation([usage]), onRecordContentEdit })
+
+    fireEvent.change(screen.getByPlaceholderText('Escribir notas…'), {
+      target: { value: 'Sin alergias conocidas' },
+    })
+
+    expect(onRecordContentEdit).toHaveBeenCalledWith('usage-1', 'notes_1', {
+      kind: 'notes',
+      content: 'Sin alergias conocidas',
+    })
+  })
+
+  it('discards pending buffers for the removed usage once removal succeeds', () => {
+    const onUsageRemoved = vi.fn()
+    const usage = makeUsage({ content: { version: '1.0', blocks: [] } as never })
+    renderPanel({ consultation: makeConsultation([usage]), onUsageRemoved })
+
+    fireEvent.click(screen.getByRole('button', { name: /Continuar sin protocolo/i }))
+
+    expect(mockRemoveMutate).toHaveBeenCalledWith('usage-1', expect.any(Object))
+    expect(onUsageRemoved).toHaveBeenCalledTimes(1)
+    expect(onUsageRemoved).toHaveBeenCalledWith('usage-1')
   })
 })

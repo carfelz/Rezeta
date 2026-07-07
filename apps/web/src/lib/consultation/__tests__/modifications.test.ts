@@ -118,6 +118,30 @@ describe('appendModification', () => {
     ])
   })
 
+  it('vitals_entered appends to vitals_entered', () => {
+    const result = appendModification(empty, {
+      type: 'vitals_entered',
+      block_id: 'blk1',
+      values: { heart_rate: 72, blood_pressure: '120/80' },
+    })
+    expect(result.vitals_entered).toEqual([
+      {
+        block_id: 'blk1',
+        values: { heart_rate: 72, blood_pressure: '120/80' },
+        timestamp: FIXED_TS,
+      },
+    ])
+  })
+
+  it('notes_edited appends to notes_edited', () => {
+    const result = appendModification(empty, {
+      type: 'notes_edited',
+      block_id: 'blk2',
+      length: 42,
+    })
+    expect(result.notes_edited).toEqual([{ block_id: 'blk2', length: 42, timestamp: FIXED_TS }])
+  })
+
   it('does not mutate existing object', () => {
     const existing: ProtocolUsageModifications = { steps_completed: [] }
     appendModification(existing, { type: 'step_completed', step_id: 's1' })

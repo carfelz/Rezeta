@@ -510,6 +510,53 @@ describe('buildGenerationInput (via ensureDraft)', () => {
   })
 })
 
+describe('run-mode vitals and clinical_notes content into historia', () => {
+  it('reflects vitals block with values and clinical_notes in the draft', async () => {
+    const vitalFields = [
+      { id: 'weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+      { id: 'height', label: 'Altura', unit: 'cm', input_type: 'number' },
+      { id: 'bmi', label: 'IMC', unit: 'kg/m²', input_type: 'number' },
+      { id: 'bp', label: 'PA', unit: 'mmHg', input_type: 'text' },
+    ]
+    mockRepo.findLatest.mockResolvedValue(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(
+      makeConsultationRow({
+        protocolUsages: [
+          {
+            content: {
+              blocks: [
+                {
+                  id: 'v1',
+                  type: 'vitals',
+                  fields: vitalFields,
+                  values: { weight: '80', height: '175', bmi: '26.1', bp: '120/80' },
+                },
+                {
+                  id: 'cn1',
+                  type: 'clinical_notes',
+                  label: 'Motivo de consulta',
+                  content: 'Control de HTA.',
+                },
+              ],
+            },
+            modifications: {},
+          },
+        ],
+      }),
+    )
+    mockPrisma.consultation.count.mockResolvedValue(0)
+    mockRepo.create.mockImplementation((data) => Promise.resolve(makeRecord({ sections: data.sections })))
+    const result = await svc.ensureDraft('c1', 't1')
+    const examenFisico = result.sections.find((s) => s.key === 'examen_fisico')
+    expect(examenFisico?.content).toContain('Peso 80 kg')
+    expect(examenFisico?.content).toContain('Altura 175 cm')
+    expect(examenFisico?.content).toContain('IMC 26.1 kg/m²')
+    expect(examenFisico?.content).toContain('PA 120/80 mmHg')
+    const motivoConsulta = result.sections.find((s) => s.key === 'motivo_consulta')
+    expect(motivoConsulta?.content).toBe('Control de HTA.')
+  })
+})
+
 describe('getExpedienteData', () => {
   it('collects signed records newest-first with their consultation context', async () => {
     mockPrisma.patient.findFirst.mockResolvedValue({
