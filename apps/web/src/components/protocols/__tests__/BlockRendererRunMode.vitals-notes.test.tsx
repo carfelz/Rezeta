@@ -224,6 +224,33 @@ describe('BlockRendererRunMode — vitals', () => {
     expect(onContentEdit).not.toHaveBeenCalled()
     expect(onModification).not.toHaveBeenCalled()
   })
+
+  it('emits no modification when a field is focused and blurred with no change', () => {
+    const onModification = vi.fn()
+    const block = vitalsBlock({ values: { weight: '70' } })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />)
+
+    const weightInput = getNumberInput(0)
+    fireEvent.focus(weightInput)
+    fireEvent.blur(weightInput)
+
+    expect(onModification).not.toHaveBeenCalled()
+  })
+
+  it('emits exactly once after a change then blur, and emits nothing on a second focus/blur with no further change', () => {
+    const onModification = vi.fn()
+    const block = vitalsBlock({ values: { weight: '70' } })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />)
+
+    const weightInput = getNumberInput(0)
+    fireEvent.change(weightInput, { target: { value: '80' } })
+    fireEvent.blur(weightInput)
+    expect(onModification).toHaveBeenCalledTimes(1)
+
+    fireEvent.focus(weightInput)
+    fireEvent.blur(weightInput)
+    expect(onModification).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('BlockRendererRunMode — clinical_notes', () => {
@@ -316,5 +343,32 @@ describe('BlockRendererRunMode — clinical_notes', () => {
 
     expect(onContentEdit).not.toHaveBeenCalled()
     expect(onModification).not.toHaveBeenCalled()
+  })
+
+  it('emits no modification when the textarea is focused and blurred with no change', () => {
+    const onModification = vi.fn()
+    const block = notesBlock({ content: 'Hola' })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />)
+
+    const textarea = screen.getByRole('textbox')
+    fireEvent.focus(textarea)
+    fireEvent.blur(textarea)
+
+    expect(onModification).not.toHaveBeenCalled()
+  })
+
+  it('emits exactly once after a change then blur, and emits nothing on a second focus/blur with no further change', () => {
+    const onModification = vi.fn()
+    const block = notesBlock({ content: '' })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode({ onModification })} />)
+
+    const textarea = screen.getByRole('textbox')
+    fireEvent.change(textarea, { target: { value: 'abc' } })
+    fireEvent.blur(textarea)
+    expect(onModification).toHaveBeenCalledTimes(1)
+
+    fireEvent.focus(textarea)
+    fireEvent.blur(textarea)
+    expect(onModification).toHaveBeenCalledTimes(1)
   })
 })

@@ -495,6 +495,12 @@ function VitalsRunMode({
   const latestValues = useRef(values)
   latestValues.current = values
 
+  // True only when at least one onChange fired since the last emitted (or
+  // reset) modification event. Focusing a field and clicking away with no
+  // edit must NOT append a `vitals_entered` event to the append-only
+  // modifications audit trail — only an actual change should.
+  const dirtySinceLastEmit = useRef(false)
+
   return (
     <div
       onBlur={(event) => {
@@ -509,11 +515,13 @@ function VitalsRunMode({
         // contained by currentTarget); only emit once focus actually leaves
         // the block, which is the standard focusout-coalescing pattern.
         if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+        if (!dirtySinceLastEmit.current) return
         onModification?.({
           type: 'vitals_entered',
           block_id: blockId,
           values: latestValues.current,
         })
+        dirtySinceLastEmit.current = false
       }}
     >
       <VitalsBlock
@@ -527,6 +535,7 @@ function VitalsRunMode({
           if (isSigned) return
           const merged = withDerivedBMI(fields, { ...latestValues.current, [fieldId]: raw })
           latestValues.current = merged
+          dirtySinceLastEmit.current = true
           onContentEdit?.(blockId, { kind: 'vitals', values: merged })
         }}
       />
@@ -563,15 +572,23 @@ function ClinicalNotesRunMode({
   const latestContent = useRef(content)
   latestContent.current = content
 
+  // True only when at least one onChange fired since the last emitted (or
+  // reset) modification event. Focusing the textarea and blurring with no
+  // edit must NOT append a `notes_edited` event to the append-only
+  // modifications audit trail — only an actual change should.
+  const dirtySinceLastEmit = useRef(false)
+
   return (
     <div
       onBlur={() => {
         if (isSigned) return
+        if (!dirtySinceLastEmit.current) return
         onModification?.({
           type: 'notes_edited',
           block_id: blockId,
           length: latestContent.current.length,
         })
+        dirtySinceLastEmit.current = false
       }}
     >
       <ClinicalNotesBlock
@@ -583,6 +600,7 @@ function ClinicalNotesRunMode({
           // Defense in depth, same rationale as VitalsRunMode above.
           if (isSigned) return
           latestContent.current = nextContent
+          dirtySinceLastEmit.current = true
           onContentEdit?.(blockId, { kind: 'notes', content: nextContent })
         }}
       />
