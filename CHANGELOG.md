@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Corregida fecha de nacimiento desfasada un día (F8)
+
+### Added
+
+- `parseDateOnly` en `apps/web/src/lib/format/dates.ts`: parsea cadenas `'YYYY-MM-DD'` (o con sufijo de hora, que se ignora) como medianoche LOCAL, evitando el desfase de `new Date('YYYY-MM-DD')`, que interpreta la cadena como medianoche UTC y, al formatearse en `America/Santo_Domingo` (UTC-4), muestra el día anterior.
+
+### Fixed
+
+- `formatDate`/`formatAge` (`apps/web/src/pages/Patients/helpers.ts`), usados por `PatientDetail/DemographicsBlock.tsx` y `Patients/PatientModal.tsx` para mostrar `patient.dateOfBirth` (columna `@db.Date`, sin componente de hora): un paciente nacido el 15/03/1972 se mostraba como «14 de marzo de 1972» y con un año de menos en el borde del cumpleaños. Ambas funciones ahora usan `parseDateOnly` en vez de `new Date(iso)`.
+- Auditados los `formatDate` hermanos que consumen strings ISO (`Schedule/helpers.ts`, `Consultation/helpers.ts`, `Billing/helpers.ts`, `PatientDetail/PrescriptionsTab.tsx`, `PatientDetail/AppointmentsTab.tsx`, `Dashboard/helpers.ts`): todos reciben columnas `DateTime` completas (`startsAt`, `signedAt`, `amendedAt`, `createdAt`, etc.), no fechas puras — se dejaron sin cambios porque no tienen el bug.
+
 ## [2026-07-07] Paridad de bloques en el editor de plantillas: signos vitales, nota clínica y órdenes
 
 ### Added
