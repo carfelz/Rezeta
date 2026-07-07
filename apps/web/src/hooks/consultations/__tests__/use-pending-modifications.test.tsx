@@ -424,6 +424,61 @@ describe('usePendingModifications', () => {
     expect(content.blocks[0]).toEqual({ id: 'vit-1', type: 'vitals', fields: [], values: { temp: 38 } })
   })
 
+  it('flush skips a usage whose content edits are buffered but the usage is missing from the cache, keeping both buffers and sending no empty body', async () => {
+    const { client, wrapper } = makeClientAndWrapper()
+    // Only usage-1 is in the cache; usage-missing has a buffered content edit
+    // but no matching usage (e.g. evicted from the cache by a refetch race).
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.recordContentEdit('usage-missing', 'notes-x', {
+        kind: 'notes',
+        content: 'orphaned',
+      })
+    })
+
+    let ok = false
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+
+    expect(ok).toBe(true)
+    // No PATCH at all — the only pending usage was skipped, not sent.
+    expect(apiClient.patch).not.toHaveBeenCalled()
+    // The buffer for the missing usage survives so a later flush can retry it.
+    expect(result.current.hasPending).toBe(true)
+    const merged = result.current.withPending(client.getQueryData(['consultations', 'cons-1'])!)
+    expect(merged.protocolUsages.find((u) => u.id === 'usage-missing')).toBeUndefined()
+  })
+
+  it('flush skips only the usage missing from the cache while still flushing a co-pending usage that is present', async () => {
+    const serverUsage = { ...usage, id: 'usage-1', modificationSummary: 'ok' }
+    vi.mocked(apiClient.patch).mockResolvedValue(serverUsage)
+    const { wrapper } = makeClientAndWrapper()
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.recordContentEdit('usage-missing', 'notes-x', {
+        kind: 'notes',
+        content: 'orphaned',
+      })
+      result.current.record('usage-1', { type: 'checklist_item', item_id: 'itm-1', checked: true })
+    })
+
+    let ok = false
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+
+    expect(ok).toBe(true)
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    const [url] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(url).toBe('/v1/consultations/cons-1/protocols/usage-1')
+    // The skipped usage's content edit is still buffered afterward, even
+    // though the co-pending usage-1 delta was flushed and cleared.
+    expect(result.current.hasPending).toBe(true)
+  })
+
   it('discardUsage is a no-op when the usage has nothing buffered', () => {
     const { result } = renderHook(() => usePendingModifications('cons-1'), {
       wrapper: makeClientAndWrapper().wrapper,

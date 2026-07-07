@@ -165,10 +165,20 @@ export function usePendingModifications(consultationId: string): PendingModifica
     if (usageIds.size === 0) return true
 
     const consultation = qc.getQueryData<ConsultationWithDetails>([QK, consultationId])
+    // A usage with buffered content edits but missing from the cache can't be
+    // merged into a full content payload — sending {} (or modifications-only,
+    // silently dropping the content edits) would either no-op or lose data.
+    // Skip that usage's PATCH entirely and keep both its buffers so a later
+    // flush (once the usage is back in the cache) can retry it.
+    const skipped = new Set<string>()
     const entries = Array.from(usageIds, (usageId) => {
       const delta = pendingRef.current[usageId]
       const contentEdits = contentPendingRef.current[usageId]
       const usage = consultation?.protocolUsages.find((u) => u.id === usageId)
+      if (contentEdits && !usage) {
+        skipped.add(usageId)
+        return null
+      }
       const content =
         contentEdits && usage ? mergeContent(usage.content, contentEdits) : undefined
       const body = {
@@ -176,9 +186,20 @@ export function usePendingModifications(consultationId: string): PendingModifica
         ...(content ? { content } : {}),
       }
       return [usageId, delta, contentEdits, body] as const
-    })
-    commitPending({})
-    commitContentPending({})
+    }).filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+
+    // Clear every buffer that IS being flushed; keep the buffers for anything
+    // skipped so they survive this flush cycle untouched (not sent, not lost).
+    const retainedPending: PendingByUsage = {}
+    const retainedContent: ContentEditsByUsage = {}
+    for (const usageId of skipped) {
+      const delta = pendingRef.current[usageId]
+      if (delta) retainedPending[usageId] = delta
+      const contentEdits = contentPendingRef.current[usageId]
+      if (contentEdits) retainedContent[usageId] = contentEdits
+    }
+    commitPending(retainedPending)
+    commitContentPending(retainedContent)
 
     const results = await Promise.allSettled(
       entries.map(([usageId, , , body]) =>
