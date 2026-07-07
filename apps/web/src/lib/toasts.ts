@@ -124,6 +124,7 @@ export const toastStrings = {
   // ── Generic ─────────────────────────────────────────────────────────────────
   errorGeneric: 'Ocurrió un error. Intenta de nuevo.',
   errorNetwork: 'Error de conexión. Verifica tu red.',
+  errorRequestTimeout: 'La solicitud tardó demasiado. Revisa tu conexión e inténtalo de nuevo.',
 } as const
 
 /**
