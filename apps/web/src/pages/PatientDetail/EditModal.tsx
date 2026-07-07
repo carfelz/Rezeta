@@ -133,6 +133,7 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
                     <SelectItem value="passport">
                       {patientDetailStrings.documentTypePassport}
                     </SelectItem>
+                    <SelectItem value="rnc">{patientDetailStrings.documentTypeRnc}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

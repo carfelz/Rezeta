@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Batch de hallazgos E2E: diálogo de consulta, órdenes, RNC y redondeo de signos vitales
+
+### Changed
+
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: eliminado el modo inline `create-patient` (botón "Crear paciente" + formulario mínimo nombre/apellido/fecha de nacimiento) — la única vía de creación de paciente ahora es la opción "Nuevo paciente" del propio `PatientCombobox`, que abre el `PatientModal` completo (con antecedentes). El campo de búsqueda del paciente ahora usa el `Field` label correcto (`patientLabel: 'Paciente'`) en vez de reutilizar el título del modal. `newConsultationDialogStrings.ts` perdió `createPatientAction`, `backToSearchAction`, `firstNameLabel`, `lastNameLabel`, `dateOfBirthLabel` (código muerto) y ganó `patientLabel`.
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: la fila de medicamento en cola ya no muestra el `source` crudo (p. ej. `protocol:row_e2e_1`); ahora renderiza `sourceFromProtocol: 'Desde protocolo'` cuando `source` empieza con `protocol:`, y nada en cualquier otro caso (nunca un id crudo). Nueva cadena en `apps/web/src/components/consultations/strings.ts`.
+- `apps/web/src/pages/Protocols/strings.ts`: `emptyDescription` del estado vacío de Protocolos simplificado a `'Crea tu primer protocolo a partir de una plantilla.'` (ya no menciona "o desde cero", que no es una vía soportada).
+
+### Added
+
+- `<SelectItem value="rnc">` en los selects de tipo de documento de `apps/web/src/pages/Patients/PatientModal.tsx` (`docTypeRnc: 'RNC'` en `pages/Patients/strings.ts`) y `apps/web/src/pages/PatientDetail/EditModal.tsx` (`documentTypeRnc: 'RNC'` en `pages/PatientDetail/strings.ts`) — el enum Zod compartido ya soportaba `'rnc'`, pero la UI no ofrecía la opción.
+
+### Fixed
+
+- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: los campos numéricos de signos vitales (p. ej. peso) podían persistir artefactos de punto flotante del `<input type="number">` del navegador (`81.4000015258789`). Nueva `normalizeVitalsValues` redondea a máximo 2 decimales, aplicada solo al hacer blur (commit), nunca por cada tecla — redondear mientras se escribe rompería la edición de valores como "81." a medio escribir.
+- Tests: `NewConsultationDialog.test.tsx` (label del picker, un único affordance de creación, elimina el test del modo inline muerto), nuevo `OrderQueuePanel.test.tsx` (caption "Desde protocolo" vs. fuente cruda vs. sin fuente), `PatientModal.test.tsx` y `EditModal.test.tsx` (opción RNC llega al payload), `BlockRendererRunMode.vitals-notes.test.tsx` (redondeo solo al blur).
+
 ## [2026-07-07] Nombre de entidad de auditoría y secciones faltantes al firmar historia
 
 ### Fixed

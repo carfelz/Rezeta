@@ -45,6 +45,7 @@ export const patientModalStrings = {
   docTypePlaceholder: 'Seleccionar',
   docTypeCedula: 'Cédula',
   docTypePassport: 'Pasaporte',
+  docTypeRnc: 'RNC',
   docNumberLabel: 'Número de documento',
   docNumberPlaceholder: 'Ej. 001-1234567-8',
   phoneLabel: 'Teléfono',

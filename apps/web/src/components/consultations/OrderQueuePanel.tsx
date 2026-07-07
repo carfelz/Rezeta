@@ -639,14 +639,14 @@ function MedicationGroup({
                       {med.notes}
                     </Caption>
                   )}
-                  {med.source && (
+                  {med.source?.startsWith('protocol:') && (
                     <Caption
                       tone="primary"
                       size="xs"
                       as="div"
                       className="font-mono mt-1 opacity-70"
                     >
-                      {med.source}
+                      {orderQueueStrings.sourceFromProtocol}
                     </Caption>
                   )}
                 </div>

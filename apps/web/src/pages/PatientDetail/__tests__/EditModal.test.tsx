@@ -13,6 +13,15 @@ vi.mock('@/hooks/patients/use-patients', () => ({
 
 import { EditModal } from '../EditModal'
 
+// Radix Select's pointerdown-based item selection needs these jsdom shims —
+// jsdom implements neither pointer capture nor scrollIntoView.
+beforeEach(() => {
+  Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+  Element.prototype.setPointerCapture = vi.fn()
+  Element.prototype.releasePointerCapture = vi.fn()
+  Element.prototype.scrollIntoView = vi.fn()
+})
+
 const patient: Patient = {
   id: 'p1',
   tenantId: 't1',
@@ -69,6 +78,20 @@ describe('EditModal', () => {
 
     expect(mocks.updateMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ allergies: [], chronicConditions: ['Diabetes'] }),
+    )
+  })
+
+  it('offers RNC as a document type option and reflects it in the update payload', async () => {
+    const user = userEvent.setup()
+    render(<EditModal patient={patient} onClose={vi.fn()} />)
+
+    // Selects in DOM order: sex, then document type — index 1 is doc type.
+    await user.click(screen.getAllByRole('combobox')[1]!)
+    await user.click(screen.getByRole('option', { name: 'RNC' }))
+    await user.click(screen.getByText('Guardar cambios'))
+
+    expect(mocks.updateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ documentType: 'rnc' }),
     )
   })
 })

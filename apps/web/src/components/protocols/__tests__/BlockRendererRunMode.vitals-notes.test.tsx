@@ -266,6 +266,42 @@ describe('BlockRendererRunMode — vitals', () => {
     expect(onModification).toHaveBeenCalledTimes(1)
   })
 
+  it('normalizes a float-artifact numeric value to at most 2 decimals only at blur (commit), not while typing', () => {
+    const onModification = vi.fn()
+    const onContentEdit = vi.fn()
+    const block = vitalsBlock({ values: { weight: '80' } })
+    render(
+      <BlockRendererRunMode
+        block={block}
+        runMode={baseRunMode({ onModification, onContentEdit })}
+      />,
+    )
+
+    const weightInput = getNumberInput(0)
+    fireEvent.change(weightInput, { target: { value: '81.4000015258789' } })
+
+    // While typing, onContentEdit propagates the raw value verbatim — rounding
+    // mid-keystroke would corrupt values like "81." before the user finishes.
+    expect(onContentEdit).toHaveBeenLastCalledWith('vitals-1', {
+      kind: 'vitals',
+      values: { weight: '81.4000015258789' },
+    })
+
+    fireEvent.blur(weightInput, { relatedTarget: null })
+
+    // At commit (blur), the float artifact is rounded to <= 2 decimals and
+    // re-propagated via onContentEdit so the persisted value is clean.
+    expect(onContentEdit).toHaveBeenLastCalledWith('vitals-1', {
+      kind: 'vitals',
+      values: { weight: '81.4' },
+    })
+    expect(onModification).toHaveBeenCalledWith({
+      type: 'vitals_entered',
+      block_id: 'vitals-1',
+      values: { weight: '81.4' },
+    })
+  })
+
   it('emits one vitals_entered event per editing burst: two separate bursts emit two events with correct final values', () => {
     const onModification = vi.fn()
     const block = vitalsBlock({ values: { weight: '70' } })

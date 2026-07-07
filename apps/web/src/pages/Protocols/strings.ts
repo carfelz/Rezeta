@@ -2,7 +2,7 @@ export const protocolsStrings = {
   pageTitle: 'Protocolos',
   newButton: 'Nuevo protocolo',
   emptyTitle: 'Sin protocolos todavía',
-  emptyDescription: 'Crea tu primer protocolo a partir de una plantilla o desde cero.',
+  emptyDescription: 'Crea tu primer protocolo a partir de una plantilla.',
   emptyCta: 'Nuevo protocolo',
   emptySearch: 'No hay protocolos que coincidan con tu búsqueda.',
   listUpdated: 'Actualizado',
