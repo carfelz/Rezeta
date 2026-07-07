@@ -53,6 +53,17 @@ describe('generateRecordSections', () => {
     expect(section(out, 'antecedentes')?.required ?? false).toBe(false)
   })
 
+  it('emits kind-valid optional sections with empty content when they have no data (editable, never omitted)', () => {
+    const out = generateRecordSections(makeInput())
+    const resultados = section(out, 'resultados_estudios')
+    expect(resultados).toBeDefined()
+    expect(resultados?.content).toBe('')
+    expect(resultados?.required).toBe(false)
+    const antecedentes = section(out, 'antecedentes')
+    expect(antecedentes).toBeDefined()
+    expect(antecedentes?.content).toBe('')
+  })
+
   it('requires antecedentes on first_visit and routes unmatched notes to enfermedad_actual', () => {
     const blocks: ProtocolBlock[] = [
       { id: 'b1', type: 'clinical_notes', label: 'Notas generales', content: 'Dolor torácico atípico.' } as ProtocolBlock,
@@ -95,7 +106,7 @@ describe('generateRecordSections', () => {
     expect(section(out, 'examen_fisico')?.content).not.toContain('Temp')
   })
 
-  it('summarizes checklist checked items, steps, and decisions into evolucion', () => {
+  it('derives checklist checked state from modifications.checklist_items (real app event shape)', () => {
     const blocks: ProtocolBlock[] = [
       {
         id: 'ck1',
@@ -103,9 +114,71 @@ describe('generateRecordSections', () => {
         title: 'Adherencia',
         items: [
           { id: 'i1', text: 'Toma dosis nocturna', checked: false },
-          { id: 'i2', text: 'Dieta hiposódica', checked: true },
+          { id: 'i2', text: 'Dieta hiposódica', checked: false },
         ],
       } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: {
+              checklist_items: [
+                { item_id: 'i2', checked: true, timestamp: '2026-07-01T10:00:00Z' },
+              ],
+            },
+          },
+        ],
+      }),
+    )
+    const evo = section(out, 'evolucion')?.content ?? ''
+    expect(evo).toContain('Adherencia: Dieta hiposódica')
+    expect(evo).not.toContain('Toma dosis nocturna')
+  })
+
+  it('last checklist_items event wins when an item is checked then unchecked', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck1',
+        type: 'checklist',
+        title: 'Adherencia',
+        items: [{ id: 'i1', text: 'Dieta hiposódica', checked: false }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: {
+              checklist_items: [
+                { item_id: 'i1', checked: true, timestamp: '2026-07-01T10:00:00Z' },
+                { item_id: 'i1', checked: false, timestamp: '2026-07-01T10:05:00Z' },
+              ],
+            },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Dieta hiposódica')
+  })
+
+  it('falls back to content-embedded checked flags when no modification event exists for that item', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck1',
+        type: 'checklist',
+        title: 'Adherencia',
+        items: [{ id: 'i1', text: 'Marcado en snapshot', checked: true }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content).toContain('Adherencia: Marcado en snapshot')
+  })
+
+  it('summarizes steps and decisions (real decision_branches shape: decision_id/branch_id) into evolucion', () => {
+    const blocks: ProtocolBlock[] = [
       {
         id: 'st1',
         type: 'steps',
@@ -131,17 +204,24 @@ describe('generateRecordSections', () => {
           {
             blocks,
             modifications: {
-              steps_completed: [{ step_id: 's1' }],
-              steps_skipped: [{ step_id: 's2', reason: 'sin oftalmoscopio' }],
-              decision_branches: [{ block_id: 'd1', branch_id: 'br2', branch_label: 'No' }],
+              steps_completed: [{ step_id: 's1', timestamp: '2026-07-01T10:00:00Z' }],
+              steps_skipped: [
+                { step_id: 's2', reason: 'sin oftalmoscopio', timestamp: '2026-07-01T10:01:00Z' },
+              ],
+              decision_branches: [
+                {
+                  decision_id: 'd1',
+                  branch_id: 'br2',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:02:00Z',
+                },
+              ],
             },
           },
         ],
       }),
     )
     const evo = section(out, 'evolucion')?.content ?? ''
-    expect(evo).toContain('Adherencia: Dieta hiposódica')
-    expect(evo).not.toContain('Toma dosis nocturna')
     expect(evo).toContain('Medir PA en ambos brazos')
     expect(evo).toContain('omitido')
     expect(evo).toContain('¿PA ≥ 160/100? → No')
@@ -317,7 +397,7 @@ describe('generateRecordSections', () => {
     expect(section(out, 'evolucion')?.content ?? '').not.toContain('Fiebre')
   })
 
-  it('resolves a decision branch label from block.branches when only branch_id is recorded', () => {
+  it('resolves a decision branch label from block.branches via branch_id', () => {
     const blocks: ProtocolBlock[] = [
       {
         id: 'd3',
@@ -334,7 +414,16 @@ describe('generateRecordSections', () => {
         usages: [
           {
             blocks,
-            modifications: { decision_branches: [{ block_id: 'd3', branch_id: 'br1' }] },
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'd3',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
           },
         ],
       }),
@@ -344,7 +433,7 @@ describe('generateRecordSections', () => {
     )
   })
 
-  it('produces no output when a decision has neither branch_label nor a matching branch_id', () => {
+  it('produces no output when the decision_id does not match any block (branch_id unresolvable)', () => {
     const blocks: ProtocolBlock[] = [
       {
         id: 'd4',
@@ -358,7 +447,16 @@ describe('generateRecordSections', () => {
         usages: [
           {
             blocks,
-            modifications: { decision_branches: [{ block_id: 'd4', branch_id: 'no-such-branch' }] },
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'no-such-decision',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
           },
         ],
       }),
@@ -439,8 +537,8 @@ describe('generateRecordSections', () => {
     const blocks: ProtocolBlock[] = [
       {
         id: 'ck4',
-        type: 'checklist',
         items: [{ id: 'i1', text: 'Ítem confirmado', checked: true }],
+        type: 'checklist',
       } as unknown as ProtocolBlock,
     ]
     const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
@@ -464,7 +562,12 @@ describe('generateRecordSections', () => {
     ]
     const out = generateRecordSections(
       makeInput({
-        usages: [{ blocks, modifications: { steps_skipped: [{ step_id: 's1' }] } }],
+        usages: [
+          {
+            blocks,
+            modifications: { steps_skipped: [{ step_id: 's1', timestamp: '2026-07-01T10:00:00Z' }] },
+          },
+        ],
       }),
     )
     expect(section(out, 'evolucion')?.content).toContain('Paso omitido sin razón (omitido)')
@@ -475,12 +578,19 @@ describe('generateRecordSections', () => {
     const blocks: ProtocolBlock[] = [
       {
         id: 'st5',
-        type: 'steps',
         steps: [{ id: 's1', order: 1, title: 'Paso completado' }],
+        type: 'steps',
       } as unknown as ProtocolBlock,
     ]
     const out = generateRecordSections(
-      makeInput({ usages: [{ blocks, modifications: { steps_completed: [{ step_id: 's1' }] } }] }),
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { steps_completed: [{ step_id: 's1', timestamp: '2026-07-01T10:00:00Z' }] },
+          },
+        ],
+      }),
     )
     expect(section(out, 'evolucion')?.content).toContain('Pasos: Paso completado')
   })
@@ -492,7 +602,19 @@ describe('generateRecordSections', () => {
     const out = generateRecordSections(
       makeInput({
         usages: [
-          { blocks, modifications: { decision_branches: [{ block_id: 'd5', branch_id: 'br1' }] } },
+          {
+            blocks,
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'd5',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
+          },
         ],
       }),
     )
@@ -513,12 +635,78 @@ describe('generateRecordSections', () => {
         usages: [
           {
             blocks,
-            modifications: { decision_branches: [{ block_id: 'd6', branch_id: 'br1', branch_label: '' }] },
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'd6',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
           },
         ],
       }),
     )
     expect(section(out, 'evolucion')?.content ?? '').not.toContain('Etiqueta vacía')
+  })
+})
+
+describe('off_protocol_notes', () => {
+  it('routes off_protocol_notes into evolucion on an evolution consultation, with timestamps stripped', () => {
+    const out = generateRecordSections(
+      makeInput({
+        kind: 'evolution',
+        usages: [
+          {
+            blocks: [],
+            modifications: {
+              off_protocol_notes: [
+                { title: 'Hallazgo incidental', note: 'Soplo sistólico leve.', timestamp: '2026-07-01T10:00:00Z' },
+              ],
+            },
+          },
+        ],
+      }),
+    )
+    const evo = section(out, 'evolucion')?.content ?? ''
+    expect(evo).toContain('Hallazgo incidental: Soplo sistólico leve.')
+    expect(evo).not.toContain('2026-07-01')
+  })
+
+  it('routes off_protocol_notes into enfermedad_actual on a first_visit consultation', () => {
+    const out = generateRecordSections(
+      makeInput({
+        kind: 'first_visit',
+        usages: [
+          {
+            blocks: [],
+            modifications: {
+              off_protocol_notes: [{ note: 'Antecedente relatado verbalmente.', timestamp: '2026-07-01T10:00:00Z' }],
+            },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'enfermedad_actual')?.content).toContain('Antecedente relatado verbalmente.')
+    expect(section(out, 'evolucion')).toBeUndefined()
+  })
+
+  it('renders an off-protocol note without a title as just the note text', () => {
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks: [],
+            modifications: {
+              off_protocol_notes: [{ note: 'Sin título.', timestamp: '2026-07-01T10:00:00Z' }],
+            },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toBe('Sin título.')
   })
 })
 
@@ -634,7 +822,7 @@ describe('historia_mapping overrides', () => {
         usages: [
           {
             blocks,
-            modifications: { steps_completed: [{ step_id: 's1' }] },
+            modifications: { steps_completed: [{ step_id: 's1', timestamp: '2026-07-01T10:00:00Z' }] },
             historiaMapping: { st1: { section: 'plan_tratamiento', label: 'Seguimiento' } },
           },
         ],
@@ -661,7 +849,16 @@ describe('historia_mapping overrides', () => {
         usages: [
           {
             blocks,
-            modifications: { decision_branches: [{ block_id: 'd1', branch_id: 'br1' }] },
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'd1',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
             historiaMapping: { d1: { section: 'diagnosticos', label: 'Ajuste terapéutico' } },
           },
         ],
@@ -717,7 +914,16 @@ describe('historia_mapping overrides', () => {
         usages: [
           {
             blocks,
-            modifications: { decision_branches: [{ block_id: 'd7', branch_id: 'br1' }] },
+            modifications: {
+              decision_branches: [
+                {
+                  decision_id: 'd7',
+                  branch_id: 'br1',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-01T10:00:00Z',
+                },
+              ],
+            },
           },
         ],
       }),
@@ -774,5 +980,99 @@ describe('historia_mapping overrides', () => {
     )
     expect(section(out, 'evolucion')?.content).toContain('Mejoría clínica')
     expect(section(out, 'enfermedad_actual')).toBeUndefined()
+  })
+
+  it('rescues a default-mapped (unmapped) checklist destination the same way as an explicit override', () => {
+    // Regression test for item #2: default label-match destinations must also
+    // pass through resolveSection, not just override destinations.
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck2',
+        type: 'clinical_notes',
+        label: 'Evolución del cuadro',
+        content: 'Texto de evolución en primera consulta.',
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({ kind: 'first_visit', usages: [{ blocks, modifications: {} }] }),
+    )
+    expect(section(out, 'enfermedad_actual')?.content).toContain('Texto de evolución en primera consulta.')
+    expect(section(out, 'evolucion')).toBeUndefined()
+  })
+})
+
+describe('integration: real ProtocolUsage row (content snapshot + real modification events)', () => {
+  it('derives a full evolution-kind record from a genuine usage content/modifications pair', () => {
+    // Mirrors what apps/web/src/lib/consultation/modifications.ts appends via
+    // appendModification, and what consultations.repository.ts merges into
+    // ProtocolUsage.modifications on updateProtocolUsage.
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'notes1',
+        type: 'clinical_notes',
+        label: 'Motivo de consulta',
+        content: 'Control de hipertensión arterial.',
+      } as ProtocolBlock,
+      {
+        id: 'vitals1',
+        type: 'vitals',
+        fields: [{ id: 'bp', label: 'PA', unit: 'mmHg', input_type: 'text' }],
+        values: { bp: '138/88' },
+      } as unknown as ProtocolBlock,
+      {
+        id: 'checklist1',
+        type: 'checklist',
+        title: 'Adherencia terapéutica',
+        items: [
+          { id: 'item1', text: 'Toma medicación a diario', checked: false },
+          { id: 'item2', text: 'Realiza actividad física', checked: false },
+        ],
+      } as unknown as ProtocolBlock,
+      {
+        id: 'decision1',
+        type: 'decision',
+        condition: '¿Control adecuado?',
+        branches: [
+          { id: 'branchA', label: 'Sí, continuar esquema actual', action: 'Continuar' },
+          { id: 'branchB', label: 'No, ajustar dosis', action: 'Ajustar' },
+        ],
+      } as unknown as ProtocolBlock,
+    ]
+    const modifications = {
+      checklist_items: [
+        { item_id: 'item1', checked: true, timestamp: '2026-07-06T14:00:00.000Z' },
+      ],
+      decision_branches: [
+        {
+          decision_id: 'decision1',
+          branch_id: 'branchB',
+          linked_protocol_launched: false,
+          timestamp: '2026-07-06T14:01:00.000Z',
+        },
+      ],
+      off_protocol_notes: [
+        {
+          title: 'Comentario adicional',
+          note: 'Paciente refiere cefalea ocasional.',
+          timestamp: '2026-07-06T14:02:00.000Z',
+        },
+      ],
+    }
+
+    const out = generateRecordSections(
+      makeInput({
+        kind: 'evolution',
+        usages: [{ blocks, modifications }],
+      }),
+    )
+
+    expect(section(out, 'motivo_consulta')?.content).toBe('Control de hipertensión arterial.')
+    expect(section(out, 'examen_fisico')?.content).toContain('PA 138/88 mmHg')
+
+    const evo = section(out, 'evolucion')?.content ?? ''
+    expect(evo).toContain('Adherencia terapéutica: Toma medicación a diario')
+    expect(evo).not.toContain('Realiza actividad física')
+    expect(evo).toContain('¿Control adecuado? → No, ajustar dosis')
+    expect(evo).toContain('Comentario adicional: Paciente refiere cefalea ocasional.')
   })
 })

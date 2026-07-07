@@ -207,7 +207,13 @@ export class ConsultationRecordsService {
       })
     }
     const rows = await this.prisma.consultationRecord.findMany({
-      where: { tenantId, patientId, status: 'signed', deletedAt: null },
+      where: {
+        tenantId,
+        patientId,
+        status: 'signed',
+        deletedAt: null,
+        consultation: { deletedAt: null },
+      },
       orderBy: { signedAt: 'desc' },
       include: { consultation: { include: { location: true } } },
     })

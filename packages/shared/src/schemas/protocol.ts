@@ -258,8 +258,16 @@ export const ProtocolTemplateSchemaContent = z.object({
 
 // ─── Historia Médica Mapping (optional per-protocol overrides) ─────────────
 
+// Mirrors the mapping tab's SELECTABLE_SECTIONS: ficha_identificacion and
+// enmiendas are system-managed (never a mapping destination), and
+// plan_tratamiento is populated only from signed order records — none of
+// these are choosable overrides in the UI, so the schema rejects them too.
+const SELECTABLE_HISTORIA_MAPPING_SECTION_KEYS = RECORD_SECTION_KEYS.filter(
+  (key) => key !== 'ficha_identificacion' && key !== 'enmiendas' && key !== 'plan_tratamiento',
+) as [Exclude<(typeof RECORD_SECTION_KEYS)[number], 'ficha_identificacion' | 'enmiendas' | 'plan_tratamiento'>, ...Exclude<(typeof RECORD_SECTION_KEYS)[number], 'ficha_identificacion' | 'enmiendas' | 'plan_tratamiento'>[]]
+
 export const HistoriaMappingEntrySchema = z.object({
-  section: z.enum(RECORD_SECTION_KEYS).optional(),
+  section: z.enum(SELECTABLE_HISTORIA_MAPPING_SECTION_KEYS).optional(),
   include: z.boolean().optional(),
   label: z.string().max(200).optional(),
 })

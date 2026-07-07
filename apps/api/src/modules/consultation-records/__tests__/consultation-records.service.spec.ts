@@ -228,6 +228,35 @@ describe('regenerate', () => {
   })
 })
 
+describe('optional sections always present (item #5)', () => {
+  it('emits resultados_estudios present-but-empty on generation, then accepts an edit filling it in', async () => {
+    mockRepo.findLatest.mockResolvedValue(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow())
+    mockPrisma.consultation.count.mockResolvedValue(1)
+    let created: ConsultationRecordDto | undefined
+    mockRepo.create.mockImplementation((data) => {
+      created = makeRecord({ sections: data.sections })
+      return Promise.resolve(created)
+    })
+    const draft = await svc.ensureDraft('c1', 't1')
+    const resultados = draft.sections.find((s) => s.key === 'resultados_estudios')
+    expect(resultados).toBeDefined()
+    expect(resultados?.content).toBe('')
+    expect(resultados?.required).toBe(false)
+
+    mockRepo.findLatest.mockResolvedValue(created)
+    mockRepo.replaceSections.mockImplementation((_id, _t, sections) =>
+      Promise.resolve(makeRecord({ sections })),
+    )
+    const updated = await svc.updateSections('c1', 't1', {
+      sections: [{ key: 'resultados_estudios', content: 'Hemograma sin alteraciones.' }],
+    })
+    const editedResultados = updated.sections.find((s) => s.key === 'resultados_estudios')
+    expect(editedResultados?.content).toBe('Hemograma sin alteraciones.')
+    expect(editedResultados?.source).toBe('edited')
+  })
+})
+
 describe('updateSections', () => {
   it('merges edited content and flags source=edited', async () => {
     mockRepo.findLatest.mockResolvedValue(makeRecord())
@@ -399,6 +428,58 @@ describe('buildGenerationInput (via ensureDraft)', () => {
     })
   })
 
+  it('derives checked/decision state from real ProtocolUsage.modifications event shapes', async () => {
+    mockRepo.findLatest.mockResolvedValue(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(
+      makeConsultationRow({
+        protocolUsages: [
+          {
+            content: {
+              blocks: [
+                {
+                  id: 'ck1',
+                  type: 'checklist',
+                  title: 'Adherencia',
+                  items: [{ id: 'i1', text: 'Dieta hiposódica', checked: false }],
+                },
+                {
+                  id: 'd1',
+                  type: 'decision',
+                  condition: '¿Control adecuado?',
+                  branches: [
+                    { id: 'br1', label: 'Sí', action: 'Continuar' },
+                    { id: 'br2', label: 'No, ajustar dosis', action: 'Ajustar' },
+                  ],
+                },
+              ],
+            },
+            // Real event shapes as written by appendModification /
+            // consultations.repository.ts's modifications merge — not the
+            // block-embedded `checked` flag or a `block_id`/`branch_label`
+            // pair the mapper used to (incorrectly) expect.
+            modifications: {
+              checklist_items: [{ item_id: 'i1', checked: true, timestamp: '2026-07-06T10:00:00Z' }],
+              decision_branches: [
+                {
+                  decision_id: 'd1',
+                  branch_id: 'br2',
+                  linked_protocol_launched: false,
+                  timestamp: '2026-07-06T10:01:00Z',
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    )
+    mockPrisma.consultation.count.mockResolvedValue(1)
+    mockRepo.create.mockImplementation((data) => Promise.resolve(makeRecord({ sections: data.sections })))
+    const result = await svc.ensureDraft('c1', 't1')
+    const evolucion = result.sections.find((s) => s.key === 'evolucion')
+    expect(evolucion?.content).toContain('Adherencia: Dieta hiposódica')
+    expect(evolucion?.content).toContain('¿Control adecuado? → No, ajustar dosis')
+  })
+
   it('falls back to now() for signedAt and defaults null/empty patient fields', async () => {
     mockRepo.findLatest.mockResolvedValue(null)
     mockPrisma.consultation.findFirst.mockResolvedValue(
@@ -453,7 +534,13 @@ describe('getExpedienteData', () => {
     const data = await svc.getExpedienteData('p1', 't1')
     expect(mockPrisma.consultationRecord.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ tenantId: 't1', patientId: 'p1', status: 'signed', deletedAt: null }),
+        where: expect.objectContaining({
+          tenantId: 't1',
+          patientId: 'p1',
+          status: 'signed',
+          deletedAt: null,
+          consultation: { deletedAt: null },
+        }),
       }),
     )
     expect(data.entries).toHaveLength(2)
@@ -462,6 +549,26 @@ describe('getExpedienteData', () => {
     expect(data.entries[0].startedAt).toBe('2026-07-06T10:42:00.000Z')
     expect(data.entries[1].startedAt).toBe('2026-05-22T09:00:00.000Z')
     expect(data.entries[0].location).toEqual({ name: 'Naco', address: null })
+  })
+
+  it('excludes records whose consultation is soft-deleted via the query filter', async () => {
+    // The repository-level filter (consultation: { deletedAt: null }) is what
+    // Prisma applies; here we simulate Prisma having already excluded such
+    // rows and assert the service still queries with that filter present.
+    mockPrisma.patient.findFirst.mockResolvedValue({
+      id: 'p1',
+      firstName: 'María',
+      lastName: 'Peña',
+      dateOfBirth: new Date('1972-03-15'),
+      documentType: 'cedula',
+      documentNumber: '001-1234567-8',
+      owner: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+    })
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([])
+    const data = await svc.getExpedienteData('p1', 't1')
+    const [args] = mockPrisma.consultationRecord.findMany.mock.calls[0] as [{ where: { consultation: { deletedAt: null } } }]
+    expect(args.where.consultation).toEqual({ deletedAt: null })
+    expect(data.entries).toHaveLength(0)
   })
 
   it('keeps only the latest version per consultation', async () => {

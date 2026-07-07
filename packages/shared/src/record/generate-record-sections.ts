@@ -6,6 +6,8 @@ import type {
 import { RECORD_SECTION_KEYS } from '../types/consultation-record.js'
 import type { ProtocolBlock } from '../types/protocol.js'
 import type { HistoriaMapping } from '../schemas/protocol.js'
+import type { ProtocolUsageModifications } from '../types/consultation.js'
+import { getCheckedStateFromModifications } from '../protocol/checked-state.js'
 
 export const RECORD_SECTION_TITLES: Record<RecordSectionKey, string> = {
   ficha_identificacion: 'Ficha de identificación',
@@ -47,11 +49,7 @@ export interface RecordPatientInput {
 export interface RecordUsageInput {
   blocks: ProtocolBlock[]
   historiaMapping?: HistoriaMapping
-  modifications: {
-    steps_completed?: Array<{ step_id: string }>
-    steps_skipped?: Array<{ step_id: string; reason?: string }>
-    decision_branches?: Array<Record<string, unknown>>
-  }
+  modifications: ProtocolUsageModifications
 }
 
 export interface RecordOrdersInput {
@@ -86,10 +84,10 @@ function narrativeSection(kind: ConsultationRecordKind): RecordSectionKey {
   return kind === 'first_visit' ? 'enfermedad_actual' : 'evolucion'
 }
 
-/** Resolves a section override, routing to the narrative default if the section is excluded for this kind. */
-function resolveSection(overriddenSection: RecordSectionKey, kind: ConsultationRecordKind): RecordSectionKey {
+/** Resolves any destination, routing to the narrative default if the section is excluded for this kind. */
+function resolveSection(destination: RecordSectionKey, kind: ConsultationRecordKind): RecordSectionKey {
   const excluded = EXCLUDED_BY_KIND[kind]
-  return excluded.includes(overriddenSection) ? narrativeSection(kind) : overriddenSection
+  return excluded.includes(destination) ? narrativeSection(kind) : destination
 }
 
 function matchNotesSection(label: string, kind: ConsultationRecordKind): RecordSectionKey {
@@ -148,6 +146,7 @@ function walkBlocks(
   usage: RecordUsageInput,
   kind: ConsultationRecordKind,
   bucket: Bucket,
+  checkedState: Record<string, boolean>,
 ): void {
   for (const raw of blocks) {
     const block = raw as any
@@ -155,13 +154,13 @@ function walkBlocks(
     if (mapping?.include === false) continue
     switch (block.type) {
       case 'section':
-        walkBlocks((block.blocks ?? []) as ProtocolBlock[], usage, kind, bucket)
+        walkBlocks((block.blocks ?? []) as ProtocolBlock[], usage, kind, bucket, checkedState)
         break
       case 'clinical_notes': {
         const content = String(block.content ?? '')
         if (content.trim()) {
           const baseDestination = mapping?.section ?? matchNotesSection(mapping?.label ?? String(block.label ?? ''), kind)
-          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
+          const destination = resolveSection(baseDestination, kind)
           push(bucket, destination, content)
         }
         break
@@ -174,18 +173,20 @@ function walkBlocks(
           .map((f) => `${f.label} ${String(values[f.id])}${f.unit ? ` ${f.unit}` : ''}`)
         if (parts.length > 0) {
           const baseDestination = mapping?.section ?? 'examen_fisico'
-          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
+          const destination = resolveSection(baseDestination, kind)
           const text = mapping?.label ? `${mapping.label}: ${parts.join(' · ')}` : parts.join(' · ')
           push(bucket, destination, text)
         }
         break
       }
       case 'checklist': {
-        const items = (block.items ?? []) as Array<{ text: string; checked?: boolean }>
-        const checked = items.filter((i) => i.checked === true).map((i) => i.text)
+        const items = (block.items ?? []) as Array<{ id: string; text: string; checked?: boolean }>
+        const checked = items
+          .filter((i) => (i.id in checkedState ? checkedState[i.id] === true : i.checked === true))
+          .map((i) => i.text)
         if (checked.length > 0) {
           const baseDestination = mapping?.section ?? narrativeSection(kind)
-          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
+          const destination = resolveSection(baseDestination, kind)
           const title = mapping?.label ?? String(block.title ?? 'Verificación')
           push(bucket, destination, `${title}: ${checked.join(', ')}`)
         }
@@ -207,7 +208,7 @@ function walkBlocks(
         }
         if (parts.length > 0) {
           const baseDestination = mapping?.section ?? narrativeSection(kind)
-          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
+          const destination = resolveSection(baseDestination, kind)
           const title = mapping?.label ?? String(block.title ?? 'Pasos')
           push(bucket, destination, `${title}: ${parts.join(' · ')}`)
         }
@@ -215,17 +216,14 @@ function walkBlocks(
       }
       case 'decision': {
         const chosen = (usage.modifications.decision_branches ?? []).find(
-          (d) => d['block_id'] === block.id,
+          (d) => d.decision_id === block.id,
         )
         if (chosen) {
           const branches = (block.branches ?? []) as Array<{ id: string; label: string }>
-          const label =
-            (chosen['branch_label'] as string | undefined) ??
-            branches.find((b) => b.id === chosen['branch_id'])?.label ??
-            ''
+          const label = branches.find((b) => b.id === chosen.branch_id)?.label ?? ''
           if (label) {
             const baseDestination = mapping?.section ?? narrativeSection(kind)
-            const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
+            const destination = resolveSection(baseDestination, kind)
             const prefix = mapping?.label ?? 'Decisión'
             push(bucket, destination, `${prefix}: ${String(block.condition ?? '')} → ${label}`)
           }
@@ -241,6 +239,15 @@ function walkBlocks(
 }
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
+/** Off-protocol notes flow into the narrative section for their consultation kind, timestamps stripped. */
+function pushOffProtocolNotes(usage: RecordUsageInput, kind: ConsultationRecordKind, bucket: Bucket): void {
+  const destination = narrativeSection(kind)
+  for (const note of usage.modifications.off_protocol_notes ?? []) {
+    const text = note.title ? `${note.title}: ${note.note}` : note.note
+    push(bucket, destination, text)
+  }
+}
+
 function buildPlan(orders: RecordOrdersInput): string {
   const lines: string[] = []
   for (const item of orders.prescriptionItems) {
@@ -254,7 +261,11 @@ function buildPlan(orders: RecordOrdersInput): string {
 export function generateRecordSections(input: GenerateRecordSectionsInput): RecordSection[] {
   const bucket: Bucket = new Map()
   push(bucket, 'ficha_identificacion', buildFicha(input.patient))
-  for (const usage of input.usages) walkBlocks(usage.blocks, usage, input.kind, bucket)
+  for (const usage of input.usages) {
+    const checkedState = getCheckedStateFromModifications(usage.modifications)
+    walkBlocks(usage.blocks, usage, input.kind, bucket, checkedState)
+    pushOffProtocolNotes(usage, input.kind, bucket)
+  }
   push(bucket, 'plan_tratamiento', buildPlan(input.orders))
   for (const amendment of input.amendments) {
     push(bucket, 'enmiendas', `${amendment.amendedAt.slice(0, 10)}: ${amendment.reason}`)
@@ -266,10 +277,12 @@ export function generateRecordSections(input: GenerateRecordSectionsInput): Reco
   const sections: RecordSection[] = []
   for (const key of RECORD_SECTION_KEYS) {
     if (excluded.has(key)) continue
+    // enmiendas only renders when amendments exist; all other kind-valid
+    // sections (including empty optional ones) always render so they can be
+    // filled in later via the edit UI.
+    if (key === 'enmiendas' && input.amendments.length === 0) continue
     const content = (bucket.get(key) ?? []).join('\n\n')
     const isRequired = required.has(key)
-    // ficha always renders; optional sections render only when they have content
-    if (!content && !isRequired && key !== 'ficha_identificacion') continue
     sections.push({
       key,
       title: RECORD_SECTION_TITLES[key],
