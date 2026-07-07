@@ -6,6 +6,8 @@ import type {
   ChecklistItemEvent,
   DecisionBranchSelected,
   StepEvent,
+  VitalsEnteredEvent,
+  NotesEditedEvent,
 } from '@rezeta/shared'
 
 export type BlockModificationEvent =
@@ -29,6 +31,8 @@ export type BlockModificationEvent =
       notes?: string
     }
   | { type: 'lab_queued'; order_id: string; test_name: string }
+  | { type: 'vitals_entered'; block_id: string; values: Record<string, string | number> }
+  | { type: 'notes_edited'; block_id: string; length: number }
 
 export function appendModification(
   existing: ProtocolUsageModifications,
@@ -88,6 +92,22 @@ export function appendModification(
         timestamp,
       }
       return { ...existing, lab_orders_queued: [...(existing.lab_orders_queued ?? []), entry] }
+    }
+    case 'vitals_entered': {
+      const entry: VitalsEnteredEvent = {
+        block_id: event.block_id,
+        values: event.values,
+        timestamp,
+      }
+      return { ...existing, vitals_entered: [...(existing.vitals_entered ?? []), entry] }
+    }
+    case 'notes_edited': {
+      const entry: NotesEditedEvent = {
+        block_id: event.block_id,
+        length: event.length,
+        timestamp,
+      }
+      return { ...existing, notes_edited: [...(existing.notes_edited ?? []), entry] }
     }
   }
 }

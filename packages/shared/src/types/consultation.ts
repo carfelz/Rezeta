@@ -167,6 +167,18 @@ export interface OffProtocolNoteEvent {
   note: string
 }
 
+export interface VitalsEnteredEvent {
+  block_id: string
+  values: Record<string, string | number>
+  timestamp: string
+}
+
+export interface NotesEditedEvent {
+  block_id: string
+  length: number
+  timestamp: string
+}
+
 export interface ConditionalStepActivated {
   block_id: string
   condition: string
@@ -182,6 +194,8 @@ export interface ProtocolUsageModifications {
   steps_skipped?: StepEvent[]
   checklist_items?: ChecklistItemEvent[]
   decision_branches?: DecisionBranchSelected[]
+  vitals_entered?: VitalsEnteredEvent[]
+  notes_edited?: NotesEditedEvent[]
   imaging_orders_queued?: ImagingOrderQueued[]
   imaging_orders_modified?: ImagingOrderModified[]
   imaging_orders_removed?: ImagingOrderRemoved[]

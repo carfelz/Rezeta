@@ -26,13 +26,29 @@ const StepEventSchema = z.object({
   reason: z.string().min(1).max(500).optional(),
 })
 
+const VitalsEnteredEventSchema = z
+  .object({
+    block_id: z.string().min(1).max(200),
+    values: z.record(z.string(), z.union([z.string(), z.number()])),
+    timestamp: z.string().datetime(),
+  })
+  .passthrough()
+
+const NotesEditedEventSchema = z
+  .object({
+    block_id: z.string().min(1).max(200),
+    length: z.number().int().min(0),
+    timestamp: z.string().datetime(),
+  })
+  .passthrough()
+
 const ModificationsSchema = z.object({
   steps_completed: z.array(StepEventSchema).optional(),
   steps_skipped: z.array(StepEventSchema).optional(),
   checklist_items: z.array(z.record(z.string(), z.unknown())).optional(),
   decision_branches: z.array(z.record(z.string(), z.unknown())).optional(),
-  vitals_entered: z.array(z.record(z.string(), z.unknown())).optional(),
-  notes_edited: z.array(z.record(z.string(), z.unknown())).optional(),
+  vitals_entered: z.array(VitalsEnteredEventSchema).optional(),
+  notes_edited: z.array(NotesEditedEventSchema).optional(),
   medication_changes: z.array(z.record(z.string(), z.unknown())).optional(),
   imaging_orders_queued: z.array(z.record(z.string(), z.unknown())).optional(),
   lab_orders_queued: z.array(z.record(z.string(), z.unknown())).optional(),
