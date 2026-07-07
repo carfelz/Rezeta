@@ -4,15 +4,18 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import { toastStrings } from '@/lib/toasts'
 import { appendModification, type BlockModificationEvent } from '@/lib/consultation/modifications'
+import { applyContentEdits, type ContentEdit } from '@/lib/consultation/content-edits'
 import type {
   ConsultationProtocolUsage,
   ConsultationWithDetails,
+  ProtocolContent,
   ProtocolUsageModifications,
 } from '@rezeta/shared'
 
 const QK = 'consultations'
 
 type PendingByUsage = Record<string, ProtocolUsageModifications>
+type ContentEditsByUsage = Record<string, Record<string, ContentEdit>>
 
 /**
  * Concatenates every event array of `delta` onto `base`. Both objects only
@@ -31,21 +34,42 @@ export function mergeModifications(
 }
 
 /**
- * Overlays not-yet-persisted modification deltas onto the server-truth
- * consultation so the UI reflects them immediately. The query cache itself is
- * never touched — refetches triggered by other mutations cannot wipe pending
- * edits.
+ * Merges buffered content edits into a usage's content, preserving unknown
+ * content keys (version, template_version, historia_mapping, …) and
+ * recursing into section blocks via `applyContentEdits`.
+ */
+function mergeContent(
+  content: ProtocolContent,
+  editsByBlockId: Record<string, ContentEdit>,
+): ProtocolContent {
+  return { ...content, blocks: applyContentEdits(content.blocks, editsByBlockId) }
+}
+
+/**
+ * Overlays not-yet-persisted modification deltas and content edits onto the
+ * server-truth consultation so the UI reflects them immediately. The query
+ * cache itself is never touched — refetches triggered by other mutations
+ * cannot wipe pending edits.
  */
 export function applyPendingToConsultation(
   consultation: ConsultationWithDetails,
   pending: PendingByUsage,
+  contentPending: ContentEditsByUsage = {},
 ): ConsultationWithDetails {
-  if (Object.keys(pending).length === 0) return consultation
+  if (Object.keys(pending).length === 0 && Object.keys(contentPending).length === 0) {
+    return consultation
+  }
   return {
     ...consultation,
     protocolUsages: consultation.protocolUsages.map((u) => {
       const delta = pending[u.id]
-      return delta ? { ...u, modifications: mergeModifications(u.modifications ?? {}, delta) } : u
+      const contentEdits = contentPending[u.id]
+      const withModifications = delta
+        ? { ...u, modifications: mergeModifications(u.modifications ?? {}, delta) }
+        : u
+      return contentEdits
+        ? { ...withModifications, content: mergeContent(withModifications.content, contentEdits) }
+        : withModifications
     }),
   }
 }
@@ -63,6 +87,19 @@ export interface PendingModifications {
    * fails, so callers gating on persistence (sign) can abort.
    */
   flush: () => Promise<boolean>
+  /**
+   * Buffer a full-value content edit for a run-mode block (vitals values or
+   * clinical notes text). Last-write-wins per block: a later edit to the
+   * same block id replaces the earlier one rather than stacking.
+   */
+  recordContentEdit: (usageId: string, blockId: string, edit: ContentEdit) => void
+  /**
+   * Drop all buffered events and content edits for a usage. Call this once a
+   * usage removal has succeeded server-side, so the next flush neither
+   * PATCHes a deleted usage (404 -> re-buffered forever) nor silently drops
+   * the edits that were meant for it.
+   */
+  discardUsage: (usageId: string) => void
 }
 
 export function usePendingModifications(consultationId: string): PendingModifications {
@@ -76,6 +113,14 @@ export function usePendingModifications(consultationId: string): PendingModifica
     setPending(next)
   }, [])
 
+  const [contentPending, setContentPending] = useState<ContentEditsByUsage>({})
+  // Same ref-as-source-of-truth pattern as pendingRef, for the same reasons.
+  const contentPendingRef = useRef<ContentEditsByUsage>(contentPending)
+  const commitContentPending = useCallback((next: ContentEditsByUsage) => {
+    contentPendingRef.current = next
+    setContentPending(next)
+  }, [])
+
   const record = useCallback(
     (usageId: string, event: BlockModificationEvent) => {
       commitPending({
@@ -86,26 +131,92 @@ export function usePendingModifications(consultationId: string): PendingModifica
     [commitPending],
   )
 
+  const recordContentEdit = useCallback(
+    (usageId: string, blockId: string, edit: ContentEdit) => {
+      commitContentPending({
+        ...contentPendingRef.current,
+        [usageId]: { ...contentPendingRef.current[usageId], [blockId]: edit },
+      })
+    },
+    [commitContentPending],
+  )
+
+  const discardUsage = useCallback(
+    (usageId: string) => {
+      if (usageId in pendingRef.current) {
+        const next = { ...pendingRef.current }
+        delete next[usageId]
+        commitPending(next)
+      }
+      if (usageId in contentPendingRef.current) {
+        const nextContent = { ...contentPendingRef.current }
+        delete nextContent[usageId]
+        commitContentPending(nextContent)
+      }
+    },
+    [commitContentPending, commitPending],
+  )
+
   const flush = useCallback(async (): Promise<boolean> => {
-    const entries = Object.entries(pendingRef.current)
-    if (entries.length === 0) return true
-    commitPending({})
+    const usageIds = new Set([
+      ...Object.keys(pendingRef.current),
+      ...Object.keys(contentPendingRef.current),
+    ])
+    if (usageIds.size === 0) return true
+
+    const consultation = qc.getQueryData<ConsultationWithDetails>([QK, consultationId])
+    // A usage with buffered content edits but missing from the cache can't be
+    // merged into a full content payload — sending {} (or modifications-only,
+    // silently dropping the content edits) would either no-op or lose data.
+    // Skip that usage's PATCH entirely and keep both its buffers so a later
+    // flush (once the usage is back in the cache) can retry it.
+    const skipped = new Set<string>()
+    const entries = Array.from(usageIds, (usageId) => {
+      const delta = pendingRef.current[usageId]
+      const contentEdits = contentPendingRef.current[usageId]
+      const usage = consultation?.protocolUsages.find((u) => u.id === usageId)
+      if (contentEdits && !usage) {
+        skipped.add(usageId)
+        return null
+      }
+      const content =
+        contentEdits && usage ? mergeContent(usage.content, contentEdits) : undefined
+      const body = {
+        ...(delta ? { modifications: delta } : {}),
+        ...(content ? { content } : {}),
+      }
+      return [usageId, delta, contentEdits, body] as const
+    }).filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+
+    // Clear every buffer that IS being flushed; keep the buffers for anything
+    // skipped so they survive this flush cycle untouched (not sent, not lost).
+    const retainedPending: PendingByUsage = {}
+    const retainedContent: ContentEditsByUsage = {}
+    for (const usageId of skipped) {
+      const delta = pendingRef.current[usageId]
+      if (delta) retainedPending[usageId] = delta
+      const contentEdits = contentPendingRef.current[usageId]
+      if (contentEdits) retainedContent[usageId] = contentEdits
+    }
+    commitPending(retainedPending)
+    commitContentPending(retainedContent)
 
     const results = await Promise.allSettled(
-      entries.map(([usageId, delta]) =>
+      entries.map(([usageId, , , body]) =>
         apiClient.patch<ConsultationProtocolUsage>(
           `/v1/consultations/${consultationId}/protocols/${usageId}`,
-          { modifications: delta },
+          body,
           { silent: true },
         ),
       ),
     )
 
     const failed: PendingByUsage = {}
+    const failedContent: ContentEditsByUsage = {}
     results.forEach((result, i) => {
       const entry = entries[i]
       if (!entry) return
-      const [usageId, delta] = entry
+      const [usageId, delta, contentEdits] = entry
       if (result.status === 'fulfilled') {
         // Fold the server-confirmed usage back into the cache so the next
         // render keeps showing the persisted events without a refetch.
@@ -123,23 +234,29 @@ export function usePendingModifications(consultationId: string): PendingModifica
           )
         }
       } else {
-        failed[usageId] = delta
+        if (delta) failed[usageId] = delta
+        if (contentEdits) failedContent[usageId] = contentEdits
       }
     })
 
-    if (Object.keys(failed).length > 0) {
-      // Re-buffer failed deltas (merged with anything recorded mid-flight)
-      // so a later flush retries them.
+    if (Object.keys(failed).length > 0 || Object.keys(failedContent).length > 0) {
+      // Re-buffer failed deltas/edits (merged with anything recorded
+      // mid-flight) so a later flush retries them.
       const next = { ...pendingRef.current }
       for (const [usageId, delta] of Object.entries(failed)) {
         next[usageId] = mergeModifications(delta, next[usageId] ?? {})
       }
+      const nextContent = { ...contentPendingRef.current }
+      for (const [usageId, edits] of Object.entries(failedContent)) {
+        nextContent[usageId] = { ...edits, ...nextContent[usageId] }
+      }
       commitPending(next)
+      commitContentPending(nextContent)
       toast.error(toastStrings.errorProtocolUsage)
       return false
     }
     return true
-  }, [commitPending, consultationId, qc])
+  }, [commitContentPending, commitPending, consultationId, qc])
 
   // Persist whatever is buffered when the doctor leaves the page (unmount on
   // in-app navigation). Fire-and-forget: the fetch outlives the component.
@@ -151,14 +268,15 @@ export function usePendingModifications(consultationId: string): PendingModifica
     }
   }, [])
 
-  const hasPending = Object.keys(pending).length > 0
+  const hasPending = Object.keys(pending).length > 0 || Object.keys(contentPending).length > 0
   const withPending = useCallback(
-    (consultation: ConsultationWithDetails) => applyPendingToConsultation(consultation, pending),
-    [pending],
+    (consultation: ConsultationWithDetails) =>
+      applyPendingToConsultation(consultation, pending, contentPending),
+    [pending, contentPending],
   )
 
   return useMemo(
-    () => ({ hasPending, record, withPending, flush }),
-    [hasPending, record, withPending, flush],
+    () => ({ hasPending, record, withPending, flush, recordContentEdit, discardUsage }),
+    [hasPending, record, withPending, flush, recordContentEdit, discardUsage],
   )
 }

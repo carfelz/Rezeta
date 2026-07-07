@@ -16,6 +16,30 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 - El envío del formulario de alta de paciente anidado ya no dispara el envío del formulario de cita (burbujeo de submit a través del portal); botones del desplegable con `type="button"`.
 
+## [2026-07-07] Run-mode vitales y notas — correcciones de revisión final
+
+### Fixed
+
+- `BlockRendererRunMode` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): los handlers `onBlur` de los bloques `vitals` y `clinical_notes` emitían `vitals_entered`/`notes_edited` incondicionalmente, así que enfocar un campo y salir sin editar escribía un evento falso en el historial de auditoría (append-only). Ahora cada subcomponente usa un ref `dirtySinceLastEmit` que solo permite la emisión cuando hubo un `onChange` real desde la última emisión.
+- `computeMissingRequiredFields` (`packages/shared/src/protocol/sign-validation.ts`): un bloque `vitals` requerido pasaba la validación de firma con valores todos vacíos (`{ weight: '' }`), porque solo contaba claves presentes. Ahora exige al menos un valor no vacío tras recortar espacios.
+- `ConsultationsService.updateProtocolUsage` (`apps/api/src/modules/consultations/consultations.service.ts`): no rechazaba escrituras de contenido cuando la consulta ya estaba firmada, a diferencia de `update()`. Un flush tardío desde una pestaña obsoleta podía mutar contenido clínico firmado sin dejar rastro de enmienda. Ahora rechaza con `CONSULTATION_ALREADY_SIGNED` antes de escribir.
+- `usePendingModifications.flush` (`apps/web/src/hooks/consultations/use-pending-modifications.ts`): cuando un usage tenía content edits bufferizados pero no se encontraba en la caché de React Query, el PATCH se enviaba de todas formas (con el contenido omitido en silencio, o con cuerpo vacío `{}`). Ahora ese usage se omite del flush y ambos buffers se conservan para reintentar cuando el usage reaparezca en la caché.
+- Corregida la ruta incorrecta (`apps/web/src/pages/Consultation/BlockRendererRunMode.tsx` → `apps/web/src/components/protocols/BlockRendererRunMode.tsx`), la palabra duplicada «silent silent», y el cambio de idioma a mitad de frase en la entrada de changelog del `[2026-07-07] Captura de vitales y notas clínicas en consulta`.
+- `applyContentEdits` (`apps/web/src/lib/consultation/content-edits.ts`): los bloques `section` sin ediciones internas ahora conservan la misma referencia (identidad) del objeto original en vez de clonarse siempre, cumpliendo lo que ya documentaba el comentario de la función.
+- `withDerivedBMI` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): el guard numérico ahora exige `weight > 0`, igual que el falsy-check de peso en `computeBMI`, así que un peso `'0'` ya no produce un IMC.
+
+## [2026-07-07] Captura de vitales y notas clínicas en consulta
+
+### Added
+
+- Run-mode inputs for `vitals` and `clinical_notes` protocol blocks in the consultation canvas (`BlockRendererRunMode`, `apps/web/src/components/protocols/BlockRendererRunMode.tsx`): vitals form captures weight, height, temperature, heart rate, blood pressure, respiratory rate; BMI is derived from weight + height (`weight / (height/100)²`); both block types persist content into the `ProtocolUsage.content` snapshot and emit typed `vitals_entered` / `notes_edited` audit events, yielding one audit record per editing burst (not per keystroke).
+- `usePendingModifications` now buffers content edits alongside event modifications, overlaying them onto the server-truth usage at render time (`usageWithDraft`); live required-field validation and sign-readiness updates reflect pending edits before flush. Content edits and events travel together in a single PATCH-per-usage on doctor sign, tab close, or route navigation, upholding the existing pending-buffer contract.
+
+### Fixed
+
+- Buffered edits para un usage removido vía «Continuar sin protocolo» ahora se descartan de forma limpia. `usePendingModifications` expone `discardUsage(usageId)`, que elimina las entradas de ambos buffers (eventos y content-edit). Previamente, remover un protocolo a mitad de consulta dejaba huérfanas las ediciones bufferizadas (los flushes siguientes intentaban un PATCH a un usage eliminado, generando errores 404 u omisión silenciosa). `ProtocolPanel` ahora invoca un nuevo callback `onUsageRemoved` al remover exitosamente, encadenando `discardUsage` desde la página padre `Consultation` — el mismo patrón de composición que `onRecordModification`/`onFlushPending`.
+- Vitals audit events (`vitals_entered`) now coalesce to one per editing burst: the event emission is gated on block focusout (`onBlur`), not per-field `onBlur`.
+
 ## [2026-07-06] Historia médica — correcciones de revisión final
 
 ### Fixed

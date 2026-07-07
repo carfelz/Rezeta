@@ -12,6 +12,7 @@ import {
 } from '@/hooks/consultations/use-consultations'
 import type { ConsultationWithDetails, SignConsultationResponse } from '@rezeta/shared'
 import { chainBreadcrumbStrings } from '@/components/consultations/strings'
+import type { ContentEdit } from '@/lib/consultation/content-edits'
 import { ConsultationModals } from './ConsultationModals'
 import { protocolPanelStrings } from './strings'
 
@@ -22,6 +23,10 @@ interface ProtocolPanelProps {
   onRecordModification: (usageId: string, event: BlockModificationEvent) => void
   /** Persists buffered modifications; resolves false if any PATCH failed. */
   onFlushPending: () => Promise<boolean>
+  /** Called once a protocol usage removal succeeds, so pending buffers for it can be dropped. */
+  onUsageRemoved: (usageId: string) => void
+  /** Buffers a full-value content edit (vitals/clinical_notes) for the active usage. */
+  onRecordContentEdit: (usageId: string, blockId: string, edit: ContentEdit) => void
   showSign: boolean
   onShowSignChange: (open: boolean) => void
   onSigned?: ((result: SignConsultationResponse) => void) | undefined
@@ -36,6 +41,8 @@ export function ProtocolPanel({
   readOnly,
   onRecordModification,
   onFlushPending,
+  onUsageRemoved,
+  onRecordContentEdit,
   showSign,
   onShowSignChange,
   onSigned,
@@ -67,6 +74,11 @@ export function ProtocolPanel({
   function handleModification(event: BlockModificationEvent): void {
     if (!activeUsage) return
     onRecordModification(activeUsage.id, event)
+  }
+
+  function handleContentEdit(blockId: string, edit: ContentEdit): void {
+    if (!activeUsage) return
+    onRecordContentEdit(activeUsage.id, blockId, edit)
   }
 
   function handleCheck(checkId: string, checked: boolean): void {
@@ -152,11 +164,16 @@ export function ProtocolPanel({
           onCheck={handleCheck}
           onLaunchLinkedProtocol={handleLaunchLinkedProtocol}
           onModification={handleModification}
+          onContentEdit={handleContentEdit}
           isSigned={readOnly}
           onContinueWithoutProtocol={() => {
             if (activeUsage) {
-              removeUsageMutation.mutate(activeUsage.id, {
-                onSuccess: () => setActiveUsageId(null),
+              const removedUsageId = activeUsage.id
+              removeUsageMutation.mutate(removedUsageId, {
+                onSuccess: () => {
+                  onUsageRemoved(removedUsageId)
+                  setActiveUsageId(null)
+                },
               })
             }
           }}

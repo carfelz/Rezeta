@@ -83,7 +83,7 @@ function blockIsCompleted(block: ProtocolBlock, checkedState: Record<string, boo
     }
     case 'vitals': {
       const values = block.values ?? {}
-      return Object.keys(values).length > 0
+      return Object.values(values).some((v) => String(v).trim() !== '')
     }
     case 'clinical_notes': {
       const content = block.content ?? ''
