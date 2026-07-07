@@ -497,8 +497,18 @@ function VitalsRunMode({
 
   return (
     <div
-      onBlur={() => {
+      onBlur={(event) => {
         if (isSigned) return
+        // The block has multiple fields (weight, height, ...), and
+        // blur/focusout bubbles per field — so tabbing from weight to height
+        // fires this handler once for each field transition, not once per
+        // burst. `appendModification` appends raw with no dedup, so without
+        // this guard we'd multiply-emit one `vitals_entered` event per field
+        // the user tabs through. Skip emission when focus is moving to
+        // another element still inside this block (relatedTarget is
+        // contained by currentTarget); only emit once focus actually leaves
+        // the block, which is the standard focusout-coalescing pattern.
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
         onModification?.({
           type: 'vitals_entered',
           block_id: blockId,
@@ -546,7 +556,10 @@ function ClinicalNotesRunMode({
   // fires once, on blur, with the final content length. The ref is updated
   // directly in onChange (not just synced from the `content` prop) so blur
   // reflects the latest keystroke even if the parent hasn't re-rendered with
-  // it yet.
+  // it yet. Unlike VitalsRunMode, this block wraps a single textarea, so
+  // blur/focusout can only fire once for this block (there's no sibling
+  // field to tab between) — the relatedTarget/currentTarget.contains guard
+  // used there isn't needed here.
   const latestContent = useRef(content)
   latestContent.current = content
 

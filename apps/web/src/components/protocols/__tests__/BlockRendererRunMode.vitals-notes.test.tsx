@@ -168,6 +168,42 @@ describe('BlockRendererRunMode — vitals', () => {
     })
   })
 
+  it('emits exactly one vitals_entered event when focus moves between fields within the block, carrying both values', () => {
+    const onModification = vi.fn()
+    const onContentEdit = vi.fn()
+    const block = vitalsBlock({ values: {} })
+    render(
+      <BlockRendererRunMode
+        block={block}
+        runMode={baseRunMode({ onModification, onContentEdit })}
+      />,
+    )
+
+    const weightInput = getNumberInput(0)
+    const heightInput = getNumberInput(1)
+
+    // Type in weight, then move focus to height (still inside the block) —
+    // this must NOT emit yet, since blur/focusout bubbles per field and
+    // would otherwise multiply-emit one event per field transition.
+    fireEvent.change(weightInput, { target: { value: '70' } })
+    fireEvent.blur(weightInput, { relatedTarget: heightInput })
+
+    expect(onModification).not.toHaveBeenCalled()
+
+    // Type in height, then blur out of the block entirely (relatedTarget is
+    // outside the wrapper, e.g. null) — this should emit exactly once, with
+    // both values merged.
+    fireEvent.change(heightInput, { target: { value: '175' } })
+    fireEvent.blur(heightInput, { relatedTarget: null })
+
+    expect(onModification).toHaveBeenCalledTimes(1)
+    expect(onModification).toHaveBeenCalledWith({
+      type: 'vitals_entered',
+      block_id: 'vitals-1',
+      values: { weight: '70', height: '175', bmi: '22.9' },
+    })
+  })
+
   it('disables inputs and fires no callbacks when isSigned', () => {
     const onModification = vi.fn()
     const onContentEdit = vi.fn()
