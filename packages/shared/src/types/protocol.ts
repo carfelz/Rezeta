@@ -146,6 +146,7 @@ export type ProtocolBlock =
   | (BlockBase & { type: 'lab_order'; title?: string; orders: LabOrderItem[] })
   | (BlockBase & {
       type: 'vitals'
+      title?: string
       fields: VitalsField[]
       values?: Record<string, string | number>
     })

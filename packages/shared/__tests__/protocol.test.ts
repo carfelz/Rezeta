@@ -71,6 +71,17 @@ describe('ProtocolBlockSchema', () => {
       /too_small/,
     )
   })
+
+  it('retains an optional title on a vitals block', () => {
+    const block = {
+      id: 'blk_vitals',
+      type: 'vitals',
+      title: 'Signos vitales basales',
+      fields: [{ id: 'hr', label: 'Frecuencia cardíaca', input_type: 'number' }],
+    }
+    const parsed = ProtocolBlockSchema.parse(block) as { title?: string }
+    expect(parsed.title).toBe('Signos vitales basales')
+  })
 })
 
 describe('ProtocolTemplateSchemaContent', () => {
