@@ -102,4 +102,7 @@ export const protocolEditorStrings = {
   historiaLabelPlaceholder: '— usa el título del bloque —',
   historiaFootnote:
     'Las secciones requeridas por el Reglamento siempre aparecen en la historia, aunque ningún bloque las alimente.',
+  historiaCaptionItems: (n: number) => `${n} ítems`,
+  historiaCaptionSteps: (n: number) => `${n} pasos`,
+  historiaCaptionBranches: (n: number) => `${n} ramas`,
 } as const

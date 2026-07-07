@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Protocol editor — Historia médica tab review fixes
+
+### Changed
+
+- `blockTypeCaption` in `apps/web/src/pages/ProtocolEditor/HistoriaMappingTab.tsx` no longer hardcodes the Spanish item/step/branch counters inline; moved to parameterized entries `historiaCaptionItems`/`historiaCaptionSteps`/`historiaCaptionBranches` in `apps/web/src/pages/ProtocolEditor/strings.ts`. No user-visible text change.
+
+### Added
+
+- Integration test `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: renders the full `ProtocolEditor` page (mocking `useProtocols`, real router/editor store) and proves a mapping-only edit (toggling a block's include switch on the Historia médica tab, no block edits) reaches `saveVersion` with `content.historia_mapping` populated, and that clearing all overrides via "Restaurar automático" omits the `historia_mapping` key entirely from the save payload.
+
 ## [2026-07-06] Historia médica — registro por consulta (fase 1)
 
 ### Added

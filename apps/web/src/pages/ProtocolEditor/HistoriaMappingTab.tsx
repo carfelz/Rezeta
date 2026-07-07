@@ -43,9 +43,15 @@ function blockTypeCaption(block: ProtocolBlock): string {
     branches?: unknown[]
     fields?: { label: string }[]
   }
-  if (block.type === 'checklist' && b.items) return `${block.type} · ${b.items.length} ítems`
-  if (block.type === 'steps' && b.steps) return `${block.type} · ${b.steps.length} pasos`
-  if (block.type === 'decision' && b.branches) return `${block.type} · ${b.branches.length} ramas`
+  if (block.type === 'checklist' && b.items) {
+    return `${block.type} · ${s.historiaCaptionItems(b.items.length)}`
+  }
+  if (block.type === 'steps' && b.steps) {
+    return `${block.type} · ${s.historiaCaptionSteps(b.steps.length)}`
+  }
+  if (block.type === 'decision' && b.branches) {
+    return `${block.type} · ${s.historiaCaptionBranches(b.branches.length)}`
+  }
   if (block.type === 'vitals' && b.fields) {
     return `${block.type} · ${b.fields.map((f) => f.label).join(', ')}`
   }
