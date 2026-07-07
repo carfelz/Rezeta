@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Paridad de bloques en el editor de plantillas: signos vitales, nota clínica y órdenes
+
+### Added
+
+- `TemplateEditor.tsx` (`apps/web/src/components/template/`): el `BlockType`, la paleta y `TYPE_LABELS` ahora incluyen `vitals` («SIGNOS VITALES»), `clinical_notes` («NOTA CLÍNICA»), `imaging_order` («ORDEN IMAGEN») y `lab_order` («ORDEN LAB») — antes solo el editor de protocolos soportaba estos cuatro tipos, dejando a los médicos sin forma de scaffoldear los bloques de los que depende la historia médica.
+- `newBlock` gana factories por tipo: `vitals` inicia con los mismos 5 campos por defecto que `block-factory.ts` del editor de protocolos (presión arterial, frecuencia cardíaca, temperatura, peso, talla); `clinical_notes` inicia con `label: 'Nota clínica'`; `imaging_order`/`lab_order` inician con `orders: []`. Todas producen bloques válidos contra `TemplateBlockSchema` (`packages/shared/src/schemas/protocol.ts`).
+- Panel de detalle ahora es consciente del tipo: `clinical_notes` edita `label` (en vez de `title`) más un checkbox «Obligatorio»; `dosage_table` gana un editor de filas (`DosageRowsEditor` — columnas fármaco/dosis/vía/frecuencia/notas con añadir/quitar fila) que reemplaza el textarea de placeholder genérico. `vitals`, `imaging_order` y `lab_order` conservan el panel genérico (título + placeholder).
+- Corregido de paso un bug latente: `BlockRow` pasaba `expandedBlockId={null}` fijo a `ChildBlockList`, por lo que el panel de detalle de un bloque hijo (todo bloque no-sección vive dentro de una sección) nunca podía expandirse tras añadirlo. Ahora se hilvana el `expandedBlockId` real del reducer a través de `SortableBlockRow` → `BlockRow` → `ChildBlockList`.
+- `strings.ts`: nuevas claves `addVitals`, `addClinicalNotes`, `addImagingOrder`, `addLabOrder`, `clinicalNotesLabelPlaceholder`, `obligatorio`, `dosageRowsLabel`, `dosageColumnLabels`, `dosageAddRow`, `dosageRemoveRow`.
+- Nuevo `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx`: paleta con los 11 botones de bloque, defaults de `vitals` válidos contra `TemplateBlockSchema`, edición de `label` en `clinical_notes` con round-trip a estado, y añadir una fila de dosis con round-trip a estado.
+
 ## [2026-07-07] Encabezado único por bloque en el editor de protocolos
 
 ### Fixed
