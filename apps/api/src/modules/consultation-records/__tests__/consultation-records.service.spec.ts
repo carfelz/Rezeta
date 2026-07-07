@@ -367,6 +367,28 @@ describe('getPdfData', () => {
 })
 
 describe('buildGenerationInput (via ensureDraft)', () => {
+  it('passes historia_mapping from usage content into the generator', async () => {
+    mockRepo.findLatest.mockResolvedValue(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(
+      makeConsultationRow({
+        protocolUsages: [
+          {
+            content: {
+              blocks: [{ id: 'b1', type: 'clinical_notes', label: 'Notas', content: 'Dirigido.' }],
+              historia_mapping: { b1: { section: 'examen_fisico' } },
+            },
+            modifications: {},
+          },
+        ],
+      }),
+    )
+    mockPrisma.consultation.count.mockResolvedValue(1)
+    mockRepo.create.mockImplementation((data) => Promise.resolve(makeRecord({ sections: data.sections })))
+    const result = await svc.ensureDraft('c1', 't1')
+    const examen = result.sections.find((s) => s.key === 'examen_fisico')
+    expect(examen?.content).toContain('Dirigido.')
+  })
+
   it('throws CONSULTATION_NOT_FOUND when the consultation row does not exist', async () => {
     mockRepo.findLatest.mockResolvedValue(null)
     mockPrisma.consultation.findFirst.mockResolvedValue(null)

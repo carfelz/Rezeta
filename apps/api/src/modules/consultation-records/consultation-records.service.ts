@@ -11,6 +11,7 @@ import type {
   RecordSection,
   UpdateRecordSectionsDto,
   ProtocolBlock,
+  HistoriaMapping,
 } from '@rezeta/shared'
 import { ErrorCode, generateRecordSections } from '@rezeta/shared'
 import type { GenerateRecordSectionsInput } from '@rezeta/shared'
@@ -249,10 +250,17 @@ export class ConsultationRecordsService {
         allergies: (c.patient.allergies as string[] | null) ?? [],
         chronicConditions: (c.patient.chronicConditions as string[] | null) ?? [],
       },
-      usages: c.protocolUsages.map((u) => ({
-        blocks: (u.content as { blocks?: ProtocolBlock[] } | null)?.blocks ?? [],
-        modifications: (u.modifications ?? {}) as GenerateRecordSectionsInput['usages'][number]['modifications'],
-      })),
+      usages: c.protocolUsages.map((u) => {
+        const content = u.content as {
+          blocks?: ProtocolBlock[]
+          historia_mapping?: HistoriaMapping
+        } | null
+        return {
+          blocks: content?.blocks ?? [],
+          ...(content?.historia_mapping ? { historiaMapping: content.historia_mapping } : {}),
+          modifications: (u.modifications ?? {}) as GenerateRecordSectionsInput['usages'][number]['modifications'],
+        }
+      }),
       orders: {
         prescriptionItems: c.prescriptions.flatMap((p) =>
           p.prescriptionItems.map((i) => ({
