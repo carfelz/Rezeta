@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Historia médica — exportación del expediente (fase 3)
+
+### Added
+
+- `GET /v1/patients/:id/record-export`: expediente completo del paciente en un solo PDF (portada + historias firmadas, la versión más reciente por consulta, orden descendente) — derecho de copia del paciente (Ley 42-01 art. 28).
+- `generateExpediente` en `PdfService` (portada con paciente, médico tratante, conteo de consultas y fecha de emisión).
+- Botón «Exportar expediente» en la pestaña Historia del detalle de paciente.
+
 ## [2026-07-06] Historia médica — mapeo por protocolo (fase 2)
 
 ### Added
