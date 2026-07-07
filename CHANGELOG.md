@@ -4,12 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-06] Consultas — descartar ediciones pendientes al remover un protocolo
+## [2026-07-07] Captura de vitales y notas clínicas en consulta
+
+### Added
+
+- Run-mode inputs for `vitals` and `clinical_notes` protocol blocks in the consultation canvas (`BlockRendererRunMode`, `apps/web/src/pages/Consultation/BlockRendererRunMode.tsx`): vitals form captures weight, height, temperature, heart rate, blood pressure, respiratory rate; BMI is derived from weight + height (`weight / (height/100)²`); both block types persist content into the `ProtocolUsage.content` snapshot and emit typed `vitals_entered` / `notes_edited` audit events, yielding one audit record per editing burst (not per keystroke).
+- `usePendingModifications` now buffers content edits alongside event modifications, overlaying them onto the server-truth usage at render time (`usageWithDraft`); live required-field validation and sign-readiness updates reflect pending edits before flush. Content edits and events travel together in a single PATCH-per-usage on doctor sign, tab close, or route navigation, upholding the existing pending-buffer contract.
 
 ### Fixed
 
-- `usePendingModifications` (`apps/web/src/hooks/consultations/use-pending-modifications.ts`) ahora expone `discardUsage(usageId)`, que elimina de ambos buffers (eventos y ediciones de contenido) las entradas de un `ProtocolUsage`. Antes, remover un protocolo a mitad de consulta ("Continuar sin protocolo", `ProtocolPanel.tsx`) dejaba huérfanas las ediciones bufferizadas de ese usage: el siguiente flush hacía PATCH a un usage eliminado (404 tratado como fallo, re-bufferizado indefinidamente) u omitía silenciosamente el contenido.
-- `ProtocolPanel` (`apps/web/src/pages/Consultation/ProtocolPanel.tsx`) ahora recibe un prop `onUsageRemoved` y lo invoca en el `onSuccess` de `useRemoveProtocolUsage`. La página `Consultation` (`apps/web/src/pages/Consultation/index.tsx`), que ya compone `usePendingModifications`, pasa `discardUsage` como ese callback — mismo patrón de composición usado para `onRecordModification`/`onFlushPending`.
+- Buffered edits for a usage removed via «Continuar sin protocolo» are now discarded cleanly. `usePendingModifications` exposes `discardUsage(usageId)`, which removes entries from both the event and content-edit buffers. Previously, remover un protocolo a mitad de consulta dejaba huérfanas las ediciones bufferizadas (following flushes attempted PATCH to a deleted usage, yielding 404 errors or silent silent omission). `ProtocolPanel` now invokes a new `onUsageRemoved` callback on successful removal, piping `discardUsage` from the parent `Consultation` page — the same composition pattern as `onRecordModification`/`onFlushPending`.
+- Vitals audit events (`vitals_entered`) now coalesce to one per editing burst: the event emission is gated on block focusout (`onBlur`), not per-field `onBlur`.
 
 ## [2026-07-06] Historia médica — correcciones de revisión final
 
