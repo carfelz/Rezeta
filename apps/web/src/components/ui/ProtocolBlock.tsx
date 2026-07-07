@@ -45,7 +45,7 @@ export function ProtocolContainer({
 
 export interface ProtocolBlockProps {
   type: string
-  title: string
+  title?: string
   required?: boolean
   nested?: boolean
   children?: ReactNode
@@ -80,9 +80,11 @@ export function ProtocolBlock({
         <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {type}
         </span>
-        <span className="text-[12px] font-serif font-medium text-n-900 flex-1 min-w-0 truncate">
-          {title}
-        </span>
+        {title && (
+          <span className="text-[12px] font-serif font-medium text-n-900 flex-1 min-w-0 truncate">
+            {title}
+          </span>
+        )}
         {required && (
           <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
             REQUERIDA

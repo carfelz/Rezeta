@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Encabezado único por bloque en el editor de protocolos
+
+### Fixed
+
+- Las tarjetas de bloque sin seleccionar en el editor de protocolos renderizaban DOS encabezados apilados: el de `EditorBlockRenderer` (chip + título) y, debajo, el de `ProtocolBlock` dentro de `BlockRenderer`. Esto duplicaba el chip y el título en bloques `dosage_table` (p. ej. «DOSIFICACIÓN»/título dos veces) y, antes de que `blockTypeLabel`/`blockDisplayTitle` cubrieran `vitals`/`clinical_notes`, mostraba el chip genérico «Bloque» encima del chip correcto.
+- `BlockRenderer.tsx`: nueva prop `chromeless?: boolean` — cuando es `true`, cada caso del switch de bloques hoja devuelve su contenido interno directamente, sin el wrapper `ProtocolBlock` (secciones y anidamiento no se ven afectados; el modo de ejecución (`BlockRendererRunMode.tsx`) no se tocó). Los casos `dosage_table` y `alert` en modo `chromeless` tampoco reenvían `title` al componente interno (`ProtocolDosageTable`/`ProtocolAlert`), evitando una tercera repetición del título.
+- `EditorBlockRenderer.tsx`: el cuerpo sin seleccionar de la tarjeta de bloque hoja ahora renderiza `<BlockRenderer chromeless />`, dejando el encabezado tipado de `EditorBlockRenderer` como el único encabezado de la tarjeta.
+- `ProtocolBlock.tsx` (ui-kit): `title` ahora es opcional; el span de título solo se renderiza cuando hay un valor, en vez de mostrar siempre una cadena (vacía o duplicada).
+- Vista de solo lectura del protocolo (`BlockRenderer.tsx`, ruta no-`chromeless`): el caso `clinical_notes` ya no pasa `title={b.label}` al chrome de `ProtocolBlock` (el label seguía viéndose en el cuerpo vía `ClinicalNotesBlock`, duplicado); el caso `vitals` solo pasa `title` cuando `b.title` está definido, en vez de caer siempre a «Signos vitales» duplicando el chip.
+- Nuevo `apps/web/src/components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx` cubre: chip correcto (no «Bloque») para `vitals`/`clinical_notes` sin seleccionar, título y chip de `dosage_table` renderizados exactamente una vez, y `BlockRenderer` con `chromeless` sin el encabezado `ProtocolBlock`.
+
 ## [2026-07-07] Editar para bloques de nota clínica y signos vitales en el editor de protocolos
 
 ### Added

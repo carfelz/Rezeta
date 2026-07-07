@@ -300,7 +300,7 @@ function LeafBlockEditor({
           onClick={() => isEditable && !isSelected && selectBlock(block.id)}
           title={isEditable && !isSelected ? blockEditorStrings.blockEdit : undefined}
         >
-          <BlockRenderer block={block} nested={nested} />
+          <BlockRenderer block={block} nested={nested} chromeless />
         </div>
       )}
     </div>
