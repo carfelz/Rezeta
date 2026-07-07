@@ -826,6 +826,53 @@ export interface HistoriaMedicaPdfData {
   startedAt: string
 }
 
+// ─── Expediente PDF data types ────────────────────────────────────────────────
+export interface ExpedientePdfData {
+  patient: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string | null
+    documentNumber: string | null
+    documentType: string | null
+  }
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+  generatedAt: string
+  entries: Array<Omit<HistoriaMedicaPdfData, 'patient' | 'doctor'>>
+}
+
+// ─── Expediente cover page ────────────────────────────────────────────────────
+function buildExpedienteCover(doc: PDFKit.PDFDocument, data: ExpedientePdfData): void {
+  const patientFullName = `${data.patient.firstName} ${data.patient.lastName}`.trim()
+  const docId = data.patient.documentNumber
+    ? `${(data.patient.documentType ?? 'Doc.').toUpperCase()} ${data.patient.documentNumber}`
+    : null
+
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(T.teal)
+  doc.text('Expediente clínico', MARGIN, MARGIN + 120)
+  doc.moveDown(0.5)
+  doc.font('Helvetica-Bold').fontSize(14).fillColor(T.n900)
+  doc.text(patientFullName)
+  doc.font('Helvetica').fontSize(10).fillColor(T.n600)
+  const meta = [calcAge(data.patient.dateOfBirth), docId].filter(Boolean).join('  ·  ')
+  if (meta) doc.text(meta)
+  doc.moveDown(1)
+  doc.fontSize(9).fillColor(T.n500)
+  doc.text(`Médico tratante: Dr. ${data.doctor.fullName ?? ''}${data.doctor.specialty ? ` · ${data.doctor.specialty}` : ''}`)
+  if (data.doctor.licenseNumber) doc.text(`Exequátur: ${data.doctor.licenseNumber}`)
+  doc.text(`Consultas incluidas: ${data.entries.length}`)
+  doc.text(`Generado: ${formatDate(data.generatedAt)}`)
+  doc.moveDown(1)
+  doc.fontSize(8).fillColor(T.n400)
+  doc.text(
+    'Copia fiel del expediente clínico emitida a solicitud del paciente (Ley General de Salud 42-01, art. 28).',
+    { width: CONTENT_W },
+  )
+}
+
 // ─── Historia médica PDF ──────────────────────────────────────────────────────
 function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfData): void {
   const { record, doctor, patient, location } = data
@@ -952,6 +999,20 @@ export class PdfService {
       info: { Title: `Historia médica — ${data.patient.firstName} ${data.patient.lastName}` },
     })
     buildHistoriaMedica(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateExpediente(data: ExpedientePdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: MARGIN,
+      info: { Title: `Expediente — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildExpedienteCover(doc, data)
+    for (const entry of data.entries) {
+      doc.addPage()
+      buildHistoriaMedica(doc, { ...entry, patient: data.patient, doctor: data.doctor })
+    }
     return toBuffer(doc)
   }
 }
