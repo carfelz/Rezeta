@@ -57,6 +57,7 @@ export const patientComboboxStrings = {
   searchPlaceholder: 'Buscar paciente...',
   noResults: 'Sin resultados',
   typeToSearch: 'Escribe para buscar',
+  newPatient: 'Nuevo paciente',
 } as const
 
 export const dateNavigationStrings = {

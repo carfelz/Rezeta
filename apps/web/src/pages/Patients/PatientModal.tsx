@@ -34,9 +34,15 @@ export interface PatientModalProps {
   mode: PatientModalMode
   patient?: Patient
   onClose: () => void
+  onCreated?: (patient: Patient) => void
 }
 
-export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX.Element {
+export function PatientModal({
+  mode,
+  patient,
+  onClose,
+  onCreated,
+}: PatientModalProps): JSX.Element {
   const createMutation = useCreatePatient()
   const updateMutation = useUpdatePatient(patient?.id ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
@@ -81,6 +87,12 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
+    // PatientModal can be rendered from within another page's <form> (e.g. the
+    // booking PatientCombobox's "Nuevo paciente" flow inside AppointmentFormModal).
+    // React's synthetic events bubble through the React tree, not the DOM tree, so
+    // even though this form is portaled elsewhere in the DOM it would otherwise
+    // also submit that ancestor form. Stop it here.
+    e.stopPropagation()
     setError(null)
     const payload = {
       fullName: fullName.trim(),
@@ -97,10 +109,15 @@ export function PatientModal({ mode, patient, onClose }: PatientModalProps): JSX
     try {
       if (isEdit && patient) {
         await updateMutation.mutateAsync(payload)
+        onClose()
       } else {
-        await createMutation.mutateAsync(payload)
+        const created = await createMutation.mutateAsync(payload)
+        if (onCreated) {
+          onCreated(created)
+        } else {
+          onClose()
+        }
       }
-      onClose()
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       logger.error(error.message, { stack: error.stack, context: 'PatientModal.submit' })

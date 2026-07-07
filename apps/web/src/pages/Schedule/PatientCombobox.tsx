@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Input } from '@/components/ui'
 import { usePatients } from '@/hooks/patients/use-patients'
 import type { Patient } from '@rezeta/shared'
+import { PatientModal } from '@/pages/Patients/PatientModal'
 import { patientComboboxStrings } from './strings'
 
 export interface PatientComboboxProps {
@@ -18,6 +19,7 @@ export function PatientCombobox({
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [selectedName, setSelectedName] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const { data } = usePatients({ search })
   const patients: Patient[] = data?.items ?? []
@@ -44,6 +46,11 @@ export function PatientCombobox({
     onChange(p.id, name)
   }
 
+  function handleCreated(p: Patient): void {
+    setShowCreateModal(false)
+    handleSelect(p)
+  }
+
   return (
     <div className="relative" ref={containerRef}>
       <Input
@@ -68,6 +75,7 @@ export function PatientCombobox({
             patients.map((p) => (
               <Button
                 key={p.id}
+                type="button"
                 variant="item"
                 size="xl"
                 className="w-full flex flex-col items-start px-3 py-2 text-left"
@@ -82,7 +90,27 @@ export function PatientCombobox({
               </Button>
             ))
           )}
+          <Button
+            type="button"
+            variant="item"
+            size="xl"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left border-t border-n-100"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <i className="ph ph-plus" style={{ fontSize: 14 }} />
+            <span className="text-[13px] font-medium text-n-800">
+              {patientComboboxStrings.newPatient}
+            </span>
+          </Button>
         </div>
+      )}
+
+      {showCreateModal && (
+        <PatientModal
+          mode="create"
+          onClose={() => setShowCreateModal(false)}
+          onCreated={handleCreated}
+        />
       )}
     </div>
   )
