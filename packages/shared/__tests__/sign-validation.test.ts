@@ -482,6 +482,31 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     expect(r.some((m) => m.id === 'protocol:u1:lab2')).toBe(true)
   })
 
+  it('vitals block is incomplete when all present values are empty strings', () => {
+    const block = {
+      id: 'blk5',
+      type: 'vitals' as const,
+      fields: [],
+      values: { weight: '', height: '' },
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toContain('blk5')
+  })
+
+  it('vitals block is complete when at least one value is non-empty after trimming', () => {
+    const block = {
+      id: 'blk6',
+      type: 'vitals' as const,
+      fields: [],
+      values: { weight: '', height: '  ', temp: '36.5' },
+      required: true,
+    } as unknown as ProtocolBlock
+    const result = computeMissingRequiredFields([makeUsage([block])])
+    expect(result).toHaveLength(0)
+  })
+
   it('vitals block with undefined values defaults to empty object (incomplete)', () => {
     const block = {
       id: 'blk3',
