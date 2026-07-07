@@ -1,6 +1,7 @@
 import {
   Injectable,
   Inject,
+  Logger,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -44,6 +45,8 @@ import { ConsultationRecordsService } from '../consultation-records/index.js'
 
 @Injectable()
 export class ConsultationsService {
+  private readonly logger = new Logger(ConsultationsService.name)
+
   constructor(
     @Inject(ConsultationsRepository) private repo: ConsultationsRepository,
     @Inject(PrismaService) private prisma: PrismaService,
@@ -322,7 +325,11 @@ export class ConsultationsService {
     try {
       const record = await this.recordsSvc.ensureDraft(id, tenantId)
       recordOutcome = { status: 'created', recordId: record.id }
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `Auto-draft historia médica creation failed for consultation ${id}`,
+        err instanceof Error ? err.stack : String(err),
+      )
       recordOutcome = { status: 'failed' }
     }
 

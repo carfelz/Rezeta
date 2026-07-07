@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common'
+import { NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common'
 import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
@@ -702,6 +702,21 @@ describe('ConsultationsService', () => {
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.recordOutcome).toEqual({ status: 'failed' })
       expect(result.status).toBe('signed')
+    })
+
+    it('logs the swallowed ensureDraft error before reporting recordOutcome=failed', async () => {
+      const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      mockRecordsSvc.ensureDraft.mockRejectedValue(new Error('boom'))
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('consult-1'),
+        expect.any(String),
+      )
+      errorSpy.mockRestore()
     })
   })
 

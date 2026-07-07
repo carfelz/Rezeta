@@ -22,6 +22,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ConsultationRecordsService } from './consultation-records.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 
 @ApiTags('Consultation Records')
 @ApiBearerAuth(AUTH_BEARER_SCHEME)
@@ -31,6 +33,7 @@ export class ConsultationRecordsController {
   constructor(
     @Inject(ConsultationRecordsService) private svc: ConsultationRecordsService,
     @Inject(PdfService) private pdf: PdfService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
   @Get()
@@ -112,11 +115,27 @@ export class ConsultationRecordsController {
   ): Promise<void> {
     const data = await this.svc.getPdfData(consultationId, tenantId)
     const buffer = await this.pdf.generateHistoriaMedica(data)
+    this.auditExport(tenantId, consultationId)
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="historia-${consultationId}.pdf"`,
       'Content-Length': String(buffer.length),
     })
     res.end(buffer)
+  }
+
+  /** Non-fatal audit write for a clinical-data PDF download (spec §4 export auditing). */
+  private auditExport(tenantId: string, consultationId: string): void {
+    const httpCtx = httpAuditContextStore.getStore()
+    void this.auditLog.record({
+      tenantId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
+      actorType: httpCtx ? 'user' : 'system',
+      category: 'system',
+      action: 'export_generated',
+      entityType: 'ConsultationRecord',
+      entityId: consultationId,
+      status: 'success',
+    })
   }
 }

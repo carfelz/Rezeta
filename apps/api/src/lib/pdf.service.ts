@@ -68,6 +68,32 @@ function formatDate(iso: string): string {
   return `${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`
 }
 
+const DOMINICAN_TIME_ZONE = 'America/Santo_Domingo'
+
+/**
+ * Formats an ISO instant as a Spanish long-form date and 24h hour string,
+ * both anchored to Dominican local time (America/Santo_Domingo) regardless
+ * of the server's own timezone. Used by the historia médica and expediente
+ * builders, whose printed date/hour is a legal record (§6.3.4) and must not
+ * drift with where the API process happens to run.
+ */
+export function formatDominicanDateTime(iso: string): { date: string; hour: string } {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString('es-DO', {
+    timeZone: DOMINICAN_TIME_ZONE,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const hour = d.toLocaleTimeString('es-DO', {
+    timeZone: DOMINICAN_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return { date, hour }
+}
+
 function calcAge(dateOfBirth: string | null): string {
   if (!dateOfBirth) return ''
   const ageDiff = Date.now() - new Date(dateOfBirth).getTime()
@@ -852,6 +878,8 @@ function buildExpedienteCover(doc: PDFKit.PDFDocument, data: ExpedientePdfData):
     : null
 
   doc.font('Helvetica-Bold').fontSize(20).fillColor(T.teal)
+  // +120pt clears space for a future letterhead/logo band above the title;
+  // matches the vertical rhythm of the historia médica header block.
   doc.text('Expediente clínico', MARGIN, MARGIN + 120)
   doc.moveDown(0.5)
   doc.font('Helvetica-Bold').fontSize(14).fillColor(T.n900)
@@ -864,7 +892,8 @@ function buildExpedienteCover(doc: PDFKit.PDFDocument, data: ExpedientePdfData):
   doc.text(`Médico tratante: Dr. ${data.doctor.fullName ?? ''}${data.doctor.specialty ? ` · ${data.doctor.specialty}` : ''}`)
   if (data.doctor.licenseNumber) doc.text(`Exequátur: ${data.doctor.licenseNumber}`)
   doc.text(`Consultas incluidas: ${data.entries.length}`)
-  doc.text(`Generado: ${formatDate(data.generatedAt)}`)
+  const generated = formatDominicanDateTime(data.generatedAt)
+  doc.text(`Generado: ${generated.date} · ${generated.hour}`)
   doc.moveDown(1)
   doc.fontSize(8).fillColor(T.n400)
   doc.text(
@@ -881,10 +910,7 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
     record.kind === 'first_visit'
       ? 'Historia médica — Primera consulta'
       : 'Historia médica — Nota de evolución'
-  const startedDate = new Date(data.startedAt)
-  const hour = `${String(startedDate.getHours()).padStart(2, '0')}:${String(
-    startedDate.getMinutes(),
-  ).padStart(2, '0')}`
+  const started = formatDominicanDateTime(data.startedAt)
 
   // Header (same visual language as prescriptions)
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
@@ -895,7 +921,7 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
   if (location) doc.text(location.name)
   // Left column's bottom, before the right-aligned date/hour repositions doc.y.
   const leftColumnBottom = doc.y
-  doc.text(`${formatDate(data.startedAt)} · ${hour}`, MARGIN, MARGIN + 2, {
+  doc.text(`${started.date} · ${started.hour}`, MARGIN, MARGIN + 2, {
     width: CONTENT_W,
     align: 'right',
   })
@@ -941,11 +967,8 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
   if (record.signedAt) {
-    const signed = new Date(record.signedAt)
-    const signedHour = `${String(signed.getHours()).padStart(2, '0')}:${String(
-      signed.getMinutes(),
-    ).padStart(2, '0')}`
-    doc.text(`Firmada: ${formatDate(record.signedAt)} · ${signedHour} · v${record.versionNumber}`)
+    const signed = formatDominicanDateTime(record.signedAt)
+    doc.text(`Firmada: ${signed.date} · ${signed.hour} · v${record.versionNumber}`)
   }
 }
 

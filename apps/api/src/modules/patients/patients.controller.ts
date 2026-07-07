@@ -41,6 +41,8 @@ import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { PatientsService } from './patients.service.js'
 import { ConsultationRecordsService } from '../consultation-records/consultation-records.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 
 const PATIENT_EXAMPLE = {
   id: '018e3f2a-1111-7000-8000-000000000001',
@@ -68,6 +70,7 @@ export class PatientsController {
     @Inject(PatientsService) private service: PatientsService,
     @Inject(ConsultationRecordsService) private recordsSvc: ConsultationRecordsService,
     @Inject(PdfService) private pdf: PdfService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
   @Get()
@@ -217,11 +220,27 @@ export class PatientsController {
   ): Promise<void> {
     const data = await this.recordsSvc.getExpedienteData(id, tenantId)
     const buffer = await this.pdf.generateExpediente(data)
+    this.auditExport(tenantId, id)
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="expediente-${id}.pdf"`,
       'Content-Length': String(buffer.length),
     })
     res.end(buffer)
+  }
+
+  /** Non-fatal audit write for a clinical-data PDF download (spec §4 export auditing). */
+  private auditExport(tenantId: string, patientId: string): void {
+    const httpCtx = httpAuditContextStore.getStore()
+    void this.auditLog.record({
+      tenantId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
+      actorType: httpCtx ? 'user' : 'system',
+      category: 'system',
+      action: 'export_generated',
+      entityType: 'Patient',
+      entityId: patientId,
+      status: 'success',
+    })
   }
 }

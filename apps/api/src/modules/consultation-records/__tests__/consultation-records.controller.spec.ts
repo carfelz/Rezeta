@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConsultationRecordsController } from '../consultation-records.controller.js'
 import type { ConsultationRecordsService } from '../consultation-records.service.js'
 import type { PdfService } from '../../../lib/pdf.service.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../../common/audit-log/audit-context.store.js'
 import type { AuthUser } from '@rezeta/shared'
 
 const mockSvc = {
@@ -15,6 +17,7 @@ const mockSvc = {
 const mockPdf = {
   generateHistoriaMedica: vi.fn(),
 }
+const mockAudit = { record: vi.fn().mockResolvedValue(undefined) }
 
 const mockUser: AuthUser = {
   id: 'u1',
@@ -26,6 +29,7 @@ const mockUser: AuthUser = {
 const controller = new ConsultationRecordsController(
   mockSvc as unknown as ConsultationRecordsService,
   mockPdf as unknown as PdfService,
+  mockAudit as unknown as AuditLogService,
 )
 
 beforeEach(() => vi.clearAllMocks())
@@ -85,5 +89,39 @@ describe('ConsultationRecordsController', () => {
       }),
     )
     expect(res.end).toHaveBeenCalledWith(buffer)
+  })
+
+  it('GET pdf records a non-fatal audit event for the download (no HTTP actor context)', async () => {
+    mockSvc.getPdfData.mockResolvedValue({ record: { id: 'rec1' } })
+    mockPdf.generateHistoriaMedica.mockResolvedValue(Buffer.from('%PDF-1.4 fake'))
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await controller.pdfDownload('t1', 'c1', res as never)
+
+    expect(mockAudit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't1',
+        actorType: 'system',
+        category: 'system',
+        action: 'export_generated',
+        entityType: 'ConsultationRecord',
+        entityId: 'c1',
+        status: 'success',
+      }),
+    )
+  })
+
+  it('GET pdf attributes the audit entry to the HTTP actor when a request context is active', async () => {
+    mockSvc.getPdfData.mockResolvedValue({ record: { id: 'rec1' } })
+    mockPdf.generateHistoriaMedica.mockResolvedValue(Buffer.from('%PDF-1.4 fake'))
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await httpAuditContextStore.run({ tenantId: 't1', actorUserId: 'u1' }, () =>
+      controller.pdfDownload('t1', 'c1', res as never),
+    )
+
+    expect(mockAudit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ actorType: 'user', actorUserId: 'u1' }),
+    )
   })
 })
