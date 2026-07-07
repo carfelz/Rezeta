@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Antecedentes del paciente y alta desde agenda
+
+### Added
+
+- Componente `TagInput` en el ui-kit (chips con Enter/coma, deduplicación, Backspace, accesible por teclado).
+- Campos «Alergias» y «Condiciones crónicas» en crear paciente (`PatientModal`) y editar paciente (`EditModal`) — antes solo se mostraban, sin forma de capturarlos.
+- Opción «Nuevo paciente» al final del selector de pacientes de la agenda (`PatientCombobox`): abre el alta de paciente y selecciona automáticamente al creado.
+
+### Fixed
+
+- El envío del formulario de alta de paciente anidado ya no dispara el envío del formulario de cita (burbujeo de submit a través del portal); botones del desplegable con `type="button"`.
+
 ## [2026-07-06] Historia médica — correcciones de revisión final
 
 ### Fixed
