@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { HistoriaMappingSchema } from './protocol.js'
 
 export const CreateConsultationSchema = z.object({
   patientId: z.string().uuid(),
@@ -16,6 +17,7 @@ const ProtocolContentSchema = z.object({
   version: z.string(),
   template_version: z.string().optional(),
   blocks: z.array(z.record(z.string(), z.unknown())),
+  historia_mapping: HistoriaMappingSchema.optional(),
 })
 
 const StepEventSchema = z.object({

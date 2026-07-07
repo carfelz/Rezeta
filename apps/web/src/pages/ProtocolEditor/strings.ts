@@ -45,6 +45,7 @@ export const protocolEditorStrings = {
   historyPreviewTitle: 'Vista previa',
 
   // ── Canvas ────────────────────────────────────────────────────────────────────
+  contentTabLabel: 'Contenido',
   addBlockFooter: 'Añadir bloque',
   tocEmptySections: 'Sin secciones',
   sectionDefaultTitle: 'Nueva sección',
@@ -82,4 +83,26 @@ export const protocolEditorStrings = {
   // ── Shared with viewer (not found / no content) ───────────────────────────────
   notFound: 'Protocolo no encontrado.',
   noContent: 'Este protocolo no tiene contenido todavía.',
+
+  // ── Historia médica mapping tab ───────────────────────────────────────────────
+  historiaTabLabel: 'Historia médica',
+  historiaMapTitle: 'Mapeo a secciones',
+  historiaMapDescription:
+    'Al firmar la consulta, el contenido de cada bloque se coloca en la sección indicada del borrador de la historia. La ficha de identificación y el plan de medicamentos se completan automáticamente.',
+  historiaMapRestore: 'Restaurar automático',
+  historiaColBlock: 'Bloque',
+  historiaColInclude: 'Incluir',
+  historiaColSection: 'Sección destino',
+  historiaColLabel: 'Etiqueta en historia',
+  historiaColOrigin: 'Origen',
+  historiaOriginAuto: 'Auto',
+  historiaOriginCustom: 'Personalizado',
+  historiaLockedPlan: 'Fijo por ley — desde recetas firmadas',
+  historiaNotIncluded: 'No se incluye',
+  historiaLabelPlaceholder: '— usa el título del bloque —',
+  historiaFootnote:
+    'Las secciones requeridas por el Reglamento siempre aparecen en la historia, aunque ningún bloque las alimente.',
+  historiaCaptionItems: (n: number) => `${n} ítems`,
+  historiaCaptionSteps: (n: number) => `${n} pasos`,
+  historiaCaptionBranches: (n: number) => `${n} ramas`,
 } as const

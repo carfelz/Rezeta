@@ -122,6 +122,7 @@ describe('ConsultationsController', () => {
     vi.mocked(svc.sign).mockResolvedValue({
       ...makeConsultation(),
       invoiceOutcome: { status: 'skipped_no_fee' },
+      recordOutcome: { status: 'failed' },
     })
     await controller.sign(tenantId, mockUser, 'c1')
     expect(svc.sign).toHaveBeenCalledWith('c1', tenantId, 'user-1')

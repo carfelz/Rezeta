@@ -29,6 +29,12 @@ export const toastStrings = {
   errorConsultationDelete: 'No se pudo eliminar la consulta.',
   errorAmendmentCreate: 'No se pudo registrar la enmienda.',
 
+  // ── Historia médica (record) ────────────────────────────────────────────────
+  errorHistoriaSave: 'No se pudo guardar la historia médica.',
+  errorHistoriaSign: 'No se pudo firmar la historia médica.',
+  errorHistoriaDownload: 'No se pudo descargar el documento.',
+  historiaMissingSections: 'Completa las secciones requeridas antes de firmar.',
+
   // ── Prescriptions & Orders ──────────────────────────────────────────────────
   prescriptionCreated: 'Receta generada',
   prescriptionUpdated: 'Receta actualizada',

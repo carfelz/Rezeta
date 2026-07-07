@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
-import { useUiStore } from '@/store/ui.store'
 import { Spinner, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
-import { ClinicalHistory } from '@/pages/Patients/ClinicalHistory'
 import { AppointmentsTab } from './AppointmentsTab'
 import { DemographicsBlock } from './DemographicsBlock'
 import { EditModal } from './EditModal'
+import { HistoriaTab } from './HistoriaTab'
 import { InvoicesTab } from './InvoicesTab'
 import { MedicalInfoBlock } from './MedicalInfoBlock'
 import { PageHeader } from './PageHeader'
@@ -15,7 +14,6 @@ import { patientDetailStrings as s } from './strings'
 
 export function PatientDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>()
-  const activeLocationId = useUiStore((s) => s.activeLocationId)
   const navigate = useNavigate()
   const [showEdit, setShowEdit] = useState(false)
 
@@ -63,10 +61,7 @@ export function PatientDetail(): JSX.Element {
 
         <div className="border border-n-200 rounded-md bg-n-0 p-5 mt-4">
           <TabsContent value="historia">
-            <ClinicalHistory
-              patientId={patient.id}
-              {...(activeLocationId ? { locationId: activeLocationId } : {})}
-            />
+            <HistoriaTab patientId={patient.id} />
           </TabsContent>
           <TabsContent value="citas">
             <AppointmentsTab patientId={patient.id} />

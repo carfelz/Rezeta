@@ -32,6 +32,7 @@ model Tenant {
   patients            Patient[]
   appointments        Appointment[]
   consultations       Consultation[]
+  consultationRecords ConsultationRecord[]
   prescriptions       Prescription[]
   invoices            Invoice[]
   protocols           Protocol[]
@@ -262,6 +263,7 @@ model Consultation {
   doctor         User                    @relation("ConsultationDoctor", fields: [doctorId], references: [id])
   location       Location                @relation(fields: [locationId], references: [id])
   amendments     ConsultationAmendment[]
+  records        ConsultationRecord[]
   prescriptions  Prescription[]
   imagingOrders  ImagingOrder[]
   labOrders      LabOrder[]
@@ -292,6 +294,30 @@ model ConsultationAmendment {
   @@unique([consultationId, amendmentNumber])
   @@index([consultationId])
   @@map("consultation_amendments")
+}
+
+model ConsultationRecord {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  consultationId String    @map("consultation_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  versionNumber  Int       @map("version_number")
+  kind           String    @db.VarChar(20) // first_visit | evolution
+  status         String    @default("draft") @db.VarChar(20) // draft | signed
+  sections       Json      @db.JsonB
+  generatedAt    DateTime  @map("generated_at")
+  signedAt       DateTime? @map("signed_at")
+  signedBy       String?   @map("signed_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@unique([consultationId, versionNumber])
+  @@index([tenantId, patientId])
+  @@map("consultation_records")
 }
 
 model Prescription {

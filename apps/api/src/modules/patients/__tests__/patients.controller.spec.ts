@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PatientsController } from '../patients.controller.js'
 import type { PatientsService } from '../patients.service.js'
+import type { ConsultationRecordsService } from '../../consultation-records/consultation-records.service.js'
+import type { PdfService, ExpedientePdfData } from '../../../lib/pdf.service.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../../common/audit-log/audit-context.store.js'
 import type { Patient } from '@rezeta/db'
 import type { AuthUser } from '@rezeta/shared'
 
@@ -38,6 +42,10 @@ describe('PatientsController', () => {
   let controller: PatientsController
   let service: PatientsService
 
+  let recordsSvc: ConsultationRecordsService
+  let pdf: PdfService
+  let auditLog: AuditLogService
+
   beforeEach(() => {
     service = {
       list: vi.fn(),
@@ -46,7 +54,16 @@ describe('PatientsController', () => {
       update: vi.fn(),
       remove: vi.fn(),
     } as unknown as PatientsService
-    controller = new PatientsController(service)
+    recordsSvc = {
+      getExpedienteData: vi.fn(),
+    } as unknown as ConsultationRecordsService
+    pdf = {
+      generateExpediente: vi.fn(),
+    } as unknown as PdfService
+    auditLog = {
+      record: vi.fn().mockResolvedValue(undefined),
+    } as unknown as AuditLogService
+    controller = new PatientsController(service, recordsSvc, pdf, auditLog)
   })
 
   it('list delegates to service with a clamped default limit', async () => {
@@ -95,5 +112,61 @@ describe('PatientsController', () => {
     vi.mocked(service.remove).mockResolvedValue(undefined)
     await controller.remove('p1', tenantId)
     expect(service.remove).toHaveBeenCalledWith('p1', tenantId)
+  })
+
+  it('recordExport streams the generated expediente pdf buffer', async () => {
+    const pdfData = { patient: { firstName: 'Ana' } } as unknown as ExpedientePdfData
+    const buffer = Buffer.from('%PDF-1.4 fake')
+    vi.mocked(recordsSvc.getExpedienteData).mockResolvedValue(pdfData)
+    vi.mocked(pdf.generateExpediente).mockResolvedValue(buffer)
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await controller.recordExport(tenantId, 'p1', res as never)
+
+    expect(recordsSvc.getExpedienteData).toHaveBeenCalledWith('p1', tenantId)
+    expect(pdf.generateExpediente).toHaveBeenCalledWith(pdfData)
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="expediente-p1.pdf"',
+      }),
+    )
+    expect(res.end).toHaveBeenCalledWith(buffer)
+  })
+
+  it('recordExport records a non-fatal audit event for the download (no HTTP actor context)', async () => {
+    const pdfData = { patient: { firstName: 'Ana' } } as unknown as ExpedientePdfData
+    vi.mocked(recordsSvc.getExpedienteData).mockResolvedValue(pdfData)
+    vi.mocked(pdf.generateExpediente).mockResolvedValue(Buffer.from('%PDF-1.4 fake'))
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await controller.recordExport(tenantId, 'p1', res as never)
+
+    expect(auditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId,
+        actorType: 'system',
+        category: 'communication',
+        action: 'pdf_generated',
+        entityType: 'Patient',
+        entityId: 'p1',
+        status: 'success',
+      }),
+    )
+  })
+
+  it('recordExport attributes the audit entry to the HTTP actor when a request context is active', async () => {
+    const pdfData = { patient: { firstName: 'Ana' } } as unknown as ExpedientePdfData
+    vi.mocked(recordsSvc.getExpedienteData).mockResolvedValue(pdfData)
+    vi.mocked(pdf.generateExpediente).mockResolvedValue(Buffer.from('%PDF-1.4 fake'))
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await httpAuditContextStore.run({ tenantId, actorUserId: 'user-1' }, () =>
+      controller.recordExport(tenantId, 'p1', res as never),
+    )
+
+    expect(auditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({ actorType: 'user', actorUserId: 'user-1' }),
+    )
   })
 })

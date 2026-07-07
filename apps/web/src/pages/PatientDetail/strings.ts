@@ -55,6 +55,31 @@ export const patientDetailStrings = {
   invoicesEmpty: 'Sin facturas registradas',
   viewInvoice: 'Ver en facturación',
 
+  // ── HistoriaTab / RecordDocument ────────────────────────────────────────────
+  historiaListTitle: 'Expediente',
+  historiaChipDraft: 'Borrador',
+  historiaChipSigned: 'Firmada',
+  historiaChipNone: 'Sin historia',
+  historiaGenerate: 'Generar historia',
+  historiaDraftBar: 'Borrador — editable hasta la firma',
+  historiaEdit: 'Editar',
+  historiaSave: 'Guardar cambios',
+  historiaCancelEdit: 'Cancelar',
+  historiaRegenerate: 'Regenerar',
+  historiaRegenerateConfirm:
+    'Regenerar descarta las ediciones y vuelve a derivar la historia del protocolo. ¿Continuar?',
+  historiaRegenerateAmended:
+    'Esta consulta tiene una enmienda registrada. Regenerar creará una nueva versión firmada de la historia. ¿Continuar?',
+  historiaSign: 'Firmar historia',
+  historiaSignedBar: 'Historia firmada — solo lectura',
+  historiaDownload: 'Descargar PDF',
+  historiaEditedFlag: 'Editado',
+  historiaKindFirstVisit: 'Primera consulta',
+  historiaKindEvolution: 'Evolución',
+  historiaEmpty: 'Selecciona una consulta para ver su historia médica.',
+  historiaOnlySigned: 'La historia se genera al firmar la consulta.',
+  historiaExport: 'Exportar expediente',
+
   // ── Shared ──────────────────────────────────────────────────────────────────
   loadError: 'No se pudo cargar la información. Intenta de nuevo.',
 } as const

@@ -4,6 +4,65 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-06] Historia médica — correcciones de revisión final
+
+### Fixed
+
+- `generateRecordSections` (`packages/shared/src/record/generate-record-sections.ts`): el mapeador ahora deriva el estado de checklist/decisiones desde `modifications.checklist_items`/`modifications.decision_branches` (los eventos reales que escribe la app vía `appendModification`), en vez de campos que la app nunca produce (`items[].checked` embebido y `block_id`/`branch_label`). Mantiene el flag `checked` embebido como respaldo cuando no hay evento de modificación para ese ítem.
+- `resolveSection` ahora se aplica a todo destino (también al match por etiqueta por defecto, no solo a los overrides de `historia_mapping`), evitando que contenido caiga en una sección excluida por tipo de consulta.
+- Las notas fuera de protocolo (`modifications.off_protocol_notes`) ahora se incluyen en la historia médica (evolución/enfermedad actual según el tipo de consulta), con la marca de tiempo removida del texto.
+- Las secciones opcionales válidas para el tipo de consulta ya no se omiten cuando quedan vacías al generar la historia; se emiten vacías y editables (excepto `enmiendas`, que solo aparece si hay enmiendas).
+- La fecha y hora legal en el PDF de historia médica y expediente (`apps/api/src/lib/pdf.service.ts`) ahora se formatea en hora dominicana (`America/Santo_Domingo`) sin importar la zona horaria del servidor — nuevo helper exportado `formatDominicanDateTime`.
+- Las descargas de PDF clínico (`GET /v1/consultations/:id/record/pdf`, `GET /v1/patients/:id/record-export`) ahora registran un evento de auditoría no bloqueante (`category: 'system'`, `action: 'export_generated'`).
+- Filas de bloques `alert`/`text` en `HistoriaMappingTab` ahora están bloqueadas igual que `dosage_table`/`lab_order`/`imaging_order`: el interruptor de inclusión se deshabilita y no puede escribir un mapeo sin efecto.
+- Barra de historia firmada (`RecordDocument`) ahora muestra «Regenerar» cuando la consulta tiene una enmienda registrada, con confirmación específica antes de crear una nueva versión firmada.
+- Error de `ensureDraft` silenciado en `ConsultationsService.sign()` ahora se registra con `Logger.error` antes de reportar `recordOutcome: 'failed'`.
+- Fallo de firma por secciones requeridas faltantes (`RECORD_REQUIRED_SECTIONS_MISSING`) ahora muestra un mensaje específico en vez del error genérico.
+- Descargas de historia/expediente que fallan ahora muestran un toast de error en vez de fallar en silencio.
+- `getExpedienteData` ahora excluye historias cuya consulta fue eliminada (soft-delete).
+
+### Changed
+
+- `HistoriaMappingEntrySchema.section` (`packages/shared/src/schemas/protocol.ts`) ahora restringe las secciones seleccionables (excluye `ficha_identificacion`, `enmiendas`, `plan_tratamiento`), igual que el selector de la UI.
+- `historiaMissingSections` se movió de `apps/web/src/pages/PatientDetail/strings.ts` a `apps/web/src/lib/toasts.ts` por capas (lo usa un hook, no un componente de página).
+
+## [2026-07-06] Historia médica — exportación del expediente (fase 3)
+
+### Added
+
+- `GET /v1/patients/:id/record-export`: expediente completo del paciente en un solo PDF (portada + historias firmadas, la versión más reciente por consulta, orden descendente) — derecho de copia del paciente (Ley 42-01 art. 28).
+- `generateExpediente` en `PdfService` (portada con paciente, médico tratante, conteo de consultas y fecha de emisión).
+- Botón «Exportar expediente» en la pestaña Historia del detalle de paciente.
+
+## [2026-07-06] Historia médica — mapeo por protocolo (fase 2)
+
+### Added
+
+- `historia_mapping` opcional en el contenido del protocolo: por bloque, sección destino, inclusión y etiqueta personalizada; viaja con `ProtocolVersion.content` y se congela en cada `ProtocolUsage`.
+- Pestaña «Historia médica» en el editor de protocolo (`HistoriaMappingTab`): tabla de mapeo con Auto/Personalizado y «Restaurar automático».
+- Integration test `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: renders the full `ProtocolEditor` page (mocking `useProtocols`, real router/editor store) and proves a mapping-only edit (toggling a block's include switch on the Historia médica tab, no block edits) reaches `saveVersion` with `content.historia_mapping` populated, and that clearing all overrides via "Restaurar automático" omits the `historia_mapping` key entirely from the save payload.
+
+### Changed
+
+- `generateRecordSections` respeta los overrides de `historia_mapping`; los bloques `dosage_table`/`lab_order`/`imaging_order` permanecen fijos (mínimo legal desde órdenes firmadas).
+- `blockTypeCaption` in `apps/web/src/pages/ProtocolEditor/HistoriaMappingTab.tsx` no longer hardcodes the Spanish item/step/branch counters inline; moved to parameterized entries `historiaCaptionItems`/`historiaCaptionSteps`/`historiaCaptionBranches` in `apps/web/src/pages/ProtocolEditor/strings.ts`. No user-visible text change.
+
+## [2026-07-06] Historia médica — registro por consulta (fase 1)
+
+### Added
+
+- `ConsultationRecord` model (`consultation_records`): historia médica versionada por consulta con secciones estructuradas (draft → signed, append-only).
+- Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones legales (Reglamento MISPAS 2023 §6.3) del contenido de protocolos, con distinción primera consulta / nota de evolución.
+- Endpoints `GET/POST/PATCH /v1/consultations/:id/record`, `POST …/record/regenerate`, `POST …/record/sign`, `GET …/record/pdf` (PDF con PDFKit, streaming).
+- El firmado de consulta genera el borrador automáticamente (`recordOutcome` en la respuesta).
+- Pestaña «Historia» del detalle de paciente: lista de consultas + documento con editar/regenerar/firmar/descargar (`HistoriaTab`, `RecordDocument`).
+- Tarjeta de historia médica en el panel post-firma de la consulta.
+
+### Changed
+
+- `SignConsultationResponse` ahora incluye `recordOutcome`.
+- Nuevos códigos de error: `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
+
 ## [2026-07-06] Dead-code sweep (part 2) — dev previews, legacy design system, unwired integration tests
 
 ### Removed

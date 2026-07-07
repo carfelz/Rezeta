@@ -12,7 +12,9 @@ import {
   UsePipes,
   ParseUUIDPipe,
   Inject,
+  Res,
 } from '@nestjs/common'
+import type { Response } from 'express'
 import {
   ApiTags,
   ApiOperation,
@@ -37,6 +39,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { PatientsService } from './patients.service.js'
+import { ConsultationRecordsService } from '../consultation-records/consultation-records.service.js'
+import { PdfService } from '../../lib/pdf.service.js'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
 
 const PATIENT_EXAMPLE = {
   id: '018e3f2a-1111-7000-8000-000000000001',
@@ -60,7 +66,12 @@ const PATIENT_EXAMPLE = {
 @ApiSecurity(AUTH_OAUTH2_SCHEME)
 @Controller('v1/patients')
 export class PatientsController {
-  constructor(@Inject(PatientsService) private service: PatientsService) {}
+  constructor(
+    @Inject(PatientsService) private service: PatientsService,
+    @Inject(ConsultationRecordsService) private recordsSvc: ConsultationRecordsService,
+    @Inject(PdfService) private pdf: PdfService,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -195,5 +206,41 @@ export class PatientsController {
   @ApiResponse({ status: 404, description: 'Patient not found.' })
   remove(@Param('id', ParseUUIDPipe) id: string, @TenantId() tenantId: string): Promise<void> {
     return this.service.remove(id, tenantId)
+  }
+
+  @Get(':id/record-export')
+  @ApiOperation({ summary: 'Download the patient expediente (all signed records) as PDF' })
+  @ApiParam({ name: 'id', format: 'uuid', example: '018e3f2a-1111-7000-8000-000000000001' })
+  @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 404, description: 'PATIENT_NOT_FOUND' })
+  async recordExport(
+    @TenantId() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const data = await this.recordsSvc.getExpedienteData(id, tenantId)
+    const buffer = await this.pdf.generateExpediente(data)
+    this.auditExport(tenantId, id)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="expediente-${id}.pdf"`,
+      'Content-Length': String(buffer.length),
+    })
+    res.end(buffer)
+  }
+
+  /** Non-fatal audit write for a clinical-data PDF download (spec §4 export auditing). */
+  private auditExport(tenantId: string, patientId: string): void {
+    const httpCtx = httpAuditContextStore.getStore()
+    void this.auditLog.record({
+      tenantId,
+      ...(httpCtx?.actorUserId ? { actorUserId: httpCtx.actorUserId } : {}),
+      actorType: httpCtx ? 'user' : 'system',
+      category: 'communication',
+      action: 'pdf_generated',
+      entityType: 'Patient',
+      entityId: patientId,
+      status: 'success',
+    })
   }
 }

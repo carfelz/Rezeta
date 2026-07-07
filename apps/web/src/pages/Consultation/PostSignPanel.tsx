@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, Callout, Overline } from '@/components/ui'
 import { useUpdateInvoiceStatus } from '@/hooks/invoices/use-invoices'
+import { useEnsureRecord } from '@/hooks/consultations/use-consultation-record'
 import { formatCurrency } from '@/pages/Billing/helpers'
 import { AppointmentFormModal } from '@/pages/Schedule/AppointmentFormModal'
 import { toDateInputValue } from '@/pages/Schedule/helpers'
-import type { ConsultationWithDetails, InvoiceOutcome } from '@rezeta/shared'
+import type { ConsultationWithDetails, InvoiceOutcome, RecordOutcome } from '@rezeta/shared'
 import { postSignPanelStrings } from './strings'
 
 const BILLING_PATH = '/facturacion'
@@ -15,6 +16,7 @@ const navLinkClass = 'text-[12px] font-sans text-p-500 hover:text-p-700 hover:un
 
 export interface PostSignPanelProps {
   invoiceOutcome: InvoiceOutcome
+  recordOutcome: RecordOutcome
   /**
    * The just-signed consultation. Currently unused by the invoice card, but
    * kept on the panel so Slice I can append a follow-up block that needs it.
@@ -29,7 +31,11 @@ export interface PostSignPanelProps {
  *
  * Structured so Slice I can append a follow-up block below the invoice card.
  */
-export function PostSignPanel({ invoiceOutcome, consultation }: PostSignPanelProps): JSX.Element {
+export function PostSignPanel({
+  invoiceOutcome,
+  recordOutcome,
+  consultation,
+}: PostSignPanelProps): JSX.Element {
   const [showFollowUp, setShowFollowUp] = useState(false)
 
   return (
@@ -38,6 +44,8 @@ export function PostSignPanel({ invoiceOutcome, consultation }: PostSignPanelPro
         {postSignPanelStrings.header}
       </Overline>
       <InvoiceCard invoiceOutcome={invoiceOutcome} />
+
+      <RecordCard recordOutcome={recordOutcome} consultation={consultation} />
 
       <div className="mt-4 flex items-center justify-between border-t border-n-100 pt-4">
         <div>
@@ -99,6 +107,46 @@ function InvoiceCard({ invoiceOutcome }: { invoiceOutcome: InvoiceOutcome }): JS
         {postSignPanelStrings.createManualLink}
       </Link>
     </Callout>
+  )
+}
+
+function RecordCard({
+  recordOutcome,
+  consultation,
+}: {
+  recordOutcome: RecordOutcome
+  consultation: ConsultationWithDetails
+}): JSX.Element {
+  const [outcome, setOutcome] = useState(recordOutcome)
+  const ensure = useEnsureRecord()
+
+  return (
+    <div className="mt-4 flex items-center justify-between border-t border-n-100 pt-4">
+      <div>
+        <div className="text-[14px] font-semibold text-n-800">
+          {postSignPanelStrings.historiaHeading}
+        </div>
+        <div className="text-[12px] text-n-500">
+          {outcome.status === 'created'
+            ? postSignPanelStrings.historiaCreated
+            : postSignPanelStrings.historiaFailed}
+        </div>
+      </div>
+      {outcome.status === 'created' ? (
+        <Link to={`/pacientes/${consultation.patientId}`} className={navLinkClass}>
+          {postSignPanelStrings.historiaOpen}
+        </Link>
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => ensure.mutate(consultation.id, { onSuccess: (record) => setOutcome({ status: 'created', recordId: record.id }) })}
+          disabled={ensure.isPending}
+        >
+          {postSignPanelStrings.historiaRetry}
+        </Button>
+      )}
+    </div>
   )
 }
 

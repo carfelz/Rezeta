@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { PostSignPanel } from '../PostSignPanel'
-import type { ConsultationWithDetails, InvoiceOutcome } from '@rezeta/shared'
+import type { ConsultationWithDetails, InvoiceOutcome, RecordOutcome } from '@rezeta/shared'
 
 // ─── Mock the invoice status mutation ──────────────────────────────────────────
 
@@ -12,6 +12,17 @@ const updateInvoiceStatusMock = vi.fn()
 vi.mock('@/hooks/invoices/use-invoices', () => ({
   useUpdateInvoiceStatus: () => ({
     mutateAsync: updateInvoiceStatusMock,
+    isPending: false,
+  }),
+}))
+
+// ─── Mock the historia record mutation ─────────────────────────────────────────
+
+const ensureRecordMutateMock = vi.fn()
+
+vi.mock('@/hooks/consultations/use-consultation-record', () => ({
+  useEnsureRecord: () => ({
+    mutate: ensureRecordMutateMock,
     isPending: false,
   }),
 }))
@@ -45,10 +56,19 @@ const consultation = {
   locationName: 'Consultorio',
 } as unknown as ConsultationWithDetails
 
-function renderPanel(invoiceOutcome: InvoiceOutcome): void {
+const defaultRecordOutcome: RecordOutcome = { status: 'created', recordId: 'rec1' }
+
+function renderPanel(
+  invoiceOutcome: InvoiceOutcome,
+  recordOutcome: RecordOutcome = defaultRecordOutcome,
+): void {
   render(
     <MemoryRouter>
-      <PostSignPanel invoiceOutcome={invoiceOutcome} consultation={consultation} />
+      <PostSignPanel
+        invoiceOutcome={invoiceOutcome}
+        recordOutcome={recordOutcome}
+        consultation={consultation}
+      />
     </MemoryRouter>,
   )
 }
@@ -127,5 +147,57 @@ describe('PostSignPanel follow-up block', () => {
     renderPanel({ status: 'skipped_no_fee' })
     await user.click(screen.getByText('Agendar seguimiento'))
     expect(screen.getByText('Nueva cita')).toBeInTheDocument()
+  })
+})
+
+describe('PostSignPanel historia card', () => {
+  beforeEach(() => {
+    updateInvoiceStatusMock.mockReset()
+    updateInvoiceStatusMock.mockResolvedValue(undefined)
+    ensureRecordMutateMock.mockReset()
+  })
+
+  it('shows the historia card with a link to the patient historia tab when created', () => {
+    renderPanel(
+      { status: 'skipped_no_fee' },
+      { status: 'created', recordId: 'rec1' },
+    )
+    expect(screen.getByText('Historia médica')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver historia/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/pacientes/'),
+    )
+  })
+
+  it('offers a retry when the draft failed', () => {
+    renderPanel({ status: 'skipped_no_fee' }, { status: 'failed' })
+    expect(screen.getByText('No se pudo generar la historia médica.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generar historia/ })).toBeInTheDocument()
+  })
+
+  it('retries generating the historia on click', async () => {
+    const user = userEvent.setup()
+    renderPanel({ status: 'skipped_no_fee' }, { status: 'failed' })
+    await user.click(screen.getByRole('button', { name: /Generar historia/ }))
+    expect(ensureRecordMutateMock).toHaveBeenCalledWith(
+      consultation.id,
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    )
+  })
+
+  it('updates the card to show success after retry succeeds', async () => {
+    const user = userEvent.setup()
+    ensureRecordMutateMock.mockImplementation((_consultationId, options) => {
+      if (options?.onSuccess) {
+        options.onSuccess({ id: 'rec1' })
+      }
+    })
+    renderPanel({ status: 'skipped_no_fee' }, { status: 'failed' })
+    expect(screen.getByText('No se pudo generar la historia médica.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generar historia/ })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Generar historia/ }))
+    expect(await screen.findByText('Borrador generado — revísala y fírmala en la ficha del paciente.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver historia/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Generar historia/ })).not.toBeInTheDocument()
   })
 })

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common'
+import { NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common'
 import { ConsultationsService } from '../consultations.service.js'
 import type { ConsultationsRepository } from '../consultations.repository.js'
 import type { PrismaService } from '../../../lib/prisma.service.js'
@@ -8,6 +8,7 @@ import type { ReferenceGuardService } from '../../../common/references/reference
 import type { InvoicesService } from '../../invoices/invoices.service.js'
 import type { ProtocolRecommendationsService } from '../../protocol-recommendations/protocol-recommendations.service.js'
 import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
+import type { ConsultationRecordsService } from '../../consultation-records/index.js'
 import { AppointmentNotStartableError } from '../consultations.repository.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
@@ -83,6 +84,7 @@ describe('ConsultationsService', () => {
   let service: ConsultationsService
   let recommendationsSvc: { invalidate: ReturnType<typeof vi.fn> }
   let auditLog: { record: ReturnType<typeof vi.fn> }
+  let mockRecordsSvc: { ensureDraft: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     repo = {
@@ -118,6 +120,7 @@ describe('ConsultationsService', () => {
     references = makeReferencesMock()
     recommendationsSvc = { invalidate: vi.fn() }
     auditLog = { record: vi.fn().mockResolvedValue(undefined) }
+    mockRecordsSvc = { ensureDraft: vi.fn().mockResolvedValue({ id: 'rec1' }) }
     service = new ConsultationsService(
       repo,
       prisma,
@@ -125,6 +128,7 @@ describe('ConsultationsService', () => {
       invoicesSvc,
       recommendationsSvc as unknown as ProtocolRecommendationsService,
       auditLog as unknown as AuditLogService,
+      mockRecordsSvc as unknown as ConsultationRecordsService,
     )
   })
 
@@ -677,6 +681,42 @@ describe('ConsultationsService', () => {
       const result = await service.sign('consult-1', 'tenant-1', 'user-1')
       expect(result.status).toBe('signed')
       expect(result.invoiceOutcome).toEqual({ status: 'failed' })
+    })
+
+    it('sign reports recordOutcome=created when the draft is generated', async () => {
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      mockRecordsSvc.ensureDraft.mockResolvedValue({ id: 'rec1' })
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.recordOutcome).toEqual({ status: 'created', recordId: 'rec1' })
+    })
+
+    it('sign reports recordOutcome=failed without failing the sign', async () => {
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      mockRecordsSvc.ensureDraft.mockRejectedValue(new Error('boom'))
+      const result = await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(result.recordOutcome).toEqual({ status: 'failed' })
+      expect(result.status).toBe('signed')
+    })
+
+    it('logs the swallowed ensureDraft error before reporting recordOutcome=failed', async () => {
+      const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+      const draft = mockConsultation({ status: 'open', protocolUsages: [mockProtocolUsage()] })
+      const signed = mockConsultation({ status: 'signed', protocolUsages: [mockProtocolUsage()] })
+      vi.mocked(repo.findById).mockResolvedValue(draft)
+      vi.mocked(repo.sign).mockResolvedValue({ consultation: signed, appointmentCompleted: false })
+      mockRecordsSvc.ensureDraft.mockRejectedValue(new Error('boom'))
+      await service.sign('consult-1', 'tenant-1', 'user-1')
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('consult-1'),
+        expect.any(String),
+      )
+      errorSpy.mockRestore()
     })
   })
 

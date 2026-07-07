@@ -8,6 +8,7 @@ import type {
   ImagingOrderItemRow,
   LabOrder,
   LabOrderItemRow,
+  ConsultationRecordDto,
 } from '@rezeta/shared'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -65,6 +66,32 @@ function formatDate(iso: string): string {
     'diciembre',
   ]
   return `${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`
+}
+
+const DOMINICAN_TIME_ZONE = 'America/Santo_Domingo'
+
+/**
+ * Formats an ISO instant as a Spanish long-form date and 24h hour string,
+ * both anchored to Dominican local time (America/Santo_Domingo) regardless
+ * of the server's own timezone. Used by the historia médica and expediente
+ * builders, whose printed date/hour is a legal record (§6.3.4) and must not
+ * drift with where the API process happens to run.
+ */
+export function formatDominicanDateTime(iso: string): { date: string; hour: string } {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString('es-DO', {
+    timeZone: DOMINICAN_TIME_ZONE,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const hour = d.toLocaleTimeString('es-DO', {
+    timeZone: DOMINICAN_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return { date, hour }
 }
 
 function calcAge(dateOfBirth: string | null): string {
@@ -803,6 +830,148 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
   }
 }
 
+// ─── Historia médica PDF data types ───────────────────────────────────────────
+export interface HistoriaMedicaPdfData {
+  record: Pick<
+    ConsultationRecordDto,
+    'kind' | 'status' | 'sections' | 'versionNumber' | 'generatedAt' | 'signedAt'
+  >
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+  patient: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string | null
+    documentNumber: string | null
+    documentType: string | null
+  }
+  location: { name: string; address: string | null } | null
+  startedAt: string
+}
+
+// ─── Expediente PDF data types ────────────────────────────────────────────────
+export interface ExpedientePdfData {
+  patient: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string | null
+    documentNumber: string | null
+    documentType: string | null
+  }
+  doctor: {
+    fullName: string | null
+    specialty: string | null
+    licenseNumber: string | null
+  }
+  generatedAt: string
+  entries: Array<Omit<HistoriaMedicaPdfData, 'patient' | 'doctor'>>
+}
+
+// ─── Expediente cover page ────────────────────────────────────────────────────
+function buildExpedienteCover(doc: PDFKit.PDFDocument, data: ExpedientePdfData): void {
+  const patientFullName = `${data.patient.firstName} ${data.patient.lastName}`.trim()
+  const docId = data.patient.documentNumber
+    ? `${(data.patient.documentType ?? 'Doc.').toUpperCase()} ${data.patient.documentNumber}`
+    : null
+
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(T.teal)
+  // +120pt clears space for a future letterhead/logo band above the title;
+  // matches the vertical rhythm of the historia médica header block.
+  doc.text('Expediente clínico', MARGIN, MARGIN + 120)
+  doc.moveDown(0.5)
+  doc.font('Helvetica-Bold').fontSize(14).fillColor(T.n900)
+  doc.text(patientFullName)
+  doc.font('Helvetica').fontSize(10).fillColor(T.n600)
+  const meta = [calcAge(data.patient.dateOfBirth), docId].filter(Boolean).join('  ·  ')
+  if (meta) doc.text(meta)
+  doc.moveDown(1)
+  doc.fontSize(9).fillColor(T.n500)
+  doc.text(`Médico tratante: Dr. ${data.doctor.fullName ?? ''}${data.doctor.specialty ? ` · ${data.doctor.specialty}` : ''}`)
+  if (data.doctor.licenseNumber) doc.text(`Exequátur: ${data.doctor.licenseNumber}`)
+  doc.text(`Consultas incluidas: ${data.entries.length}`)
+  const generated = formatDominicanDateTime(data.generatedAt)
+  doc.text(`Generado: ${generated.date} · ${generated.hour}`)
+  doc.moveDown(1)
+  doc.fontSize(8).fillColor(T.n400)
+  doc.text(
+    'Copia fiel del expediente clínico emitida a solicitud del paciente (Ley General de Salud 42-01, art. 28).',
+    { width: CONTENT_W },
+  )
+}
+
+// ─── Historia médica PDF ──────────────────────────────────────────────────────
+function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfData): void {
+  const { record, doctor, patient, location } = data
+  const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
+  const kindTitle =
+    record.kind === 'first_visit'
+      ? 'Historia médica — Primera consulta'
+      : 'Historia médica — Nota de evolución'
+  const started = formatDominicanDateTime(data.startedAt)
+
+  // Header (same visual language as prescriptions)
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
+  doc.text(`Dr. ${doctor.fullName ?? 'Médico'}`, MARGIN, MARGIN, { width: CONTENT_W - 150 })
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.specialty) doc.text(doctor.specialty)
+  if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
+  if (location) doc.text(location.name)
+  // Left column's bottom, before the right-aligned date/hour repositions doc.y.
+  const leftColumnBottom = doc.y
+  doc.text(`${started.date} · ${started.hour}`, MARGIN, MARGIN + 2, {
+    width: CONTENT_W,
+    align: 'right',
+  })
+  // Divider goes below the max of both columns (mirrors buildPrescription).
+  doc.x = MARGIN
+  doc.y = Math.max(leftColumnBottom, doc.y) + 10
+  strokeLine(doc, MARGIN, doc.y, MARGIN + CONTENT_W, doc.y, T.teal, 2)
+  doc.y += 14
+
+  // Title + patient line
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(T.n900).text(kindTitle, MARGIN)
+  const docId = patient.documentNumber
+    ? `${(patient.documentType ?? 'Doc.').toUpperCase()} ${patient.documentNumber}`
+    : null
+  doc.font('Helvetica').fontSize(10).fillColor(T.n600)
+  doc.text([patientFullName, calcAge(patient.dateOfBirth), docId].filter(Boolean).join('  ·  '))
+  doc.moveDown(1)
+
+  // Draft banner
+  if (record.status === 'draft') {
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(T.warnText)
+    doc.text('BORRADOR — PENDIENTE DE FIRMA', MARGIN)
+    doc.moveDown(0.6)
+  }
+
+  // Sections
+  for (const section of record.sections) {
+    if (!section.content.trim()) continue
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(T.teal)
+    doc.text(section.title.toUpperCase(), MARGIN, doc.y)
+    doc.moveDown(0.2)
+    doc.font('Helvetica').fontSize(10).fillColor(T.n700)
+    doc.text(section.content, MARGIN + 10, doc.y, { width: CONTENT_W - 10 })
+    doc.moveDown(0.8)
+  }
+
+  // Signature footer
+  doc.moveDown(1.5)
+  strokeLine(doc, MARGIN, doc.y, MARGIN + 200, doc.y, T.n300, 1)
+  doc.moveDown(0.3)
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n800)
+  doc.text(`Dr. ${doctor.fullName ?? ''}`, MARGIN)
+  doc.font('Helvetica').fontSize(9).fillColor(T.n500)
+  if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
+  if (record.signedAt) {
+    const signed = formatDominicanDateTime(record.signedAt)
+    doc.text(`Firmada: ${signed.date} · ${signed.hour} · v${record.versionNumber}`)
+  }
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 @Injectable()
 export class PdfService {
@@ -843,6 +1012,30 @@ export class PdfService {
       info: { Title: `Orden de laboratorio — ${data.patient.firstName} ${data.patient.lastName}` },
     })
     buildLabOrderGroup(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateHistoriaMedica(data: HistoriaMedicaPdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: MARGIN,
+      info: { Title: `Historia médica — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildHistoriaMedica(doc, data)
+    return toBuffer(doc)
+  }
+
+  async generateExpediente(data: ExpedientePdfData): Promise<Buffer> {
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margin: MARGIN,
+      info: { Title: `Expediente — ${data.patient.firstName} ${data.patient.lastName}` },
+    })
+    buildExpedienteCover(doc, data)
+    for (const entry of data.entries) {
+      doc.addPage()
+      buildHistoriaMedica(doc, { ...entry, patient: data.patient, doctor: data.doctor })
+    }
     return toBuffer(doc)
   }
 }

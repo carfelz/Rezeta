@@ -118,6 +118,7 @@ export function Consultation(): JSX.Element {
         {signResult && (
           <PostSignPanel
             invoiceOutcome={signResult.invoiceOutcome}
+            recordOutcome={signResult.recordOutcome}
             consultation={consultation}
           />
         )}

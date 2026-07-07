@@ -1,4 +1,5 @@
 import type { ProtocolContent, ProtocolUsageStatus } from './protocol.js'
+import type { RecordOutcome } from './consultation-record.js'
 
 export type ConsultationStatus = 'open' | 'signed' | 'amended'
 
@@ -270,6 +271,7 @@ export type InvoiceOutcome =
  */
 export interface SignConsultationResponse extends ConsultationWithDetails {
   invoiceOutcome: InvoiceOutcome
+  recordOutcome: RecordOutcome
 }
 
 /**
