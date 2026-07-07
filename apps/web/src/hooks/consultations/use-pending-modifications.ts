@@ -93,6 +93,13 @@ export interface PendingModifications {
    * same block id replaces the earlier one rather than stacking.
    */
   recordContentEdit: (usageId: string, blockId: string, edit: ContentEdit) => void
+  /**
+   * Drop all buffered events and content edits for a usage. Call this once a
+   * usage removal has succeeded server-side, so the next flush neither
+   * PATCHes a deleted usage (404 -> re-buffered forever) nor silently drops
+   * the edits that were meant for it.
+   */
+  discardUsage: (usageId: string) => void
 }
 
 export function usePendingModifications(consultationId: string): PendingModifications {
@@ -132,6 +139,22 @@ export function usePendingModifications(consultationId: string): PendingModifica
       })
     },
     [commitContentPending],
+  )
+
+  const discardUsage = useCallback(
+    (usageId: string) => {
+      if (usageId in pendingRef.current) {
+        const next = { ...pendingRef.current }
+        delete next[usageId]
+        commitPending(next)
+      }
+      if (usageId in contentPendingRef.current) {
+        const nextContent = { ...contentPendingRef.current }
+        delete nextContent[usageId]
+        commitContentPending(nextContent)
+      }
+    },
+    [commitContentPending, commitPending],
   )
 
   const flush = useCallback(async (): Promise<boolean> => {
@@ -232,7 +255,7 @@ export function usePendingModifications(consultationId: string): PendingModifica
   )
 
   return useMemo(
-    () => ({ hasPending, record, withPending, flush, recordContentEdit }),
-    [hasPending, record, withPending, flush, recordContentEdit],
+    () => ({ hasPending, record, withPending, flush, recordContentEdit, discardUsage }),
+    [hasPending, record, withPending, flush, recordContentEdit, discardUsage],
   )
 }

@@ -22,6 +22,8 @@ interface ProtocolPanelProps {
   onRecordModification: (usageId: string, event: BlockModificationEvent) => void
   /** Persists buffered modifications; resolves false if any PATCH failed. */
   onFlushPending: () => Promise<boolean>
+  /** Called once a protocol usage removal succeeds, so pending buffers for it can be dropped. */
+  onUsageRemoved: (usageId: string) => void
   showSign: boolean
   onShowSignChange: (open: boolean) => void
   onSigned?: ((result: SignConsultationResponse) => void) | undefined
@@ -36,6 +38,7 @@ export function ProtocolPanel({
   readOnly,
   onRecordModification,
   onFlushPending,
+  onUsageRemoved,
   showSign,
   onShowSignChange,
   onSigned,
@@ -155,8 +158,12 @@ export function ProtocolPanel({
           isSigned={readOnly}
           onContinueWithoutProtocol={() => {
             if (activeUsage) {
-              removeUsageMutation.mutate(activeUsage.id, {
-                onSuccess: () => setActiveUsageId(null),
+              const removedUsageId = activeUsage.id
+              removeUsageMutation.mutate(removedUsageId, {
+                onSuccess: () => {
+                  onUsageRemoved(removedUsageId)
+                  setActiveUsageId(null)
+                },
               })
             }
           }}

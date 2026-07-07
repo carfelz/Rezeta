@@ -367,4 +367,76 @@ describe('usePendingModifications', () => {
     const [, retryBody] = vi.mocked(apiClient.patch).mock.calls[1]!
     expect(retryBody).toHaveProperty('content')
   })
+
+  it('discardUsage drops both buffers for a removed usage; flush only PATCHes the surviving one', async () => {
+    const usage2 = { ...usage, id: 'usage-2' }
+    const consultationWithBoth = {
+      ...consultation,
+      protocolUsages: [usage, usage2],
+    } as unknown as ConsultationWithDetails
+    const survivorServerUsage = { ...usage, id: 'usage-2' }
+    vi.mocked(apiClient.patch).mockResolvedValue(survivorServerUsage)
+    const { client, wrapper } = makeClientAndWrapper()
+    client.setQueryData(['consultations', 'cons-1'], consultationWithBoth)
+    const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+    act(() => {
+      result.current.record('usage-1', { type: 'checklist_item', item_id: 'itm-1', checked: true })
+      result.current.recordContentEdit('usage-1', 'notes-1', {
+        kind: 'notes',
+        content: 'orphaned edit',
+      })
+      result.current.record('usage-2', { type: 'step_completed', step_id: 'step-1' })
+      result.current.recordContentEdit('usage-2', 'vit-1', {
+        kind: 'vitals',
+        values: { temp: 38 },
+      })
+    })
+
+    act(() => {
+      result.current.discardUsage('usage-1')
+    })
+
+    // Discarded usage's buffered checklist event and content edit are both gone;
+    // it renders exactly as server-truth again.
+    const overlaid = result.current.withPending(consultationWithBoth)
+    const discardedUsage = overlaid.protocolUsages.find((u) => u.id === 'usage-1')!
+    expect(discardedUsage.modifications?.checklist_items).toHaveLength(1)
+    const discardedNotesBlock = discardedUsage.content.blocks[1] as unknown as { content: string }
+    expect(discardedNotesBlock.content).toBe('original')
+
+    let ok = false
+    await act(async () => {
+      ok = await result.current.flush()
+    })
+
+    expect(ok).toBe(true)
+    expect(apiClient.patch).toHaveBeenCalledTimes(1)
+    const [url, body] = vi.mocked(apiClient.patch).mock.calls[0]!
+    expect(url).toBe('/v1/consultations/cons-1/protocols/usage-2')
+    const { content, modifications } = body as {
+      content: { blocks: { id: string; values?: Record<string, number> }[] }
+      modifications: { steps_completed: { step_id: string }[] }
+    }
+    expect(modifications.steps_completed.map((e) => e.step_id)).toEqual(['step-1'])
+    expect(content.blocks[0]).toEqual({ id: 'vit-1', type: 'vitals', fields: [], values: { temp: 38 } })
+  })
+
+  it('discardUsage is a no-op when the usage has nothing buffered', () => {
+    const { result } = renderHook(() => usePendingModifications('cons-1'), {
+      wrapper: makeClientAndWrapper().wrapper,
+    })
+
+    act(() => {
+      result.current.record('usage-2', { type: 'step_completed', step_id: 'step-1' })
+    })
+
+    act(() => {
+      result.current.discardUsage('usage-not-buffered')
+    })
+
+    expect(result.current.hasPending).toBe(true)
+    const overlaid = result.current.withPending(consultation)
+    expect(overlaid.protocolUsages[0]!.modifications?.checklist_items).toHaveLength(1)
+  })
 })
