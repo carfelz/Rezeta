@@ -1,12 +1,20 @@
 import { Button, NativeSelect, Input } from '@/components/ui'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
-import type { HistoriaMapping, RecordSectionKey } from '@rezeta/shared'
+import type { HistoriaMapping } from '@rezeta/shared'
 import { RECORD_SECTION_TITLES, RECORD_SECTION_KEYS } from '@rezeta/shared'
 import { protocolEditorStrings as s } from './strings'
 
+// The schema-level restriction on HistoriaMappingEntry.section (excludes
+// ficha_identificacion/enmiendas/plan_tratamiento — see
+// packages/shared/src/schemas/protocol.ts) drives this type; keep both in sync.
+type SelectableSection = NonNullable<HistoriaMapping[string]['section']>
+
+// Fixed destination: fed from signed order records, never mappable.
 const LOCKED_TYPES = new Set(['dosage_table', 'lab_order', 'imaging_order'])
+// Reference material only (spec §6): never included in the historia, so the
+// toggle is locked off — clicking it can never write a no-op mapping entry.
 const EXCLUDED_BY_DEFAULT = new Set(['alert', 'text'])
-const DEFAULT_SECTION: Record<string, RecordSectionKey> = {
+const DEFAULT_SECTION: Record<string, SelectableSection> = {
   vitals: 'examen_fisico',
   checklist: 'evolucion',
   steps: 'evolucion',
@@ -14,7 +22,8 @@ const DEFAULT_SECTION: Record<string, RecordSectionKey> = {
   clinical_notes: 'evolucion', // display default; real routing label-matches at generation time
 }
 const SELECTABLE_SECTIONS = RECORD_SECTION_KEYS.filter(
-  (k) => k !== 'ficha_identificacion' && k !== 'enmiendas' && k !== 'plan_tratamiento',
+  (k): k is SelectableSection =>
+    k !== 'ficha_identificacion' && k !== 'enmiendas' && k !== 'plan_tratamiento',
 )
 
 interface Props {
@@ -110,8 +119,8 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
         <tbody>
           {rows.map((block) => {
             const entry = current[block.id]
-            const locked = LOCKED_TYPES.has(block.type)
             const excludedByDefault = EXCLUDED_BY_DEFAULT.has(block.type)
+            const locked = LOCKED_TYPES.has(block.type) || excludedByDefault
             const included = entry?.include !== undefined ? entry.include : !excludedByDefault
             const isCustom = Boolean(entry)
             const sectionValue =
@@ -143,10 +152,11 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                     role="switch"
                     aria-checked={included}
                     aria-label={s.historiaColInclude}
+                    disabled={locked}
                     onClick={() => setEntry(block.id, { ...entry, include: !included })}
                     className={`w-8 h-[18px] rounded-full relative shrink-0 transition-colors duration-[100ms] ${
                       included ? 'bg-p-500' : 'bg-n-200'
-                    }`}
+                    } ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <span
                       className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-n-0 transition-[left] duration-[100ms] ${
@@ -156,9 +166,9 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                   </button>
                 </td>
                 <td className="px-4 py-[10px] border-b border-n-100 align-middle">
-                  {locked ? (
+                  {LOCKED_TYPES.has(block.type) ? (
                     <span className="text-[13px] text-n-400">{s.historiaLockedPlan}</span>
-                  ) : !included ? (
+                  ) : locked || !included ? (
                     <span className="text-[13px] text-n-400">{s.historiaNotIncluded}</span>
                   ) : (
                     <NativeSelect
@@ -166,7 +176,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                       onChange={(e) =>
                         setEntry(block.id, {
                           ...entry,
-                          section: e.target.value as RecordSectionKey,
+                          section: e.target.value as SelectableSection,
                         })
                       }
                     >

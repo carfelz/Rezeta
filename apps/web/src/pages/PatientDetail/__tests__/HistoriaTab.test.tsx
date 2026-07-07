@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react'
+import { toast } from 'sonner'
 import { HistoriaTab } from '../HistoriaTab'
 import * as consultationHooks from '@/hooks/consultations/use-consultations'
 import * as recordHooks from '@/hooks/consultations/use-consultation-record'
+import { toastStrings } from '@/lib/toasts'
 
 vi.mock('@/hooks/consultations/use-consultations')
 vi.mock('@/hooks/consultations/use-consultation-record')
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const consultations = [
   {
@@ -152,5 +155,12 @@ describe('HistoriaTab', () => {
     render(<HistoriaTab patientId="p1" />)
     fireEvent.click(screen.getByRole('button', { name: /Exportar expediente/ }))
     expect(spy).toHaveBeenCalledWith('p1')
+  })
+
+  it('toasts an error when the expediente download rejects', async () => {
+    vi.spyOn(recordHooks, 'downloadExpediente').mockRejectedValue(new Error('network'))
+    render(<HistoriaTab patientId="p1" />)
+    fireEvent.click(screen.getByRole('button', { name: /Exportar expediente/ }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaDownload))
   })
 })

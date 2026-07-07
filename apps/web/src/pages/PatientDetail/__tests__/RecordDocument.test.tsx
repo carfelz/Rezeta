@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { toast } from 'sonner'
 import { RecordDocument } from '../RecordDocument'
 import * as recordHooks from '@/hooks/consultations/use-consultation-record'
+import { toastStrings } from '@/lib/toasts'
 import type { ConsultationRecordDto } from '@rezeta/shared'
 
 vi.mock('@/hooks/consultations/use-consultation-record')
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const draft: ConsultationRecordDto = {
   id: 'rec1',
@@ -152,6 +155,61 @@ describe('RecordDocument', () => {
     expect(screen.queryByRole('button', { name: /Firmar historia/ })).not.toBeInTheDocument()
   })
 
+  it('shows a Regenerar button on the signed bar when the consultation was amended', () => {
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: { ...draft, status: 'signed', signedAt: '2026-07-06T11:00:00Z' },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="amended" />)
+    expect(screen.getByRole('button', { name: /Regenerar/ })).toBeInTheDocument()
+  })
+
+  it('does not show a Regenerar button on the signed bar when the consultation is only signed', () => {
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: { ...draft, status: 'signed', signedAt: '2026-07-06T11:00:00Z' },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+    expect(screen.queryByRole('button', { name: /Regenerar/ })).not.toBeInTheDocument()
+  })
+
+  it('confirms with the amendment-specific string and regenerates when accepted', () => {
+    const regenerate = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false } as never
+    vi.mocked(recordHooks.useRegenerateRecord).mockReturnValue(regenerate)
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: { ...draft, status: 'signed', signedAt: '2026-07-06T11:00:00Z' },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<RecordDocument consultationId="c1" consultationStatus="amended" />)
+    fireEvent.click(screen.getByRole('button', { name: /Regenerar/ }))
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining('nueva versión firmada'),
+    )
+    expect(
+      vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).toHaveBeenCalled()
+  })
+
+  it('does not regenerate from the amended signed bar when confirmation is declined', () => {
+    const regenerate = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false } as never
+    vi.mocked(recordHooks.useRegenerateRecord).mockReturnValue(regenerate)
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: { ...draft, status: 'signed', signedAt: '2026-07-06T11:00:00Z' },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<RecordDocument consultationId="c1" consultationStatus="amended" />)
+    fireEvent.click(screen.getByRole('button', { name: /Regenerar/ }))
+    expect(
+      vi.mocked((regenerate as { mutate: ReturnType<typeof vi.fn> }).mutate),
+    ).not.toHaveBeenCalled()
+  })
+
   it('downloads the PDF when Descargar PDF is clicked', () => {
     vi.mocked(recordHooks.downloadRecordPdf).mockResolvedValue(undefined)
     vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
@@ -162,6 +220,18 @@ describe('RecordDocument', () => {
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Descargar PDF/ }))
     expect(vi.mocked(recordHooks.downloadRecordPdf)).toHaveBeenCalledWith('c1')
+  })
+
+  it('toasts an error when the PDF download rejects', async () => {
+    vi.mocked(recordHooks.downloadRecordPdf).mockRejectedValue(new Error('network'))
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: { ...draft, status: 'signed', signedAt: '2026-07-06T11:00:00Z' },
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+    fireEvent.click(screen.getByRole('button', { name: /Descargar PDF/ }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaDownload))
   })
 
   it('exits edit mode when the update mutation succeeds', () => {

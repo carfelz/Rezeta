@@ -1,9 +1,17 @@
 import { useState } from 'react'
-import { Badge, Button, Spinner } from '@/components/ui'
+import { toast } from 'sonner'
+import { Badge, Button, Overline, Spinner } from '@/components/ui'
 import { usePatientConsultations } from '@/hooks/consultations/use-consultations'
 import { downloadExpediente } from '@/hooks/consultations/use-consultation-record'
+import { toastStrings } from '@/lib/toasts'
 import { RecordDocument } from './RecordDocument'
 import { patientDetailStrings as s } from './strings'
+
+function handleDownloadExpediente(patientId: string): void {
+  downloadExpediente(patientId).catch(() => {
+    toast.error(toastStrings.errorHistoriaDownload)
+  })
+}
 
 export interface HistoriaTabProps {
   patientId: string
@@ -36,10 +44,10 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
     <div className="grid grid-cols-[280px_1fr] min-h-[400px] -m-5">
       <div className="border-r border-n-200 bg-n-25" data-testid="historia-consultation-list">
         <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
-          <span className="font-mono text-[11px] uppercase tracking-[0.10em] text-n-400">
+          <Overline as="span" size="lg" tone="neutral">
             {s.historiaListTitle}
-          </span>
-          <Button variant="secondary" size="sm" onClick={() => void downloadExpediente(patientId)}>
+          </Overline>
+          <Button variant="secondary" size="sm" onClick={() => handleDownloadExpediente(patientId)}>
             <i className="ph ph-download-simple" /> {s.historiaExport}
           </Button>
         </div>

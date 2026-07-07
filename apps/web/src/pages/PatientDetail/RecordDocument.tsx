@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button, Spinner, Textarea, Overline } from '@/components/ui'
 import {
   useConsultationRecord,
@@ -8,8 +9,15 @@ import {
   useSignRecord,
   downloadRecordPdf,
 } from '@/hooks/consultations/use-consultation-record'
+import { toastStrings } from '@/lib/toasts'
 import type { RecordSection } from '@rezeta/shared'
 import { patientDetailStrings as s } from './strings'
+
+function handleDownloadRecordPdf(consultationId: string): void {
+  downloadRecordPdf(consultationId).catch(() => {
+    toast.error(toastStrings.errorHistoriaDownload)
+  })
+}
 
 export interface RecordDocumentProps {
   consultationId: string
@@ -79,6 +87,10 @@ export function RecordDocument({
     if (window.confirm(s.historiaRegenerateConfirm)) regenerate.mutate()
   }
 
+  function confirmRegenerateAmended(): void {
+    if (window.confirm(s.historiaRegenerateAmended)) regenerate.mutate()
+  }
+
   return (
     <div>
       {isDraft ? (
@@ -120,11 +132,16 @@ export function RecordDocument({
       ) : (
         <div className="flex items-center gap-2 px-5 py-2 bg-success-bg border-b border-success-border">
           <span className="text-[12px] font-medium text-success-text">{s.historiaSignedBar}</span>
-          <div className="ml-auto">
+          <div className="ml-auto flex gap-2">
+            {consultationStatus === 'amended' && (
+              <Button variant="ghost" size="sm" onClick={confirmRegenerateAmended}>
+                {s.historiaRegenerate}
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => void downloadRecordPdf(consultationId)}
+              onClick={() => handleDownloadRecordPdf(consultationId)}
             >
               <i className="ph ph-download-simple" /> {s.historiaDownload}
             </Button>

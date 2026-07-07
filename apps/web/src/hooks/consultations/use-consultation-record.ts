@@ -85,7 +85,11 @@ export function useSignRecord(
     onSuccess: (record) => {
       qc.setQueryData([QK, consultationId], record)
     },
-    onError: () => {
+    onError: (err) => {
+      if (err instanceof ApiRequestError && err.error.code === 'RECORD_REQUIRED_SECTIONS_MISSING') {
+        toast.error(toastStrings.historiaMissingSections)
+        return
+      }
       toast.error(toastStrings.errorHistoriaSign)
     },
   })

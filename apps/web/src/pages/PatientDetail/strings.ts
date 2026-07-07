@@ -68,6 +68,8 @@ export const patientDetailStrings = {
   historiaRegenerate: 'Regenerar',
   historiaRegenerateConfirm:
     'Regenerar descarta las ediciones y vuelve a derivar la historia del protocolo. ¿Continuar?',
+  historiaRegenerateAmended:
+    'Esta consulta tiene una enmienda registrada. Regenerar creará una nueva versión firmada de la historia. ¿Continuar?',
   historiaSign: 'Firmar historia',
   historiaSignedBar: 'Historia firmada — solo lectura',
   historiaDownload: 'Descargar PDF',
@@ -76,7 +78,6 @@ export const patientDetailStrings = {
   historiaKindEvolution: 'Evolución',
   historiaEmpty: 'Selecciona una consulta para ver su historia médica.',
   historiaOnlySigned: 'La historia se genera al firmar la consulta.',
-  historiaMissingSections: 'Completa las secciones requeridas antes de firmar.',
   historiaExport: 'Exportar expediente',
 
   // ── Shared ──────────────────────────────────────────────────────────────────

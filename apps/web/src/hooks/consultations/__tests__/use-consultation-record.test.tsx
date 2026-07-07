@@ -79,6 +79,17 @@ describe('useSignRecord', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSign)
   })
+
+  it('toasts the missing-sections string when the API rejects with RECORD_REQUIRED_SECTIONS_MISSING', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(
+      new ApiRequestError({ code: 'RECORD_REQUIRED_SECTIONS_MISSING', message: 'x' }),
+    )
+    const { result } = renderHook(() => useSignRecord('c1'), { wrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(toast.error).toHaveBeenCalledWith(toastStrings.historiaMissingSections)
+    expect(toast.error).not.toHaveBeenCalledWith(toastStrings.errorHistoriaSign)
+  })
 })
 
 describe('useEnsureRecord', () => {

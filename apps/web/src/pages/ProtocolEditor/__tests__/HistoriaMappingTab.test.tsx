@@ -8,6 +8,7 @@ const blocks = [
   { id: 'v1', type: 'vitals', fields: [], values: {} },
   { id: 'dt1', type: 'dosage_table', rows: [] },
   { id: 'a1', type: 'alert', severity: 'info', content: 'ref' },
+  { id: 't1', type: 'text', content: 'ref text' },
 ] as unknown as ProtocolBlock[]
 
 describe('HistoriaMappingTab', () => {
@@ -25,7 +26,9 @@ describe('HistoriaMappingTab', () => {
   it('emits an override when the destination changes', () => {
     const onChange = vi.fn()
     render(<HistoriaMappingTab blocks={blocks} mapping={undefined} onChange={onChange} />)
-    fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'examen_fisico' } })
+    const combobox = screen.getAllByRole('combobox')[0]
+    expect(combobox).toBeDefined()
+    fireEvent.change(combobox!, { target: { value: 'examen_fisico' } })
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ b1: { section: 'examen_fisico' } }))
   })
 
@@ -39,10 +42,46 @@ describe('HistoriaMappingTab', () => {
     expect(onChange).toHaveBeenCalledWith({})
   })
 
-  it('toggling include=false emits the exclusion', () => {
+  it('toggling include=false emits the exclusion for an unlocked row', () => {
     const onChange = vi.fn()
     render(<HistoriaMappingTab blocks={blocks} mapping={undefined} onChange={onChange} />)
-    fireEvent.click(screen.getAllByRole('switch')[0])
+    const switchEl = screen.getAllByRole('switch')[0]
+    expect(switchEl).toBeDefined()
+    fireEvent.click(switchEl!)
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ b1: { include: false } }))
+  })
+
+  it('shows "No se incluye" and disables the switch for alert/text reference-material rows', () => {
+    const onChange = vi.fn()
+    render(<HistoriaMappingTab blocks={blocks} mapping={undefined} onChange={onChange} />)
+    const noSeIncluye = screen.getAllByText('No se incluye')
+    expect(noSeIncluye.length).toBe(2) // alert + text
+
+    const switches = screen.getAllByRole('switch')
+    const alertSwitch = switches[3] // b1, v1, dt1, a1, t1 in block order
+    const textSwitch = switches[4]
+    expect(alertSwitch).toBeDisabled()
+    expect(textSwitch).toBeDisabled()
+
+    fireEvent.click(alertSwitch!)
+    fireEvent.click(textSwitch!)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('disables the switch on legally locked rows (dosage_table/lab_order/imaging_order)', () => {
+    const onChange = vi.fn()
+    render(<HistoriaMappingTab blocks={blocks} mapping={undefined} onChange={onChange} />)
+    const switches = screen.getAllByRole('switch')
+    const dosageTableSwitch = switches[2]
+    expect(dosageTableSwitch).toBeDisabled()
+    fireEvent.click(dosageTableSwitch!)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('leaves the section select and label input enabled for unlocked, included rows', () => {
+    render(<HistoriaMappingTab blocks={blocks} mapping={undefined} onChange={vi.fn()} />)
+    const switches = screen.getAllByRole('switch')
+    expect(switches[0]).not.toBeDisabled() // b1 clinical_notes
+    expect(switches[1]).not.toBeDisabled() // v1 vitals
   })
 })
