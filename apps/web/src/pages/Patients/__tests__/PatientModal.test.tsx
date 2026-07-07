@@ -58,6 +58,24 @@ describe('PatientModal', () => {
     )
   })
 
+  it('commits an uncommitted Alergias draft when Registrar paciente is clicked without Enter', async () => {
+    const user = userEvent.setup()
+    render(<PatientModal mode="create" onClose={vi.fn()} />)
+
+    await user.type(screen.getByPlaceholderText('Ej. Ana María Reyes'), 'Ana Reyes')
+    // Type into Alergias but never press Enter — the draft must still be
+    // committed via blur when the submit button is clicked.
+    await user.type(screen.getByLabelText('Alergias'), 'Penicilina')
+
+    await user.click(screen.getByRole('button', { name: 'Registrar paciente' }))
+
+    expect(mocks.createMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allergies: ['Penicilina'],
+      }),
+    )
+  })
+
   it('submits empty arrays when no antecedentes are entered', async () => {
     const user = userEvent.setup()
     render(<PatientModal mode="create" onClose={vi.fn()} />)

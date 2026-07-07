@@ -46,6 +46,13 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
+    // EditModal isn't nested inside another form today, but the modal-reuse
+    // pattern is spreading (see PatientModal, which IS rendered inside the
+    // booking PatientCombobox's "Nuevo paciente" flow). React's synthetic
+    // events bubble through the React tree, not the DOM tree, so a portaled
+    // modal's form submit would otherwise also submit an ancestor form.
+    // Stop it here defensively.
+    e.stopPropagation()
     setError(null)
     try {
       await updateMutation.mutateAsync({

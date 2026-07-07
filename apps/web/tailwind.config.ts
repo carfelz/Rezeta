@@ -199,6 +199,7 @@ const config: Config = {
       // Min/max sizes for touch targets and component heights
       minHeight: {
         touch: 'var(--size-touch-min)', // 44px
+        'input-md': 'var(--size-input-md)', // 34px
       },
       height: {
         'btn-sm': 'var(--size-btn-sm)', // 28px

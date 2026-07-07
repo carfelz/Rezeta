@@ -8,8 +8,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // so the end-to-end create-then-select flow is verified against actual
 // component behavior rather than a stub.
 
+const appointmentMocks = vi.hoisted(() => ({
+  createMutateAsync: vi.fn(),
+}))
+
 vi.mock('@/hooks/appointments/use-appointments', () => ({
-  useCreateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateAppointment: () => ({ mutateAsync: appointmentMocks.createMutateAsync, isPending: false }),
   useUpdateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
@@ -50,9 +54,10 @@ describe('AppointmentFormModal + PatientCombobox integration', () => {
       lastName: 'Pérez',
     })
 
+    const onClose = vi.fn()
     const user = userEvent.setup()
     render(
-      <AppointmentFormModal defaultDate="2026-07-02" defaultLocationId="loc1" onClose={vi.fn()} />,
+      <AppointmentFormModal defaultDate="2026-07-02" defaultLocationId="loc1" onClose={onClose} />,
     )
 
     await user.click(screen.getByPlaceholderText(/buscar paciente/i))
@@ -68,5 +73,16 @@ describe('AppointmentFormModal + PatientCombobox integration', () => {
       screen.queryByRole('heading', { name: 'Registrar paciente' }),
     ).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('Luis Pérez')).toBeInTheDocument()
+
+    // Pin the nested-form bubbling fix: submitting the inner patient-create
+    // form (portaled inside this outer AppointmentFormModal's <form>) must
+    // NOT also trigger the outer appointment form's submit handler or close
+    // the outer modal. Without PatientModal's handleSubmit calling
+    // e.stopPropagation(), React's synthetic submit event bubbles through
+    // the React tree (not the DOM tree) and would fire both. Verified by
+    // temporarily removing that stopPropagation call: this assertion fails
+    // (appointmentMocks.createMutateAsync gets called) without the fix.
+    expect(appointmentMocks.createMutateAsync).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
   })
 })

@@ -133,4 +133,31 @@ describe('TagInput', () => {
     render(<TagInput value={[]} onChange={vi.fn()} id="allergies" />)
     expect(document.getElementById('allergies')).toBeInTheDocument()
   })
+
+  it('commits the draft on blur without requiring Enter', async () => {
+    const user = userEvent.setup()
+    render(
+      <div>
+        <Controlled placeholder="Escribir..." />
+        <button type="button">Elsewhere</button>
+      </div>,
+    )
+    const input = screen.getByPlaceholderText('Escribir...')
+    await user.type(input, 'Penicilina')
+    await user.click(screen.getByRole('button', { name: 'Elsewhere' }))
+    expect(screen.getByText('Penicilina')).toBeInTheDocument()
+    expect(input).toHaveValue('')
+  })
+
+  it('splits a pasted comma-separated draft into multiple tags on Enter', async () => {
+    const user = userEvent.setup()
+    render(<Controlled placeholder="Escribir..." />)
+    const input = screen.getByPlaceholderText('Escribir...')
+    await user.click(input)
+    await user.paste('Penicilina, Sulfas')
+    await user.keyboard('{Enter}')
+    expect(screen.getByText('Penicilina')).toBeInTheDocument()
+    expect(screen.getByText('Sulfas')).toBeInTheDocument()
+    expect(input).toHaveValue('')
+  })
 })

@@ -72,8 +72,7 @@ describe('PatientCombobox', () => {
 
   it('renders the fixed "Nuevo paciente" option with zero search results', async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<PatientCombobox value="" onChange={vi.fn()} />)
-    void rerender
+    render(<PatientCombobox value="" onChange={vi.fn()} />)
     await user.click(screen.getByPlaceholderText(/buscar paciente/i))
     await user.type(screen.getByPlaceholderText(/buscar paciente/i), 'zzz-no-match')
     expect(screen.getByRole('button', { name: /nuevo paciente/i })).toBeInTheDocument()

@@ -13,11 +13,19 @@ export interface TagInputProps {
 const defaultRemoveAriaLabel = (tag: string): string => `Remove ${tag}`
 
 /**
- * Free-text tag/chip input. Enter or comma commits the trimmed value
- * (ignoring empty or case-insensitive duplicates); Backspace on an empty
- * input removes the last tag. Chips use neutral token styling — semantic
- * coloring (e.g. alert colors for allergies) belongs to display contexts,
- * not this editable control.
+ * Free-text tag/chip input. Enter or comma commits the trimmed value,
+ * splitting on commas so a pasted "A, B" becomes two tags (ignoring empty
+ * or case-insensitive duplicates); Backspace on an empty input removes the
+ * last tag. Chips use neutral token styling — semantic coloring (e.g. alert
+ * colors for allergies) belongs to display contexts, not this editable
+ * control.
+ *
+ * The draft is also committed on blur: a doctor who types a value and then
+ * clicks a submit button (without pressing Enter) would otherwise lose the
+ * uncommitted draft, because the submit handler reads `value` before the
+ * draft ever makes it into state. Blur fires (and React flushes the
+ * resulting state update) before the submit button's click handler runs,
+ * so committing on blur closes that gap.
  */
 export function TagInput({
   value,
@@ -30,14 +38,23 @@ export function TagInput({
   const [draft, setDraft] = useState('')
 
   function commitDraft(): void {
-    const trimmed = draft.trim()
-    if (trimmed.length === 0) {
+    const parts = draft
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+    if (parts.length === 0) {
       setDraft('')
       return
     }
-    const isDuplicate = value.some((tag) => tag.toLowerCase() === trimmed.toLowerCase())
-    if (!isDuplicate) {
-      onChange([...value, trimmed])
+    const next = [...value]
+    for (const part of parts) {
+      const isDuplicate = next.some((tag) => tag.toLowerCase() === part.toLowerCase())
+      if (!isDuplicate) {
+        next.push(part)
+      }
+    }
+    if (next.length !== value.length) {
+      onChange(next)
     }
     setDraft('')
   }
@@ -60,7 +77,7 @@ export function TagInput({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-1.5 w-full px-3 py-1.5',
+        'flex flex-wrap items-center gap-1.5 w-full min-h-input-md px-3 py-1.5',
         'bg-n-0 border rounded-sm',
         'transition-[border-color,box-shadow] duration-[100ms]',
         'border-n-300 focus-within:border-p-500 focus-within:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
@@ -91,6 +108,7 @@ export function TagInput({
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={commitDraft}
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
