@@ -5,6 +5,7 @@ import type {
 } from '../types/consultation-record.js'
 import { RECORD_SECTION_KEYS } from '../types/consultation-record.js'
 import type { ProtocolBlock } from '../types/protocol.js'
+import type { HistoriaMapping } from '../schemas/protocol.js'
 
 export const RECORD_SECTION_TITLES: Record<RecordSectionKey, string> = {
   ficha_identificacion: 'Ficha de identificación',
@@ -45,6 +46,7 @@ export interface RecordPatientInput {
 
 export interface RecordUsageInput {
   blocks: ProtocolBlock[]
+  historiaMapping?: HistoriaMapping
   modifications: {
     steps_completed?: Array<{ step_id: string }>
     steps_skipped?: Array<{ step_id: string; reason?: string }>
@@ -143,13 +145,18 @@ function walkBlocks(
 ): void {
   for (const raw of blocks) {
     const block = raw as any
+    const mapping = usage.historiaMapping?.[block.id as string]
+    if (mapping?.include === false) continue
     switch (block.type) {
       case 'section':
         walkBlocks((block.blocks ?? []) as ProtocolBlock[], usage, kind, bucket)
         break
       case 'clinical_notes': {
         const content = String(block.content ?? '')
-        if (content.trim()) push(bucket, matchNotesSection(String(block.label ?? ''), kind), content)
+        if (content.trim()) {
+          const destination = mapping?.section ?? matchNotesSection(mapping?.label ?? String(block.label ?? ''), kind)
+          push(bucket, destination, content)
+        }
         break
       }
       case 'vitals': {
@@ -158,14 +165,20 @@ function walkBlocks(
         const parts = fields
           .filter((f) => values[f.id] !== undefined && values[f.id] !== '')
           .map((f) => `${f.label} ${String(values[f.id])}${f.unit ? ` ${f.unit}` : ''}`)
-        if (parts.length > 0) push(bucket, 'examen_fisico', parts.join(' · '))
+        if (parts.length > 0) {
+          const destination = mapping?.section ?? 'examen_fisico'
+          const text = mapping?.label ? `${mapping.label}: ${parts.join(' · ')}` : parts.join(' · ')
+          push(bucket, destination, text)
+        }
         break
       }
       case 'checklist': {
         const items = (block.items ?? []) as Array<{ text: string; checked?: boolean }>
         const checked = items.filter((i) => i.checked === true).map((i) => i.text)
         if (checked.length > 0) {
-          push(bucket, narrativeSection(kind), `${String(block.title ?? 'Verificación')}: ${checked.join(', ')}`)
+          const destination = mapping?.section ?? narrativeSection(kind)
+          const title = mapping?.label ?? String(block.title ?? 'Verificación')
+          push(bucket, destination, `${title}: ${checked.join(', ')}`)
         }
         break
       }
@@ -184,7 +197,9 @@ function walkBlocks(
           }
         }
         if (parts.length > 0) {
-          push(bucket, narrativeSection(kind), `${String(block.title ?? 'Pasos')}: ${parts.join(' · ')}`)
+          const destination = mapping?.section ?? narrativeSection(kind)
+          const title = mapping?.label ?? String(block.title ?? 'Pasos')
+          push(bucket, destination, `${title}: ${parts.join(' · ')}`)
         }
         break
       }
@@ -198,7 +213,11 @@ function walkBlocks(
             (chosen['branch_label'] as string | undefined) ??
             branches.find((b) => b.id === chosen['branch_id'])?.label ??
             ''
-          if (label) push(bucket, narrativeSection(kind), `Decisión: ${String(block.condition ?? '')} → ${label}`)
+          if (label) {
+            const destination = mapping?.section ?? narrativeSection(kind)
+            const prefix = mapping?.label ?? 'Decisión'
+            push(bucket, destination, `${prefix}: ${String(block.condition ?? '')} → ${label}`)
+          }
         }
         break
       }

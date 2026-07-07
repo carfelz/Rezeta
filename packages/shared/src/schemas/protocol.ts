@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RECORD_SECTION_KEYS } from '../types/consultation-record.js'
 
 export const AlertSeveritySchema = z.enum(['info', 'warning', 'danger', 'success'])
 
@@ -255,10 +256,22 @@ export const ProtocolTemplateSchemaContent = z.object({
   blocks: z.array(TemplateBlockSchema),
 })
 
+// ─── Historia Médica Mapping (optional per-protocol overrides) ─────────────
+
+export const HistoriaMappingEntrySchema = z.object({
+  section: z.enum(RECORD_SECTION_KEYS).optional(),
+  include: z.boolean().optional(),
+  label: z.string().max(200).optional(),
+})
+export const HistoriaMappingSchema = z.record(z.string(), HistoriaMappingEntrySchema)
+export type HistoriaMappingEntry = z.infer<typeof HistoriaMappingEntrySchema>
+export type HistoriaMapping = z.infer<typeof HistoriaMappingSchema>
+
 export const ProtocolContentSchema = z.object({
   version: z.string(),
   template_version: z.string().optional(),
   blocks: z.array(ProtocolBlockSchema),
+  historia_mapping: HistoriaMappingSchema.optional(),
 })
 
 // ─── Request Schemas ─────────────────────────────────────────────────────────

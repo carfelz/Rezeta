@@ -521,3 +521,219 @@ describe('generateRecordSections', () => {
     expect(section(out, 'evolucion')?.content ?? '').not.toContain('Etiqueta vacía')
   })
 })
+
+describe('historia_mapping overrides', () => {
+  it('redirects a clinical_notes block to the mapped section', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'b1', type: 'clinical_notes', label: 'Notas', content: 'Hallazgo dirigido.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: {}, historiaMapping: { b1: { section: 'examen_fisico' } } }],
+      }),
+    )
+    expect(section(out, 'examen_fisico')?.content).toContain('Hallazgo dirigido.')
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Hallazgo dirigido.')
+  })
+
+  it('excludes a block with include=false', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'b1', type: 'clinical_notes', label: 'Motivo', content: 'Nunca sale.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({ usages: [{ blocks, modifications: {}, historiaMapping: { b1: { include: false } } }] }),
+    )
+    expect(out.map((s) => s.content).join('\n')).not.toContain('Nunca sale.')
+  })
+
+  it('prefixes a custom label on non-notes blocks', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck1',
+        type: 'checklist',
+        title: 'Adherencia',
+        items: [{ id: 'i1', text: 'Dieta', checked: true }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: {}, historiaMapping: { ck1: { label: 'Hábitos del paciente' } } }],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Hábitos del paciente: Dieta')
+  })
+
+  it('ignores mapping entries on legally locked block types', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'dt1',
+        type: 'dosage_table',
+        rows: [{ id: 'r1', drug: 'X', dose: '1', route: 'VO', frequency: 'od', notes: '' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: {}, historiaMapping: { dt1: { section: 'evolucion' } } }],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content ?? '').toBe('')
+  })
+
+  it('replaces the label used for clinical_notes matching instead of the input label', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'b2',
+        type: 'clinical_notes',
+        label: 'Notas libres',
+        content: 'Texto sobre diagnóstico.',
+      } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: {}, historiaMapping: { b2: { label: 'Diagnóstico' } } }],
+      }),
+    )
+    expect(section(out, 'diagnosticos')?.content).toContain('Texto sobre diagnóstico.')
+  })
+
+  it('redirects a vitals block and prefixes its label when both section and label are mapped', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'v1',
+        type: 'vitals',
+        fields: [{ id: 'bp', label: 'PA', unit: 'mmHg', input_type: 'text' }],
+        values: { bp: '120/80' },
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: {},
+            historiaMapping: { v1: { section: 'evolucion', label: 'Signos de control' } },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Signos de control: PA 120/80 mmHg')
+    expect(section(out, 'examen_fisico')?.content ?? '').not.toContain('PA 120/80')
+  })
+
+  it('redirects a steps block to a mapped section with a custom title', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'st1',
+        type: 'steps',
+        title: 'Manejo',
+        steps: [{ id: 's1', order: 1, title: 'Paso hecho' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { steps_completed: [{ step_id: 's1' }] },
+            historiaMapping: { st1: { section: 'plan_tratamiento', label: 'Seguimiento' } },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'plan_tratamiento')?.content).toContain('Seguimiento: Paso hecho')
+    expect(section(out, 'evolucion')?.content ?? '').not.toContain('Paso hecho')
+  })
+
+  it('redirects a decision block and prefixes the decision line with a custom label', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd1',
+        type: 'decision',
+        condition: '¿Requiere ajuste?',
+        branches: [
+          { id: 'br1', label: 'Sí', action: 'Ajustar' },
+          { id: 'br2', label: 'No', action: 'Mantener' },
+        ],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { decision_branches: [{ block_id: 'd1', branch_id: 'br1' }] },
+            historiaMapping: { d1: { section: 'diagnosticos', label: 'Ajuste terapéutico' } },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'diagnosticos')?.content).toContain('Ajuste terapéutico: ¿Requiere ajuste? → Sí')
+  })
+
+  it('applies mapping entries to blocks nested inside a section block', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'sec1',
+        type: 'section',
+        title: 'Evaluación',
+        blocks: [
+          { id: 'n1', type: 'clinical_notes', label: 'Motivo', content: 'Nota anidada dirigida.' },
+        ],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: {},
+            historiaMapping: { n1: { section: 'diagnosticos' } },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'diagnosticos')?.content).toContain('Nota anidada dirigida.')
+    expect(section(out, 'motivo_consulta')?.content ?? '').not.toContain('Nota anidada dirigida.')
+  })
+
+  it('routes a clinical_notes block with content but no label and no mapping to the narrative default', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'b3', type: 'clinical_notes', content: 'Sin etiqueta.' } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(makeInput({ usages: [{ blocks, modifications: {} }] }))
+    expect(section(out, 'evolucion')?.content).toContain('Sin etiqueta.')
+  })
+
+  it('resolves a mapped decision label even when the block has no condition text', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'd7',
+        type: 'decision',
+        branches: [{ id: 'br1', label: 'Sí', action: 'Continuar' }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [
+          {
+            blocks,
+            modifications: { decision_branches: [{ block_id: 'd7', branch_id: 'br1' }] },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Decisión:  → Sí')
+  })
+
+  it('falls back to default behavior for blocks with no mapping entry when a mapping is present', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'b1', type: 'clinical_notes', label: 'Motivo', content: 'Sin mapear.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        usages: [{ blocks, modifications: {}, historiaMapping: { other_block: { include: false } } }],
+      }),
+    )
+    expect(section(out, 'motivo_consulta')?.content).toContain('Sin mapear.')
+  })
+})
