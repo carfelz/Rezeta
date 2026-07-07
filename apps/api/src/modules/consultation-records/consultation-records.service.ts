@@ -19,7 +19,7 @@ import { ConsultationRecordsRepository } from './consultation-records.repository
 import { PrismaService } from '../../lib/prisma.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { httpAuditContextStore } from '../../common/audit-log/audit-context.store.js'
-import type { HistoriaMedicaPdfData } from '../../lib/pdf.service.js'
+import type { ExpedientePdfData, HistoriaMedicaPdfData } from '../../lib/pdf.service.js'
 
 @Injectable()
 export class ConsultationRecordsService {
@@ -192,6 +192,61 @@ export class ConsultationRecordsService {
       },
       location: c.location ? { name: c.location.name, address: c.location.address } : null,
       startedAt: c.startedAt.toISOString(),
+    }
+  }
+
+  async getExpedienteData(patientId: string, tenantId: string): Promise<ExpedientePdfData> {
+    const patient = await this.prisma.patient.findFirst({
+      where: { id: patientId, tenantId, deletedAt: null },
+      include: { owner: true },
+    })
+    if (!patient) {
+      throw new NotFoundException({
+        code: ErrorCode.PATIENT_NOT_FOUND,
+        message: 'Patient not found',
+      })
+    }
+    const rows = await this.prisma.consultationRecord.findMany({
+      where: { tenantId, patientId, status: 'signed', deletedAt: null },
+      orderBy: { signedAt: 'desc' },
+      include: { consultation: { include: { location: true } } },
+    })
+    // Only the latest signed version per consultation (append-only versions).
+    const latestByConsultation = new Map<string, (typeof rows)[number]>()
+    for (const row of rows) {
+      const existing = latestByConsultation.get(row.consultationId)
+      if (!existing || row.versionNumber > existing.versionNumber) {
+        latestByConsultation.set(row.consultationId, row)
+      }
+    }
+    return {
+      patient: {
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.toISOString() : null,
+        documentNumber: patient.documentNumber,
+        documentType: patient.documentType,
+      },
+      doctor: {
+        fullName: patient.owner.fullName,
+        specialty: patient.owner.specialty,
+        licenseNumber: patient.owner.licenseNumber,
+      },
+      generatedAt: new Date().toISOString(),
+      entries: [...latestByConsultation.values()].map((row) => ({
+        record: {
+          kind: row.kind as ConsultationRecordKind,
+          status: 'signed' as const,
+          versionNumber: row.versionNumber,
+          generatedAt: row.generatedAt.toISOString(),
+          signedAt: row.signedAt?.toISOString() ?? null,
+          sections: row.sections as unknown as RecordSection[],
+        },
+        location: row.consultation.location
+          ? { name: row.consultation.location.name, address: row.consultation.location.address }
+          : null,
+        startedAt: row.consultation.startedAt.toISOString(),
+      })),
     }
   }
 

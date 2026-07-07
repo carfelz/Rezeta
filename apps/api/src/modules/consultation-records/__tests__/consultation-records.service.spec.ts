@@ -96,6 +96,8 @@ const mockRepo = {
 
 const mockPrisma = {
   consultation: { findFirst: vi.fn(), count: vi.fn() },
+  patient: { findFirst: vi.fn() },
+  consultationRecord: { findMany: vi.fn() },
 }
 
 const mockAudit = { record: vi.fn().mockResolvedValue(undefined) }
@@ -426,3 +428,117 @@ describe('buildGenerationInput (via ensureDraft)', () => {
     )
   })
 })
+
+describe('getExpedienteData', () => {
+  it('collects signed records newest-first with their consultation context', async () => {
+    mockPrisma.patient.findFirst.mockResolvedValue({
+      id: 'p1',
+      firstName: 'María',
+      lastName: 'Peña',
+      dateOfBirth: new Date('1972-03-15'),
+      documentType: 'cedula',
+      documentNumber: '001-1234567-8',
+      owner: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+    })
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([
+      {
+        ...makeRecordRowForExport('rec2', '2026-07-06T10:42:00Z'),
+        consultation: { startedAt: new Date('2026-07-06T10:42:00Z'), location: { name: 'Naco', address: null } },
+      },
+      {
+        ...makeRecordRowForExport('rec1', '2026-05-22T09:00:00Z'),
+        consultation: { startedAt: new Date('2026-05-22T09:00:00Z'), location: { name: 'Naco', address: null } },
+      },
+    ])
+    const data = await svc.getExpedienteData('p1', 't1')
+    expect(mockPrisma.consultationRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 't1', patientId: 'p1', status: 'signed', deletedAt: null }),
+      }),
+    )
+    expect(data.entries).toHaveLength(2)
+    expect(data.patient.firstName).toBe('María')
+    expect(data.doctor.fullName).toBe('Ana Herrera')
+    expect(data.entries[0].startedAt).toBe('2026-07-06T10:42:00.000Z')
+    expect(data.entries[1].startedAt).toBe('2026-05-22T09:00:00.000Z')
+    expect(data.entries[0].location).toEqual({ name: 'Naco', address: null })
+  })
+
+  it('keeps only the latest version per consultation', async () => {
+    mockPrisma.patient.findFirst.mockResolvedValue({
+      id: 'p1',
+      firstName: 'María',
+      lastName: 'Peña',
+      dateOfBirth: new Date('1972-03-15'),
+      documentType: 'cedula',
+      documentNumber: '001-1234567-8',
+      owner: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+    })
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([
+      {
+        ...makeRecordRowForExport('rec2-v2', '2026-07-06T10:42:00Z'),
+        consultationId: 'c-rec2',
+        versionNumber: 2,
+        consultation: { startedAt: new Date('2026-07-06T10:42:00Z'), location: null },
+      },
+      {
+        ...makeRecordRowForExport('rec2-v1', '2026-07-01T10:00:00Z'),
+        consultationId: 'c-rec2',
+        versionNumber: 1,
+        consultation: { startedAt: new Date('2026-07-01T10:00:00Z'), location: null },
+      },
+    ])
+    const data = await svc.getExpedienteData('p1', 't1')
+    expect(data.entries).toHaveLength(1)
+    expect(data.entries[0].record.versionNumber).toBe(2)
+    expect(data.entries[0].location).toBeNull()
+  })
+
+  it('defaults dateOfBirth and signedAt to null when absent', async () => {
+    mockPrisma.patient.findFirst.mockResolvedValue({
+      id: 'p1',
+      firstName: 'Juan',
+      lastName: 'Pérez',
+      dateOfBirth: null,
+      documentType: null,
+      documentNumber: null,
+      owner: { fullName: null, specialty: null, licenseNumber: null },
+    })
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([
+      {
+        ...makeRecordRowForExport('rec1', '2026-07-06T10:42:00Z'),
+        signedAt: null,
+        consultation: { startedAt: new Date('2026-07-06T10:42:00Z'), location: null },
+      },
+    ])
+    const data = await svc.getExpedienteData('p1', 't1')
+    expect(data.patient.dateOfBirth).toBeNull()
+    expect(data.entries[0].record.signedAt).toBeNull()
+    expect(data.entries[0].location).toBeNull()
+  })
+
+  it('throws PATIENT_NOT_FOUND for a missing patient', async () => {
+    mockPrisma.patient.findFirst.mockResolvedValue(null)
+    await expect(svc.getExpedienteData('p1', 't1')).rejects.toMatchObject({
+      response: { code: 'PATIENT_NOT_FOUND' },
+    })
+  })
+})
+
+function makeRecordRowForExport(id: string, signedAt: string) {
+  return {
+    id,
+    consultationId: 'c-' + id,
+    patientId: 'p1',
+    versionNumber: 1,
+    kind: 'evolution',
+    status: 'signed',
+    sections: [],
+    generatedAt: new Date(signedAt),
+    signedAt: new Date(signedAt),
+    signedBy: 'u1',
+    createdAt: new Date(signedAt),
+    updatedAt: new Date(signedAt),
+    deletedAt: null,
+  }
+}
