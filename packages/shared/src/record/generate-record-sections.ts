@@ -86,6 +86,12 @@ function narrativeSection(kind: ConsultationRecordKind): RecordSectionKey {
   return kind === 'first_visit' ? 'enfermedad_actual' : 'evolucion'
 }
 
+/** Resolves a section override, routing to the narrative default if the section is excluded for this kind. */
+function resolveSection(overriddenSection: RecordSectionKey, kind: ConsultationRecordKind): RecordSectionKey {
+  const excluded = EXCLUDED_BY_KIND[kind]
+  return excluded.includes(overriddenSection) ? narrativeSection(kind) : overriddenSection
+}
+
 function matchNotesSection(label: string, kind: ConsultationRecordKind): RecordSectionKey {
   const n = normalize(label)
   if (n.includes('motivo')) return 'motivo_consulta'
@@ -154,7 +160,8 @@ function walkBlocks(
       case 'clinical_notes': {
         const content = String(block.content ?? '')
         if (content.trim()) {
-          const destination = mapping?.section ?? matchNotesSection(mapping?.label ?? String(block.label ?? ''), kind)
+          const baseDestination = mapping?.section ?? matchNotesSection(mapping?.label ?? String(block.label ?? ''), kind)
+          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
           push(bucket, destination, content)
         }
         break
@@ -166,7 +173,8 @@ function walkBlocks(
           .filter((f) => values[f.id] !== undefined && values[f.id] !== '')
           .map((f) => `${f.label} ${String(values[f.id])}${f.unit ? ` ${f.unit}` : ''}`)
         if (parts.length > 0) {
-          const destination = mapping?.section ?? 'examen_fisico'
+          const baseDestination = mapping?.section ?? 'examen_fisico'
+          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
           const text = mapping?.label ? `${mapping.label}: ${parts.join(' · ')}` : parts.join(' · ')
           push(bucket, destination, text)
         }
@@ -176,7 +184,8 @@ function walkBlocks(
         const items = (block.items ?? []) as Array<{ text: string; checked?: boolean }>
         const checked = items.filter((i) => i.checked === true).map((i) => i.text)
         if (checked.length > 0) {
-          const destination = mapping?.section ?? narrativeSection(kind)
+          const baseDestination = mapping?.section ?? narrativeSection(kind)
+          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
           const title = mapping?.label ?? String(block.title ?? 'Verificación')
           push(bucket, destination, `${title}: ${checked.join(', ')}`)
         }
@@ -197,7 +206,8 @@ function walkBlocks(
           }
         }
         if (parts.length > 0) {
-          const destination = mapping?.section ?? narrativeSection(kind)
+          const baseDestination = mapping?.section ?? narrativeSection(kind)
+          const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
           const title = mapping?.label ?? String(block.title ?? 'Pasos')
           push(bucket, destination, `${title}: ${parts.join(' · ')}`)
         }
@@ -214,7 +224,8 @@ function walkBlocks(
             branches.find((b) => b.id === chosen['branch_id'])?.label ??
             ''
           if (label) {
-            const destination = mapping?.section ?? narrativeSection(kind)
+            const baseDestination = mapping?.section ?? narrativeSection(kind)
+            const destination = mapping?.section ? resolveSection(baseDestination, kind) : baseDestination
             const prefix = mapping?.label ?? 'Decisión'
             push(bucket, destination, `${prefix}: ${String(block.condition ?? '')} → ${label}`)
           }

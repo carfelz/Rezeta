@@ -736,4 +736,43 @@ describe('historia_mapping overrides', () => {
     )
     expect(section(out, 'motivo_consulta')?.content).toContain('Sin mapear.')
   })
+
+  it('rescues clinical_notes with evolucion mapping on first_visit by routing to enfermedad_actual', () => {
+    const blocks: ProtocolBlock[] = [
+      { id: 'b1', type: 'clinical_notes', label: 'Notas', content: 'Historia clínica.' } as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        kind: 'first_visit',
+        usages: [{ blocks, modifications: {}, historiaMapping: { b1: { section: 'evolucion' } } }],
+      }),
+    )
+    expect(section(out, 'enfermedad_actual')?.content).toContain('Historia clínica.')
+    expect(section(out, 'evolucion')).toBeUndefined()
+  })
+
+  it('rescues checklist with enfermedad_actual mapping on evolution by routing to evolucion', () => {
+    const blocks: ProtocolBlock[] = [
+      {
+        id: 'ck1',
+        type: 'checklist',
+        title: 'Evaluación',
+        items: [{ id: 'i1', text: 'Mejoría clínica', checked: true }],
+      } as unknown as ProtocolBlock,
+    ]
+    const out = generateRecordSections(
+      makeInput({
+        kind: 'evolution',
+        usages: [
+          {
+            blocks,
+            modifications: {},
+            historiaMapping: { ck1: { section: 'enfermedad_actual' } },
+          },
+        ],
+      }),
+    )
+    expect(section(out, 'evolucion')?.content).toContain('Mejoría clínica')
+    expect(section(out, 'enfermedad_actual')).toBeUndefined()
+  })
 })
