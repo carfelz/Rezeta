@@ -20,13 +20,13 @@ describe('VitalInput', () => {
 
   it('respects readOnly', () => {
     render(<VitalInput label="HR" value="70" onChange={vi.fn()} unit="lpm" readOnly />)
-    const input = screen.getByDisplayValue('70')
+    const input = screen.getByDisplayValue<HTMLInputElement>('70')
     expect(input.readOnly).toBe(true)
   })
 
   it('respects disabled', () => {
     render(<VitalInput label="HR" value="" onChange={vi.fn()} unit="lpm" disabled />)
-    const input = screen.getByDisplayValue('')
+    const input = screen.getByDisplayValue<HTMLInputElement>('')
     expect(input.disabled).toBe(true)
   })
 })

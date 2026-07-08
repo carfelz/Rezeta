@@ -30,6 +30,7 @@ const authUser = {
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00.000Z',
+  preferences: {},
 }
 
 describe('AuthController', () => {

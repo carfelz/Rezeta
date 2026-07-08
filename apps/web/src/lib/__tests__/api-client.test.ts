@@ -14,6 +14,7 @@ vi.mock('@/lib/auth', () => ({
 import { apiClient, ApiRequestError, triggerDownload } from '../api-client'
 import { authClient } from '@/lib/auth'
 import { useLoadingStore } from '@/store/loading.store'
+import type { ApiError } from '@rezeta/shared'
 
 const mockAuth = authClient as unknown as {
   getToken: ReturnType<typeof vi.fn>
@@ -29,7 +30,7 @@ describe('ApiRequestError', () => {
   })
 
   it('is instanceof Error', () => {
-    const err = new ApiRequestError({ code: 'ERR', message: 'oops' })
+    const err = new ApiRequestError({ code: 'ERR' as unknown as ApiError['code'], message: 'oops' })
     expect(err).toBeInstanceOf(Error)
   })
 })

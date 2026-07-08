@@ -158,7 +158,7 @@ describe('UsersRepository', () => {
       mockTx.user.create.mockResolvedValue(existingUser)
 
       await repo.provisionUser(verified)
-      const callData = mockTx.user.create.mock.calls[0][0].data as Record<string, unknown>
+      const callData = mockTx.user.create.mock.calls[0]![0].data as Record<string, unknown>
       expect(callData).not.toHaveProperty('fullName')
       expect(callData).not.toHaveProperty('specialty')
     })

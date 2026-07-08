@@ -18,12 +18,13 @@ function makeRec(overrides: Partial<ProtocolRecommendation> = {}): ProtocolRecom
   return {
     protocolId: 'proto-1',
     title: 'HTA — Seguimiento',
-    typeId: 'type-1',
-    typeName: 'Cardiovascular',
+    categoryId: 'type-1',
+    categoryName: 'Cardiovascular',
     currentVersionNumber: 2,
     lastUsedAt: new Date().toISOString(),
     usageCount: 1,
     isMostProbable: false,
+    source: 'patient-history',
     ...overrides,
   }
 }

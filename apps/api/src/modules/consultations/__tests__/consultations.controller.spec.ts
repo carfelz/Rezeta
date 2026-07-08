@@ -6,9 +6,15 @@ import type { AuthUser, ConsultationWithDetails, ConsultationProtocolUsage } fro
 
 const mockUser: AuthUser = {
   id: 'user-1',
+  externalUid: 'ext-1',
   tenantId: 'tenant-1',
   email: 'doc@test.com',
+  fullName: 'Dr. Test',
   role: 'owner',
+  specialty: null,
+  licenseNumber: null,
+  tenantSeededAt: '2026-01-01T00:00:00Z',
+  preferences: {},
 }
 const tenantId = 'tenant-1'
 
@@ -29,6 +35,8 @@ function makeConsultation(id = 'c1'): ConsultationWithDetails {
     patientName: 'Ana Reyes',
     locationName: 'Clínica Central',
     doctorName: 'Dr. Test',
+    patientAllergies: [],
+    patientChronicConditions: [],
     amendments: [],
     protocolUsages: [],
   }
@@ -51,6 +59,7 @@ function makeUsage(): ConsultationProtocolUsage {
     modifications: {},
     modificationSummary: null,
     appliedAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
     protocolTitle: 'Test Protocol',
     protocolTypeName: null,
     versionNumber: 1,

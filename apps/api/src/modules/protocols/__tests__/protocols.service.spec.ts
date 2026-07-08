@@ -76,7 +76,7 @@ describe('ProtocolsService', () => {
         version: { id: 'v1', versionNumber: 1, content: {}, changeSummary: null, createdAt: now },
       })
       await service.create('t1', 'u1', { templateId: 'tmpl-1', title: 'New' } as never)
-      const arg = mockRepo.create.mock.calls[0][0] as Record<string, unknown>
+      const arg = mockRepo.create.mock.calls[0]![0] as Record<string, unknown>
       expect(arg.templateId).toBe('tmpl-1')
       expect(arg.categoryId).toBe('cat-1')
       expect((arg.content as { blocks: unknown[] }).blocks).toHaveLength(1)
@@ -125,8 +125,8 @@ describe('ProtocolsService', () => {
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
       expect(result).toHaveLength(1)
-      expect(result[0].categoryName).toBe('Emergencia')
-      expect(result[0].currentVersionNumber).toBe(2)
+      expect(result[0]!.categoryName).toBe('Emergencia')
+      expect(result[0]!.currentVersionNumber).toBe(2)
     })
 
     it('returns null currentVersionNumber when no versions', async () => {
@@ -141,8 +141,8 @@ describe('ProtocolsService', () => {
       }
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
-      expect(result[0].currentVersionNumber).toBeNull()
-      expect(result[0].blockCount).toBe(0)
+      expect(result[0]!.currentVersionNumber).toBeNull()
+      expect(result[0]!.blockCount).toBe(0)
     })
 
     it('returns null categoryId and categoryName for blank protocols in list', async () => {
@@ -157,8 +157,8 @@ describe('ProtocolsService', () => {
       }
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
-      expect(result[0].categoryId).toBeNull()
-      expect(result[0].categoryName).toBeNull()
+      expect(result[0]!.categoryId).toBeNull()
+      expect(result[0]!.categoryName).toBeNull()
     })
 
     it('computes blockCount from latest version content blocks array', async () => {
@@ -184,8 +184,8 @@ describe('ProtocolsService', () => {
       }
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
-      expect(result[0].blockCount).toBe(2)
-      expect(result[0].currentVersionNumber).toBe(3)
+      expect(result[0]!.blockCount).toBe(2)
+      expect(result[0]!.currentVersionNumber).toBe(3)
     })
 
     it('returns blockCount=0 when latest version content lacks a blocks array', async () => {
@@ -200,7 +200,7 @@ describe('ProtocolsService', () => {
       }
       mockRepo.list.mockResolvedValue([listRow])
       const result = await service.list('t1')
-      expect(result[0].blockCount).toBe(0)
+      expect(result[0]!.blockCount).toBe(0)
     })
 
     it('passes query filters through to repo', async () => {
@@ -224,8 +224,11 @@ describe('ProtocolsService', () => {
 
     it('passes sort filter alone', async () => {
       mockRepo.list.mockResolvedValue([])
-      await service.list('t1', { favoritesOnly: false, sort: 'title' })
-      expect(mockRepo.list).toHaveBeenCalledWith('t1', expect.objectContaining({ sort: 'title' }))
+      await service.list('t1', { favoritesOnly: false, sort: 'title_asc' })
+      expect(mockRepo.list).toHaveBeenCalledWith(
+        't1',
+        expect.objectContaining({ sort: 'title_asc' }),
+      )
     })
 
     it('passes favoritesOnly:false when false (service always includes the flag)', async () => {
@@ -372,7 +375,7 @@ describe('ProtocolsService', () => {
       ])
       const result = await service.listVersions('proto1', 't1')
       expect(result).toHaveLength(1)
-      expect(result[0].isCurrent).toBe(true)
+      expect(result[0]!.isCurrent).toBe(true)
     })
 
     it('throws NotFoundException when protocol not found', async () => {

@@ -80,11 +80,20 @@ describe('useCreateLocation', () => {
     vi.mocked(apiClient.post).mockResolvedValue(mockLocation)
     const { result } = renderHook(() => useCreateLocation(), { wrapper: makeWrapper() })
     await act(async () => {
-      await result.current.mutateAsync({ name: 'Centro Médico Real', address: 'Calle 1' })
+      await result.current.mutateAsync({
+        name: 'Centro Médico Real',
+        address: 'Calle 1',
+        isOwned: false,
+        commissionPercent: 0,
+        consultationFee: 0,
+      })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/locations', {
       name: 'Centro Médico Real',
       address: 'Calle 1',
+      isOwned: false,
+      commissionPercent: 0,
+      consultationFee: 0,
     })
   })
 })

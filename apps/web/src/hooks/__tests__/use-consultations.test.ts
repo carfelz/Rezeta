@@ -138,7 +138,7 @@ describe('useUpdateConsultation', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ chiefComplaint: 'Dolor' } as Parameters<
+      await result.current.mutateAsync({ chiefComplaint: 'Dolor' } as unknown as Parameters<
         typeof result.current.mutateAsync
       >[0])
     })
@@ -313,12 +313,11 @@ describe('useCreatePrescription', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ items: [] } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/prescriptions', {
       items: [],
+      groupOrder: 1,
     })
   })
 })
@@ -350,12 +349,11 @@ describe('useCreateImagingOrder', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ orders: [] } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/imaging-orders', {
-      orders: [],
+      items: [],
+      groupOrder: 1,
     })
   })
 })
@@ -385,12 +383,11 @@ describe('useCreateLabOrder', () => {
     vi.mocked(apiClient.post).mockResolvedValue(mockLab)
     const { result } = renderHook(() => useCreateLabOrder('cons-1'), { wrapper: makeWrapper() })
     await act(async () => {
-      await result.current.mutateAsync({ orders: [] } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/lab-orders', {
-      orders: [],
+      items: [],
+      groupOrder: 1,
     })
   })
 })

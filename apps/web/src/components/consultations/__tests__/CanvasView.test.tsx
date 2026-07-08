@@ -21,8 +21,8 @@ const makeUsage = (
   completedAt: null,
   notes: null,
   appliedAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
   modificationSummary: null,
-  checkedState: {},
   modifications: {},
   content: {
     version: '1.0',

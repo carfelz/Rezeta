@@ -43,6 +43,8 @@ function mockConsultation(
     patientName: 'María García',
     locationName: 'Clínica Centro',
     doctorName: 'Dr. García',
+    patientAllergies: [],
+    patientChronicConditions: [],
     amendments: [],
     protocolUsages: [],
     ...overrides,
@@ -932,7 +934,7 @@ describe('ConsultationsService', () => {
         mockProtocolUsage({ modificationSummary: 'Updated' }),
       )
       const result = await service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-        content: {},
+        content: { version: '1.0', blocks: [] },
         modifications: {},
         modificationSummary: 'Updated',
       })
@@ -944,7 +946,7 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)
       await expect(
         service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-          content: {},
+          content: { version: '1.0', blocks: [] },
           modifications: {},
         }),
       ).rejects.toThrow(NotFoundException)
@@ -957,7 +959,7 @@ describe('ConsultationsService', () => {
       )
       await expect(
         service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-          content: {},
+          content: { version: '1.0', blocks: [] },
           modifications: {},
         }),
       ).rejects.toThrow(NotFoundException)
@@ -967,7 +969,7 @@ describe('ConsultationsService', () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
       await expect(
         service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-          content: {},
+          content: { version: '1.0', blocks: [] },
           modifications: {},
         }),
       ).rejects.toMatchObject({
@@ -984,7 +986,7 @@ describe('ConsultationsService', () => {
         mockProtocolUsage({ modificationSummary: 'Updated' }),
       )
       const result = await service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-        content: {},
+        content: { version: '1.0', blocks: [] },
         modifications: {},
       })
       expect(result.modificationSummary).toBe('Updated')
@@ -997,7 +999,7 @@ describe('ConsultationsService', () => {
       )
       await expect(
         service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
-          content: {},
+          content: { version: '1.0', blocks: [] },
           expectedUpdatedAt: '2025-12-31T00:00:00.000Z',
         }),
       ).rejects.toMatchObject({

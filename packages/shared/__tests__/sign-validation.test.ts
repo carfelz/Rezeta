@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeMissingRequiredFields } from '../src/protocol/sign-validation'
-import type { ConsultationProtocolUsage, ProtocolBlock } from '../src'
+import { computeMissingRequiredFields } from '../src/protocol/sign-validation.js'
+import type { ConsultationProtocolUsage, ProtocolBlock, MissingRequiredField } from '../src/index.js'
 
 function makeUsage(
   blocks: ProtocolBlock[],
@@ -28,6 +28,7 @@ function makeUsage(
     completedAt: null,
     notes: null,
     appliedAt: ts,
+    updatedAt: ts,
     modificationSummary: null,
     modifications: checklistItems.length > 0 ? { checklist_items: checklistItems } : {},
     content: { version: '1.0', blocks },
@@ -51,7 +52,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block], { i1: true })])
-    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
   it('passes when all checklist items checked', () => {
@@ -77,7 +78,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:d1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:d1')).toBe(true)
   })
 
   it('passes decision block with one branch selected', () => {
@@ -120,7 +121,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       ],
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
   it('text and alert blocks always pass', () => {
@@ -157,7 +158,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block], { s1: true })])
-    expect(r.some((m) => m.id === 'protocol:u1:stp1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:stp1')).toBe(true)
   })
 
   it('passes required steps block when all steps checked', () => {
@@ -184,7 +185,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:dt1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:dt1')).toBe(true)
   })
 
   it('passes required dosage_table when at least one row checked', () => {
@@ -217,7 +218,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:img1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:img1')).toBe(true)
   })
 
   it('passes required imaging_order when an order is checked', () => {
@@ -257,7 +258,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:lab1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:lab1')).toBe(true)
   })
 
   it('passes required lab_order when an order is checked', () => {
@@ -334,7 +335,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    const entry = r.find((m) => m.id === 'protocol:u1:chk_no_title')
+    const entry = r.find((m: MissingRequiredField) => m.id === 'protocol:u1:chk_no_title')
     expect(entry?.label).toBe('Bloque chk_no_title')
   })
 
@@ -350,7 +351,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    const entry = r.find((m) => m.id === 'protocol:u1:d1')
+    const entry = r.find((m: MissingRequiredField) => m.id === 'protocol:u1:d1')
     expect(entry?.label).toBe('¿Hay fiebre?')
   })
 
@@ -364,12 +365,12 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     const usage = makeUsage([block])
     usage.status = 'completed'
     const r = computeMissingRequiredFields([usage])
-    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
   it('handles usage with null content (no blocks)', () => {
     const usage = makeUsage([])
-    usage.content = null
+    usage.content = null as unknown as ConsultationProtocolUsage['content']
     const r = computeMissingRequiredFields([usage])
     expect(r).toEqual([])
   })
@@ -384,7 +385,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     const usage = makeUsage([block])
     usage.modifications = {}
     const r = computeMissingRequiredFields([usage])
-    expect(r.some((m) => m.id === 'protocol:u1:chk1')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:chk1')).toBe(true)
   })
 
   it('vitals block is incomplete when no values entered', () => {
@@ -396,7 +397,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const result = computeMissingRequiredFields([makeUsage([block])])
     expect(result).toHaveLength(1)
-    expect(result[0].id).toContain('blk1')
+    expect(result[0]!.id).toContain('blk1')
   })
 
   it('vitals block is complete when at least one value entered', () => {
@@ -421,7 +422,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const result = computeMissingRequiredFields([makeUsage([block])])
     expect(result).toHaveLength(1)
-    expect(result[0].id).toContain('blk2')
+    expect(result[0]!.id).toContain('blk2')
   })
 
   it('clinical_notes block is complete when content is non-empty', () => {
@@ -445,7 +446,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:d2')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:d2')).toBe(true)
   })
 
   it('dosage_table with undefined rows defaults to empty array (incomplete)', () => {
@@ -457,7 +458,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:dt2')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:dt2')).toBe(true)
   })
 
   it('imaging_order with undefined orders defaults to empty array (incomplete)', () => {
@@ -468,7 +469,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:img2')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:img2')).toBe(true)
   })
 
   it('lab_order with undefined orders defaults to empty array (incomplete)', () => {
@@ -479,7 +480,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
       required: true,
     } as unknown as ProtocolBlock
     const r = computeMissingRequiredFields([makeUsage([block])])
-    expect(r.some((m) => m.id === 'protocol:u1:lab2')).toBe(true)
+    expect(r.some((m: MissingRequiredField) => m.id === 'protocol:u1:lab2')).toBe(true)
   })
 
   it('vitals block is incomplete when all present values are empty strings', () => {
@@ -492,7 +493,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const result = computeMissingRequiredFields([makeUsage([block])])
     expect(result).toHaveLength(1)
-    expect(result[0].id).toContain('blk5')
+    expect(result[0]!.id).toContain('blk5')
   })
 
   it('vitals block is complete when at least one value is non-empty after trimming', () => {
@@ -517,7 +518,7 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const result = computeMissingRequiredFields([makeUsage([block])])
     expect(result).toHaveLength(1)
-    expect(result[0].id).toContain('blk3')
+    expect(result[0]!.id).toContain('blk3')
   })
 
   it('clinical_notes block with undefined content defaults to empty string (incomplete)', () => {
@@ -530,6 +531,6 @@ describe('computeMissingRequiredFields — protocol-required blocks', () => {
     } as unknown as ProtocolBlock
     const result = computeMissingRequiredFields([makeUsage([block])])
     expect(result).toHaveLength(1)
-    expect(result[0].id).toContain('blk4')
+    expect(result[0]!.id).toContain('blk4')
   })
 })

@@ -61,7 +61,7 @@ describe('downloadAuditLogCsv', () => {
 
   it('includes multiple params in query string', async () => {
     await downloadAuditLogCsv({ category: 'entity', status: 'success' })
-    const url = mocks.download.mock.calls[0][0] as string
+    const url = mocks.download.mock.calls[0]![0] as string
     expect(url).toContain('category=entity')
     expect(url).toContain('status=success')
   })

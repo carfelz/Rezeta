@@ -155,7 +155,7 @@ describe('OrdersRepository', () => {
       }
       const result = await repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result.id).toBe('rx1')
-      expect(result.prescriptionItems[0].drug).toBe('Ibuprofeno')
+      expect(result.prescriptionItems[0]!.drug).toBe('Ibuprofeno')
       expect(result.createdAt).toBe(now.toISOString())
     })
 
@@ -294,7 +294,7 @@ describe('OrdersRepository', () => {
       mockPrisma.prescription.findMany.mockResolvedValue([makeRxRow()])
       const result = await repo.listPrescriptionsByConsultation('c1', 't1')
       expect(result).toHaveLength(1)
-      expect(result[0].consultationId).toBe('c1')
+      expect(result[0]!.consultationId).toBe('c1')
     })
   })
 
@@ -331,7 +331,7 @@ describe('OrdersRepository', () => {
       }
       const result = await repo.createImagingOrder('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result).toHaveLength(1)
-      expect(result[0].items[0].studyType).toBe('Rx Tórax')
+      expect(result[0]!.items[0]!.studyType).toBe('Rx Tórax')
     })
 
     it('on P2002 unique-constraint violation, re-fetches and returns the existing group', async () => {
@@ -385,7 +385,7 @@ describe('OrdersRepository', () => {
       )
       const result = await repo.findImagingOrderById('img1', 't1')
       expect(result?.id).toBe('img1')
-      expect(result?.items[0].urgency).toBe('routine')
+      expect(result?.items[0]!.urgency).toBe('routine')
     })
 
     it('returns null when not found', async () => {
@@ -423,7 +423,7 @@ describe('OrdersRepository', () => {
       }
       const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result).toHaveLength(1)
-      expect(result[0].items[0].testName).toBe('Hemograma')
+      expect(result[0]!.items[0]!.testName).toBe('Hemograma')
     })
 
     it('on P2002 unique-constraint violation, re-fetches and returns the existing group', async () => {
@@ -475,7 +475,7 @@ describe('OrdersRepository', () => {
       mockPrisma.labOrder.findFirst.mockResolvedValue(makeLabRow({ items: [makeLabItem()] }))
       const result = await repo.findLabOrderById('lab1', 't1')
       expect(result?.id).toBe('lab1')
-      expect(result?.items[0].sampleType).toBe('blood')
+      expect(result?.items[0]!.sampleType).toBe('blood')
     })
 
     it('returns null when not found', async () => {
@@ -489,7 +489,7 @@ describe('OrdersRepository', () => {
       mockPrisma.labOrder.findMany.mockResolvedValue([makeLabRow({ items: [makeLabItem()] })])
       const result = await repo.listLabOrdersByConsultation('c1', 't1')
       expect(result).toHaveLength(1)
-      expect(result[0].items[0].testName).toBe('Hemograma')
+      expect(result[0]!.items[0]!.testName).toBe('Hemograma')
     })
   })
 
@@ -511,11 +511,11 @@ describe('OrdersRepository', () => {
       mockPrisma.imagingOrder.findMany.mockResolvedValue([])
       mockPrisma.labOrder.findMany.mockResolvedValue([])
       await repo.getOrdersForConsultation('c1', 't1')
-      const rxWhere = mockPrisma.prescription.findMany.mock.calls[0][0].where
+      const rxWhere = mockPrisma.prescription.findMany.mock.calls[0]![0].where
       expect(rxWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
-      const imgWhere = mockPrisma.imagingOrder.findMany.mock.calls[0][0].where
+      const imgWhere = mockPrisma.imagingOrder.findMany.mock.calls[0]![0].where
       expect(imgWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
-      const labWhere = mockPrisma.labOrder.findMany.mock.calls[0][0].where
+      const labWhere = mockPrisma.labOrder.findMany.mock.calls[0]![0].where
       expect(labWhere).toMatchObject({ consultationId: 'c1', tenantId: 't1', deletedAt: null })
     })
 
@@ -584,8 +584,8 @@ describe('OrdersRepository', () => {
         ],
       }
       const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
-      expect(result[0].items[0].testName).toBe('Hemograma')
-      expect(result[0].items[0].sampleType).toBe('blood')
+      expect(result[0]!.items[0]!.testName).toBe('Hemograma')
+      expect(result[0]!.items[0]!.sampleType).toBe('blood')
     })
   })
 })

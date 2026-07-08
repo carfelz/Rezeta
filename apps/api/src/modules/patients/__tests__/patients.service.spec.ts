@@ -11,7 +11,8 @@ const mockPatient = (overrides: Partial<Patient> = {}): Patient =>
     id: 'patient-id-1',
     tenantId: 'tenant-1',
     ownerUserId: 'user-1',
-    fullName: 'María García',
+    firstName: 'María',
+    lastName: 'García',
     dateOfBirth: null,
     sex: null,
     documentType: null,
@@ -23,7 +24,6 @@ const mockPatient = (overrides: Partial<Patient> = {}): Patient =>
     allergies: [],
     chronicConditions: [],
     notes: null,
-    isActive: true,
     deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -51,7 +51,7 @@ describe('PatientsService', () => {
     it('returns items and hasMore: false when results fit within limit', async () => {
       const patients = [mockPatient(), mockPatient({ id: 'patient-id-2' })]
       vi.mocked(repo.findMany).mockResolvedValue(patients)
-      const result = await service.list({ tenantId: 'tenant-1', limit: 50 })
+      const result = await service.list({ tenantId: 'tenant-1', ownerId: 'user-1', limit: 50 })
       expect(result.items).toHaveLength(2)
       expect(result.hasMore).toBe(false)
       expect(result.nextCursor).toBeUndefined()
@@ -61,7 +61,7 @@ describe('PatientsService', () => {
       // Service requests limit+1 rows and checks if there are more
       const patients = Array.from({ length: 3 }, (_, i) => mockPatient({ id: `p-${i}` }))
       vi.mocked(repo.findMany).mockResolvedValue(patients)
-      const result = await service.list({ tenantId: 'tenant-1', limit: 2 })
+      const result = await service.list({ tenantId: 'tenant-1', ownerId: 'user-1', limit: 2 })
       expect(result.hasMore).toBe(true)
       expect(result.items).toHaveLength(2)
       expect(result.nextCursor).toBe('p-1')
@@ -69,13 +69,13 @@ describe('PatientsService', () => {
 
     it('applies default limit of 50 when not specified', async () => {
       vi.mocked(repo.findMany).mockResolvedValue([])
-      await service.list({ tenantId: 'tenant-1' })
+      await service.list({ tenantId: 'tenant-1', ownerId: 'user-1' })
       expect(repo.findMany).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }))
     })
 
     it('returns empty list', async () => {
       vi.mocked(repo.findMany).mockResolvedValue([])
-      const result = await service.list({ tenantId: 'tenant-1' })
+      const result = await service.list({ tenantId: 'tenant-1', ownerId: 'user-1' })
       expect(result.items).toHaveLength(0)
       expect(result.hasMore).toBe(false)
     })
@@ -125,13 +125,13 @@ describe('PatientsService', () => {
 
   describe('update', () => {
     it('updates and returns updated patient', async () => {
-      const patient = mockPatient({ fullName: 'María Actualizada' })
+      const patient = mockPatient({ firstName: 'María', lastName: 'Actualizada' })
       vi.mocked(repo.findById).mockResolvedValue(mockPatient())
       vi.mocked(repo.update).mockResolvedValue(patient)
       const result = await service.update('patient-id-1', 'tenant-1', {
         fullName: 'María Actualizada',
       })
-      expect(result.fullName).toBe('María Actualizada')
+      expect(result.lastName).toBe('Actualizada')
     })
 
     it('throws NotFoundException when patient does not exist', async () => {
@@ -153,7 +153,7 @@ describe('PatientsService', () => {
   describe('remove', () => {
     it('soft-deletes patient when found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockPatient())
-      vi.mocked(repo.softDelete).mockResolvedValue(undefined)
+      vi.mocked(repo.softDelete).mockResolvedValue(mockPatient({ deletedAt: new Date() }))
       await service.remove('patient-id-1', 'tenant-1')
       expect(repo.softDelete).toHaveBeenCalledWith('patient-id-1', 'tenant-1')
     })

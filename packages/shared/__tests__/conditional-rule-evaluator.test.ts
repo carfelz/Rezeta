@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateConditionalRule, resolveField } from '../src/protocol/conditional-rule-evaluator'
-import type { ConditionalRule } from '../src/types/protocol'
-import type { Vitals } from '../src/types/consultation'
+import { evaluateConditionalRule, resolveField } from '../src/protocol/conditional-rule-evaluator.js'
+import type { ConditionalRule } from '../src/types/protocol.js'
+import type { Vitals } from '../src/types/consultation.js'
 
 const vitals: Vitals = {
   bloodPressureSystolic: 165,

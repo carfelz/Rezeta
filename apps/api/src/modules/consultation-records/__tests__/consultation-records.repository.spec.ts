@@ -95,7 +95,7 @@ describe('ConsultationRecordsRepository', () => {
       makeRow({ status: 'signed', signedAt: now, signedBy: 'u1' }),
     )
     const result = await repo.sign('rec1', 't1', 'u1')
-    const call = mockPrisma.consultationRecord.updateMany.mock.calls[0][0]
+    const call = mockPrisma.consultationRecord.updateMany.mock.calls[0]![0]
     expect(call.where).toEqual({ id: 'rec1', tenantId: 't1', status: 'draft', deletedAt: null })
     expect(call.data.status).toBe('signed')
     expect(call.data.signedBy).toBe('u1')

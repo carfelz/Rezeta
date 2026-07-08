@@ -115,7 +115,7 @@ describe('AuthGuard', () => {
     // Override ip to undefined
     ctx._req.ip = undefined
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
-    const call = mockAuditLog.record.mock.calls[0][0] as Record<string, unknown>
+    const call = mockAuditLog.record.mock.calls[0]![0] as Record<string, unknown>
     expect(call.ipAddress).toBeUndefined()
   })
 

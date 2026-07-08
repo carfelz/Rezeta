@@ -23,9 +23,15 @@ const mockAudit = { record: vi.fn().mockResolvedValue(undefined) }
 
 const mockUser: AuthUser = {
   id: 'u1',
+  externalUid: 'ext-1',
   tenantId: 't1',
   email: 'doc@test.com',
+  fullName: 'Dr. Test',
   role: 'owner',
+  specialty: null,
+  licenseNumber: null,
+  tenantSeededAt: '2026-01-01T00:00:00Z',
+  preferences: {},
 }
 
 const controller = new ConsultationRecordsController(

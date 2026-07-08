@@ -240,8 +240,8 @@ describe('FirebaseAuthProvider', () => {
       })
       vi.stubGlobal('fetch', fetchMock)
       await provider.signInWithPassword('a@b', 'p')
-      expect(fetchMock.mock.calls[0][0]).toContain('identitytoolkit.googleapis.com')
-      expect(fetchMock.mock.calls[0][0]).toContain('mykey')
+      expect(fetchMock.mock.calls[0]![0]).toContain('identitytoolkit.googleapis.com')
+      expect(fetchMock.mock.calls[0]![0]).toContain('mykey')
     })
 
     it('throws UnauthorizedException on non-ok response with error message', async () => {

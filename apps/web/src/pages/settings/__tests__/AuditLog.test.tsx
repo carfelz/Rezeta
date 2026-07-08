@@ -137,7 +137,7 @@ describe('AuditLog', () => {
       isError: false,
     })
     render(<AuditLog />)
-    fireEvent.click(screen.getAllByRole('row')[1])
+    fireEvent.click(screen.getAllByRole('row')[1]!)
     expect(screen.getByLabelText('Cerrar')).toBeInTheDocument()
   })
 
@@ -152,7 +152,7 @@ describe('AuditLog', () => {
     })
     render(<AuditLog />)
     // open drawer
-    fireEvent.click(screen.getAllByRole('row')[1])
+    fireEvent.click(screen.getAllByRole('row')[1]!)
     // close via X button
     fireEvent.click(screen.getByLabelText('Cerrar'))
     expect(screen.queryByLabelText('Cerrar')).not.toBeInTheDocument()
@@ -202,7 +202,7 @@ describe('AuditLog', () => {
       isError: false,
     })
     render(<AuditLog />)
-    fireEvent.click(screen.getAllByRole('row')[1])
+    fireEvent.click(screen.getAllByRole('row')[1]!)
     expect(screen.getByText('fullName')).toBeInTheDocument()
     expect(screen.getByText('Old Name')).toBeInTheDocument()
     expect(screen.getByText('New Name')).toBeInTheDocument()

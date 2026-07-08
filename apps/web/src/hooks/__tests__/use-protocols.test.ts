@@ -145,11 +145,11 @@ describe('useProtocols — useCreateProtocol', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await mutResult.current.mutateAsync({ title: 'Anafilaxia', typeId: 'type-1' })
+      await mutResult.current.mutateAsync({ title: 'Anafilaxia', templateId: 'tpl-1' })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/protocols', {
       title: 'Anafilaxia',
-      typeId: 'type-1',
+      templateId: 'tpl-1',
     })
   })
 })
@@ -183,7 +183,8 @@ describe('useProtocols — useSaveVersion', () => {
       await mutResult.current.mutateAsync({
         content: { version: '1.0', blocks: [] },
         changeSummary: 'Added steps',
-      } as Parameters<typeof mutResult.current.mutateAsync>[0])
+        publish: false,
+      })
     })
     expect(apiClient.post).toHaveBeenCalledWith(
       '/v1/protocols/proto-1/versions',

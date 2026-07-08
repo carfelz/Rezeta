@@ -101,13 +101,16 @@ describe('useCreatePatient', () => {
     vi.mocked(apiClient.post).mockResolvedValue(mockPatient)
     const { result } = renderHook(() => useCreatePatient(), { wrapper: makeWrapper() })
     await act(async () => {
-      await result.current.mutateAsync({ firstName: 'Ana', lastName: 'Reyes' } as Parameters<
-        typeof result.current.mutateAsync
-      >[0])
+      await result.current.mutateAsync({
+        fullName: 'Ana Reyes',
+        allergies: [],
+        chronicConditions: [],
+      })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/patients', {
-      firstName: 'Ana',
-      lastName: 'Reyes',
+      fullName: 'Ana Reyes',
+      allergies: [],
+      chronicConditions: [],
     })
   })
 })
@@ -119,9 +122,9 @@ describe('useUpdatePatient', () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ ...mockPatient, firstName: 'María' })
     const { result } = renderHook(() => useUpdatePatient('p-1'), { wrapper: makeWrapper() })
     await act(async () => {
-      await result.current.mutateAsync({ firstName: 'María' })
+      await result.current.mutateAsync({ fullName: 'María' })
     })
-    expect(apiClient.patch).toHaveBeenCalledWith('/v1/patients/p-1', { firstName: 'María' })
+    expect(apiClient.patch).toHaveBeenCalledWith('/v1/patients/p-1', { fullName: 'María' })
   })
 })
 

@@ -114,9 +114,9 @@ describe('ProtocolsService — saveVersion publish flow', () => {
 
       await service.saveVersion('proto1', 't1', 'u1', {
         content: minimalContent,
-      })
+      } as never)
 
-      const call = mockRepo.saveVersion.mock.calls[0][0] as { publish?: boolean }
+      const call = mockRepo.saveVersion.mock.calls[0]![0] as { publish?: boolean }
       expect(call.publish).toBeFalsy()
     })
   })

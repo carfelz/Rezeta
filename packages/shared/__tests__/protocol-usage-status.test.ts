@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { PROTOCOL_USAGE_STATUSES, type ProtocolUsageStatus } from '../src/types/protocol'
+import { PROTOCOL_USAGE_STATUSES, type ProtocolUsageStatus } from '../src/types/protocol.js'
 import type {
   ProtocolUsageModifications,
   OffProtocolNoteEvent,
   ConditionalStepActivated,
-} from '../src/types/consultation'
+} from '../src/types/consultation.js'
 
 describe('ProtocolUsageStatus', () => {
   it('exports the canonical list of four statuses', () => {
@@ -30,8 +30,8 @@ describe('ProtocolUsageModifications new kinds', () => {
     }
 
     expect(mods.off_protocol_notes).toHaveLength(1)
-    expect(mods.off_protocol_notes?.[0].note).toBe('Observación adicional')
-    expect(mods.off_protocol_notes?.[0].title).toBe('Hallazgo')
+    expect(mods.off_protocol_notes?.[0]!.note).toBe('Observación adicional')
+    expect(mods.off_protocol_notes?.[0]!.title).toBe('Hallazgo')
   })
 
   it('accepts conditional_steps_activated modification', () => {
@@ -47,7 +47,7 @@ describe('ProtocolUsageModifications new kinds', () => {
     }
 
     expect(mods.conditional_steps_activated).toHaveLength(1)
-    expect(mods.conditional_steps_activated?.[0].condition).toBe('BP > 180')
+    expect(mods.conditional_steps_activated?.[0]!.condition).toBe('BP > 180')
   })
 
   it('accepts off_protocol_notes without a title', () => {
@@ -60,7 +60,7 @@ describe('ProtocolUsageModifications new kinds', () => {
       off_protocol_notes: [note],
     }
 
-    expect(mods.off_protocol_notes?.[0].title).toBeUndefined()
-    expect(mods.off_protocol_notes?.[0].note).toBe('Nota simple')
+    expect(mods.off_protocol_notes?.[0]!.title).toBeUndefined()
+    expect(mods.off_protocol_notes?.[0]!.note).toBe('Nota simple')
   })
 })

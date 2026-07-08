@@ -76,7 +76,7 @@ describe('ProtocolCategoriesRepository', () => {
   it('softDelete stamps deletedAt', async () => {
     mockPrisma.protocolCategory.update.mockResolvedValue({ id: 'c1' })
     await repo.softDelete('c1', 't1')
-    const arg = mockPrisma.protocolCategory.update.mock.calls[0][0] as {
+    const arg = mockPrisma.protocolCategory.update.mock.calls[0]![0] as {
       where: { id: string; tenantId: string }
       data: { deletedAt: Date }
     }

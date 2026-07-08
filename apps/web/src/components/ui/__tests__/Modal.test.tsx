@@ -13,8 +13,11 @@ import {
 import { Button } from '@/components/ui/Button'
 
 function renderModal(open?: boolean, onOpenChange?: (v: boolean) => void) {
+  const modalProps: { open?: boolean; onOpenChange?: (v: boolean) => void } = {}
+  if (open !== undefined) modalProps.open = open
+  if (onOpenChange !== undefined) modalProps.onOpenChange = onOpenChange
   return render(
-    <Modal open={open} onOpenChange={onOpenChange}>
+    <Modal {...modalProps}>
       <ModalTrigger asChild>
         <Button id="open-btn">Abrir Modal</Button>
       </ModalTrigger>

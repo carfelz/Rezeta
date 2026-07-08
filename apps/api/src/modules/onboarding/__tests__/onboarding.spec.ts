@@ -100,13 +100,13 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
       )
       await expect(
         service.seedCustom('fb1', {
-          templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+          templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
           types: [{ name: 'Ty', templateClientId: 'c1' }],
         }),
       ).rejects.toThrow(ConflictException)
       await expect(
         service.seedCustom('fb1', {
-          templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+          templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
           types: [{ name: 'Ty', templateClientId: 'c1' }],
         }),
       ).rejects.toMatchObject({ response: { code: 'TENANT_ALREADY_SEEDED' } })
