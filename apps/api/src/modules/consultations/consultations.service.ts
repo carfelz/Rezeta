@@ -459,7 +459,20 @@ export class ConsultationsService {
         message: 'Protocol usage not found',
       })
     }
-    return this.repo.updateProtocolUsage(usageId, tenantId, dto)
+    if (
+      dto.content !== undefined &&
+      dto.expectedUpdatedAt !== undefined &&
+      usage.updatedAt !== dto.expectedUpdatedAt
+    ) {
+      throw new ConflictException({
+        code: ErrorCode.PROTOCOL_USAGE_STALE,
+        message: 'Protocol usage was modified by another session',
+        details: { currentUpdatedAt: usage.updatedAt },
+      })
+    }
+    const repoDto = { ...dto }
+    delete repoDto.expectedUpdatedAt
+    return this.repo.updateProtocolUsage(usageId, tenantId, repoDto)
   }
 
   async updateCheckedState(

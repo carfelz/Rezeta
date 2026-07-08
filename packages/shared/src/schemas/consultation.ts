@@ -60,6 +60,13 @@ export const UpdateProtocolUsageSchema = z.object({
   modificationSummary: z.string().max(500).nullable().optional(),
   status: z.enum(['in_progress', 'completed', 'abandoned']).optional(),
   completedAt: z.string().datetime().nullable().optional(),
+  /**
+   * Optimistic-concurrency precondition: the `updatedAt` the client last saw
+   * for this usage. Only checked when `content` is also present — sent
+   * alongside a full content replace so a stale tab can't silently clobber a
+   * newer write from another session.
+   */
+  expectedUpdatedAt: z.string().datetime().optional(),
 })
 
 export const AmendConsultationSchema = z.object({

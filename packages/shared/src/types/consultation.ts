@@ -56,6 +56,8 @@ export interface ConsultationProtocolUsage {
   completedAt: string | null
   notes: string | null
   appliedAt: string
+  /** Row-level last-modified timestamp, used as an optimistic-concurrency precondition. */
+  updatedAt: string
   protocolTitle: string
   protocolTypeName: string | null
   versionNumber: number

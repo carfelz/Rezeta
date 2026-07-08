@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, ApiRequestError } from '@/lib/api-client'
 import { toastStrings } from '@/lib/toasts'
 import { appendModification, type BlockModificationEvent } from '@/lib/consultation/modifications'
 import { applyContentEdits, type ContentEdit } from '@/lib/consultation/content-edits'
-import type {
-  ConsultationProtocolUsage,
-  ConsultationWithDetails,
-  ProtocolContent,
-  ProtocolUsageModifications,
+import {
+  ErrorCode,
+  type ConsultationProtocolUsage,
+  type ConsultationWithDetails,
+  type ProtocolContent,
+  type ProtocolUsageModifications,
 } from '@rezeta/shared'
 
 const QK = 'consultations'
@@ -179,11 +180,15 @@ export function usePendingModifications(consultationId: string): PendingModifica
         skipped.add(usageId)
         return null
       }
-      const content =
-        contentEdits && usage ? mergeContent(usage.content, contentEdits) : undefined
+      // The precondition (expectedUpdatedAt) only accompanies a content
+      // replace, so it's derived alongside content from the same usage.
+      const contentUpdate =
+        contentEdits && usage
+          ? { content: mergeContent(usage.content, contentEdits), expectedUpdatedAt: usage.updatedAt }
+          : undefined
       const body = {
         ...(delta ? { modifications: delta } : {}),
-        ...(content ? { content } : {}),
+        ...contentUpdate,
       }
       return [usageId, delta, contentEdits, body] as const
     }).filter((entry): entry is NonNullable<typeof entry> => entry !== null)
@@ -213,6 +218,12 @@ export function usePendingModifications(consultationId: string): PendingModifica
 
     const failed: PendingByUsage = {}
     const failedContent: ContentEditsByUsage = {}
+    // Usages rejected with PROTOCOL_USAGE_STALE: their contentEdits buffer is
+    // dropped permanently (re-sending it would just 409 forever) but the
+    // modifications delta still goes through `failed` so it gets re-buffered
+    // like any other failure.
+    let hasStaleFailure = false
+    let hasOtherFailure = false
     results.forEach((result, i) => {
       const entry = entries[i]
       if (!entry) return
@@ -234,12 +245,21 @@ export function usePendingModifications(consultationId: string): PendingModifica
           )
         }
       } else {
-        if (delta) failed[usageId] = delta
-        if (contentEdits) failedContent[usageId] = contentEdits
+        const isStale =
+          result.reason instanceof ApiRequestError &&
+          result.reason.error.code === ErrorCode.PROTOCOL_USAGE_STALE
+        if (isStale) {
+          hasStaleFailure = true
+          if (delta) failed[usageId] = delta
+        } else {
+          hasOtherFailure = true
+          if (delta) failed[usageId] = delta
+          if (contentEdits) failedContent[usageId] = contentEdits
+        }
       }
     })
 
-    if (Object.keys(failed).length > 0 || Object.keys(failedContent).length > 0) {
+    if (hasStaleFailure || hasOtherFailure) {
       // Re-buffer failed deltas/edits (merged with anything recorded
       // mid-flight) so a later flush retries them.
       const next = { ...pendingRef.current }
@@ -252,7 +272,13 @@ export function usePendingModifications(consultationId: string): PendingModifica
       }
       commitPending(next)
       commitContentPending(nextContent)
-      toast.error(toastStrings.errorProtocolUsage)
+      if (hasStaleFailure) {
+        toast.error(toastStrings.errorProtocolUsageStale)
+        void qc.invalidateQueries({ queryKey: [QK, consultationId] })
+      }
+      if (hasOtherFailure) {
+        toast.error(toastStrings.errorProtocolUsage)
+      }
       return false
     }
     return true

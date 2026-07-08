@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Bloqueo optimista al editar contenido de un protocolo en dos pestañas
+
+### Added
+
+- `packages/shared/src/errors.ts`: nuevo código `PROTOCOL_USAGE_STALE` en el bloque de Consultation.
+- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema` gana `expectedUpdatedAt` (ISO datetime opcional) — la precondición de concurrencia optimista que acompaña un reemplazo de `content`.
+- `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gana `updatedAt: string`.
+- `apps/api/src/modules/consultations/consultations.repository.ts`: `toProtocolUsage` ahora emite `updatedAt` (ISO string) en cada `ConsultationProtocolUsage` serializado.
+- `apps/api/src/modules/consultations/consultations.service.ts`: `updateProtocolUsage` rechaza con `ConflictException` (`PROTOCOL_USAGE_STALE`, con `details.currentUpdatedAt`) cuando el PATCH trae `content` y un `expectedUpdatedAt` que ya no coincide con el `updatedAt` actual de la fila — dos pestañas editando la misma consulta abierta ya no pueden pisarse el contenido clínico en silencio. Los PATCH sin `content` o sin `expectedUpdatedAt` (llamadas solo de `modifications`) no cambian de comportamiento.
+- `apps/web/src/hooks/consultations/use-pending-modifications.ts`: el `flush` envía `expectedUpdatedAt` junto con `content` siempre que hay un reemplazo de contenido pendiente. Ante un 409 `PROTOCOL_USAGE_STALE`, la edición de contenido (`contentEdits`) de esa `usage` se descarta de forma permanente (reenviarla solo repetiría el 409), la delta de `modifications` se vuelve a encolar como cualquier otro fallo, se muestra el toast `errorProtocolUsageStale` una sola vez aunque varias `usages` vengan obsoletas, y se invalida la query de la consulta para traer el contenido fresco. El resto de rechazos conserva el comportamiento existente (reencolar ambos búferes + toast genérico).
+- `apps/web/src/lib/toasts.ts`: nueva cadena `errorProtocolUsageStale`.
+- Tests: `consultations.service.spec.ts` (rechazo por `expectedUpdatedAt` obsoleto, paso sin forwardear el campo cuando coincide, llamadas solo-`modifications` sin chequeo), `consultations.repository.spec.ts` (`updatedAt` mapeado a ISO string), `use-pending-modifications.test.tsx` (envío de `expectedUpdatedAt`, manejo del 409 obsoleto — toast único, contentEdits descartados, modifications reencoladas, invalidación de query — y el camino no-obsoleto sin cambios).
+
 ## [2026-07-08] Selector de versión de la historia médica — UI
 
 ### Added
