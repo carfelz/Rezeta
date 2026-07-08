@@ -1076,3 +1076,22 @@ describe('integration: real ProtocolUsage row (content snapshot + real modificat
     expect(evo).toContain('Comentario adicional: Paciente refiere cefalea ocasional.')
   })
 })
+
+describe('plan de tratamiento with empty duration', () => {
+  it('omits the trailing dash when a prescription item has no duration', () => {
+    const out = generateRecordSections(
+      makeInput({
+        orders: {
+          prescriptionItems: [
+            { drug: 'Enalapril', dose: '10 mg', route: 'VO', frequency: 'cada 12 h', duration: '' },
+          ],
+          labTests: [],
+          imagingStudies: [],
+        },
+      }),
+    )
+    const plan = section(out, 'plan_tratamiento')?.content ?? ''
+    expect(plan).toContain('Enalapril 10 mg VO cada 12 h')
+    expect(plan).not.toContain('—')
+  })
+})
