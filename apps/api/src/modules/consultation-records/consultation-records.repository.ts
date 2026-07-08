@@ -4,6 +4,7 @@ import type {
   ConsultationRecordKind,
   ConsultationRecordStatus,
   RecordSection,
+  RecordVersionSummary,
 } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 
@@ -39,6 +40,17 @@ function toDto(row: RecordRow): ConsultationRecordDto {
   }
 }
 
+function toSummary(row: RecordRow): RecordVersionSummary {
+  return {
+    id: row.id,
+    versionNumber: row.versionNumber,
+    kind: row.kind as ConsultationRecordKind,
+    status: row.status as ConsultationRecordStatus,
+    generatedAt: row.generatedAt.toISOString(),
+    signedAt: row.signedAt?.toISOString() ?? null,
+  }
+}
+
 @Injectable()
 export class ConsultationRecordsRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
@@ -47,6 +59,26 @@ export class ConsultationRecordsRepository {
     const row = await this.prisma.consultationRecord.findFirst({
       where: { consultationId, tenantId, deletedAt: null },
       orderBy: { versionNumber: 'desc' },
+    })
+    return row ? toDto(row) : null
+  }
+
+  /** Append-only version history, newest first. Empty array when no record exists. */
+  async listVersions(consultationId: string, tenantId: string): Promise<RecordVersionSummary[]> {
+    const rows = await this.prisma.consultationRecord.findMany({
+      where: { consultationId, tenantId, deletedAt: null },
+      orderBy: { versionNumber: 'desc' },
+    })
+    return rows.map(toSummary)
+  }
+
+  async findByVersion(
+    consultationId: string,
+    tenantId: string,
+    versionNumber: number,
+  ): Promise<ConsultationRecordDto | null> {
+    const row = await this.prisma.consultationRecord.findFirst({
+      where: { consultationId, tenantId, versionNumber, deletedAt: null },
     })
     return row ? toDto(row) : null
   }

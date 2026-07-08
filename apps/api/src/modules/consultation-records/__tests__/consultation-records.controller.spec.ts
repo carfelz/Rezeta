@@ -13,6 +13,8 @@ const mockSvc = {
   updateSections: vi.fn(),
   sign: vi.fn(),
   getPdfData: vi.fn(),
+  listVersions: vi.fn(),
+  getVersion: vi.fn(),
 }
 const mockPdf = {
   generateHistoriaMedica: vi.fn(),
@@ -78,9 +80,9 @@ describe('ConsultationRecordsController', () => {
     mockPdf.generateHistoriaMedica.mockResolvedValue(buffer)
     const res = { set: vi.fn(), end: vi.fn() }
 
-    await controller.pdfDownload('t1', 'c1', res as never)
+    await controller.pdfDownload('t1', 'c1', undefined, res as never)
 
-    expect(mockSvc.getPdfData).toHaveBeenCalledWith('c1', 't1')
+    expect(mockSvc.getPdfData).toHaveBeenCalledWith('c1', 't1', undefined)
     expect(mockPdf.generateHistoriaMedica).toHaveBeenCalledWith(pdfData)
     expect(res.set).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -91,12 +93,44 @@ describe('ConsultationRecordsController', () => {
     expect(res.end).toHaveBeenCalledWith(buffer)
   })
 
+  it('GET pdf passes the version query param through and versions the filename', async () => {
+    const pdfData = { record: { id: 'rec1', versionNumber: 2 } }
+    const buffer = Buffer.from('%PDF-1.4 fake')
+    mockSvc.getPdfData.mockResolvedValue(pdfData)
+    mockPdf.generateHistoriaMedica.mockResolvedValue(buffer)
+    const res = { set: vi.fn(), end: vi.fn() }
+
+    await controller.pdfDownload('t1', 'c1', 2, res as never)
+
+    expect(mockSvc.getPdfData).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'Content-Disposition': 'attachment; filename="historia-c1-v2.pdf"',
+      }),
+    )
+  })
+
+  it('GET versions delegates to listVersions', async () => {
+    const summaries = [{ id: 'rec1', versionNumber: 1 }]
+    mockSvc.listVersions.mockResolvedValue(summaries)
+    const result = await controller.getVersions('t1', 'c1')
+    expect(mockSvc.listVersions).toHaveBeenCalledWith('c1', 't1')
+    expect(result).toEqual(summaries)
+  })
+
+  it('GET versions/:versionNumber delegates to getVersion', async () => {
+    mockSvc.getVersion.mockResolvedValue({ id: 'rec1', versionNumber: 2 })
+    const result = await controller.getVersion('t1', 'c1', 2)
+    expect(mockSvc.getVersion).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(result).toEqual({ id: 'rec1', versionNumber: 2 })
+  })
+
   it('GET pdf records a non-fatal audit event for the download (no HTTP actor context)', async () => {
     mockSvc.getPdfData.mockResolvedValue({ record: { id: 'rec1' } })
     mockPdf.generateHistoriaMedica.mockResolvedValue(Buffer.from('%PDF-1.4 fake'))
     const res = { set: vi.fn(), end: vi.fn() }
 
-    await controller.pdfDownload('t1', 'c1', res as never)
+    await controller.pdfDownload('t1', 'c1', undefined, res as never)
 
     expect(mockAudit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -117,7 +151,7 @@ describe('ConsultationRecordsController', () => {
     const res = { set: vi.fn(), end: vi.fn() }
 
     await httpAuditContextStore.run({ tenantId: 't1', actorUserId: 'u1' }, () =>
-      controller.pdfDownload('t1', 'c1', res as never),
+      controller.pdfDownload('t1', 'c1', undefined, res as never),
     )
 
     expect(mockAudit.record).toHaveBeenCalledWith(

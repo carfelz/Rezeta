@@ -4,18 +4,25 @@ import {
   Post,
   Patch,
   Param,
+  Query,
   Body,
   Inject,
   ParseUUIDPipe,
+  ParseIntPipe,
   HttpCode,
   HttpStatus,
   UsePipes,
   Res,
 } from '@nestjs/common'
 import type { Response } from 'express'
-import { ApiTags, ApiBearerAuth, ApiSecurity, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger'
+import { ApiTags, ApiBearerAuth, ApiSecurity, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
-import type { ConsultationRecordDto, AuthUser, UpdateRecordSectionsDto } from '@rezeta/shared'
+import type {
+  ConsultationRecordDto,
+  AuthUser,
+  UpdateRecordSectionsDto,
+  RecordVersionSummary,
+} from '@rezeta/shared'
 import { UpdateRecordSectionsSchema } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -103,22 +110,51 @@ export class ConsultationRecordsController {
     return this.svc.sign(consultationId, tenantId, user.id)
   }
 
-  @Get('pdf')
-  @ApiOperation({ summary: 'Download the latest consultation record as PDF' })
+  @Get('versions')
+  @ApiOperation({ summary: 'List the version history of the consultation record' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Ordered versionNumber desc; empty array when no record exists' })
+  getVersions(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+  ): Promise<RecordVersionSummary[]> {
+    return this.svc.listVersions(consultationId, tenantId)
+  }
+
+  @Get('versions/:versionNumber')
+  @ApiOperation({ summary: 'Get a specific consultation record version' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiParam({ name: 'versionNumber', type: Number })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 404, description: 'RECORD_NOT_FOUND' })
+  getVersion(
+    @TenantId() tenantId: string,
+    @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Param('versionNumber', ParseIntPipe) versionNumber: number,
+  ): Promise<ConsultationRecordDto> {
+    return this.svc.getVersion(consultationId, tenantId, versionNumber)
+  }
+
+  @Get('pdf')
+  @ApiOperation({ summary: 'Download the consultation record as PDF (latest, or a specific version)' })
+  @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
+  @ApiQuery({ name: 'version', type: Number, required: false })
   @ApiResponse({ status: 200, description: 'PDF buffer' })
   @ApiResponse({ status: 404, description: 'RECORD_NOT_FOUND' })
   async pdfDownload(
     @TenantId() tenantId: string,
     @Param('consultationId', ParseUUIDPipe) consultationId: string,
+    @Query('version', new ParseIntPipe({ optional: true })) version: number | undefined,
     @Res() res: Response,
   ): Promise<void> {
-    const data = await this.svc.getPdfData(consultationId, tenantId)
+    const data = await this.svc.getPdfData(consultationId, tenantId, version)
     const buffer = await this.pdf.generateHistoriaMedica(data)
     this.auditExport(tenantId, consultationId)
+    const filename =
+      version === undefined ? `historia-${consultationId}.pdf` : `historia-${consultationId}-v${version}.pdf`
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historia-${consultationId}.pdf"`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
       'Content-Length': String(buffer.length),
     })
     res.end(buffer)

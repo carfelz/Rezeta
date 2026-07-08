@@ -92,6 +92,8 @@ const mockRepo = {
   create: vi.fn(),
   replaceSections: vi.fn(),
   sign: vi.fn(),
+  listVersions: vi.fn(),
+  findByVersion: vi.fn(),
 }
 
 const mockPrisma = {
@@ -420,10 +422,65 @@ describe('sign', () => {
   })
 })
 
+describe('listVersions', () => {
+  it('maps repo rows to version summaries', async () => {
+    const summaries = [
+      { id: 'rec2', versionNumber: 2, kind: 'evolution', status: 'signed', generatedAt: now.toISOString(), signedAt: now.toISOString() },
+      { id: 'rec1', versionNumber: 1, kind: 'first_visit', status: 'signed', generatedAt: now.toISOString(), signedAt: now.toISOString() },
+    ]
+    mockRepo.listVersions.mockResolvedValue(summaries)
+    const result = await svc.listVersions('c1', 't1')
+    expect(mockRepo.listVersions).toHaveBeenCalledWith('c1', 't1')
+    expect(result).toEqual(summaries)
+  })
+
+  it('returns an empty array when no record exists (no 404)', async () => {
+    mockRepo.listVersions.mockResolvedValue([])
+    const result = await svc.listVersions('c1', 't1')
+    expect(result).toEqual([])
+  })
+})
+
+describe('getVersion', () => {
+  it('returns the full dto for that version', async () => {
+    mockRepo.findByVersion.mockResolvedValue(makeRecord({ versionNumber: 2 }))
+    const result = await svc.getVersion('c1', 't1', 2)
+    expect(mockRepo.findByVersion).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(result.versionNumber).toBe(2)
+  })
+
+  it('throws RECORD_NOT_FOUND when that version does not exist', async () => {
+    mockRepo.findByVersion.mockResolvedValue(null)
+    await expect(svc.getVersion('c1', 't1', 99)).rejects.toMatchObject({
+      response: { code: 'RECORD_NOT_FOUND' },
+    })
+  })
+})
+
 describe('getPdfData', () => {
   it('throws RECORD_NOT_FOUND when no record exists', async () => {
     mockRepo.findLatest.mockResolvedValue(null)
     await expect(svc.getPdfData('c1', 't1')).rejects.toMatchObject({
+      response: { code: 'RECORD_NOT_FOUND' },
+    })
+  })
+
+  it('loads a specific version when versionNumber is provided', async () => {
+    mockRepo.findByVersion.mockResolvedValue(makeRecord({ versionNumber: 2 }))
+    mockPrisma.consultation.findFirst.mockResolvedValue({
+      ...makeConsultationRow(),
+      doctor: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+      location: null,
+    })
+    const result = await svc.getPdfData('c1', 't1', 2)
+    expect(mockRepo.findByVersion).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(mockRepo.findLatest).not.toHaveBeenCalled()
+    expect(result.record.versionNumber).toBe(2)
+  })
+
+  it('throws RECORD_NOT_FOUND when the requested version does not exist', async () => {
+    mockRepo.findByVersion.mockResolvedValue(null)
+    await expect(svc.getPdfData('c1', 't1', 99)).rejects.toMatchObject({
       response: { code: 'RECORD_NOT_FOUND' },
     })
   })

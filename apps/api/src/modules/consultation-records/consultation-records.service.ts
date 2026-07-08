@@ -9,6 +9,7 @@ import type {
   ConsultationRecordDto,
   ConsultationRecordKind,
   RecordSection,
+  RecordVersionSummary,
   UpdateRecordSectionsDto,
   ProtocolBlock,
   HistoriaMapping,
@@ -31,6 +32,26 @@ export class ConsultationRecordsService {
 
   async getLatest(consultationId: string, tenantId: string): Promise<ConsultationRecordDto> {
     const record = await this.repo.findLatest(consultationId, tenantId)
+    if (!record) {
+      throw new NotFoundException({
+        code: ErrorCode.RECORD_NOT_FOUND,
+        message: 'Esta consulta no tiene historia médica generada',
+      })
+    }
+    return record
+  }
+
+  /** Full version history, newest first. Empty array when no record exists (no 404). */
+  async listVersions(consultationId: string, tenantId: string): Promise<RecordVersionSummary[]> {
+    return this.repo.listVersions(consultationId, tenantId)
+  }
+
+  async getVersion(
+    consultationId: string,
+    tenantId: string,
+    versionNumber: number,
+  ): Promise<ConsultationRecordDto> {
+    const record = await this.repo.findByVersion(consultationId, tenantId, versionNumber)
     if (!record) {
       throw new NotFoundException({
         code: ErrorCode.RECORD_NOT_FOUND,
@@ -192,8 +213,15 @@ export class ConsultationRecordsService {
     return signed
   }
 
-  async getPdfData(consultationId: string, tenantId: string): Promise<HistoriaMedicaPdfData> {
-    const record = await this.getLatest(consultationId, tenantId)
+  async getPdfData(
+    consultationId: string,
+    tenantId: string,
+    versionNumber?: number,
+  ): Promise<HistoriaMedicaPdfData> {
+    const record =
+      versionNumber === undefined
+        ? await this.getLatest(consultationId, tenantId)
+        : await this.getVersion(consultationId, tenantId, versionNumber)
     const c = await this.prisma.consultation.findFirst({
       where: { id: consultationId, tenantId, deletedAt: null },
       include: { patient: true, doctor: true, location: true },

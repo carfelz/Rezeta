@@ -51,3 +51,13 @@ export interface ConsultationRecordDto {
  * failure never fails the sign — the response reports what happened.
  */
 export type RecordOutcome = { status: 'created'; recordId: string } | { status: 'failed' }
+
+/** Summary row for the append-only version history of a consultation record. */
+export interface RecordVersionSummary {
+  id: string
+  versionNumber: number
+  kind: ConsultationRecordKind
+  status: ConsultationRecordStatus
+  generatedAt: string
+  signedAt: string | null
+}

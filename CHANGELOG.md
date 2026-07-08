@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Historial de versiones de la historia médica — API
+
+### Added
+
+- `packages/shared/src/types/consultation-record.ts`: nuevo tipo `RecordVersionSummary` (id, versionNumber, kind, status, generatedAt, signedAt) para listar el historial de versiones sin traer el contenido completo de cada una.
+- `apps/api/src/modules/consultation-records/consultation-records.repository.ts`: `listVersions` (todas las versiones no eliminadas de una consulta, ordenadas por `versionNumber` desc, filtradas por tenant) y `findByVersion` (versión exacta o `null`). Nuevo mapeador privado `toSummary`.
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `listVersions` (delega al repo; array vacío si la consulta no tiene historia, sin 404 — la UI usa esto como gate) y `getVersion` (lanza `RECORD_NOT_FOUND` si la versión no existe). `getPdfData` acepta un `versionNumber` opcional y carga esa versión en vez de la última cuando se provee.
+- `apps/api/src/modules/consultation-records/consultation-records.controller.ts`: `GET /v1/consultations/:consultationId/record/versions` y `GET /v1/consultations/:consultationId/record/versions/:versionNumber`. `GET …/record/pdf` gana el query param opcional `version` (validado como entero vía `ParseIntPipe`); el nombre del archivo descargado pasa a `historia-${consultationId}-v${N}.pdf` cuando se indica una versión. La auditoría de descarga (categoría `communication`, acción `pdf_generated`) se mantiene sin cambios para descargas versionadas.
+- Tests: se extienden `consultation-records.{repository,service,controller}.spec.ts` con los casos nuevos (listado, versión puntual, 404 de versión inexistente, pdf versionado, filtrado por tenant).
+
 ## [2026-07-08] Reintento ante colisión de versión al crear un ConsultationRecord
 
 ### Fixed
