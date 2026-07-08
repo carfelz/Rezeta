@@ -116,10 +116,12 @@ export function useProtocols(): UseProtocolsReturn {
     return useMutation({
       mutationFn: (dto: SaveProtocolVersionDto) =>
         apiClient.post<SaveVersionResponse>(`/v1/protocols/${protocolId}/versions`, dto),
-      onSuccess: () => {
+      onSuccess: (_data, dto) => {
         void queryClient.invalidateQueries({ queryKey: ['protocols', protocolId] })
         void queryClient.invalidateQueries({ queryKey: ['protocols'] })
-        toast.success(toastStrings.protocolVersionPublished)
+        toast.success(
+          dto.publish ? toastStrings.protocolVersionPublished : toastStrings.protocolDraftSaved,
+        )
       },
       onError: () => {
         toast.error(toastStrings.errorProtocolSave)

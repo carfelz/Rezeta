@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Toast correcto al guardar borrador y etiqueta única en notas clínicas
+
+### Fixed
+
+- `apps/web/src/hooks/protocols/use-protocols.ts`: guardar una versión como borrador mostraba el toast "Nueva versión publicada" aunque no se publicara nada — el médico podía creer que la nueva versión ya estaba activa en consultas. Ahora `useSaveVersion` distingue por `dto.publish`: "Borrador guardado" (nueva cadena `protocolDraftSaved` en `lib/toasts.ts`) vs. "Nueva versión publicada".
+- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: en modo consulta, los bloques de nota clínica mostraban su etiqueta dos veces (título del encabezado del bloque + etiqueta interna con asterisco). Se elimina el `title` duplicado del encabezado — la etiqueta interna, que además marca el requerido, es la única fuente. Mismo criterio aplicado antes al editor y a la vista de solo lectura (hallazgo del E2E en vivo del 2026-07-08).
+
+### Added
+
+- `docs/TODO.md`: ítem de vigilancia por la pérdida (una sola vez, no reproducida) del snapshot de la cola de órdenes en localStorage tras un reload.
+
 ## [2026-07-07] El botón "Firmar y cerrar" se deshabilita mientras corre el flush previo a la firma
 
 ### Fixed

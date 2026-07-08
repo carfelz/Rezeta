@@ -83,6 +83,7 @@ export const toastStrings = {
   protocolArchived: 'Protocolo archivado',
   errorProtocolArchive: 'No se pudo archivar el protocolo.',
   protocolVersionPublished: 'Nueva versión publicada',
+  protocolDraftSaved: 'Borrador guardado',
   protocolUsageAdded: 'Protocolo aplicado a la consulta',
   protocolUsageRemoved: 'Protocolo removido de la consulta',
   errorProtocolSave: 'No se pudo guardar el protocolo.',

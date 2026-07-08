@@ -911,11 +911,7 @@ export function BlockRendererRunMode({
 
     case 'clinical_notes':
       return (
-        <ProtocolBlock
-          type={blockRendererRunModeStrings.clinicalNotesType}
-          title={b.label}
-          nested={nested}
-        >
+        <ProtocolBlock type={blockRendererRunModeStrings.clinicalNotesType} nested={nested}>
           <ClinicalNotesRunMode
             blockId={b.id}
             label={b.label}
