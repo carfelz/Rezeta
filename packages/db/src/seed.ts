@@ -48,6 +48,17 @@ const STARTER_TEMPLATES = [
           ],
         },
         {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
+          ],
+        },
+        {
           id: 'sec_assessment',
           type: 'section',
           title: 'Evaluación Inicial',
@@ -88,6 +99,16 @@ const STARTER_TEMPLATES = [
           ],
         },
         {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_evolucion_notes',
+          type: 'clinical_notes',
+          label: 'Evolución',
+        },
+        {
           id: 'sec_escalation',
           type: 'section',
           title: 'Criterios de Escalada',
@@ -118,6 +139,23 @@ const STARTER_TEMPLATES = [
       version: '1.0',
       metadata: { suggested_specialty: 'general', intended_use: 'Rutas de decisión diagnóstica' },
       blocks: [
+        {
+          id: 'blk_motivo_notes',
+          type: 'clinical_notes',
+          label: 'Motivo de consulta',
+          required: true,
+        },
+        {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
+          ],
+        },
         {
           id: 'sec_presentation',
           type: 'section',
@@ -187,10 +225,26 @@ const STARTER_TEMPLATES = [
             },
           ],
         },
+        {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_plan_notes',
+          type: 'clinical_notes',
+          label: 'Plan de tratamiento',
+        },
       ],
     },
   },
 ]
+
+// The `diagnostic-algorithm` template's `clinical_notes` labels above use Spanish
+// section-router keywords deliberately: the historia médica generator's section
+// matcher (`matchNotesSection` in packages/shared/src/record/generate-record-sections.ts)
+// matches Spanish keywords only, and this seeder only produces Spanish-language
+// tenants — so labels stay Spanish to keep historia routing intact.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dev accounts — Firebase UIDs from the dev project's Authentication console.

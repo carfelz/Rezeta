@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Bloques de historia clínica en las plantillas semilla
+
+### Added
+
+- `apps/api/src/lib/starter-fixtures/index.ts`: los dos protocolos semilla (`emergency`, `diagnostic`, es/en) ganan bloques `clinical_notes` y `vitals` de nivel superior, aditivos sobre las secciones existentes. `diagnostic` agrega `clinical_notes` "Motivo de consulta" (`blk_motivo_notes`, obligatorio) como primer bloque, luego `vitals` (`blk_vitals`, 5 campos estándar: presión arterial, frecuencia cardíaca, temperatura, peso, talla), y tras "Diagnóstico Diferencial" agrega `clinical_notes` "Diagnóstico" (`blk_dx_notes`) y "Plan de tratamiento" (`blk_plan_notes`) como último bloque. `emergency` agrega `vitals` (mismos 5 campos) antes de "Evaluación inicial", y tras "Monitoreo post-intervención" agrega `clinical_notes` "Diagnóstico" (`blk_dx_notes`) y "Evolución" (`blk_evolucion_notes`). Las fixtures `en` reutilizan intencionalmente las mismas etiquetas en español para los bloques `clinical_notes` (comentario en el código) porque el enrutador de secciones de la historia médica (`matchNotesSection` en `packages/shared/src/record/generate-record-sections.ts`) solo reconoce palabras clave en español.
+- `packages/db/src/seed.ts`: `STARTER_TEMPLATES` gana las mismas adiciones (contenido idéntico, ids idénticos) en sus copias de `emergency-intervention` y `diagnostic-algorithm`, ya que este archivo no puede importar desde `apps/api`.
+- Tests: `apps/api/src/lib/starter-fixtures/__tests__/index.test.ts` gana dos suites nuevas — una estructural (cada fixture, ambos locales, tiene ≥1 bloque `clinical_notes` con etiqueta no vacía y ≥1 bloque `vitals` con ≥4 campos) y una funcional que construye el contenido en tiempo de ejecución vía `buildProtocolContentFromTemplate`, rellena valores/contenido de prueba y llama a `generateRecordSections` real (de `@rezeta/shared`) para verificar el enrutamiento predicho: "Motivo de consulta" → `motivo_consulta`, "Diagnóstico" → `diagnosticos`, "Plan de tratamiento" → `plan_tratamiento`, "Evolución" → `evolucion`, `vitals` → `examen_fisico`.
+
+Antes de este cambio, ningún bloque de las plantillas semilla era `clinical_notes` ni `vitals` (solo `text`/`alert`/`checklist`/`dosage_table`/`steps`/`decision`), por lo que `walkBlocks` no enrutaba nada a esas secciones y los protocolos semilla generaban una historia médica vacía en esas secciones.
+
 ## [2026-07-08] Toggle único de Obligatorio y etiquetas exhaustivas de auditoría
 
 ### Fixed
