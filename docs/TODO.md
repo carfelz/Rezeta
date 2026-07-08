@@ -5,42 +5,36 @@
 
 ## Pending code tasks
 
-1. **Expose historia médica version history** — prior `ConsultationRecord` versions
-   (created after amendments) are retained append-only but unreachable: no version list in
-   `GET /v1/consultations/:id/record`, no UI. Spec §7.2 promised it. API: extend the GET
-   response or add `…/record/versions`. UI: read-only version selector in
-   `RecordDocument.tsx` when >1 version exists, each with its own PDF download.
+1. ~~**Expose historia médica version history**~~ — done 2026-07-08: API adds
+   `GET …/record/versions` and `GET …/record/versions/:versionNumber` (`a440a45`); web UI
+   adds a read-only version selector in `RecordDocument.tsx`, each version with its own PDF
+   download (`de26a80`, `9ef2a5b`).
 
-2. **Fix consultation-record version race (P2002)** — `ensureDraft`/`regenerate`
-   (`consultation-records.service.ts`) compute `versionNumber` optimistically; concurrent
-   calls collide on `@@unique([consultationId, versionNumber])` and the loser surfaces a raw
-   500. Catch P2002 → re-read `findLatest` / retry once.
+2. ~~**Fix consultation-record version race (P2002)**~~ — done 2026-07-08: `ensureDraft`
+   re-reads `findLatest` on P2002 and returns the racing winner instead of erroring;
+   `regenerate` re-reads and retries the create once, rethrowing on a second collision
+   (`feacfe6`).
 
-3. **Make editor crash-recovery drafts mapping-aware** — `saveLocalDraft`
-   (`apps/web/src/store/editor.store.ts`) persists only `blocks`; a `historia_mapping`-only
-   edit isn't recoverable after a crash. Extend the payload + restore path, keeping
-   backward compat with blocks-only stored drafts.
+3. ~~**Make editor crash-recovery drafts mapping-aware**~~ — done 2026-07-08:
+   `saveLocalDraft`/`loadLocalDraft` (`apps/web/src/store/editor.store.ts`) persist and
+   restore `historia_mapping` alongside `blocks`; old blocks-only drafts still load fine
+   (`79d9764`).
 
-4. **Decide CIE/ICD coding for definitive diagnoses** *(research/decision, no code)* —
-   DR Reglamento §6.12.4 formally requires CIE coding of definitive diagnoses; conflicts
-   with the project's "no ICD-10, free-text diagnoses" convention (CLAUDE.md). Produce a
-   short decision doc: optional CIE-10 typeahead field vs. free-text-primary vs. full
-   coding; consider solo-specialist UX, ARS/SISALRIL audit expectations, CIE-10-ES data
-   licensing, and where codes would live in the record sections model.
+4. ~~**Decide CIE/ICD coding for definitive diagnoses**~~ — decision doc drafted
+   2026-07-08, pending Carlos's decision:
+   `docs/superpowers/specs/2026-07-08-cie-coding-decision.md` (STATUS: DRAFT) (`8602dbf`).
 
-5. **Add optimistic-concurrency guard to usage content updates** — PR #28 introduced the
-   first client path that replaces `ProtocolUsage.content` wholesale; two tabs on the same
-   open consultation last-write-wins the entire content. Add a stale-write precondition
-   (updatedAt / revision counter → 409 `PROTOCOL_USAGE_STALE` + Spanish reload toast).
-   Modification-event-only PATCHes stay unaffected (append-only merge).
+5. ~~**Add optimistic-concurrency guard to usage content updates**~~ — done 2026-07-08:
+   `expectedUpdatedAt` precondition on `updateProtocolUsage` rejects a stale `content`
+   write with 409 `PROTOCOL_USAGE_STALE` + Spanish reload toast; modification-only PATCHes
+   are unaffected (`146c764`).
 
 ## Untracked but recommended
 
-6. **Seeded-template audit for historia quality** — generated historias map content by
-   `clinical_notes` labels ("Motivo de consulta", "Diagnóstico", …) and vitals blocks.
-   Audit/enrich the seeded templates (`apps/api/src/lib/starter-fixtures/`,
-   `packages/db/src/seed.ts`) so out-of-the-box protocols produce well-mapped historias.
-   Content task more than code.
+6. ~~**Seeded-template audit for historia quality**~~ — done 2026-07-08: both seed
+   fixtures (`apps/api/src/lib/starter-fixtures/index.ts`, `packages/db/src/seed.ts`) gain
+   `clinical_notes`/`vitals` blocks that route to motivo/diagnóstico/plan/evolución/examen
+   físico (`b9dd7e6`).
 
 7. ~~**Dogfooding pass**~~ — done 2026-07-07: a live manual pass through the consultation
    flow (fill vitals/notes → sign → order queue → historia) surfaced 17 findings, fixed on
@@ -53,29 +47,29 @@
 
 8. **F7 recurrence** — root cause was a non-settling request (no timeout); if a dead-save
    recurs, capture HAR + console before reload.
-9. **UX**: consolidate duplicated Obligatorio toggle in template editor `clinical_notes`
-   detail panel (header + panel bind same state).
-10. **`settings/AuditLog` `ENTITY_TYPE_LABELS`** lacks `Onboarding`/`ConsultationRecord`
-    entries (falls back to raw string).
-11. **Order flush**: silent per-mutation toasts double up with `errorFlushOrders` on
-    failure; consider a silent flag. Also on success, each persisted group fires its own
-    success toast — a multi-group sign produces a per-group success-toast storm; suppress
-    per-mutation success toasts during a flush too.
-12. **Test: imaging flush path** in `use-flush-order-queue` (code-identical to tested
-    meds/labs; 5-line test).
-13. **Test: read-only single-label regression** for `clinical_notes`/`vitals` in
-    `BlockRenderer` non-chromeless path.
-14. **Order flush retry**: a create that times out client-side after succeeding
-    server-side re-POSTs on retry (no idempotency key) — consider idempotency or
-    reconciliation.
-15. **Watch: order-queue snapshot lost across reload** (observed once, 2026-07-08 live
-    E2E, not reproduced under clean conditions). A queued med with a verified
-    `rz:oq:<consultationId>` localStorage snapshot came back empty after a reload that
-    followed a hard dev-server kill mid-session. Suspect: the mirror effect in
-    `use-order-queue-session.ts:64-73` removes the key whenever the in-memory queue is
-    empty; if a broken/half-mounted render lets it run before the restore effect
-    repopulates the store, the snapshot is destroyed. If a user reports a vanished
-    queue, start here.
+9. ~~**UX**: consolidate duplicated Obligatorio toggle~~ — done 2026-07-08: the
+   `clinical_notes` detail panel no longer duplicates the checkbox; the header toggle is
+   the single control of `required` (`782d39c`).
+10. ~~**`settings/AuditLog` `ENTITY_TYPE_LABELS`**~~ — done 2026-07-08: gains
+    `Onboarding`/`ConsultationRecord` plus the remaining kebab-case/historical entity keys
+    (falls back to a friendly label instead of the raw string) (`782d39c`).
+11. ~~**Order flush**: silent per-mutation toasts~~ — done 2026-07-08: the three order
+    create hooks take `opts?: { silent }`; the flush passes `{ silent: true }` on all three
+    so a multi-group sign no longer produces a per-group toast storm, leaving only the
+    single `errorFlushOrders` on failure (`9b03617`).
+12. ~~**Test: imaging flush path**~~ — done 2026-07-08:
+    `use-flush-order-queue.test.ts` gains an imaging-group flush case (`9b03617`).
+13. ~~**Test: read-only single-label regression**~~ — done 2026-07-08: new
+    `BlockRenderer.vitals-notes.test.tsx` pins single-label rendering for
+    `clinical_notes`/`vitals` in the non-chromeless path (`782d39c`).
+14. ~~**Order flush retry**~~ — done 2026-07-08: `Prescription`/`ImagingOrder`/`LabOrder`
+    gain `clientRequestId` + a `(consultationId, clientRequestId)` unique constraint; a
+    P2002 on retry returns the already-created row instead of duplicating (`f84932a`).
+15. ~~**Watch: order-queue snapshot lost across reload**~~ — done 2026-07-08: root-caused
+    to the mirror effect in `use-order-queue-session.ts` racing the restore effect on
+    mount/`consultationId` change; fixed with a `hydrated` ref gate so the mirror effect
+    never runs on pre-restore values (`77de51e`), behavior pinned with four new test cases
+    (`b6afb41`).
 
 ## Deliberately deferred (product decisions on record)
 
