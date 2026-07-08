@@ -83,6 +83,13 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - Vista de solo lectura del protocolo (`BlockRenderer.tsx`, ruta no-`chromeless`): el caso `clinical_notes` ya no pasa `title={b.label}` al chrome de `ProtocolBlock` (el label seguía viéndose en el cuerpo vía `ClinicalNotesBlock`, duplicado); el caso `vitals` solo pasa `title` cuando `b.title` está definido, en vez de caer siempre a «Signos vitales» duplicando el chip.
 - Nuevo `apps/web/src/components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx` cubre: chip correcto (no «Bloque») para `vitals`/`clinical_notes` sin seleccionar, título y chip de `dosage_table` renderizados exactamente una vez, y `BlockRenderer` con `chromeless` sin el encabezado `ProtocolBlock`.
 
+## [2026-07-07] El título de un bloque de signos vitales sobrevive la validación del esquema
+
+### Fixed
+
+- `packages/shared/src/schemas/protocol.ts`: la variante `vitals` de `ProtocolBlockSchema` y `TemplateBlockSchema` no tenía campo `title`, así que Zod lo descartaba silenciosamente al guardar — `VitalsBlockEditor` permite editar el título de un bloque de signos vitales, pero el cambio se perdía en el primer guardado. Añadido `title` opcional a la variante `vitals` en ambos esquemas (igual que el resto de tipos de bloque) y al tipo `ProtocolBlock` escrito a mano (`packages/shared/src/types/protocol.ts`).
+- Tests: `packages/shared/__tests__/protocol.test.ts` gana un caso que confirma que `title` sobrevive el parseo de un bloque `vitals`.
+
 ## [2026-07-07] Editar para bloques de nota clínica y signos vitales en el editor de protocolos
 
 ### Added
@@ -108,6 +115,14 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - `EditorHeader.tsx`, `SaveModal.tsx`, `PublishModal.tsx`: mientras un guardado está en curso, los botones «Guardar» y «Publicar»/«Guardar y publicar» ahora muestran `Spinner` + las etiquetas «Guardando…»/«Publicando…» (antes el botón de publicar no daba ninguna señal de carga).
 - `index.tsx`: los tres flujos de guardado (`handleSaveDraft`, `handleSaveModalPublish`, `handlePublishConfirm`) ahora limpian el banner de «Se recuperó un borrador no guardado» (`setDraftBanner(null)`) en su `onSuccess`; antes el banner sobrevivía a un guardado exitoso.
 - `strings.ts`: se agregó `publishing: 'Publicando…'` y se normalizó `saving` a `'Guardando…'` (elipsis unicode, consistente con el resto de la app).
+
+## [2026-07-07] Timeouts en el transporte para que las peticiones siempre se resuelvan
+
+### Fixed
+
+- `apps/web/src/lib/api-client.ts`: `request()` y `downloadBlob()` podían quedarse colgados indefinidamente si `authClient.getToken()` nunca resolvía (p. ej. un problema de red al refrescar el token de Firebase) o si el `fetch` a la API nunca se asentaba — sin timeout, el spinner global de carga quedaba activo para siempre y no había forma de reintentar. `getToken()` ahora corre bajo un nuevo helper `withTimeout` (15s) y el `fetch` recibe `signal: AbortSignal.timeout(30_000)` (30s); ambos casos rechazan con un error legible en vez de colgarse.
+- `apps/web/src/lib/toasts.ts`: nueva cadena `errorRequestTimeout` para el mensaje de timeout.
+- Tests: `apps/web/src/lib/__tests__/api-client.test.ts` gana casos para el timeout de obtención de token y el timeout de la petición `fetch`.
 
 ## [2026-07-07] Antecedentes del paciente y alta desde agenda
 
