@@ -1,8 +1,11 @@
 import { authClient } from './auth'
 import { useLoadingStore } from '@/store/loading.store'
+import { toastStrings } from './toasts'
 import type { ApiError } from '@rezeta/shared'
 
 const API_BASE = (import.meta.env['VITE_API_URL'] as string | undefined) ?? ''
+const TOKEN_TIMEOUT_MS = 15_000
+const REQUEST_TIMEOUT_MS = 30_000
 
 export interface RequestOptions {
   /** Skip the global loading indicator (autosave/polling traffic). */
@@ -13,6 +16,18 @@ export class ApiRequestError extends Error {
   constructor(public readonly error: ApiError) {
     super(error.message)
     this.name = 'ApiRequestError'
+  }
+}
+
+async function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms)
+  })
+  try {
+    return await Promise.race([p, timeout])
+  } finally {
+    clearTimeout(timer!)
   }
 }
 
@@ -28,7 +43,7 @@ async function withLoading<T>(silent: boolean | undefined, run: () => Promise<T>
 
 async function request<T>(path: string, init?: RequestInit, opts?: RequestOptions): Promise<T> {
   return withLoading(opts?.silent, async () => {
-    const token = await authClient.getToken()
+    const token = await withTimeout(authClient.getToken(), TOKEN_TIMEOUT_MS, toastStrings.errorRequestTimeout)
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -36,7 +51,7 @@ async function request<T>(path: string, init?: RequestInit, opts?: RequestOption
       ...((init?.headers as Record<string, string> | undefined) ?? {}),
     }
 
-    const response = await fetch(`${API_BASE}${path}`, { ...init, headers })
+    const response = await fetch(`${API_BASE}${path}`, { ...init, headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
 
     if (response.status === 204) return undefined as T
 
@@ -56,11 +71,11 @@ async function request<T>(path: string, init?: RequestInit, opts?: RequestOption
 
 async function downloadBlob(path: string, opts?: RequestOptions): Promise<Blob> {
   return withLoading(opts?.silent, async () => {
-    const token = await authClient.getToken()
+    const token = await withTimeout(authClient.getToken(), TOKEN_TIMEOUT_MS, toastStrings.errorRequestTimeout)
     const headers: Record<string, string> = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
-    const response = await fetch(`${API_BASE}${path}`, { headers })
+    const response = await fetch(`${API_BASE}${path}`, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
     if (response.status === 401) {
       await authClient.signOut()
     }

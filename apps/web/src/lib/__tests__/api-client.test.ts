@@ -299,4 +299,56 @@ describe('apiClient', () => {
       expect(useLoadingStore.getState().pendingCount).toBe(0)
     })
   })
+
+  describe('request timeouts', () => {
+    beforeEach(() => {
+      useLoadingStore.setState({ pendingCount: 0, isLoading: false })
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('token timeout rejects with errorRequestTimeout message', async () => {
+      mockAuth.getToken.mockImplementation(() => new Promise(() => {}))
+      fetchMock.mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: vi.fn().mockResolvedValue({ data: { id: '1' } }),
+      })
+
+      const promise = apiClient.get('/v1/x')
+      vi.advanceTimersByTime(15_000)
+      await expect(promise).rejects.toThrow('La solicitud tardó demasiado. Revisa tu conexión e inténtalo de nuevo.')
+    })
+
+    it('fetch receives an AbortSignal', async () => {
+      mockAuth.getToken.mockResolvedValue('token')
+      fetchMock.mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: vi.fn().mockResolvedValue({ data: { id: '1' } }),
+      })
+
+      await apiClient.get('/v1/x')
+      const [, opts] = fetchMock.mock.calls[0] as [string, RequestInit]
+      expect(opts.signal).toBeInstanceOf(AbortSignal)
+    })
+
+    it('loading store requestFinished fires on token timeout', async () => {
+      mockAuth.getToken.mockImplementation(() => new Promise(() => {}))
+      fetchMock.mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: vi.fn().mockResolvedValue({ data: { id: '1' } }),
+      })
+
+      const promise = apiClient.get('/v1/x')
+      expect(useLoadingStore.getState().pendingCount).toBe(1)
+      vi.advanceTimersByTime(15_000)
+      await expect(promise).rejects.toThrow()
+      expect(useLoadingStore.getState().pendingCount).toBe(0)
+    })
+  })
 })

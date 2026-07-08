@@ -69,24 +69,44 @@ describe('NewConsultationDialog', () => {
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/consultas/c1'))
   })
 
-  it('shows the minimal patient form when no match and creates patient then consultation', async () => {
+  it('labels the patient picker "Paciente" and offers exactly one create-patient affordance', async () => {
     const user = userEvent.setup()
     render(<NewConsultationDialog open onClose={vi.fn()} />)
 
-    await user.click(screen.getByText('Crear paciente'))
-    await user.type(screen.getByLabelText('Nombre'), 'Juan')
-    await user.type(screen.getByLabelText('Apellido'), 'Pérez')
-    await user.type(screen.getByLabelText('Fecha de nacimiento'), '1990-04-12')
+    expect(screen.getByText('Paciente')).toBeInTheDocument()
+    // The redundant inline "Crear paciente" button/mode is gone — the
+    // combobox's own "Nuevo paciente" option (opening the full PatientModal)
+    // is the single creation path.
+    expect(screen.queryByText('Crear paciente')).not.toBeInTheDocument()
 
-    await user.click(screen.getByText('Iniciar consulta'))
+    await user.click(screen.getByPlaceholderText('Buscar por nombre o cédula'))
 
-    await waitFor(() => expect(createPatientMock).toHaveBeenCalled())
-    await waitFor(() => expect(createConsultationMock).toHaveBeenCalled())
+    expect(screen.getAllByText('Nuevo paciente')).toHaveLength(1)
   })
 
   it('disables submit until patient and location are set', () => {
     render(<NewConsultationDialog open onClose={vi.fn()} />)
     expect(screen.getByText('Iniciar consulta').closest('button')).toBeDisabled()
+  })
+
+  it('preselects the patient in the combobox when initialPatient is provided', async () => {
+    const user = userEvent.setup()
+    render(
+      <NewConsultationDialog
+        open
+        onClose={vi.fn()}
+        initialPatient={{ id: 'p1', fullName: 'Ana Reyes' }}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('Ana Reyes')).toBeInTheDocument()
+    expect(screen.getByText('Iniciar consulta').closest('button')).toBeEnabled()
+
+    await user.click(screen.getByText('Iniciar consulta'))
+
+    expect(createConsultationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ patientId: 'p1', locationId: 'loc1' }),
+    )
   })
 
   it('keeps the dialog open and does not navigate when consultation creation fails', async () => {

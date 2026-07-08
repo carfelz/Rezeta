@@ -9,16 +9,18 @@ export interface PatientComboboxProps {
   value: string
   onChange: (patientId: string, patientName: string) => void
   placeholder?: string
+  initialSelectedName?: string
 }
 
 export function PatientCombobox({
   value,
   onChange,
   placeholder = patientComboboxStrings.searchPlaceholder,
+  initialSelectedName,
 }: PatientComboboxProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
-  const [selectedName, setSelectedName] = useState('')
+  const [selectedName, setSelectedName] = useState(initialSelectedName ?? '')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const { data } = usePatients({ search })

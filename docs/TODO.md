@@ -42,10 +42,32 @@
    `packages/db/src/seed.ts`) so out-of-the-box protocols produce well-mapped historias.
    Content task more than code.
 
-7. **Dogfooding pass** — everything shipped on automated tests; nobody has clicked through
-   the full flow in a running app: consultation → fill vitals/notes → sign → review
-   historia draft → edit → sign historia → download PDF → export expediente. Do one manual
-   pass before relying on it clinically.
+7. ~~**Dogfooding pass**~~ — done 2026-07-07: a live manual pass through the consultation
+   flow (fill vitals/notes → sign → order queue → historia) surfaced 17 findings, fixed on
+   `fix/e2e-consultation-flow-findings` (see `CHANGELOG.md` entries dated 2026-07-07 and
+   `docs/superpowers/plans/2026-07-07-06-e2e-findings-fixes.md`). Historia PDF
+   download/export expediente were not covered by that pass — still worth a follow-up
+   click-through.
+
+## Follow-ups from the E2E consultation flow fixes (2026-07-07)
+
+8. **F7 recurrence** — root cause was a non-settling request (no timeout); if a dead-save
+   recurs, capture HAR + console before reload.
+9. **UX**: consolidate duplicated Obligatorio toggle in template editor `clinical_notes`
+   detail panel (header + panel bind same state).
+10. **`settings/AuditLog` `ENTITY_TYPE_LABELS`** lacks `Onboarding`/`ConsultationRecord`
+    entries (falls back to raw string).
+11. **Order flush**: silent per-mutation toasts double up with `errorFlushOrders` on
+    failure; consider a silent flag. Also on success, each persisted group fires its own
+    success toast — a multi-group sign produces a per-group success-toast storm; suppress
+    per-mutation success toasts during a flush too.
+12. **Test: imaging flush path** in `use-flush-order-queue` (code-identical to tested
+    meds/labs; 5-line test).
+13. **Test: read-only single-label regression** for `clinical_notes`/`vitals` in
+    `BlockRenderer` non-chromeless path.
+14. **Order flush retry**: a create that times out client-side after succeeding
+    server-side re-POSTs on retry (no idempotency key) — consider idempotency or
+    reconciliation.
 
 ## Deliberately deferred (product decisions on record)
 

@@ -2,33 +2,41 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import type { Patient } from '@rezeta/shared'
 import { DOC_LABELS, formatAge } from '@/pages/Patients/helpers'
+import { patientDetailStrings as s } from './strings'
 
 export interface PageHeaderProps {
   patient: Patient
   onEdit: () => void
+  onNewConsultation: () => void
 }
 
-export function PageHeader({ patient, onEdit }: PageHeaderProps): JSX.Element {
+export function PageHeader({ patient, onEdit, onNewConsultation }: PageHeaderProps): JSX.Element {
   const fullName = `${patient.firstName} ${patient.lastName}`.trim()
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
   const docLabel = patient.documentNumber
     ? `${DOC_LABELS[patient.documentType ?? ''] ?? patient.documentType} ${patient.documentNumber}`
-    : 'Sin documento'
+    : s.noDocument
 
   return (
     <>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-[12.5px] font-sans text-n-500">
           <Link to="/pacientes" className="hover:text-n-800 transition-colors">
-            Pacientes
+            {s.breadcrumbPatients}
           </Link>
           <i className="ph ph-caret-right text-[11px] text-n-300" />
           <span className="text-n-800 font-medium">{fullName}</span>
         </div>
-        <Button variant="secondary" size="sm" onClick={onEdit}>
-          <i className="ph ph-pencil-simple mr-2 text-[14px]" />
-          Editar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={onEdit}>
+            <i className="ph ph-pencil-simple mr-2 text-[14px]" />
+            {s.editButton}
+          </Button>
+          <Button variant="primary" size="sm" onClick={onNewConsultation}>
+            <i className="ph ph-plus mr-2 text-[14px]" />
+            {s.newConsultation}
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mb-6">

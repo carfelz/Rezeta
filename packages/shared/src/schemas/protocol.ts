@@ -165,6 +165,7 @@ export const ProtocolBlockSchema: z.ZodType<unknown> = z.lazy(() =>
     }),
     BaseBlockSchema.extend({
       type: z.literal('vitals'),
+      title: z.string().max(300).optional(),
       fields: z.array(VitalsFieldSchema),
       values: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
     }),
@@ -234,6 +235,7 @@ export const TemplateBlockSchema: z.ZodType<unknown> = z.lazy(() =>
     }),
     BaseTemplateBlockSchema.extend({
       type: z.literal('vitals'),
+      title: z.string().max(300).optional(),
       fields: z.array(VitalsFieldSchema).optional(),
     }),
     BaseTemplateBlockSchema.extend({

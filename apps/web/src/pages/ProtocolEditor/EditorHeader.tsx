@@ -94,12 +94,27 @@ export function EditorHeader({
           {protocolEditorStrings.preview}
         </Button>
         <Button variant="secondary" size="sm" onClick={onSaveDraft} disabled={isSaving}>
-          {isSaving ? <Spinner className="mr-2" decorative size="sm" /> : null}
-          {protocolEditorStrings.save}
+          {isSaving ? (
+            <>
+              <Spinner className="mr-2" decorative size="sm" />
+              {protocolEditorStrings.saving}
+            </>
+          ) : (
+            protocolEditorStrings.save
+          )}
         </Button>
         <Button variant="primary" size="sm" onClick={onPublishClick} disabled={isSaving}>
-          <i className="ph ph-check mr-2" />
-          {protocolEditorStrings.publish(nextPublishVersion)}
+          {isSaving ? (
+            <>
+              <Spinner className="mr-2" decorative size="sm" />
+              {protocolEditorStrings.publishing}
+            </>
+          ) : (
+            <>
+              <i className="ph ph-check mr-2" />
+              {protocolEditorStrings.publish(nextPublishVersion)}
+            </>
+          )}
         </Button>
       </div>
     </div>

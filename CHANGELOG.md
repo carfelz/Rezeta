@@ -4,6 +4,136 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] El botón "Firmar y cerrar" se deshabilita mientras corre el flush previo a la firma
+
+### Fixed
+
+- `apps/web/src/components/consultations/SignModal.tsx`: el botón de confirmación solo estaba deshabilitado con `signMutation.isPending`, pero `onBeforeSign()` (persiste modificaciones pendientes y vacía la cola de órdenes — puede tardar segundos, con presupuestos de red de 15s+30s por llamada) corre ANTES de `signMutation.mutate`, dejando el botón habilitado y sin feedback durante esa ventana. Un doble clic disparaba dos IIFEs de flush concurrentes que tomaban la misma instantánea de la cola, generando recetas duplicadas en una consulta a punto de firmarse. Ahora se rastrea un estado `preparing` (true al inicio del IIFE, false en un `finally`); el botón usa `disabled={preparing || signMutation.isPending}` y muestra la etiqueta `Firmando…` durante ambas fases, y un `onBeforeSign` que resuelve false re-habilita el botón.
+
+### Added
+
+- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gana tres casos — (a) clicks repetidos durante el flush real en vuelo no doble-POSTean recetas ni doble-firman (rojo contra el código previo), (b) el botón se re-habilita tras `onBeforeSign` → false, (c) la firma procede tras `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: la aserción del chip de vitals se ajusta de `toBeGreaterThanOrEqual(1)` a `toHaveLength(2)` (chip + título de respaldo renderizan el nombre del tipo) para atrapar regresiones de chip duplicado.
+
+## [2026-07-07] El selector de ubicación distingue "cargando" de "cero ubicaciones"
+
+### Fixed
+
+- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación confundía "consulta en curso" (`locations === undefined`) con "cero ubicaciones confirmadas" — si el usuario abría el dropdown antes de que resolviera el primer fetch, veía el estado vacío `Sin ubicaciones configuradas` aunque el tenant sí tuviera ubicaciones. Ahora se desestructura `isLoading` de `useLocations()` y el estado vacío solo se renderiza cuando `!isLoading`; mientras carga, el panel no muestra ni la lista ni el estado vacío.
+
+### Added
+
+- Tests: `components/layout/__tests__/Topbar.test.tsx` gana un caso que simula `useLocations` con `{ data: undefined, isLoading: true }` y confirma que ni la lista ni "Sin ubicaciones configuradas" se renderizan mientras carga (guarda de regresión para el fix de arriba). `components/consultations/__tests__/NewConsultationDialog.test.tsx` refuerza el test de paciente preseleccionado (`initialPatient`): ahora también hace clic en "Iniciar consulta" y verifica que `createConsultationMock` recibe `patientId: 'p1'`, en vez de solo comprobar el valor del combobox.
+
+## [2026-07-07] Iniciar consulta desde el paciente y estado vacío del selector de ubicación
+
+### Added
+
+- `apps/web/src/pages/PatientDetail/PageHeader.tsx`: nuevo botón primario "Nueva consulta" (`ph-plus`, cadena `newConsultation` en `pages/PatientDetail/strings.ts`) junto al botón "Editar" existente. Abre `NewConsultationDialog` (ver más abajo) con el paciente de la página ya preseleccionado — antes no había ninguna vía para iniciar una consulta walk-in desde la ficha del paciente. De paso se movieron a `strings.ts` las cadenas que quedaban hardcodeadas en el header: `breadcrumbPatients: 'Pacientes'`, `editButton: 'Editar'`, `noDocument: 'Sin documento'`.
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: nueva prop opcional `initialPatient?: { id: string; fullName: string }` — cuando se pasa, el `PatientCombobox` arranca con ese paciente ya seleccionado (vía `useState` inicial, sin efectos). `apps/web/src/pages/Schedule/PatientCombobox.tsx` gana la prop `initialSelectedName?: string` para sembrar su estado interno `selectedName`; el resto de sus consumidores (agenda) no se ven afectados al ser opcional.
+- `apps/web/src/pages/PatientDetail/index.tsx`: nuevo estado `showNewConsultation` que monta `NewConsultationDialog` con `initialPatient` derivado del paciente cargado; el diálogo navega a `/consultas/:id` por sí mismo al crear la consulta (mismo patrón que `pages/Schedule/index.tsx`).
+- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación ahora se renderiza siempre que está abierto, incluso con cero ubicaciones — antes el panel completo desaparecía (`dropdownOpen && locations.length > 0`) y no ofrecía ninguna salida. Con la lista vacía muestra un estado vacío con las cadenas `noLocations: 'Sin ubicaciones configuradas'` y un enlace `addLocation: 'Añadir ubicación'` (nuevas en `components/layout/strings.ts`) hacia `/ajustes/ubicaciones`, que cierra el dropdown al hacer clic.
+- Tests: `NewConsultationDialog.test.tsx` (preselección de paciente vía `initialPatient`), `PatientDetailTabs.test.tsx` (botón "Nueva consulta" abre el diálogo con el paciente ya seleccionado), nuevo `components/layout/__tests__/Topbar.test.tsx` (estado vacío con cero ubicaciones vs. listado normal con ubicaciones).
+
+## [2026-07-07] Batch de hallazgos E2E: diálogo de consulta, órdenes, RNC y redondeo de signos vitales
+
+### Changed
+
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: eliminado el modo inline `create-patient` (botón "Crear paciente" + formulario mínimo nombre/apellido/fecha de nacimiento) — la única vía de creación de paciente ahora es la opción "Nuevo paciente" del propio `PatientCombobox`, que abre el `PatientModal` completo (con antecedentes). El campo de búsqueda del paciente ahora usa el `Field` label correcto (`patientLabel: 'Paciente'`) en vez de reutilizar el título del modal. `newConsultationDialogStrings.ts` perdió `createPatientAction`, `backToSearchAction`, `firstNameLabel`, `lastNameLabel`, `dateOfBirthLabel` (código muerto) y ganó `patientLabel`.
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: la fila de medicamento en cola ya no muestra el `source` crudo (p. ej. `protocol:row_e2e_1`); ahora renderiza `sourceFromProtocol: 'Desde protocolo'` cuando `source` empieza con `protocol:`, y nada en cualquier otro caso (nunca un id crudo). Nueva cadena en `apps/web/src/components/consultations/strings.ts`.
+- `apps/web/src/pages/Protocols/strings.ts`: `emptyDescription` del estado vacío de Protocolos simplificado a `'Crea tu primer protocolo a partir de una plantilla.'` (ya no menciona "o desde cero", que no es una vía soportada).
+
+### Added
+
+- `<SelectItem value="rnc">` en los selects de tipo de documento de `apps/web/src/pages/Patients/PatientModal.tsx` (`docTypeRnc: 'RNC'` en `pages/Patients/strings.ts`) y `apps/web/src/pages/PatientDetail/EditModal.tsx` (`documentTypeRnc: 'RNC'` en `pages/PatientDetail/strings.ts`) — el enum Zod compartido ya soportaba `'rnc'`, pero la UI no ofrecía la opción.
+
+### Fixed
+
+- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: los campos numéricos de signos vitales (p. ej. peso) podían persistir artefactos de punto flotante del `<input type="number">` del navegador (`81.4000015258789`). Nueva `normalizeVitalsValues` redondea a máximo 2 decimales, aplicada solo al hacer blur (commit), nunca por cada tecla — redondear mientras se escribe rompería la edición de valores como "81." a medio escribir.
+- Tests: `NewConsultationDialog.test.tsx` (label del picker, un único affordance de creación, elimina el test del modo inline muerto), nuevo `OrderQueuePanel.test.tsx` (caption "Desde protocolo" vs. fuente cruda vs. sin fuente), `PatientModal.test.tsx` y `EditModal.test.tsx` (opción RNC llega al payload), `BlockRendererRunMode.vitals-notes.test.tsx` (redondeo solo al blur).
+
+## [2026-07-07] Nombre de entidad de auditoría y secciones faltantes al firmar historia
+
+### Fixed
+
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: el singularizador de segmentos de URL usaba `slice(1, -1)`, que le quitaba la última letra a cualquier segmento no-plural (`onboarding` → `Onboardin`). Ahora `toEntityType` solo recorta la `s` final cuando el segmento realmente termina en plural (`patients` → `Patient`); segmentos como `onboarding` se capitalizan sin recortar.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` ganó la entrada `Onboarding: 'la configuración inicial'`, que antes no existía y caía al formato genérico «un registro (Onboarding)» en el feed de actividad del dashboard.
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: el `onError` de `useSignRecord` ahora lee `err.error.details.missing` (ya provisto por la API, `consultation-records.service.ts`) y arma el toast con los títulos en español de las secciones faltantes (`RECORD_SECTION_TITLES` de `@rezeta/shared`), en vez del genérico «Completa las secciones requeridas antes de firmar.» que no indicaba cuáles. Se mantiene el mensaje genérico como fallback si `details` viene ausente o vacío. Nueva cadena `historiaMissingSectionsNamed` en `apps/web/src/lib/toasts.ts`.
+- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` (segmento plural vs. no-plural), `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` (mapeo de `Onboarding`), `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx` (toast con nombres de sección vs. genérico sin `details`).
+
+## [2026-07-07] Corregida fecha de nacimiento desfasada un día (F8)
+
+### Added
+
+- `parseDateOnly` en `apps/web/src/lib/format/dates.ts`: parsea cadenas `'YYYY-MM-DD'` (o con sufijo de hora, que se ignora) como medianoche LOCAL, evitando el desfase de `new Date('YYYY-MM-DD')`, que interpreta la cadena como medianoche UTC y, al formatearse en `America/Santo_Domingo` (UTC-4), muestra el día anterior.
+
+### Fixed
+
+- `formatDate`/`formatAge` (`apps/web/src/pages/Patients/helpers.ts`), usados por `PatientDetail/DemographicsBlock.tsx` y `Patients/PatientModal.tsx` para mostrar `patient.dateOfBirth` (columna `@db.Date`, sin componente de hora): un paciente nacido el 15/03/1972 se mostraba como «14 de marzo de 1972» y con un año de menos en el borde del cumpleaños. Ambas funciones ahora usan `parseDateOnly` en vez de `new Date(iso)`.
+- Auditados los `formatDate` hermanos que consumen strings ISO (`Schedule/helpers.ts`, `Consultation/helpers.ts`, `Billing/helpers.ts`, `PatientDetail/PrescriptionsTab.tsx`, `PatientDetail/AppointmentsTab.tsx`, `Dashboard/helpers.ts`): todos reciben columnas `DateTime` completas (`startsAt`, `signedAt`, `amendedAt`, `createdAt`, etc.), no fechas puras — se dejaron sin cambios porque no tienen el bug.
+
+## [2026-07-07] Paridad de bloques en el editor de plantillas: signos vitales, nota clínica y órdenes
+
+### Added
+
+- `TemplateEditor.tsx` (`apps/web/src/components/template/`): el `BlockType`, la paleta y `TYPE_LABELS` ahora incluyen `vitals` («SIGNOS VITALES»), `clinical_notes` («NOTA CLÍNICA»), `imaging_order` («ORDEN IMAGEN») y `lab_order` («ORDEN LAB») — antes solo el editor de protocolos soportaba estos cuatro tipos, dejando a los médicos sin forma de scaffoldear los bloques de los que depende la historia médica.
+- `newBlock` gana factories por tipo: `vitals` inicia con los mismos 5 campos por defecto que `block-factory.ts` del editor de protocolos (presión arterial, frecuencia cardíaca, temperatura, peso, talla); `clinical_notes` inicia con `label: 'Nota clínica'`; `imaging_order`/`lab_order` inician con `orders: []`. Todas producen bloques válidos contra `TemplateBlockSchema` (`packages/shared/src/schemas/protocol.ts`).
+- Panel de detalle ahora es consciente del tipo: `clinical_notes` edita `label` (en vez de `title`) más un checkbox «Obligatorio»; `dosage_table` gana un editor de filas (`DosageRowsEditor` — columnas fármaco/dosis/vía/frecuencia/notas con añadir/quitar fila) que reemplaza el textarea de placeholder genérico. `vitals`, `imaging_order` y `lab_order` conservan el panel genérico (título + placeholder).
+- Corregido de paso un bug latente: `BlockRow` pasaba `expandedBlockId={null}` fijo a `ChildBlockList`, por lo que el panel de detalle de un bloque hijo (todo bloque no-sección vive dentro de una sección) nunca podía expandirse tras añadirlo. Ahora se hilvana el `expandedBlockId` real del reducer a través de `SortableBlockRow` → `BlockRow` → `ChildBlockList`.
+- `strings.ts`: nuevas claves `addVitals`, `addClinicalNotes`, `addImagingOrder`, `addLabOrder`, `clinicalNotesLabelPlaceholder`, `obligatorio`, `dosageRowsLabel`, `dosageColumnLabels`, `dosageAddRow`, `dosageRemoveRow`.
+- Nuevo `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx`: paleta con los 11 botones de bloque, defaults de `vitals` válidos contra `TemplateBlockSchema`, edición de `label` en `clinical_notes` con round-trip a estado, y añadir una fila de dosis con round-trip a estado.
+
+## [2026-07-07] Encabezado único por bloque en el editor de protocolos
+
+### Fixed
+
+- Las tarjetas de bloque sin seleccionar en el editor de protocolos renderizaban DOS encabezados apilados: el de `EditorBlockRenderer` (chip + título) y, debajo, el de `ProtocolBlock` dentro de `BlockRenderer`. Esto duplicaba el chip y el título en bloques `dosage_table` (p. ej. «DOSIFICACIÓN»/título dos veces) y, antes de que `blockTypeLabel`/`blockDisplayTitle` cubrieran `vitals`/`clinical_notes`, mostraba el chip genérico «Bloque» encima del chip correcto.
+- `BlockRenderer.tsx`: nueva prop `chromeless?: boolean` — cuando es `true`, cada caso del switch de bloques hoja devuelve su contenido interno directamente, sin el wrapper `ProtocolBlock` (secciones y anidamiento no se ven afectados; el modo de ejecución (`BlockRendererRunMode.tsx`) no se tocó). Los casos `dosage_table` y `alert` en modo `chromeless` tampoco reenvían `title` al componente interno (`ProtocolDosageTable`/`ProtocolAlert`), evitando una tercera repetición del título.
+- `EditorBlockRenderer.tsx`: el cuerpo sin seleccionar de la tarjeta de bloque hoja ahora renderiza `<BlockRenderer chromeless />`, dejando el encabezado tipado de `EditorBlockRenderer` como el único encabezado de la tarjeta.
+- `ProtocolBlock.tsx` (ui-kit): `title` ahora es opcional; el span de título solo se renderiza cuando hay un valor, en vez de mostrar siempre una cadena (vacía o duplicada).
+- Vista de solo lectura del protocolo (`BlockRenderer.tsx`, ruta no-`chromeless`): el caso `clinical_notes` ya no pasa `title={b.label}` al chrome de `ProtocolBlock` (el label seguía viéndose en el cuerpo vía `ClinicalNotesBlock`, duplicado); el caso `vitals` solo pasa `title` cuando `b.title` está definido, en vez de caer siempre a «Signos vitales» duplicando el chip.
+- Nuevo `apps/web/src/components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx` cubre: chip correcto (no «Bloque») para `vitals`/`clinical_notes` sin seleccionar, título y chip de `dosage_table` renderizados exactamente una vez, y `BlockRenderer` con `chromeless` sin el encabezado `ProtocolBlock`.
+
+## [2026-07-07] El título de un bloque de signos vitales sobrevive la validación del esquema
+
+### Fixed
+
+- `packages/shared/src/schemas/protocol.ts`: la variante `vitals` de `ProtocolBlockSchema` y `TemplateBlockSchema` no tenía campo `title`, así que Zod lo descartaba silenciosamente al guardar — `VitalsBlockEditor` permite editar el título de un bloque de signos vitales, pero el cambio se perdía en el primer guardado. Añadido `title` opcional a la variante `vitals` en ambos esquemas (igual que el resto de tipos de bloque) y al tipo `ProtocolBlock` escrito a mano (`packages/shared/src/types/protocol.ts`).
+- Tests: `packages/shared/__tests__/protocol.test.ts` gana un caso que confirma que `title` sobrevive el parseo de un bloque `vitals`.
+
+## [2026-07-07] Editar para bloques de nota clínica y signos vitales en el editor de protocolos
+
+### Added
+
+- `EDITABLE_BLOCK_TYPES` (`apps/web/src/components/protocols/EditorBlockRenderer.tsx`) ahora incluye `vitals` y `clinical_notes`, habilitando el ítem «Editar» del menú contextual y el swap a `EditForm` para ambos tipos (antes no tenían ninguna acción de edición).
+- Nuevo `ClinicalNotesBlockEditor.tsx`: edita `label` (campo «Etiqueta») y `required` (checkbox «Obligatorio») con el mismo patrón de borrador local + `updateBlock`/`selectBlock(null)` que `DosageTableEditor`. Una etiqueta editable es lo que permite que la historia médica enrute el contenido de la nota a la sección correcta (el mapeo se hace por `block.label`).
+- Nuevo `VitalsBlockEditor.tsx`: edita el título del bloque y las filas de `fields` (etiqueta, unidad, tipo); permite añadir/quitar campos. Los campos `input_type: 'computed'` (p. ej. IMC) se renderizan bloqueados — sin botón de eliminar y sin selector de tipo — para proteger fórmulas derivadas.
+- `strings.ts`: nuevas claves `notesLabelField`, `notesRequiredField`, `vitalsTitleField`, `vitalsFieldLabel`, `vitalsFieldUnit`, `vitalsFieldType`, `vitalsTypeText`, `vitalsTypeNumber`, `vitalsTypeComputed`, `vitalsAddField`, `vitalsRemoveField(label)`.
+- `blockTypeLabel`/`blockDisplayTitle` (`EditorBlockRenderer.tsx`) ahora tienen entradas para `vitals` y `clinical_notes` en vez de caer al rótulo genérico "Bloque".
+
+## [2026-07-07] Órdenes en cola se persisten al firmar la consulta
+
+### Fixed
+
+- Las órdenes agregadas con «+ Añadir a receta» (medicamentos, laboratorio, imagen) vivían solo en el store cliente `useOrderQueueStore` y se descartaban silenciosamente al firmar, dejando vacías la pestaña Recetas del paciente y el plan de tratamiento de la historia médica. Nuevo hook `useFlushOrderQueue` (`apps/web/src/hooks/consultations/use-flush-order-queue.ts`) que persiste cada grupo en cola vía los endpoints de creación existentes antes del `PATCH` de firma.
+- `Consultation/index.tsx`: `onBeforeSign` ahora compone la persistencia de modificaciones pendientes seguida del volcado de la cola de órdenes; si cualquier creación falla se aborta la firma (no se crea un registro inmutable a partir de contenido a medio guardar) y la cola queda intacta para reintentar (`toastStrings.errorFlushOrders`).
+- `Consultation/index.tsx`: al firmar con éxito se resetea `useOrderQueueStore`, evitando el desajuste entre el chip «Recetas 1» y la lista «Sin recetas en esta consulta».
+
+## [2026-07-07] Editor de protocolos — feedback visible al guardar
+
+### Fixed
+
+- `EditorHeader.tsx`, `SaveModal.tsx`, `PublishModal.tsx`: mientras un guardado está en curso, los botones «Guardar» y «Publicar»/«Guardar y publicar» ahora muestran `Spinner` + las etiquetas «Guardando…»/«Publicando…» (antes el botón de publicar no daba ninguna señal de carga).
+- `index.tsx`: los tres flujos de guardado (`handleSaveDraft`, `handleSaveModalPublish`, `handlePublishConfirm`) ahora limpian el banner de «Se recuperó un borrador no guardado» (`setDraftBanner(null)`) en su `onSuccess`; antes el banner sobrevivía a un guardado exitoso.
+- `strings.ts`: se agregó `publishing: 'Publicando…'` y se normalizó `saving` a `'Guardando…'` (elipsis unicode, consistente con el resto de la app).
+
+## [2026-07-07] Timeouts en el transporte para que las peticiones siempre se resuelvan
+
+### Fixed
+
+- `apps/web/src/lib/api-client.ts`: `request()` y `downloadBlob()` podían quedarse colgados indefinidamente si `authClient.getToken()` nunca resolvía (p. ej. un problema de red al refrescar el token de Firebase) o si el `fetch` a la API nunca se asentaba — sin timeout, el spinner global de carga quedaba activo para siempre y no había forma de reintentar. `getToken()` ahora corre bajo un nuevo helper `withTimeout` (15s) y el `fetch` recibe `signal: AbortSignal.timeout(30_000)` (30s); ambos casos rechazan con un error legible en vez de colgarse.
+- `apps/web/src/lib/toasts.ts`: nueva cadena `errorRequestTimeout` para el mensaje de timeout.
+- Tests: `apps/web/src/lib/__tests__/api-client.test.ts` gana casos para el timeout de obtención de token y el timeout de la petición `fetch`.
+
 ## [2026-07-07] Antecedentes del paciente y alta desde agenda
 
 ### Added

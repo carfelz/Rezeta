@@ -45,6 +45,21 @@ const MONTHS_SHORT = [
   'dic',
 ] as const
 
+/**
+ * Parses 'YYYY-MM-DD' (optionally with a time suffix, which is ignored)
+ * as LOCAL midnight, avoiding the UTC-midnight off-by-one.
+ *
+ * `new Date('YYYY-MM-DD')` parses date-only strings as UTC midnight; when
+ * later rendered with `toLocaleDateString` in a timezone behind UTC (e.g.
+ * America/Santo_Domingo, UTC-4) it displays as the previous day. Use this
+ * for any date-only field (e.g. a `@db.Date` column like a birth date)
+ * before formatting or reading local date parts.
+ */
+export function parseDateOnly(iso: string): Date {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
+  return new Date(y!, m! - 1, d)
+}
+
 function ampm(hours: number, minutes: number): string {
   const isPm = hours >= 12
   const h = hours % 12 || 12

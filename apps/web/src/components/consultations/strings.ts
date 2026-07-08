@@ -41,6 +41,7 @@ export const orderQueueStrings = {
   deleteOrderLabel: 'Eliminar orden',
   withContrast: 'Con contraste',
   fastingRequired: 'En ayunas',
+  sourceFromProtocol: 'Desde protocolo',
 
   // Add medication form
   addMedicationButton: 'Añadir medicamento',

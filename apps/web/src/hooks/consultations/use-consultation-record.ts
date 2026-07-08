@@ -3,7 +3,8 @@ import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient, ApiRequestError, triggerDownload } from '@/lib/api-client'
 import { toastStrings } from '@/lib/toasts'
-import type { ConsultationRecordDto, UpdateRecordSectionsDto } from '@rezeta/shared'
+import type { ConsultationRecordDto, RecordSectionKey, UpdateRecordSectionsDto } from '@rezeta/shared'
+import { RECORD_SECTION_TITLES } from '@rezeta/shared'
 
 const QK = 'consultation-record'
 
@@ -87,7 +88,17 @@ export function useSignRecord(
     },
     onError: (err) => {
       if (err instanceof ApiRequestError && err.error.code === 'RECORD_REQUIRED_SECTIONS_MISSING') {
-        toast.error(toastStrings.historiaMissingSections)
+        const missing = err.error.details?.['missing']
+        const names = Array.isArray(missing)
+          ? missing
+              .filter((key): key is RecordSectionKey => typeof key === 'string' && key in RECORD_SECTION_TITLES)
+              .map((key) => RECORD_SECTION_TITLES[key])
+          : []
+        toast.error(
+          names.length > 0
+            ? toastStrings.historiaMissingSectionsNamed(names)
+            : toastStrings.historiaMissingSections,
+        )
         return
       }
       toast.error(toastStrings.errorHistoriaSign)

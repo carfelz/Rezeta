@@ -4,6 +4,8 @@ export const topbarStrings = {
   notificationsLabel: 'Notificaciones',
   defaultSpecialty: 'Médico',
   openMenuLabel: 'Abrir menú',
+  noLocations: 'Sin ubicaciones configuradas',
+  addLocation: 'Añadir ubicación',
 } as const
 
 export const globalLoadingStrings = {

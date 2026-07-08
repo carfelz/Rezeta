@@ -25,7 +25,13 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'sonner'
 import { templateEditorWidgetStrings } from './strings'
-import type { ProtocolTemplateDto } from '@rezeta/shared'
+import type {
+  ProtocolTemplateDto,
+  DosageRow,
+  VitalsField,
+  ImagingOrderItem,
+  LabOrderItem,
+} from '@rezeta/shared'
 import {
   Button,
   Badge,
@@ -57,6 +63,10 @@ export type BlockType =
   | 'decision'
   | 'dosage_table'
   | 'alert'
+  | 'vitals'
+  | 'clinical_notes'
+  | 'imaging_order'
+  | 'lab_order'
 
 export interface TemplateBlock {
   id: string
@@ -68,6 +78,14 @@ export interface TemplateBlock {
   // section only
   collapsed_by_default?: boolean | undefined
   blocks?: TemplateBlock[] | undefined
+  // clinical_notes only
+  label?: string | undefined
+  // dosage_table only
+  rows?: DosageRow[] | undefined
+  // vitals only
+  fields?: VitalsField[] | undefined
+  // imaging_order / lab_order only
+  orders?: (ImagingOrderItem | LabOrderItem)[] | undefined
 }
 
 export interface TemplateEditorState {
@@ -85,6 +103,8 @@ export interface TemplateSchema {
   blocks: unknown[]
 }
 
+const DOSAGE_COLUMNS = ['drug', 'dose', 'route', 'frequency', 'notes'] as const
+
 function blockToSchema(b: TemplateBlock): unknown {
   const base: Record<string, unknown> = { id: b.id, type: b.type }
   if (b.required !== undefined) base['required'] = b.required
@@ -94,6 +114,20 @@ function blockToSchema(b: TemplateBlock): unknown {
     if (b.description) base['description'] = b.description
     if (b.collapsed_by_default) base['collapsed_by_default'] = true
     base['placeholder_blocks'] = (b.blocks ?? []).map(blockToSchema)
+  } else if (b.type === 'clinical_notes') {
+    if (b.label) base['label'] = b.label
+  } else if (b.type === 'dosage_table') {
+    if (b.title) base['title'] = b.title
+    if (b.rows && b.rows.length > 0) {
+      base['columns'] = DOSAGE_COLUMNS
+      base['rows'] = b.rows
+    }
+  } else if (b.type === 'vitals') {
+    if (b.title) base['title'] = b.title
+    base['fields'] = b.fields ?? []
+  } else if (b.type === 'imaging_order' || b.type === 'lab_order') {
+    if (b.title) base['title'] = b.title
+    base['orders'] = b.orders ?? []
   } else {
     if (b.title) base['title'] = b.title
   }
@@ -119,6 +153,10 @@ interface RawBlock {
   collapsed_by_default?: unknown
   placeholder_blocks?: unknown
   blocks?: unknown
+  label?: unknown
+  rows?: unknown
+  fields?: unknown
+  orders?: unknown
 }
 
 function isRecord(value: unknown): value is RawBlock {
@@ -136,6 +174,10 @@ function parseBlocks(raw: unknown): TemplateBlock[] {
     if (typeof b.description === 'string') block.description = b.description
     if (typeof b.placeholder === 'string') block.placeholder = b.placeholder
     if (typeof b.required === 'boolean') block.required = b.required
+    if (typeof b.label === 'string') block.label = b.label
+    if (Array.isArray(b.rows)) block.rows = b.rows as DosageRow[]
+    if (Array.isArray(b.fields)) block.fields = b.fields as VitalsField[]
+    if (Array.isArray(b.orders)) block.orders = b.orders as (ImagingOrderItem | LabOrderItem)[]
     if (block.type === 'section') {
       const children = Array.isArray(b.placeholder_blocks)
         ? b.placeholder_blocks
@@ -192,13 +234,29 @@ type Action =
   | { type: 'REORDER_BLOCKS'; activeId: string; overId: string; parentId?: string | undefined }
   | { type: 'MARK_CLEAN' }
 
+// Mirrors the protocol editor's vitals default (block-factory.ts) so a
+// template scaffolds the same starting fields a protocol instance would.
+function defaultVitalsFields(): VitalsField[] {
+  return [
+    { id: genId('vf'), label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+    { id: genId('vf'), label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+    { id: genId('vf'), label: 'Temperatura', unit: '°C', input_type: 'number' },
+    { id: genId('vf'), label: 'Peso', unit: 'kg', input_type: 'number' },
+    { id: genId('vf'), label: 'Talla', unit: 'cm', input_type: 'number' },
+  ]
+}
+
 function newBlock(blockType: BlockType): TemplateBlock {
-  return {
+  const base: TemplateBlock = {
     id: genId(blockType === 'section' ? 'sec' : 'blk'),
     type: blockType,
     required: false,
-    ...(blockType === 'section' ? { title: '', blocks: [] } : {}),
   }
+  if (blockType === 'section') return { ...base, title: '', blocks: [] }
+  if (blockType === 'clinical_notes') return { ...base, label: 'Nota clínica' }
+  if (blockType === 'vitals') return { ...base, fields: defaultVitalsFields() }
+  if (blockType === 'imaging_order' || blockType === 'lab_order') return { ...base, orders: [] }
+  return base
 }
 
 function updateBlockInList(
@@ -355,6 +413,109 @@ const TYPE_LABELS: Record<BlockType, string> = {
   decision: 'DECISIÓN',
   dosage_table: 'TABLA DOSIS',
   alert: 'ALERTA',
+  vitals: 'SIGNOS VITALES',
+  clinical_notes: 'NOTA CLÍNICA',
+  imaging_order: 'ORDEN IMAGEN',
+  lab_order: 'ORDEN LAB',
+}
+
+// ─── DosageRowsEditor ─────────────────────────────────────────────────────────
+// Fully controlled (no draft state) to match the rest of this editor: every
+// keystroke dispatches straight into reducer state via onUpdate.
+
+type DosageColumn = (typeof DOSAGE_COLUMNS)[number]
+
+interface DosageRowsEditorProps {
+  block: TemplateBlock
+  isLocked: boolean
+  parentId?: string | undefined
+  onUpdate: (id: string, patch: Partial<TemplateBlock>, parentId?: string) => void
+}
+
+function DosageRowsEditor({ block, isLocked, parentId, onUpdate }: DosageRowsEditorProps) {
+  const rows = block.rows ?? []
+
+  function addRow() {
+    const newRow: DosageRow = {
+      id: genId('row'),
+      drug: '',
+      dose: '',
+      route: '',
+      frequency: '',
+      notes: '',
+    }
+    onUpdate(block.id, { rows: [...rows, newRow] }, parentId)
+  }
+
+  function updateRow(rowId: string, col: DosageColumn, value: string) {
+    onUpdate(
+      block.id,
+      { rows: rows.map((r) => (r.id === rowId ? { ...r, [col]: value } : r)) },
+      parentId,
+    )
+  }
+
+  function removeRow(rowId: string) {
+    onUpdate(block.id, { rows: rows.filter((r) => r.id !== rowId) }, parentId)
+  }
+
+  return (
+    <Field label={templateEditorWidgetStrings.dosageRowsLabel}>
+      {rows.length > 0 && (
+        <div className="overflow-x-auto rounded-sm border border-n-200 mb-2">
+          <table className="w-full text-[12px] font-sans">
+            <thead>
+              <tr className="bg-n-50 border-b border-n-200">
+                {DOSAGE_COLUMNS.map((col) => (
+                  <th
+                    key={col}
+                    className="px-2 py-2 text-left text-[10.5px] font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                  >
+                    {templateEditorWidgetStrings.dosageColumnLabels[col]}
+                  </th>
+                ))}
+                {!isLocked && <th className="px-2 py-2 w-8" />}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, idx) => (
+                <tr key={row.id} className={idx % 2 === 0 ? 'bg-n-0' : 'bg-n-25'}>
+                  {DOSAGE_COLUMNS.map((col) => (
+                    <td key={col} className="px-1 py-1">
+                      <Input
+                        value={row[col]}
+                        disabled={isLocked}
+                        aria-label={templateEditorWidgetStrings.dosageColumnLabels[col]}
+                        onChange={(e) => updateRow(row.id, col, e.target.value)}
+                      />
+                    </td>
+                  ))}
+                  {!isLocked && (
+                    <td className="px-1 py-1 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-[28px] px-0"
+                        title={templateEditorWidgetStrings.dosageRemoveRow}
+                        onClick={() => removeRow(row.id)}
+                      >
+                        <i className="ph ph-x text-[14px]" />
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {!isLocked && (
+        <Button variant="secondary" size="sm" onClick={addRow}>
+          {templateEditorWidgetStrings.dosageAddRow}
+        </Button>
+      )}
+    </Field>
+  )
 }
 
 // ─── BlockRow ─────────────────────────────────────────────────────────────────
@@ -362,6 +523,9 @@ const TYPE_LABELS: Record<BlockType, string> = {
 interface BlockRowProps {
   block: TemplateBlock
   isExpanded: boolean
+  // Global expanded id, threaded through so a section's children can expand
+  // their own detail panel (children render their own ChildBlockList).
+  expandedBlockId: string | null
   isLocked: boolean
   parentId?: string | undefined
   onToggle: (id: string) => void
@@ -378,6 +542,7 @@ interface BlockRowProps {
 function BlockRow({
   block,
   isExpanded,
+  expandedBlockId,
   isLocked,
   parentId,
   onToggle,
@@ -391,7 +556,8 @@ function BlockRow({
   dragRef,
 }: BlockRowProps) {
   const isSection = block.type === 'section'
-  const displayTitle = block.title ?? block.placeholder ?? templateEditorWidgetStrings.noTitle
+  const displayTitle =
+    block.title ?? block.label ?? block.placeholder ?? templateEditorWidgetStrings.noTitle
   const isRequired = block.required ?? false
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -485,8 +651,8 @@ function BlockRow({
           style={{
             flex: 1,
             fontSize: 13,
-            color: block.title ? 'var(--color-n-800)' : 'var(--color-n-400)',
-            fontStyle: block.title ? undefined : 'italic',
+            color: block.title ?? block.label ? 'var(--color-n-800)' : 'var(--color-n-400)',
+            fontStyle: block.title ?? block.label ? undefined : 'italic',
             fontWeight: isSection ? 500 : 400,
             overflow: 'hidden',
             whiteSpace: 'nowrap',
@@ -616,6 +782,63 @@ function BlockRow({
                 />
               </Field>
             </>
+          ) : block.type === 'clinical_notes' ? (
+            <>
+              <Field label={templateEditorWidgetStrings.blockTitleOptional}>
+                <Input
+                  value={block.label ?? ''}
+                  disabled={isLocked}
+                  onChange={(e) =>
+                    onUpdate(block.id, { label: e.target.value || undefined }, parentId)
+                  }
+                  placeholder={templateEditorWidgetStrings.clinicalNotesLabelPlaceholder}
+                />
+              </Field>
+              <label
+                style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+              >
+                <Checkbox
+                  checked={isRequired}
+                  disabled={isLocked}
+                  onChange={(e) => onUpdate(block.id, { required: e.target.checked }, parentId)}
+                />
+                <span
+                  style={{ fontSize: 12, color: 'var(--color-n-600)', fontFamily: 'var(--font-sans)' }}
+                >
+                  {templateEditorWidgetStrings.obligatorio}
+                </span>
+              </label>
+              <Field label={templateEditorWidgetStrings.placeholderHint}>
+                <Textarea
+                  value={block.placeholder ?? ''}
+                  disabled={isLocked}
+                  rows={2}
+                  onChange={(e) =>
+                    onUpdate(block.id, { placeholder: e.target.value || undefined }, parentId)
+                  }
+                  placeholder={templateEditorWidgetStrings.blockPlaceholderInstruction}
+                />
+              </Field>
+            </>
+          ) : block.type === 'dosage_table' ? (
+            <>
+              <Field label={templateEditorWidgetStrings.blockTitleOptional}>
+                <Input
+                  value={block.title ?? ''}
+                  disabled={isLocked}
+                  onChange={(e) =>
+                    onUpdate(block.id, { title: e.target.value || undefined }, parentId)
+                  }
+                  placeholder={`Ej. ${TYPE_LABELS[block.type]}`}
+                />
+              </Field>
+              <DosageRowsEditor
+                block={block}
+                isLocked={isLocked}
+                parentId={parentId}
+                onUpdate={onUpdate}
+              />
+            </>
           ) : (
             <>
               <Field label={templateEditorWidgetStrings.blockTitleOptional}>
@@ -651,7 +874,7 @@ function BlockRow({
             <ChildBlockList
               blocks={block.blocks ?? []}
               parentId={block.id}
-              expandedBlockId={null}
+              expandedBlockId={expandedBlockId}
               isLocked={isLocked}
               onToggle={onToggle}
               onUpdate={onUpdate}
@@ -693,6 +916,7 @@ function SortableBlockRow({ block, expandedBlockId, isLocked, ...rest }: Sortabl
     <BlockRow
       block={block}
       isExpanded={expandedBlockId === block.id}
+      expandedBlockId={expandedBlockId}
       isLocked={isLocked}
       dragListeners={listeners}
       dragAttributes={attributes}
@@ -981,6 +1205,10 @@ export function TemplateEditor({
               ['decision', templateEditorWidgetStrings.addDecision],
               ['dosage_table', templateEditorWidgetStrings.addDosage],
               ['alert', templateEditorWidgetStrings.addAlert],
+              ['vitals', templateEditorWidgetStrings.addVitals],
+              ['clinical_notes', templateEditorWidgetStrings.addClinicalNotes],
+              ['imaging_order', templateEditorWidgetStrings.addImagingOrder],
+              ['lab_order', templateEditorWidgetStrings.addLabOrder],
             ] as [BlockType, string][]
           ).map(([blockType, label]) => (
             <Button

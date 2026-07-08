@@ -205,6 +205,7 @@ export function ProtocolEditor(): JSX.Element {
           setSaveSummary('')
           markSaved()
           setSavedHistoriaMapping(historiaMapping)
+          setDraftBanner(null)
           if (id) clearLocalDraft(id)
         },
       },
@@ -220,6 +221,7 @@ export function ProtocolEditor(): JSX.Element {
           setSaveSummary('')
           markSaved()
           setSavedHistoriaMapping(historiaMapping)
+          setDraftBanner(null)
           if (id) clearLocalDraft(id)
         },
       },
@@ -235,6 +237,7 @@ export function ProtocolEditor(): JSX.Element {
           setChangeSummary('')
           markSaved()
           setSavedHistoriaMapping(historiaMapping)
+          setDraftBanner(null)
           if (id) clearLocalDraft(id)
         },
       },

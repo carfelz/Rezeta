@@ -466,6 +466,34 @@ function withDerivedBMI(
   return result
 }
 
+/**
+ * Rounds every parseable-as-number value in `values` to at most 2 decimal
+ * places, fixing float artifacts (e.g. `81.4000015258789` from a browser's
+ * number input) at commit time. Must only run on blur, never per keystroke —
+ * rounding mid-edit would mangle values the user is still typing (e.g.
+ * turning "81." into "81" and dropping the decimal point they just typed).
+ * Non-numeric or empty values (including the computed `bmi`, already capped
+ * to 1 decimal by `withDerivedBMI`) pass through unchanged. Returns the same
+ * object reference when nothing needed rounding, so callers can skip a
+ * redundant `onContentEdit` re-propagation.
+ */
+function normalizeVitalsValues(
+  values: Record<string, string | number>,
+): Record<string, string | number> {
+  let changed = false
+  const result: Record<string, string | number> = { ...values }
+  for (const [key, raw] of Object.entries(values)) {
+    const str = String(raw).trim()
+    if (str === '' || Number.isNaN(Number(str))) continue
+    const rounded = String(Math.round(parseFloat(str) * 100) / 100)
+    if (rounded !== String(raw)) {
+      result[key] = rounded
+      changed = true
+    }
+  }
+  return changed ? result : values
+}
+
 function VitalsRunMode({
   blockId,
   fields,
@@ -517,6 +545,11 @@ function VitalsRunMode({
         // the block, which is the standard focusout-coalescing pattern.
         if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
         if (!dirtySinceLastEmit.current) return
+        const normalized = normalizeVitalsValues(latestValues.current)
+        if (normalized !== latestValues.current) {
+          latestValues.current = normalized
+          onContentEdit?.(blockId, { kind: 'vitals', values: normalized })
+        }
         onModification?.({
           type: 'vitals_entered',
           block_id: blockId,

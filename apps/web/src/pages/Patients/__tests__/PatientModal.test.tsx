@@ -27,6 +27,15 @@ vi.mock('../ClinicalHistory', () => ({
 
 import { PatientModal } from '../PatientModal'
 
+// Radix Select's pointerdown-based item selection needs these jsdom shims —
+// jsdom implements neither pointer capture nor scrollIntoView.
+beforeEach(() => {
+  Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+  Element.prototype.setPointerCapture = vi.fn()
+  Element.prototype.releasePointerCapture = vi.fn()
+  Element.prototype.scrollIntoView = vi.fn()
+})
+
 describe('PatientModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -85,6 +94,21 @@ describe('PatientModal', () => {
 
     expect(mocks.createMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ allergies: [], chronicConditions: [] }),
+    )
+  })
+
+  it('offers RNC as a document type option and reflects it in the create payload', async () => {
+    const user = userEvent.setup()
+    render(<PatientModal mode="create" onClose={vi.fn()} />)
+
+    await user.type(screen.getByPlaceholderText('Ej. Ana María Reyes'), 'Ana Reyes')
+    // Selects in DOM order: sex, then document type — index 1 is doc type.
+    await user.click(screen.getAllByRole('combobox')[1]!)
+    await user.click(screen.getByRole('option', { name: 'RNC' }))
+    await user.click(screen.getByRole('button', { name: 'Registrar paciente' }))
+
+    expect(mocks.createMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ documentType: 'rnc' }),
     )
   })
 })

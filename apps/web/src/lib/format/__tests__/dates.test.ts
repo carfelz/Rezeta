@@ -6,6 +6,7 @@ import {
   formatDateNumeric,
   formatRelativeMinutes,
   formatTimeShort,
+  parseDateOnly,
 } from '../dates'
 
 describe('formatTimeShort coverage of all branches', () => {
@@ -80,6 +81,26 @@ describe('formatDateNumeric', () => {
 
   it('preserves two-digit day and month', () => {
     expect(formatDateNumeric(new Date(2026, 11, 25))).toBe('25/12/2026')
+  })
+})
+
+describe('parseDateOnly', () => {
+  it('parses a date-only string as local midnight, not UTC midnight', () => {
+    const parsed = parseDateOnly('1972-03-15')
+    expect(parsed.getFullYear()).toBe(1972)
+    expect(parsed.getMonth()).toBe(2)
+    expect(parsed.getDate()).toBe(15)
+  })
+
+  it('ignores a time suffix and still parses the date part as local midnight', () => {
+    const parsed = parseDateOnly('1972-03-15T00:00:00.000Z')
+    expect(parsed.getFullYear()).toBe(1972)
+    expect(parsed.getMonth()).toBe(2)
+    expect(parsed.getDate()).toBe(15)
+  })
+
+  it('round-trips through formatDateLong without an off-by-one day', () => {
+    expect(formatDateLong(parseDateOnly('1972-03-15'))).toBe('miércoles, 15 de marzo de 1972')
   })
 })
 

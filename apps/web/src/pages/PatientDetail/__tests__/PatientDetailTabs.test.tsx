@@ -13,22 +13,31 @@ const mocks = vi.hoisted(() => ({
   usePatient: vi.fn(),
   useAppointments: vi.fn(),
   usePatientPrescriptions: vi.fn(),
+  useCreateConsultation: vi.fn(),
   useInvoices: vi.fn(),
   useStartConsultation: vi.fn(),
   useUiStore: vi.fn(),
+  useLocations: vi.fn(),
 }))
 
-vi.mock('@/hooks/patients/use-patients', () => ({ usePatient: mocks.usePatient }))
+vi.mock('@/hooks/patients/use-patients', () => ({
+  usePatient: mocks.usePatient,
+  // PatientCombobox (rendered inside NewConsultationDialog) consumes usePatients
+  // for its search dropdown.
+  usePatients: () => ({ data: { items: [] } }),
+}))
 vi.mock('@/hooks/appointments/use-appointments', () => ({
   useAppointments: mocks.useAppointments,
 }))
 vi.mock('@/hooks/consultations/use-consultations', () => ({
   usePatientPrescriptions: mocks.usePatientPrescriptions,
+  useCreateConsultation: mocks.useCreateConsultation,
 }))
 vi.mock('@/hooks/invoices/use-invoices', () => ({ useInvoices: mocks.useInvoices }))
 vi.mock('@/hooks/consultations/use-start-consultation', () => ({
   useStartConsultation: mocks.useStartConsultation,
 }))
+vi.mock('@/hooks/locations/use-locations', () => ({ useLocations: mocks.useLocations }))
 vi.mock('@/store/ui.store', () => ({ useUiStore: mocks.useUiStore }))
 vi.mock('../HistoriaTab', () => ({
   HistoriaTab: () => <div data-testid="historia-tab">Historia</div>,
@@ -169,6 +178,10 @@ function setup(
   })
   mocks.useStartConsultation.mockReturnValue({ start: vi.fn(), isStarting: false })
   mocks.useUiStore.mockReturnValue(null)
+  mocks.useCreateConsultation.mockReturnValue({ mutateAsync: vi.fn(), isPending: false })
+  mocks.useLocations.mockReturnValue({
+    data: [{ id: 'loc1', name: 'Consultorio', city: 'Santo Domingo' }],
+  })
 }
 
 function renderPage(): void {
@@ -255,5 +268,12 @@ describe('PatientDetail tabs', () => {
     renderPage()
     await userEvent.click(screen.getByRole('tab', { name: 'Facturas' }))
     expect(screen.getByText('Sin facturas registradas')).toBeInTheDocument()
+  })
+
+  it('opens the new consultation dialog with the patient preselected', async () => {
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /Nueva consulta/ }))
+
+    expect(screen.getByDisplayValue('Ana Reyes')).toBeInTheDocument()
   })
 })

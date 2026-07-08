@@ -18,6 +18,12 @@ function resolveAction(method: string, path: string): AuditEntityAction {
   return 'update'
 }
 
+/** Capitalizes a URL resource segment, singularizing it only when it actually ends in a plural 's' (e.g. 'patients' -> 'Patient'); non-plural segments are capitalized as-is (e.g. 'onboarding' -> 'Onboarding'). */
+function toEntityType(segment: string): string {
+  const singular = segment.endsWith('s') ? segment.slice(0, -1) : segment
+  return singular.charAt(0).toUpperCase() + singular.slice(1)
+}
+
 function extractEntityName(response: unknown): string | undefined {
   if (!response || typeof response !== 'object') return undefined
   const r = response as Record<string, unknown>
@@ -51,9 +57,7 @@ export class AuditLogInterceptor implements NestInterceptor {
     const entityId = (request.params as Record<string, string>)['id']
     const segments = request.path.split('/').filter(Boolean)
     const resourceSegment = segments.find((s) => !s.startsWith('v') && s !== entityId)
-    const entityType = resourceSegment
-      ? resourceSegment.charAt(0).toUpperCase() + resourceSegment.slice(1, -1)
-      : undefined
+    const entityType = resourceSegment ? toEntityType(resourceSegment) : undefined
 
     const httpCtx = {
       tenantId,

@@ -96,6 +96,21 @@ export const blockEditorStrings = {
   dosageAddRow: '+ Añadir fila',
   dosageRemoveRow: 'Eliminar fila',
 
+  // ── Clinical notes block ──────────────────────────────────────────────────
+  notesLabelField: 'Etiqueta',
+  notesRequiredField: 'Obligatorio',
+
+  // ── Vitals block ──────────────────────────────────────────────────────────
+  vitalsTitleField: 'Título',
+  vitalsFieldLabel: 'Campo',
+  vitalsFieldUnit: 'Unidad',
+  vitalsFieldType: 'Tipo',
+  vitalsTypeText: 'Texto',
+  vitalsTypeNumber: 'Número',
+  vitalsTypeComputed: 'Calculado',
+  vitalsAddField: 'Añadir campo',
+  vitalsRemoveField: (label: string) => `Quitar ${label}`,
+
   // ── Type picker modal (TemplatePickerModal) ───────────────────────────────
   typePickerTitle: 'Nuevo protocolo',
   typePickerSubtitle: 'Elige una plantilla para empezar',

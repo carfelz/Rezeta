@@ -254,6 +254,7 @@ export function PatientModal({
                       <SelectItem value="passport">
                         {patientModalStrings.docTypePassport}
                       </SelectItem>
+                      <SelectItem value="rnc">{patientModalStrings.docTypeRnc}</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>

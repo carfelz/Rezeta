@@ -124,68 +124,96 @@ function typeLabel(type: string): string {
 interface BlockRendererProps {
   block: unknown
   nested?: boolean
+  // When true, leaf blocks render their inner content directly, without the
+  // ProtocolBlock chrome (header chip + title). Used by EditorBlockRenderer's
+  // unselected leaf card, which already renders its own typed header — the
+  // ProtocolBlock chrome there would otherwise duplicate it.
+  chromeless?: boolean
 }
 
-export function BlockRenderer({ block, nested = false }: BlockRendererProps): JSX.Element | null {
+export function BlockRenderer({
+  block,
+  nested = false,
+  chromeless = false,
+}: BlockRendererProps): JSX.Element | null {
   const b = block as ProtocolBlock
 
   switch (b.type) {
-    case 'section':
+    case 'section': {
+      const content =
+        b.blocks.length > 0 ? (
+          <div className="flex flex-col gap-0">
+            {b.blocks.map((child) => (
+              <BlockRenderer key={child.id} block={child} nested />
+            ))}
+          </div>
+        ) : null
+      if (chromeless) return content
       return (
         <ProtocolBlock type={typeLabel('section')} title={b.title} nested={nested}>
-          {b.blocks.length > 0 ? (
-            <div className="flex flex-col gap-0">
-              {b.blocks.map((child) => (
-                <BlockRenderer key={child.id} block={child} nested />
-              ))}
-            </div>
-          ) : null}
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'text':
+    case 'text': {
+      const content = (
+        <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
+          {b.content}
+        </p>
+      )
+      if (chromeless) return content
       return (
         <ProtocolBlock type={typeLabel('text')} title={blockTypeStrings.text} nested={nested}>
-          <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
-            {b.content}
-          </p>
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'checklist':
+    case 'checklist': {
+      const content = <ProtocolChecklist items={b.items} />
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('checklist')}
           title={b.title ?? blockTypeStrings.checklist}
           nested={nested}
         >
-          <ProtocolChecklist items={b.items} />
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'steps':
+    case 'steps': {
+      const content = <ProtocolSteps steps={b.steps} />
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('steps')}
           title={b.title ?? blockTypeStrings.steps}
           nested={nested}
         >
-          <ProtocolSteps steps={b.steps} />
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'decision':
+    case 'decision': {
+      const content = <ProtocolDecision condition={b.condition} branches={b.branches} />
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('decision')}
           title={b.condition || blockTypeStrings.decision}
           nested={nested}
         >
-          <ProtocolDecision condition={b.condition} branches={b.branches} />
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'dosage_table':
+    case 'dosage_table': {
+      if (chromeless) return <ProtocolDosageTable rows={b.rows} />
       return (
         <ProtocolBlock
           type={typeLabel('dosage_table')}
@@ -195,8 +223,10 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
           <ProtocolDosageTable rows={b.rows} {...(b.title ? { title: b.title } : {})} />
         </ProtocolBlock>
       )
+    }
 
-    case 'alert':
+    case 'alert': {
+      if (chromeless) return <ProtocolAlert severity={b.severity} content={b.content} />
       return (
         <ProtocolBlock
           type={typeLabel('alert')}
@@ -210,69 +240,84 @@ export function BlockRenderer({ block, nested = false }: BlockRendererProps): JS
           />
         </ProtocolBlock>
       )
+    }
 
-    case 'imaging_order':
+    case 'imaging_order': {
+      const content = (
+        <div className="flex flex-col gap-2">
+          {b.orders.map((o) => (
+            <div key={o.id} className="text-[13px] font-sans text-n-700">
+              <span className="font-medium">{o.study_type}</span>
+              {o.indication && <span className="text-n-500"> · {o.indication}</span>}
+            </div>
+          ))}
+        </div>
+      )
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('imaging_order')}
           title={b.title ?? blockTypeStrings.imagingOrder}
           nested={nested}
         >
-          <div className="flex flex-col gap-2">
-            {b.orders.map((o) => (
-              <div key={o.id} className="text-[13px] font-sans text-n-700">
-                <span className="font-medium">{o.study_type}</span>
-                {o.indication && <span className="text-n-500"> · {o.indication}</span>}
-              </div>
-            ))}
-          </div>
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'lab_order':
+    case 'lab_order': {
+      const content = (
+        <div className="flex flex-col gap-2">
+          {b.orders.map((o) => (
+            <div key={o.id} className="text-[13px] font-sans text-n-700">
+              <span className="font-medium">{o.test_name}</span>
+              {o.indication && <span className="text-n-500"> · {o.indication}</span>}
+            </div>
+          ))}
+        </div>
+      )
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('lab_order')}
           title={b.title ?? blockTypeStrings.labOrder}
           nested={nested}
         >
-          <div className="flex flex-col gap-2">
-            {b.orders.map((o) => (
-              <div key={o.id} className="text-[13px] font-sans text-n-700">
-                <span className="font-medium">{o.test_name}</span>
-                {o.indication && <span className="text-n-500"> · {o.indication}</span>}
-              </div>
-            ))}
-          </div>
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'vitals':
+    case 'vitals': {
+      const content = <VitalsBlock fields={b.fields} readOnly />
+      if (chromeless) return content
       return (
         <ProtocolBlock
           type={typeLabel('vitals')}
-          title={b.title ?? blockTypeStrings.vitals}
+          {...(b.title ? { title: b.title } : {})}
           nested={nested}
         >
-          <VitalsBlock fields={b.fields} readOnly />
+          {content}
         </ProtocolBlock>
       )
+    }
 
-    case 'clinical_notes':
+    case 'clinical_notes': {
+      const content = (
+        <ClinicalNotesBlock
+          label={b.label}
+          content={b.content}
+          {...(b.required !== undefined ? { required: b.required } : {})}
+          readOnly
+        />
+      )
+      if (chromeless) return content
       return (
-        <ProtocolBlock
-          type={typeLabel('clinical_notes')}
-          title={b.label}
-          nested={nested}
-        >
-          <ClinicalNotesBlock
-            label={b.label}
-            content={b.content}
-            {...(b.required !== undefined ? { required: b.required } : {})}
-            readOnly
-          />
+        <ProtocolBlock type={typeLabel('clinical_notes')} nested={nested}>
+          {content}
         </ProtocolBlock>
       )
+    }
 
     default:
       return null

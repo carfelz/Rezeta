@@ -1,4 +1,10 @@
 export const patientDetailStrings = {
+  // ── PageHeader ──────────────────────────────────────────────────────────────
+  breadcrumbPatients: 'Pacientes',
+  editButton: 'Editar',
+  noDocument: 'Sin documento',
+  newConsultation: 'Nueva consulta',
+
   // ── DemographicsBlock ───────────────────────────────────────────────────────
   sectionTitle: 'Datos personales',
   fieldDateOfBirth: 'Fecha de nacimiento',
@@ -20,6 +26,7 @@ export const patientDetailStrings = {
   documentTypeSelectPlaceholder: 'Seleccionar',
   documentTypeCedula: 'Cédula',
   documentTypePassport: 'Pasaporte',
+  documentTypeRnc: 'RNC',
   fieldDocumentNumber: 'Número de documento',
   fieldDocumentNumberPlaceholder: 'Ej. 001-1234567-8',
   fieldPhoneLabel: 'Teléfono',
