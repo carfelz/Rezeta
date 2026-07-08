@@ -12,7 +12,7 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 
 ### Added
 
-- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gana tres casos — (a) clicks repetidos durante el flush real en vuelo no doble-POSTean recetas ni doble-firman (rojo contra el código previo), (b) el botón se re-habilita tras `onBeforeSign` → false, (c) la firma procede tras `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: la aserción del chip de vitals se ajusta de `toBeGreaterThanOrEqual(1)` a `toHaveLength(1)` para atrapar regresiones de chip duplicado.
+- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gana tres casos — (a) clicks repetidos durante el flush real en vuelo no doble-POSTean recetas ni doble-firman (rojo contra el código previo), (b) el botón se re-habilita tras `onBeforeSign` → false, (c) la firma procede tras `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: la aserción del chip de vitals se ajusta de `toBeGreaterThanOrEqual(1)` a `toHaveLength(2)` (chip + título de respaldo renderizan el nombre del tipo) para atrapar regresiones de chip duplicado.
 
 ## [2026-07-07] El selector de ubicación distingue "cargando" de "cero ubicaciones"
 
