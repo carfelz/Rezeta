@@ -6,11 +6,16 @@ import { toastStrings } from '@/lib/toasts'
 const mutateRx = vi.fn()
 const mutateImg = vi.fn()
 const mutateLab = vi.fn()
+const useCreatePrescriptionMock = vi.fn(() => ({ mutateAsync: mutateRx }))
+const useCreateImagingOrderMock = vi.fn(() => ({ mutateAsync: mutateImg }))
+const useCreateLabOrderMock = vi.fn(() => ({ mutateAsync: mutateLab }))
 
 vi.mock('../use-consultations', () => ({
-  useCreatePrescription: () => ({ mutateAsync: mutateRx }),
-  useCreateImagingOrder: () => ({ mutateAsync: mutateImg }),
-  useCreateLabOrder: () => ({ mutateAsync: mutateLab }),
+  useCreatePrescription: (id: string, opts?: { silent?: boolean }) =>
+    useCreatePrescriptionMock(id, opts),
+  useCreateImagingOrder: (id: string, opts?: { silent?: boolean }) =>
+    useCreateImagingOrderMock(id, opts),
+  useCreateLabOrder: (id: string, opts?: { silent?: boolean }) => useCreateLabOrderMock(id, opts),
 }))
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }))
@@ -96,6 +101,54 @@ describe('useFlushOrderQueue', () => {
     expect(useOrderQueueStore.getState().medications).toHaveLength(0)
     expect(useOrderQueueStore.getState().labOrders).toHaveLength(0)
     expect(toast.error).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it('requests each create hook silenced, so per-group toasts never fire', () => {
+    renderHook(() => useFlushOrderQueue(CONSULT_ID))
+
+    expect(useCreatePrescriptionMock).toHaveBeenCalledWith(CONSULT_ID, { silent: true })
+    expect(useCreateImagingOrderMock).toHaveBeenCalledWith(CONSULT_ID, { silent: true })
+    expect(useCreateLabOrderMock).toHaveBeenCalledWith(CONSULT_ID, { silent: true })
+  })
+
+  it('persists a queued imaging order group, then empties the store and returns true', async () => {
+    act(() => {
+      useOrderQueueStore.getState().queueImagingOrder({
+        study_type: 'Radiografía de tórax',
+        indication: 'tos persistente',
+        urgency: 'routine',
+        contrast: false,
+        fasting_required: false,
+        source: 'protocolo:tos',
+      })
+    })
+
+    const { result } = renderHook(() => useFlushOrderQueue(CONSULT_ID))
+
+    let outcome: boolean | undefined
+    await act(async () => {
+      outcome = await result.current.flush()
+    })
+
+    expect(outcome).toBe(true)
+    expect(mutateImg).toHaveBeenCalledTimes(1)
+    expect(mutateImg).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupOrder: 1,
+        items: [
+          expect.objectContaining({
+            studyType: 'Radiografía de tórax',
+            indication: 'tos persistente',
+            urgency: 'routine',
+            contrast: false,
+            fastingRequired: false,
+            source: 'protocolo:tos',
+          }),
+        ],
+      }),
+    )
+    expect(useOrderQueueStore.getState().imagingOrders).toHaveLength(0)
   })
 
   it('resolves true and fires no requests when the queue is empty', async () => {
@@ -141,6 +194,7 @@ describe('useFlushOrderQueue', () => {
     })
 
     expect(outcome).toBe(false)
+    expect(toast.error).toHaveBeenCalledTimes(1)
     expect(toast.error).toHaveBeenCalledWith(toastStrings.errorFlushOrders)
     // meds failed first, so the lab create is never attempted and its queue stays
     expect(mutateLab).not.toHaveBeenCalled()

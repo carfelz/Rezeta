@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Silenciar toasts por grupo durante el flush de órdenes
+
+### Fixed
+
+- `apps/web/src/hooks/consultations/use-consultations.ts`: `useCreatePrescription`, `useCreateImagingOrder` y `useCreateLabOrder` ganan un segundo parámetro opcional `opts?: { silent?: boolean }`. Con `silent: true`, el `onSuccess`/`onError` de cada hook sigue invalidando la query de la consulta (sin cambios) pero deja de disparar `toast.success`/`toast.error`. Sin `opts`, el comportamiento es idéntico al anterior — los llamados manuales de "Generar" en `OrderQueuePanel.tsx` (:556, :689, :819) no pasan `opts` y no cambian.
+- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: las tres instancias de hook que usa `flush()` ahora se crean con `{ silent: true }`, así un flush de varios grupos (medicamentos, laboratorio, imagenología) al firmar la consulta ya no produce un toast de éxito/error por cada grupo — solo queda el `errorFlushOrders` único que ya emitía `flush()` ante un fallo.
+
+### Added
+
+- Tests: nuevo `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (harness copiado de `use-protocols.save-toast.test.tsx`) que prueba, para los tres hooks de creación, que el toast se dispara por defecto y se suprime con `{ silent: true }`, tanto en éxito como en error.
+- Tests: `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` gana una prueba que verifica que `flush()` invoca los tres hooks con `{ silent: true }`, más un caso nuevo que encola y persiste un grupo de imagenología (cubre el path de imagenología del flush, antes solo probado para medicamentos/laboratorio).
+
 ## [2026-07-08] Bloqueo optimista al editar contenido de un protocolo en dos pestañas
 
 ### Added

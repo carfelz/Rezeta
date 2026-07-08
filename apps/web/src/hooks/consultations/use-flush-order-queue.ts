@@ -16,16 +16,19 @@ import {
  *
  * `flush()` walks each group sequentially (medications, then labs, then
  * imaging), removing each group from the store as its create succeeds — so a
- * failure leaves the remaining queue intact for retry. It returns true only
- * when the whole queue is persisted; on the first failure it toasts
- * `errorFlushOrders` and returns false so the caller aborts the sign.
+ * failure leaves the remaining queue intact for retry. The create hooks are
+ * called with `{ silent: true }` so a multi-group flush doesn't spam a
+ * per-group success/error toast; this hook is the single source of feedback.
+ * It returns true only when the whole queue is persisted; on the first
+ * failure it toasts `errorFlushOrders` and returns false so the caller
+ * aborts the sign.
  */
 export function useFlushOrderQueue(consultationId: string): {
   flush: () => Promise<boolean>
 } {
-  const createPrescription = useCreatePrescription(consultationId)
-  const createImagingOrder = useCreateImagingOrder(consultationId)
-  const createLabOrder = useCreateLabOrder(consultationId)
+  const createPrescription = useCreatePrescription(consultationId, { silent: true })
+  const createImagingOrder = useCreateImagingOrder(consultationId, { silent: true })
+  const createLabOrder = useCreateLabOrder(consultationId, { silent: true })
 
   const flush = useCallback(async (): Promise<boolean> => {
     const {

@@ -313,6 +313,7 @@ export function useAddOffProtocolNote(
 
 export function useCreatePrescription(
   consultationId: string,
+  opts?: { silent?: boolean },
 ): UseMutationResult<Prescription, Error, CreatePrescriptionGroupDto> {
   const qc = useQueryClient()
   return useMutation({
@@ -320,10 +321,10 @@ export function useCreatePrescription(
       apiClient.post<Prescription>(`/v1/consultations/${consultationId}/prescriptions`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
-      toast.success(toastStrings.prescriptionCreated)
+      if (!opts?.silent) toast.success(toastStrings.prescriptionCreated)
     },
     onError: () => {
-      toast.error(toastStrings.errorPrescriptionSave)
+      if (!opts?.silent) toast.error(toastStrings.errorPrescriptionSave)
     },
   })
 }
@@ -341,6 +342,7 @@ export function useListPrescriptions(
 
 export function useCreateImagingOrder(
   consultationId: string,
+  opts?: { silent?: boolean },
 ): UseMutationResult<ImagingOrder[], Error, CreateImagingOrderGroupDto> {
   const qc = useQueryClient()
   return useMutation({
@@ -348,10 +350,10 @@ export function useCreateImagingOrder(
       apiClient.post<ImagingOrder[]>(`/v1/consultations/${consultationId}/imaging-orders`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
-      toast.success(toastStrings.imagingOrderCreated)
+      if (!opts?.silent) toast.success(toastStrings.imagingOrderCreated)
     },
     onError: () => {
-      toast.error(toastStrings.errorOrderSave)
+      if (!opts?.silent) toast.error(toastStrings.errorOrderSave)
     },
   })
 }
@@ -369,6 +371,7 @@ export function useListImagingOrders(
 
 export function useCreateLabOrder(
   consultationId: string,
+  opts?: { silent?: boolean },
 ): UseMutationResult<LabOrder[], Error, CreateLabOrderGroupDto> {
   const qc = useQueryClient()
   return useMutation({
@@ -376,10 +379,10 @@ export function useCreateLabOrder(
       apiClient.post<LabOrder[]>(`/v1/consultations/${consultationId}/lab-orders`, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
-      toast.success(toastStrings.labOrderCreated)
+      if (!opts?.silent) toast.success(toastStrings.labOrderCreated)
     },
     onError: () => {
-      toast.error(toastStrings.errorOrderSave)
+      if (!opts?.silent) toast.error(toastStrings.errorOrderSave)
     },
   })
 }
