@@ -173,4 +173,53 @@ describe('useOrderQueueSession', () => {
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(0)
   })
+
+  it('does not wipe the localStorage snapshot via a pre-restore mirror-effect pass on mount', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(makeSnapshot()))
+
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    // The race: a mirror effect running before restore propagates would see
+    // empty queue arrays and call removeItem, wiping the snapshot before the
+    // restored values ever land. Assert it survives the initial mount intact.
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+    const { medications } = useOrderQueueStore.getState()
+    expect(medications).toHaveLength(1)
+    expect(medications[0].drug).toBe('Amoxicilina')
+
+    // Mechanism assertion (fallback per brief): removeItem must never be
+    // called for this key during the initial mount when a snapshot exists.
+    const removedThisKey = removeItemSpy.mock.calls.some(([key]) => key === STORAGE_KEY)
+    expect(removedThisKey).toBe(false)
+
+    removeItemSpy.mockRestore()
+  })
+
+  it('does not let a consultationId switch remove the new id snapshot before its restore completes', () => {
+    const OTHER_ID = 'consult-xyz'
+    const OTHER_KEY = `rz:oq:${OTHER_ID}`
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(makeSnapshot()))
+    localStorage.setItem(OTHER_KEY, JSON.stringify(makeSnapshot()))
+
+    const { rerender } = renderHook(({ id }: { id: string }) => useOrderQueueSession(id, false), {
+      initialProps: { id: CONSULT_ID },
+    })
+
+    // id A is hydrated with a non-empty queue; switching to id B triggers a
+    // transient reset() before B's restore lands. Neither key should be
+    // removed as a side effect of that transient state.
+    rerender({ id: OTHER_ID })
+
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+    expect(localStorage.getItem(OTHER_KEY)).not.toBeNull()
+
+    const { medications } = useOrderQueueStore.getState()
+    expect(medications).toHaveLength(1)
+    expect(medications[0].drug).toBe('Amoxicilina')
+
+    removeItemSpy.mockRestore()
+  })
 })

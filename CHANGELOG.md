@@ -4,6 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Compuerta de hidratación en la sesión de cola de órdenes
+
+### Fixed
+
+- `apps/web/src/hooks/consultations/use-order-queue-session.ts`: `useOrderQueueSession` gana un `useRef` de hidratación (`hydrated`) que evita que el efecto de espejo (el que persiste/limpia `localStorage` según los arrays de la cola) se ejecute con valores del store previos a la restauración. El efecto de restore (`deps: [consultationId]`) pone `hydrated.current = false` como primera instrucción y `hydrated.current = true` como última — en el path feliz y en cada retorno anticipado (`isSigned`, sin snapshot guardado, snapshot corrupto) — porque el hook cuenta como "hidratado" en cuanto el paso de restore terminó, sea lo que sea que haya encontrado. El efecto espejo ahora arranca con `if (!hydrated.current) return`. Antes, un primer commit en el que el efecto espejo corriera con los arrays aún vacíos (previos al `restoreSnapshot()`) entraba en su rama de "cola vacía" y llamaba `localStorage.removeItem`, borrando el snapshot justo antes de que los valores restaurados se propagaran — mismo problema transitorio al cambiar `consultationId` (`reset()`). Ningún array de dependencias cambió.
+- Tests: `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` gana dos casos — uno que verifica que el snapshot en `localStorage` sobrevive el montaje inicial (con aserción de mecanismo: `localStorage.removeItem` no se invoca sobre esa clave durante el primer commit, ya que la carrera de interleaving de efectos no se reproduce de forma determinista bajo el test renderer de React, que ejecuta los efectos de un mismo componente en orden de declaración) y otro que cubre el cambio de `consultationId` de A a B, confirmando que el `reset()` transitorio de A no borra ni la clave de A ni la de B antes de que el restore de B complete. Los 9 casos preexistentes siguen en verde.
+
 ## [2026-07-08] Creación idempotente de órdenes en el reintento del flush (clientRequestId)
 
 ### Added
