@@ -298,7 +298,7 @@ export class OrdersRepository {
       // timeout) — the unique (consultationId, clientRequestId) constraint
       // caught the duplicate. Return the row created by the original request.
       const existing = await this.prisma.prescription.findFirst({
-        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId, deletedAt: null },
         include: PRESCRIPTION_INCLUDE,
       })
       if (existing) return toPrescription(existing)
@@ -372,7 +372,7 @@ export class OrdersRepository {
       // timeout) — the unique (consultationId, clientRequestId) constraint
       // caught the duplicate. Return the group created by the original request.
       const existing = await this.prisma.imagingOrder.findFirst({
-        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId, deletedAt: null },
         include: IMAGING_ORDER_INCLUDE,
       })
       if (existing) return [toImagingOrder(existing)]
@@ -439,7 +439,7 @@ export class OrdersRepository {
       // timeout) — the unique (consultationId, clientRequestId) constraint
       // caught the duplicate. Return the group created by the original request.
       const existing = await this.prisma.labOrder.findFirst({
-        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId, deletedAt: null },
         include: LAB_ORDER_INCLUDE,
       })
       if (existing) return [toLabOrder(existing)]

@@ -25,6 +25,7 @@ import type {
 } from '@rezeta/shared'
 import { UpdateRecordSectionsSchema } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
+import { ParsePositiveIntPipe } from '../../common/pipes/parse-positive-int.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { ConsultationRecordsService } from './consultation-records.service.js'
@@ -140,11 +141,12 @@ export class ConsultationRecordsController {
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
   @ApiQuery({ name: 'version', type: Number, required: false })
   @ApiResponse({ status: 200, description: 'PDF buffer' })
+  @ApiResponse({ status: 400, description: 'VALIDATION_ERROR' })
   @ApiResponse({ status: 404, description: 'RECORD_NOT_FOUND' })
   async pdfDownload(
     @TenantId() tenantId: string,
     @Param('consultationId', ParseUUIDPipe) consultationId: string,
-    @Query('version', new ParseIntPipe({ optional: true })) version: number | undefined,
+    @Query('version', new ParsePositiveIntPipe()) version: number | undefined,
     @Res() res: Response,
   ): Promise<void> {
     const data = await this.svc.getPdfData(consultationId, tenantId, version)

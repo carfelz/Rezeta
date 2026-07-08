@@ -65,11 +65,16 @@
 14. ~~**Order flush retry**~~ — done 2026-07-08: `Prescription`/`ImagingOrder`/`LabOrder`
     gain `clientRequestId` + a `(consultationId, clientRequestId)` unique constraint; a
     P2002 on retry returns the already-created row instead of duplicating (`f84932a`).
-15. ~~**Watch: order-queue snapshot lost across reload**~~ — done 2026-07-08: root-caused
-    to the mirror effect in `use-order-queue-session.ts` racing the restore effect on
-    mount/`consultationId` change; fixed with a `hydrated` ref gate so the mirror effect
-    never runs on pre-restore values (`77de51e`), behavior pinned with four new test cases
-    (`b6afb41`).
+15. ~~**Watch: order-queue snapshot lost across reload**~~ — done 2026-07-08: the
+    suspected race — the mirror effect in `use-order-queue-session.ts` running against
+    pre-restore values while racing the restore effect on mount/`consultationId` change —
+    was hardened defensively with a `hydrated` ref gate so the mirror effect never runs on
+    pre-restore values (`77de51e`), and hydrate-on-every-path behavior (every restore-effect
+    exit sets `hydrated.current = true`) is pinned with four new test cases (`b6afb41`). The
+    original repro was never reproduced: under React's effect ordering, the two effects run
+    in declaration order within the same commit, so the interleaving the gate guards against
+    cannot even be observed as false in this codebase today — this is defensive hardening,
+    not a confirmed root-cause fix.
 
 ## Deliberately deferred (product decisions on record)
 

@@ -272,7 +272,20 @@ export function useSkipStep(
           },
         },
       ),
-    onSuccess: () => {
+    // Fold the response usage into the cache synchronously (same pattern as
+    // useUpdateCheckedState) before the invalidate's async refetch resolves —
+    // otherwise a same-tab flush (use-pending-modifications.ts) reading the
+    // cache in that window sees the pre-PATCH `updatedAt` and 409s falsely on
+    // PROTOCOL_USAGE_STALE, discarding buffered content edits.
+    onSuccess: (usage) => {
+      qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
+        prev
+          ? {
+              ...prev,
+              protocolUsages: prev.protocolUsages.map((u) => (u.id === usage.id ? usage : u)),
+            }
+          : prev,
+      )
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
       toast.success(toastStrings.stepSkipped)
     },
@@ -301,7 +314,17 @@ export function useAddOffProtocolNote(
       )
       return updated
     },
-    onSuccess: () => {
+    // Same cache-fold-before-invalidate pattern as useSkipStep — see comment
+    // there for why the synchronous setQueryData matters.
+    onSuccess: (usage) => {
+      qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
+        prev
+          ? {
+              ...prev,
+              protocolUsages: prev.protocolUsages.map((u) => (u.id === usage.id ? usage : u)),
+            }
+          : prev,
+      )
       void qc.invalidateQueries({ queryKey: [QK, consultationId] })
       toast.success(toastStrings.offProtocolNoteAdded)
     },

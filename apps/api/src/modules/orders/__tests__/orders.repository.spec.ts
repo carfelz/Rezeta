@@ -245,6 +245,35 @@ describe('OrdersRepository', () => {
         p2002,
       )
     })
+
+    it('re-fetch excludes soft-deleted rows — a soft-deleted match re-throws the original error', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.prescription.create.mockRejectedValueOnce(p2002)
+      // The re-fetch itself filters deletedAt: null, so a soft-deleted row
+      // with the same (consultationId, clientRequestId, tenantId) never comes
+      // back from Prisma — simulate that by resolving null.
+      mockPrisma.prescription.findFirst.mockResolvedValueOnce(null)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      await expect(repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toBe(
+        p2002,
+      )
+      expect(mockPrisma.prescription.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            consultationId: 'c1',
+            clientRequestId: 'req_abc12345',
+            tenantId: 't1',
+            deletedAt: null,
+          }),
+        }),
+      )
+    })
   })
 
   describe('findPrescriptionById', () => {

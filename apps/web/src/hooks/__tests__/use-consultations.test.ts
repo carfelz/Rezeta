@@ -472,6 +472,38 @@ describe('useSkipStep', () => {
     ).modifications.steps_skipped
     expect(skipped.map((s) => s.step_id)).toEqual(['step-2'])
   })
+
+  it('folds the response usage into the consultation cache before invalidating', async () => {
+    const updatedUsage = { ...mockUsage, updatedAt: '2026-01-02T00:00:00.000Z' }
+    vi.mocked(apiClient.patch).mockResolvedValue(updatedUsage)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['consultations', 'cons-1'], {
+      ...mockConsultation,
+      protocolUsages: [
+        { ...mockUsage, updatedAt: '2026-01-01T00:00:00.000Z' },
+        { id: 'usage-2', consultationId: 'cons-1', checkedItems: [] },
+      ],
+    })
+    const setQueryDataSpy = vi.spyOn(client, 'setQueryData')
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useSkipStep('cons-1', 'usage-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ stepId: 'step-1', reason: 'No aplica hoy' })
+    })
+    // setQueryData must be called with the mutation's response before the
+    // mutateAsync promise resolves — this is the mechanism that closes the
+    // same-tab false-stale window (see comment on useSkipStep).
+    expect(setQueryDataSpy).toHaveBeenCalledWith(['consultations', 'cons-1'], expect.any(Function))
+    const cached = client.getQueryData(['consultations', 'cons-1']) as {
+      protocolUsages: { id: string; updatedAt: string }[]
+    }
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')).toEqual(updatedUsage)
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')?.updatedAt).toBe(
+      '2026-01-02T00:00:00.000Z',
+    )
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-2')).toBeDefined()
+  })
 })
 
 describe('useAddOffProtocolNote', () => {
@@ -522,5 +554,37 @@ describe('useAddOffProtocolNote', () => {
     expect(vi.mocked(apiClient.patch).mock.calls[0]![0]).toBe(
       '/v1/consultations/cons-1/protocols/usage-1',
     )
+  })
+
+  it('folds the response usage into the consultation cache before invalidating', async () => {
+    const updatedUsage = { ...mockUsage, updatedAt: '2026-01-02T00:00:00.000Z' }
+    vi.mocked(apiClient.patch).mockResolvedValue(updatedUsage)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['consultations', 'cons-1'], {
+      ...mockConsultation,
+      protocolUsages: [
+        { ...mockUsage, updatedAt: '2026-01-01T00:00:00.000Z' },
+        { id: 'usage-2', consultationId: 'cons-1', checkedItems: [] },
+      ],
+    })
+    const setQueryDataSpy = vi.spyOn(client, 'setQueryData')
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children)
+    const { result } = renderHook(() => useAddOffProtocolNote('cons-1', 'usage-1'), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ note: 'Hallazgo extra' })
+    })
+    // setQueryData must be called with the mutation's response before the
+    // mutateAsync promise resolves — this is the mechanism that closes the
+    // same-tab false-stale window (see comment on useAddOffProtocolNote).
+    expect(setQueryDataSpy).toHaveBeenCalledWith(['consultations', 'cons-1'], expect.any(Function))
+    const cached = client.getQueryData(['consultations', 'cons-1']) as {
+      protocolUsages: { id: string; updatedAt: string }[]
+    }
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')).toEqual(updatedUsage)
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-1')?.updatedAt).toBe(
+      '2026-01-02T00:00:00.000Z',
+    )
+    expect(cached.protocolUsages.find((u) => u.id === 'usage-2')).toBeDefined()
   })
 })
