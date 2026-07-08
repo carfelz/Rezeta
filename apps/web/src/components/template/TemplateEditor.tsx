@@ -794,20 +794,6 @@ function BlockRow({
                   placeholder={templateEditorWidgetStrings.clinicalNotesLabelPlaceholder}
                 />
               </Field>
-              <label
-                style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-              >
-                <Checkbox
-                  checked={isRequired}
-                  disabled={isLocked}
-                  onChange={(e) => onUpdate(block.id, { required: e.target.checked }, parentId)}
-                />
-                <span
-                  style={{ fontSize: 12, color: 'var(--color-n-600)', fontFamily: 'var(--font-sans)' }}
-                >
-                  {templateEditorWidgetStrings.obligatorio}
-                </span>
-              </label>
               <Field label={templateEditorWidgetStrings.placeholderHint}>
                 <Textarea
                   value={block.placeholder ?? ''}

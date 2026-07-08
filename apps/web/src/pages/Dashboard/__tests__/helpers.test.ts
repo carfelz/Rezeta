@@ -48,4 +48,11 @@ describe('describeAuditEntry', () => {
       describeAuditEntry(entry({ action: 'onboarding.create', entityType: 'Onboarding' })).detail,
     ).toBe(' creó la configuración inicial')
   })
+
+  it('maps the ConsultationRecord entityType to a friendly Spanish label', () => {
+    expect(
+      describeAuditEntry(entry({ action: 'record.create', entityType: 'ConsultationRecord' }))
+        .detail,
+    ).toBe(' creó una historia médica')
+  })
 })

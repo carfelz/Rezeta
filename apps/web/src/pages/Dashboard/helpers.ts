@@ -92,7 +92,17 @@ function friendlyEntity(t: string): string {
     Location: 'una ubicación',
     ProtocolType: 'un tipo de protocolo',
     ProtocolTemplate: 'una plantilla',
+    ProtocolCategory: 'una categoría de protocolo',
     Onboarding: 'la configuración inicial',
+    Schedule: 'un horario',
+    User: 'un usuario',
+    Log: 'un registro técnico',
+    ConsultationRecord: 'una historia médica',
+    // Kebab-case leftovers produced by the interceptor before the
+    // entity-type fix landed — historical audit rows already contain these.
+    'Protocol-template': 'una plantilla',
+    'Protocol-categorie': 'una categoría de protocolo',
+    Onboardin: 'la configuración inicial',
   }
   return map[t] ?? `un registro (${t})`
 }

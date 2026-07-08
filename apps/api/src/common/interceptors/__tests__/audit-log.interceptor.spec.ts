@@ -196,6 +196,22 @@ describe('AuditLogInterceptor', () => {
     expect(event['entityType']).toBe('Onboarding')
   })
 
+  it('singularizes and PascalCases a kebab-case plural resource segment', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/protocol-templates', params: {} })
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler()))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['entityType']).toBe('ProtocolTemplate')
+  })
+
+  it('singularizes a kebab-case "-ies" plural resource segment (categories -> Category)', async () => {
+    const req = makeRequest({ method: 'POST', path: '/v1/protocol-categories', params: {} })
+    await firstValueFrom(interceptor.intercept(makeContext(req), makeHandler()))
+    await new Promise((r) => setTimeout(r, 10))
+    const event = recordMock.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(event['entityType']).toBe('ProtocolCategory')
+  })
+
   it('resolves action as "archive" for PATCH /archive path', async () => {
     const req = makeRequest({
       method: 'PATCH',

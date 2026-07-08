@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Toggle único de Obligatorio y etiquetas exhaustivas de auditoría
+
+### Fixed
+
+- `apps/web/src/components/template/TemplateEditor.tsx`: el panel de detalle de un bloque `clinical_notes` ya no duplica el checkbox "Obligatorio" (:797-810 eliminado) — el toggle de cabecera (:665-693), presente para todo bloque no bloqueado, es el único control de `required`. La cadena `obligatorio` en `apps/web/src/components/template/strings.ts` se elimina por quedar sin uso.
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: `toEntityType` ahora separa el segmento del recurso por `-`, singulariza solo la última palabra (`ies` → `y`; si no, se quita la `s` final) y une en PascalCase — `protocol-templates` → `ProtocolTemplate`, `protocol-categories` → `ProtocolCategory`, `patients` → `Patient`, `onboarding` → `Onboarding` (sin cambios). Antes, `protocol-templates`/`protocol-categories` quedaban como `Protocol-template`/`Protocol-categorie` en el registro de auditoría.
+- `apps/web/src/pages/settings/AuditLog.tsx`: `ENTITY_TYPE_LABELS` gana `ProtocolCategory`, `Schedule`, `User`, `Onboarding`, `Log`, `ConsultationRecord`, y las claves kebab-case heredadas (`Protocol-template`, `Protocol-categorie`, `Onboardin`) que ya existen en filas de auditoría históricas anteriores a este fix — todas siguen mostrando una etiqueta amigable en vez de caer al valor crudo de `entityType`.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` gana el mismo conjunto de claves (`ProtocolCategory`, `Schedule`, `User`, `Log`, `ConsultationRecord` → "una historia médica", y las variantes kebab-case/históricas) para que el feed de actividad del dashboard describa estos tipos de entidad en español en vez de caer al genérico "un registro (…)".
+
+### Added
+
+- `apps/web/src/components/protocols/__tests__/BlockRenderer.vitals-notes.test.tsx`: test de regresión (nuevo, sin cobertura previa del `BlockRenderer` de solo lectura) que fija que `clinical_notes` renderiza su etiqueta exactamente una vez (sin duplicado por el chrome de `ProtocolBlock`), que `vitals` sin `title` muestra el chip de tipo exactamente una vez, y que `vitals` con `title: 'Signos basales'` muestra ese título exactamente una vez.
+- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` gana casos para `protocol-templates` → `ProtocolTemplate` y `protocol-categories` → `ProtocolCategory`. `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx` gana casos para el round-trip de `required` vía el toggle de cabecera y para confirmar que el panel de detalle ya no renderiza un segundo checkbox. `apps/web/src/pages/settings/__tests__/AuditLog.test.tsx` gana un caso parametrizado sobre las nuevas claves de `ENTITY_TYPE_LABELS`. `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` gana un caso para `ConsultationRecord` → "una historia médica".
+
 ## [2026-07-08] Borradores de recuperación de fallos incluyen el mapeo de historia
 
 ### Fixed
