@@ -79,6 +79,9 @@ export function useOrderQueueSession(consultationId: string, isSigned: boolean):
 
   // Persist to localStorage whenever queue changes. Clear when signed or empty.
   useEffect(() => {
+    // Skip until the restore effect above has finished its pass for the
+    // current consultationId — otherwise this would see pre-restore (empty)
+    // selector values and wipe a snapshot that hasn't been applied yet.
     if (!hydrated.current) return
     if (!consultationId) return
     if (isSigned) {

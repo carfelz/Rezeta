@@ -174,6 +174,14 @@ describe('useOrderQueueSession', () => {
     expect(medications).toHaveLength(0)
   })
 
+  // Note: this test passes identically with or without the hydration gate
+  // under React's test renderer — effects for a single component run in
+  // declaration order within one commit, so the restore effect's
+  // reset()/restoreSnapshot() calls always land before the mirror effect
+  // reads the store, and the race described below cannot manifest here. It
+  // does not pin the gate itself. It documents the invariant (a snapshot
+  // must survive mount) and guards adjacent regressions — e.g. a future
+  // change that makes removeItem fire during mount.
   it('does not wipe the localStorage snapshot via a pre-restore mirror-effect pass on mount', () => {
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
     localStorage.setItem(STORAGE_KEY, JSON.stringify(makeSnapshot()))
@@ -196,6 +204,13 @@ describe('useOrderQueueSession', () => {
     removeItemSpy.mockRestore()
   })
 
+  // Note: this test passes identically with or without the hydration gate
+  // under React's test renderer, for the same reason as the mount-race test
+  // above — effects run in declaration order within a commit, so the
+  // interleaving this test describes cannot manifest here. It does not pin
+  // the gate itself. It documents the invariant (a consultationId switch
+  // must not remove either id's snapshot) and guards adjacent regressions —
+  // e.g. a future change that makes removeItem fire during the switch.
   it('does not let a consultationId switch remove the new id snapshot before its restore completes', () => {
     const OTHER_ID = 'consult-xyz'
     const OTHER_KEY = `rz:oq:${OTHER_ID}`
@@ -221,5 +236,52 @@ describe('useOrderQueueSession', () => {
     expect(medications[0].drug).toBe('Amoxicilina')
 
     removeItemSpy.mockRestore()
+  })
+
+  // These two tests pin the hydration gate's real failure mode: a restore-
+  // effect exit path that forgets to set hydrated.current = true. If that
+  // happened, the mirror effect would early-return forever and the queue
+  // would never be persisted again — these tests fail in that scenario
+  // because they assert a post-mount write actually reaches localStorage.
+  it('still mirrors queue changes to localStorage after a corrupted snapshot on mount', () => {
+    localStorage.setItem(STORAGE_KEY, 'not-valid-json{')
+
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    act(() => {
+      useOrderQueueStore.getState().queueMedication({
+        drug: 'Post-corrupt',
+        dose: '250mg',
+        route: 'oral',
+        frequency: 'cada 12h',
+        duration: '3 días',
+      })
+    })
+
+    const stored = localStorage.getItem(STORAGE_KEY)
+    expect(stored).not.toBeNull()
+    const parsed = JSON.parse(stored!)
+    expect(parsed.medications).toHaveLength(1)
+    expect(parsed.medications[0].drug).toBe('Post-corrupt')
+  })
+
+  it('still mirrors queue changes to localStorage after mounting with no saved snapshot', () => {
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    act(() => {
+      useOrderQueueStore.getState().queueMedication({
+        drug: 'Fresh',
+        dose: '100mg',
+        route: 'oral',
+        frequency: 'diario',
+        duration: '10 días',
+      })
+    })
+
+    const stored = localStorage.getItem(STORAGE_KEY)
+    expect(stored).not.toBeNull()
+    const parsed = JSON.parse(stored!)
+    expect(parsed.medications).toHaveLength(1)
+    expect(parsed.medications[0].drug).toBe('Fresh')
   })
 })
