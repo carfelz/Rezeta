@@ -58,7 +58,16 @@
 10. **`settings/AuditLog` `ENTITY_TYPE_LABELS`** lacks `Onboarding`/`ConsultationRecord`
     entries (falls back to raw string).
 11. **Order flush**: silent per-mutation toasts double up with `errorFlushOrders` on
-    failure; consider a silent flag.
+    failure; consider a silent flag. Also on success, each persisted group fires its own
+    success toast — a multi-group sign produces a per-group success-toast storm; suppress
+    per-mutation success toasts during a flush too.
+12. **Test: imaging flush path** in `use-flush-order-queue` (code-identical to tested
+    meds/labs; 5-line test).
+13. **Test: read-only single-label regression** for `clinical_notes`/`vitals` in
+    `BlockRenderer` non-chromeless path.
+14. **Order flush retry**: a create that times out client-side after succeeding
+    server-side re-POSTs on retry (no idempotency key) — consider idempotency or
+    reconciliation.
 
 ## Deliberately deferred (product decisions on record)
 

@@ -66,7 +66,12 @@ describe('EditorBlockRenderer — single typed header per unselected leaf card',
     initStore(block)
     render(<EditorBlockRenderer block={block} />)
 
-    expect(screen.getAllByText(blockTypeStrings.vitals).length).toBeGreaterThanOrEqual(1)
+    // Exactly two occurrences, both legitimate: the type chip (blockTypeLabel)
+    // and the card title (blockDisplayTitle falls back to the type name because
+    // a vitals block has no custom `title`). Asserting the exact count — not a
+    // loose `>= 1` — is what catches a duplicated-chip / stacked-header
+    // regression, which would push this to 3+.
+    expect(screen.getAllByText(blockTypeStrings.vitals)).toHaveLength(2)
     expect(screen.queryByText(blockTypeStrings.unknown)).not.toBeInTheDocument()
   })
 

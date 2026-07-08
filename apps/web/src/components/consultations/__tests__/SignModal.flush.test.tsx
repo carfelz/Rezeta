@@ -38,6 +38,35 @@ function renderSignModal(): void {
   )
 }
 
+interface Deferred<T> {
+  promise: Promise<T>
+  resolve: (value: T) => void
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+  return { promise, resolve }
+}
+
+function renderWithBeforeSign(onBeforeSign: () => Promise<boolean>): void {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={client}>
+      <Modal open onOpenChange={() => undefined}>
+        <SignModal
+          consultationId={CONSULT_ID}
+          onBeforeSign={onBeforeSign}
+          onClose={() => undefined}
+          onSigned={() => undefined}
+        />
+      </Modal>
+    </QueryClientProvider>,
+  )
+}
+
 function queueOneMedication(): void {
   act(() => {
     const store = useOrderQueueStore.getState()
@@ -94,5 +123,89 @@ describe('SignModal — order queue flush on sign', () => {
     expect(apiClient.patch).not.toHaveBeenCalled()
     // Queue stays intact for retry.
     expect(useOrderQueueStore.getState().medications).toHaveLength(1)
+  })
+})
+
+describe('SignModal — confirm disabled while the pre-sign flush runs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    act(() => useOrderQueueStore.getState().reset())
+  })
+
+  it('does not double-POST or double-sign when the button is clicked repeatedly during flush', async () => {
+    // Hold the prescription POST open so the real flush stays mid-flight while
+    // we hammer the confirm button.
+    const postDeferred = deferred<unknown>()
+    ;(apiClient.post as ReturnType<typeof vi.fn>).mockReturnValue(postDeferred.promise)
+    ;(apiClient.patch as ReturnType<typeof vi.fn>).mockResolvedValue({ invoiceOutcome: null })
+    queueOneMedication()
+
+    renderSignModal()
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y cerrar' }))
+
+    // First click snapshots the queue and fires exactly one POST; the button
+    // now shows the pending label and is disabled.
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledTimes(1))
+    const pendingButton = screen.getByRole('button', { name: 'Firmando…' })
+    expect(pendingButton).toBeDisabled()
+
+    // Extra clicks during the flush window must be no-ops — a second flush would
+    // re-snapshot the still-unremoved queue and persist a duplicate prescription.
+    fireEvent.click(pendingButton)
+    fireEvent.click(pendingButton)
+    expect(apiClient.post).toHaveBeenCalledTimes(1)
+    expect(apiClient.patch).not.toHaveBeenCalled()
+
+    // Resolve the flush; the sign proceeds exactly once.
+    await act(async () => {
+      postDeferred.resolve({})
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(apiClient.patch).toHaveBeenCalledTimes(1))
+    expect(apiClient.post).toHaveBeenCalledTimes(1)
+  })
+
+  it('re-enables the confirm button after onBeforeSign resolves false', async () => {
+    ;(apiClient.patch as ReturnType<typeof vi.fn>).mockResolvedValue({})
+    const gate = deferred<boolean>()
+    const onBeforeSign = vi.fn(() => gate.promise)
+
+    renderWithBeforeSign(onBeforeSign)
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y cerrar' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Firmando…' })).toBeDisabled(),
+    )
+    expect(onBeforeSign).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      gate.resolve(false)
+      await Promise.resolve()
+    })
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Firmar y cerrar' })).not.toBeDisabled(),
+    )
+    expect(apiClient.patch).not.toHaveBeenCalled()
+  })
+
+  it('proceeds with the sign once onBeforeSign resolves true', async () => {
+    ;(apiClient.patch as ReturnType<typeof vi.fn>).mockResolvedValue({ invoiceOutcome: null })
+    const gate = deferred<boolean>()
+    const onBeforeSign = vi.fn(() => gate.promise)
+
+    renderWithBeforeSign(onBeforeSign)
+    fireEvent.click(screen.getByRole('button', { name: 'Firmar y cerrar' }))
+
+    await waitFor(() => expect(onBeforeSign).toHaveBeenCalledTimes(1))
+    expect(apiClient.patch).not.toHaveBeenCalled()
+
+    await act(async () => {
+      gate.resolve(true)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(apiClient.patch).toHaveBeenCalledTimes(1))
+    expect(onBeforeSign).toHaveBeenCalledTimes(1)
   })
 })

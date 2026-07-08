@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Button,
   ModalBody,
@@ -30,6 +31,13 @@ export function SignModal({
   onSigned,
 }: SignModalProps): JSX.Element {
   const signMutation = useSignConsultation(consultationId)
+  // `onBeforeSign` (persist buffered modifications + flush the order queue) can
+  // take seconds and its network calls each carry a multi-second budget. Track
+  // that window explicitly so the confirm button is disabled the moment it
+  // starts — a double-click during it would spawn a second flush that
+  // re-snapshots the same queue and persists duplicate orders.
+  const [preparing, setPreparing] = useState(false)
+  const busy = preparing || signMutation.isPending
   return (
     <ModalContent>
       <ModalHeader title={signModalStrings.title} subtitle={signModalStrings.subtitle} />
@@ -51,18 +59,23 @@ export function SignModal({
           variant="primary"
           onClick={() => {
             void (async () => {
-              if (onBeforeSign && !(await onBeforeSign())) return
-              signMutation.mutate(undefined, {
-                onSuccess: (result) => {
-                  onSigned?.(result)
-                  onClose()
-                },
-              })
+              setPreparing(true)
+              try {
+                if (onBeforeSign && !(await onBeforeSign())) return
+                signMutation.mutate(undefined, {
+                  onSuccess: (result) => {
+                    onSigned?.(result)
+                    onClose()
+                  },
+                })
+              } finally {
+                setPreparing(false)
+              }
             })()
           }}
-          disabled={signMutation.isPending}
+          disabled={busy}
         >
-          {signMutation.isPending ? signModalStrings.signingButton : signModalStrings.signButton}
+          {busy ? signModalStrings.signingButton : signModalStrings.signButton}
         </Button>
       </ModalFooter>
     </ModalContent>

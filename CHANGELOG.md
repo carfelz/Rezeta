@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] El botón "Firmar y cerrar" se deshabilita mientras corre el flush previo a la firma
+
+### Fixed
+
+- `apps/web/src/components/consultations/SignModal.tsx`: el botón de confirmación solo estaba deshabilitado con `signMutation.isPending`, pero `onBeforeSign()` (persiste modificaciones pendientes y vacía la cola de órdenes — puede tardar segundos, con presupuestos de red de 15s+30s por llamada) corre ANTES de `signMutation.mutate`, dejando el botón habilitado y sin feedback durante esa ventana. Un doble clic disparaba dos IIFEs de flush concurrentes que tomaban la misma instantánea de la cola, generando recetas duplicadas en una consulta a punto de firmarse. Ahora se rastrea un estado `preparing` (true al inicio del IIFE, false en un `finally`); el botón usa `disabled={preparing || signMutation.isPending}` y muestra la etiqueta `Firmando…` durante ambas fases, y un `onBeforeSign` que resuelve false re-habilita el botón.
+
+### Added
+
+- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gana tres casos — (a) clicks repetidos durante el flush real en vuelo no doble-POSTean recetas ni doble-firman (rojo contra el código previo), (b) el botón se re-habilita tras `onBeforeSign` → false, (c) la firma procede tras `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: la aserción del chip de vitals se ajusta de `toBeGreaterThanOrEqual(1)` a `toHaveLength(1)` para atrapar regresiones de chip duplicado.
+
 ## [2026-07-07] El selector de ubicación distingue "cargando" de "cero ubicaciones"
 
 ### Fixed
