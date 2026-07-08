@@ -72,7 +72,7 @@ const PrescriptionItemSchema = z.object({
   dose: z.string().min(1).max(200),
   route: z.string().min(1).max(100),
   frequency: z.string().min(1).max(200),
-  duration: z.string().min(1).max(200),
+  duration: z.string().max(200).default(''),
   notes: z.string().max(2000).optional(),
   source: z.string().max(200).optional(),
 })
