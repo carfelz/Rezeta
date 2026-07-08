@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] El selector de ubicación distingue "cargando" de "cero ubicaciones"
+
+### Fixed
+
+- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación confundía "consulta en curso" (`locations === undefined`) con "cero ubicaciones confirmadas" — si el usuario abría el dropdown antes de que resolviera el primer fetch, veía el estado vacío `Sin ubicaciones configuradas` aunque el tenant sí tuviera ubicaciones. Ahora se desestructura `isLoading` de `useLocations()` y el estado vacío solo se renderiza cuando `!isLoading`; mientras carga, el panel no muestra ni la lista ni el estado vacío.
+
+### Added
+
+- Tests: `components/layout/__tests__/Topbar.test.tsx` gana un caso que simula `useLocations` con `{ data: undefined, isLoading: true }` y confirma que ni la lista ni "Sin ubicaciones configuradas" se renderizan mientras carga (guarda de regresión para el fix de arriba). `components/consultations/__tests__/NewConsultationDialog.test.tsx` refuerza el test de paciente preseleccionado (`initialPatient`): ahora también hace clic en "Iniciar consulta" y verifica que `createConsultationMock` recibe `patientId: 'p1'`, en vez de solo comprobar el valor del combobox.
+
 ## [2026-07-07] Iniciar consulta desde el paciente y estado vacío del selector de ubicación
 
 ### Added

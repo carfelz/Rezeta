@@ -59,4 +59,15 @@ describe('Topbar location selector', () => {
 
     expect(screen.queryByText('Sin ubicaciones configuradas')).not.toBeInTheDocument()
   })
+
+  it('renders neither the list nor the empty state while locations are still loading', async () => {
+    mocks.useLocations.mockReturnValue({ data: undefined, isLoading: true })
+    const user = userEvent.setup()
+    renderTopbar()
+
+    await user.click(screen.getByText('Seleccionar ubicación'))
+
+    expect(screen.queryByText('Sin ubicaciones configuradas')).not.toBeInTheDocument()
+    expect(screen.queryByText('Consultorio')).not.toBeInTheDocument()
+  })
 })

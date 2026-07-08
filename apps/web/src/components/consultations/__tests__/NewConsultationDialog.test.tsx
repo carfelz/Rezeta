@@ -89,7 +89,8 @@ describe('NewConsultationDialog', () => {
     expect(screen.getByText('Iniciar consulta').closest('button')).toBeDisabled()
   })
 
-  it('preselects the patient in the combobox when initialPatient is provided', () => {
+  it('preselects the patient in the combobox when initialPatient is provided', async () => {
+    const user = userEvent.setup()
     render(
       <NewConsultationDialog
         open
@@ -100,6 +101,12 @@ describe('NewConsultationDialog', () => {
 
     expect(screen.getByDisplayValue('Ana Reyes')).toBeInTheDocument()
     expect(screen.getByText('Iniciar consulta').closest('button')).toBeEnabled()
+
+    await user.click(screen.getByText('Iniciar consulta'))
+
+    expect(createConsultationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ patientId: 'p1', locationId: 'loc1' }),
+    )
   })
 
   it('keeps the dialog open and does not navigate when consultation creation fails', async () => {

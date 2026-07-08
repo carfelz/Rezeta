@@ -25,7 +25,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
   const activeLocationId = useUiStore((s) => s.activeLocationId)
   const setActiveLocation = useUiStore((s) => s.setActiveLocation)
   const { user } = useAuth()
-  const { data: locations } = useLocations()
+  const { data: locations, isLoading: locationsLoading } = useLocations()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -118,16 +118,18 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
                 </Button>
               ))
             ) : (
-              <div className="px-4 py-3 flex flex-col gap-2">
-                <p className="text-[13px] font-sans text-n-500">{topbarStrings.noLocations}</p>
-                <Link
-                  to="/ajustes/ubicaciones"
-                  className="text-[13px] font-sans font-medium text-p-600 hover:text-p-700"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  {topbarStrings.addLocation}
-                </Link>
-              </div>
+              !locationsLoading && (
+                <div className="px-4 py-3 flex flex-col gap-2">
+                  <p className="text-[13px] font-sans text-n-500">{topbarStrings.noLocations}</p>
+                  <Link
+                    to="/ajustes/ubicaciones"
+                    className="text-[13px] font-sans font-medium text-p-600 hover:text-p-700"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    {topbarStrings.addLocation}
+                  </Link>
+                </div>
+              )
             )}
           </div>
         )}
