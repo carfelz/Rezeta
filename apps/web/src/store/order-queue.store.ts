@@ -43,6 +43,14 @@ export interface OrderGroup {
   id: string
   title: string
   order: number
+  /**
+   * Per-instance idempotency key sent to the API as `clientRequestId`. Unlike
+   * `id` (a stable display id used only for local grouping — e.g. the default
+   * medication group always uses `'default-rx'`), `requestId` is regenerated
+   * every time a group instance is created so a retried flush POST is
+   * recognized server-side as the same request.
+   */
+  requestId: string
 }
 
 interface OrderQueueState {
@@ -77,11 +85,11 @@ interface OrderQueueState {
 
   reset: () => void
   restoreSnapshot: (snapshot: {
-    medicationGroups: OrderGroup[]
+    medicationGroups: Array<Partial<Pick<OrderGroup, 'requestId'>> & Omit<OrderGroup, 'requestId'>>
     medications: QueuedMedication[]
-    imagingGroups: OrderGroup[]
+    imagingGroups: Array<Partial<Pick<OrderGroup, 'requestId'>> & Omit<OrderGroup, 'requestId'>>
     imagingOrders: QueuedImagingOrder[]
-    labGroups: OrderGroup[]
+    labGroups: Array<Partial<Pick<OrderGroup, 'requestId'>> & Omit<OrderGroup, 'requestId'>>
     labOrders: QueuedLabOrder[]
   }) => void
 }
@@ -90,22 +98,60 @@ function makeId(): string {
   return Math.random().toString(36).slice(2)
 }
 
-const defaultMedicationGroup: OrderGroup = { id: 'default-rx', title: 'Receta', order: 1 }
-const defaultImagingGroup: OrderGroup = { id: 'default-img', title: 'Orden 1', order: 1 }
-const defaultLabGroup: OrderGroup = { id: 'default-lab', title: 'Laboratorio 1', order: 1 }
+/** Backfills a fresh requestId for groups restored from a pre-idempotency localStorage snapshot. */
+function withRequestId(
+  groups: Array<Partial<Pick<OrderGroup, 'requestId'>> & Omit<OrderGroup, 'requestId'>>,
+): OrderGroup[] {
+  return groups.map((g) => ({ ...g, requestId: g.requestId ?? crypto.randomUUID() }))
+}
 
-const initialState = {
-  activeTab: 'medications' as OrderTab,
-  medicationGroups: [defaultMedicationGroup],
-  medications: [],
-  imagingGroups: [defaultImagingGroup],
-  imagingOrders: [],
-  labGroups: [defaultLabGroup],
-  labOrders: [],
+function makeDefaultMedicationGroup(): OrderGroup {
+  return { id: 'default-rx', title: 'Receta', order: 1, requestId: crypto.randomUUID() }
+}
+
+function makeDefaultImagingGroup(): OrderGroup {
+  return { id: 'default-img', title: 'Orden 1', order: 1, requestId: crypto.randomUUID() }
+}
+
+function makeDefaultLabGroup(): OrderGroup {
+  return { id: 'default-lab', title: 'Laboratorio 1', order: 1, requestId: crypto.randomUUID() }
+}
+
+// Every group in this default id/title/order set is re-derived fresh (via the
+// make* factories) on each call — including on `reset()` — so its requestId
+// is never reused across store instances or consultations.
+function makeInitialState(): Omit<
+  OrderQueueState,
+  | 'setActiveTab'
+  | 'addMedicationGroup'
+  | 'removeMedicationGroup'
+  | 'queueMedication'
+  | 'removeMedication'
+  | 'updateMedication'
+  | 'addImagingGroup'
+  | 'removeImagingGroup'
+  | 'queueImagingOrder'
+  | 'removeImagingOrder'
+  | 'addLabGroup'
+  | 'removeLabGroup'
+  | 'queueLabOrder'
+  | 'removeLabOrder'
+  | 'reset'
+  | 'restoreSnapshot'
+> {
+  return {
+    activeTab: 'medications',
+    medicationGroups: [makeDefaultMedicationGroup()],
+    medications: [],
+    imagingGroups: [makeDefaultImagingGroup()],
+    imagingOrders: [],
+    labGroups: [makeDefaultLabGroup()],
+    labOrders: [],
+  }
 }
 
 export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
-  ...initialState,
+  ...makeInitialState(),
 
   setActiveTab: (tab) => set({ activeTab: tab }),
 
@@ -120,6 +166,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
           id,
           title: title ?? `Receta ${s.medicationGroups.length + 1}`,
           order: s.medicationGroups.length + 1,
+          requestId: crypto.randomUUID(),
         },
       ],
     }))
@@ -133,7 +180,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
     })),
 
   queueMedication: (med, groupId) => {
-    const targetGroupId = groupId ?? get().medicationGroups[0]?.id ?? defaultMedicationGroup.id
+    const targetGroupId = groupId ?? get().medicationGroups[0]?.id ?? 'default-rx'
     set((s) => ({
       medications: [...s.medications, { ...med, id: makeId(), groupId: targetGroupId }],
       activeTab: 'medications',
@@ -158,6 +205,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
           id,
           title: title ?? `Orden ${s.imagingGroups.length + 1}`,
           order: s.imagingGroups.length + 1,
+          requestId: crypto.randomUUID(),
         },
       ],
     }))
@@ -171,7 +219,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
     })),
 
   queueImagingOrder: (order, groupId) => {
-    const targetGroupId = groupId ?? get().imagingGroups[0]?.id ?? defaultImagingGroup.id
+    const targetGroupId = groupId ?? get().imagingGroups[0]?.id ?? 'default-img'
     set((s) => ({
       imagingOrders: [...s.imagingOrders, { ...order, id: makeId(), groupId: targetGroupId }],
       activeTab: 'imaging',
@@ -192,6 +240,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
           id,
           title: title ?? `Laboratorio ${s.labGroups.length + 1}`,
           order: s.labGroups.length + 1,
+          requestId: crypto.randomUUID(),
         },
       ],
     }))
@@ -205,7 +254,7 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
     })),
 
   queueLabOrder: (order, groupId) => {
-    const targetGroupId = groupId ?? get().labGroups[0]?.id ?? defaultLabGroup.id
+    const targetGroupId = groupId ?? get().labGroups[0]?.id ?? 'default-lab'
     set((s) => ({
       labOrders: [...s.labOrders, { ...order, id: makeId(), groupId: targetGroupId }],
       activeTab: 'labs',
@@ -214,15 +263,15 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
 
   removeLabOrder: (id) => set((s) => ({ labOrders: s.labOrders.filter((o) => o.id !== id) })),
 
-  reset: () => set(initialState),
+  reset: () => set(makeInitialState()),
 
   restoreSnapshot: (snapshot) =>
     set({
-      medicationGroups: snapshot.medicationGroups,
+      medicationGroups: withRequestId(snapshot.medicationGroups),
       medications: snapshot.medications,
-      imagingGroups: snapshot.imagingGroups,
+      imagingGroups: withRequestId(snapshot.imagingGroups),
       imagingOrders: snapshot.imagingOrders,
-      labGroups: snapshot.labGroups,
+      labGroups: withRequestId(snapshot.labGroups),
       labOrders: snapshot.labOrders,
     }),
 }))

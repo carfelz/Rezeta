@@ -36,11 +36,17 @@ describe('useOrderQueueSession', () => {
     act(() =>
       useOrderQueueStore.setState({
         activeTab: 'medications',
-        medicationGroups: [{ id: 'default-rx', title: 'Receta', order: 1 }],
+        medicationGroups: [
+          { id: 'default-rx', title: 'Receta', order: 1, requestId: crypto.randomUUID() },
+        ],
         medications: [],
-        imagingGroups: [{ id: 'default-img', title: 'Orden 1', order: 1 }],
+        imagingGroups: [
+          { id: 'default-img', title: 'Orden 1', order: 1, requestId: crypto.randomUUID() },
+        ],
         imagingOrders: [],
-        labGroups: [{ id: 'default-lab', title: 'Laboratorio 1', order: 1 }],
+        labGroups: [
+          { id: 'default-lab', title: 'Laboratorio 1', order: 1, requestId: crypto.randomUUID() },
+        ],
         labOrders: [],
       }),
     )

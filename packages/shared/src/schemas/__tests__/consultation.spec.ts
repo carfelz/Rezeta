@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { CreatePrescriptionGroupSchema, UpdateProtocolUsageSchema } from '../consultation.js'
+import {
+  CreatePrescriptionGroupSchema,
+  CreateImagingOrderGroupSchema,
+  CreateLabOrderGroupSchema,
+  UpdateProtocolUsageSchema,
+} from '../consultation.js'
 
 describe('UpdateProtocolUsageSchema modifications', () => {
   it('accepts a valid vitals_entered event', () => {
@@ -121,6 +126,50 @@ describe('CreatePrescriptionGroupSchema duration', () => {
   it('still rejects an item with an empty drug', () => {
     const result = CreatePrescriptionGroupSchema.safeParse({
       items: [{ ...baseItem, drug: '', duration: '30 días' }],
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('clientRequestId (idempotent order creation)', () => {
+  const rxItem = { drug: 'Enalapril', dose: '10 mg', route: 'VO', frequency: 'cada 12 h' }
+  const imgItem = { studyType: 'RX Tórax', indication: 'Dolor torácico' }
+  const labItem = { testName: 'Hemograma', indication: 'Anemia' }
+
+  it('is optional on CreatePrescriptionGroupSchema', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({ items: [rxItem] })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.clientRequestId).toBeUndefined()
+  })
+
+  it('accepts a valid clientRequestId on each create-group schema', () => {
+    const requestId = 'req_1234567890'
+    expect(
+      CreatePrescriptionGroupSchema.safeParse({ items: [rxItem], clientRequestId: requestId })
+        .success,
+    ).toBe(true)
+    expect(
+      CreateImagingOrderGroupSchema.safeParse({ items: [imgItem], clientRequestId: requestId })
+        .success,
+    ).toBe(true)
+    expect(
+      CreateLabOrderGroupSchema.safeParse({ items: [labItem], clientRequestId: requestId })
+        .success,
+    ).toBe(true)
+  })
+
+  it('rejects a clientRequestId shorter than 8 characters', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({
+      items: [rxItem],
+      clientRequestId: 'short',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects a clientRequestId longer than 64 characters', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({
+      items: [rxItem],
+      clientRequestId: 'x'.repeat(65),
     })
     expect(result.success).toBe(false)
   })

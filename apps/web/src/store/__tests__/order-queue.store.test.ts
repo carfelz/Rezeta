@@ -50,6 +50,24 @@ describe('useOrderQueueStore', () => {
       expect(result.current.medicationGroups).toHaveLength(1)
     })
 
+    it('the default medication group carries a requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      expect(result.current.medicationGroups[0]?.requestId).toBeTruthy()
+      expect(result.current.medicationGroups[0]?.id).toBe('default-rx')
+    })
+
+    it('generates a fresh requestId for the default group each time the store resets', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      const firstRequestId = result.current.medicationGroups[0]?.requestId
+      act(() => result.current.reset())
+      const secondRequestId = result.current.medicationGroups[0]?.requestId
+
+      expect(secondRequestId).toBeTruthy()
+      expect(secondRequestId).not.toBe(firstRequestId)
+      // the display id stays constant — grouping only, not idempotency
+      expect(result.current.medicationGroups[0]?.id).toBe('default-rx')
+    })
+
     it('addMedicationGroup adds a new group and returns its id', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       let id: string = ''
@@ -59,6 +77,16 @@ describe('useOrderQueueStore', () => {
       expect(result.current.medicationGroups).toHaveLength(2)
       expect(result.current.medicationGroups[1]?.title).toBe('Antibióticos')
       expect(id).toBeTruthy()
+    })
+
+    it('addMedicationGroup gives each new group its own fresh requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      act(() => {
+        result.current.addMedicationGroup('Antibióticos')
+      })
+      const [defaultGroup, newGroup] = result.current.medicationGroups
+      expect(newGroup?.requestId).toBeTruthy()
+      expect(newGroup?.requestId).not.toBe(defaultGroup?.requestId)
     })
 
     it('addMedicationGroup uses auto title when none provided', () => {
@@ -118,6 +146,19 @@ describe('useOrderQueueStore', () => {
       expect(result.current.imagingGroups).toHaveLength(1)
     })
 
+    it('the default imaging group carries a requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      expect(result.current.imagingGroups[0]?.requestId).toBeTruthy()
+    })
+
+    it('addImagingGroup gives the new group its own fresh requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      act(() => result.current.addImagingGroup('Urgentes'))
+      const [defaultGroup, newGroup] = result.current.imagingGroups
+      expect(newGroup?.requestId).toBeTruthy()
+      expect(newGroup?.requestId).not.toBe(defaultGroup?.requestId)
+    })
+
     it('queueImagingOrder adds to default group', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       act(() => result.current.queueImagingOrder(imagingBase))
@@ -163,6 +204,19 @@ describe('useOrderQueueStore', () => {
     it('starts with one default lab group', () => {
       const { result } = renderHook(() => useOrderQueueStore())
       expect(result.current.labGroups).toHaveLength(1)
+    })
+
+    it('the default lab group carries a requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      expect(result.current.labGroups[0]?.requestId).toBeTruthy()
+    })
+
+    it('addLabGroup gives the new group its own fresh requestId', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      act(() => result.current.addLabGroup('Urgentes'))
+      const [defaultGroup, newGroup] = result.current.labGroups
+      expect(newGroup?.requestId).toBeTruthy()
+      expect(newGroup?.requestId).not.toBe(defaultGroup?.requestId)
     })
 
     it('queueLabOrder adds order and switches to labs tab', () => {
@@ -212,6 +266,44 @@ describe('useOrderQueueStore', () => {
       expect(result.current.imagingOrders).toHaveLength(0)
       expect(result.current.labOrders).toHaveLength(0)
       expect(result.current.activeTab).toBe('medications')
+    })
+  })
+
+  // ── restoreSnapshot back-compat ─────────────────────────────────────────────────
+
+  describe('restoreSnapshot', () => {
+    it('backfills a fresh requestId for groups from an old snapshot that lack one', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      act(() => {
+        result.current.restoreSnapshot({
+          medicationGroups: [{ id: 'g1', title: 'Receta', order: 1 } as never],
+          medications: [],
+          imagingGroups: [{ id: 'ig1', title: 'Orden 1', order: 1 } as never],
+          imagingOrders: [],
+          labGroups: [{ id: 'lg1', title: 'Lab 1', order: 1 } as never],
+          labOrders: [],
+        })
+      })
+
+      expect(result.current.medicationGroups[0]?.requestId).toBeTruthy()
+      expect(result.current.imagingGroups[0]?.requestId).toBeTruthy()
+      expect(result.current.labGroups[0]?.requestId).toBeTruthy()
+    })
+
+    it('preserves an existing requestId from a newer snapshot', () => {
+      const { result } = renderHook(() => useOrderQueueStore())
+      act(() => {
+        result.current.restoreSnapshot({
+          medicationGroups: [{ id: 'g1', title: 'Receta', order: 1, requestId: 'keep-me' }],
+          medications: [],
+          imagingGroups: [],
+          imagingOrders: [],
+          labGroups: [],
+          labOrders: [],
+        })
+      })
+
+      expect(result.current.medicationGroups[0]?.requestId).toBe('keep-me')
     })
   })
 })

@@ -87,6 +87,7 @@ const PrescriptionItemSchema = z.object({
 export const CreatePrescriptionGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
+  clientRequestId: z.string().min(8).max(64).optional(),
   items: z.array(PrescriptionItemSchema).min(1),
 })
 
@@ -109,6 +110,7 @@ const ImagingOrderItemSchema = z.object({
 export const CreateImagingOrderGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
+  clientRequestId: z.string().min(8).max(64).optional(),
   items: z.array(ImagingOrderItemSchema).min(1),
 })
 
@@ -131,6 +133,7 @@ const LabOrderItemSchema = z.object({
 export const CreateLabOrderGroupSchema = z.object({
   groupTitle: z.string().max(200).nullable().optional(),
   groupOrder: z.number().int().min(1).default(1),
+  clientRequestId: z.string().min(8).max(64).optional(),
   items: z.array(LabOrderItemSchema).min(1),
 })
 

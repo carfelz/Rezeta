@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Creación idempotente de órdenes en el reintento del flush (clientRequestId)
+
+### Added
+
+- `packages/db/prisma/schema.prisma`: `Prescription`, `ImagingOrder` y `LabOrder` ganan `clientRequestId String? @map("client_request_id") @db.VarChar(64)` y una restricción `@@unique([consultationId, clientRequestId])`. Postgres permite múltiples `NULL` en un índice único, así que las filas existentes (sin `clientRequestId`) no se ven afectadas. Migración `packages/db/prisma/migrations/20260708043942_order_client_request_id/`.
+- `packages/shared/src/schemas/consultation.ts`: `CreatePrescriptionGroupSchema`, `CreateImagingOrderGroupSchema` y `CreateLabOrderGroupSchema` ganan `clientRequestId: z.string().min(8).max(64).optional()`.
+- `apps/api/src/modules/orders/orders.repository.ts`: `createPrescription`, `createImagingOrder` y `createLabOrder` pasan `clientRequestId` al `create` y, si Prisma lanza `P2002` sobre la restricción única `(consultationId, clientRequestId)`, recuperan y devuelven la fila ya creada por el intento original en lugar de fallar — mismo patrón estructural (`err.code === 'P2002'`, sin importar tipos de Prisma) que `users.repository.ts`. Sin `clientRequestId` o ante cualquier otro error, se relanza tal cual.
+- `apps/web/src/store/order-queue.store.ts`: cada `OrderGroup` gana `requestId: string` (`crypto.randomUUID()`), generado de nuevo en cada instancia de grupo — al crear uno con `addMedicationGroup`/`addImagingGroup`/`addLabGroup`, y en el grupo por defecto de cada llamada a `reset()` (incluida la inicialización del store). El `id` de display del grupo por defecto (`'default-rx'`, etc.) no cambia — sigue usándose solo para agrupar localmente. `restoreSnapshot` retro-compatibiliza snapshots antiguos de `localStorage` que no tienen `requestId`, generando uno nuevo por cada grupo que lo tenga ausente.
+- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: cada POST de grupo (`createPrescription`, `createImagingOrder`, `createLabOrder`) envía `clientRequestId: group.requestId`. Como el grupo no se quita de la cola hasta que su create tiene éxito, un timeout cliente (`AbortSignal` de 30s) que ya haya persistido en el servidor y un reintento posterior del mismo grupo en cola envían el mismo `clientRequestId` — la API detecta el duplicado y devuelve la fila existente, evitando una receta/orden firmada duplicada.
+- Tests: `packages/shared/src/schemas/__tests__/consultation.spec.ts` (validación de `clientRequestId` en los tres schemas de creación); `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (paso de `clientRequestId` al `create`, recuperación tras `P2002` para los tres tipos de orden, relanzamiento de errores no-`P2002`, relanzamiento de `P2002` sin `clientRequestId` o si la refetch no encuentra nada); `apps/web/src/store/__tests__/order-queue.store.test.ts` (`requestId` en los grupos por defecto, `requestId` fresco en cada `addXGroup`/`reset()`, backfill y preservación en `restoreSnapshot`); `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (el payload incluye `clientRequestId`; dos flushes del mismo grupo aún en cola envían el mismo id).
+
 ## [2026-07-08] Silenciar toasts por grupo durante el flush de órdenes
 
 ### Fixed

@@ -72,6 +72,7 @@ describe('useFlushOrderQueue', () => {
       expect.objectContaining({
         groupTitle: 'Receta',
         groupOrder: 1,
+        clientRequestId: expect.any(String),
         items: [
           expect.objectContaining({
             drug: 'Amoxicilina',
@@ -88,6 +89,7 @@ describe('useFlushOrderQueue', () => {
     expect(mutateLab).toHaveBeenCalledWith(
       expect.objectContaining({
         groupOrder: 1,
+        clientRequestId: expect.any(String),
         items: [
           expect.objectContaining({
             testName: 'Hemograma',
@@ -136,6 +138,7 @@ describe('useFlushOrderQueue', () => {
     expect(mutateImg).toHaveBeenCalledWith(
       expect.objectContaining({
         groupOrder: 1,
+        clientRequestId: expect.any(String),
         items: [
           expect.objectContaining({
             studyType: 'Radiografía de tórax',
@@ -200,5 +203,43 @@ describe('useFlushOrderQueue', () => {
     expect(mutateLab).not.toHaveBeenCalled()
     expect(useOrderQueueStore.getState().labOrders).toHaveLength(1)
     expect(useOrderQueueStore.getState().medications).toHaveLength(1)
+  })
+
+  it('sends the same clientRequestId on a retried flush of a still-queued group', async () => {
+    // Simulates the client-side-timeout scenario: the first flush's create
+    // "fails" from the client's perspective (e.g. an aborted request) so the
+    // group stays queued; a second flush retries the SAME group instance.
+    mutateRx.mockRejectedValueOnce(new Error('client timeout'))
+
+    act(() => {
+      useOrderQueueStore.getState().queueMedication({
+        drug: 'Amoxicilina',
+        dose: '500mg',
+        route: 'oral',
+        frequency: 'cada 8h',
+        duration: '7 días',
+      })
+    })
+
+    const { result } = renderHook(() => useFlushOrderQueue(CONSULT_ID))
+
+    await act(async () => {
+      await result.current.flush()
+    })
+    expect(mutateRx).toHaveBeenCalledTimes(1)
+    const firstRequestId = mutateRx.mock.calls[0]?.[0]?.clientRequestId as string
+    expect(firstRequestId).toBeTruthy()
+    // the group is still queued after the failed attempt
+    expect(useOrderQueueStore.getState().medications).toHaveLength(1)
+
+    mutateRx.mockResolvedValueOnce({})
+    await act(async () => {
+      await result.current.flush()
+    })
+
+    expect(mutateRx).toHaveBeenCalledTimes(2)
+    const secondRequestId = mutateRx.mock.calls[1]?.[0]?.clientRequestId as string
+    expect(secondRequestId).toBe(firstRequestId)
+    expect(useOrderQueueStore.getState().medications).toHaveLength(0)
   })
 })

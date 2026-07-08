@@ -249,6 +249,16 @@ const LAB_ORDER_INCLUDE = {
 export class OrdersRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma error types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
+  }
+
   async createPrescription(
     tenantId: string,
     consultationId: string,
@@ -256,30 +266,44 @@ export class OrdersRepository {
     userId: string,
     dto: CreatePrescriptionGroupDto,
   ): Promise<Prescription> {
-    const row = await this.prisma.prescription.create({
-      data: {
-        tenantId,
-        consultationId,
-        patientId,
-        doctorId: userId,
-        groupTitle: dto.groupTitle ?? null,
-        groupOrder: dto.groupOrder,
-        status: 'queued',
-        prescriptionItems: {
-          create: dto.items.map((item) => ({
-            drug: item.drug,
-            dose: item.dose,
-            route: item.route,
-            frequency: item.frequency,
-            duration: item.duration,
-            notes: item.notes ?? null,
-            source: item.source ?? null,
-          })),
+    try {
+      const row = await this.prisma.prescription.create({
+        data: {
+          tenantId,
+          consultationId,
+          patientId,
+          doctorId: userId,
+          groupTitle: dto.groupTitle ?? null,
+          groupOrder: dto.groupOrder,
+          clientRequestId: dto.clientRequestId ?? null,
+          status: 'queued',
+          prescriptionItems: {
+            create: dto.items.map((item) => ({
+              drug: item.drug,
+              dose: item.dose,
+              route: item.route,
+              frequency: item.frequency,
+              duration: item.duration,
+              notes: item.notes ?? null,
+              source: item.source ?? null,
+            })),
+          },
         },
-      },
-      include: PRESCRIPTION_INCLUDE,
-    })
-    return toPrescription(row)
+        include: PRESCRIPTION_INCLUDE,
+      })
+      return toPrescription(row)
+    } catch (err: unknown) {
+      if (!dto.clientRequestId || !this.isUniqueViolation(err)) throw err
+      // Retry of a flush that already succeeded server-side (client-side
+      // timeout) — the unique (consultationId, clientRequestId) constraint
+      // caught the duplicate. Return the row created by the original request.
+      const existing = await this.prisma.prescription.findFirst({
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        include: PRESCRIPTION_INCLUDE,
+      })
+      if (existing) return toPrescription(existing)
+      throw err
+    }
   }
 
   async findPrescriptionById(id: string, tenantId: string): Promise<Prescription | null> {
@@ -316,30 +340,44 @@ export class OrdersRepository {
     userId: string,
     dto: CreateImagingOrderGroupDto,
   ): Promise<ImagingOrder[]> {
-    const row = await this.prisma.imagingOrder.create({
-      data: {
-        tenantId,
-        consultationId,
-        patientId,
-        doctorId: userId,
-        groupTitle: dto.groupTitle ?? null,
-        groupOrder: dto.groupOrder,
-        status: 'queued',
-        items: {
-          create: dto.items.map((item) => ({
-            studyType: item.studyType,
-            indication: item.indication,
-            urgency: item.urgency,
-            contrast: item.contrast,
-            fastingRequired: item.fastingRequired,
-            specialInstructions: item.specialInstructions ?? null,
-            source: item.source ?? null,
-          })),
+    try {
+      const row = await this.prisma.imagingOrder.create({
+        data: {
+          tenantId,
+          consultationId,
+          patientId,
+          doctorId: userId,
+          groupTitle: dto.groupTitle ?? null,
+          groupOrder: dto.groupOrder,
+          clientRequestId: dto.clientRequestId ?? null,
+          status: 'queued',
+          items: {
+            create: dto.items.map((item) => ({
+              studyType: item.studyType,
+              indication: item.indication,
+              urgency: item.urgency,
+              contrast: item.contrast,
+              fastingRequired: item.fastingRequired,
+              specialInstructions: item.specialInstructions ?? null,
+              source: item.source ?? null,
+            })),
+          },
         },
-      },
-      include: IMAGING_ORDER_INCLUDE,
-    })
-    return [toImagingOrder(row)]
+        include: IMAGING_ORDER_INCLUDE,
+      })
+      return [toImagingOrder(row)]
+    } catch (err: unknown) {
+      if (!dto.clientRequestId || !this.isUniqueViolation(err)) throw err
+      // Retry of a flush that already succeeded server-side (client-side
+      // timeout) — the unique (consultationId, clientRequestId) constraint
+      // caught the duplicate. Return the group created by the original request.
+      const existing = await this.prisma.imagingOrder.findFirst({
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        include: IMAGING_ORDER_INCLUDE,
+      })
+      if (existing) return [toImagingOrder(existing)]
+      throw err
+    }
   }
 
   async findImagingOrderById(id: string, tenantId: string): Promise<ImagingOrder | null> {
@@ -369,30 +407,44 @@ export class OrdersRepository {
     userId: string,
     dto: CreateLabOrderGroupDto,
   ): Promise<LabOrder[]> {
-    const row = await this.prisma.labOrder.create({
-      data: {
-        tenantId,
-        consultationId,
-        patientId,
-        doctorId: userId,
-        groupTitle: dto.groupTitle ?? null,
-        groupOrder: dto.groupOrder,
-        status: 'queued',
-        items: {
-          create: dto.items.map((item) => ({
-            testName: item.testName,
-            indication: item.indication,
-            urgency: item.urgency,
-            fastingRequired: item.fastingRequired,
-            sampleType: item.sampleType,
-            specialInstructions: item.specialInstructions ?? null,
-            source: item.source ?? null,
-          })),
+    try {
+      const row = await this.prisma.labOrder.create({
+        data: {
+          tenantId,
+          consultationId,
+          patientId,
+          doctorId: userId,
+          groupTitle: dto.groupTitle ?? null,
+          groupOrder: dto.groupOrder,
+          clientRequestId: dto.clientRequestId ?? null,
+          status: 'queued',
+          items: {
+            create: dto.items.map((item) => ({
+              testName: item.testName,
+              indication: item.indication,
+              urgency: item.urgency,
+              fastingRequired: item.fastingRequired,
+              sampleType: item.sampleType,
+              specialInstructions: item.specialInstructions ?? null,
+              source: item.source ?? null,
+            })),
+          },
         },
-      },
-      include: LAB_ORDER_INCLUDE,
-    })
-    return [toLabOrder(row)]
+        include: LAB_ORDER_INCLUDE,
+      })
+      return [toLabOrder(row)]
+    } catch (err: unknown) {
+      if (!dto.clientRequestId || !this.isUniqueViolation(err)) throw err
+      // Retry of a flush that already succeeded server-side (client-side
+      // timeout) — the unique (consultationId, clientRequestId) constraint
+      // caught the duplicate. Return the group created by the original request.
+      const existing = await this.prisma.labOrder.findFirst({
+        where: { consultationId, clientRequestId: dto.clientRequestId, tenantId },
+        include: LAB_ORDER_INCLUDE,
+      })
+      if (existing) return [toLabOrder(existing)]
+      throw err
+    }
   }
 
   async findLabOrderById(id: string, tenantId: string): Promise<LabOrder | null> {

@@ -50,6 +50,7 @@ export function useFlushOrderQueue(consultationId: string): {
         await createPrescription.mutateAsync({
           groupTitle: group.title,
           groupOrder: group.order,
+          clientRequestId: group.requestId,
           items: items.map((m) => ({
             drug: m.drug,
             dose: m.dose,
@@ -69,6 +70,7 @@ export function useFlushOrderQueue(consultationId: string): {
         await createLabOrder.mutateAsync({
           groupTitle: group.title,
           groupOrder: group.order,
+          clientRequestId: group.requestId,
           items: items.map((o) => ({
             testName: o.test_name,
             indication: o.indication,
@@ -88,6 +90,7 @@ export function useFlushOrderQueue(consultationId: string): {
         await createImagingOrder.mutateAsync({
           groupTitle: group.title,
           groupOrder: group.order,
+          clientRequestId: group.requestId,
           items: items.map((o) => ({
             studyType: o.study_type,
             indication: o.indication,

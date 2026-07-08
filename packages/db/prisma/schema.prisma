@@ -321,19 +321,20 @@ model ConsultationRecord {
 }
 
 model Prescription {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  consultationId String?   @map("consultation_id") @db.Uuid
-  patientId      String    @map("patient_id") @db.Uuid
-  doctorId       String    @map("doctor_id") @db.Uuid
-  groupTitle     String?   @map("group_title") @db.VarChar(200)
-  groupOrder     Int       @default(1) @map("group_order")
-  status         String    @default("queued") @db.VarChar(20) // queued | signed
-  signedAt       DateTime? @map("signed_at")
-  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  consultationId  String?   @map("consultation_id") @db.Uuid
+  patientId       String    @map("patient_id") @db.Uuid
+  doctorId        String    @map("doctor_id") @db.Uuid
+  groupTitle      String?   @map("group_title") @db.VarChar(200)
+  groupOrder      Int       @default(1) @map("group_order")
+  clientRequestId String?   @map("client_request_id") @db.VarChar(64)
+  status          String    @default("queued") @db.VarChar(20) // queued | signed
+  signedAt        DateTime? @map("signed_at")
+  pdfUrl          String?   @map("pdf_url") @db.VarChar(2048)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   tenant            Tenant             @relation(fields: [tenantId], references: [id])
   consultation      Consultation?      @relation(fields: [consultationId], references: [id])
@@ -341,6 +342,7 @@ model Prescription {
   doctor            User               @relation("PrescriptionDoctor", fields: [doctorId], references: [id])
   prescriptionItems PrescriptionItem[]
 
+  @@unique([consultationId, clientRequestId])
   @@index([tenantId])
   @@index([tenantId, patientId])
   @@index([consultationId, groupOrder])
@@ -618,19 +620,20 @@ model ProtocolSuggestion {
 }
 
 model ImagingOrder {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  consultationId String    @map("consultation_id") @db.Uuid
-  patientId      String    @map("patient_id") @db.Uuid
-  doctorId       String    @map("doctor_id") @db.Uuid
-  groupTitle     String?   @map("group_title") @db.VarChar(200)
-  groupOrder     Int       @default(1) @map("group_order")
-  status         String    @default("queued") @db.VarChar(20) // queued | signed
-  signedAt       DateTime? @map("signed_at")
-  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  consultationId  String    @map("consultation_id") @db.Uuid
+  patientId       String    @map("patient_id") @db.Uuid
+  doctorId        String    @map("doctor_id") @db.Uuid
+  groupTitle      String?   @map("group_title") @db.VarChar(200)
+  groupOrder      Int       @default(1) @map("group_order")
+  clientRequestId String?   @map("client_request_id") @db.VarChar(64)
+  status          String    @default("queued") @db.VarChar(20) // queued | signed
+  signedAt        DateTime? @map("signed_at")
+  pdfUrl          String?   @map("pdf_url") @db.VarChar(2048)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   tenant       Tenant             @relation(fields: [tenantId], references: [id])
   consultation Consultation       @relation(fields: [consultationId], references: [id])
@@ -638,6 +641,7 @@ model ImagingOrder {
   doctor       User               @relation("ImagingOrderDoctor", fields: [doctorId], references: [id])
   items        ImagingOrderItem[]
 
+  @@unique([consultationId, clientRequestId])
   @@index([consultationId, groupOrder])
   @@index([tenantId])
   @@index([tenantId, deletedAt])
@@ -663,19 +667,20 @@ model ImagingOrderItem {
 }
 
 model LabOrder {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  consultationId String    @map("consultation_id") @db.Uuid
-  patientId      String    @map("patient_id") @db.Uuid
-  doctorId       String    @map("doctor_id") @db.Uuid
-  groupTitle     String?   @map("group_title") @db.VarChar(200)
-  groupOrder     Int       @default(1) @map("group_order")
-  status         String    @default("queued") @db.VarChar(20) // queued | signed
-  signedAt       DateTime? @map("signed_at")
-  pdfUrl         String?   @map("pdf_url") @db.VarChar(2048)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  consultationId  String    @map("consultation_id") @db.Uuid
+  patientId       String    @map("patient_id") @db.Uuid
+  doctorId        String    @map("doctor_id") @db.Uuid
+  groupTitle      String?   @map("group_title") @db.VarChar(200)
+  groupOrder      Int       @default(1) @map("group_order")
+  clientRequestId String?   @map("client_request_id") @db.VarChar(64)
+  status          String    @default("queued") @db.VarChar(20) // queued | signed
+  signedAt        DateTime? @map("signed_at")
+  pdfUrl          String?   @map("pdf_url") @db.VarChar(2048)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   tenant       Tenant         @relation(fields: [tenantId], references: [id])
   consultation Consultation   @relation(fields: [consultationId], references: [id])
@@ -683,6 +688,7 @@ model LabOrder {
   doctor       User           @relation("LabOrderDoctor", fields: [doctorId], references: [id])
   items        LabOrderItem[]
 
+  @@unique([consultationId, clientRequestId])
   @@index([consultationId, groupOrder])
   @@index([tenantId])
   @@index([tenantId, deletedAt])

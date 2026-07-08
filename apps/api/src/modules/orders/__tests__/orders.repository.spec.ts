@@ -158,6 +158,93 @@ describe('OrdersRepository', () => {
       expect(result.prescriptionItems[0].drug).toBe('Ibuprofeno')
       expect(result.createdAt).toBe(now.toISOString())
     })
+
+    it('passes clientRequestId through to the create call', async () => {
+      mockPrisma.prescription.create.mockResolvedValue(makeRxRow())
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      await repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)
+      expect(mockPrisma.prescription.create.mock.calls[0][0].data).toMatchObject({
+        clientRequestId: 'req_abc12345',
+      })
+    })
+
+    it('on P2002 unique-constraint violation, re-fetches and returns the existing row', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.prescription.create.mockRejectedValueOnce(p2002)
+      const existing = makeRxRow({ id: 'rx-existing' })
+      mockPrisma.prescription.findFirst.mockResolvedValueOnce(existing)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      const result = await repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)
+
+      expect(result.id).toBe('rx-existing')
+      expect(mockPrisma.prescription.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            consultationId: 'c1',
+            clientRequestId: 'req_abc12345',
+            tenantId: 't1',
+          }),
+        }),
+      )
+    })
+
+    it('re-throws non-P2002 errors', async () => {
+      const dbError = new Error('DB connection lost')
+      mockPrisma.prescription.create.mockRejectedValueOnce(dbError)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      await expect(repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toThrow(
+        'DB connection lost',
+      )
+      expect(mockPrisma.prescription.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('re-throws P2002 when no clientRequestId was sent (no dedup key to refetch by)', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.prescription.create.mockRejectedValueOnce(p2002)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      await expect(repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toBe(
+        p2002,
+      )
+      expect(mockPrisma.prescription.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('re-throws P2002 if the re-fetch finds nothing (extreme edge case)', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.prescription.create.mockRejectedValueOnce(p2002)
+      mockPrisma.prescription.findFirst.mockResolvedValueOnce(null)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
+      }
+      await expect(repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toBe(
+        p2002,
+      )
+    })
   })
 
   describe('findPrescriptionById', () => {
@@ -217,6 +304,49 @@ describe('OrdersRepository', () => {
       expect(result).toHaveLength(1)
       expect(result[0].items[0].studyType).toBe('Rx Tórax')
     })
+
+    it('on P2002 unique-constraint violation, re-fetches and returns the existing group', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.imagingOrder.create.mockRejectedValueOnce(p2002)
+      const existing = makeImagingRow({ id: 'img-existing', items: [makeImagingItem()] })
+      mockPrisma.imagingOrder.findFirst.mockResolvedValueOnce(existing)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ studyType: 'Rx Tórax', indication: 'Disnea', urgency: 'routine' }],
+      }
+      const result = await repo.createImagingOrder('t1', 'c1', 'p1', 'u1', dto as never)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]?.id).toBe('img-existing')
+      expect(mockPrisma.imagingOrder.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            consultationId: 'c1',
+            clientRequestId: 'req_abc12345',
+            tenantId: 't1',
+          }),
+        }),
+      )
+    })
+
+    it('re-throws non-P2002 errors', async () => {
+      const dbError = new Error('DB connection lost')
+      mockPrisma.imagingOrder.create.mockRejectedValueOnce(dbError)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ studyType: 'Rx Tórax', indication: 'Disnea', urgency: 'routine' }],
+      }
+      await expect(repo.createImagingOrder('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toThrow(
+        'DB connection lost',
+      )
+      expect(mockPrisma.imagingOrder.findFirst).not.toHaveBeenCalled()
+    })
   })
 
   describe('findImagingOrderById', () => {
@@ -265,6 +395,49 @@ describe('OrdersRepository', () => {
       const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
       expect(result).toHaveLength(1)
       expect(result[0].items[0].testName).toBe('Hemograma')
+    })
+
+    it('on P2002 unique-constraint violation, re-fetches and returns the existing group', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+      mockPrisma.labOrder.create.mockRejectedValueOnce(p2002)
+      const existing = makeLabRow({ id: 'lab-existing', items: [makeLabItem()] })
+      mockPrisma.labOrder.findFirst.mockResolvedValueOnce(existing)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ testName: 'Hemograma', indication: 'Anemia', urgency: 'routine' }],
+      }
+      const result = await repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]?.id).toBe('lab-existing')
+      expect(mockPrisma.labOrder.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            consultationId: 'c1',
+            clientRequestId: 'req_abc12345',
+            tenantId: 't1',
+          }),
+        }),
+      )
+    })
+
+    it('re-throws non-P2002 errors', async () => {
+      const dbError = new Error('DB connection lost')
+      mockPrisma.labOrder.create.mockRejectedValueOnce(dbError)
+
+      const dto = {
+        groupTitle: null,
+        groupOrder: 1,
+        clientRequestId: 'req_abc12345',
+        items: [{ testName: 'Hemograma', indication: 'Anemia', urgency: 'routine' }],
+      }
+      await expect(repo.createLabOrder('t1', 'c1', 'p1', 'u1', dto as never)).rejects.toThrow(
+        'DB connection lost',
+      )
+      expect(mockPrisma.labOrder.findFirst).not.toHaveBeenCalled()
     })
   })
 
