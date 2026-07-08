@@ -45,17 +45,25 @@ export class ConsultationRecordsService {
     const existing = await this.repo.findLatest(consultationId, tenantId)
     if (existing) return existing
     const { input, patientId } = await this.buildGenerationInput(consultationId, tenantId)
-    const record = await this.repo.create({
-      tenantId,
-      consultationId,
-      patientId,
-      versionNumber: 1,
-      kind: input.kind,
-      sections: generateRecordSections(input),
-      generatedAt: new Date(),
-    })
-    this.audit(tenantId, record.id, 'create')
-    return record
+    try {
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: 1,
+        kind: input.kind,
+        sections: generateRecordSections(input),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    } catch (err: unknown) {
+      if (!this.isUniqueViolation(err)) throw err
+      // Lost the race to create v1 — the winner's row is already there.
+      const winner = await this.repo.findLatest(consultationId, tenantId)
+      if (winner) return winner
+      throw err
+    }
   }
 
   /**
@@ -86,17 +94,37 @@ export class ConsultationRecordsService {
         message: 'La historia firmada solo puede regenerarse tras una enmienda de la consulta',
       })
     }
-    const record = await this.repo.create({
-      tenantId,
-      consultationId,
-      patientId,
-      versionNumber: latest.versionNumber + 1,
-      kind: latest.kind,
-      sections: generateRecordSections({ ...input, kind: latest.kind }),
-      generatedAt: new Date(),
-    })
-    this.audit(tenantId, record.id, 'create')
-    return record
+    try {
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: latest.versionNumber + 1,
+        kind: latest.kind,
+        sections: generateRecordSections({ ...input, kind: latest.kind }),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    } catch (err: unknown) {
+      if (!this.isUniqueViolation(err)) throw err
+      // Lost the race to create the next version — re-read and retry once
+      // with the freshly observed version number. A second collision is
+      // rethrown as-is (the exception filter maps raw P2002 to a 409).
+      const relatest = await this.repo.findLatest(consultationId, tenantId)
+      const nextVersion = (relatest ?? latest).versionNumber + 1
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: nextVersion,
+        kind: latest.kind,
+        sections: generateRecordSections({ ...input, kind: latest.kind }),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    }
   }
 
   async updateSections(
@@ -356,5 +384,15 @@ export class ConsultationRecordsService {
       entityId,
       status: 'success',
     })
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }

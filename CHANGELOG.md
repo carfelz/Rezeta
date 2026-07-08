@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Reintento ante colisión de versión al crear un ConsultationRecord
+
+### Fixed
+
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` y `regenerate` calculaban `versionNumber` de forma optimista (`1` y `latest.versionNumber + 1` respectivamente) tras una lectura de `findLatest`, sin manejar la colisión `P2002` del `@@unique([consultationId, versionNumber])` — dos llamadas concurrentes chocaban y una de ellas recibía un 409 genérico en vez de resolverse. `ensureDraft` ahora, ante `P2002`, relee `findLatest` y devuelve el registro ganador de la carrera en vez de crear otro. `regenerate` relee `findLatest`, recalcula `versionNumber` y reintenta la creación una sola vez; una segunda colisión se repropaga sin envolver (el filtro de excepciones global ya la traduce a 409).
+
+### Added
+
+- Tests: `consultation-records/__tests__/consultation-records.service.spec.ts` gana cinco casos — recuperación por relectura en `ensureDraft` tras `P2002`, no-P2002 se repropaga sin relectura, borde de relectura vacía tras `P2002`, reintento único con versión recalculada en `regenerate`, y repropagación de la segunda colisión cuando el reintento también choca.
+
 ## [2026-07-08] Toast correcto al guardar borrador y etiqueta única en notas clínicas
 
 ### Fixed
