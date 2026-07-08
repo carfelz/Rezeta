@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { UpdateProtocolUsageSchema } from '../consultation.js'
+import { CreatePrescriptionGroupSchema, UpdateProtocolUsageSchema } from '../consultation.js'
 
 describe('UpdateProtocolUsageSchema modifications', () => {
   it('accepts a valid vitals_entered event', () => {
@@ -95,6 +95,32 @@ describe('UpdateProtocolUsageSchema modifications', () => {
       modifications: {
         vitals_entered: [{ block_id: 'blk1', values: { heart_rate: 72 }, timestamp: 'not-a-date' }],
       },
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('CreatePrescriptionGroupSchema duration', () => {
+  const baseItem = { drug: 'Enalapril', dose: '10 mg', route: 'VO', frequency: 'cada 12 h' }
+
+  it('accepts an item with an empty duration (protocol dosage rows carry none)', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({
+      groupTitle: 'Receta',
+      groupOrder: 1,
+      items: [{ ...baseItem, duration: '', source: 'protocol:row_1' }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an item with duration omitted, defaulting to empty string', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({ items: [baseItem] })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.items[0]?.duration).toBe('')
+  })
+
+  it('still rejects an item with an empty drug', () => {
+    const result = CreatePrescriptionGroupSchema.safeParse({
+      items: [{ ...baseItem, drug: '', duration: '30 días' }],
     })
     expect(result.success).toBe(false)
   })

@@ -4,6 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] La duración de un medicamento recetado es opcional
+
+### Fixed
+
+- `packages/shared/src/schemas/consultation.ts`: `PrescriptionItemSchema.duration` pasa de `min(1)` a opcional con default `''`. Los medicamentos encolados desde una tabla de dosis ("+ Añadir a receta") no llevan duración — las tablas de dosis no tienen esa columna y la fila en cola no es editable — así que tanto "Generar receta" como el flush previo a la firma fallaban con `VALIDATION_ERROR` 400 sin salida posible para el médico (hallazgo del E2E en vivo del 2026-07-07). Las recetas crónicas sin duración fija ahora son válidas.
+- `packages/shared/src/record/generate-record-sections.ts`: el plan de tratamiento omite el guion final cuando el medicamento no tiene duración (antes: `Enalapril 10 mg VO cada 12 h — `).
+
 ## [2026-07-07] El botón "Firmar y cerrar" se deshabilita mientras corre el flush previo a la firma
 
 ### Fixed

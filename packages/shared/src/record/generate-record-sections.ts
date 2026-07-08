@@ -251,7 +251,8 @@ function pushOffProtocolNotes(usage: RecordUsageInput, kind: ConsultationRecordK
 function buildPlan(orders: RecordOrdersInput): string {
   const lines: string[] = []
   for (const item of orders.prescriptionItems) {
-    lines.push(`${item.drug} ${item.dose} ${item.route} ${item.frequency} — ${item.duration}`)
+    const duration = item.duration ? ` — ${item.duration}` : ''
+    lines.push(`${item.drug} ${item.dose} ${item.route} ${item.frequency}${duration}`)
   }
   if (orders.labTests.length > 0) lines.push(`Laboratorio: ${orders.labTests.join(', ')}`)
   if (orders.imagingStudies.length > 0) lines.push(`Imágenes: ${orders.imagingStudies.join(', ')}`)
