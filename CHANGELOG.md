@@ -4,6 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Selector de versión de la historia médica — UI
+
+### Added
+
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useRecordVersions(consultationId)` (GET `/record/versions`, clave `[QK, consultationId, 'versions']`) y `useRecordVersion(consultationId, versionNumber | null)` (GET `/record/versions/:versionNumber`, habilitado solo cuando se elige una versión distinta de la última). `downloadRecordPdf` acepta un `versionNumber` opcional y ajusta la URL (`?version=N`) y el nombre de archivo (`historia-<id>-v<N>.pdf`). `useRegenerateRecord` y `useSignRecord` invalidan `[QK, consultationId, 'versions']` al completarse para que el listado no quede obsoleto.
+- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: selector de versión (componente `Select` existente) junto al rótulo "· v{n}", visible únicamente cuando hay más de una versión. Elegir una versión anterior renderiza sus secciones en modo estrictamente de solo lectura — oculta Editar/Firmar/Regenerar, muestra el aviso "Versión anterior — solo lectura" y solo permite descargar el PDF de esa versión. Volver a la última versión restablece el comportamiento actual sin cambios.
+- `apps/web/src/pages/PatientDetail/strings.ts`: nuevas cadenas `versionLabel`, `versionSelectorAria`, `olderVersionNotice`.
+- Tests: se extienden `use-consultation-record.test.tsx` (versiones, descarga versionada, invalidación tras regenerar/firmar) y `RecordDocument.test.tsx` (selector oculto/visible, lectura de versión anterior, descarga versionada, restauración al volver a la última). `HistoriaTab.test.tsx` gana los mocks por defecto de los hooks nuevos.
+
 ## [2026-07-08] Historial de versiones de la historia médica — API
 
 ### Added

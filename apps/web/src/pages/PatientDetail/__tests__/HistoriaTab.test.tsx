@@ -45,6 +45,16 @@ beforeEach(() => {
   vi.mocked(recordHooks.useUpdateRecordSections).mockReturnValue(stub)
   vi.mocked(recordHooks.useRegenerateRecord).mockReturnValue(stub)
   vi.mocked(recordHooks.useSignRecord).mockReturnValue(stub)
+  vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+    data: [],
+    isLoading: false,
+    isSuccess: true,
+  } as never)
+  vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+  } as never)
 })
 
 describe('HistoriaTab', () => {

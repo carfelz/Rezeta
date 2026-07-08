@@ -9,6 +9,8 @@ import {
   useUpdateRecordSections,
   useRegenerateRecord,
   useEnsureRecord,
+  useRecordVersions,
+  useRecordVersion,
 } from '../use-consultation-record'
 import { apiClient, ApiRequestError, triggerDownload } from '@/lib/api-client'
 import { toast } from 'sonner'
@@ -72,6 +74,19 @@ describe('useSignRecord', () => {
     result.current.mutate()
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/c1/record/sign', {})
+  })
+
+  it('invalidates the versions list on success', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ id: 'rec1', status: 'signed' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const signWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useSignRecord('c1'), { wrapper: signWrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultation-record', 'c1', 'versions'] })
   })
 
   it('toasts an error when the sign request fails', async () => {
@@ -165,6 +180,58 @@ describe('useRegenerateRecord', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSave)
   })
+
+  it('invalidates the versions list on success', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ id: 'rec1', status: 'draft' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const regenerateWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useRegenerateRecord('c1'), { wrapper: regenerateWrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultation-record', 'c1', 'versions'] })
+  })
+})
+
+describe('useRecordVersions', () => {
+  it('fetches the version list', async () => {
+    const versions = [
+      { id: 'v2', versionNumber: 2, kind: 'evolution', status: 'signed', generatedAt: 't2', signedAt: 't2' },
+      { id: 'v1', versionNumber: 1, kind: 'evolution', status: 'signed', generatedAt: 't1', signedAt: 't1' },
+    ]
+    vi.mocked(apiClient.get).mockResolvedValue(versions)
+    const { result } = renderHook(() => useRecordVersions('c1'), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/consultations/c1/record/versions')
+    expect(result.current.data).toEqual(versions)
+  })
+
+  it('is disabled without a consultation id', () => {
+    const { result } = renderHook(() => useRecordVersions(null), { wrapper })
+    expect(result.current.fetchStatus).toBe('idle')
+  })
+})
+
+describe('useRecordVersion', () => {
+  it('fetches a specific version', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 'rec1', versionNumber: 1, status: 'signed' })
+    const { result } = renderHook(() => useRecordVersion('c1', 1), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/consultations/c1/record/versions/1')
+    expect(result.current.data).toMatchObject({ id: 'rec1', versionNumber: 1 })
+  })
+
+  it('is disabled when the version number is null', () => {
+    const { result } = renderHook(() => useRecordVersion('c1', null), { wrapper })
+    expect(result.current.fetchStatus).toBe('idle')
+  })
+
+  it('is disabled without a consultation id', () => {
+    const { result } = renderHook(() => useRecordVersion(null, 1), { wrapper })
+    expect(result.current.fetchStatus).toBe('idle')
+  })
 })
 
 describe('downloadRecordPdf', () => {
@@ -176,5 +243,15 @@ describe('downloadRecordPdf', () => {
 
     expect(apiClient.download).toHaveBeenCalledWith('/v1/consultations/c1/record/pdf')
     expect(triggerDownload).toHaveBeenCalledWith(blob, 'historia-c1.pdf')
+  })
+
+  it('appends the version query param and versioned filename when given a version number', async () => {
+    const blob = new Blob(['pdf content'], { type: 'application/pdf' })
+    vi.mocked(apiClient.download).mockResolvedValue(blob)
+
+    await downloadRecordPdf('c1', 2)
+
+    expect(apiClient.download).toHaveBeenCalledWith('/v1/consultations/c1/record/pdf?version=2')
+    expect(triggerDownload).toHaveBeenCalledWith(blob, 'historia-c1-v2.pdf')
   })
 })

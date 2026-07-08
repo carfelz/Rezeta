@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import { RecordDocument } from '../RecordDocument'
 import * as recordHooks from '@/hooks/consultations/use-consultation-record'
 import { toastStrings } from '@/lib/toasts'
-import type { ConsultationRecordDto } from '@rezeta/shared'
+import type { ConsultationRecordDto, RecordVersionSummary } from '@rezeta/shared'
 
 vi.mock('@/hooks/consultations/use-consultation-record')
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+
+// Radix Select's pointerdown-based item selection needs these jsdom shims —
+// jsdom implements neither pointer capture nor scrollIntoView.
+beforeEach(() => {
+  Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+  Element.prototype.setPointerCapture = vi.fn()
+  Element.prototype.releasePointerCapture = vi.fn()
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 const draft: ConsultationRecordDto = {
   id: 'rec1',
@@ -59,6 +69,16 @@ beforeEach(() => {
   vi.mocked(recordHooks.useRegenerateRecord).mockReturnValue(mutationStub)
   vi.mocked(recordHooks.useSignRecord).mockReturnValue(mutationStub)
   vi.mocked(recordHooks.useEnsureRecord).mockReturnValue(mutationStub)
+  vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+    data: [],
+    isLoading: false,
+    isSuccess: true,
+  } as never)
+  vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+  } as never)
 })
 
 describe('RecordDocument', () => {
@@ -300,5 +320,149 @@ describe('RecordDocument', () => {
     } as never)
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     expect(screen.getByText(/Primera consulta/)).toBeInTheDocument()
+  })
+})
+
+describe('RecordDocument version selector', () => {
+  const latestSigned: ConsultationRecordDto = {
+    ...draft,
+    id: 'rec2',
+    versionNumber: 2,
+    status: 'signed',
+    signedAt: '2026-07-06T12:00:00Z',
+  }
+  const olderVersion: ConsultationRecordDto = {
+    ...latestSigned,
+    id: 'rec1',
+    versionNumber: 1,
+    signedAt: '2026-07-05T12:00:00Z',
+    sections: latestSigned.sections.map((sec) =>
+      sec.key === 'motivo_consulta' ? { ...sec, content: 'Control anterior.' } : sec,
+    ),
+  }
+  const versionsList: RecordVersionSummary[] = [
+    {
+      id: 'rec2',
+      versionNumber: 2,
+      kind: 'evolution',
+      status: 'signed',
+      generatedAt: latestSigned.generatedAt,
+      signedAt: latestSigned.signedAt,
+    },
+    {
+      id: 'rec1',
+      versionNumber: 1,
+      kind: 'evolution',
+      status: 'signed',
+      generatedAt: olderVersion.generatedAt,
+      signedAt: olderVersion.signedAt,
+    },
+  ]
+
+  it('hides the selector when there is only one version', () => {
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+  })
+
+  it('shows the version selector when there are multiple versions', () => {
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: latestSigned,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+      data: versionsList,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
+  })
+
+  it('selecting an older version renders its sections read-only and hides editing actions', async () => {
+    const user = userEvent.setup()
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: latestSigned,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+      data: versionsList,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+      data: olderVersion,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V1' }))
+
+    expect(screen.getByText('Control anterior.')).toBeInTheDocument()
+    expect(screen.getByText('Versión anterior — solo lectura')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Firmar historia/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Regenerar/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Descargar PDF/ })).toBeInTheDocument()
+  })
+
+  it('downloads the PDF for the selected older version', async () => {
+    const user = userEvent.setup()
+    vi.mocked(recordHooks.downloadRecordPdf).mockResolvedValue(undefined)
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: latestSigned,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+      data: versionsList,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+      data: olderVersion,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V1' }))
+    await user.click(screen.getByRole('button', { name: /Descargar PDF/ }))
+
+    expect(vi.mocked(recordHooks.downloadRecordPdf)).toHaveBeenCalledWith('c1', 1)
+  })
+
+  it('restores the action bar when switching back to the latest version', async () => {
+    const user = userEvent.setup()
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: latestSigned,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+      data: versionsList,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+      data: olderVersion,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V1' }))
+    expect(screen.getByText('Versión anterior — solo lectura')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V2' }))
+
+    expect(screen.queryByText('Versión anterior — solo lectura')).not.toBeInTheDocument()
+    expect(screen.getByText('Historia firmada — solo lectura')).toBeInTheDocument()
   })
 })
