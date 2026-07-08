@@ -19,15 +19,20 @@ import { newConsultationDialogStrings as s } from './newConsultationDialogString
 export interface NewConsultationDialogProps {
   open: boolean
   onClose: () => void
+  initialPatient?: { id: string; fullName: string }
 }
 
-export function NewConsultationDialog({ open, onClose }: NewConsultationDialogProps): JSX.Element {
+export function NewConsultationDialog({
+  open,
+  onClose,
+  initialPatient,
+}: NewConsultationDialogProps): JSX.Element {
   const navigate = useNavigate()
   const activeLocationId = useUiStore((st) => st.activeLocationId)
   const { data: locations } = useLocations()
   const createConsultation = useCreateConsultation()
 
-  const [selectedPatientId, setSelectedPatientId] = useState('')
+  const [selectedPatientId, setSelectedPatientId] = useState(initialPatient?.id ?? '')
   const [locationId, setLocationId] = useState(activeLocationId ?? '')
 
   const canSubmit =
@@ -57,6 +62,7 @@ export function NewConsultationDialog({ open, onClose }: NewConsultationDialogPr
               value={selectedPatientId}
               onChange={(id) => setSelectedPatientId(id)}
               placeholder={s.searchPlaceholder}
+              {...(initialPatient ? { initialSelectedName: initialPatient.fullName } : {})}
             />
           </Field>
 

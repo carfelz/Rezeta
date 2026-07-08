@@ -89,6 +89,19 @@ describe('NewConsultationDialog', () => {
     expect(screen.getByText('Iniciar consulta').closest('button')).toBeDisabled()
   })
 
+  it('preselects the patient in the combobox when initialPatient is provided', () => {
+    render(
+      <NewConsultationDialog
+        open
+        onClose={vi.fn()}
+        initialPatient={{ id: 'p1', fullName: 'Ana Reyes' }}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('Ana Reyes')).toBeInTheDocument()
+    expect(screen.getByText('Iniciar consulta').closest('button')).toBeEnabled()
+  })
+
   it('keeps the dialog open and does not navigate when consultation creation fails', async () => {
     const user = userEvent.setup()
     createConsultationMock.mockRejectedValueOnce(new Error('boom'))

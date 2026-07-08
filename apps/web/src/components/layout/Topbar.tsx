@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useUiStore } from '@/store/ui.store'
 import { useAuth } from '@/hooks/use-auth'
 import type { Location as ClinicLocation } from '@rezeta/shared'
@@ -77,44 +78,57 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
           <i className="ph ph-caret-down text-[12px] text-n-400 ml-1" />
         </Button>
 
-        {dropdownOpen && locations && locations.length > 0 && (
+        {dropdownOpen && (
           <div className="absolute top-full left-0 mt-1 min-w-[220px] bg-n-0 border border-n-200 rounded-md shadow-floating z-50 py-1">
-            {locations.map((loc) => (
-              <Button
-                key={loc.id}
-                variant="item"
-                size="sm"
-                className="w-full h-auto flex items-center justify-start gap-2 px-4 py-2 text-left"
-                onClick={() => {
-                  setActiveLocation(loc.id)
-                  setDropdownOpen(false)
-                }}
-              >
-                <span
-                  className={
-                    loc.id === activeLocationId
-                      ? 'w-2 h-2 bg-p-500 rounded-full shrink-0'
-                      : 'w-2 h-2 bg-n-300 rounded-full shrink-0'
-                  }
-                />
-                <div>
-                  <div
+            {locations && locations.length > 0 ? (
+              locations.map((loc) => (
+                <Button
+                  key={loc.id}
+                  variant="item"
+                  size="sm"
+                  className="w-full h-auto flex items-center justify-start gap-2 px-4 py-2 text-left"
+                  onClick={() => {
+                    setActiveLocation(loc.id)
+                    setDropdownOpen(false)
+                  }}
+                >
+                  <span
                     className={
                       loc.id === activeLocationId
-                        ? 'text-[13px] font-semibold text-n-800'
-                        : 'text-[13px] font-regular text-n-800'
+                        ? 'w-2 h-2 bg-p-500 rounded-full shrink-0'
+                        : 'w-2 h-2 bg-n-300 rounded-full shrink-0'
                     }
-                  >
-                    {loc.name}
+                  />
+                  <div>
+                    <div
+                      className={
+                        loc.id === activeLocationId
+                          ? 'text-[13px] font-semibold text-n-800'
+                          : 'text-[13px] font-regular text-n-800'
+                      }
+                    >
+                      {loc.name}
+                    </div>
+                    {loc.city && (
+                      <Caption tone="neutral" size="sm" as="div">
+                        {loc.city}
+                      </Caption>
+                    )}
                   </div>
-                  {loc.city && (
-                    <Caption tone="neutral" size="sm" as="div">
-                      {loc.city}
-                    </Caption>
-                  )}
-                </div>
-              </Button>
-            ))}
+                </Button>
+              ))
+            ) : (
+              <div className="px-4 py-3 flex flex-col gap-2">
+                <p className="text-[13px] font-sans text-n-500">{topbarStrings.noLocations}</p>
+                <Link
+                  to="/ajustes/ubicaciones"
+                  className="text-[13px] font-sans font-medium text-p-600 hover:text-p-700"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  {topbarStrings.addLocation}
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>

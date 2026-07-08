@@ -1,4 +1,10 @@
 export const patientDetailStrings = {
+  // ── PageHeader ──────────────────────────────────────────────────────────────
+  breadcrumbPatients: 'Pacientes',
+  editButton: 'Editar',
+  noDocument: 'Sin documento',
+  newConsultation: 'Nueva consulta',
+
   // ── DemographicsBlock ───────────────────────────────────────────────────────
   sectionTitle: 'Datos personales',
   fieldDateOfBirth: 'Fecha de nacimiento',

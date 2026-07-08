@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
 import { Spinner, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
+import { NewConsultationDialog } from '@/components/consultations/NewConsultationDialog'
 import { AppointmentsTab } from './AppointmentsTab'
 import { DemographicsBlock } from './DemographicsBlock'
 import { EditModal } from './EditModal'
@@ -16,6 +17,7 @@ export function PatientDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [showEdit, setShowEdit] = useState(false)
+  const [showNewConsultation, setShowNewConsultation] = useState(false)
 
   const { data: patient, isLoading, isError } = usePatient(id ?? '')
 
@@ -47,7 +49,22 @@ export function PatientDetail(): JSX.Element {
     <div className="max-w-[800px] m-auto">
       {showEdit && <EditModal patient={patient} onClose={() => setShowEdit(false)} />}
 
-      <PageHeader patient={patient} onEdit={() => setShowEdit(true)} />
+      {showNewConsultation && (
+        <NewConsultationDialog
+          open={showNewConsultation}
+          onClose={() => setShowNewConsultation(false)}
+          initialPatient={{
+            id: patient.id,
+            fullName: `${patient.firstName} ${patient.lastName}`.trim(),
+          }}
+        />
+      )}
+
+      <PageHeader
+        patient={patient}
+        onEdit={() => setShowEdit(true)}
+        onNewConsultation={() => setShowNewConsultation(true)}
+      />
       <DemographicsBlock patient={patient} />
       <MedicalInfoBlock patient={patient} />
 

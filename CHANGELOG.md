@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-07] Iniciar consulta desde el paciente y estado vacío del selector de ubicación
+
+### Added
+
+- `apps/web/src/pages/PatientDetail/PageHeader.tsx`: nuevo botón primario "Nueva consulta" (`ph-plus`, cadena `newConsultation` en `pages/PatientDetail/strings.ts`) junto al botón "Editar" existente. Abre `NewConsultationDialog` (ver más abajo) con el paciente de la página ya preseleccionado — antes no había ninguna vía para iniciar una consulta walk-in desde la ficha del paciente. De paso se movieron a `strings.ts` las cadenas que quedaban hardcodeadas en el header: `breadcrumbPatients: 'Pacientes'`, `editButton: 'Editar'`, `noDocument: 'Sin documento'`.
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: nueva prop opcional `initialPatient?: { id: string; fullName: string }` — cuando se pasa, el `PatientCombobox` arranca con ese paciente ya seleccionado (vía `useState` inicial, sin efectos). `apps/web/src/pages/Schedule/PatientCombobox.tsx` gana la prop `initialSelectedName?: string` para sembrar su estado interno `selectedName`; el resto de sus consumidores (agenda) no se ven afectados al ser opcional.
+- `apps/web/src/pages/PatientDetail/index.tsx`: nuevo estado `showNewConsultation` que monta `NewConsultationDialog` con `initialPatient` derivado del paciente cargado; el diálogo navega a `/consultas/:id` por sí mismo al crear la consulta (mismo patrón que `pages/Schedule/index.tsx`).
+- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación ahora se renderiza siempre que está abierto, incluso con cero ubicaciones — antes el panel completo desaparecía (`dropdownOpen && locations.length > 0`) y no ofrecía ninguna salida. Con la lista vacía muestra un estado vacío con las cadenas `noLocations: 'Sin ubicaciones configuradas'` y un enlace `addLocation: 'Añadir ubicación'` (nuevas en `components/layout/strings.ts`) hacia `/ajustes/ubicaciones`, que cierra el dropdown al hacer clic.
+- Tests: `NewConsultationDialog.test.tsx` (preselección de paciente vía `initialPatient`), `PatientDetailTabs.test.tsx` (botón "Nueva consulta" abre el diálogo con el paciente ya seleccionado), nuevo `components/layout/__tests__/Topbar.test.tsx` (estado vacío con cero ubicaciones vs. listado normal con ubicaciones).
+
 ## [2026-07-07] Batch de hallazgos E2E: diálogo de consulta, órdenes, RNC y redondeo de signos vitales
 
 ### Changed
