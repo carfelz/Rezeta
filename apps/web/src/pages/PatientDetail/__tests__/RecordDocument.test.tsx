@@ -379,6 +379,72 @@ describe('RecordDocument version selector', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
+  it('shows the draft action bar for the latest version and hides it after selecting an older version', async () => {
+    const user = userEvent.setup()
+    const latestDraft: ConsultationRecordDto = { ...draft, versionNumber: 2 }
+    const v1Signed: ConsultationRecordDto = {
+      ...draft,
+      id: 'rec1',
+      versionNumber: 1,
+      status: 'signed',
+      signedAt: '2026-07-05T12:00:00Z',
+    }
+    const draftVersionsList: RecordVersionSummary[] = [
+      {
+        id: 'rec2',
+        versionNumber: 2,
+        kind: 'evolution',
+        status: 'draft',
+        generatedAt: latestDraft.generatedAt,
+        signedAt: null,
+      },
+      {
+        id: 'rec1',
+        versionNumber: 1,
+        kind: 'evolution',
+        status: 'signed',
+        generatedAt: v1Signed.generatedAt,
+        signedAt: v1Signed.signedAt,
+      },
+    ]
+    vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
+      data: latestDraft,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersions).mockReturnValue({
+      data: draftVersionsList,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    vi.mocked(recordHooks.useRecordVersion).mockReturnValue({
+      data: v1Signed,
+      isLoading: false,
+      isSuccess: true,
+    } as never)
+    render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
+
+    // Latest version selected (default): the draft action bar is present.
+    expect(screen.getByRole('button', { name: /Editar/ })).toBeInTheDocument()
+
+    // Select the older, signed version.
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V1' }))
+
+    expect(screen.getByText('Versión anterior — solo lectura')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Firmar historia/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Regenerar/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Descargar PDF/ })).toBeInTheDocument()
+
+    // Switching back to the latest version restores the draft actions.
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: 'V2' }))
+
+    expect(screen.queryByText('Versión anterior — solo lectura')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Editar/ })).toBeInTheDocument()
+  })
+
   it('selecting an older version renders its sections read-only and hides editing actions', async () => {
     const user = userEvent.setup()
     vi.mocked(recordHooks.useConsultationRecord).mockReturnValue({
