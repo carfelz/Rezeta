@@ -502,3 +502,12 @@ describe('BlockRendererRunMode — clinical_notes', () => {
     })
   })
 })
+
+describe('BlockRendererRunMode — clinical_notes label rendering', () => {
+  it('renders the block label exactly once (inner label only, no duplicate chrome title)', () => {
+    const block = notesBlock({ label: 'Motivo de consulta', content: '' })
+    render(<BlockRendererRunMode block={block} runMode={baseRunMode()} />)
+
+    expect(screen.getAllByText('Motivo de consulta')).toHaveLength(1)
+  })
+})

@@ -68,6 +68,14 @@
 14. **Order flush retry**: a create that times out client-side after succeeding
     server-side re-POSTs on retry (no idempotency key) — consider idempotency or
     reconciliation.
+15. **Watch: order-queue snapshot lost across reload** (observed once, 2026-07-08 live
+    E2E, not reproduced under clean conditions). A queued med with a verified
+    `rz:oq:<consultationId>` localStorage snapshot came back empty after a reload that
+    followed a hard dev-server kill mid-session. Suspect: the mirror effect in
+    `use-order-queue-session.ts:64-73` removes the key whenever the in-memory queue is
+    empty; if a broken/half-mounted render lets it run before the restore effect
+    repopulates the store, the snapshot is destroyed. If a user reports a vanished
+    queue, start here.
 
 ## Deliberately deferred (product decisions on record)
 
