@@ -276,7 +276,7 @@ describe('regenerate', () => {
     const result = await svc.regenerate('c1', 't1')
     expect(result.versionNumber).toBe(3)
     expect(mockRepo.create).toHaveBeenCalledTimes(2)
-    expect(mockRepo.create.mock.calls[1][0].versionNumber).toBe(3)
+    expect(mockRepo.create.mock.calls[1]![0].versionNumber).toBe(3)
     expect(mockRepo.findLatest).toHaveBeenCalledTimes(2)
   })
 

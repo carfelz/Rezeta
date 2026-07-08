@@ -168,7 +168,7 @@ describe('OrdersRepository', () => {
         items: [{ drug: 'Ibuprofeno', dose: '400mg', route: 'oral', frequency: 'TID' }],
       }
       await repo.createPrescription('t1', 'c1', 'p1', 'u1', dto as never)
-      expect(mockPrisma.prescription.create.mock.calls[0][0].data).toMatchObject({
+      expect(mockPrisma.prescription.create.mock.calls[0]![0].data).toMatchObject({
         clientRequestId: 'req_abc12345',
       })
     })

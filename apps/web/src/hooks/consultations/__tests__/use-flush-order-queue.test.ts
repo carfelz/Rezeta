@@ -6,9 +6,15 @@ import { toastStrings } from '@/lib/toasts'
 const mutateRx = vi.fn()
 const mutateImg = vi.fn()
 const mutateLab = vi.fn()
-const useCreatePrescriptionMock = vi.fn(() => ({ mutateAsync: mutateRx }))
-const useCreateImagingOrderMock = vi.fn(() => ({ mutateAsync: mutateImg }))
-const useCreateLabOrderMock = vi.fn(() => ({ mutateAsync: mutateLab }))
+const useCreatePrescriptionMock = vi.fn((_id?: string, _opts?: { silent?: boolean }) => ({
+  mutateAsync: mutateRx,
+}))
+const useCreateImagingOrderMock = vi.fn((_id?: string, _opts?: { silent?: boolean }) => ({
+  mutateAsync: mutateImg,
+}))
+const useCreateLabOrderMock = vi.fn((_id?: string, _opts?: { silent?: boolean }) => ({
+  mutateAsync: mutateLab,
+}))
 
 vi.mock('../use-consultations', () => ({
   useCreatePrescription: (id: string, opts?: { silent?: boolean }) =>

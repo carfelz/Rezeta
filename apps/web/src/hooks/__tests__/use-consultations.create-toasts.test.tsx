@@ -22,11 +22,18 @@ function wrapper({ children }: { children: ReactNode }): JSX.Element {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
 
-const RX_DTO = { items: [] } as Parameters<ReturnType<typeof useCreatePrescription>['mutateAsync']>[0]
-const IMG_DTO = { items: [] } as Parameters<
-  ReturnType<typeof useCreateImagingOrder>['mutateAsync']
->[0]
-const LAB_DTO = { items: [] } as Parameters<ReturnType<typeof useCreateLabOrder>['mutateAsync']>[0]
+const RX_DTO: Parameters<ReturnType<typeof useCreatePrescription>['mutateAsync']>[0] = {
+  items: [],
+  groupOrder: 1,
+}
+const IMG_DTO: Parameters<ReturnType<typeof useCreateImagingOrder>['mutateAsync']>[0] = {
+  items: [],
+  groupOrder: 1,
+}
+const LAB_DTO: Parameters<ReturnType<typeof useCreateLabOrder>['mutateAsync']>[0] = {
+  items: [],
+  groupOrder: 1,
+}
 
 describe('useCreatePrescription toast silencing', () => {
   beforeEach(() => {

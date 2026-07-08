@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Errores de TypeScript en tests agregados en esta rama
+
+### Fixed
+
+- `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (:25-34): `RX_DTO`/`IMG_DTO`/`LAB_DTO` dejan de forzar el tipo vía `as <DTO>` sobre un objeto `{ items: [] }` incompleto (TS2352, `groupOrder` faltante) y pasan a ser constantes anotadas con el tipo del parámetro (`items: [], groupOrder: 1`), sin cast — un revisor previo había señalado el cast forzado como una debilidad del test.
+- `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (:9-15): los mocks `useCreatePrescriptionMock`/`useCreateImagingOrderMock`/`useCreateLabOrderMock` (`vi.fn()`) ganan la firma `(_id?: string, _opts?: { silent?: boolean })` — antes estaban tipados como funciones de cero argumentos (TS2554) aunque el código bajo prueba los invoca con `(consultationId, { silent: true })`.
+- `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` (:67, :197, :236): `medications[0].drug` gana la aserción no-nula ya usada en el resto del archivo (`medications[0]!.drug`) tras el `expect(medications).toHaveLength(1)` que ya precede a cada acceso (TS2532).
+- `apps/api/src/modules/consultation-records/__tests__/consultation-records.service.spec.ts` (:279, dentro del test agregado en esta rama "retries once with a recomputed version number when create races another version (P2002)"): `mockRepo.create.mock.calls[1][0].versionNumber` gana la aserción no-nula (`calls[1]!`), mismo idioma que el resto de la suite de la API (TS2532). Los demás TS2532/TS2339 preexistentes del archivo quedan intactos.
+- `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (:171, dentro del test agregado en esta rama "passes clientRequestId through to the create call"): `mockPrisma.prescription.create.mock.calls[0][0].data` gana la misma aserción no-nula (`calls[0]!`) (TS2532). Los demás TS2532 preexistentes del archivo quedan intactos.
+
+Estos errores solo aparecían bajo el tsconfig completo (`npx tsc -p tsconfig.json --noEmit`), no bajo `tsconfig.build.json` (excluye `__tests__/**`) que usa CI; no afectaban el build mientras existía una base preexistente y no relacionada de errores similares en archivos no tocados por esta rama, que se deja intacta.
+
 ## [2026-07-08] Bloques de historia clínica en las plantillas semilla
 
 ### Added

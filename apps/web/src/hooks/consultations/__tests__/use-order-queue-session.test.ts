@@ -64,7 +64,7 @@ describe('useOrderQueueSession', () => {
 
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(1)
-    expect(medications[0].drug).toBe('Amoxicilina')
+    expect(medications[0]!.drug).toBe('Amoxicilina')
   })
 
   it('shows toast when restoring saved queue', async () => {
@@ -194,7 +194,7 @@ describe('useOrderQueueSession', () => {
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(1)
-    expect(medications[0].drug).toBe('Amoxicilina')
+    expect(medications[0]!.drug).toBe('Amoxicilina')
 
     // Mechanism assertion (fallback per brief): removeItem must never be
     // called for this key during the initial mount when a snapshot exists.
@@ -233,7 +233,7 @@ describe('useOrderQueueSession', () => {
 
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(1)
-    expect(medications[0].drug).toBe('Amoxicilina')
+    expect(medications[0]!.drug).toBe('Amoxicilina')
 
     removeItemSpy.mockRestore()
   })
