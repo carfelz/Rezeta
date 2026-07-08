@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
+import type { HistoriaMapping } from '@rezeta/shared'
 
 // ── Block manipulation helpers (pure functions) ───────────────────────────────
 
@@ -233,11 +234,21 @@ export const useEditorStore = create<EditorState>((set) => ({
 
 const AUTOSAVE_PREFIX = 'protocol-draft-'
 
-export function saveLocalDraft(protocolId: string, blocks: ProtocolBlock[]): void {
+export function saveLocalDraft(
+  protocolId: string,
+  blocks: ProtocolBlock[],
+  historiaMapping?: HistoriaMapping,
+): void {
   try {
     localStorage.setItem(
       `${AUTOSAVE_PREFIX}${protocolId}`,
-      JSON.stringify({ blocks, savedAt: Date.now() }),
+      JSON.stringify({
+        blocks,
+        ...(historiaMapping && Object.keys(historiaMapping).length > 0
+          ? { historia_mapping: historiaMapping }
+          : {}),
+        savedAt: Date.now(),
+      }),
     )
   } catch {
     // Storage full or unavailable — silently ignore
@@ -246,11 +257,20 @@ export function saveLocalDraft(protocolId: string, blocks: ProtocolBlock[]): voi
 
 export function loadLocalDraft(
   protocolId: string,
-): { blocks: ProtocolBlock[]; savedAt: number } | null {
+): { blocks: ProtocolBlock[]; historiaMapping?: HistoriaMapping; savedAt: number } | null {
   try {
     const raw = localStorage.getItem(`${AUTOSAVE_PREFIX}${protocolId}`)
     if (!raw) return null
-    return JSON.parse(raw) as { blocks: ProtocolBlock[]; savedAt: number }
+    const parsed = JSON.parse(raw) as {
+      blocks: ProtocolBlock[]
+      historia_mapping?: HistoriaMapping
+      savedAt: number
+    }
+    return {
+      blocks: parsed.blocks,
+      ...(parsed.historia_mapping ? { historiaMapping: parsed.historia_mapping } : {}),
+      savedAt: parsed.savedAt,
+    }
   } catch {
     return null
   }

@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Borradores de recuperación de fallos incluyen el mapeo de historia
+
+### Fixed
+
+- `apps/web/src/store/editor.store.ts`: `saveLocalDraft(protocolId, blocks, historiaMapping?)` gana un tercer parámetro opcional; el payload persistido en `localStorage` incluye `historia_mapping` solo cuando el mapeo no está vacío. `loadLocalDraft` devuelve `{ blocks, historiaMapping?, savedAt }` — retrocompatible con borradores antiguos `{blocks, savedAt}`, que cargan con `historiaMapping` en `undefined`.
+- `apps/web/src/pages/ProtocolEditor/index.tsx`: el autoguardado (intervalo de 30s) ahora persiste también el mapeo de historia vigente vía un nuevo `mappingRef` (mismo patrón que `blocksRef`). `applyDraft` restaura `historiaMapping` desde el borrador recuperado (sin tocar `savedHistoriaMapping`, para que la edición recuperada se lea como no guardada y "Guardar" la persista). Antes, una edición que solo tocara el mapeo de historia (sin cambios en `blocks`) no era recuperable tras un cierre inesperado del navegador.
+- Tests: `apps/web/src/store/__tests__/editor.store.test.ts` gana casos de ida y vuelta con mapeo, sin mapeo (clave ausente en el JSON almacenado) y de carga de un payload legado sin `historia_mapping`. `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx` gana un caso que fuerza un tick de autoguardado (temporizadores falsos, 30s) tras una edición que solo toca el mapeo y verifica que el borrador en `localStorage` incluye `historia_mapping`, y otro que aplica un borrador recuperado con mapeo y verifica que la pestaña Historia médica refleja el override restaurado.
+
 ## [2026-07-08] Compuerta de hidratación en la sesión de cola de órdenes
 
 ### Fixed
