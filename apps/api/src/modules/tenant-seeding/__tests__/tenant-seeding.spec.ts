@@ -7,6 +7,7 @@ import { TenantSeedingService } from '../tenant-seeding.service.js'
 const unseededTenant = { id: 't1', seededAt: null }
 
 const mockTx = {
+  $queryRaw: vi.fn(),
   tenant: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -31,6 +32,7 @@ describe('TenantSeedingService — locale names', () => {
     service = new TenantSeedingService(mockPrisma as never)
 
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
+    mockTx.$queryRaw.mockResolvedValue([{ id: 't1' }])
     mockTx.tenant.findUnique.mockResolvedValue({ seededAt: null })
     mockTx.tenant.update.mockResolvedValue({})
     mockTx.protocolTemplate.create.mockImplementation(({ data }: { data: { name: string } }) =>

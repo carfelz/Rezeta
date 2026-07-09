@@ -10,15 +10,28 @@ vi.mock('@/lib/api-client', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
+  ApiRequestError: class ApiRequestError extends Error {
+    constructor(public readonly error: { code: string; message: string }) {
+      super(error.message)
+      this.name = 'ApiRequestError'
+    }
+  },
 }))
 
-import { apiClient } from '@/lib/api-client'
+import { ErrorCode } from '@rezeta/shared'
+import { apiClient, ApiRequestError } from '@/lib/api-client'
 import { useAuthStore } from '@/store/auth.store'
 import {
   useOnboardingStarters,
   useOnboardingDefault,
   useOnboardingCustom,
 } from '../onboarding/use-onboarding'
+
+const alreadySeededError = (): Error =>
+  new ApiRequestError({
+    code: ErrorCode.TENANT_ALREADY_SEEDED,
+    message: 'Tenant has already been seeded',
+  })
 
 const mockUser = {
   id: 'user-1',
@@ -77,6 +90,36 @@ describe('useOnboardingDefault', () => {
     const { result: storeResult } = renderHook(() => useAuthStore())
     expect(storeResult.current.user).toEqual(mockUser)
   })
+
+  // A concurrent onboarding request (React StrictMode double-invokes the mount
+  // effect in dev; a double-click does it in prod) makes the loser receive
+  // TENANT_ALREADY_SEEDED. The tenant *is* seeded, so this is a success.
+  it('treats TENANT_ALREADY_SEEDED as success by loading the current user', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(alreadySeededError())
+    vi.mocked(apiClient.get).mockResolvedValue(mockUser)
+
+    const { result } = renderHook(() => useOnboardingDefault(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync()
+    })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/auth/me')
+    expect(result.current.isError).toBe(false)
+
+    const { result: storeResult } = renderHook(() => useAuthStore())
+    expect(storeResult.current.user).toEqual(mockUser)
+  })
+
+  it('still surfaces unrelated failures', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('network down'))
+
+    const { result } = renderHook(() => useOnboardingDefault(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await expect(result.current.mutateAsync()).rejects.toThrow(/network down/)
+    })
+
+    expect(apiClient.get).not.toHaveBeenCalled()
+  })
 })
 
 describe('useOnboardingCustom', () => {
@@ -97,6 +140,24 @@ describe('useOnboardingCustom', () => {
       await result.current.mutateAsync(input as Parameters<typeof result.current.mutateAsync>[0])
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/onboarding/custom', input)
+
+    const { result: storeResult } = renderHook(() => useAuthStore())
+    expect(storeResult.current.user).toEqual(mockUser)
+  })
+
+  it('treats TENANT_ALREADY_SEEDED as success by loading the current user', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(alreadySeededError())
+    vi.mocked(apiClient.get).mockResolvedValue(mockUser)
+
+    const { result } = renderHook(() => useOnboardingCustom(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync({ templates: [], types: [] } as Parameters<
+        typeof result.current.mutateAsync
+      >[0])
+    })
+
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/auth/me')
+    expect(result.current.isError).toBe(false)
 
     const { result: storeResult } = renderHook(() => useAuthStore())
     expect(storeResult.current.user).toEqual(mockUser)

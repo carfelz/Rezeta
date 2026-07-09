@@ -6,6 +6,7 @@ const unseededTenant = { id: 't1', seededAt: null }
 const seededTenant = { id: 't1', seededAt: new Date('2026-01-01') }
 
 const mockTx = {
+  $queryRaw: vi.fn(),
   tenant: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -31,6 +32,7 @@ describe('TenantSeedingService (unit)', () => {
 
     // Default: unseeded tenant, transaction re-check also unseeded
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
+    mockTx.$queryRaw.mockResolvedValue([{ id: 't1' }])
     mockTx.tenant.findUnique.mockResolvedValue({ seededAt: null })
     mockTx.tenant.update.mockResolvedValue({})
     // Template creates return objects with sequential IDs
