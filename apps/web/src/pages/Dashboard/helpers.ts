@@ -1,5 +1,6 @@
 import type { BadgeProps } from '@/components/ui'
 import type { AppointmentStatus, AuditLogItem } from '@rezeta/shared'
+import { AUDIT_ENTITY_LABELS_ARTICLE } from '@/lib/audit-entities'
 
 export const MONTHS_ES = [
   'enero',
@@ -81,29 +82,7 @@ export function initialsForActor(fullName: string | null): string {
 }
 
 function friendlyEntity(t: string): string {
-  const map: Record<string, string> = {
-    Consultation: 'una consulta',
-    Patient: 'un paciente',
-    Protocol: 'un protocolo',
-    ProtocolVersion: 'una versión de protocolo',
-    Prescription: 'una prescripción',
-    Appointment: 'una cita',
-    Invoice: 'una factura',
-    Location: 'una ubicación',
-    ProtocolType: 'un tipo de protocolo',
-    ProtocolTemplate: 'una plantilla',
-    ProtocolCategory: 'una categoría de protocolo',
-    Onboarding: 'la configuración inicial',
-    Schedule: 'un horario',
-    User: 'un usuario',
-    Log: 'un registro técnico',
-    ConsultationRecord: 'una historia médica',
-    // Kebab-case leftovers produced by the interceptor before the
-    // entity-type fix landed — historical audit rows already contain these.
-    'Protocol-template': 'una plantilla',
-    'Protocol-categorie': 'una categoría de protocolo',
-    Onboardin: 'la configuración inicial',
-  }
+  const map: Record<string, string> = AUDIT_ENTITY_LABELS_ARTICLE
   return map[t] ?? `un registro (${t})`
 }
 

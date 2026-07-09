@@ -5,6 +5,7 @@ import { useAuditLogs, downloadAuditLogCsv } from '@/hooks/audit-logs/use-audit-
 import type { AuditLogParams } from '@/hooks/audit-logs/use-audit-logs'
 import { triggerDownload } from '@/lib/api-client'
 import { logger } from '@/lib/logger'
+import { AUDIT_ENTITY_LABELS_FORMAL } from '@/lib/audit-entities'
 import {
   Button,
   Callout,
@@ -68,29 +69,7 @@ const ACTOR_TYPE_LABELS: Record<string, string> = {
   cron: auditLogStrings.actorCron,
 }
 
-const ENTITY_TYPE_LABELS: Record<string, string> = {
-  Consultation: 'Consulta',
-  Patient: 'Paciente',
-  Protocol: 'Protocolo',
-  ProtocolVersion: 'Versión de protocolo',
-  ProtocolTemplate: 'Plantilla',
-  ProtocolType: 'Tipo de protocolo',
-  ProtocolCategory: 'Categoría de protocolo',
-  Prescription: 'Prescripción',
-  Appointment: 'Cita',
-  Invoice: 'Factura',
-  Location: 'Ubicación',
-  Schedule: 'Horario',
-  User: 'Usuario',
-  Onboarding: 'Configuración inicial',
-  Log: 'Registro técnico',
-  ConsultationRecord: 'Historia médica',
-  // Kebab-case leftovers produced by the interceptor before the entity-type
-  // fix landed — historical audit rows already contain these values.
-  'Protocol-template': 'Plantilla',
-  'Protocol-categorie': 'Categoría de protocolo',
-  Onboardin: 'Configuración inicial',
-}
+const ENTITY_TYPE_LABELS: Record<string, string> = AUDIT_ENTITY_LABELS_FORMAL
 
 function formatTs(iso: string): string {
   const d = new Date(iso)

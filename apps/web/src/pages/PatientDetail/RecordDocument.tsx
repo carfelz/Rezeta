@@ -26,11 +26,7 @@ import type { RecordSection } from '@rezeta/shared'
 import { patientDetailStrings as s } from './strings'
 
 function handleDownloadRecordPdf(consultationId: string, versionNumber?: number): void {
-  const promise =
-    versionNumber !== undefined
-      ? downloadRecordPdf(consultationId, versionNumber)
-      : downloadRecordPdf(consultationId)
-  promise.catch(() => {
+  downloadRecordPdf(consultationId, versionNumber).catch(() => {
     toast.error(toastStrings.errorHistoriaDownload)
   })
 }

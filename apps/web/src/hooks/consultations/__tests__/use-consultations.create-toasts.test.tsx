@@ -15,7 +15,7 @@ import {
   useCreatePrescription,
   useCreateImagingOrder,
   useCreateLabOrder,
-} from '../consultations/use-consultations'
+} from '../use-consultations'
 
 function wrapper({ children }: { children: ReactNode }): JSX.Element {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

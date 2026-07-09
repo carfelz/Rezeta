@@ -449,10 +449,13 @@ describe('getVersion', () => {
     expect(result.versionNumber).toBe(2)
   })
 
-  it('throws RECORD_NOT_FOUND when that version does not exist', async () => {
+  it('throws RECORD_NOT_FOUND with a version-specific message when that version does not exist', async () => {
     mockRepo.findByVersion.mockResolvedValue(null)
     await expect(svc.getVersion('c1', 't1', 99)).rejects.toMatchObject({
-      response: { code: 'RECORD_NOT_FOUND' },
+      response: {
+        code: 'RECORD_NOT_FOUND',
+        message: 'Esta consulta no tiene la versión 99 de la historia médica',
+      },
     })
   })
 })

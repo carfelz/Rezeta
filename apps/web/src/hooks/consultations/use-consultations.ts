@@ -274,9 +274,8 @@ export function useSkipStep(
       ),
     // Fold the response usage into the cache synchronously (same pattern as
     // useUpdateCheckedState) before the invalidate's async refetch resolves —
-    // otherwise a same-tab flush (use-pending-modifications.ts) reading the
-    // cache in that window sees the pre-PATCH `updatedAt` and 409s falsely on
-    // PROTOCOL_USAGE_STALE, discarding buffered content edits.
+    // this keeps modifications/UI state (e.g. the skipped-step marker) fresh
+    // in the cache immediately, instead of waiting on the refetch to land.
     onSuccess: (usage) => {
       qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
         prev
@@ -315,7 +314,8 @@ export function useAddOffProtocolNote(
       return updated
     },
     // Same cache-fold-before-invalidate pattern as useSkipStep — see comment
-    // there for why the synchronous setQueryData matters.
+    // there for why the synchronous setQueryData matters (keeps the new
+    // off-protocol note visible in cache without waiting on the refetch).
     onSuccess: (usage) => {
       qc.setQueryData<ConsultationWithDetails>([QK, consultationId], (prev) =>
         prev

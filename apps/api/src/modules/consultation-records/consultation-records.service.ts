@@ -32,12 +32,7 @@ export class ConsultationRecordsService {
 
   async getLatest(consultationId: string, tenantId: string): Promise<ConsultationRecordDto> {
     const record = await this.repo.findLatest(consultationId, tenantId)
-    if (!record) {
-      throw new NotFoundException({
-        code: ErrorCode.RECORD_NOT_FOUND,
-        message: 'Esta consulta no tiene historia médica generada',
-      })
-    }
+    if (!record) this.throwRecordNotFound()
     return record
   }
 
@@ -53,10 +48,7 @@ export class ConsultationRecordsService {
   ): Promise<ConsultationRecordDto> {
     const record = await this.repo.findByVersion(consultationId, tenantId, versionNumber)
     if (!record) {
-      throw new NotFoundException({
-        code: ErrorCode.RECORD_NOT_FOUND,
-        message: 'Esta consulta no tiene historia médica generada',
-      })
+      this.throwRecordNotFound(`Esta consulta no tiene la versión ${versionNumber} de la historia médica`)
     }
     return record
   }
@@ -67,17 +59,14 @@ export class ConsultationRecordsService {
     if (existing) return existing
     const { input, patientId } = await this.buildGenerationInput(consultationId, tenantId)
     try {
-      const record = await this.repo.create({
-        tenantId,
+      return await this.createVersion({
         consultationId,
+        tenantId,
         patientId,
         versionNumber: 1,
         kind: input.kind,
-        sections: generateRecordSections(input),
-        generatedAt: new Date(),
+        input,
       })
-      this.audit(tenantId, record.id, 'create')
-      return record
     } catch (err: unknown) {
       if (!this.isUniqueViolation(err)) throw err
       // Lost the race to create v1 — the winner's row is already there.
@@ -116,17 +105,14 @@ export class ConsultationRecordsService {
       })
     }
     try {
-      const record = await this.repo.create({
-        tenantId,
+      return await this.createVersion({
         consultationId,
+        tenantId,
         patientId,
         versionNumber: latest.versionNumber + 1,
         kind: latest.kind,
-        sections: generateRecordSections({ ...input, kind: latest.kind }),
-        generatedAt: new Date(),
+        input: { ...input, kind: latest.kind },
       })
-      this.audit(tenantId, record.id, 'create')
-      return record
     } catch (err: unknown) {
       if (!this.isUniqueViolation(err)) throw err
       // Lost the race to create the next version — re-read and retry once
@@ -134,17 +120,14 @@ export class ConsultationRecordsService {
       // rethrown as-is (the exception filter maps raw P2002 to a 409).
       const relatest = await this.repo.findLatest(consultationId, tenantId)
       const nextVersion = (relatest ?? latest).versionNumber + 1
-      const record = await this.repo.create({
-        tenantId,
+      return await this.createVersion({
         consultationId,
+        tenantId,
         patientId,
         versionNumber: nextVersion,
         kind: latest.kind,
-        sections: generateRecordSections({ ...input, kind: latest.kind }),
-        generatedAt: new Date(),
+        input: { ...input, kind: latest.kind },
       })
-      this.audit(tenantId, record.id, 'create')
-      return record
     }
   }
 
@@ -397,6 +380,38 @@ export class ConsultationRecordsService {
       })),
     }
     return { input, patientId: c.patientId }
+  }
+
+  /** Persists a new record version, generating its sections, and audits the create. */
+  private async createVersion(params: {
+    consultationId: string
+    tenantId: string
+    patientId: string
+    versionNumber: number
+    kind: ConsultationRecordKind
+    input: GenerateRecordSectionsInput
+  }): Promise<ConsultationRecordDto> {
+    const record = await this.repo.create({
+      tenantId: params.tenantId,
+      consultationId: params.consultationId,
+      patientId: params.patientId,
+      versionNumber: params.versionNumber,
+      kind: params.kind,
+      sections: generateRecordSections(params.input),
+      generatedAt: new Date(),
+    })
+    this.audit(params.tenantId, record.id, 'create')
+    return record
+  }
+
+  /** Shared RECORD_NOT_FOUND throw; pass a version-specific message when relevant. */
+  private throwRecordNotFound(
+    message = 'Esta consulta no tiene historia médica generada',
+  ): never {
+    throw new NotFoundException({
+      code: ErrorCode.RECORD_NOT_FOUND,
+      message,
+    })
   }
 
   /** Non-fatal audit write, mirrors the consultations-service pattern. */

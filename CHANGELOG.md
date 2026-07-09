@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Deduplicación de etiquetas de auditoría y del servicio de historias médicas
+
+### Changed
+
+- `apps/web/src/lib/audit-entities.ts` (nuevo): extrae el conjunto canónico de claves `entityType` de auditoría (`AUDIT_ENTITY_KEYS`) y los dos mapas de etiquetas en español que antes se duplicaban verbatim en `apps/web/src/pages/settings/AuditLog.tsx` (`ENTITY_TYPE_LABELS`, fraseo formal) y `apps/web/src/pages/Dashboard/helpers.ts` (`friendlyEntity`, fraseo "un/una X"). Ambos mapas se tipan como `Record<AuditEntityKey, string>`, así que una clave faltante o de más en cualquiera de los dos es un error de compilación en vez de una divergencia silenciosa. Las dos fraseologías (distintas por diseño) se conservan sin fusionar.
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` y `regenerate` (incluida su ruta de reintento tras P2002) ahora comparten un helper privado `createVersion` para el payload de creación + auditoría, en vez de repetirlo tres veces. `getLatest` y `getVersion` comparten el throw de `RECORD_NOT_FOUND` vía el helper privado `throwRecordNotFound`.
+- `apps/web/src/hooks/consultations/use-consultations.ts`: los comentarios de `useSkipStep` y `useAddOffProtocolNote` que justificaban el `setQueryData` síncrono citaban la ventana de falsa staleness sobre `updatedAt` (ya resuelta por la precondición basada en `contentUpdatedAt` del cambio anterior). Reescritos para reflejar el motivo vigente: mantener fresco en caché el estado de modificaciones/UI sin esperar al refetch.
+- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: `handleDownloadRecordPdf` elimina el ternario redundante `versionNumber !== undefined ? f(id, v) : f(id)` — el parámetro ya es opcional, así que se reenvía directo.
+- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: movido desde `apps/web/src/hooks/__tests__/` (su fuente, `use-consultations.ts`, vive en `hooks/consultations/`, no en `hooks/`); import relativo corregido de `../consultations/use-consultations` a `../use-consultations`.
+
+### Fixed
+
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: el mensaje 404 de `getVersion` ya no es genérico ("Esta consulta no tiene historia médica generada") — ahora incluye el número de versión solicitado (`Esta consulta no tiene la versión N de la historia médica`), distinguiéndolo del 404 de `getLatest`.
+
 ## [2026-07-08] Precondición de staleness específica al contenido en protocolos (contentUpdatedAt)
 
 ### Added

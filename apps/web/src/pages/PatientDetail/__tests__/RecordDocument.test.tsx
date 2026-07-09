@@ -239,7 +239,7 @@ describe('RecordDocument', () => {
     } as never)
     render(<RecordDocument consultationId="c1" consultationStatus="signed" />)
     fireEvent.click(screen.getByRole('button', { name: /Descargar PDF/ }))
-    expect(vi.mocked(recordHooks.downloadRecordPdf)).toHaveBeenCalledWith('c1')
+    expect(vi.mocked(recordHooks.downloadRecordPdf)).toHaveBeenCalledWith('c1', undefined)
   })
 
   it('toasts an error when the PDF download rejects', async () => {
