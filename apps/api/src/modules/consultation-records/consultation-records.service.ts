@@ -9,6 +9,7 @@ import type {
   ConsultationRecordDto,
   ConsultationRecordKind,
   RecordSection,
+  RecordVersionSummary,
   UpdateRecordSectionsDto,
   ProtocolBlock,
   HistoriaMapping,
@@ -40,22 +41,50 @@ export class ConsultationRecordsService {
     return record
   }
 
+  /** Full version history, newest first. Empty array when no record exists (no 404). */
+  async listVersions(consultationId: string, tenantId: string): Promise<RecordVersionSummary[]> {
+    return this.repo.listVersions(consultationId, tenantId)
+  }
+
+  async getVersion(
+    consultationId: string,
+    tenantId: string,
+    versionNumber: number,
+  ): Promise<ConsultationRecordDto> {
+    const record = await this.repo.findByVersion(consultationId, tenantId, versionNumber)
+    if (!record) {
+      throw new NotFoundException({
+        code: ErrorCode.RECORD_NOT_FOUND,
+        message: 'Esta consulta no tiene historia médica generada',
+      })
+    }
+    return record
+  }
+
   /** Creates v1 if the consultation has no record yet; otherwise returns the latest. */
   async ensureDraft(consultationId: string, tenantId: string): Promise<ConsultationRecordDto> {
     const existing = await this.repo.findLatest(consultationId, tenantId)
     if (existing) return existing
     const { input, patientId } = await this.buildGenerationInput(consultationId, tenantId)
-    const record = await this.repo.create({
-      tenantId,
-      consultationId,
-      patientId,
-      versionNumber: 1,
-      kind: input.kind,
-      sections: generateRecordSections(input),
-      generatedAt: new Date(),
-    })
-    this.audit(tenantId, record.id, 'create')
-    return record
+    try {
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: 1,
+        kind: input.kind,
+        sections: generateRecordSections(input),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    } catch (err: unknown) {
+      if (!this.isUniqueViolation(err)) throw err
+      // Lost the race to create v1 — the winner's row is already there.
+      const winner = await this.repo.findLatest(consultationId, tenantId)
+      if (winner) return winner
+      throw err
+    }
   }
 
   /**
@@ -86,17 +115,37 @@ export class ConsultationRecordsService {
         message: 'La historia firmada solo puede regenerarse tras una enmienda de la consulta',
       })
     }
-    const record = await this.repo.create({
-      tenantId,
-      consultationId,
-      patientId,
-      versionNumber: latest.versionNumber + 1,
-      kind: latest.kind,
-      sections: generateRecordSections({ ...input, kind: latest.kind }),
-      generatedAt: new Date(),
-    })
-    this.audit(tenantId, record.id, 'create')
-    return record
+    try {
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: latest.versionNumber + 1,
+        kind: latest.kind,
+        sections: generateRecordSections({ ...input, kind: latest.kind }),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    } catch (err: unknown) {
+      if (!this.isUniqueViolation(err)) throw err
+      // Lost the race to create the next version — re-read and retry once
+      // with the freshly observed version number. A second collision is
+      // rethrown as-is (the exception filter maps raw P2002 to a 409).
+      const relatest = await this.repo.findLatest(consultationId, tenantId)
+      const nextVersion = (relatest ?? latest).versionNumber + 1
+      const record = await this.repo.create({
+        tenantId,
+        consultationId,
+        patientId,
+        versionNumber: nextVersion,
+        kind: latest.kind,
+        sections: generateRecordSections({ ...input, kind: latest.kind }),
+        generatedAt: new Date(),
+      })
+      this.audit(tenantId, record.id, 'create')
+      return record
+    }
   }
 
   async updateSections(
@@ -164,8 +213,15 @@ export class ConsultationRecordsService {
     return signed
   }
 
-  async getPdfData(consultationId: string, tenantId: string): Promise<HistoriaMedicaPdfData> {
-    const record = await this.getLatest(consultationId, tenantId)
+  async getPdfData(
+    consultationId: string,
+    tenantId: string,
+    versionNumber?: number,
+  ): Promise<HistoriaMedicaPdfData> {
+    const record =
+      versionNumber === undefined
+        ? await this.getLatest(consultationId, tenantId)
+        : await this.getVersion(consultationId, tenantId, versionNumber)
     const c = await this.prisma.consultation.findFirst({
       where: { id: consultationId, tenantId, deletedAt: null },
       include: { patient: true, doctor: true, location: true },
@@ -356,5 +412,15 @@ export class ConsultationRecordsService {
       entityId,
       status: 'success',
     })
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }

@@ -61,6 +61,7 @@ export function ProtocolEditor(): JSX.Element {
   const [titleDraft, setTitleDraft] = useState('')
   const [draftBanner, setDraftBanner] = useState<{
     blocks: ProtocolBlock[]
+    historiaMapping?: HistoriaMapping
     savedAt: number
   } | null>(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
@@ -103,13 +104,15 @@ export function ProtocolEditor(): JSX.Element {
   // ── Autosave ────────────────────────────────────────────────────────────
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
+  const mappingRef = useRef(historiaMapping)
+  mappingRef.current = historiaMapping
   const isDirtyRef = useRef(combinedIsDirty)
   isDirtyRef.current = combinedIsDirty
 
   useEffect(() => {
     if (!id) return
     const interval = setInterval(() => {
-      if (isDirtyRef.current) saveLocalDraft(id, blocksRef.current)
+      if (isDirtyRef.current) saveLocalDraft(id, blocksRef.current, mappingRef.current)
     }, 30_000)
     return () => clearInterval(interval)
   }, [id])
@@ -249,6 +252,7 @@ export function ProtocolEditor(): JSX.Element {
     if (!draftBanner || !id) return
     const requiredIds = extractRequiredBlockIds(protocolTemplateSchema)
     initEditor(id, draftBanner.blocks, requiredIds)
+    if (draftBanner.historiaMapping) setHistoriaMapping(draftBanner.historiaMapping)
     setDraftBanner(null)
   }
 

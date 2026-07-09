@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   useOrderQueueStore,
@@ -38,30 +38,51 @@ export function useOrderQueueSession(consultationId: string, isSigned: boolean):
   const reset = useOrderQueueStore((s) => s.reset)
   const restoreSnapshot = useOrderQueueStore((s) => s.restoreSnapshot)
 
+  // Guards the mirror effect against running with pre-restore (empty) selector
+  // values on mount or on a consultationId change — see hydration gate below.
+  const hydrated = useRef(false)
+
   // Reset store and restore any saved queue when consultationId changes.
   useEffect(() => {
-    if (!consultationId) return
+    hydrated.current = false
+    if (!consultationId) {
+      hydrated.current = true
+      return
+    }
     reset()
-    if (isSigned) return
+    if (isSigned) {
+      hydrated.current = true
+      return
+    }
     try {
       const raw = localStorage.getItem(storageKey(consultationId))
-      if (!raw) return
+      if (!raw) {
+        hydrated.current = true
+        return
+      }
       const snapshot = JSON.parse(raw) as QueueSnapshot
       if (
         !snapshot.medications.length &&
         !snapshot.imagingOrders.length &&
         !snapshot.labOrders.length
-      )
+      ) {
+        hydrated.current = true
         return
+      }
       restoreSnapshot(snapshot)
       toast.info(toastStrings.orderQueueRestored)
     } catch {
       // corrupted or unavailable storage — start fresh
     }
+    hydrated.current = true
   }, [consultationId]) // intentional: only reset/restore when consultationId changes
 
   // Persist to localStorage whenever queue changes. Clear when signed or empty.
   useEffect(() => {
+    // Skip until the restore effect above has finished its pass for the
+    // current consultationId — otherwise this would see pre-restore (empty)
+    // selector values and wipe a snapshot that hasn't been applied yet.
+    if (!hydrated.current) return
     if (!consultationId) return
     if (isSigned) {
       localStorage.removeItem(storageKey(consultationId))

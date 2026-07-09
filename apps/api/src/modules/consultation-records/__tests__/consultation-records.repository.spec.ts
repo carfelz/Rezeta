@@ -29,6 +29,7 @@ function makeRow(overrides: Record<string, unknown> = {}) {
 const mockPrisma = {
   consultationRecord: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
     create: vi.fn(),
     updateMany: vi.fn(),
   },
@@ -104,5 +105,54 @@ describe('ConsultationRecordsRepository', () => {
   it('sign returns null when already signed', async () => {
     mockPrisma.consultationRecord.updateMany.mockResolvedValue({ count: 0 })
     expect(await repo.sign('rec1', 't1', 'u1')).toBeNull()
+  })
+
+  it('listVersions returns all non-deleted versions for the tenant, newest first', async () => {
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([
+      makeRow({ id: 'rec2', versionNumber: 2 }),
+      makeRow({ id: 'rec1', versionNumber: 1 }),
+    ])
+    const result = await repo.listVersions('c1', 't1')
+    expect(mockPrisma.consultationRecord.findMany).toHaveBeenCalledWith({
+      where: { consultationId: 'c1', tenantId: 't1', deletedAt: null },
+      orderBy: { versionNumber: 'desc' },
+    })
+    expect(result).toEqual([
+      {
+        id: 'rec2',
+        versionNumber: 2,
+        kind: 'evolution',
+        status: 'draft',
+        generatedAt: now.toISOString(),
+        signedAt: null,
+      },
+      {
+        id: 'rec1',
+        versionNumber: 1,
+        kind: 'evolution',
+        status: 'draft',
+        generatedAt: now.toISOString(),
+        signedAt: null,
+      },
+    ])
+  })
+
+  it('listVersions returns an empty array when no record exists', async () => {
+    mockPrisma.consultationRecord.findMany.mockResolvedValue([])
+    expect(await repo.listVersions('c1', 't1')).toEqual([])
+  })
+
+  it('findByVersion returns the exact version scoped to tenant', async () => {
+    mockPrisma.consultationRecord.findFirst.mockResolvedValue(makeRow({ versionNumber: 2 }))
+    const result = await repo.findByVersion('c1', 't1', 2)
+    expect(mockPrisma.consultationRecord.findFirst).toHaveBeenCalledWith({
+      where: { consultationId: 'c1', tenantId: 't1', versionNumber: 2, deletedAt: null },
+    })
+    expect(result?.versionNumber).toBe(2)
+  })
+
+  it('findByVersion returns null when that version does not exist', async () => {
+    mockPrisma.consultationRecord.findFirst.mockResolvedValue(null)
+    expect(await repo.findByVersion('c1', 't1', 99)).toBeNull()
   })
 })

@@ -53,6 +53,17 @@ const esFixtures: TemplateFixture[] = [
           ],
         },
         {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
+          ],
+        },
+        {
           id: 'sec_assessment',
           type: 'section',
           title: 'Evaluación inicial',
@@ -103,6 +114,16 @@ const esFixtures: TemplateFixture[] = [
           ],
         },
         {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_evolucion_notes',
+          type: 'clinical_notes',
+          label: 'Evolución',
+        },
+        {
           id: 'sec_escalation',
           type: 'section',
           title: 'Criterios de escalación',
@@ -142,6 +163,23 @@ const esFixtures: TemplateFixture[] = [
         intended_use: 'Vías de decisión diagnóstica',
       },
       blocks: [
+        {
+          id: 'blk_motivo_notes',
+          type: 'clinical_notes',
+          label: 'Motivo de consulta',
+          required: true,
+        },
+        {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
+          ],
+        },
         {
           id: 'sec_presentation',
           type: 'section',
@@ -220,11 +258,28 @@ const esFixtures: TemplateFixture[] = [
             },
           ],
         },
+        {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_plan_notes',
+          type: 'clinical_notes',
+          label: 'Plan de tratamiento',
+        },
       ],
     },
   },
 ]
 
+// The `en` fixtures below intentionally reuse the SAME SPANISH labels for their
+// `clinical_notes` blocks (e.g. 'Motivo de consulta', 'Diagnóstico') even though
+// the rest of the fixture is translated. The historia médica generator's section
+// router (`matchNotesSection` in packages/shared/src/record/generate-record-sections.ts)
+// matches Spanish keywords only, and the product's UI language is Spanish — so
+// translating these labels to English would silently break historia routing for
+// doctors using the English locale.
 const enFixtures: TemplateFixture[] = [
   {
     key: 'emergency',
@@ -264,6 +319,17 @@ const enFixtures: TemplateFixture[] = [
               severity: 'danger',
               placeholder: 'Absolute or relative contraindications.',
             },
+          ],
+        },
+        {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
           ],
         },
         {
@@ -317,6 +383,16 @@ const enFixtures: TemplateFixture[] = [
           ],
         },
         {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_evolucion_notes',
+          type: 'clinical_notes',
+          label: 'Evolución',
+        },
+        {
           id: 'sec_escalation',
           type: 'section',
           title: 'Escalation Criteria',
@@ -356,6 +432,23 @@ const enFixtures: TemplateFixture[] = [
         intended_use: 'Diagnostic decision pathways',
       },
       blocks: [
+        {
+          id: 'blk_motivo_notes',
+          type: 'clinical_notes',
+          label: 'Motivo de consulta',
+          required: true,
+        },
+        {
+          id: 'blk_vitals',
+          type: 'vitals',
+          fields: [
+            { id: 'vf_bp', label: 'Presión arterial', unit: 'mmHg', input_type: 'text' },
+            { id: 'vf_hr', label: 'Frecuencia cardíaca', unit: 'lpm', input_type: 'number' },
+            { id: 'vf_temp', label: 'Temperatura', unit: '°C', input_type: 'number' },
+            { id: 'vf_weight', label: 'Peso', unit: 'kg', input_type: 'number' },
+            { id: 'vf_height', label: 'Talla', unit: 'cm', input_type: 'number' },
+          ],
+        },
         {
           id: 'sec_presentation',
           type: 'section',
@@ -427,6 +520,16 @@ const enFixtures: TemplateFixture[] = [
               placeholder: 'Most common and most dangerous alternative diagnoses.',
             },
           ],
+        },
+        {
+          id: 'blk_dx_notes',
+          type: 'clinical_notes',
+          label: 'Diagnóstico',
+        },
+        {
+          id: 'blk_plan_notes',
+          type: 'clinical_notes',
+          label: 'Plan de tratamiento',
         },
       ],
     },

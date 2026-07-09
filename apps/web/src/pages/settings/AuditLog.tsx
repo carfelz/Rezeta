@@ -75,10 +75,21 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
   ProtocolVersion: 'Versión de protocolo',
   ProtocolTemplate: 'Plantilla',
   ProtocolType: 'Tipo de protocolo',
+  ProtocolCategory: 'Categoría de protocolo',
   Prescription: 'Prescripción',
   Appointment: 'Cita',
   Invoice: 'Factura',
   Location: 'Ubicación',
+  Schedule: 'Horario',
+  User: 'Usuario',
+  Onboarding: 'Configuración inicial',
+  Log: 'Registro técnico',
+  ConsultationRecord: 'Historia médica',
+  // Kebab-case leftovers produced by the interceptor before the entity-type
+  // fix landed — historical audit rows already contain these values.
+  'Protocol-template': 'Plantilla',
+  'Protocol-categorie': 'Categoría de protocolo',
+  Onboardin: 'Configuración inicial',
 }
 
 function formatTs(iso: string): string {

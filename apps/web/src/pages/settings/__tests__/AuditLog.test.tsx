@@ -222,6 +222,29 @@ describe('AuditLog', () => {
     expect(screen.getAllByText('Sistema').length).toBeGreaterThanOrEqual(1)
   })
 
+  it.each([
+    ['ProtocolCategory', 'Categoría de protocolo'],
+    ['Protocol-template', 'Plantilla'],
+    ['Protocol-categorie', 'Categoría de protocolo'],
+    ['Schedule', 'Horario'],
+    ['User', 'Usuario'],
+    ['Onboarding', 'Configuración inicial'],
+    ['Log', 'Registro técnico'],
+    ['ConsultationRecord', 'Historia médica'],
+    ['Onboardin', 'Configuración inicial'],
+  ])('renders friendly label for entityType %s', (entityType, label) => {
+    mocks.useAuditLogs.mockReturnValue({
+      data: {
+        data: [{ ...sampleItem, category: 'entity' as const, entityType, entityId: 'e1' }],
+        pagination: { cursor: null, hasMore: false, limit: 50 },
+      },
+      isLoading: false,
+      isError: false,
+    })
+    render(<AuditLog />)
+    expect(screen.getByText(label)).toBeInTheDocument()
+  })
+
   it('calls downloadAuditLogCsv on export click', async () => {
     setup('clinic')
     const blob = new Blob(['csv'], { type: 'text/csv' })

@@ -8,6 +8,7 @@ import {
   clearLocalDraft,
 } from '@/store/editor.store'
 import type { ProtocolBlock } from '@/components/protocols/BlockRenderer'
+import type { HistoriaMapping } from '@rezeta/shared'
 
 const makeTextBlock = (id: string, content = 'Hello'): ProtocolBlock => ({
   id,
@@ -379,5 +380,34 @@ describe('Local draft helpers', () => {
   it('loadLocalDraft returns null on JSON parse error', () => {
     localStorage.setItem('protocol-draft-bad', '{invalid json')
     expect(loadLocalDraft('bad')).toBeNull()
+  })
+
+  it('round-trips a draft with a historia mapping', () => {
+    const blocks = [makeTextBlock('b1')]
+    const mapping: HistoriaMapping = { b1: { include: false } }
+    saveLocalDraft('protocol-1', blocks, mapping)
+    const loaded = loadLocalDraft('protocol-1')
+    expect(loaded?.historiaMapping).toEqual(mapping)
+  })
+
+  it('round-trips a draft without a historia mapping, omitting the key from storage', () => {
+    const blocks = [makeTextBlock('b1')]
+    saveLocalDraft('protocol-1', blocks)
+    const raw = localStorage.getItem('protocol-draft-protocol-1')
+    expect(raw).not.toBeNull()
+    expect(JSON.parse(raw!)).not.toHaveProperty('historia_mapping')
+    const loaded = loadLocalDraft('protocol-1')
+    expect(loaded?.historiaMapping).toBeUndefined()
+  })
+
+  it('loads a legacy {blocks, savedAt} payload with historiaMapping undefined', () => {
+    localStorage.setItem(
+      'protocol-draft-legacy-1',
+      JSON.stringify({ blocks: [makeTextBlock('b1')], savedAt: Date.now() }),
+    )
+    const loaded = loadLocalDraft('legacy-1')
+    expect(loaded).not.toBeNull()
+    expect(loaded?.blocks).toHaveLength(1)
+    expect(loaded?.historiaMapping).toBeUndefined()
   })
 })

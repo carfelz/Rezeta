@@ -68,6 +68,7 @@ function mockProtocolUsage(
     modifications: {},
     modificationSummary: null,
     appliedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     protocolTitle: 'Test Protocol',
     protocolTypeName: null,
     versionNumber: 1,
@@ -987,6 +988,56 @@ describe('ConsultationsService', () => {
         modifications: {},
       })
       expect(result.modificationSummary).toBe('Updated')
+    })
+
+    it('rejects with PROTOCOL_USAGE_STALE when content is sent with a stale expectedUpdatedAt', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
+      vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
+        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+      )
+      await expect(
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          content: {},
+          expectedUpdatedAt: '2025-12-31T00:00:00.000Z',
+        }),
+      ).rejects.toMatchObject({
+        response: {
+          code: ErrorCode.PROTOCOL_USAGE_STALE,
+          details: { currentUpdatedAt: '2026-01-01T10:00:00.000Z' },
+        },
+      })
+      expect(repo.updateProtocolUsage).not.toHaveBeenCalled()
+    })
+
+    it('updates the usage without forwarding expectedUpdatedAt when it matches the current updatedAt', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
+      vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
+        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+      )
+      vi.mocked(repo.updateProtocolUsage).mockResolvedValue(mockProtocolUsage())
+      await service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+        content: { version: '1.0', blocks: [] },
+        expectedUpdatedAt: '2026-01-01T10:00:00.000Z',
+      })
+      expect(repo.updateProtocolUsage).toHaveBeenCalledWith('usage-1', 'tenant-1', {
+        content: { version: '1.0', blocks: [] },
+      })
+    })
+
+    it('passes through modifications-only updates with no expectedUpdatedAt check', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
+      vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
+        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+      )
+      vi.mocked(repo.updateProtocolUsage).mockResolvedValue(mockProtocolUsage())
+      await expect(
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          modifications: { steps_completed: [{ step_id: 'stp1', timestamp: 't1' }] },
+        }),
+      ).resolves.toBeDefined()
+      expect(repo.updateProtocolUsage).toHaveBeenCalledWith('usage-1', 'tenant-1', {
+        modifications: { steps_completed: [{ step_id: 'stp1', timestamp: 't1' }] },
+      })
     })
   })
 

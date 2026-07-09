@@ -12,6 +12,13 @@ vi.mock('@/lib/api-client', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
+  ApiRequestError: class ApiRequestError extends Error {
+    error: { code: string; message: string; details?: Record<string, unknown> }
+    constructor(error: { code: string; message: string; details?: Record<string, unknown> }) {
+      super(error.message)
+      this.error = error
+    }
+  },
 }))
 
 vi.mock('sonner', () => ({
@@ -19,18 +26,19 @@ vi.mock('sonner', () => ({
 }))
 
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, ApiRequestError } from '@/lib/api-client'
 import {
   usePendingModifications,
   mergeModifications,
   applyPendingToConsultation,
 } from '../use-pending-modifications'
-import type { ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
+import { ErrorCode, type ConsultationWithDetails, type ConsultationProtocolUsage } from '@rezeta/shared'
 
 const usage = {
   id: 'usage-1',
   consultationId: 'cons-1',
   protocolId: 'proto-1',
+  updatedAt: '2026-01-01T10:00:00.000Z',
   modifications: {
     checklist_items: [{ item_id: 'itm-0', checked: true, timestamp: 'past' }],
   },
@@ -281,9 +289,10 @@ describe('usePendingModifications', () => {
     expect(result.current.hasPending).toBe(false)
     expect(apiClient.patch).toHaveBeenCalledTimes(1)
     const [, body] = vi.mocked(apiClient.patch).mock.calls[0]!
-    const { content, modifications } = body as {
+    const { content, modifications, expectedUpdatedAt } = body as {
       content: { version: string; blocks: { id: string; values?: Record<string, number> }[] }
       modifications: { checklist_items: { item_id: string }[] }
+      expectedUpdatedAt: string
     }
     expect(modifications.checklist_items.map((e) => e.item_id)).toEqual(['itm-1'])
     // Unknown content keys (version, template_version, historia_mapping) survive the merge
@@ -292,6 +301,8 @@ describe('usePendingModifications', () => {
     )
     expect(content).toHaveProperty('historia_mapping')
     expect(content.blocks[0]).toEqual({ id: 'vit-1', type: 'vitals', fields: [], values: { temp: 40 } })
+    // The precondition rides alongside the content replace
+    expect(expectedUpdatedAt).toBe(usage.updatedAt)
   })
 
   it('flush sends content-only (no modifications key) when only content edits are pending', async () => {
@@ -495,6 +506,118 @@ describe('usePendingModifications', () => {
     expect(result.current.hasPending).toBe(true)
     const overlaid = result.current.withPending(consultation)
     expect(overlaid.protocolUsages[0]!.modifications?.checklist_items).toHaveLength(1)
+  })
+
+  describe('PROTOCOL_USAGE_STALE handling', () => {
+    it('on a stale rejection: toasts the stale message, drops the contentEdits buffer, re-buffers the modifications delta, and invalidates the consultation query', async () => {
+      const staleError = new ApiRequestError({
+        code: ErrorCode.PROTOCOL_USAGE_STALE,
+        message: 'stale',
+      })
+      vi.mocked(apiClient.patch).mockRejectedValue(staleError)
+      const { client, wrapper } = makeClientAndWrapper()
+      const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+      const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+      act(() => {
+        result.current.record('usage-1', { type: 'checklist_item', item_id: 'itm-1', checked: true })
+        result.current.recordContentEdit('usage-1', 'notes-1', {
+          kind: 'notes',
+          content: 'edited before conflict',
+        })
+      })
+
+      let ok = true
+      await act(async () => {
+        ok = await result.current.flush()
+      })
+
+      expect(ok).toBe(false)
+      expect(toast.error).toHaveBeenCalledTimes(1)
+      expect(toast.error).toHaveBeenCalledWith(
+        'Este protocolo fue actualizado en otra pestaña o dispositivo. Recarga la consulta para continuar.',
+      )
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultations', 'cons-1'] })
+
+      // contentEdits are dropped — the notes block reverts to server truth
+      const overlaid = result.current.withPending(consultation)
+      const notesBlock = overlaid.protocolUsages[0]!.content.blocks[1] as unknown as {
+        content: string
+      }
+      expect(notesBlock.content).toBe('original')
+
+      // the modifications delta survives and is resent on the next flush
+      expect(result.current.hasPending).toBe(true)
+      vi.mocked(apiClient.patch).mockResolvedValueOnce({ ...usage, modificationSummary: 'ok' })
+      let retryOk = false
+      await act(async () => {
+        retryOk = await result.current.flush()
+      })
+      expect(retryOk).toBe(true)
+      expect(apiClient.patch).toHaveBeenCalledTimes(2)
+      const [, retryBody] = vi.mocked(apiClient.patch).mock.calls[1]!
+      expect(retryBody).not.toHaveProperty('content')
+      expect(
+        (retryBody as { modifications: { checklist_items: { item_id: string }[] } }).modifications
+          .checklist_items.map((e) => e.item_id),
+      ).toEqual(['itm-1'])
+    })
+
+    it('toasts the stale message only once even when multiple usages come back stale', async () => {
+      const staleError = new ApiRequestError({
+        code: ErrorCode.PROTOCOL_USAGE_STALE,
+        message: 'stale',
+      })
+      vi.mocked(apiClient.patch).mockRejectedValue(staleError)
+      const usage2 = { ...usage, id: 'usage-2' }
+      const consultationWithBoth = {
+        ...consultation,
+        protocolUsages: [usage, usage2],
+      } as unknown as ConsultationWithDetails
+      const { client, wrapper } = makeClientAndWrapper()
+      client.setQueryData(['consultations', 'cons-1'], consultationWithBoth)
+
+      const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+      act(() => {
+        result.current.recordContentEdit('usage-1', 'notes-1', { kind: 'notes', content: 'a' })
+        result.current.recordContentEdit('usage-2', 'notes-1', { kind: 'notes', content: 'b' })
+      })
+
+      await act(async () => {
+        await result.current.flush()
+      })
+
+      expect(toast.error).toHaveBeenCalledTimes(1)
+    })
+
+    it('a non-stale rejection keeps the existing generic-toast, re-buffer-both behavior unchanged', async () => {
+      vi.mocked(apiClient.patch).mockRejectedValue(new Error('network'))
+      const { wrapper } = makeClientAndWrapper()
+      const { result } = renderHook(() => usePendingModifications('cons-1'), { wrapper })
+
+      act(() => {
+        result.current.recordContentEdit('usage-1', 'notes-1', {
+          kind: 'notes',
+          content: 'will still retry',
+        })
+      })
+
+      let ok = true
+      await act(async () => {
+        ok = await result.current.flush()
+      })
+
+      expect(ok).toBe(false)
+      expect(toast.error).toHaveBeenCalledWith(
+        'No se pudo actualizar el protocolo de la consulta.',
+      )
+      const overlaid = result.current.withPending(consultation)
+      const notesBlock = overlaid.protocolUsages[0]!.content.blocks[1] as unknown as {
+        content: string
+      }
+      expect(notesBlock.content).toBe('will still retry')
+    })
   })
 })
 

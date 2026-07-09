@@ -1,20 +1,36 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Button, Spinner, Textarea, Overline } from '@/components/ui'
+import {
+  Button,
+  Spinner,
+  Textarea,
+  Overline,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui'
 import {
   useConsultationRecord,
   useEnsureRecord,
   useUpdateRecordSections,
   useRegenerateRecord,
   useSignRecord,
+  useRecordVersions,
+  useRecordVersion,
   downloadRecordPdf,
 } from '@/hooks/consultations/use-consultation-record'
 import { toastStrings } from '@/lib/toasts'
 import type { RecordSection } from '@rezeta/shared'
 import { patientDetailStrings as s } from './strings'
 
-function handleDownloadRecordPdf(consultationId: string): void {
-  downloadRecordPdf(consultationId).catch(() => {
+function handleDownloadRecordPdf(consultationId: string, versionNumber?: number): void {
+  const promise =
+    versionNumber !== undefined
+      ? downloadRecordPdf(consultationId, versionNumber)
+      : downloadRecordPdf(consultationId)
+  promise.catch(() => {
     toast.error(toastStrings.errorHistoriaDownload)
   })
 }
@@ -29,12 +45,18 @@ export function RecordDocument({
   consultationStatus,
 }: RecordDocumentProps): JSX.Element {
   const { data: record, isLoading } = useConsultationRecord(consultationId)
+  const { data: versions } = useRecordVersions(consultationId)
   const ensure = useEnsureRecord()
   const update = useUpdateRecordSections(consultationId)
   const regenerate = useRegenerateRecord(consultationId)
   const signRecord = useSignRecord(consultationId)
   const [editing, setEditing] = useState(false)
   const [draftTexts, setDraftTexts] = useState<Record<string, string>>({})
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
+
+  const latestVersionNumber = record?.versionNumber ?? null
+  const isViewingOlder = selectedVersion !== null && selectedVersion !== latestVersionNumber
+  const { data: olderRecord } = useRecordVersion(consultationId, isViewingOlder ? selectedVersion : null)
 
   if (isLoading) {
     return (
@@ -58,7 +80,16 @@ export function RecordDocument({
     )
   }
 
-  const isDraft = record.status === 'draft'
+  if (isViewingOlder && !olderRecord) {
+    return (
+      <div className="flex items-center justify-center h-[200px]">
+        <Spinner size="md" className="text-n-400" />
+      </div>
+    )
+  }
+
+  const viewedRecord = isViewingOlder && olderRecord ? olderRecord : record
+  const isDraft = !isViewingOlder && record.status === 'draft'
   const editableSections = record.sections.filter((sec) => sec.key !== 'ficha_identificacion')
 
   function startEdit(): void {
@@ -93,7 +124,20 @@ export function RecordDocument({
 
   return (
     <div>
-      {isDraft ? (
+      {isViewingOlder ? (
+        <div className="flex items-center gap-2 px-5 py-2 bg-n-50 border-b border-n-200">
+          <span className="text-[12px] font-medium text-n-500">{s.olderVersionNotice}</span>
+          <div className="ml-auto flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleDownloadRecordPdf(consultationId, viewedRecord.versionNumber)}
+            >
+              <i className="ph ph-download-simple" /> {s.historiaDownload}
+            </Button>
+          </div>
+        </div>
+      ) : isDraft ? (
         <div className="flex items-center gap-2 px-5 py-2 bg-warning-bg border-b border-warning-border">
           <span className="text-[12px] font-medium text-warning-text">{s.historiaDraftBar}</span>
           <div className="ml-auto flex gap-2">
@@ -150,15 +194,35 @@ export function RecordDocument({
       )}
 
       <div className="p-5 max-w-[640px]">
-        <div className="mb-4 pb-3 border-b border-n-200">
+        <div className="mb-4 pb-3 border-b border-n-200 flex items-center justify-between gap-3">
           <Overline size="sm" tone="neutral">
-            {record.kind === 'first_visit' ? s.historiaKindFirstVisit : s.historiaKindEvolution}
+            {viewedRecord.kind === 'first_visit' ? s.historiaKindFirstVisit : s.historiaKindEvolution}
             {' · v'}
-            {record.versionNumber}
+            {viewedRecord.versionNumber}
           </Overline>
+          {versions && versions.length > 1 && (
+            <Select
+              value={String(selectedVersion ?? latestVersionNumber)}
+              onValueChange={(value) => {
+                const versionNumber = Number(value)
+                setSelectedVersion(versionNumber === latestVersionNumber ? null : versionNumber)
+              }}
+            >
+              <SelectTrigger aria-label={s.versionSelectorAria} className="w-auto min-w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {versions.map((ver) => (
+                  <SelectItem key={ver.versionNumber} value={String(ver.versionNumber)}>
+                    {s.versionLabel(ver.versionNumber)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
-        {record.sections.map((section: RecordSection) => (
+        {viewedRecord.sections.map((section: RecordSection) => (
           <div key={section.key} className="mb-4 pl-3 border-l-2 border-p-500">
             <div className="flex items-center gap-2 mb-1">
               <Overline size="sm" tone="primary">
@@ -170,7 +234,7 @@ export function RecordDocument({
                 </span>
               )}
             </div>
-            {editing && section.key !== 'ficha_identificacion' ? (
+            {editing && !isViewingOlder && section.key !== 'ficha_identificacion' ? (
               <Textarea
                 className="min-h-[80px]"
                 value={draftTexts[section.key] as string}

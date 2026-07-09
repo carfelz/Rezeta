@@ -101,6 +101,47 @@ describe('TemplateEditor — clinical_notes detail panel', () => {
   })
 })
 
+// ─── (c.1) header "Requerido" toggle is the single Obligatorio control ──────
+
+describe('TemplateEditor — header required toggle', () => {
+  it('toggling the header checkbox round-trips `required` into reducer state', () => {
+    const onSave = vi.fn()
+    render(<TemplateEditor {...baseProps({ onSave })} />)
+    fireEvent.click(screen.getByRole('button', { name: templateEditorWidgetStrings.addSection }))
+    fireEvent.click(
+      screen.getByRole('button', { name: templateEditorWidgetStrings.addClinicalNotes }),
+    )
+
+    const headerCheckbox = screen.getByRole('checkbox', {
+      name: templateEditorWidgetStrings.requiredLabel,
+    })
+    expect(headerCheckbox).not.toBeChecked()
+    fireEvent.click(headerCheckbox)
+
+    const schema = saveAndGetSchema(onSave)
+    const section = schema.blocks[0] as SchemaBlockWithChildren
+    const clinicalNotesBlock = section.placeholder_blocks?.[0] as { required?: boolean }
+    expect(clinicalNotesBlock.required).toBe(true)
+  })
+
+  it('the clinical_notes detail panel no longer renders a duplicate Obligatorio checkbox', () => {
+    const onSave = vi.fn()
+    render(<TemplateEditor {...baseProps({ onSave })} />)
+    fireEvent.click(screen.getByRole('button', { name: templateEditorWidgetStrings.addSection }))
+    fireEvent.click(
+      screen.getByRole('button', { name: templateEditorWidgetStrings.addClinicalNotes }),
+    )
+
+    // The block is auto-expanded on add, so the detail panel (label input,
+    // former Obligatorio checkbox, placeholder textarea) is already visible.
+    // Two blocks exist (section + clinical_notes), each with its own header
+    // "Requerido"/"Requerida" toggle — that's the only place a checkbox
+    // should render; the detail panel must not add a third, duplicate one.
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2)
+    expect(screen.queryByText('Obligatorio')).not.toBeInTheDocument()
+  })
+})
+
 // ─── (d) dosage_table detail panel row editor ───────────────────────────────
 
 describe('TemplateEditor — dosage_table detail panel', () => {

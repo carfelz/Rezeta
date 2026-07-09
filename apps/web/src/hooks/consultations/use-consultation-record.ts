@@ -3,7 +3,12 @@ import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient, ApiRequestError, triggerDownload } from '@/lib/api-client'
 import { toastStrings } from '@/lib/toasts'
-import type { ConsultationRecordDto, RecordSectionKey, UpdateRecordSectionsDto } from '@rezeta/shared'
+import type {
+  ConsultationRecordDto,
+  RecordSectionKey,
+  RecordVersionSummary,
+  UpdateRecordSectionsDto,
+} from '@rezeta/shared'
 import { RECORD_SECTION_TITLES } from '@rezeta/shared'
 
 const QK = 'consultation-record'
@@ -27,15 +32,44 @@ export function useConsultationRecord(
   })
 }
 
+export function useRecordVersions(
+  consultationId: string | null,
+): UseQueryResult<RecordVersionSummary[], Error> {
+  return useQuery({
+    queryKey: [QK, consultationId, 'versions'],
+    queryFn: () =>
+      apiClient.get<RecordVersionSummary[]>(`/v1/consultations/${consultationId}/record/versions`),
+    enabled: Boolean(consultationId),
+  })
+}
+
+export function useRecordVersion(
+  consultationId: string | null,
+  versionNumber: number | null,
+): UseQueryResult<ConsultationRecordDto, Error> {
+  return useQuery({
+    queryKey: [QK, consultationId, 'versions', versionNumber],
+    queryFn: () =>
+      apiClient.get<ConsultationRecordDto>(
+        `/v1/consultations/${consultationId}/record/versions/${versionNumber}`,
+      ),
+    enabled: Boolean(consultationId) && versionNumber !== null,
+  })
+}
+
 function useRecordMutation<TVars>(
   consultationId: string,
   run: (vars: TVars) => Promise<ConsultationRecordDto>,
+  options?: { invalidateVersions?: boolean },
 ): UseMutationResult<ConsultationRecordDto, Error, TVars> {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: run,
     onSuccess: (record) => {
       qc.setQueryData([QK, consultationId], record)
+      if (options?.invalidateVersions) {
+        void qc.invalidateQueries({ queryKey: [QK, consultationId, 'versions'] })
+      }
     },
     onError: () => {
       toast.error(toastStrings.errorHistoriaSave)
@@ -68,11 +102,14 @@ export function useUpdateRecordSections(
 export function useRegenerateRecord(
   consultationId: string,
 ): UseMutationResult<ConsultationRecordDto, Error, void> {
-  return useRecordMutation(consultationId, () =>
-    apiClient.post<ConsultationRecordDto>(
-      `/v1/consultations/${consultationId}/record/regenerate`,
-      {},
-    ),
+  return useRecordMutation(
+    consultationId,
+    () =>
+      apiClient.post<ConsultationRecordDto>(
+        `/v1/consultations/${consultationId}/record/regenerate`,
+        {},
+      ),
+    { invalidateVersions: true },
   )
 }
 
@@ -85,6 +122,7 @@ export function useSignRecord(
       apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record/sign`, {}),
     onSuccess: (record) => {
       qc.setQueryData([QK, consultationId], record)
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'versions'] })
     },
     onError: (err) => {
       if (err instanceof ApiRequestError && err.error.code === 'RECORD_REQUIRED_SECTIONS_MISSING') {
@@ -106,9 +144,17 @@ export function useSignRecord(
   })
 }
 
-export async function downloadRecordPdf(consultationId: string): Promise<void> {
-  const blob = await apiClient.download(`/v1/consultations/${consultationId}/record/pdf`)
-  triggerDownload(blob, `historia-${consultationId}.pdf`)
+export async function downloadRecordPdf(
+  consultationId: string,
+  versionNumber?: number,
+): Promise<void> {
+  const query = versionNumber !== undefined ? `?version=${versionNumber}` : ''
+  const blob = await apiClient.download(`/v1/consultations/${consultationId}/record/pdf${query}`)
+  const filename =
+    versionNumber !== undefined
+      ? `historia-${consultationId}-v${versionNumber}.pdf`
+      : `historia-${consultationId}.pdf`
+  triggerDownload(blob, filename)
 }
 
 export async function downloadExpediente(patientId: string): Promise<void> {

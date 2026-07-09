@@ -113,6 +113,7 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
     completedAt: row.completedAt?.toISOString() ?? null,
     notes: row.notes,
     appliedAt: row.appliedAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
     protocolTitle: row.protocol.title,
     protocolTypeName: null,
     versionNumber: row.protocolVersion.versionNumber,

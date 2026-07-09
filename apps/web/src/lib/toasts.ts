@@ -88,6 +88,8 @@ export const toastStrings = {
   protocolUsageRemoved: 'Protocolo removido de la consulta',
   errorProtocolSave: 'No se pudo guardar el protocolo.',
   errorProtocolUsage: 'No se pudo actualizar el protocolo de la consulta.',
+  errorProtocolUsageStale:
+    'Este protocolo fue actualizado en otra pestaña o dispositivo. Recarga la consulta para continuar.',
 
   // ── Protocol Types ──────────────────────────────────────────────────────────
   protocolTypeCreated: 'Tipo de protocolo creado',

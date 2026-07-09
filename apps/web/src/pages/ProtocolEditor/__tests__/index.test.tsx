@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -154,5 +154,46 @@ describe('ProtocolEditor save-path wiring', () => {
 
     await waitFor(() => expect(saveVersion).toHaveBeenCalled())
     expect(screen.queryByText(protocolEditorStrings.draftRecovered)).not.toBeInTheDocument()
+  })
+
+  it('persists historia_mapping to the local draft on an autosave tick after a mapping-only edit', () => {
+    vi.useFakeTimers()
+    try {
+      setup()
+
+      act(() => {
+        const tab = screen.getByRole('tab', { name: 'Historia médica' })
+        tab.focus()
+        fireEvent.click(tab)
+      })
+      act(() => {
+        fireEvent.click(screen.getAllByRole('switch')[0]!)
+      })
+
+      act(() => {
+        vi.advanceTimersByTime(30_000)
+      })
+
+      const raw = window.localStorage.getItem('protocol-draft-proto-1')
+      expect(raw).not.toBeNull()
+      expect(JSON.parse(raw!).historia_mapping).toEqual({ b1: { include: false } })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('applies the historia mapping from a recovered draft', async () => {
+    vi.mocked(loadLocalDraft).mockReturnValue({
+      blocks: [{ id: 'b1', type: 'clinical_notes', label: 'Motivo de consulta', content: 'x' }],
+      historiaMapping: { b1: { include: false } },
+      savedAt: Date.now(),
+    })
+    setup()
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: protocolEditorStrings.draftUse }))
+    await user.click(screen.getByRole('tab', { name: 'Historia médica' }))
+
+    expect(screen.getAllByRole('switch')[0]).toHaveAttribute('aria-checked', 'false')
   })
 })

@@ -92,6 +92,8 @@ const mockRepo = {
   create: vi.fn(),
   replaceSections: vi.fn(),
   sign: vi.fn(),
+  listVersions: vi.fn(),
+  findByVersion: vi.fn(),
 }
 
 const mockPrisma = {
@@ -168,6 +170,42 @@ describe('ensureDraft', () => {
       },
     })
   })
+
+  it('recovers from a P2002 race by re-reading the winning record instead of creating another', async () => {
+    mockRepo.findLatest
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(makeRecord({ id: 'rec-winner' }))
+    mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow())
+    mockPrisma.consultation.count.mockResolvedValue(0)
+    const p2002Error = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+    mockRepo.create.mockRejectedValueOnce(p2002Error)
+
+    const result = await svc.ensureDraft('c1', 't1')
+    expect(result.id).toBe('rec-winner')
+    expect(mockRepo.create).toHaveBeenCalledTimes(1)
+    expect(mockRepo.findLatest).toHaveBeenCalledTimes(2)
+  })
+
+  it('rethrows non-P2002 errors from create without re-reading', async () => {
+    mockRepo.findLatest.mockResolvedValueOnce(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow())
+    mockPrisma.consultation.count.mockResolvedValue(0)
+    const dbError = new Error('DB connection lost')
+    mockRepo.create.mockRejectedValueOnce(dbError)
+
+    await expect(svc.ensureDraft('c1', 't1')).rejects.toThrow('DB connection lost')
+    expect(mockRepo.findLatest).toHaveBeenCalledTimes(1)
+  })
+
+  it('rethrows the P2002 error if the re-read also returns nothing (extreme edge case)', async () => {
+    mockRepo.findLatest.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
+    mockPrisma.consultation.findFirst.mockResolvedValue(makeConsultationRow())
+    mockPrisma.consultation.count.mockResolvedValue(0)
+    const p2002Error = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+    mockRepo.create.mockRejectedValueOnce(p2002Error)
+
+    await expect(svc.ensureDraft('c1', 't1')).rejects.toThrow(p2002Error)
+  })
 })
 
 describe('regenerate', () => {
@@ -217,6 +255,48 @@ describe('regenerate', () => {
     expect(result.versionNumber).toBe(2)
     const created = mockRepo.create.mock.calls[0][0]
     expect(created.sections.some((s: RecordSection) => s.key === 'enmiendas')).toBe(true)
+  })
+
+  it('retries once with a recomputed version number when create races another version (P2002)', async () => {
+    mockRepo.findLatest
+      .mockResolvedValueOnce(makeRecord({ status: 'signed', versionNumber: 1 }))
+      .mockResolvedValueOnce(makeRecord({ status: 'signed', versionNumber: 2 }))
+    mockPrisma.consultation.findFirst.mockResolvedValue(
+      makeConsultationRow({
+        status: 'amended',
+        amendments: [{ reason: 'Dosis corregida', amendedAt: now }],
+      }),
+    )
+    mockPrisma.consultation.count.mockResolvedValue(1)
+    const p2002Error = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+    mockRepo.create
+      .mockRejectedValueOnce(p2002Error)
+      .mockImplementationOnce((data) => Promise.resolve(makeRecord({ versionNumber: data.versionNumber })))
+
+    const result = await svc.regenerate('c1', 't1')
+    expect(result.versionNumber).toBe(3)
+    expect(mockRepo.create).toHaveBeenCalledTimes(2)
+    expect(mockRepo.create.mock.calls[1]![0].versionNumber).toBe(3)
+    expect(mockRepo.findLatest).toHaveBeenCalledTimes(2)
+  })
+
+  it('rethrows the second P2002 error when the retry also collides', async () => {
+    mockRepo.findLatest
+      .mockResolvedValueOnce(makeRecord({ status: 'signed', versionNumber: 1 }))
+      .mockResolvedValueOnce(makeRecord({ status: 'signed', versionNumber: 2 }))
+    mockPrisma.consultation.findFirst.mockResolvedValue(
+      makeConsultationRow({
+        status: 'amended',
+        amendments: [{ reason: 'Dosis corregida', amendedAt: now }],
+      }),
+    )
+    mockPrisma.consultation.count.mockResolvedValue(1)
+    const p2002ErrorFirst = Object.assign(new Error('Unique constraint (1st)'), { code: 'P2002' })
+    const p2002ErrorSecond = Object.assign(new Error('Unique constraint (2nd)'), { code: 'P2002' })
+    mockRepo.create.mockRejectedValueOnce(p2002ErrorFirst).mockRejectedValueOnce(p2002ErrorSecond)
+
+    await expect(svc.regenerate('c1', 't1')).rejects.toThrow(p2002ErrorSecond)
+    expect(mockRepo.create).toHaveBeenCalledTimes(2)
   })
 
   it('rejects when latest is signed and there is no amendment', async () => {
@@ -342,10 +422,65 @@ describe('sign', () => {
   })
 })
 
+describe('listVersions', () => {
+  it('maps repo rows to version summaries', async () => {
+    const summaries = [
+      { id: 'rec2', versionNumber: 2, kind: 'evolution', status: 'signed', generatedAt: now.toISOString(), signedAt: now.toISOString() },
+      { id: 'rec1', versionNumber: 1, kind: 'first_visit', status: 'signed', generatedAt: now.toISOString(), signedAt: now.toISOString() },
+    ]
+    mockRepo.listVersions.mockResolvedValue(summaries)
+    const result = await svc.listVersions('c1', 't1')
+    expect(mockRepo.listVersions).toHaveBeenCalledWith('c1', 't1')
+    expect(result).toEqual(summaries)
+  })
+
+  it('returns an empty array when no record exists (no 404)', async () => {
+    mockRepo.listVersions.mockResolvedValue([])
+    const result = await svc.listVersions('c1', 't1')
+    expect(result).toEqual([])
+  })
+})
+
+describe('getVersion', () => {
+  it('returns the full dto for that version', async () => {
+    mockRepo.findByVersion.mockResolvedValue(makeRecord({ versionNumber: 2 }))
+    const result = await svc.getVersion('c1', 't1', 2)
+    expect(mockRepo.findByVersion).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(result.versionNumber).toBe(2)
+  })
+
+  it('throws RECORD_NOT_FOUND when that version does not exist', async () => {
+    mockRepo.findByVersion.mockResolvedValue(null)
+    await expect(svc.getVersion('c1', 't1', 99)).rejects.toMatchObject({
+      response: { code: 'RECORD_NOT_FOUND' },
+    })
+  })
+})
+
 describe('getPdfData', () => {
   it('throws RECORD_NOT_FOUND when no record exists', async () => {
     mockRepo.findLatest.mockResolvedValue(null)
     await expect(svc.getPdfData('c1', 't1')).rejects.toMatchObject({
+      response: { code: 'RECORD_NOT_FOUND' },
+    })
+  })
+
+  it('loads a specific version when versionNumber is provided', async () => {
+    mockRepo.findByVersion.mockResolvedValue(makeRecord({ versionNumber: 2 }))
+    mockPrisma.consultation.findFirst.mockResolvedValue({
+      ...makeConsultationRow(),
+      doctor: { fullName: 'Ana Herrera', specialty: 'Cardiología', licenseNumber: '145-23' },
+      location: null,
+    })
+    const result = await svc.getPdfData('c1', 't1', 2)
+    expect(mockRepo.findByVersion).toHaveBeenCalledWith('c1', 't1', 2)
+    expect(mockRepo.findLatest).not.toHaveBeenCalled()
+    expect(result.record.versionNumber).toBe(2)
+  })
+
+  it('throws RECORD_NOT_FOUND when the requested version does not exist', async () => {
+    mockRepo.findByVersion.mockResolvedValue(null)
+    await expect(svc.getPdfData('c1', 't1', 99)).rejects.toMatchObject({
       response: { code: 'RECORD_NOT_FOUND' },
     })
   })

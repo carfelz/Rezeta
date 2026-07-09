@@ -47,7 +47,6 @@ export const templateEditorWidgetStrings = {
   blockPlaceholderInstruction: 'Instrucción para el médico al rellenar este bloque',
   addBlockLabel: 'Añadir bloque',
   clinicalNotesLabelPlaceholder: 'Ej. Nota de evolución',
-  obligatorio: 'Obligatorio',
   dosageRowsLabel: 'Filas de dosis',
   dosageColumnLabels: {
     drug: 'Fármaco',

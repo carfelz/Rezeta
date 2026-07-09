@@ -18,10 +18,29 @@ function resolveAction(method: string, path: string): AuditEntityAction {
   return 'update'
 }
 
-/** Capitalizes a URL resource segment, singularizing it only when it actually ends in a plural 's' (e.g. 'patients' -> 'Patient'); non-plural segments are capitalized as-is (e.g. 'onboarding' -> 'Onboarding'). */
+/** Singularizes the last word of a hyphen-separated segment: '-ies' -> '-y', a trailing 's' is stripped (but only when it actually forms a plural, e.g. 'onboarding' is left untouched), anything else is unchanged. */
+function singularizeWord(word: string): string {
+  if (word.endsWith('ies')) return `${word.slice(0, -3)}y`
+  if (word.endsWith('s')) return word.slice(0, -1)
+  return word
+}
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
+/**
+ * Converts a kebab-case URL resource segment into a PascalCase entity type,
+ * singularizing only the last word (e.g. 'protocol-templates' -> 'ProtocolTemplate',
+ * 'protocol-categories' -> 'ProtocolCategory', 'patients' -> 'Patient',
+ * 'onboarding' -> 'Onboarding').
+ */
 function toEntityType(segment: string): string {
-  const singular = segment.endsWith('s') ? segment.slice(0, -1) : segment
-  return singular.charAt(0).toUpperCase() + singular.slice(1)
+  const words = segment.split('-').filter(Boolean)
+  if (words.length === 0) return capitalize(segment)
+  return words
+    .map((word, index) => capitalize(index === words.length - 1 ? singularizeWord(word) : word))
+    .join('')
 }
 
 function extractEntityName(response: unknown): string | undefined {

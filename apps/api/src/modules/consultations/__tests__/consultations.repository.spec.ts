@@ -43,6 +43,7 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
     completedAt: null,
     notes: null,
     appliedAt: now,
+    updatedAt: now,
     protocol: { title: 'Anaphylaxis' },
     protocolVersion: { versionNumber: 1 },
     childUsages: [],
@@ -665,6 +666,12 @@ describe('ConsultationsRepository', () => {
       const result = await repo.findProtocolUsageById('pu1', 't1')
       expect(result?.id).toBe('pu1')
       expect(result?.protocolTitle).toBe('Anaphylaxis')
+    })
+
+    it('maps updatedAt to an ISO string', async () => {
+      mockPrisma.protocolUsage.findFirst.mockResolvedValue(makeProtocolUsageRow({ updatedAt: now }))
+      const result = await repo.findProtocolUsageById('pu1', 't1')
+      expect(result?.updatedAt).toBe(now.toISOString())
     })
 
     it('returns null when not found', async () => {

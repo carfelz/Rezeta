@@ -36,11 +36,17 @@ describe('useOrderQueueSession', () => {
     act(() =>
       useOrderQueueStore.setState({
         activeTab: 'medications',
-        medicationGroups: [{ id: 'default-rx', title: 'Receta', order: 1 }],
+        medicationGroups: [
+          { id: 'default-rx', title: 'Receta', order: 1, requestId: crypto.randomUUID() },
+        ],
         medications: [],
-        imagingGroups: [{ id: 'default-img', title: 'Orden 1', order: 1 }],
+        imagingGroups: [
+          { id: 'default-img', title: 'Orden 1', order: 1, requestId: crypto.randomUUID() },
+        ],
         imagingOrders: [],
-        labGroups: [{ id: 'default-lab', title: 'Laboratorio 1', order: 1 }],
+        labGroups: [
+          { id: 'default-lab', title: 'Laboratorio 1', order: 1, requestId: crypto.randomUUID() },
+        ],
         labOrders: [],
       }),
     )
@@ -58,7 +64,7 @@ describe('useOrderQueueSession', () => {
 
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(1)
-    expect(medications[0].drug).toBe('Amoxicilina')
+    expect(medications[0]!.drug).toBe('Amoxicilina')
   })
 
   it('shows toast when restoring saved queue', async () => {
@@ -166,5 +172,116 @@ describe('useOrderQueueSession', () => {
     expect(() => renderHook(() => useOrderQueueSession(CONSULT_ID, false))).not.toThrow()
     const { medications } = useOrderQueueStore.getState()
     expect(medications).toHaveLength(0)
+  })
+
+  // Note: this test passes identically with or without the hydration gate
+  // under React's test renderer — effects for a single component run in
+  // declaration order within one commit, so the restore effect's
+  // reset()/restoreSnapshot() calls always land before the mirror effect
+  // reads the store, and the race described below cannot manifest here. It
+  // does not pin the gate itself. It documents the invariant (a snapshot
+  // must survive mount) and guards adjacent regressions — e.g. a future
+  // change that makes removeItem fire during mount.
+  it('does not wipe the localStorage snapshot via a pre-restore mirror-effect pass on mount', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(makeSnapshot()))
+
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    // The race: a mirror effect running before restore propagates would see
+    // empty queue arrays and call removeItem, wiping the snapshot before the
+    // restored values ever land. Assert it survives the initial mount intact.
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+    const { medications } = useOrderQueueStore.getState()
+    expect(medications).toHaveLength(1)
+    expect(medications[0]!.drug).toBe('Amoxicilina')
+
+    // Mechanism assertion (fallback per brief): removeItem must never be
+    // called for this key during the initial mount when a snapshot exists.
+    const removedThisKey = removeItemSpy.mock.calls.some(([key]) => key === STORAGE_KEY)
+    expect(removedThisKey).toBe(false)
+
+    removeItemSpy.mockRestore()
+  })
+
+  // Note: this test passes identically with or without the hydration gate
+  // under React's test renderer, for the same reason as the mount-race test
+  // above — effects run in declaration order within a commit, so the
+  // interleaving this test describes cannot manifest here. It does not pin
+  // the gate itself. It documents the invariant (a consultationId switch
+  // must not remove either id's snapshot) and guards adjacent regressions —
+  // e.g. a future change that makes removeItem fire during the switch.
+  it('does not let a consultationId switch remove the new id snapshot before its restore completes', () => {
+    const OTHER_ID = 'consult-xyz'
+    const OTHER_KEY = `rz:oq:${OTHER_ID}`
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(makeSnapshot()))
+    localStorage.setItem(OTHER_KEY, JSON.stringify(makeSnapshot()))
+
+    const { rerender } = renderHook(({ id }: { id: string }) => useOrderQueueSession(id, false), {
+      initialProps: { id: CONSULT_ID },
+    })
+
+    // id A is hydrated with a non-empty queue; switching to id B triggers a
+    // transient reset() before B's restore lands. Neither key should be
+    // removed as a side effect of that transient state.
+    rerender({ id: OTHER_ID })
+
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+    expect(localStorage.getItem(OTHER_KEY)).not.toBeNull()
+
+    const { medications } = useOrderQueueStore.getState()
+    expect(medications).toHaveLength(1)
+    expect(medications[0]!.drug).toBe('Amoxicilina')
+
+    removeItemSpy.mockRestore()
+  })
+
+  // These two tests pin the hydration gate's real failure mode: a restore-
+  // effect exit path that forgets to set hydrated.current = true. If that
+  // happened, the mirror effect would early-return forever and the queue
+  // would never be persisted again — these tests fail in that scenario
+  // because they assert a post-mount write actually reaches localStorage.
+  it('still mirrors queue changes to localStorage after a corrupted snapshot on mount', () => {
+    localStorage.setItem(STORAGE_KEY, 'not-valid-json{')
+
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    act(() => {
+      useOrderQueueStore.getState().queueMedication({
+        drug: 'Post-corrupt',
+        dose: '250mg',
+        route: 'oral',
+        frequency: 'cada 12h',
+        duration: '3 días',
+      })
+    })
+
+    const stored = localStorage.getItem(STORAGE_KEY)
+    expect(stored).not.toBeNull()
+    const parsed = JSON.parse(stored!)
+    expect(parsed.medications).toHaveLength(1)
+    expect(parsed.medications[0].drug).toBe('Post-corrupt')
+  })
+
+  it('still mirrors queue changes to localStorage after mounting with no saved snapshot', () => {
+    renderHook(() => useOrderQueueSession(CONSULT_ID, false))
+
+    act(() => {
+      useOrderQueueStore.getState().queueMedication({
+        drug: 'Fresh',
+        dose: '100mg',
+        route: 'oral',
+        frequency: 'diario',
+        duration: '10 días',
+      })
+    })
+
+    const stored = localStorage.getItem(STORAGE_KEY)
+    expect(stored).not.toBeNull()
+    const parsed = JSON.parse(stored!)
+    expect(parsed.medications).toHaveLength(1)
+    expect(parsed.medications[0].drug).toBe('Fresh')
   })
 })
