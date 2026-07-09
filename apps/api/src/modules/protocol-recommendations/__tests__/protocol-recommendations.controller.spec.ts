@@ -13,6 +13,7 @@ const user: AuthUser = {
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,
+  preferences: {},
 }
 
 describe('ProtocolRecommendationsController', () => {

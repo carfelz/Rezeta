@@ -30,6 +30,7 @@ function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
     completedAt: null,
     notes: null,
     appliedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     modificationSummary: null,
     modifications: {},
     content: { version: '1.0', blocks },
@@ -53,6 +54,8 @@ function makeConsultation(usage: ConsultationProtocolUsage): ConsultationWithDet
     patientName: 'Isabel',
     locationName: 'Centro',
     doctorName: 'Dr. García',
+    patientAllergies: [],
+    patientChronicConditions: [],
     amendments: [],
     protocolUsages: [usage],
   }

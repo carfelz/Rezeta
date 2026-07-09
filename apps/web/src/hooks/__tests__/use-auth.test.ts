@@ -13,6 +13,7 @@ const mockUser = {
   specialty: 'Cardiología',
   licenseNumber: 'CMP-001',
   tenantSeededAt: null,
+  preferences: {},
 }
 
 describe('useAuth', () => {

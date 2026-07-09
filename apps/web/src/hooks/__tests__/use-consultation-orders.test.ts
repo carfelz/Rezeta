@@ -67,10 +67,11 @@ describe('useCreatePrescriptionGroup', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ items: [] })
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/prescriptions', {
       items: [],
+      groupOrder: 1,
     })
   })
 })
@@ -84,10 +85,11 @@ describe('useCreateImagingOrderGroup', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ orders: [] })
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/imaging-orders', {
-      orders: [],
+      items: [],
+      groupOrder: 1,
     })
   })
 })
@@ -101,10 +103,11 @@ describe('useCreateLabOrderGroup', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ orders: [] })
+      await result.current.mutateAsync({ items: [], groupOrder: 1 })
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/consultations/cons-1/lab-orders', {
-      orders: [],
+      items: [],
+      groupOrder: 1,
     })
   })
 })

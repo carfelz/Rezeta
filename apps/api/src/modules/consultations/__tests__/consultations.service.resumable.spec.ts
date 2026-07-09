@@ -28,6 +28,8 @@ function makeConsultation(
     patientName: 'Isabel Cristina',
     locationName: 'Centro',
     doctorName: 'Dr. García',
+    patientAllergies: [],
+    patientChronicConditions: [],
     amendments: [],
     protocolUsages: [],
     ...overrides,

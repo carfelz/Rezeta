@@ -49,7 +49,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       usageCount: 3,
       isMostProbable: true,
     })
-    expect(result[0].lastUsedAt).toBe('2026-04-01T10:00:00.000Z')
+    expect(result[0]!.lastUsedAt).toBe('2026-04-01T10:00:00.000Z')
   })
 
   it('zeros per-patient signals for step-2 doctor-history rows', async () => {
@@ -99,7 +99,7 @@ describe('ProtocolRecommendationsRepository — source tagging', () => {
       .mockResolvedValueOnce([])
 
     const result = await repo.getRecommendations(tenantId, doctorUserId, patientId, 5)
-    expect(result[0].isMostProbable).toBe(false)
+    expect(result[0]!.isMostProbable).toBe(false)
   })
 
   it('marks step-3 rows as fallback with null lastUsedAt and zero usageCount', async () => {

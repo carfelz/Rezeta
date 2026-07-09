@@ -29,7 +29,7 @@ describe('VitalsSection', () => {
     render(
       <VitalsSection vitals={{ ...EMPTY_LOCAL_VITALS, hr: '70' }} onChange={vi.fn()} disabled />,
     )
-    const hr = screen.getByDisplayValue('70')
+    const hr = screen.getByDisplayValue<HTMLInputElement>('70')
     expect(hr.disabled).toBe(true)
   })
 })

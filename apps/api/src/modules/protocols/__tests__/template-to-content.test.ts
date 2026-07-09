@@ -6,7 +6,7 @@ import { getStarterFixtures } from '../../../lib/starter-fixtures/index.js'
 // Helper to extract a single block from the output
 function firstBlock(schema: unknown): Record<string, unknown> {
   const out = buildProtocolContentFromTemplate(schema)
-  return (out.blocks as Array<Record<string, unknown>>)[0]
+  return (out.blocks as Array<Record<string, unknown>>)[0]!
 }
 
 describe('buildProtocolContentFromTemplate', () => {
@@ -29,7 +29,7 @@ describe('buildProtocolContentFromTemplate', () => {
         ] },
       ],
     })
-    const section = (out.blocks as Array<Record<string, unknown>>)[0]
+    const section = (out.blocks as Array<Record<string, unknown>>)[0]!
     expect(section).not.toHaveProperty('placeholder_blocks')
     expect(section).not.toHaveProperty('required')
     expect(Array.isArray(section.blocks)).toBe(true)
@@ -40,7 +40,7 @@ describe('buildProtocolContentFromTemplate', () => {
       version: '1.0',
       blocks: [{ type: 'text', placeholder: 'hint', required: true, description: 'd' }],
     })
-    const block = (out.blocks as Array<Record<string, unknown>>)[0]
+    const block = (out.blocks as Array<Record<string, unknown>>)[0]!
     expect(block).not.toHaveProperty('placeholder')
     expect(block).not.toHaveProperty('required')
     expect(block).not.toHaveProperty('description')
@@ -90,7 +90,7 @@ describe('buildProtocolContentFromTemplate', () => {
       version: '1.0',
       blocks: [{ id: 'sec', type: 'section', title: 'Empty section' }],
     })
-    const section = (out.blocks as Array<Record<string, unknown>>)[0]
+    const section = (out.blocks as Array<Record<string, unknown>>)[0]!
     expect(Array.isArray(section.blocks)).toBe(true)
     expect((section.blocks as unknown[]).length).toBe(0)
   })
@@ -104,7 +104,7 @@ describe('buildProtocolContentFromTemplate', () => {
       ],
     })
     const blocks = out.blocks as Array<Record<string, unknown>>
-    expect(blocks[0].description).toBe('keep me')
+    expect(blocks[0]!.description).toBe('keep me')
     expect(blocks[1]).not.toHaveProperty('description')
   })
 
@@ -178,9 +178,9 @@ describe('buildProtocolContentFromTemplate', () => {
       const items = block.items as Array<Record<string, unknown>>
       expect(Array.isArray(items)).toBe(true)
       expect(items.length).toBeGreaterThanOrEqual(1)
-      expect(typeof items[0].id).toBe('string')
-      expect(typeof items[0].text).toBe('string')
-      expect(typeof items[0].critical).toBe('boolean')
+      expect(typeof items[0]!.id).toBe('string')
+      expect(typeof items[0]!.text).toBe('string')
+      expect(typeof items[0]!.critical).toBe('boolean')
     })
 
     it('seeds one empty item when items is an empty array', () => {
@@ -197,7 +197,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const items = block.items as Array<Record<string, unknown>>
       expect(items.length).toBe(1)
-      expect(items[0].text).toBe('Check vitals')
+      expect(items[0]!.text).toBe('Check vitals')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -212,9 +212,9 @@ describe('buildProtocolContentFromTemplate', () => {
       const steps = block.steps as Array<Record<string, unknown>>
       expect(Array.isArray(steps)).toBe(true)
       expect(steps.length).toBeGreaterThanOrEqual(1)
-      expect(typeof steps[0].id).toBe('string')
-      expect(steps[0].order).toBe(1)
-      expect(typeof steps[0].title).toBe('string')
+      expect(typeof steps[0]!.id).toBe('string')
+      expect(steps[0]!.order).toBe(1)
+      expect(typeof steps[0]!.title).toBe('string')
     })
 
     it('seeds one empty step when steps is an empty array', () => {
@@ -231,7 +231,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const steps = block.steps as Array<Record<string, unknown>>
       expect(steps.length).toBe(1)
-      expect(steps[0].title).toBe('Wash hands')
+      expect(steps[0]!.title).toBe('Wash hands')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -247,9 +247,9 @@ describe('buildProtocolContentFromTemplate', () => {
       const branches = block.branches as Array<Record<string, unknown>>
       expect(Array.isArray(branches)).toBe(true)
       expect(branches.length).toBeGreaterThanOrEqual(2)
-      expect(typeof branches[0].id).toBe('string')
-      expect(typeof branches[0].label).toBe('string')
-      expect(typeof branches[0].action).toBe('string')
+      expect(typeof branches[0]!.id).toBe('string')
+      expect(typeof branches[0]!.label).toBe('string')
+      expect(typeof branches[0]!.action).toBe('string')
     })
 
     it('seeds two branches when only one branch is present', () => {
@@ -272,7 +272,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const branches = block.branches as Array<Record<string, unknown>>
       expect(branches.length).toBe(2)
-      expect(branches[0].label).toBe('Yes')
+      expect(branches[0]!.label).toBe('Yes')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -293,8 +293,8 @@ describe('buildProtocolContentFromTemplate', () => {
       const rows = block.rows as Array<Record<string, unknown>>
       expect(Array.isArray(rows)).toBe(true)
       expect(rows.length).toBeGreaterThanOrEqual(1)
-      expect(typeof rows[0].id).toBe('string')
-      expect(typeof rows[0].drug).toBe('string')
+      expect(typeof rows[0]!.id).toBe('string')
+      expect(typeof rows[0]!.drug).toBe('string')
     })
 
     it('seeds one row when rows is an empty array', () => {
@@ -319,7 +319,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const rows = block.rows as Array<Record<string, unknown>>
       expect(rows.length).toBe(1)
-      expect(rows[0].drug).toBe('Aspirin')
+      expect(rows[0]!.drug).toBe('Aspirin')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -334,11 +334,11 @@ describe('buildProtocolContentFromTemplate', () => {
       const orders = block.orders as Array<Record<string, unknown>>
       expect(Array.isArray(orders)).toBe(true)
       expect(orders.length).toBeGreaterThanOrEqual(1)
-      expect(typeof orders[0].id).toBe('string')
-      expect(typeof orders[0].test_name).toBe('string')
-      expect(orders[0].urgency).toBe('routine')
-      expect(orders[0].fasting_required).toBe(false)
-      expect(orders[0].sample_type).toBe('blood')
+      expect(typeof orders[0]!.id).toBe('string')
+      expect(typeof orders[0]!.test_name).toBe('string')
+      expect(orders[0]!.urgency).toBe('routine')
+      expect(orders[0]!.fasting_required).toBe(false)
+      expect(orders[0]!.sample_type).toBe('blood')
     })
 
     it('seeds one order when orders is an empty array', () => {
@@ -362,7 +362,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const orders = block.orders as Array<Record<string, unknown>>
       expect(orders.length).toBe(1)
-      expect(orders[0].test_name).toBe('CBC')
+      expect(orders[0]!.test_name).toBe('CBC')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -377,11 +377,11 @@ describe('buildProtocolContentFromTemplate', () => {
       const orders = block.orders as Array<Record<string, unknown>>
       expect(Array.isArray(orders)).toBe(true)
       expect(orders.length).toBeGreaterThanOrEqual(1)
-      expect(typeof orders[0].id).toBe('string')
-      expect(typeof orders[0].study_type).toBe('string')
-      expect(orders[0].urgency).toBe('routine')
-      expect(orders[0].contrast).toBe(false)
-      expect(orders[0].fasting_required).toBe(false)
+      expect(typeof orders[0]!.id).toBe('string')
+      expect(typeof orders[0]!.study_type).toBe('string')
+      expect(orders[0]!.urgency).toBe('routine')
+      expect(orders[0]!.contrast).toBe(false)
+      expect(orders[0]!.fasting_required).toBe(false)
     })
 
     it('seeds one order when orders is an empty array', () => {
@@ -405,7 +405,7 @@ describe('buildProtocolContentFromTemplate', () => {
       })
       const orders = block.orders as Array<Record<string, unknown>>
       expect(orders.length).toBe(1)
-      expect(orders[0].study_type).toBe('X-Ray')
+      expect(orders[0]!.study_type).toBe('X-Ray')
     })
 
     it('output satisfies ProtocolContentSchema', () => {
@@ -442,7 +442,7 @@ describe('buildProtocolContentFromTemplate', () => {
         version: '1.0',
         blocks: [{ id: 'b1', type: 'spacer' }],
       })
-      const block = (out.blocks as Array<Record<string, unknown>>)[0]
+      const block = (out.blocks as Array<Record<string, unknown>>)[0]!
       expect(block.type).toBe('spacer')
       expect(block.id).toBe('b1')
       // The default branch does nothing — no extra fields are injected
@@ -456,7 +456,7 @@ describe('buildProtocolContentFromTemplate', () => {
         version: '1.0',
         blocks: [{ id: 'b2', type: 'spacer', height: 32 }],
       })
-      const block = (out.blocks as Array<Record<string, unknown>>)[0]
+      const block = (out.blocks as Array<Record<string, unknown>>)[0]!
       expect(block.height).toBe(32)
     })
   })

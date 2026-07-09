@@ -15,9 +15,15 @@ vi.mock('../../../lib/pdf.service.js', () => ({
 
 const mockUser: AuthUser = {
   id: 'user-1',
+  externalUid: 'ext-1',
   tenantId: 'tenant-1',
   email: 'doc@test.com',
+  fullName: 'Dr. Test',
   role: 'owner',
+  specialty: null,
+  licenseNumber: null,
+  tenantSeededAt: '2026-01-01T00:00:00Z',
+  preferences: {},
 }
 const tenantId = 'tenant-1'
 const consultationId = 'c1'

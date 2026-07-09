@@ -146,7 +146,7 @@ describe('ensureDraft', () => {
     mockRepo.create.mockImplementation((data) => Promise.resolve(makeRecord({ kind: data.kind })))
     const result = await svc.ensureDraft('c1', 't1')
     expect(result.kind).toBe('first_visit')
-    const created = mockRepo.create.mock.calls[0][0]
+    const created = mockRepo.create.mock.calls[0]![0]
     expect(created.versionNumber).toBe(1)
     expect(created.sections.some((s: RecordSection) => s.key === 'motivo_consulta' && s.content === 'Control de HTA.')).toBe(true)
     expect(created.sections.some((s: RecordSection) => s.key === 'plan_tratamiento' && s.content.includes('Losartán'))).toBe(true)
@@ -253,7 +253,7 @@ describe('regenerate', () => {
     )
     const result = await svc.regenerate('c1', 't1')
     expect(result.versionNumber).toBe(2)
-    const created = mockRepo.create.mock.calls[0][0]
+    const created = mockRepo.create.mock.calls[0]![0]
     expect(created.sections.some((s: RecordSection) => s.key === 'enmiendas')).toBe(true)
   })
 
@@ -501,7 +501,7 @@ describe('getPdfData', () => {
       location: { name: 'Centro Médico Naco', address: 'Av. Tiradentes 45' },
     })
     const result = await svc.getPdfData('c1', 't1')
-    expect(result.record.id).toBe('rec1')
+    expect(result.record.versionNumber).toBe(1)
     expect(result.doctor).toEqual({
       fullName: 'Ana Herrera',
       specialty: 'Cardiología',
@@ -728,9 +728,9 @@ describe('getExpedienteData', () => {
     expect(data.entries).toHaveLength(2)
     expect(data.patient.firstName).toBe('María')
     expect(data.doctor.fullName).toBe('Ana Herrera')
-    expect(data.entries[0].startedAt).toBe('2026-07-06T10:42:00.000Z')
-    expect(data.entries[1].startedAt).toBe('2026-05-22T09:00:00.000Z')
-    expect(data.entries[0].location).toEqual({ name: 'Naco', address: null })
+    expect(data.entries[0]!.startedAt).toBe('2026-07-06T10:42:00.000Z')
+    expect(data.entries[1]!.startedAt).toBe('2026-05-22T09:00:00.000Z')
+    expect(data.entries[0]!.location).toEqual({ name: 'Naco', address: null })
   })
 
   it('excludes records whose consultation is soft-deleted via the query filter', async () => {
@@ -779,8 +779,8 @@ describe('getExpedienteData', () => {
     ])
     const data = await svc.getExpedienteData('p1', 't1')
     expect(data.entries).toHaveLength(1)
-    expect(data.entries[0].record.versionNumber).toBe(2)
-    expect(data.entries[0].location).toBeNull()
+    expect(data.entries[0]!.record.versionNumber).toBe(2)
+    expect(data.entries[0]!.location).toBeNull()
   })
 
   it('defaults dateOfBirth and signedAt to null when absent', async () => {
@@ -802,8 +802,8 @@ describe('getExpedienteData', () => {
     ])
     const data = await svc.getExpedienteData('p1', 't1')
     expect(data.patient.dateOfBirth).toBeNull()
-    expect(data.entries[0].record.signedAt).toBeNull()
-    expect(data.entries[0].location).toBeNull()
+    expect(data.entries[0]!.record.signedAt).toBeNull()
+    expect(data.entries[0]!.location).toBeNull()
   })
 
   it('throws PATIENT_NOT_FOUND for a missing patient', async () => {

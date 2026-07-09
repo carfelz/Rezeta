@@ -31,6 +31,7 @@ describe('useAuthStore — internal setters', () => {
       specialty: 'Cardiología',
       licenseNumber: 'CMP-001',
       tenantSeededAt: null,
+      preferences: {},
     }
     act(() => result.current._setUser(mockUser))
     expect(result.current.user?.email).toBe('doctor@rezeta.app')
@@ -50,6 +51,7 @@ describe('useAuthStore — internal setters', () => {
         specialty: null,
         licenseNumber: null,
         tenantSeededAt: null,
+        preferences: {},
       }),
     )
     act(() => result.current._setUser(null))
@@ -123,6 +125,7 @@ describe('useAuthStore — internal setters', () => {
       specialty: 'Neurología',
       licenseNumber: null,
       tenantSeededAt: null,
+      preferences: {},
     }
     act(() => result.current.setUser(user))
     expect(result.current.user?.email).toBe('new@rezeta.app')

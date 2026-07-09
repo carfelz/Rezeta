@@ -246,63 +246,63 @@ describe('ProtocolsRepository', () => {
     it('applies default sort (updatedAt desc)', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1')
-      const orderBy = mockPrisma.protocol.findMany.mock.calls[0][0].orderBy
+      const orderBy = mockPrisma.protocol.findMany.mock.calls[0]![0].orderBy
       expect(orderBy).toEqual({ updatedAt: 'desc' })
     })
 
     it('applies updatedAt_asc sort', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { sort: 'updatedAt_asc' })
-      const orderBy = mockPrisma.protocol.findMany.mock.calls[0][0].orderBy
+      const orderBy = mockPrisma.protocol.findMany.mock.calls[0]![0].orderBy
       expect(orderBy).toEqual({ updatedAt: 'asc' })
     })
 
     it('applies title_asc sort', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { sort: 'title_asc' })
-      const orderBy = mockPrisma.protocol.findMany.mock.calls[0][0].orderBy
+      const orderBy = mockPrisma.protocol.findMany.mock.calls[0]![0].orderBy
       expect(orderBy).toEqual({ title: 'asc' })
     })
 
     it('applies title_desc sort', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { sort: 'title_desc' })
-      const orderBy = mockPrisma.protocol.findMany.mock.calls[0][0].orderBy
+      const orderBy = mockPrisma.protocol.findMany.mock.calls[0]![0].orderBy
       expect(orderBy).toEqual({ title: 'desc' })
     })
 
     it('applies categoryId filter when provided', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { categoryId: 'cat1' })
-      const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
+      const where = mockPrisma.protocol.findMany.mock.calls[0]![0].where
       expect(where.categoryId).toBe('cat1')
     })
 
     it('applies status filter when provided', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { status: 'active' })
-      const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
+      const where = mockPrisma.protocol.findMany.mock.calls[0]![0].where
       expect(where.status).toBe('active')
     })
 
     it('applies favoritesOnly filter when true', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { favoritesOnly: true })
-      const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
+      const where = mockPrisma.protocol.findMany.mock.calls[0]![0].where
       expect(where.isFavorite).toBe(true)
     })
 
     it('applies search filter when provided', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', { search: 'anaphylaxis' })
-      const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
+      const where = mockPrisma.protocol.findMany.mock.calls[0]![0].where
       expect(where.title).toEqual({ contains: 'anaphylaxis', mode: 'insensitive' })
     })
 
     it('omits optional filters when not provided', async () => {
       mockPrisma.protocol.findMany.mockResolvedValue([])
       await repo.list('t1', {})
-      const where = mockPrisma.protocol.findMany.mock.calls[0][0].where
+      const where = mockPrisma.protocol.findMany.mock.calls[0]![0].where
       expect(where.categoryId).toBeUndefined()
       expect(where.status).toBeUndefined()
       expect(where.isFavorite).toBeUndefined()
@@ -356,8 +356,8 @@ describe('ProtocolsRepository', () => {
       ])
       const result = await repo.listVersions('proto1', 't1')
       expect(result).toHaveLength(2)
-      expect(result[0].isCurrent).toBe(true)
-      expect(result[1].isCurrent).toBe(false)
+      expect(result[0]!.isCurrent).toBe(true)
+      expect(result[1]!.isCurrent).toBe(false)
     })
 
     it('returns empty array when protocol not found', async () => {
@@ -460,7 +460,7 @@ describe('ProtocolsRepository', () => {
         publish: false,
       })
 
-      const updateData = mockTx.protocol.update.mock.calls[0][0].data
+      const updateData = mockTx.protocol.update.mock.calls[0]![0].data
       expect(updateData.status).toBeUndefined()
     })
 

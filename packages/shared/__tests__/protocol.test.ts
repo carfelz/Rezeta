@@ -5,7 +5,7 @@ import {
   ProtocolTemplateSchemaContent,
   ConditionalRuleSchema,
   ComparisonOpSchema,
-} from '../src/schemas/protocol'
+} from '../src/schemas/protocol.js'
 
 describe('ProtocolBlockSchema', () => {
   it('validates a text block correctly', () => {

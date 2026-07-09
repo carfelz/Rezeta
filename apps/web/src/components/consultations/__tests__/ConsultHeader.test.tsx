@@ -65,7 +65,19 @@ describe('ConsultHeader', () => {
   })
 
   it('does not render subtitle when not provided', () => {
-    renderHeader({ subtitle: undefined })
+    render(
+      <MemoryRouter>
+        <ConsultHeader
+          breadcrumbs={[
+            { label: 'Pacientes', to: '/pacientes' },
+            { label: 'Isabel Cristina Cruz', to: '/pacientes/p1' },
+            { label: 'Consulta · 2 may de 2026' },
+          ]}
+          datetimeOverline="SÁBADO, 2 DE MAYO DE 2026 · 02:29 A.M. · CONSULTORIO PRIVADO DR. GARCÍA"
+          title="Nueva consulta"
+        />
+      </MemoryRouter>,
+    )
     expect(screen.queryByText('Isabel Cristina Cruz · Dr. Test García')).toBeNull()
   })
 })

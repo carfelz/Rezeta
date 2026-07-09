@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildInitialContentFromTemplate } from '../src/protocol/content-builder'
-import { ProtocolContentSchema } from '../src/schemas/protocol'
+import { buildInitialContentFromTemplate } from '../src/protocol/content-builder.js'
+import { ProtocolContentSchema } from '../src/schemas/protocol.js'
 
 // ─── Template fixtures matching the actual seed data ─────────────────────────
 
@@ -161,7 +161,7 @@ describe('buildInitialContentFromTemplate', () => {
     const content = buildInitialContentFromTemplate(emergencyTemplate)
     const sections = content.blocks as Array<{ id: string; type: string; blocks: unknown[] }>
     const intervention = sections.find((b) => b.id === 'sec_intervention')
-    const childBlocks = intervention.blocks as Array<{ id: string; type: string }>
+    const childBlocks = intervention!.blocks as Array<{ id: string; type: string }>
     expect(childBlocks.some((b) => b.id === 'blk_int_meds' && b.type === 'dosage_table')).toBe(true)
   })
 
@@ -169,14 +169,14 @@ describe('buildInitialContentFromTemplate', () => {
     const content = buildInitialContentFromTemplate(emergencyTemplate)
     const sections = content.blocks as Array<{ id: string; blocks: unknown[] }>
     const indications = sections.find((b) => b.id === 'sec_indications')
-    expect(indications.blocks).toHaveLength(0) // text placeholder is not required
+    expect(indications!.blocks).toHaveLength(0) // text placeholder is not required
   })
 
   it('sec_intervention has only the dosage_table (steps placeholder is optional)', () => {
     const content = buildInitialContentFromTemplate(emergencyTemplate)
     const sections = content.blocks as Array<{ id: string; blocks: unknown[] }>
     const intervention = sections.find((b) => b.id === 'sec_intervention')
-    expect(intervention.blocks).toHaveLength(1)
+    expect(intervention!.blocks).toHaveLength(1)
   })
 
   it('sets template_version from the template schema version', () => {
@@ -188,7 +188,7 @@ describe('buildInitialContentFromTemplate', () => {
     const content = buildInitialContentFromTemplate(pharmacologicalTemplate)
     const sections = content.blocks as Array<{ id: string; blocks: unknown[] }>
     const dosing = sections.find((b) => b.id === 'sec_dosing')
-    const table = (dosing.blocks as Array<{ id: string; type: string; rows: unknown[] }>)[0]
+    const table = (dosing!.blocks as Array<{ id: string; type: string; rows: unknown[] }>)[0]
     expect(table?.id).toBe('blk_dose_table')
     expect(table?.type).toBe('dosage_table')
     expect(table?.rows).toHaveLength(1)
@@ -198,7 +198,7 @@ describe('buildInitialContentFromTemplate', () => {
     const content = buildInitialContentFromTemplate(diagnosticTemplate)
     const sections = content.blocks as Array<{ id: string; blocks: unknown[] }>
     const pathway = sections.find((b) => b.id === 'sec_pathway')
-    expect(pathway.blocks).toHaveLength(0)
+    expect(pathway!.blocks).toHaveLength(0)
   })
 
   it('clinical procedure skips optional sec_preparation', () => {
@@ -218,11 +218,11 @@ describe('buildInitialContentFromTemplate', () => {
   it('seeded dosage_table row has all required fields', () => {
     const content = buildInitialContentFromTemplate(pharmacologicalTemplate)
     const sections = content.blocks as Array<{ id: string; blocks: unknown[] }>
-    const table = (sections[0].blocks as Array<{ rows: Array<Record<string, string>> }>)[0]
-    const row = table.rows[0]
+    const table = (sections[0]!.blocks as Array<{ rows: Array<Record<string, string>> }>)[0]
+    const row = table!.rows[0]
     expect(row).toMatchObject({ drug: '', dose: '', route: '', frequency: '', notes: '' })
-    expect(typeof row.id).toBe('string')
-    expect(row.id.length).toBeGreaterThan(0)
+    expect(typeof row!.id).toBe('string')
+    expect(row!.id!.length).toBeGreaterThan(0)
   })
 
   // ── Individual block type coverage ────────────────────────────────────────
@@ -251,7 +251,7 @@ describe('buildInitialContentFromTemplate', () => {
     }
     expect(block.type).toBe('checklist')
     expect(block.items).toHaveLength(1)
-    expect(block.items[0].critical).toBe(false)
+    expect(block.items[0]!.critical).toBe(false)
   })
 
   it('seeds required steps block with one empty step', () => {
@@ -266,7 +266,7 @@ describe('buildInitialContentFromTemplate', () => {
     }
     expect(block.type).toBe('steps')
     expect(block.steps).toHaveLength(1)
-    expect(block.steps[0].order).toBe(1)
+    expect(block.steps[0]!.order).toBe(1)
   })
 
   it('seeds required decision block with two branches', () => {
@@ -351,7 +351,7 @@ describe('buildInitialContentFromTemplate', () => {
     }
     const content = buildInitialContentFromTemplate(template)
     const section = content.blocks[0] as { blocks: Array<{ id: string }> }
-    expect(section.blocks[0].id).toBe('blk_t')
+    expect(section.blocks[0]!.id).toBe('blk_t')
   })
 
   it('section includes description when provided', () => {

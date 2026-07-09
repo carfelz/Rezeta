@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+import { resolve } from 'path'
 import { redactForAudit } from '../redact.js'
 
 /**
@@ -15,8 +14,7 @@ import { redactForAudit } from '../redact.js'
  */
 const PATIENT_IDENTIFIER_COLUMNS = ['documentNumber']
 
-const here = dirname(fileURLToPath(import.meta.url))
-const schemaPath = resolve(here, '../../../../../../packages/db/prisma/schema.prisma')
+const schemaPath = resolve(process.cwd(), '../../packages/db/prisma/schema.prisma')
 
 function patientModelBlock(): string {
   const schema = readFileSync(schemaPath, 'utf8')

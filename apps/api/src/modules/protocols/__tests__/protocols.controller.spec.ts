@@ -26,6 +26,7 @@ const user = {
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,
+  preferences: {},
 }
 
 const protocol = {
@@ -76,7 +77,7 @@ describe('ProtocolsController', () => {
 
   it('create: delegates to service.create with tenantId + userId', async () => {
     mockService.create.mockResolvedValue(protocol)
-    const dto = { title: 'Anaphylaxis', categoryId: 'cat1' }
+    const dto = { title: 'Anaphylaxis', templateId: 'tmpl1' }
     const result = await controller.create(dto, 't1', user)
     expect(mockService.create).toHaveBeenCalledWith('t1', 'u1', dto)
     expect(result).toEqual(protocol)

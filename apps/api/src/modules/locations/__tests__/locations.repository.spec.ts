@@ -52,16 +52,16 @@ describe('LocationsRepository', () => {
       mockPrisma.location.findMany.mockResolvedValue([makePrismaLocation()])
       const result = await repo.findMany('t1', 'u1')
       expect(result).toHaveLength(1)
-      expect(result[0].name).toBe('Clínica Central')
-      expect(result[0].commissionPercent).toBe(15)
-      expect(result[0].consultationFee).toBe(1500)
-      expect(result[0].createdAt).toBe(now.toISOString())
+      expect(result[0]!.name).toBe('Clínica Central')
+      expect(result[0]!.commissionPercent).toBe(15)
+      expect(result[0]!.consultationFee).toBe(1500)
+      expect(result[0]!.createdAt).toBe(now.toISOString())
     })
 
     it('returns consultationFee of 0 when no doctorLocation', async () => {
       mockPrisma.location.findMany.mockResolvedValue([makePrismaLocation({ doctorLocations: [] })])
       const result = await repo.findMany('t1', 'u1')
-      expect(result[0].consultationFee).toBe(0)
+      expect(result[0]!.consultationFee).toBe(0)
     })
 
     it('returns empty array when no locations', async () => {

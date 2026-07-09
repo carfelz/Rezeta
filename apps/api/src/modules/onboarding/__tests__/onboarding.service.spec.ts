@@ -131,7 +131,7 @@ describe('OnboardingService', () => {
 
     it('throws BadRequestException when type references unknown templateClientId', async () => {
       const badInput = {
-        templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+        templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
         types: [{ name: 'Bad', templateClientId: 'nonexistent' }],
       }
       await expect(service.seedCustom('fb1', badInput)).rejects.toThrow(BadRequestException)

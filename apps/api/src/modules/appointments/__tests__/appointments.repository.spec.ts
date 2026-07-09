@@ -52,22 +52,22 @@ describe('AppointmentsRepository', () => {
       mockPrisma.appointment.findMany.mockResolvedValue([makeApptRow()])
       const result = await repo.findMany({ tenantId: 't1', userId: 'u1' })
       expect(result).toHaveLength(1)
-      expect(result[0].patientName).toBe('Ana Reyes')
-      expect(result[0].locationName).toBe('Clínica Central')
-      expect(result[0].startsAt).toBe(now.toISOString())
+      expect(result[0]!.patientName).toBe('Ana Reyes')
+      expect(result[0]!.locationName).toBe('Clínica Central')
+      expect(result[0]!.startsAt).toBe(now.toISOString())
     })
 
     it('adds locationId filter when provided', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       await repo.findMany({ tenantId: 't1', userId: 'u1', locationId: 'loc1' })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.locationId).toBe('loc1')
     })
 
     it('adds status filter when provided', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       await repo.findMany({ tenantId: 't1', userId: 'u1', status: 'completed' })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.status).toBe('completed')
     })
 
@@ -76,7 +76,7 @@ describe('AppointmentsRepository', () => {
       const from = new Date('2026-01-01')
       const to = new Date('2026-01-31')
       await repo.findMany({ tenantId: 't1', userId: 'u1', from, to })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.startsAt.gte).toBe(from)
       expect(where.startsAt.lte).toBe(to)
     })
@@ -85,7 +85,7 @@ describe('AppointmentsRepository', () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       const from = new Date('2026-01-01')
       await repo.findMany({ tenantId: 't1', userId: 'u1', from })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.startsAt.gte).toBe(from)
       expect(where.startsAt.lte).toBeUndefined()
     })
@@ -94,14 +94,14 @@ describe('AppointmentsRepository', () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       const to = new Date('2026-01-31')
       await repo.findMany({ tenantId: 't1', userId: 'u1', to })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.startsAt.lte).toBe(to)
     })
 
     it('adds patientId filter when provided', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       await repo.findMany({ tenantId: 't1', userId: 'u1', patientId: 'p1' })
-      const where = mockPrisma.appointment.findMany.mock.calls[0][0].where
+      const where = mockPrisma.appointment.findMany.mock.calls[0]![0].where
       expect(where.patientId).toBe('p1')
     })
   })
@@ -112,21 +112,21 @@ describe('AppointmentsRepository', () => {
         makeApptRow({ consultations: [{ id: 'cons-live', status: 'open' }] }),
       ])
       const [appt] = await repo.findMany({ tenantId: 't1', userId: 'u1' })
-      expect(appt.consultationId).toBe('cons-live')
-      expect(appt.consultationStatus).toBe('open')
+      expect(appt!.consultationId).toBe('cons-live')
+      expect(appt!.consultationStatus).toBe('open')
     })
 
     it('returns null link fields when no live consultation exists', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([makeApptRow({ consultations: [] })])
       const [appt] = await repo.findMany({ tenantId: 't1', userId: 'u1' })
-      expect(appt.consultationId).toBeNull()
-      expect(appt.consultationStatus).toBeNull()
+      expect(appt!.consultationId).toBeNull()
+      expect(appt!.consultationStatus).toBeNull()
     })
 
     it('scopes the consultations include to live records, newest first', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([])
       await repo.findMany({ tenantId: 't1', userId: 'u1' })
-      const include = mockPrisma.appointment.findMany.mock.calls[0][0].include
+      const include = mockPrisma.appointment.findMany.mock.calls[0]![0].include
       expect(include.consultations.where).toEqual({ deletedAt: null })
       expect(include.consultations.orderBy).toEqual({ createdAt: 'desc' })
       expect(include.consultations.take).toBe(1)
@@ -204,14 +204,14 @@ describe('AppointmentsRepository', () => {
     it('includes excludeId in query when provided', async () => {
       mockPrisma.appointment.count.mockResolvedValue(0)
       await repo.hasConflict('u1', 't1', now, later, 'exclude-apt')
-      const where = mockPrisma.appointment.count.mock.calls[0][0].where
+      const where = mockPrisma.appointment.count.mock.calls[0]![0].where
       expect(where.id).toEqual({ not: 'exclude-apt' })
     })
 
     it('omits excludeId from query when not provided', async () => {
       mockPrisma.appointment.count.mockResolvedValue(0)
       await repo.hasConflict('u1', 't1', now, later)
-      const where = mockPrisma.appointment.count.mock.calls[0][0].where
+      const where = mockPrisma.appointment.count.mock.calls[0]![0].where
       expect(where.id).toBeUndefined()
     })
   })
@@ -221,7 +221,7 @@ describe('AppointmentsRepository', () => {
       mockPrisma.consultation.findFirst.mockResolvedValue({ id: 'c1', status: 'open' })
       const result = await repo.findLiveConsultation('apt1', 't1')
       expect(result).toEqual({ id: 'c1', status: 'open' })
-      const args = mockPrisma.consultation.findFirst.mock.calls[0][0]
+      const args = mockPrisma.consultation.findFirst.mock.calls[0]![0]
       expect(args.where).toEqual({ appointmentId: 'apt1', tenantId: 't1', deletedAt: null })
       expect(args.orderBy).toEqual({ createdAt: 'desc' })
       expect(args.select).toEqual({ id: true, status: true })

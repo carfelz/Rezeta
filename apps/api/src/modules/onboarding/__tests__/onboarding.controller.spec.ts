@@ -17,6 +17,7 @@ const user = {
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,
+  preferences: {},
 }
 
 const authUser = {
@@ -90,7 +91,7 @@ describe('OnboardingController', () => {
   it('seedCustom: returns authUser with tenantSeededAt set', async () => {
     mockService.seedCustom.mockResolvedValue(authUser)
     const result = await controller.seedCustom(user, {
-      templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+      templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
       types: [{ name: 'Ty', templateClientId: 'c1' }],
     })
     expect(result.tenantSeededAt).toBeTruthy()
@@ -100,7 +101,7 @@ describe('OnboardingController', () => {
     mockService.seedCustom.mockRejectedValue(new Error('Validation failed'))
     await expect(
       controller.seedCustom(user, {
-        templates: [{ clientId: 'c1', name: 'T', schema: {} }],
+        templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
         types: [{ name: 'Ty', templateClientId: 'c1' }],
       }),
     ).rejects.toThrow('Validation failed')

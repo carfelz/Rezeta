@@ -73,9 +73,13 @@ describe('useCreateProtocolTemplate', () => {
   it('posts new template', async () => {
     vi.mocked(apiClient.post).mockResolvedValue(mockTemplate)
     const { result } = renderHook(() => useCreateProtocolTemplate(), { wrapper: makeWrapper() })
-    const dto = { name: 'New Template', schema: { version: '1.0', blocks: [] } }
+    const dto = {
+      name: 'New Template',
+      categoryId: 'cat-1',
+      schema: { version: '1.0', blocks: [] },
+    }
     await act(async () => {
-      await result.current.mutateAsync(dto as Parameters<typeof result.current.mutateAsync>[0])
+      await result.current.mutateAsync(dto)
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/protocol-templates', dto)
   })

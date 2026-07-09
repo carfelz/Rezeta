@@ -98,9 +98,14 @@ describe('useCreateAppointment', () => {
   it('posts new appointment', async () => {
     vi.mocked(apiClient.post).mockResolvedValue(mockAppt)
     const { result } = renderHook(() => useCreateAppointment(), { wrapper: makeWrapper() })
-    const dto = { patientId: 'p-1', locationId: 'loc-1', scheduledAt: '2026-05-01T09:00:00Z' }
+    const dto = {
+      patientId: 'p-1',
+      locationId: 'loc-1',
+      startsAt: '2026-05-01T09:00:00Z',
+      endsAt: '2026-05-01T09:30:00Z',
+    }
     await act(async () => {
-      await result.current.mutateAsync(dto as Parameters<typeof result.current.mutateAsync>[0])
+      await result.current.mutateAsync(dto)
     })
     expect(apiClient.post).toHaveBeenCalledWith('/v1/appointments', dto)
   })
@@ -115,10 +120,10 @@ describe('useUpdateAppointment', () => {
       wrapper: makeWrapper(),
     })
     await act(async () => {
-      await result.current.mutateAsync({ scheduledAt: '2026-05-02T09:00:00Z' })
+      await result.current.mutateAsync({ startsAt: '2026-05-02T09:00:00Z' })
     })
     expect(apiClient.patch).toHaveBeenCalledWith('/v1/appointments/appt-1', {
-      scheduledAt: '2026-05-02T09:00:00Z',
+      startsAt: '2026-05-02T09:00:00Z',
     })
   })
 })

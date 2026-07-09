@@ -23,6 +23,7 @@ function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
     completedAt: null,
     notes: null,
     appliedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     protocolTitle: 'Test Protocol',
     protocolTypeName: null,
     versionNumber: 1,

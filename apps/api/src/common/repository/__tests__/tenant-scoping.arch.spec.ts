@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, resolve, relative } from 'path'
+import { resolve, relative } from 'path'
 import ts from 'typescript'
 
 /**
@@ -20,9 +19,8 @@ const MUTATION_METHODS = new Set(['update', 'updateMany', 'delete', 'deleteMany'
 // Models with no `tenant_id` column — scoped by `userId` or a parent relation.
 const TENANTLESS_MODELS = new Set(['scheduleBlock', 'scheduleException'])
 
-const here = dirname(fileURLToPath(import.meta.url))
-const modulesDir = resolve(here, '../../../modules')
-const repoRoot = resolve(here, '../../../../../..')
+const modulesDir = resolve(process.cwd(), 'src/modules')
+const repoRoot = resolve(process.cwd(), '../..')
 
 function repositoryFiles(): string[] {
   const out: string[] = []

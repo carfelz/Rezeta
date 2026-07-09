@@ -98,13 +98,13 @@ describe('SignModal — order queue flush on sign', () => {
     await waitFor(() => expect(apiClient.patch).toHaveBeenCalled())
 
     const postCall = (apiClient.post as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(postCall[0]).toBe(`/v1/consultations/${CONSULT_ID}/prescriptions`)
+    expect(postCall![0]).toBe(`/v1/consultations/${CONSULT_ID}/prescriptions`)
     const signCall = (apiClient.patch as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(signCall[0]).toBe(`/v1/consultations/${CONSULT_ID}/sign`)
+    expect(signCall![0]).toBe(`/v1/consultations/${CONSULT_ID}/sign`)
 
     const postOrder = (apiClient.post as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]
     const patchOrder = (apiClient.patch as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]
-    expect(postOrder).toBeLessThan(patchOrder)
+    expect(postOrder!).toBeLessThan(patchOrder!)
   })
 
   it('aborts the sign (no PATCH) when the prescription POST fails', async () => {

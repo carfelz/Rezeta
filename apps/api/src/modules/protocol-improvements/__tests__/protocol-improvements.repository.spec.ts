@@ -46,8 +46,8 @@ describe('ProtocolImprovementsRepository', () => {
       mockPrisma.protocolSuggestion.findMany.mockResolvedValue([makeSuggestionRow()])
       const result = await repo.listByProtocol('proto1', 't1')
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('sug1')
-      expect(result[0].occurrencePercentage).toBe(90)
+      expect(result[0]!.id).toBe('sug1')
+      expect(result[0]!.occurrencePercentage).toBe(90)
     })
 
     it('returns empty array when none found', async () => {
@@ -97,7 +97,7 @@ describe('ProtocolImprovementsRepository', () => {
       mockPrisma.protocolSuggestion.update.mockResolvedValue(
         makeSuggestionRow({ status: 'applied', appliedAt: applied }),
       )
-      const result = await repo.markApplied('sug1')
+      const result = await repo.markApplied('sug1', 't1')
       expect(result.status).toBe('applied')
       expect(result.appliedAt).toBe(applied.toISOString())
     })
@@ -109,7 +109,7 @@ describe('ProtocolImprovementsRepository', () => {
       mockPrisma.protocolSuggestion.update.mockResolvedValue(
         makeSuggestionRow({ status: 'dismissed', dismissedAt: dismissed }),
       )
-      const result = await repo.markDismissed('sug1')
+      const result = await repo.markDismissed('sug1', 't1')
       expect(result.status).toBe('dismissed')
       expect(result.dismissedAt).toBe(dismissed.toISOString())
     })

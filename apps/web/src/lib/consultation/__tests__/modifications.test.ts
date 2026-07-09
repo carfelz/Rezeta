@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { appendModification } from '../modifications'
 import type { ProtocolUsageModifications } from '@rezeta/shared'
 
@@ -27,7 +27,7 @@ describe('appendModification', () => {
     }
     const result = appendModification(existing, { type: 'step_completed', step_id: 's1' })
     expect(result.steps_completed).toHaveLength(2)
-    expect(result.steps_completed?.[1].step_id).toBe('s1')
+    expect(result.steps_completed?.[1]!.step_id).toBe('s1')
   })
 
   it('checklist_item appends to checklist_items', () => {
@@ -45,7 +45,7 @@ describe('appendModification', () => {
       item_id: 'i2',
       checked: false,
     })
-    expect(result.checklist_items?.[0].checked).toBe(false)
+    expect(result.checklist_items?.[0]!.checked).toBe(false)
   })
 
   it('decision_branch appends to decision_branches', () => {
@@ -104,7 +104,7 @@ describe('appendModification', () => {
       frequency: 'bid',
       notes: 'con comida',
     })
-    expect(result.medications_added?.[0].notes).toBe('con comida')
+    expect(result.medications_added?.[0]!.notes).toBe('con comida')
   })
 
   it('lab_queued appends to lab_orders_queued', () => {
@@ -151,6 +151,6 @@ describe('appendModification', () => {
   it('accepts explicit timestamp', () => {
     const ts = '2025-06-15T12:00:00.000Z'
     const result = appendModification(empty, { type: 'step_completed', step_id: 's1' }, ts)
-    expect(result.steps_completed?.[0].timestamp).toBe(ts)
+    expect(result.steps_completed?.[0]!.timestamp).toBe(ts)
   })
 })

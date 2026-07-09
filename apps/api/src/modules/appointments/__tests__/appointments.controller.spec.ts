@@ -22,6 +22,7 @@ const user = {
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,
+  preferences: {},
 }
 
 const appointment = {

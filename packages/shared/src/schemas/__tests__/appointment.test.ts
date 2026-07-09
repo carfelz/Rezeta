@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { AppointmentStatusSchema, UpdateAppointmentStatusSchema } from '../appointment'
-import { ErrorCode } from '../../errors'
+import { AppointmentStatusSchema, UpdateAppointmentStatusSchema } from '../appointment.js'
+import { ErrorCode } from '../../errors.js'
 
 describe('AppointmentStatusSchema', () => {
   it('accepts in_progress', () => {

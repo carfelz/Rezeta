@@ -21,8 +21,7 @@ const makeSectionBlock = (id: string, children: ProtocolBlock[] = []): ProtocolB
   type: 'section',
   title: `Section ${id}`,
   blocks: children,
-  collapsible: false,
-  defaultCollapsed: false,
+  collapsed_by_default: false,
 })
 
 describe('useEditorStore', () => {

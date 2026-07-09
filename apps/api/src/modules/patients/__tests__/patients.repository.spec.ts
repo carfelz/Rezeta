@@ -56,7 +56,7 @@ describe('PatientsRepository', () => {
     it('adds OR search filter when search is provided', async () => {
       mockPrisma.patient.findMany.mockResolvedValue([patient])
       await repo.findMany({ tenantId: 't1', ownerId: 'u1', search: 'Ana' })
-      const where = mockPrisma.patient.findMany.mock.calls[0][0].where
+      const where = mockPrisma.patient.findMany.mock.calls[0]![0].where
       expect(where.OR).toBeDefined()
       expect(where.OR).toHaveLength(4)
     })
@@ -64,7 +64,7 @@ describe('PatientsRepository', () => {
     it('uses cursor pagination when cursor is provided', async () => {
       mockPrisma.patient.findMany.mockResolvedValue([])
       await repo.findMany({ tenantId: 't1', ownerId: 'u1', cursor: 'p2', limit: 10 })
-      const args = mockPrisma.patient.findMany.mock.calls[0][0]
+      const args = mockPrisma.patient.findMany.mock.calls[0]![0]
       expect(args.cursor).toEqual({ id: 'p2' })
       expect(args.skip).toBe(1)
       expect(args.take).toBe(11)
@@ -88,7 +88,7 @@ describe('PatientsRepository', () => {
     it('splits fullName into firstName and lastName', async () => {
       mockPrisma.patient.create.mockResolvedValue(patient)
       await repo.create('t1', 'u1', { fullName: 'Ana María Reyes' } as never)
-      const data = mockPrisma.patient.create.mock.calls[0][0].data
+      const data = mockPrisma.patient.create.mock.calls[0]![0].data
       expect(data.firstName).toBe('Ana María')
       expect(data.lastName).toBe('Reyes')
     })
@@ -96,7 +96,7 @@ describe('PatientsRepository', () => {
     it('handles single-word name (no lastName)', async () => {
       mockPrisma.patient.create.mockResolvedValue({ ...patient, firstName: 'Ana', lastName: '' })
       await repo.create('t1', 'u1', { fullName: 'Ana' } as never)
-      const data = mockPrisma.patient.create.mock.calls[0][0].data
+      const data = mockPrisma.patient.create.mock.calls[0]![0].data
       expect(data.firstName).toBe('Ana')
       expect(data.lastName).toBe('')
     })
@@ -104,13 +104,13 @@ describe('PatientsRepository', () => {
     it('sets dateOfBirth to null when not provided', async () => {
       mockPrisma.patient.create.mockResolvedValue(patient)
       await repo.create('t1', 'u1', { fullName: 'Ana Reyes' } as never)
-      expect(mockPrisma.patient.create.mock.calls[0][0].data.dateOfBirth).toBeNull()
+      expect(mockPrisma.patient.create.mock.calls[0]![0].data.dateOfBirth).toBeNull()
     })
 
     it('converts dateOfBirth string to Date when provided', async () => {
       mockPrisma.patient.create.mockResolvedValue(patient)
       await repo.create('t1', 'u1', { fullName: 'Ana Reyes', dateOfBirth: '1990-05-15' } as never)
-      const dob = mockPrisma.patient.create.mock.calls[0][0].data.dateOfBirth
+      const dob = mockPrisma.patient.create.mock.calls[0]![0].data.dateOfBirth
       expect(dob).toBeInstanceOf(Date)
     })
   })
@@ -119,7 +119,7 @@ describe('PatientsRepository', () => {
     it('splits fullName when provided', async () => {
       mockPrisma.patient.update.mockResolvedValue(patient)
       await repo.update('p1', 't1', { fullName: 'María López' } as never)
-      const data = mockPrisma.patient.update.mock.calls[0][0].data
+      const data = mockPrisma.patient.update.mock.calls[0]![0].data
       expect(data.firstName).toBe('María')
       expect(data.lastName).toBe('López')
       expect(data.fullName).toBeUndefined()
@@ -128,21 +128,21 @@ describe('PatientsRepository', () => {
     it('does not include firstName/lastName when fullName not provided', async () => {
       mockPrisma.patient.update.mockResolvedValue(patient)
       await repo.update('p1', 't1', { phone: '555-1234' } as never)
-      const data = mockPrisma.patient.update.mock.calls[0][0].data
+      const data = mockPrisma.patient.update.mock.calls[0]![0].data
       expect(data.firstName).toBeUndefined()
     })
 
     it('converts dateOfBirth to Date when provided', async () => {
       mockPrisma.patient.update.mockResolvedValue(patient)
       await repo.update('p1', 't1', { dateOfBirth: '1990-05-15' } as never)
-      const data = mockPrisma.patient.update.mock.calls[0][0].data
+      const data = mockPrisma.patient.update.mock.calls[0]![0].data
       expect(data.dateOfBirth).toBeInstanceOf(Date)
     })
 
     it('sets dateOfBirth to null when explicitly null', async () => {
       mockPrisma.patient.update.mockResolvedValue(patient)
       await repo.update('p1', 't1', { dateOfBirth: null } as never)
-      const data = mockPrisma.patient.update.mock.calls[0][0].data
+      const data = mockPrisma.patient.update.mock.calls[0]![0].data
       expect(data.dateOfBirth).toBeNull()
     })
   })

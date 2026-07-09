@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Los archivos de test ahora pasan por el typecheck
+
+### Changed
+
+- `apps/api`, `apps/web`, `packages/shared`: el script `typecheck` ahora corre `tsc --noEmit` con el tsconfig completo (incluye `__tests__/**`) en lugar de `tsconfig.build.json` (que los excluía). Los tests quedaban fuera de todo gate de tipos y acumularon 341 errores silenciosos; el pre-commit y CI ahora los detectan (`packages/db` ya funcionaba así).
+
+### Fixed
+
+- 341 errores de TypeScript en archivos de test (web 43, api 257, shared 41; db estaba limpio), sin debilitar aserciones ni eliminar tests. Patrones principales: índices posiblemente `undefined` bajo `noUncheckedIndexedAccess` (aserciones non-null tras verificaciones de existencia), fixtures desactualizados respecto a los tipos reales (`AuthUser.preferences`, `startsAt`/`endsAt`, `fullName`, `templateId`/`categoryId`, `items`/`groupOrder`), imports sin extensión `.js` en `packages/shared`, y `import.meta` en dos specs de arquitectura del api reescrito con rutas basadas en `process.cwd()` (el programa compila como CommonJS).
+- Dos bugs genuinos de fixtures descubiertos por el typecheck: `sort: 'title'` (valor inexistente del enum, ahora `'title_asc'`) en `protocols.service.spec.ts`, y un mapeo a `plan_tratamiento` (sección no seleccionable como destino) en `generate-record-sections.spec.ts`.
+
 ## [2026-07-08] Correcciones de la revisión final de rama: ventana de falsa staleness, validación de `version` y refetch de órdenes tras P2002
 
 ### Fixed

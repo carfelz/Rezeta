@@ -11,9 +11,15 @@ import type { AuthUser } from '@rezeta/shared'
 
 const mockUser: AuthUser = {
   id: 'user-1',
+  externalUid: 'ext-1',
   tenantId: 'tenant-1',
   email: 'doc@test.com',
+  fullName: 'Dr. Test',
   role: 'owner',
+  specialty: null,
+  licenseNumber: null,
+  tenantSeededAt: '2026-01-01T00:00:00Z',
+  preferences: {},
 }
 const tenantId = 'tenant-1'
 
@@ -30,8 +36,11 @@ function makePatient(id = 'p1'): Patient {
     documentNumber: null,
     phone: null,
     email: null,
-    allergies: null,
-    medicalHistory: null,
+    address: null,
+    bloodType: null,
+    allergies: [],
+    chronicConditions: [],
+    notes: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     deletedAt: null,

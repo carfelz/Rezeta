@@ -180,7 +180,7 @@ describe('ProtocolTemplatesRepository', () => {
     it('includes name in update data when provided', async () => {
       mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow())
       await repo.update(TEMPLATE_ID, TENANT_ID, { name: 'New Name' })
-      const call = mockPrisma.protocolTemplate.update.mock.calls[0][0] as {
+      const call = mockPrisma.protocolTemplate.update.mock.calls[0]![0] as {
         data: { name: string }
       }
       expect(call.data.name).toBe('New Name')
@@ -189,7 +189,7 @@ describe('ProtocolTemplatesRepository', () => {
     it('includes categoryId in update data when provided', async () => {
       mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow())
       await repo.update(TEMPLATE_ID, TENANT_ID, { categoryId: CATEGORY_ID })
-      const call = mockPrisma.protocolTemplate.update.mock.calls[0][0] as {
+      const call = mockPrisma.protocolTemplate.update.mock.calls[0]![0] as {
         data: { categoryId: string }
       }
       expect(call.data.categoryId).toBe(CATEGORY_ID)
@@ -198,7 +198,7 @@ describe('ProtocolTemplatesRepository', () => {
     it('omits name from data when not provided', async () => {
       mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow())
       await repo.update(TEMPLATE_ID, TENANT_ID, { schema: MINIMAL_SCHEMA })
-      const call = mockPrisma.protocolTemplate.update.mock.calls[0][0] as {
+      const call = mockPrisma.protocolTemplate.update.mock.calls[0]![0] as {
         data: Record<string, unknown>
       }
       expect(call.data).not.toHaveProperty('name')
@@ -208,7 +208,7 @@ describe('ProtocolTemplatesRepository', () => {
       const newSchema = { version: '2.0', blocks: [] }
       mockPrisma.protocolTemplate.update.mockResolvedValue(makeTemplateRow())
       await repo.update(TEMPLATE_ID, TENANT_ID, { schema: newSchema })
-      const call = mockPrisma.protocolTemplate.update.mock.calls[0][0] as {
+      const call = mockPrisma.protocolTemplate.update.mock.calls[0]![0] as {
         data: { schema: object }
       }
       expect(call.data.schema).toEqual(newSchema)

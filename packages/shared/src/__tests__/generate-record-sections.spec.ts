@@ -823,12 +823,12 @@ describe('historia_mapping overrides', () => {
           {
             blocks,
             modifications: { steps_completed: [{ step_id: 's1', timestamp: '2026-07-01T10:00:00Z' }] },
-            historiaMapping: { st1: { section: 'plan_tratamiento', label: 'Seguimiento' } },
+            historiaMapping: { st1: { section: 'resultados_estudios', label: 'Seguimiento' } },
           },
         ],
       }),
     )
-    expect(section(out, 'plan_tratamiento')?.content).toContain('Seguimiento: Paso hecho')
+    expect(section(out, 'resultados_estudios')?.content).toContain('Seguimiento: Paso hecho')
     expect(section(out, 'evolucion')?.content ?? '').not.toContain('Paso hecho')
   })
 
