@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-09] Eliminado el script `test:integration` obsoleto
+
+### Removed
+
+- `apps/api/package.json`: eliminado el script `test:integration`, que apuntaba a `test/auth.integration.ts` y `test/protocols.integration.ts`. Ambos archivos —y el directorio `apps/api/test/` completo— se borraron en `3676dda` por no estar cableados (el `include` de `vitest.config.ts` solo cubre `src/**/*.{spec,test}.ts`), pero el script sobrevivió y fallaba al ejecutarse. Ningún workflow de CI lo invocaba.
+
 ## [2026-07-09] Onboarding concurrente ya no falla con una violación de unicidad
 
 ### Fixed

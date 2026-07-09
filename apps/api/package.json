@@ -8,8 +8,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run test/auth.integration.ts test/protocols.integration.ts"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
