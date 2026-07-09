@@ -389,6 +389,16 @@ describe('Local draft helpers', () => {
     expect(loaded?.historiaMapping).toEqual(mapping)
   })
 
+  it('round-trips a draft with an empty (cleared) historia mapping, persisting the key', () => {
+    const blocks = [makeTextBlock('b1')]
+    saveLocalDraft('protocol-1', blocks, {})
+    const raw = localStorage.getItem('protocol-draft-protocol-1')
+    expect(raw).not.toBeNull()
+    expect(JSON.parse(raw!)).toHaveProperty('historia_mapping', {})
+    const loaded = loadLocalDraft('protocol-1')
+    expect(loaded?.historiaMapping).toEqual({})
+  })
+
   it('round-trips a draft without a historia mapping, omitting the key from storage', () => {
     const blocks = [makeTextBlock('b1')]
     saveLocalDraft('protocol-1', blocks)

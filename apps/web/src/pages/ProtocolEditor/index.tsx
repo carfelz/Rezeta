@@ -252,7 +252,7 @@ export function ProtocolEditor(): JSX.Element {
     if (!draftBanner || !id) return
     const requiredIds = extractRequiredBlockIds(protocolTemplateSchema)
     initEditor(id, draftBanner.blocks, requiredIds)
-    if (draftBanner.historiaMapping) setHistoriaMapping(draftBanner.historiaMapping)
+    if (draftBanner.historiaMapping !== undefined) setHistoriaMapping(draftBanner.historiaMapping)
     setDraftBanner(null)
   }
 

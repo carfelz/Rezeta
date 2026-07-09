@@ -244,9 +244,7 @@ export function saveLocalDraft(
       `${AUTOSAVE_PREFIX}${protocolId}`,
       JSON.stringify({
         blocks,
-        ...(historiaMapping && Object.keys(historiaMapping).length > 0
-          ? { historia_mapping: historiaMapping }
-          : {}),
+        ...(historiaMapping !== undefined ? { historia_mapping: historiaMapping } : {}),
         savedAt: Date.now(),
       }),
     )

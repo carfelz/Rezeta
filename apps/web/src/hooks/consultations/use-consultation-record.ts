@@ -84,6 +84,7 @@ export function useEnsureRecord(): UseMutationResult<ConsultationRecordDto, Erro
       apiClient.post<ConsultationRecordDto>(`/v1/consultations/${consultationId}/record`, {}),
     onSuccess: (record, consultationId) => {
       qc.setQueryData([QK, consultationId], record)
+      void qc.invalidateQueries({ queryKey: [QK, consultationId, 'versions'] })
     },
     onError: () => {
       toast.error(toastStrings.errorHistoriaSave)

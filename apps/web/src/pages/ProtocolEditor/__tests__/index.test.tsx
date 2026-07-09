@@ -196,4 +196,42 @@ describe('ProtocolEditor save-path wiring', () => {
 
     expect(screen.getAllByRole('switch')[0]).toHaveAttribute('aria-checked', 'false')
   })
+
+  it('applies an empty historia mapping from a recovered draft, clearing a prior override', async () => {
+    vi.mocked(useProtocols).mockReturnValue({
+      useGetProtocol: () =>
+        makeQuery({
+          ...protocol,
+          currentVersion: {
+            ...protocol.currentVersion!,
+            content: {
+              ...protocol.currentVersion!.content,
+              historia_mapping: { b1: { include: false } },
+            },
+          },
+        }),
+      useRenameProtocol: () => makeMutation(vi.fn()),
+      useSaveVersion: () => makeMutation(vi.fn()),
+      useGetVersionHistory: () => makeQuery([]),
+      useGetVersion: () => makeQuery(undefined),
+      useRestoreVersion: () => makeMutation(vi.fn()),
+    } as unknown as ReturnType<typeof useProtocols>)
+    vi.mocked(loadLocalDraft).mockReturnValue({
+      blocks: [{ id: 'b1', type: 'clinical_notes', label: 'Motivo de consulta', content: 'x' }],
+      historiaMapping: {},
+      savedAt: Date.now(),
+    })
+
+    const router = createMemoryRouter(
+      [{ path: '/protocolos/:id', element: <ProtocolEditor /> }],
+      { initialEntries: ['/protocolos/proto-1'] },
+    )
+    render(<RouterProvider router={router} />)
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: protocolEditorStrings.draftUse }))
+    await user.click(screen.getByRole('tab', { name: 'Historia médica' }))
+
+    expect(screen.getAllByRole('switch')[0]).toHaveAttribute('aria-checked', 'true')
+  })
 })

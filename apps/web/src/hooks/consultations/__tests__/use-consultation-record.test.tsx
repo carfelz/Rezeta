@@ -143,6 +143,19 @@ describe('useEnsureRecord', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(toast.error).toHaveBeenCalledWith(toastStrings.errorHistoriaSave)
   })
+
+  it('invalidates the versions list on success', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ id: 'rec1', status: 'draft' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const ensureWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useEnsureRecord(), { wrapper: ensureWrapper })
+    result.current.mutate('c1')
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultation-record', 'c1', 'versions'] })
+  })
 })
 
 describe('useUpdateRecordSections', () => {

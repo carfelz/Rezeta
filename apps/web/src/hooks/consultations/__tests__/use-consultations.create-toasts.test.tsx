@@ -79,6 +79,22 @@ describe('useCreatePrescription toast silencing', () => {
     })
     expect(toast.error).not.toHaveBeenCalled()
   })
+
+  it('still invalidates consultation queries on success when silent: true', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ id: 'rx-1' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const silentWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useCreatePrescription('cons-1', { silent: true }), {
+      wrapper: silentWrapper,
+    })
+    await act(async () => {
+      await result.current.mutateAsync(RX_DTO)
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultations', 'cons-1'] })
+  })
 })
 
 describe('useCreateImagingOrder toast silencing', () => {
@@ -125,6 +141,22 @@ describe('useCreateImagingOrder toast silencing', () => {
     })
     expect(toast.error).not.toHaveBeenCalled()
   })
+
+  it('still invalidates consultation queries on success when silent: true', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue([{ id: 'img-1' }])
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const silentWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useCreateImagingOrder('cons-1', { silent: true }), {
+      wrapper: silentWrapper,
+    })
+    await act(async () => {
+      await result.current.mutateAsync(IMG_DTO)
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultations', 'cons-1'] })
+  })
 })
 
 describe('useCreateLabOrder toast silencing', () => {
@@ -170,5 +202,21 @@ describe('useCreateLabOrder toast silencing', () => {
       await result.current.mutateAsync(LAB_DTO).catch(() => undefined)
     })
     expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it('still invalidates consultation queries on success when silent: true', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue([{ id: 'lab-1' }])
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const silentWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useCreateLabOrder('cons-1', { silent: true }), {
+      wrapper: silentWrapper,
+    })
+    await act(async () => {
+      await result.current.mutateAsync(LAB_DTO)
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['consultations', 'cons-1'] })
   })
 })

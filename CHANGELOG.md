@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Borrador local recupera un mapeo de historia médica limpiado, versiones invalidadas al asegurar el registro y cobertura de invalidación silenciosa
+
+### Fixed
+
+- `apps/web/src/store/editor.store.ts`: `saveLocalDraft` ya no omite `historia_mapping` cuando el mapeo pasado es `{}` — ahora persiste la clave siempre que el parámetro esté definido (incluido vacío), y solo la omite cuando es `undefined`. Antes, un borrador de recuperación tras un crash cuya única edición era limpiar el mapeo se restauraba sin esa limpieza. `loadLocalDraft` no cambia (clave ausente sigue siendo `undefined`, compatibilidad retro intacta).
+- `apps/web/src/pages/ProtocolEditor/index.tsx`: `applyDraft` cambia el guard `if (draftBanner.historiaMapping)` a `!== undefined` para reflejar con claridad que un mapeo `{}` cargado desde el borrador también debe aplicarse (ya se comportaba así por ser `{}` truthy, pero el guard anterior era ambiguo sobre esa intención).
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useEnsureRecord` ahora también invalida `[QK, consultationId, 'versions']` en éxito, alineándose con `useRegenerateRecord` y `useSignRecord`, que ya invalidaban ese key.
+
+### Added
+
+- `apps/web/src/store/__tests__/editor.store.test.ts`: caso de round-trip para un mapeo `{}` (clave persistida, se restaura como `{}`).
+- `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: caso que aplica un borrador con `historiaMapping: {}` sobre un mapeo previo no vacío y verifica que el override se limpia.
+- `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx`: caso que verifica la invalidación de `[QK, consultationId, 'versions']` en `useEnsureRecord`.
+- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: casos para `useCreatePrescription`, `useCreateImagingOrder` y `useCreateLabOrder` que verifican que `qc.invalidateQueries` sigue disparándose con `{ silent: true }` (los hooks no cambiaron; la cobertura confirma el contrato existente).
+
 ## [2026-07-08] Deduplicación de etiquetas de auditoría y del servicio de historias médicas
 
 ### Changed
