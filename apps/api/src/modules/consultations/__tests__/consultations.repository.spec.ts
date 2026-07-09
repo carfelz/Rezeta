@@ -44,6 +44,7 @@ function makeProtocolUsageRow(overrides: Record<string, unknown> = {}) {
     notes: null,
     appliedAt: now,
     updatedAt: now,
+    contentUpdatedAt: now,
     protocol: { title: 'Anaphylaxis' },
     protocolVersion: { versionNumber: 1 },
     childUsages: [],
@@ -618,6 +619,25 @@ describe('ConsultationsRepository', () => {
       const data = mockPrisma.protocolUsage.update.mock.calls[0]![0].data
       expect(data.completedAt).toBeNull()
     })
+
+    it('sets contentUpdatedAt when content is provided', async () => {
+      mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
+      await repo.updateProtocolUsage('pu1', 't1', {
+        content: { version: '1.0', blocks: [] },
+      } as never)
+      const data = mockPrisma.protocolUsage.update.mock.calls[0]![0].data
+      expect(data.contentUpdatedAt).toBeInstanceOf(Date)
+    })
+
+    it('does not set contentUpdatedAt for a modifications-only update', async () => {
+      mockPrisma.protocolUsage.findFirst.mockResolvedValue({ modifications: {} })
+      mockPrisma.protocolUsage.update.mockResolvedValue(makeProtocolUsageRow())
+      await repo.updateProtocolUsage('pu1', 't1', {
+        modifications: { steps_completed: [{ step_id: 'stp1', timestamp: 't1' }] },
+      } as never)
+      const data = mockPrisma.protocolUsage.update.mock.calls[0]![0].data
+      expect(data.contentUpdatedAt).toBeUndefined()
+    })
   })
 
   // ── updateCheckedState ─────────────────────────────────────────────────────
@@ -673,6 +693,14 @@ describe('ConsultationsRepository', () => {
       mockPrisma.protocolUsage.findFirst.mockResolvedValue(makeProtocolUsageRow({ updatedAt: now }))
       const result = await repo.findProtocolUsageById('pu1', 't1')
       expect(result?.updatedAt).toBe(now.toISOString())
+    })
+
+    it('maps contentUpdatedAt to an ISO string', async () => {
+      mockPrisma.protocolUsage.findFirst.mockResolvedValue(
+        makeProtocolUsageRow({ contentUpdatedAt: now }),
+      )
+      const result = await repo.findProtocolUsageById('pu1', 't1')
+      expect(result?.contentUpdatedAt).toBe(now.toISOString())
     })
 
     it('returns null when not found', async () => {

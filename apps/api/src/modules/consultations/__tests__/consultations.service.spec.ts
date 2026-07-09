@@ -71,6 +71,7 @@ function mockProtocolUsage(
     modificationSummary: null,
     appliedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    contentUpdatedAt: new Date().toISOString(),
     protocolTitle: 'Test Protocol',
     protocolTypeName: null,
     versionNumber: 1,
@@ -992,44 +993,44 @@ describe('ConsultationsService', () => {
       expect(result.modificationSummary).toBe('Updated')
     })
 
-    it('rejects with PROTOCOL_USAGE_STALE when content is sent with a stale expectedUpdatedAt', async () => {
+    it('rejects with PROTOCOL_USAGE_STALE when content is sent with a stale expectedContentUpdatedAt', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
-        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+        mockProtocolUsage({ contentUpdatedAt: '2026-01-01T10:00:00.000Z' }),
       )
       await expect(
         service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
           content: { version: '1.0', blocks: [] },
-          expectedUpdatedAt: '2025-12-31T00:00:00.000Z',
+          expectedContentUpdatedAt: '2025-12-31T00:00:00.000Z',
         }),
       ).rejects.toMatchObject({
         response: {
           code: ErrorCode.PROTOCOL_USAGE_STALE,
-          details: { currentUpdatedAt: '2026-01-01T10:00:00.000Z' },
+          details: { currentContentUpdatedAt: '2026-01-01T10:00:00.000Z' },
         },
       })
       expect(repo.updateProtocolUsage).not.toHaveBeenCalled()
     })
 
-    it('updates the usage without forwarding expectedUpdatedAt when it matches the current updatedAt', async () => {
+    it('updates the usage without forwarding expectedContentUpdatedAt when it matches the current contentUpdatedAt', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
-        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+        mockProtocolUsage({ contentUpdatedAt: '2026-01-01T10:00:00.000Z' }),
       )
       vi.mocked(repo.updateProtocolUsage).mockResolvedValue(mockProtocolUsage())
       await service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
         content: { version: '1.0', blocks: [] },
-        expectedUpdatedAt: '2026-01-01T10:00:00.000Z',
+        expectedContentUpdatedAt: '2026-01-01T10:00:00.000Z',
       })
       expect(repo.updateProtocolUsage).toHaveBeenCalledWith('usage-1', 'tenant-1', {
         content: { version: '1.0', blocks: [] },
       })
     })
 
-    it('passes through modifications-only updates with no expectedUpdatedAt check', async () => {
+    it('passes through modifications-only updates with no expectedContentUpdatedAt check', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
-        mockProtocolUsage({ updatedAt: '2026-01-01T10:00:00.000Z' }),
+        mockProtocolUsage({ contentUpdatedAt: '2026-01-01T10:00:00.000Z' }),
       )
       vi.mocked(repo.updateProtocolUsage).mockResolvedValue(mockProtocolUsage())
       await expect(
@@ -1039,6 +1040,31 @@ describe('ConsultationsService', () => {
       ).resolves.toBeDefined()
       expect(repo.updateProtocolUsage).toHaveBeenCalledWith('usage-1', 'tenant-1', {
         modifications: { steps_completed: [{ step_id: 'stp1', timestamp: 't1' }] },
+      })
+    })
+
+    it('succeeds when contentUpdatedAt is unchanged even though a modifications-only PATCH bumped updatedAt', async () => {
+      // Simulates the real bug this task fixes: an intervening
+      // modifications-only PATCH bumps the row-level `updatedAt` (Prisma
+      // bumps it on ANY update) but must NOT bump `contentUpdatedAt`. A
+      // content flush whose precondition was captured before that PATCH
+      // must still succeed because it compares against contentUpdatedAt.
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
+      vi.mocked(repo.findProtocolUsageById).mockResolvedValue(
+        mockProtocolUsage({
+          contentUpdatedAt: '2026-01-01T10:00:00.000Z',
+          updatedAt: '2026-01-01T10:05:00.000Z',
+        }),
+      )
+      vi.mocked(repo.updateProtocolUsage).mockResolvedValue(mockProtocolUsage())
+      await expect(
+        service.updateProtocolUsage('consult-1', 'usage-1', 'tenant-1', {
+          content: { version: '1.0', blocks: [] },
+          expectedContentUpdatedAt: '2026-01-01T10:00:00.000Z',
+        }),
+      ).resolves.toBeDefined()
+      expect(repo.updateProtocolUsage).toHaveBeenCalledWith('usage-1', 'tenant-1', {
+        content: { version: '1.0', blocks: [] },
       })
     })
   })

@@ -114,6 +114,7 @@ function toProtocolUsage(row: PrismaProtocolUsageWithRels): ConsultationProtocol
     notes: row.notes,
     appliedAt: row.appliedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    contentUpdatedAt: row.contentUpdatedAt.toISOString(),
     protocolTitle: row.protocol.title,
     protocolTypeName: null,
     versionNumber: row.protocolVersion.versionNumber,
@@ -536,6 +537,9 @@ export class ConsultationsRepository {
 
     if (dto.content !== undefined) {
       data.content = dto.content as Prisma.InputJsonValue
+      // Content-specific timestamp — bumped ONLY on content writes so a
+      // modifications-only PATCH never falsely stales a content flush.
+      data.contentUpdatedAt = new Date()
     }
     if (dto.modifications !== undefined) {
       // Merge new modifications onto existing ones rather than replacing

@@ -24,6 +24,7 @@ function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
     notes: null,
     appliedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    contentUpdatedAt: new Date().toISOString(),
     protocolTitle: 'Test Protocol',
     protocolTypeName: null,
     versionNumber: 1,

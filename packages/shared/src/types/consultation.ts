@@ -56,8 +56,16 @@ export interface ConsultationProtocolUsage {
   completedAt: string | null
   notes: string | null
   appliedAt: string
-  /** Row-level last-modified timestamp, used as an optimistic-concurrency precondition. */
+  /** Row-level last-modified timestamp. Bumped on ANY update (content or modifications). */
   updatedAt: string
+  /**
+   * Content-specific last-modified timestamp, bumped ONLY when `content` is
+   * replaced (not by modification-only events like checklist ticks, skips,
+   * or off-notes). Used as the optimistic-concurrency precondition for
+   * content flushes so a benign modification event elsewhere never falsely
+   * flags a content write as stale.
+   */
+  contentUpdatedAt: string
   protocolTitle: string
   protocolTypeName: string | null
   versionNumber: number

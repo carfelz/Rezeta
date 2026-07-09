@@ -31,6 +31,7 @@ function makeUsage(blocks: ProtocolBlock[]): ConsultationProtocolUsage {
     notes: null,
     appliedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    contentUpdatedAt: new Date().toISOString(),
     modificationSummary: null,
     modifications: {},
     content: { version: '1.0', blocks },

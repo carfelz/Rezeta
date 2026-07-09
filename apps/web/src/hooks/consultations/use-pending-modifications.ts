@@ -180,11 +180,16 @@ export function usePendingModifications(consultationId: string): PendingModifica
         skipped.add(usageId)
         return null
       }
-      // The precondition (expectedUpdatedAt) only accompanies a content
-      // replace, so it's derived alongside content from the same usage.
+      // The precondition (expectedContentUpdatedAt) only accompanies a
+      // content replace, so it's derived alongside content from the same
+      // usage. It rides on contentUpdatedAt (not the row-level updatedAt) so
+      // a modifications-only PATCH elsewhere never falsely stales this flush.
       const contentUpdate =
         contentEdits && usage
-          ? { content: mergeContent(usage.content, contentEdits), expectedUpdatedAt: usage.updatedAt }
+          ? {
+              content: mergeContent(usage.content, contentEdits),
+              expectedContentUpdatedAt: usage.contentUpdatedAt,
+            }
           : undefined
       const body = {
         ...(delta ? { modifications: delta } : {}),

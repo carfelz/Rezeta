@@ -29,6 +29,7 @@ function makeUsage(
     notes: null,
     appliedAt: ts,
     updatedAt: ts,
+    contentUpdatedAt: ts,
     modificationSummary: null,
     modifications: checklistItems.length > 0 ? { checklist_items: checklistItems } : {},
     content: { version: '1.0', blocks },

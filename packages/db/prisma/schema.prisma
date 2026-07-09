@@ -546,6 +546,11 @@ model ProtocolUsage {
   notes               String?   @db.Text
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
+  // Bumped ONLY on content writes (dto.content !== undefined) — the
+  // stale-write precondition compares against this, not `updatedAt`, so a
+  // benign append-only modification event (checklist tick, skip, off-note)
+  // in another tab never falsely 409s a content flush.
+  contentUpdatedAt    DateTime  @default(now()) @map("content_updated_at")
   deletedAt           DateTime? @map("deleted_at")
 
   tenant          Tenant          @relation(fields: [tenantId], references: [id])

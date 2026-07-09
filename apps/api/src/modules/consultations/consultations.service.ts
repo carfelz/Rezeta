@@ -461,17 +461,17 @@ export class ConsultationsService {
     }
     if (
       dto.content !== undefined &&
-      dto.expectedUpdatedAt !== undefined &&
-      usage.updatedAt !== dto.expectedUpdatedAt
+      dto.expectedContentUpdatedAt !== undefined &&
+      usage.contentUpdatedAt !== dto.expectedContentUpdatedAt
     ) {
       throw new ConflictException({
         code: ErrorCode.PROTOCOL_USAGE_STALE,
         message: 'Protocol usage was modified by another session',
-        details: { currentUpdatedAt: usage.updatedAt },
+        details: { currentContentUpdatedAt: usage.contentUpdatedAt },
       })
     }
     const repoDto = { ...dto }
-    delete repoDto.expectedUpdatedAt
+    delete repoDto.expectedContentUpdatedAt
     return this.repo.updateProtocolUsage(usageId, tenantId, repoDto)
   }
 

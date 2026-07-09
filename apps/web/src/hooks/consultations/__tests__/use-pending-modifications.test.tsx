@@ -39,6 +39,10 @@ const usage = {
   consultationId: 'cons-1',
   protocolId: 'proto-1',
   updatedAt: '2026-01-01T10:00:00.000Z',
+  // Deliberately different from updatedAt: a modifications-only PATCH bumps
+  // the row's updatedAt but must not bump contentUpdatedAt, and the flush
+  // precondition must ride on contentUpdatedAt, not updatedAt.
+  contentUpdatedAt: '2026-01-01T09:00:00.000Z',
   modifications: {
     checklist_items: [{ item_id: 'itm-0', checked: true, timestamp: 'past' }],
   },
@@ -289,10 +293,10 @@ describe('usePendingModifications', () => {
     expect(result.current.hasPending).toBe(false)
     expect(apiClient.patch).toHaveBeenCalledTimes(1)
     const [, body] = vi.mocked(apiClient.patch).mock.calls[0]!
-    const { content, modifications, expectedUpdatedAt } = body as {
+    const { content, modifications, expectedContentUpdatedAt } = body as {
       content: { version: string; blocks: { id: string; values?: Record<string, number> }[] }
       modifications: { checklist_items: { item_id: string }[] }
-      expectedUpdatedAt: string
+      expectedContentUpdatedAt: string
     }
     expect(modifications.checklist_items.map((e) => e.item_id)).toEqual(['itm-1'])
     // Unknown content keys (version, template_version, historia_mapping) survive the merge
@@ -301,8 +305,9 @@ describe('usePendingModifications', () => {
     )
     expect(content).toHaveProperty('historia_mapping')
     expect(content.blocks[0]).toEqual({ id: 'vit-1', type: 'vitals', fields: [], values: { temp: 40 } })
-    // The precondition rides alongside the content replace
-    expect(expectedUpdatedAt).toBe(usage.updatedAt)
+    // The precondition rides alongside the content replace, and is derived
+    // from contentUpdatedAt (not the row-level updatedAt).
+    expect(expectedContentUpdatedAt).toBe(usage.contentUpdatedAt)
   })
 
   it('flush sends content-only (no modifications key) when only content edits are pending', async () => {

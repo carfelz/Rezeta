@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-08] Precondición de staleness específica al contenido en protocolos (contentUpdatedAt)
+
+### Added
+
+- `packages/db/prisma/schema.prisma`: `ProtocolUsage.contentUpdatedAt` (columna `content_updated_at`), migración `protocol_usage_content_updated_at` con backfill (`UPDATE protocol_usages SET content_updated_at = updated_at`) para las filas existentes.
+
+### Fixed
+
+- El guard de escritura obsoleta (409 `PROTOCOL_USAGE_STALE`) en `PATCH .../protocols/:usageId` comparaba `updatedAt` a nivel de fila, que Prisma actualiza en CUALQUIER escritura — un evento de modificación benigno y solo de anexado (marcar un ítem de checklist en otra pestaña) hacía fallar falsamente un flush de contenido, y el cliente web descartaba permanentemente las ediciones de contenido bufferizadas del doctor para ese `usage`. `apps/api/src/modules/consultations/consultations.repository.ts`: `updateProtocolUsage` ahora fija `contentUpdatedAt` solo cuando `dto.content !== undefined`; `toProtocolUsage` emite `contentUpdatedAt` (además de `updatedAt`, sin cambios). `apps/api/src/modules/consultations/consultations.service.ts`: la precondición ahora compara `usage.contentUpdatedAt` contra `dto.expectedContentUpdatedAt` (detalles del 409: `currentContentUpdatedAt`); una escritura solo de modificaciones nunca vuelve a invalidar esta precondición.
+
+### Changed
+
+- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema.expectedUpdatedAt` renombrado a `expectedContentUpdatedAt` (web es el único cliente; sin capa de compatibilidad). `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gana `contentUpdatedAt: string`. `apps/web/src/hooks/consultations/use-pending-modifications.ts`: el flush de contenido envía `expectedContentUpdatedAt: usage.contentUpdatedAt` (antes `usage.updatedAt`); la semántica de la rama "stale" (descartar contentEdits, re-bufferizar modificaciones, toast único, invalidar) no cambia.
+
 ## [2026-07-08] Los archivos de test ahora pasan por el typecheck
 
 ### Changed
