@@ -23,361 +23,361 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - `apps/api/src/modules/tenant-seeding/__tests__/tenant-seeding.concurrency.spec.ts`: covers the row lock before the `seededAt` re-read, the `P2002` → `TENANT_ALREADY_SEEDED` remap, and the non-capture of unrelated errors, for both `seedDefault` and `seedCustom`.
 - `apps/web/src/hooks/__tests__/use-onboarding.test.ts`: covers the fallback to `GET /v1/auth/me` on `TENANT_ALREADY_SEEDED` and the untouched propagation of unrelated failures.
 
-## [2026-07-08] Borrador local recupera un mapeo de historia médica limpiado, versiones invalidadas al asegurar el registro y cobertura de invalidación silenciosa
+## [2026-07-08] Local draft restores a cleared medical-record mapping, versions invalidated on ensuring the record, and silent-invalidation coverage
 
 ### Fixed
 
-- `apps/web/src/store/editor.store.ts`: `saveLocalDraft` ya no omite `historia_mapping` cuando el mapeo pasado es `{}` — ahora persiste la clave siempre que el parámetro esté definido (incluido vacío), y solo la omite cuando es `undefined`. Antes, un borrador de recuperación tras un crash cuya única edición era limpiar el mapeo se restauraba sin esa limpieza. `loadLocalDraft` no cambia (clave ausente sigue siendo `undefined`, compatibilidad retro intacta).
-- `apps/web/src/pages/ProtocolEditor/index.tsx`: `applyDraft` cambia el guard `if (draftBanner.historiaMapping)` a `!== undefined` para reflejar con claridad que un mapeo `{}` cargado desde el borrador también debe aplicarse (ya se comportaba así por ser `{}` truthy, pero el guard anterior era ambiguo sobre esa intención).
-- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useEnsureRecord` ahora también invalida `[QK, consultationId, 'versions']` en éxito, alineándose con `useRegenerateRecord` y `useSignRecord`, que ya invalidaban ese key.
+- `apps/web/src/store/editor.store.ts`: `saveLocalDraft` no longer omits `historia_mapping` when the passed mapping is `{}` — it now persists the key whenever the parameter is defined (including empty), and only omits it when it is `undefined`. Previously, a crash-recovery draft whose only edit was clearing the mapping was restored without that clearing. `loadLocalDraft` is unchanged (an absent key remains `undefined`, backward compatibility intact).
+- `apps/web/src/pages/ProtocolEditor/index.tsx`: `applyDraft` changes the `if (draftBanner.historiaMapping)` guard to `!== undefined` to clearly reflect that a `{}` mapping loaded from the draft should also be applied (it already behaved this way since `{}` is truthy, but the previous guard was ambiguous about that intent).
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useEnsureRecord` now also invalidates `[QK, consultationId, 'versions']` on success, aligning with `useRegenerateRecord` and `useSignRecord`, which already invalidated that key.
 
 ### Added
 
-- `apps/web/src/store/__tests__/editor.store.test.ts`: caso de round-trip para un mapeo `{}` (clave persistida, se restaura como `{}`).
-- `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: caso que aplica un borrador con `historiaMapping: {}` sobre un mapeo previo no vacío y verifica que el override se limpia.
-- `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx`: caso que verifica la invalidación de `[QK, consultationId, 'versions']` en `useEnsureRecord`.
-- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: casos para `useCreatePrescription`, `useCreateImagingOrder` y `useCreateLabOrder` que verifican que `qc.invalidateQueries` sigue disparándose con `{ silent: true }` (los hooks no cambiaron; la cobertura confirma el contrato existente).
+- `apps/web/src/store/__tests__/editor.store.test.ts`: round-trip case for a `{}` mapping (key persisted, restored as `{}`).
+- `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: case that applies a draft with `historiaMapping: {}` over a previous non-empty mapping and verifies the override is cleared.
+- `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx`: case that verifies the invalidation of `[QK, consultationId, 'versions']` in `useEnsureRecord`.
+- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: cases for `useCreatePrescription`, `useCreateImagingOrder` and `useCreateLabOrder` that verify `qc.invalidateQueries` still fires with `{ silent: true }` (the hooks did not change; the coverage confirms the existing contract).
 
-## [2026-07-08] Deduplicación de etiquetas de auditoría y del servicio de historias médicas
+## [2026-07-08] Deduplication of audit labels and the medical-records service
 
 ### Changed
 
-- `apps/web/src/lib/audit-entities.ts` (nuevo): extrae el conjunto canónico de claves `entityType` de auditoría (`AUDIT_ENTITY_KEYS`) y los dos mapas de etiquetas en español que antes se duplicaban verbatim en `apps/web/src/pages/settings/AuditLog.tsx` (`ENTITY_TYPE_LABELS`, fraseo formal) y `apps/web/src/pages/Dashboard/helpers.ts` (`friendlyEntity`, fraseo "un/una X"). Ambos mapas se tipan como `Record<AuditEntityKey, string>`, así que una clave faltante o de más en cualquiera de los dos es un error de compilación en vez de una divergencia silenciosa. Las dos fraseologías (distintas por diseño) se conservan sin fusionar.
-- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` y `regenerate` (incluida su ruta de reintento tras P2002) ahora comparten un helper privado `createVersion` para el payload de creación + auditoría, en vez de repetirlo tres veces. `getLatest` y `getVersion` comparten el throw de `RECORD_NOT_FOUND` vía el helper privado `throwRecordNotFound`.
-- `apps/web/src/hooks/consultations/use-consultations.ts`: los comentarios de `useSkipStep` y `useAddOffProtocolNote` que justificaban el `setQueryData` síncrono citaban la ventana de falsa staleness sobre `updatedAt` (ya resuelta por la precondición basada en `contentUpdatedAt` del cambio anterior). Reescritos para reflejar el motivo vigente: mantener fresco en caché el estado de modificaciones/UI sin esperar al refetch.
-- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: `handleDownloadRecordPdf` elimina el ternario redundante `versionNumber !== undefined ? f(id, v) : f(id)` — el parámetro ya es opcional, así que se reenvía directo.
-- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: movido desde `apps/web/src/hooks/__tests__/` (su fuente, `use-consultations.ts`, vive en `hooks/consultations/`, no en `hooks/`); import relativo corregido de `../consultations/use-consultations` a `../use-consultations`.
+- `apps/web/src/lib/audit-entities.ts` (new): extracts the canonical set of audit `entityType` keys (`AUDIT_ENTITY_KEYS`) and the two Spanish label maps that were previously duplicated verbatim in `apps/web/src/pages/settings/AuditLog.tsx` (`ENTITY_TYPE_LABELS`, formal phrasing) and `apps/web/src/pages/Dashboard/helpers.ts` (`friendlyEntity`, "un/una X" phrasing). Both maps are typed as `Record<AuditEntityKey, string>`, so a missing or extra key in either one is a compile error instead of a silent divergence. The two phrasings (distinct by design) are kept unmerged.
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` and `regenerate` (including its retry path after P2002) now share a private `createVersion` helper for the creation + audit payload, instead of repeating it three times. `getLatest` and `getVersion` share the `RECORD_NOT_FOUND` throw via the private `throwRecordNotFound` helper.
+- `apps/web/src/hooks/consultations/use-consultations.ts`: the comments in `useSkipStep` and `useAddOffProtocolNote` that justified the synchronous `setQueryData` cited the false-staleness window on `updatedAt` (already resolved by the `contentUpdatedAt`-based precondition of the previous change). Rewritten to reflect the current reason: keep the modifications/UI state fresh in cache without waiting for the refetch.
+- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: `handleDownloadRecordPdf` removes the redundant ternary `versionNumber !== undefined ? f(id, v) : f(id)` — the parameter is already optional, so it is forwarded directly.
+- `apps/web/src/hooks/consultations/__tests__/use-consultations.create-toasts.test.tsx`: moved from `apps/web/src/hooks/__tests__/` (its source, `use-consultations.ts`, lives in `hooks/consultations/`, not `hooks/`); relative import corrected from `../consultations/use-consultations` to `../use-consultations`.
 
 ### Fixed
 
-- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: el mensaje 404 de `getVersion` ya no es genérico ("Esta consulta no tiene historia médica generada") — ahora incluye el número de versión solicitado (`Esta consulta no tiene la versión N de la historia médica`), distinguiéndolo del 404 de `getLatest`.
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: the 404 message from `getVersion` is no longer generic ("Esta consulta no tiene historia médica generada") — it now includes the requested version number (`Esta consulta no tiene la versión N de la historia médica`), distinguishing it from the `getLatest` 404.
 
-## [2026-07-08] Precondición de staleness específica al contenido en protocolos (contentUpdatedAt)
+## [2026-07-08] Content-specific staleness precondition on protocols (contentUpdatedAt)
 
 ### Added
 
-- `packages/db/prisma/schema.prisma`: `ProtocolUsage.contentUpdatedAt` (columna `content_updated_at`), migración `protocol_usage_content_updated_at` con backfill (`UPDATE protocol_usages SET content_updated_at = updated_at`) para las filas existentes.
+- `packages/db/prisma/schema.prisma`: `ProtocolUsage.contentUpdatedAt` (column `content_updated_at`), migration `protocol_usage_content_updated_at` with backfill (`UPDATE protocol_usages SET content_updated_at = updated_at`) for existing rows.
 
 ### Fixed
 
-- El guard de escritura obsoleta (409 `PROTOCOL_USAGE_STALE`) en `PATCH .../protocols/:usageId` comparaba `updatedAt` a nivel de fila, que Prisma actualiza en CUALQUIER escritura — un evento de modificación benigno y solo de anexado (marcar un ítem de checklist en otra pestaña) hacía fallar falsamente un flush de contenido, y el cliente web descartaba permanentemente las ediciones de contenido bufferizadas del doctor para ese `usage`. `apps/api/src/modules/consultations/consultations.repository.ts`: `updateProtocolUsage` ahora fija `contentUpdatedAt` solo cuando `dto.content !== undefined`; `toProtocolUsage` emite `contentUpdatedAt` (además de `updatedAt`, sin cambios). `apps/api/src/modules/consultations/consultations.service.ts`: la precondición ahora compara `usage.contentUpdatedAt` contra `dto.expectedContentUpdatedAt` (detalles del 409: `currentContentUpdatedAt`); una escritura solo de modificaciones nunca vuelve a invalidar esta precondición.
+- The stale-write guard (409 `PROTOCOL_USAGE_STALE`) on `PATCH .../protocols/:usageId` compared row-level `updatedAt`, which Prisma updates on ANY write — a benign, append-only modification event (checking a checklist item in another tab) falsely failed a content flush, and the web client permanently discarded the doctor's buffered content edits for that `usage`. `apps/api/src/modules/consultations/consultations.repository.ts`: `updateProtocolUsage` now sets `contentUpdatedAt` only when `dto.content !== undefined`; `toProtocolUsage` emits `contentUpdatedAt` (in addition to `updatedAt`, unchanged). `apps/api/src/modules/consultations/consultations.service.ts`: the precondition now compares `usage.contentUpdatedAt` against `dto.expectedContentUpdatedAt` (409 details: `currentContentUpdatedAt`); a modifications-only write never invalidates this precondition again.
 
 ### Changed
 
-- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema.expectedUpdatedAt` renombrado a `expectedContentUpdatedAt` (web es el único cliente; sin capa de compatibilidad). `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gana `contentUpdatedAt: string`. `apps/web/src/hooks/consultations/use-pending-modifications.ts`: el flush de contenido envía `expectedContentUpdatedAt: usage.contentUpdatedAt` (antes `usage.updatedAt`); la semántica de la rama "stale" (descartar contentEdits, re-bufferizar modificaciones, toast único, invalidar) no cambia.
+- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema.expectedUpdatedAt` renamed to `expectedContentUpdatedAt` (web is the only client; no compatibility layer). `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gains `contentUpdatedAt: string`. `apps/web/src/hooks/consultations/use-pending-modifications.ts`: the content flush sends `expectedContentUpdatedAt: usage.contentUpdatedAt` (previously `usage.updatedAt`); the semantics of the "stale" branch (discard contentEdits, re-buffer modifications, single toast, invalidate) do not change.
 
-## [2026-07-08] Los archivos de test ahora pasan por el typecheck
+## [2026-07-08] Test files now pass through the typecheck
 
 ### Changed
 
-- `apps/api`, `apps/web`, `packages/shared`: el script `typecheck` ahora corre `tsc --noEmit` con el tsconfig completo (incluye `__tests__/**`) en lugar de `tsconfig.build.json` (que los excluía). Los tests quedaban fuera de todo gate de tipos y acumularon 341 errores silenciosos; el pre-commit y CI ahora los detectan (`packages/db` ya funcionaba así).
+- `apps/api`, `apps/web`, `packages/shared`: the `typecheck` script now runs `tsc --noEmit` with the full tsconfig (includes `__tests__/**`) instead of `tsconfig.build.json` (which excluded them). Tests fell outside every type gate and accumulated 341 silent errors; pre-commit and CI now catch them (`packages/db` already worked this way).
 
 ### Fixed
 
-- 341 errores de TypeScript en archivos de test (web 43, api 257, shared 41; db estaba limpio), sin debilitar aserciones ni eliminar tests. Patrones principales: índices posiblemente `undefined` bajo `noUncheckedIndexedAccess` (aserciones non-null tras verificaciones de existencia), fixtures desactualizados respecto a los tipos reales (`AuthUser.preferences`, `startsAt`/`endsAt`, `fullName`, `templateId`/`categoryId`, `items`/`groupOrder`), imports sin extensión `.js` en `packages/shared`, y `import.meta` en dos specs de arquitectura del api reescrito con rutas basadas en `process.cwd()` (el programa compila como CommonJS).
-- Dos bugs genuinos de fixtures descubiertos por el typecheck: `sort: 'title'` (valor inexistente del enum, ahora `'title_asc'`) en `protocols.service.spec.ts`, y un mapeo a `plan_tratamiento` (sección no seleccionable como destino) en `generate-record-sections.spec.ts`.
+- 341 TypeScript errors in test files (web 43, api 257, shared 41; db was clean), without weakening assertions or removing tests. Main patterns: possibly `undefined` indexes under `noUncheckedIndexedAccess` (non-null assertions after existence checks), fixtures out of date relative to the real types (`AuthUser.preferences`, `startsAt`/`endsAt`, `fullName`, `templateId`/`categoryId`, `items`/`groupOrder`), imports without the `.js` extension in `packages/shared`, and `import.meta` in two architecture specs of the rewritten api rewritten with `process.cwd()`-based paths (the program compiles as CommonJS).
+- Two genuine fixture bugs uncovered by the typecheck: `sort: 'title'` (nonexistent enum value, now `'title_asc'`) in `protocols.service.spec.ts`, and a mapping to `plan_tratamiento` (a section not selectable as a target) in `generate-record-sections.spec.ts`.
 
-## [2026-07-08] Correcciones de la revisión final de rama: ventana de falsa staleness, validación de `version` y refetch de órdenes tras P2002
-
-### Fixed
-
-- `apps/web/src/hooks/consultations/use-consultations.ts`: `useSkipStep` y `useAddOffProtocolNote` ahora hacen `setQueryData` con el `usage` devuelto por su PATCH antes de invalidar (mismo patrón que ya usaba `useUpdateCheckedState` en este archivo), en vez de depender solo de `invalidateQueries`. Antes, entre el `PATCH` y el refetch asíncrono, la caché de react-query retenía el `updatedAt` previo del `usage` — si un flush de `use-pending-modifications.ts` (ediciones de contenido bufferizadas) corría en esa ventana, enviaba un `expectedUpdatedAt` obsoleto, el servidor lo rechazaba con 409 `PROTOCOL_USAGE_STALE`, y el flush descartaba permanentemente los `contentEdits` bufferizados del doctor para ese `usage`.
-- `apps/api/src/common/pipes/parse-positive-int.pipe.ts` (nuevo): `ParsePositiveIntPipe` valida que un parámetro numérico opcional sea un entero ≥ 1, devolviendo `undefined` sin cambios cuando el parámetro no se envía (mismo comportamiento de passthrough que `ParseIntPipe({ optional: true })`) y lanzando `BadRequestException` con `code: VALIDATION_ERROR` para 0, negativos o valores no enteros. `apps/api/src/modules/consultation-records/consultation-records.controller.ts`: el query param `version` de `GET .../record/pdf` usa este pipe en vez de `ParseIntPipe({ optional: true })`, que aceptaba 0 y negativos como "válidos".
-- `apps/api/src/modules/orders/orders.repository.ts`: las tres recuperaciones `findFirst` tras un `P2002` (`createPrescription`, `createImagingOrder`, `createLabOrder`), que buscan por `consultationId` + `clientRequestId` + `tenantId` para devolver la fila ya creada por el intento original, ahora filtran también `deletedAt: null`. Antes, si la fila con ese `clientRequestId` había sido borrada lógicamente, el re-fetch la devolvía igual y el flush de reintento terminaba "recuperando" una orden ya eliminada en vez de relanzar el error original.
-
-### Added
-
-- Tests: `apps/web/src/hooks/__tests__/use-consultations.test.ts` gana un caso para `useSkipStep` y otro para `useAddOffProtocolNote` que confirman que `setQueryData` se llama con el `usage` de la respuesta (incluyendo su `updatedAt` fresco) antes de que se resuelva `mutateAsync`. `apps/api/src/common/pipes/__tests__/parse-positive-int.pipe.spec.ts` (nuevo) cubre passthrough de `undefined`, enteros positivos válidos, rechazo de 0/negativos/no-enteros/no-numéricos y la forma del error (`code`, `details.field`). `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` gana un caso en la suite de `createPrescription` que confirma que el re-fetch tras `P2002` se llama con `deletedAt: null` en el `where` y que, si no encuentra fila (caso de una fila soft-deleted), se relanza el error original.
-
-## [2026-07-08] Errores de TypeScript en tests agregados en esta rama
+## [2026-07-08] Final branch review fixes: false-staleness window, `version` validation, and order refetch after P2002
 
 ### Fixed
 
-- `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (:25-34): `RX_DTO`/`IMG_DTO`/`LAB_DTO` dejan de forzar el tipo vía `as <DTO>` sobre un objeto `{ items: [] }` incompleto (TS2352, `groupOrder` faltante) y pasan a ser constantes anotadas con el tipo del parámetro (`items: [], groupOrder: 1`), sin cast — un revisor previo había señalado el cast forzado como una debilidad del test.
-- `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (:9-15): los mocks `useCreatePrescriptionMock`/`useCreateImagingOrderMock`/`useCreateLabOrderMock` (`vi.fn()`) ganan la firma `(_id?: string, _opts?: { silent?: boolean })` — antes estaban tipados como funciones de cero argumentos (TS2554) aunque el código bajo prueba los invoca con `(consultationId, { silent: true })`.
-- `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` (:67, :197, :236): `medications[0].drug` gana la aserción no-nula ya usada en el resto del archivo (`medications[0]!.drug`) tras el `expect(medications).toHaveLength(1)` que ya precede a cada acceso (TS2532).
-- `apps/api/src/modules/consultation-records/__tests__/consultation-records.service.spec.ts` (:279, dentro del test agregado en esta rama "retries once with a recomputed version number when create races another version (P2002)"): `mockRepo.create.mock.calls[1][0].versionNumber` gana la aserción no-nula (`calls[1]!`), mismo idioma que el resto de la suite de la API (TS2532). Los demás TS2532/TS2339 preexistentes del archivo quedan intactos.
-- `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (:171, dentro del test agregado en esta rama "passes clientRequestId through to the create call"): `mockPrisma.prescription.create.mock.calls[0][0].data` gana la misma aserción no-nula (`calls[0]!`) (TS2532). Los demás TS2532 preexistentes del archivo quedan intactos.
-
-Estos errores solo aparecían bajo el tsconfig completo (`npx tsc -p tsconfig.json --noEmit`), no bajo `tsconfig.build.json` (excluye `__tests__/**`) que usa CI; no afectaban el build mientras existía una base preexistente y no relacionada de errores similares en archivos no tocados por esta rama, que se deja intacta.
-
-## [2026-07-08] Bloques de historia clínica en las plantillas semilla
+- `apps/web/src/hooks/consultations/use-consultations.ts`: `useSkipStep` and `useAddOffProtocolNote` now `setQueryData` with the `usage` returned by their PATCH before invalidating (same pattern `useUpdateCheckedState` already used in this file), instead of relying solely on `invalidateQueries`. Previously, between the `PATCH` and the async refetch, the react-query cache retained the `usage`'s prior `updatedAt` — if a flush from `use-pending-modifications.ts` (buffered content edits) ran in that window, it sent a stale `expectedUpdatedAt`, the server rejected it with 409 `PROTOCOL_USAGE_STALE`, and the flush permanently discarded the doctor's buffered `contentEdits` for that `usage`.
+- `apps/api/src/common/pipes/parse-positive-int.pipe.ts` (new): `ParsePositiveIntPipe` validates that an optional numeric parameter is an integer ≥ 1, returning `undefined` unchanged when the parameter is not sent (same passthrough behavior as `ParseIntPipe({ optional: true })`) and throwing `BadRequestException` with `code: VALIDATION_ERROR` for 0, negatives, or non-integer values. `apps/api/src/modules/consultation-records/consultation-records.controller.ts`: the `version` query param of `GET .../record/pdf` uses this pipe instead of `ParseIntPipe({ optional: true })`, which accepted 0 and negatives as "valid".
+- `apps/api/src/modules/orders/orders.repository.ts`: the three `findFirst` recoveries after a `P2002` (`createPrescription`, `createImagingOrder`, `createLabOrder`), which look up by `consultationId` + `clientRequestId` + `tenantId` to return the row already created by the original attempt, now also filter `deletedAt: null`. Previously, if the row with that `clientRequestId` had been soft-deleted, the re-fetch returned it anyway and the retry flush ended up "recovering" an already-deleted order instead of re-throwing the original error.
 
 ### Added
 
-- `apps/api/src/lib/starter-fixtures/index.ts`: los dos protocolos semilla (`emergency`, `diagnostic`, es/en) ganan bloques `clinical_notes` y `vitals` de nivel superior, aditivos sobre las secciones existentes. `diagnostic` agrega `clinical_notes` "Motivo de consulta" (`blk_motivo_notes`, obligatorio) como primer bloque, luego `vitals` (`blk_vitals`, 5 campos estándar: presión arterial, frecuencia cardíaca, temperatura, peso, talla), y tras "Diagnóstico Diferencial" agrega `clinical_notes` "Diagnóstico" (`blk_dx_notes`) y "Plan de tratamiento" (`blk_plan_notes`) como último bloque. `emergency` agrega `vitals` (mismos 5 campos) antes de "Evaluación inicial", y tras "Monitoreo post-intervención" agrega `clinical_notes` "Diagnóstico" (`blk_dx_notes`) y "Evolución" (`blk_evolucion_notes`). Las fixtures `en` reutilizan intencionalmente las mismas etiquetas en español para los bloques `clinical_notes` (comentario en el código) porque el enrutador de secciones de la historia médica (`matchNotesSection` en `packages/shared/src/record/generate-record-sections.ts`) solo reconoce palabras clave en español.
-- `packages/db/src/seed.ts`: `STARTER_TEMPLATES` gana las mismas adiciones (contenido idéntico, ids idénticos) en sus copias de `emergency-intervention` y `diagnostic-algorithm`, ya que este archivo no puede importar desde `apps/api`.
-- Tests: `apps/api/src/lib/starter-fixtures/__tests__/index.test.ts` gana dos suites nuevas — una estructural (cada fixture, ambos locales, tiene ≥1 bloque `clinical_notes` con etiqueta no vacía y ≥1 bloque `vitals` con ≥4 campos) y una funcional que construye el contenido en tiempo de ejecución vía `buildProtocolContentFromTemplate`, rellena valores/contenido de prueba y llama a `generateRecordSections` real (de `@rezeta/shared`) para verificar el enrutamiento predicho: "Motivo de consulta" → `motivo_consulta`, "Diagnóstico" → `diagnosticos`, "Plan de tratamiento" → `plan_tratamiento`, "Evolución" → `evolucion`, `vitals` → `examen_fisico`.
+- Tests: `apps/web/src/hooks/__tests__/use-consultations.test.ts` gains a case for `useSkipStep` and another for `useAddOffProtocolNote` that confirm `setQueryData` is called with the response's `usage` (including its fresh `updatedAt`) before `mutateAsync` resolves. `apps/api/src/common/pipes/__tests__/parse-positive-int.pipe.spec.ts` (new) covers passthrough of `undefined`, valid positive integers, rejection of 0/negatives/non-integers/non-numerics, and the error shape (`code`, `details.field`). `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` gains a case in the `createPrescription` suite that confirms the re-fetch after `P2002` is called with `deletedAt: null` in the `where` and that, if it finds no row (the soft-deleted-row case), the original error is re-thrown.
 
-Antes de este cambio, ningún bloque de las plantillas semilla era `clinical_notes` ni `vitals` (solo `text`/`alert`/`checklist`/`dosage_table`/`steps`/`decision`), por lo que `walkBlocks` no enrutaba nada a esas secciones y los protocolos semilla generaban una historia médica vacía en esas secciones.
-
-## [2026-07-08] Toggle único de Obligatorio y etiquetas exhaustivas de auditoría
+## [2026-07-08] TypeScript errors in tests added on this branch
 
 ### Fixed
 
-- `apps/web/src/components/template/TemplateEditor.tsx`: el panel de detalle de un bloque `clinical_notes` ya no duplica el checkbox "Obligatorio" (:797-810 eliminado) — el toggle de cabecera (:665-693), presente para todo bloque no bloqueado, es el único control de `required`. La cadena `obligatorio` en `apps/web/src/components/template/strings.ts` se elimina por quedar sin uso.
-- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: `toEntityType` ahora separa el segmento del recurso por `-`, singulariza solo la última palabra (`ies` → `y`; si no, se quita la `s` final) y une en PascalCase — `protocol-templates` → `ProtocolTemplate`, `protocol-categories` → `ProtocolCategory`, `patients` → `Patient`, `onboarding` → `Onboarding` (sin cambios). Antes, `protocol-templates`/`protocol-categories` quedaban como `Protocol-template`/`Protocol-categorie` en el registro de auditoría.
-- `apps/web/src/pages/settings/AuditLog.tsx`: `ENTITY_TYPE_LABELS` gana `ProtocolCategory`, `Schedule`, `User`, `Onboarding`, `Log`, `ConsultationRecord`, y las claves kebab-case heredadas (`Protocol-template`, `Protocol-categorie`, `Onboardin`) que ya existen en filas de auditoría históricas anteriores a este fix — todas siguen mostrando una etiqueta amigable en vez de caer al valor crudo de `entityType`.
-- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` gana el mismo conjunto de claves (`ProtocolCategory`, `Schedule`, `User`, `Log`, `ConsultationRecord` → "una historia médica", y las variantes kebab-case/históricas) para que el feed de actividad del dashboard describa estos tipos de entidad en español en vez de caer al genérico "un registro (…)".
+- `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (:25-34): `RX_DTO`/`IMG_DTO`/`LAB_DTO` stop forcing the type via `as <DTO>` over an incomplete `{ items: [] }` object (TS2352, missing `groupOrder`) and become constants annotated with the parameter's type (`items: [], groupOrder: 1`), without a cast — a prior reviewer had flagged the forced cast as a test weakness.
+- `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (:9-15): the `useCreatePrescriptionMock`/`useCreateImagingOrderMock`/`useCreateLabOrderMock` mocks (`vi.fn()`) gain the signature `(_id?: string, _opts?: { silent?: boolean })` — previously they were typed as zero-argument functions (TS2554) even though the code under test invokes them with `(consultationId, { silent: true })`.
+- `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` (:67, :197, :236): `medications[0].drug` gains the non-null assertion already used in the rest of the file (`medications[0]!.drug`) after the `expect(medications).toHaveLength(1)` that already precedes each access (TS2532).
+- `apps/api/src/modules/consultation-records/__tests__/consultation-records.service.spec.ts` (:279, within the test added on this branch "retries once with a recomputed version number when create races another version (P2002)"): `mockRepo.create.mock.calls[1][0].versionNumber` gains the non-null assertion (`calls[1]!`), the same idiom as the rest of the API suite (TS2532). The file's other preexisting TS2532/TS2339 errors are left intact.
+- `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (:171, within the test added on this branch "passes clientRequestId through to the create call"): `mockPrisma.prescription.create.mock.calls[0][0].data` gains the same non-null assertion (`calls[0]!`) (TS2532). The file's other preexisting TS2532 errors are left intact.
+
+These errors only appeared under the full tsconfig (`npx tsc -p tsconfig.json --noEmit`), not under `tsconfig.build.json` (excludes `__tests__/**`) which CI uses; they did not affect the build while a preexisting, unrelated base of similar errors existed in files untouched by this branch, which is left intact.
+
+## [2026-07-08] Clinical-note blocks in the seed templates
 
 ### Added
 
-- `apps/web/src/components/protocols/__tests__/BlockRenderer.vitals-notes.test.tsx`: test de regresión (nuevo, sin cobertura previa del `BlockRenderer` de solo lectura) que fija que `clinical_notes` renderiza su etiqueta exactamente una vez (sin duplicado por el chrome de `ProtocolBlock`), que `vitals` sin `title` muestra el chip de tipo exactamente una vez, y que `vitals` con `title: 'Signos basales'` muestra ese título exactamente una vez.
-- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` gana casos para `protocol-templates` → `ProtocolTemplate` y `protocol-categories` → `ProtocolCategory`. `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx` gana casos para el round-trip de `required` vía el toggle de cabecera y para confirmar que el panel de detalle ya no renderiza un segundo checkbox. `apps/web/src/pages/settings/__tests__/AuditLog.test.tsx` gana un caso parametrizado sobre las nuevas claves de `ENTITY_TYPE_LABELS`. `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` gana un caso para `ConsultationRecord` → "una historia médica".
+- `apps/api/src/lib/starter-fixtures/index.ts`: the two seed protocols (`emergency`, `diagnostic`, es/en) gain top-level `clinical_notes` and `vitals` blocks, additive over the existing sections. `diagnostic` adds `clinical_notes` "Motivo de consulta" (`blk_motivo_notes`, required) as the first block, then `vitals` (`blk_vitals`, 5 standard fields: blood pressure, heart rate, temperature, weight, height), and after "Diagnóstico Diferencial" adds `clinical_notes` "Diagnóstico" (`blk_dx_notes`) and "Plan de tratamiento" (`blk_plan_notes`) as the last block. `emergency` adds `vitals` (same 5 fields) before "Evaluación inicial", and after "Monitoreo post-intervención" adds `clinical_notes` "Diagnóstico" (`blk_dx_notes`) and "Evolución" (`blk_evolucion_notes`). The `en` fixtures intentionally reuse the same Spanish labels for the `clinical_notes` blocks (comment in the code) because the medical-record section router (`matchNotesSection` in `packages/shared/src/record/generate-record-sections.ts`) only recognizes Spanish keywords.
+- `packages/db/src/seed.ts`: `STARTER_TEMPLATES` gains the same additions (identical content, identical ids) in its copies of `emergency-intervention` and `diagnostic-algorithm`, since this file cannot import from `apps/api`.
+- Tests: `apps/api/src/lib/starter-fixtures/__tests__/index.test.ts` gains two new suites — a structural one (each fixture, both locales, has ≥1 `clinical_notes` block with a non-empty label and ≥1 `vitals` block with ≥4 fields) and a functional one that builds the content at runtime via `buildProtocolContentFromTemplate`, fills in test values/content, and calls the real `generateRecordSections` (from `@rezeta/shared`) to verify the predicted routing: "Motivo de consulta" → `motivo_consulta`, "Diagnóstico" → `diagnosticos`, "Plan de tratamiento" → `plan_tratamiento`, "Evolución" → `evolucion`, `vitals` → `examen_fisico`.
 
-## [2026-07-08] Borradores de recuperación de fallos incluyen el mapeo de historia
+Before this change, no block in the seed templates was `clinical_notes` or `vitals` (only `text`/`alert`/`checklist`/`dosage_table`/`steps`/`decision`), so `walkBlocks` routed nothing to those sections and the seed protocols generated an empty medical record in those sections.
+
+## [2026-07-08] Single "Obligatorio" toggle and exhaustive audit labels
 
 ### Fixed
 
-- `apps/web/src/store/editor.store.ts`: `saveLocalDraft(protocolId, blocks, historiaMapping?)` gana un tercer parámetro opcional; el payload persistido en `localStorage` incluye `historia_mapping` solo cuando el mapeo no está vacío. `loadLocalDraft` devuelve `{ blocks, historiaMapping?, savedAt }` — retrocompatible con borradores antiguos `{blocks, savedAt}`, que cargan con `historiaMapping` en `undefined`.
-- `apps/web/src/pages/ProtocolEditor/index.tsx`: el autoguardado (intervalo de 30s) ahora persiste también el mapeo de historia vigente vía un nuevo `mappingRef` (mismo patrón que `blocksRef`). `applyDraft` restaura `historiaMapping` desde el borrador recuperado (sin tocar `savedHistoriaMapping`, para que la edición recuperada se lea como no guardada y "Guardar" la persista). Antes, una edición que solo tocara el mapeo de historia (sin cambios en `blocks`) no era recuperable tras un cierre inesperado del navegador.
-- Tests: `apps/web/src/store/__tests__/editor.store.test.ts` gana casos de ida y vuelta con mapeo, sin mapeo (clave ausente en el JSON almacenado) y de carga de un payload legado sin `historia_mapping`. `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx` gana un caso que fuerza un tick de autoguardado (temporizadores falsos, 30s) tras una edición que solo toca el mapeo y verifica que el borrador en `localStorage` incluye `historia_mapping`, y otro que aplica un borrador recuperado con mapeo y verifica que la pestaña Historia médica refleja el override restaurado.
+- `apps/web/src/components/template/TemplateEditor.tsx`: the detail panel of a `clinical_notes` block no longer duplicates the "Obligatorio" checkbox (:797-810 removed) — the header toggle (:665-693), present for every non-locked block, is the only `required` control. The `obligatorio` string in `apps/web/src/components/template/strings.ts` is removed as unused.
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: `toEntityType` now splits the resource segment on `-`, singularizes only the last word (`ies` → `y`; otherwise the trailing `s` is dropped) and joins in PascalCase — `protocol-templates` → `ProtocolTemplate`, `protocol-categories` → `ProtocolCategory`, `patients` → `Patient`, `onboarding` → `Onboarding` (unchanged). Previously, `protocol-templates`/`protocol-categories` came out as `Protocol-template`/`Protocol-categorie` in the audit log.
+- `apps/web/src/pages/settings/AuditLog.tsx`: `ENTITY_TYPE_LABELS` gains `ProtocolCategory`, `Schedule`, `User`, `Onboarding`, `Log`, `ConsultationRecord`, and the legacy kebab-case keys (`Protocol-template`, `Protocol-categorie`, `Onboardin`) that already exist in historical audit rows predating this fix — all still show a friendly label instead of falling back to the raw `entityType` value.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` gains the same set of keys (`ProtocolCategory`, `Schedule`, `User`, `Log`, `ConsultationRecord` → "una historia médica", and the kebab-case/historical variants) so the dashboard activity feed describes these entity types in Spanish instead of falling back to the generic "un registro (…)".
 
-## [2026-07-08] Compuerta de hidratación en la sesión de cola de órdenes
+### Added
+
+- `apps/web/src/components/protocols/__tests__/BlockRenderer.vitals-notes.test.tsx`: regression test (new, no prior coverage of the read-only `BlockRenderer`) that pins that `clinical_notes` renders its label exactly once (no duplicate from the `ProtocolBlock` chrome), that `vitals` without a `title` shows the type chip exactly once, and that `vitals` with `title: 'Signos basales'` shows that title exactly once.
+- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` gains cases for `protocol-templates` → `ProtocolTemplate` and `protocol-categories` → `ProtocolCategory`. `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx` gains cases for the `required` round-trip via the header toggle and for confirming the detail panel no longer renders a second checkbox. `apps/web/src/pages/settings/__tests__/AuditLog.test.tsx` gains a parameterized case over the new `ENTITY_TYPE_LABELS` keys. `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` gains a case for `ConsultationRecord` → "una historia médica".
+
+## [2026-07-08] Crash-recovery drafts include the medical-record mapping
 
 ### Fixed
 
-- `apps/web/src/hooks/consultations/use-order-queue-session.ts`: `useOrderQueueSession` gana un `useRef` de hidratación (`hydrated`) que evita que el efecto de espejo (el que persiste/limpia `localStorage` según los arrays de la cola) se ejecute con valores del store previos a la restauración. El efecto de restore (`deps: [consultationId]`) pone `hydrated.current = false` como primera instrucción y `hydrated.current = true` como última — en el path feliz y en cada retorno anticipado (`isSigned`, sin snapshot guardado, snapshot corrupto) — porque el hook cuenta como "hidratado" en cuanto el paso de restore terminó, sea lo que sea que haya encontrado. El efecto espejo ahora arranca con `if (!hydrated.current) return`. La carrera sospechada era: un primer commit en el que el efecto espejo corriera con los arrays aún vacíos (previos al `restoreSnapshot()`) entraría en su rama de "cola vacía" y llamaría `localStorage.removeItem`, borrando el snapshot justo antes de que los valores restaurados se propagaran — mismo problema transitorio al cambiar `consultationId` (`reset()`). Ningún array de dependencias cambió. **Nota de la revisión final:** bajo el orden de efectos de React (los efectos de un mismo componente corren en orden de declaración dentro de un commit), esa carrera no se pudo observar como falsa en este código — el repro original nunca se reprodujo. Este cambio es, por tanto, un endurecimiento defensivo de la propiedad "hidratar antes de espejar", no una corrección de causa raíz confirmada.
-- Tests: `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` gana cuatro casos. Dos documentan el invariante de la carrera original (snapshot sobrevive el montaje inicial; un cambio de `consultationId` de A a B no borra ni la clave de A ni la de B) vía aserción de mecanismo (`localStorage.removeItem` no se invoca sobre esas claves); ambos quedan explícitamente comentados como no-deterministas para la carrera en sí — bajo el test renderer de React los efectos de un mismo componente corren en orden de declaración dentro de un commit, así que el interleaving que originó el bug no se reproduce ahí, y la protección real contra ese caso (el cambio A→B) está verificada por inspección de código: la compuerta hace la interleaving imposible por construcción, no por temporización observada en el test. Los otros dos casos sí fijan (pin) el comportamiento de la propia compuerta — que cada rama de salida del efecto de restore marque `hydrated.current = true`, incluyendo el path de snapshot corrupto y el de ausencia de snapshot — verificado en rojo/verde: al quitar el `hydrated.current = true` del path `catch`, el test del snapshot corrupto falla como se esperaba. Los 9 casos preexistentes siguen en verde.
+- `apps/web/src/store/editor.store.ts`: `saveLocalDraft(protocolId, blocks, historiaMapping?)` gains an optional third parameter; the payload persisted to `localStorage` includes `historia_mapping` only when the mapping is non-empty. `loadLocalDraft` returns `{ blocks, historiaMapping?, savedAt }` — backward compatible with old `{blocks, savedAt}` drafts, which load with `historiaMapping` as `undefined`.
+- `apps/web/src/pages/ProtocolEditor/index.tsx`: the autosave (30s interval) now also persists the current medical-record mapping via a new `mappingRef` (same pattern as `blocksRef`). `applyDraft` restores `historiaMapping` from the recovered draft (without touching `savedHistoriaMapping`, so the recovered edit reads as unsaved and "Guardar" persists it). Previously, an edit that only touched the medical-record mapping (no changes to `blocks`) was not recoverable after an unexpected browser close.
+- Tests: `apps/web/src/store/__tests__/editor.store.test.ts` gains round-trip cases with a mapping, without a mapping (key absent in the stored JSON), and loading a legacy payload without `historia_mapping`. `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx` gains a case that forces an autosave tick (fake timers, 30s) after an edit that only touches the mapping and verifies the `localStorage` draft includes `historia_mapping`, and another that applies a recovered draft with a mapping and verifies the Historia médica tab reflects the restored override.
 
-## [2026-07-08] Creación idempotente de órdenes en el reintento del flush (clientRequestId)
-
-### Added
-
-- `packages/db/prisma/schema.prisma`: `Prescription`, `ImagingOrder` y `LabOrder` ganan `clientRequestId String? @map("client_request_id") @db.VarChar(64)` y una restricción `@@unique([consultationId, clientRequestId])`. Postgres permite múltiples `NULL` en un índice único, así que las filas existentes (sin `clientRequestId`) no se ven afectadas. Migración `packages/db/prisma/migrations/20260708043942_order_client_request_id/`.
-- `packages/shared/src/schemas/consultation.ts`: `CreatePrescriptionGroupSchema`, `CreateImagingOrderGroupSchema` y `CreateLabOrderGroupSchema` ganan `clientRequestId: z.string().min(8).max(64).optional()`.
-- `apps/api/src/modules/orders/orders.repository.ts`: `createPrescription`, `createImagingOrder` y `createLabOrder` pasan `clientRequestId` al `create` y, si Prisma lanza `P2002` sobre la restricción única `(consultationId, clientRequestId)`, recuperan y devuelven la fila ya creada por el intento original en lugar de fallar — mismo patrón estructural (`err.code === 'P2002'`, sin importar tipos de Prisma) que `users.repository.ts`. Sin `clientRequestId` o ante cualquier otro error, se relanza tal cual.
-- `apps/web/src/store/order-queue.store.ts`: cada `OrderGroup` gana `requestId: string` (`crypto.randomUUID()`), generado de nuevo en cada instancia de grupo — al crear uno con `addMedicationGroup`/`addImagingGroup`/`addLabGroup`, y en el grupo por defecto de cada llamada a `reset()` (incluida la inicialización del store). El `id` de display del grupo por defecto (`'default-rx'`, etc.) no cambia — sigue usándose solo para agrupar localmente. `restoreSnapshot` retro-compatibiliza snapshots antiguos de `localStorage` que no tienen `requestId`, generando uno nuevo por cada grupo que lo tenga ausente.
-- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: cada POST de grupo (`createPrescription`, `createImagingOrder`, `createLabOrder`) envía `clientRequestId: group.requestId`. Como el grupo no se quita de la cola hasta que su create tiene éxito, un timeout cliente (`AbortSignal` de 30s) que ya haya persistido en el servidor y un reintento posterior del mismo grupo en cola envían el mismo `clientRequestId` — la API detecta el duplicado y devuelve la fila existente, evitando una receta/orden firmada duplicada.
-- Tests: `packages/shared/src/schemas/__tests__/consultation.spec.ts` (validación de `clientRequestId` en los tres schemas de creación); `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (paso de `clientRequestId` al `create`, recuperación tras `P2002` para los tres tipos de orden, relanzamiento de errores no-`P2002`, relanzamiento de `P2002` sin `clientRequestId` o si la refetch no encuentra nada); `apps/web/src/store/__tests__/order-queue.store.test.ts` (`requestId` en los grupos por defecto, `requestId` fresco en cada `addXGroup`/`reset()`, backfill y preservación en `restoreSnapshot`); `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (el payload incluye `clientRequestId`; dos flushes del mismo grupo aún en cola envían el mismo id).
-
-## [2026-07-08] Silenciar toasts por grupo durante el flush de órdenes
+## [2026-07-08] Hydration gate in the order-queue session
 
 ### Fixed
 
-- `apps/web/src/hooks/consultations/use-consultations.ts`: `useCreatePrescription`, `useCreateImagingOrder` y `useCreateLabOrder` ganan un segundo parámetro opcional `opts?: { silent?: boolean }`. Con `silent: true`, el `onSuccess`/`onError` de cada hook sigue invalidando la query de la consulta (sin cambios) pero deja de disparar `toast.success`/`toast.error`. Sin `opts`, el comportamiento es idéntico al anterior — los llamados manuales de "Generar" en `OrderQueuePanel.tsx` (:556, :689, :819) no pasan `opts` y no cambian.
-- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: las tres instancias de hook que usa `flush()` ahora se crean con `{ silent: true }`, así un flush de varios grupos (medicamentos, laboratorio, imagenología) al firmar la consulta ya no produce un toast de éxito/error por cada grupo — solo queda el `errorFlushOrders` único que ya emitía `flush()` ante un fallo.
+- `apps/web/src/hooks/consultations/use-order-queue-session.ts`: `useOrderQueueSession` gains a hydration `useRef` (`hydrated`) that prevents the mirror effect (the one that persists/clears `localStorage` based on the queue arrays) from running with pre-restore store values. The restore effect (`deps: [consultationId]`) sets `hydrated.current = false` as its first statement and `hydrated.current = true` as its last — on the happy path and on every early return (`isSigned`, no saved snapshot, corrupt snapshot) — because the hook counts as "hydrated" as soon as the restore step finished, whatever it found. The mirror effect now starts with `if (!hydrated.current) return`. The suspected race was: a first commit in which the mirror effect ran with the arrays still empty (before `restoreSnapshot()`) would enter its "empty queue" branch and call `localStorage.removeItem`, deleting the snapshot right before the restored values propagated — the same transient problem when changing `consultationId` (`reset()`). No dependency array changed. **Final-review note:** under React's effect ordering (effects of the same component run in declaration order within a commit), that race could not be observed as false in this code — the original repro never reproduced. This change is therefore a defensive hardening of the "hydrate before mirror" property, not a confirmed root-cause fix.
+- Tests: `apps/web/src/hooks/consultations/__tests__/use-order-queue-session.test.ts` gains four cases. Two document the invariant of the original race (snapshot survives the initial mount; a `consultationId` change from A to B deletes neither A's key nor B's key) via a mechanism assertion (`localStorage.removeItem` is not invoked on those keys); both are explicitly commented as non-deterministic for the race itself — under React's test renderer the effects of the same component run in declaration order within a commit, so the interleaving that caused the bug does not reproduce there, and the real protection against that case (the A→B change) is verified by code inspection: the gate makes the interleaving impossible by construction, not by timing observed in the test. The other two cases do pin the behavior of the gate itself — that every exit branch of the restore effect sets `hydrated.current = true`, including the corrupt-snapshot path and the no-snapshot path — verified red/green: removing the `hydrated.current = true` from the `catch` path makes the corrupt-snapshot test fail as expected. The 9 preexisting cases remain green.
+
+## [2026-07-08] Idempotent order creation on the flush retry (clientRequestId)
 
 ### Added
 
-- Tests: nuevo `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (harness copiado de `use-protocols.save-toast.test.tsx`) que prueba, para los tres hooks de creación, que el toast se dispara por defecto y se suprime con `{ silent: true }`, tanto en éxito como en error.
-- Tests: `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` gana una prueba que verifica que `flush()` invoca los tres hooks con `{ silent: true }`, más un caso nuevo que encola y persiste un grupo de imagenología (cubre el path de imagenología del flush, antes solo probado para medicamentos/laboratorio).
+- `packages/db/prisma/schema.prisma`: `Prescription`, `ImagingOrder` and `LabOrder` gain `clientRequestId String? @map("client_request_id") @db.VarChar(64)` and a `@@unique([consultationId, clientRequestId])` constraint. Postgres allows multiple `NULL`s in a unique index, so existing rows (without `clientRequestId`) are unaffected. Migration `packages/db/prisma/migrations/20260708043942_order_client_request_id/`.
+- `packages/shared/src/schemas/consultation.ts`: `CreatePrescriptionGroupSchema`, `CreateImagingOrderGroupSchema` and `CreateLabOrderGroupSchema` gain `clientRequestId: z.string().min(8).max(64).optional()`.
+- `apps/api/src/modules/orders/orders.repository.ts`: `createPrescription`, `createImagingOrder` and `createLabOrder` pass `clientRequestId` to the `create` and, if Prisma throws `P2002` on the `(consultationId, clientRequestId)` unique constraint, recover and return the row already created by the original attempt instead of failing — same structural pattern (`err.code === 'P2002'`, without importing Prisma types) as `users.repository.ts`. Without `clientRequestId` or on any other error, it re-throws as-is.
+- `apps/web/src/store/order-queue.store.ts`: each `OrderGroup` gains `requestId: string` (`crypto.randomUUID()`), regenerated for each group instance — when creating one with `addMedicationGroup`/`addImagingGroup`/`addLabGroup`, and in the default group of every `reset()` call (including store initialization). The default group's display `id` (`'default-rx'`, etc.) does not change — it is still used only for local grouping. `restoreSnapshot` makes old `localStorage` snapshots that lack `requestId` backward compatible, generating a new one for each group missing it.
+- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: each group POST (`createPrescription`, `createImagingOrder`, `createLabOrder`) sends `clientRequestId: group.requestId`. Because the group is not removed from the queue until its create succeeds, a client timeout (30s `AbortSignal`) that already persisted on the server and a later retry of the same queued group send the same `clientRequestId` — the API detects the duplicate and returns the existing row, avoiding a duplicate signed prescription/order.
+- Tests: `packages/shared/src/schemas/__tests__/consultation.spec.ts` (validation of `clientRequestId` in the three creation schemas); `apps/api/src/modules/orders/__tests__/orders.repository.spec.ts` (passing `clientRequestId` to the `create`, recovery after `P2002` for the three order types, re-throwing non-`P2002` errors, re-throwing `P2002` without `clientRequestId` or if the refetch finds nothing); `apps/web/src/store/__tests__/order-queue.store.test.ts` (`requestId` in the default groups, fresh `requestId` on each `addXGroup`/`reset()`, backfill and preservation in `restoreSnapshot`); `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` (the payload includes `clientRequestId`; two flushes of the same still-queued group send the same id).
 
-## [2026-07-08] Bloqueo optimista al editar contenido de un protocolo en dos pestañas
-
-### Added
-
-- `packages/shared/src/errors.ts`: nuevo código `PROTOCOL_USAGE_STALE` en el bloque de Consultation.
-- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema` gana `expectedUpdatedAt` (ISO datetime opcional) — la precondición de concurrencia optimista que acompaña un reemplazo de `content`.
-- `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gana `updatedAt: string`.
-- `apps/api/src/modules/consultations/consultations.repository.ts`: `toProtocolUsage` ahora emite `updatedAt` (ISO string) en cada `ConsultationProtocolUsage` serializado.
-- `apps/api/src/modules/consultations/consultations.service.ts`: `updateProtocolUsage` rechaza con `ConflictException` (`PROTOCOL_USAGE_STALE`, con `details.currentUpdatedAt`) cuando el PATCH trae `content` y un `expectedUpdatedAt` que ya no coincide con el `updatedAt` actual de la fila — dos pestañas editando la misma consulta abierta ya no pueden pisarse el contenido clínico en silencio. Los PATCH sin `content` o sin `expectedUpdatedAt` (llamadas solo de `modifications`) no cambian de comportamiento.
-- `apps/web/src/hooks/consultations/use-pending-modifications.ts`: el `flush` envía `expectedUpdatedAt` junto con `content` siempre que hay un reemplazo de contenido pendiente. Ante un 409 `PROTOCOL_USAGE_STALE`, la edición de contenido (`contentEdits`) de esa `usage` se descarta de forma permanente (reenviarla solo repetiría el 409), la delta de `modifications` se vuelve a encolar como cualquier otro fallo, se muestra el toast `errorProtocolUsageStale` una sola vez aunque varias `usages` vengan obsoletas, y se invalida la query de la consulta para traer el contenido fresco. El resto de rechazos conserva el comportamiento existente (reencolar ambos búferes + toast genérico).
-- `apps/web/src/lib/toasts.ts`: nueva cadena `errorProtocolUsageStale`.
-- Tests: `consultations.service.spec.ts` (rechazo por `expectedUpdatedAt` obsoleto, paso sin forwardear el campo cuando coincide, llamadas solo-`modifications` sin chequeo), `consultations.repository.spec.ts` (`updatedAt` mapeado a ISO string), `use-pending-modifications.test.tsx` (envío de `expectedUpdatedAt`, manejo del 409 obsoleto — toast único, contentEdits descartados, modifications reencoladas, invalidación de query — y el camino no-obsoleto sin cambios).
-
-## [2026-07-08] Selector de versión de la historia médica — UI
-
-### Added
-
-- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useRecordVersions(consultationId)` (GET `/record/versions`, clave `[QK, consultationId, 'versions']`) y `useRecordVersion(consultationId, versionNumber | null)` (GET `/record/versions/:versionNumber`, habilitado solo cuando se elige una versión distinta de la última). `downloadRecordPdf` acepta un `versionNumber` opcional y ajusta la URL (`?version=N`) y el nombre de archivo (`historia-<id>-v<N>.pdf`). `useRegenerateRecord` y `useSignRecord` invalidan `[QK, consultationId, 'versions']` al completarse para que el listado no quede obsoleto.
-- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: selector de versión (componente `Select` existente) junto al rótulo "· v{n}", visible únicamente cuando hay más de una versión. Elegir una versión anterior renderiza sus secciones en modo estrictamente de solo lectura — oculta Editar/Firmar/Regenerar, muestra el aviso "Versión anterior — solo lectura" y solo permite descargar el PDF de esa versión. Volver a la última versión restablece el comportamiento actual sin cambios.
-- `apps/web/src/pages/PatientDetail/strings.ts`: nuevas cadenas `versionLabel`, `versionSelectorAria`, `olderVersionNotice`.
-- Tests: se extienden `use-consultation-record.test.tsx` (versiones, descarga versionada, invalidación tras regenerar/firmar) y `RecordDocument.test.tsx` (selector oculto/visible, lectura de versión anterior, descarga versionada, restauración al volver a la última). `HistoriaTab.test.tsx` gana los mocks por defecto de los hooks nuevos.
-
-## [2026-07-08] Historial de versiones de la historia médica — API
-
-### Added
-
-- `packages/shared/src/types/consultation-record.ts`: nuevo tipo `RecordVersionSummary` (id, versionNumber, kind, status, generatedAt, signedAt) para listar el historial de versiones sin traer el contenido completo de cada una.
-- `apps/api/src/modules/consultation-records/consultation-records.repository.ts`: `listVersions` (todas las versiones no eliminadas de una consulta, ordenadas por `versionNumber` desc, filtradas por tenant) y `findByVersion` (versión exacta o `null`). Nuevo mapeador privado `toSummary`.
-- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `listVersions` (delega al repo; array vacío si la consulta no tiene historia, sin 404 — la UI usa esto como gate) y `getVersion` (lanza `RECORD_NOT_FOUND` si la versión no existe). `getPdfData` acepta un `versionNumber` opcional y carga esa versión en vez de la última cuando se provee.
-- `apps/api/src/modules/consultation-records/consultation-records.controller.ts`: `GET /v1/consultations/:consultationId/record/versions` y `GET /v1/consultations/:consultationId/record/versions/:versionNumber`. `GET …/record/pdf` gana el query param opcional `version` (validado como entero vía `ParseIntPipe`); el nombre del archivo descargado pasa a `historia-${consultationId}-v${N}.pdf` cuando se indica una versión. La auditoría de descarga (categoría `communication`, acción `pdf_generated`) se mantiene sin cambios para descargas versionadas.
-- Tests: se extienden `consultation-records.{repository,service,controller}.spec.ts` con los casos nuevos (listado, versión puntual, 404 de versión inexistente, pdf versionado, filtrado por tenant).
-
-## [2026-07-08] Reintento ante colisión de versión al crear un ConsultationRecord
+## [2026-07-08] Silence per-group toasts during the order flush
 
 ### Fixed
 
-- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` y `regenerate` calculaban `versionNumber` de forma optimista (`1` y `latest.versionNumber + 1` respectivamente) tras una lectura de `findLatest`, sin manejar la colisión `P2002` del `@@unique([consultationId, versionNumber])` — dos llamadas concurrentes chocaban y una de ellas recibía un 409 genérico en vez de resolverse. `ensureDraft` ahora, ante `P2002`, relee `findLatest` y devuelve el registro ganador de la carrera en vez de crear otro. `regenerate` relee `findLatest`, recalcula `versionNumber` y reintenta la creación una sola vez; una segunda colisión se repropaga sin envolver (el filtro de excepciones global ya la traduce a 409).
+- `apps/web/src/hooks/consultations/use-consultations.ts`: `useCreatePrescription`, `useCreateImagingOrder` and `useCreateLabOrder` gain an optional second parameter `opts?: { silent?: boolean }`. With `silent: true`, each hook's `onSuccess`/`onError` still invalidates the consultation query (unchanged) but stops firing `toast.success`/`toast.error`. Without `opts`, the behavior is identical to before — the manual "Generar" calls in `OrderQueuePanel.tsx` (:556, :689, :819) do not pass `opts` and do not change.
+- `apps/web/src/hooks/consultations/use-flush-order-queue.ts`: the three hook instances that `flush()` uses are now created with `{ silent: true }`, so a flush of several groups (medications, lab, imaging) when signing the consultation no longer produces a success/error toast per group — only the single `errorFlushOrders` that `flush()` already emitted on a failure remains.
 
 ### Added
 
-- Tests: `consultation-records/__tests__/consultation-records.service.spec.ts` gana cinco casos — recuperación por relectura en `ensureDraft` tras `P2002`, no-P2002 se repropaga sin relectura, borde de relectura vacía tras `P2002`, reintento único con versión recalculada en `regenerate`, y repropagación de la segunda colisión cuando el reintento también choca.
+- Tests: new `apps/web/src/hooks/__tests__/use-consultations.create-toasts.test.tsx` (harness copied from `use-protocols.save-toast.test.tsx`) that tests, for the three creation hooks, that the toast fires by default and is suppressed with `{ silent: true }`, both on success and on error.
+- Tests: `apps/web/src/hooks/consultations/__tests__/use-flush-order-queue.test.ts` gains a test that verifies `flush()` invokes the three hooks with `{ silent: true }`, plus a new case that queues and persists an imaging group (covers the imaging path of the flush, previously only tested for medications/lab).
 
-## [2026-07-08] Toast correcto al guardar borrador y etiqueta única en notas clínicas
+## [2026-07-08] Optimistic locking when editing a protocol's content in two tabs
+
+### Added
+
+- `packages/shared/src/errors.ts`: new `PROTOCOL_USAGE_STALE` code in the Consultation block.
+- `packages/shared/src/schemas/consultation.ts`: `UpdateProtocolUsageSchema` gains `expectedUpdatedAt` (optional ISO datetime) — the optimistic-concurrency precondition that accompanies a `content` replacement.
+- `packages/shared/src/types/consultation.ts`: `ConsultationProtocolUsage` gains `updatedAt: string`.
+- `apps/api/src/modules/consultations/consultations.repository.ts`: `toProtocolUsage` now emits `updatedAt` (ISO string) on each serialized `ConsultationProtocolUsage`.
+- `apps/api/src/modules/consultations/consultations.service.ts`: `updateProtocolUsage` rejects with `ConflictException` (`PROTOCOL_USAGE_STALE`, with `details.currentUpdatedAt`) when the PATCH carries `content` and an `expectedUpdatedAt` that no longer matches the row's current `updatedAt` — two tabs editing the same open consultation can no longer silently overwrite clinical content. PATCHes without `content` or without `expectedUpdatedAt` (`modifications`-only calls) do not change behavior.
+- `apps/web/src/hooks/consultations/use-pending-modifications.ts`: `flush` sends `expectedUpdatedAt` alongside `content` whenever there is a pending content replacement. On a 409 `PROTOCOL_USAGE_STALE`, that `usage`'s content edit (`contentEdits`) is permanently discarded (resending it would only repeat the 409), the `modifications` delta is re-queued like any other failure, the `errorProtocolUsageStale` toast is shown only once even if several `usages` come back stale, and the consultation query is invalidated to fetch the fresh content. Other rejections keep the existing behavior (re-queue both buffers + generic toast).
+- `apps/web/src/lib/toasts.ts`: new `errorProtocolUsageStale` string.
+- Tests: `consultations.service.spec.ts` (rejection on a stale `expectedUpdatedAt`, passing without forwarding the field when it matches, `modifications`-only calls without the check), `consultations.repository.spec.ts` (`updatedAt` mapped to an ISO string), `use-pending-modifications.test.tsx` (sending `expectedUpdatedAt`, handling the stale 409 — single toast, contentEdits discarded, modifications re-queued, query invalidation — and the non-stale path unchanged).
+
+## [2026-07-08] Medical-record version selector — UI
+
+### Added
+
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useRecordVersions(consultationId)` (GET `/record/versions`, key `[QK, consultationId, 'versions']`) and `useRecordVersion(consultationId, versionNumber | null)` (GET `/record/versions/:versionNumber`, enabled only when a version other than the latest is chosen). `downloadRecordPdf` accepts an optional `versionNumber` and adjusts the URL (`?version=N`) and the file name (`historia-<id>-v<N>.pdf`). `useRegenerateRecord` and `useSignRecord` invalidate `[QK, consultationId, 'versions']` on completion so the listing does not go stale.
+- `apps/web/src/pages/PatientDetail/RecordDocument.tsx`: version selector (existing `Select` component) next to the "· v{n}" label, visible only when there is more than one version. Choosing an older version renders its sections in strictly read-only mode — hides Editar/Firmar/Regenerar, shows the "Versión anterior — solo lectura" notice, and only allows downloading that version's PDF. Returning to the latest version restores the current behavior unchanged.
+- `apps/web/src/pages/PatientDetail/strings.ts`: new strings `versionLabel`, `versionSelectorAria`, `olderVersionNotice`.
+- Tests: `use-consultation-record.test.tsx` (versions, versioned download, invalidation after regenerate/sign) and `RecordDocument.test.tsx` (selector hidden/visible, reading an older version, versioned download, restoration on returning to the latest) are extended. `HistoriaTab.test.tsx` gains the default mocks of the new hooks.
+
+## [2026-07-08] Medical-record version history — API
+
+### Added
+
+- `packages/shared/src/types/consultation-record.ts`: new `RecordVersionSummary` type (id, versionNumber, kind, status, generatedAt, signedAt) to list the version history without fetching each one's full content.
+- `apps/api/src/modules/consultation-records/consultation-records.repository.ts`: `listVersions` (all non-deleted versions of a consultation, ordered by `versionNumber` desc, filtered by tenant) and `findByVersion` (exact version or `null`). New private `toSummary` mapper.
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `listVersions` (delegates to the repo; empty array if the consultation has no record, no 404 — the UI uses this as a gate) and `getVersion` (throws `RECORD_NOT_FOUND` if the version does not exist). `getPdfData` accepts an optional `versionNumber` and loads that version instead of the latest when provided.
+- `apps/api/src/modules/consultation-records/consultation-records.controller.ts`: `GET /v1/consultations/:consultationId/record/versions` and `GET /v1/consultations/:consultationId/record/versions/:versionNumber`. `GET …/record/pdf` gains the optional `version` query param (validated as an integer via `ParseIntPipe`); the downloaded file name becomes `historia-${consultationId}-v${N}.pdf` when a version is given. The download audit (category `communication`, action `pdf_generated`) is kept unchanged for versioned downloads.
+- Tests: `consultation-records.{repository,service,controller}.spec.ts` are extended with the new cases (listing, specific version, 404 for a nonexistent version, versioned pdf, tenant filtering).
+
+## [2026-07-08] Retry on version collision when creating a ConsultationRecord
 
 ### Fixed
 
-- `apps/web/src/hooks/protocols/use-protocols.ts`: guardar una versión como borrador mostraba el toast "Nueva versión publicada" aunque no se publicara nada — el médico podía creer que la nueva versión ya estaba activa en consultas. Ahora `useSaveVersion` distingue por `dto.publish`: "Borrador guardado" (nueva cadena `protocolDraftSaved` en `lib/toasts.ts`) vs. "Nueva versión publicada".
-- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: en modo consulta, los bloques de nota clínica mostraban su etiqueta dos veces (título del encabezado del bloque + etiqueta interna con asterisco). Se elimina el `title` duplicado del encabezado — la etiqueta interna, que además marca el requerido, es la única fuente. Mismo criterio aplicado antes al editor y a la vista de solo lectura (hallazgo del E2E en vivo del 2026-07-08).
+- `apps/api/src/modules/consultation-records/consultation-records.service.ts`: `ensureDraft` and `regenerate` computed `versionNumber` optimistically (`1` and `latest.versionNumber + 1` respectively) after a `findLatest` read, without handling the `P2002` collision of `@@unique([consultationId, versionNumber])` — two concurrent calls collided and one of them got a generic 409 instead of resolving. `ensureDraft` now, on `P2002`, re-reads `findLatest` and returns the race-winning record instead of creating another. `regenerate` re-reads `findLatest`, recomputes `versionNumber`, and retries the creation once; a second collision is re-propagated unwrapped (the global exception filter already translates it to a 409).
 
 ### Added
 
-- `docs/TODO.md`: ítem de vigilancia por la pérdida (una sola vez, no reproducida) del snapshot de la cola de órdenes en localStorage tras un reload.
+- Tests: `consultation-records/__tests__/consultation-records.service.spec.ts` gains five cases — recovery by re-read in `ensureDraft` after `P2002`, non-P2002 re-propagated without a re-read, empty-re-read edge after `P2002`, single retry with a recomputed version in `regenerate`, and re-propagation of the second collision when the retry also collides.
 
-## [2026-07-07] La duración de un medicamento recetado es opcional
+## [2026-07-08] Correct toast on saving a draft and single label on clinical notes
 
 ### Fixed
 
-- `packages/shared/src/schemas/consultation.ts`: `PrescriptionItemSchema.duration` pasa de `min(1)` a opcional con default `''`. Los medicamentos encolados desde una tabla de dosis ("+ Añadir a receta") no llevan duración — las tablas de dosis no tienen esa columna y la fila en cola no es editable — así que tanto "Generar receta" como el flush previo a la firma fallaban con `VALIDATION_ERROR` 400 sin salida posible para el médico (hallazgo del E2E en vivo del 2026-07-07). Las recetas crónicas sin duración fija ahora son válidas.
-- `packages/shared/src/record/generate-record-sections.ts`: el plan de tratamiento omite el guion final cuando el medicamento no tiene duración (antes: `Enalapril 10 mg VO cada 12 h — `).
+- `apps/web/src/hooks/protocols/use-protocols.ts`: saving a version as a draft showed the "Nueva versión publicada" toast even though nothing was published — the doctor could believe the new version was already active in consultations. `useSaveVersion` now distinguishes by `dto.publish`: "Borrador guardado" (new `protocolDraftSaved` string in `lib/toasts.ts`) vs. "Nueva versión publicada".
+- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: in consultation mode, clinical-note blocks showed their label twice (block header title + internal label with an asterisk). The duplicated header `title` is removed — the internal label, which also marks the required flag, is the only source. Same criterion previously applied to the editor and the read-only view (finding from the live E2E on 2026-07-08).
 
-## [2026-07-07] El botón "Firmar y cerrar" se deshabilita mientras corre el flush previo a la firma
+### Added
+
+- `docs/TODO.md`: watch item for the (one-time, not reproduced) loss of the order-queue snapshot in localStorage after a reload.
+
+## [2026-07-07] A prescribed medication's duration is optional
 
 ### Fixed
 
-- `apps/web/src/components/consultations/SignModal.tsx`: el botón de confirmación solo estaba deshabilitado con `signMutation.isPending`, pero `onBeforeSign()` (persiste modificaciones pendientes y vacía la cola de órdenes — puede tardar segundos, con presupuestos de red de 15s+30s por llamada) corre ANTES de `signMutation.mutate`, dejando el botón habilitado y sin feedback durante esa ventana. Un doble clic disparaba dos IIFEs de flush concurrentes que tomaban la misma instantánea de la cola, generando recetas duplicadas en una consulta a punto de firmarse. Ahora se rastrea un estado `preparing` (true al inicio del IIFE, false en un `finally`); el botón usa `disabled={preparing || signMutation.isPending}` y muestra la etiqueta `Firmando…` durante ambas fases, y un `onBeforeSign` que resuelve false re-habilita el botón.
+- `packages/shared/src/schemas/consultation.ts`: `PrescriptionItemSchema.duration` goes from `min(1)` to optional with default `''`. Medications queued from a dosage table ("+ Añadir a receta") carry no duration — dosage tables have no such column and the queued row is not editable — so both "Generar receta" and the pre-sign flush failed with `VALIDATION_ERROR` 400 with no way out for the doctor (finding from the live E2E on 2026-07-07). Chronic prescriptions with no fixed duration are now valid.
+- `packages/shared/src/record/generate-record-sections.ts`: the treatment plan omits the trailing dash when the medication has no duration (previously: `Enalapril 10 mg VO cada 12 h — `).
 
-### Added
-
-- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gana tres casos — (a) clicks repetidos durante el flush real en vuelo no doble-POSTean recetas ni doble-firman (rojo contra el código previo), (b) el botón se re-habilita tras `onBeforeSign` → false, (c) la firma procede tras `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: la aserción del chip de vitals se ajusta de `toBeGreaterThanOrEqual(1)` a `toHaveLength(2)` (chip + título de respaldo renderizan el nombre del tipo) para atrapar regresiones de chip duplicado.
-
-## [2026-07-07] El selector de ubicación distingue "cargando" de "cero ubicaciones"
+## [2026-07-07] The "Firmar y cerrar" button is disabled while the pre-sign flush runs
 
 ### Fixed
 
-- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación confundía "consulta en curso" (`locations === undefined`) con "cero ubicaciones confirmadas" — si el usuario abría el dropdown antes de que resolviera el primer fetch, veía el estado vacío `Sin ubicaciones configuradas` aunque el tenant sí tuviera ubicaciones. Ahora se desestructura `isLoading` de `useLocations()` y el estado vacío solo se renderiza cuando `!isLoading`; mientras carga, el panel no muestra ni la lista ni el estado vacío.
+- `apps/web/src/components/consultations/SignModal.tsx`: the confirmation button was only disabled with `signMutation.isPending`, but `onBeforeSign()` (persists pending modifications and drains the order queue — can take seconds, with network budgets of 15s+30s per call) runs BEFORE `signMutation.mutate`, leaving the button enabled and without feedback during that window. A double click fired two concurrent flush IIFEs that took the same queue snapshot, generating duplicate prescriptions in a consultation about to be signed. A `preparing` state is now tracked (true at the start of the IIFE, false in a `finally`); the button uses `disabled={preparing || signMutation.isPending}` and shows the `Firmando…` label during both phases, and an `onBeforeSign` that resolves false re-enables the button.
 
 ### Added
 
-- Tests: `components/layout/__tests__/Topbar.test.tsx` gana un caso que simula `useLocations` con `{ data: undefined, isLoading: true }` y confirma que ni la lista ni "Sin ubicaciones configuradas" se renderizan mientras carga (guarda de regresión para el fix de arriba). `components/consultations/__tests__/NewConsultationDialog.test.tsx` refuerza el test de paciente preseleccionado (`initialPatient`): ahora también hace clic en "Iniciar consulta" y verifica que `createConsultationMock` recibe `patientId: 'p1'`, en vez de solo comprobar el valor del combobox.
+- Tests: `components/consultations/__tests__/SignModal.flush.test.tsx` gains three cases — (a) repeated clicks during the real in-flight flush do not double-POST prescriptions or double-sign (red against the previous code), (b) the button re-enables after `onBeforeSign` → false, (c) signing proceeds after `onBeforeSign` → true. `components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx`: the vitals chip assertion is adjusted from `toBeGreaterThanOrEqual(1)` to `toHaveLength(2)` (chip + fallback title render the type name) to catch duplicate-chip regressions.
 
-## [2026-07-07] Iniciar consulta desde el paciente y estado vacío del selector de ubicación
+## [2026-07-07] The location selector distinguishes "loading" from "zero locations"
+
+### Fixed
+
+- `apps/web/src/components/layout/Topbar.tsx`: the location selector panel confused "fetch in progress" (`locations === undefined`) with "zero confirmed locations" — if the user opened the dropdown before the first fetch resolved, they saw the empty state `Sin ubicaciones configuradas` even though the tenant did have locations. `isLoading` is now destructured from `useLocations()` and the empty state only renders when `!isLoading`; while loading, the panel shows neither the list nor the empty state.
 
 ### Added
 
-- `apps/web/src/pages/PatientDetail/PageHeader.tsx`: nuevo botón primario "Nueva consulta" (`ph-plus`, cadena `newConsultation` en `pages/PatientDetail/strings.ts`) junto al botón "Editar" existente. Abre `NewConsultationDialog` (ver más abajo) con el paciente de la página ya preseleccionado — antes no había ninguna vía para iniciar una consulta walk-in desde la ficha del paciente. De paso se movieron a `strings.ts` las cadenas que quedaban hardcodeadas en el header: `breadcrumbPatients: 'Pacientes'`, `editButton: 'Editar'`, `noDocument: 'Sin documento'`.
-- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: nueva prop opcional `initialPatient?: { id: string; fullName: string }` — cuando se pasa, el `PatientCombobox` arranca con ese paciente ya seleccionado (vía `useState` inicial, sin efectos). `apps/web/src/pages/Schedule/PatientCombobox.tsx` gana la prop `initialSelectedName?: string` para sembrar su estado interno `selectedName`; el resto de sus consumidores (agenda) no se ven afectados al ser opcional.
-- `apps/web/src/pages/PatientDetail/index.tsx`: nuevo estado `showNewConsultation` que monta `NewConsultationDialog` con `initialPatient` derivado del paciente cargado; el diálogo navega a `/consultas/:id` por sí mismo al crear la consulta (mismo patrón que `pages/Schedule/index.tsx`).
-- `apps/web/src/components/layout/Topbar.tsx`: el panel del selector de ubicación ahora se renderiza siempre que está abierto, incluso con cero ubicaciones — antes el panel completo desaparecía (`dropdownOpen && locations.length > 0`) y no ofrecía ninguna salida. Con la lista vacía muestra un estado vacío con las cadenas `noLocations: 'Sin ubicaciones configuradas'` y un enlace `addLocation: 'Añadir ubicación'` (nuevas en `components/layout/strings.ts`) hacia `/ajustes/ubicaciones`, que cierra el dropdown al hacer clic.
-- Tests: `NewConsultationDialog.test.tsx` (preselección de paciente vía `initialPatient`), `PatientDetailTabs.test.tsx` (botón "Nueva consulta" abre el diálogo con el paciente ya seleccionado), nuevo `components/layout/__tests__/Topbar.test.tsx` (estado vacío con cero ubicaciones vs. listado normal con ubicaciones).
+- Tests: `components/layout/__tests__/Topbar.test.tsx` gains a case that simulates `useLocations` with `{ data: undefined, isLoading: true }` and confirms that neither the list nor "Sin ubicaciones configuradas" render while loading (regression guard for the fix above). `components/consultations/__tests__/NewConsultationDialog.test.tsx` strengthens the preselected-patient test (`initialPatient`): it now also clicks "Iniciar consulta" and verifies that `createConsultationMock` receives `patientId: 'p1'`, instead of only checking the combobox value.
 
-## [2026-07-07] Batch de hallazgos E2E: diálogo de consulta, órdenes, RNC y redondeo de signos vitales
+## [2026-07-07] Start a consultation from the patient and the location-selector empty state
+
+### Added
+
+- `apps/web/src/pages/PatientDetail/PageHeader.tsx`: new primary "Nueva consulta" button (`ph-plus`, `newConsultation` string in `pages/PatientDetail/strings.ts`) next to the existing "Editar" button. It opens `NewConsultationDialog` (see below) with the page's patient already preselected — previously there was no way to start a walk-in consultation from the patient file. Along the way, the strings still hardcoded in the header were moved to `strings.ts`: `breadcrumbPatients: 'Pacientes'`, `editButton: 'Editar'`, `noDocument: 'Sin documento'`.
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: new optional prop `initialPatient?: { id: string; fullName: string }` — when passed, the `PatientCombobox` starts with that patient already selected (via initial `useState`, no effects). `apps/web/src/pages/Schedule/PatientCombobox.tsx` gains the `initialSelectedName?: string` prop to seed its internal `selectedName` state; its other consumers (schedule) are unaffected since it is optional.
+- `apps/web/src/pages/PatientDetail/index.tsx`: new `showNewConsultation` state that mounts `NewConsultationDialog` with `initialPatient` derived from the loaded patient; the dialog navigates to `/consultas/:id` on its own when creating the consultation (same pattern as `pages/Schedule/index.tsx`).
+- `apps/web/src/components/layout/Topbar.tsx`: the location selector panel now renders whenever it is open, even with zero locations — previously the whole panel disappeared (`dropdownOpen && locations.length > 0`) and offered no way out. With an empty list it shows an empty state with the strings `noLocations: 'Sin ubicaciones configuradas'` and an `addLocation: 'Añadir ubicación'` link (new in `components/layout/strings.ts`) to `/ajustes/ubicaciones`, which closes the dropdown when clicked.
+- Tests: `NewConsultationDialog.test.tsx` (patient preselection via `initialPatient`), `PatientDetailTabs.test.tsx` ("Nueva consulta" button opens the dialog with the patient already selected), new `components/layout/__tests__/Topbar.test.tsx` (empty state with zero locations vs. normal listing with locations).
+
+## [2026-07-07] Batch of E2E findings: consultation dialog, orders, RNC, and vitals rounding
 
 ### Changed
 
-- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: eliminado el modo inline `create-patient` (botón "Crear paciente" + formulario mínimo nombre/apellido/fecha de nacimiento) — la única vía de creación de paciente ahora es la opción "Nuevo paciente" del propio `PatientCombobox`, que abre el `PatientModal` completo (con antecedentes). El campo de búsqueda del paciente ahora usa el `Field` label correcto (`patientLabel: 'Paciente'`) en vez de reutilizar el título del modal. `newConsultationDialogStrings.ts` perdió `createPatientAction`, `backToSearchAction`, `firstNameLabel`, `lastNameLabel`, `dateOfBirthLabel` (código muerto) y ganó `patientLabel`.
-- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: la fila de medicamento en cola ya no muestra el `source` crudo (p. ej. `protocol:row_e2e_1`); ahora renderiza `sourceFromProtocol: 'Desde protocolo'` cuando `source` empieza con `protocol:`, y nada en cualquier otro caso (nunca un id crudo). Nueva cadena en `apps/web/src/components/consultations/strings.ts`.
-- `apps/web/src/pages/Protocols/strings.ts`: `emptyDescription` del estado vacío de Protocolos simplificado a `'Crea tu primer protocolo a partir de una plantilla.'` (ya no menciona "o desde cero", que no es una vía soportada).
+- `apps/web/src/components/consultations/NewConsultationDialog.tsx`: removed the inline `create-patient` mode ("Crear paciente" button + minimal first-name/last-name/date-of-birth form) — the only patient-creation path is now the "Nuevo paciente" option of the `PatientCombobox` itself, which opens the full `PatientModal` (with history). The patient search field now uses the correct `Field` label (`patientLabel: 'Paciente'`) instead of reusing the modal title. `newConsultationDialogStrings.ts` lost `createPatientAction`, `backToSearchAction`, `firstNameLabel`, `lastNameLabel`, `dateOfBirthLabel` (dead code) and gained `patientLabel`.
+- `apps/web/src/components/consultations/OrderQueuePanel.tsx`: the queued medication row no longer shows the raw `source` (e.g. `protocol:row_e2e_1`); it now renders `sourceFromProtocol: 'Desde protocolo'` when `source` starts with `protocol:`, and nothing in any other case (never a raw id). New string in `apps/web/src/components/consultations/strings.ts`.
+- `apps/web/src/pages/Protocols/strings.ts`: the Protocols empty-state `emptyDescription` is simplified to `'Crea tu primer protocolo a partir de una plantilla.'` (it no longer mentions "o desde cero", which is not a supported path).
 
 ### Added
 
-- `<SelectItem value="rnc">` en los selects de tipo de documento de `apps/web/src/pages/Patients/PatientModal.tsx` (`docTypeRnc: 'RNC'` en `pages/Patients/strings.ts`) y `apps/web/src/pages/PatientDetail/EditModal.tsx` (`documentTypeRnc: 'RNC'` en `pages/PatientDetail/strings.ts`) — el enum Zod compartido ya soportaba `'rnc'`, pero la UI no ofrecía la opción.
+- `<SelectItem value="rnc">` in the document-type selects of `apps/web/src/pages/Patients/PatientModal.tsx` (`docTypeRnc: 'RNC'` in `pages/Patients/strings.ts`) and `apps/web/src/pages/PatientDetail/EditModal.tsx` (`documentTypeRnc: 'RNC'` in `pages/PatientDetail/strings.ts`) — the shared Zod enum already supported `'rnc'`, but the UI did not offer the option.
 
 ### Fixed
 
-- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: los campos numéricos de signos vitales (p. ej. peso) podían persistir artefactos de punto flotante del `<input type="number">` del navegador (`81.4000015258789`). Nueva `normalizeVitalsValues` redondea a máximo 2 decimales, aplicada solo al hacer blur (commit), nunca por cada tecla — redondear mientras se escribe rompería la edición de valores como "81." a medio escribir.
-- Tests: `NewConsultationDialog.test.tsx` (label del picker, un único affordance de creación, elimina el test del modo inline muerto), nuevo `OrderQueuePanel.test.tsx` (caption "Desde protocolo" vs. fuente cruda vs. sin fuente), `PatientModal.test.tsx` y `EditModal.test.tsx` (opción RNC llega al payload), `BlockRendererRunMode.vitals-notes.test.tsx` (redondeo solo al blur).
+- `apps/web/src/components/protocols/BlockRendererRunMode.tsx`: numeric vitals fields (e.g. weight) could persist floating-point artifacts from the browser's `<input type="number">` (`81.4000015258789`). New `normalizeVitalsValues` rounds to at most 2 decimals, applied only on blur (commit), never per keystroke — rounding while typing would break editing values like a half-typed "81.".
+- Tests: `NewConsultationDialog.test.tsx` (picker label, a single creation affordance, removes the dead inline-mode test), new `OrderQueuePanel.test.tsx` (caption "Desde protocolo" vs. raw source vs. no source), `PatientModal.test.tsx` and `EditModal.test.tsx` (RNC option reaches the payload), `BlockRendererRunMode.vitals-notes.test.tsx` (rounding only on blur).
 
-## [2026-07-07] Nombre de entidad de auditoría y secciones faltantes al firmar historia
+## [2026-07-07] Audit entity name and missing sections when signing a record
 
 ### Fixed
 
-- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: el singularizador de segmentos de URL usaba `slice(1, -1)`, que le quitaba la última letra a cualquier segmento no-plural (`onboarding` → `Onboardin`). Ahora `toEntityType` solo recorta la `s` final cuando el segmento realmente termina en plural (`patients` → `Patient`); segmentos como `onboarding` se capitalizan sin recortar.
-- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` ganó la entrada `Onboarding: 'la configuración inicial'`, que antes no existía y caía al formato genérico «un registro (Onboarding)» en el feed de actividad del dashboard.
-- `apps/web/src/hooks/consultations/use-consultation-record.ts`: el `onError` de `useSignRecord` ahora lee `err.error.details.missing` (ya provisto por la API, `consultation-records.service.ts`) y arma el toast con los títulos en español de las secciones faltantes (`RECORD_SECTION_TITLES` de `@rezeta/shared`), en vez del genérico «Completa las secciones requeridas antes de firmar.» que no indicaba cuáles. Se mantiene el mensaje genérico como fallback si `details` viene ausente o vacío. Nueva cadena `historiaMissingSectionsNamed` en `apps/web/src/lib/toasts.ts`.
-- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` (segmento plural vs. no-plural), `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` (mapeo de `Onboarding`), `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx` (toast con nombres de sección vs. genérico sin `details`).
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts`: the URL-segment singularizer used `slice(1, -1)`, which stripped the last letter from any non-plural segment (`onboarding` → `Onboardin`). `toEntityType` now trims the trailing `s` only when the segment actually ends in a plural (`patients` → `Patient`); segments like `onboarding` are capitalized without trimming.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `friendlyEntity` gained the `Onboarding: 'la configuración inicial'` entry, which previously did not exist and fell back to the generic format «un registro (Onboarding)» in the dashboard activity feed.
+- `apps/web/src/hooks/consultations/use-consultation-record.ts`: `useSignRecord`'s `onError` now reads `err.error.details.missing` (already provided by the API, `consultation-records.service.ts`) and builds the toast with the Spanish titles of the missing sections (`RECORD_SECTION_TITLES` from `@rezeta/shared`), instead of the generic «Completa las secciones requeridas antes de firmar.» that did not indicate which. The generic message is kept as a fallback if `details` comes back absent or empty. New `historiaMissingSectionsNamed` string in `apps/web/src/lib/toasts.ts`.
+- Tests: `apps/api/src/common/interceptors/__tests__/audit-log.interceptor.spec.ts` (plural vs. non-plural segment), `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts` (`Onboarding` mapping), `apps/web/src/hooks/consultations/__tests__/use-consultation-record.test.tsx` (toast with section names vs. generic without `details`).
 
-## [2026-07-07] Corregida fecha de nacimiento desfasada un día (F8)
+## [2026-07-07] Fixed date of birth off by one day (F8)
 
 ### Added
 
-- `parseDateOnly` en `apps/web/src/lib/format/dates.ts`: parsea cadenas `'YYYY-MM-DD'` (o con sufijo de hora, que se ignora) como medianoche LOCAL, evitando el desfase de `new Date('YYYY-MM-DD')`, que interpreta la cadena como medianoche UTC y, al formatearse en `America/Santo_Domingo` (UTC-4), muestra el día anterior.
+- `parseDateOnly` in `apps/web/src/lib/format/dates.ts`: parses `'YYYY-MM-DD'` strings (or with a time suffix, which is ignored) as LOCAL midnight, avoiding the offset of `new Date('YYYY-MM-DD')`, which interprets the string as UTC midnight and, when formatted in `America/Santo_Domingo` (UTC-4), shows the previous day.
 
 ### Fixed
 
-- `formatDate`/`formatAge` (`apps/web/src/pages/Patients/helpers.ts`), usados por `PatientDetail/DemographicsBlock.tsx` y `Patients/PatientModal.tsx` para mostrar `patient.dateOfBirth` (columna `@db.Date`, sin componente de hora): un paciente nacido el 15/03/1972 se mostraba como «14 de marzo de 1972» y con un año de menos en el borde del cumpleaños. Ambas funciones ahora usan `parseDateOnly` en vez de `new Date(iso)`.
-- Auditados los `formatDate` hermanos que consumen strings ISO (`Schedule/helpers.ts`, `Consultation/helpers.ts`, `Billing/helpers.ts`, `PatientDetail/PrescriptionsTab.tsx`, `PatientDetail/AppointmentsTab.tsx`, `Dashboard/helpers.ts`): todos reciben columnas `DateTime` completas (`startsAt`, `signedAt`, `amendedAt`, `createdAt`, etc.), no fechas puras — se dejaron sin cambios porque no tienen el bug.
+- `formatDate`/`formatAge` (`apps/web/src/pages/Patients/helpers.ts`), used by `PatientDetail/DemographicsBlock.tsx` and `Patients/PatientModal.tsx` to show `patient.dateOfBirth` (`@db.Date` column, no time component): a patient born on 15/03/1972 was shown as «14 de marzo de 1972» and one year short at the birthday boundary. Both functions now use `parseDateOnly` instead of `new Date(iso)`.
+- Audited the sibling `formatDate` calls that consume ISO strings (`Schedule/helpers.ts`, `Consultation/helpers.ts`, `Billing/helpers.ts`, `PatientDetail/PrescriptionsTab.tsx`, `PatientDetail/AppointmentsTab.tsx`, `Dashboard/helpers.ts`): they all receive full `DateTime` columns (`startsAt`, `signedAt`, `amendedAt`, `createdAt`, etc.), not pure dates — they were left unchanged because they do not have the bug.
 
-## [2026-07-07] Paridad de bloques en el editor de plantillas: signos vitales, nota clínica y órdenes
+## [2026-07-07] Block parity in the template editor: vitals, clinical note, and orders
 
 ### Added
 
-- `TemplateEditor.tsx` (`apps/web/src/components/template/`): el `BlockType`, la paleta y `TYPE_LABELS` ahora incluyen `vitals` («SIGNOS VITALES»), `clinical_notes` («NOTA CLÍNICA»), `imaging_order` («ORDEN IMAGEN») y `lab_order` («ORDEN LAB») — antes solo el editor de protocolos soportaba estos cuatro tipos, dejando a los médicos sin forma de scaffoldear los bloques de los que depende la historia médica.
-- `newBlock` gana factories por tipo: `vitals` inicia con los mismos 5 campos por defecto que `block-factory.ts` del editor de protocolos (presión arterial, frecuencia cardíaca, temperatura, peso, talla); `clinical_notes` inicia con `label: 'Nota clínica'`; `imaging_order`/`lab_order` inician con `orders: []`. Todas producen bloques válidos contra `TemplateBlockSchema` (`packages/shared/src/schemas/protocol.ts`).
-- Panel de detalle ahora es consciente del tipo: `clinical_notes` edita `label` (en vez de `title`) más un checkbox «Obligatorio»; `dosage_table` gana un editor de filas (`DosageRowsEditor` — columnas fármaco/dosis/vía/frecuencia/notas con añadir/quitar fila) que reemplaza el textarea de placeholder genérico. `vitals`, `imaging_order` y `lab_order` conservan el panel genérico (título + placeholder).
-- Corregido de paso un bug latente: `BlockRow` pasaba `expandedBlockId={null}` fijo a `ChildBlockList`, por lo que el panel de detalle de un bloque hijo (todo bloque no-sección vive dentro de una sección) nunca podía expandirse tras añadirlo. Ahora se hilvana el `expandedBlockId` real del reducer a través de `SortableBlockRow` → `BlockRow` → `ChildBlockList`.
-- `strings.ts`: nuevas claves `addVitals`, `addClinicalNotes`, `addImagingOrder`, `addLabOrder`, `clinicalNotesLabelPlaceholder`, `obligatorio`, `dosageRowsLabel`, `dosageColumnLabels`, `dosageAddRow`, `dosageRemoveRow`.
-- Nuevo `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx`: paleta con los 11 botones de bloque, defaults de `vitals` válidos contra `TemplateBlockSchema`, edición de `label` en `clinical_notes` con round-trip a estado, y añadir una fila de dosis con round-trip a estado.
+- `TemplateEditor.tsx` (`apps/web/src/components/template/`): the `BlockType`, the palette, and `TYPE_LABELS` now include `vitals` («SIGNOS VITALES»), `clinical_notes` («NOTA CLÍNICA»), `imaging_order` («ORDEN IMAGEN») and `lab_order` («ORDEN LAB») — previously only the protocol editor supported these four types, leaving doctors with no way to scaffold the blocks the medical record depends on.
+- `newBlock` gains per-type factories: `vitals` starts with the same 5 default fields as the protocol editor's `block-factory.ts` (blood pressure, heart rate, temperature, weight, height); `clinical_notes` starts with `label: 'Nota clínica'`; `imaging_order`/`lab_order` start with `orders: []`. All produce blocks valid against `TemplateBlockSchema` (`packages/shared/src/schemas/protocol.ts`).
+- The detail panel is now type-aware: `clinical_notes` edits `label` (instead of `title`) plus an «Obligatorio» checkbox; `dosage_table` gains a row editor (`DosageRowsEditor` — drug/dose/route/frequency/notes columns with add/remove row) that replaces the generic placeholder textarea. `vitals`, `imaging_order` and `lab_order` keep the generic panel (title + placeholder).
+- Fixed a latent bug along the way: `BlockRow` passed a fixed `expandedBlockId={null}` to `ChildBlockList`, so the detail panel of a child block (every non-section block lives inside a section) could never expand after being added. The reducer's real `expandedBlockId` is now threaded through `SortableBlockRow` → `BlockRow` → `ChildBlockList`.
+- `strings.ts`: new keys `addVitals`, `addClinicalNotes`, `addImagingOrder`, `addLabOrder`, `clinicalNotesLabelPlaceholder`, `obligatorio`, `dosageRowsLabel`, `dosageColumnLabels`, `dosageAddRow`, `dosageRemoveRow`.
+- New `apps/web/src/components/template/__tests__/TemplateEditor.test.tsx`: palette with the 11 block buttons, `vitals` defaults valid against `TemplateBlockSchema`, editing `label` in `clinical_notes` with a round-trip to state, and adding a dosage row with a round-trip to state.
 
-## [2026-07-07] Encabezado único por bloque en el editor de protocolos
-
-### Fixed
-
-- Las tarjetas de bloque sin seleccionar en el editor de protocolos renderizaban DOS encabezados apilados: el de `EditorBlockRenderer` (chip + título) y, debajo, el de `ProtocolBlock` dentro de `BlockRenderer`. Esto duplicaba el chip y el título en bloques `dosage_table` (p. ej. «DOSIFICACIÓN»/título dos veces) y, antes de que `blockTypeLabel`/`blockDisplayTitle` cubrieran `vitals`/`clinical_notes`, mostraba el chip genérico «Bloque» encima del chip correcto.
-- `BlockRenderer.tsx`: nueva prop `chromeless?: boolean` — cuando es `true`, cada caso del switch de bloques hoja devuelve su contenido interno directamente, sin el wrapper `ProtocolBlock` (secciones y anidamiento no se ven afectados; el modo de ejecución (`BlockRendererRunMode.tsx`) no se tocó). Los casos `dosage_table` y `alert` en modo `chromeless` tampoco reenvían `title` al componente interno (`ProtocolDosageTable`/`ProtocolAlert`), evitando una tercera repetición del título.
-- `EditorBlockRenderer.tsx`: el cuerpo sin seleccionar de la tarjeta de bloque hoja ahora renderiza `<BlockRenderer chromeless />`, dejando el encabezado tipado de `EditorBlockRenderer` como el único encabezado de la tarjeta.
-- `ProtocolBlock.tsx` (ui-kit): `title` ahora es opcional; el span de título solo se renderiza cuando hay un valor, en vez de mostrar siempre una cadena (vacía o duplicada).
-- Vista de solo lectura del protocolo (`BlockRenderer.tsx`, ruta no-`chromeless`): el caso `clinical_notes` ya no pasa `title={b.label}` al chrome de `ProtocolBlock` (el label seguía viéndose en el cuerpo vía `ClinicalNotesBlock`, duplicado); el caso `vitals` solo pasa `title` cuando `b.title` está definido, en vez de caer siempre a «Signos vitales» duplicando el chip.
-- Nuevo `apps/web/src/components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx` cubre: chip correcto (no «Bloque») para `vitals`/`clinical_notes` sin seleccionar, título y chip de `dosage_table` renderizados exactamente una vez, y `BlockRenderer` con `chromeless` sin el encabezado `ProtocolBlock`.
-
-## [2026-07-07] El título de un bloque de signos vitales sobrevive la validación del esquema
+## [2026-07-07] Single header per block in the protocol editor
 
 ### Fixed
 
-- `packages/shared/src/schemas/protocol.ts`: la variante `vitals` de `ProtocolBlockSchema` y `TemplateBlockSchema` no tenía campo `title`, así que Zod lo descartaba silenciosamente al guardar — `VitalsBlockEditor` permite editar el título de un bloque de signos vitales, pero el cambio se perdía en el primer guardado. Añadido `title` opcional a la variante `vitals` en ambos esquemas (igual que el resto de tipos de bloque) y al tipo `ProtocolBlock` escrito a mano (`packages/shared/src/types/protocol.ts`).
-- Tests: `packages/shared/__tests__/protocol.test.ts` gana un caso que confirma que `title` sobrevive el parseo de un bloque `vitals`.
+- Unselected block cards in the protocol editor rendered TWO stacked headers: the one from `EditorBlockRenderer` (chip + title) and, below it, the one from `ProtocolBlock` inside `BlockRenderer`. This duplicated the chip and title on `dosage_table` blocks (e.g. «DOSIFICACIÓN»/title twice) and, before `blockTypeLabel`/`blockDisplayTitle` covered `vitals`/`clinical_notes`, showed the generic «Bloque» chip above the correct chip.
+- `BlockRenderer.tsx`: new prop `chromeless?: boolean` — when `true`, each leaf-block switch case returns its inner content directly, without the `ProtocolBlock` wrapper (sections and nesting are unaffected; run mode (`BlockRendererRunMode.tsx`) was not touched). The `dosage_table` and `alert` cases in `chromeless` mode also do not forward `title` to the inner component (`ProtocolDosageTable`/`ProtocolAlert`), avoiding a third repetition of the title.
+- `EditorBlockRenderer.tsx`: the unselected body of the leaf-block card now renders `<BlockRenderer chromeless />`, leaving `EditorBlockRenderer`'s typed header as the card's only header.
+- `ProtocolBlock.tsx` (ui-kit): `title` is now optional; the title span only renders when there is a value, instead of always showing a string (empty or duplicated).
+- Protocol read-only view (`BlockRenderer.tsx`, non-`chromeless` path): the `clinical_notes` case no longer passes `title={b.label}` to the `ProtocolBlock` chrome (the label was still visible in the body via `ClinicalNotesBlock`, duplicated); the `vitals` case only passes `title` when `b.title` is defined, instead of always falling back to «Signos vitales» duplicating the chip.
+- New `apps/web/src/components/protocols/__tests__/EditorBlockRenderer.chrome.test.tsx` covers: correct chip (not «Bloque») for unselected `vitals`/`clinical_notes`, `dosage_table` title and chip rendered exactly once, and `BlockRenderer` with `chromeless` without the `ProtocolBlock` header.
 
-## [2026-07-07] Editar para bloques de nota clínica y signos vitales en el editor de protocolos
+## [2026-07-07] A vitals block's title survives schema validation
+
+### Fixed
+
+- `packages/shared/src/schemas/protocol.ts`: the `vitals` variant of `ProtocolBlockSchema` and `TemplateBlockSchema` had no `title` field, so Zod silently dropped it on save — `VitalsBlockEditor` allows editing a vitals block's title, but the change was lost on the first save. Added an optional `title` to the `vitals` variant in both schemas (like the other block types) and to the hand-written `ProtocolBlock` type (`packages/shared/src/types/protocol.ts`).
+- Tests: `packages/shared/__tests__/protocol.test.ts` gains a case confirming that `title` survives parsing of a `vitals` block.
+
+## [2026-07-07] Edit for clinical-note and vitals blocks in the protocol editor
 
 ### Added
 
-- `EDITABLE_BLOCK_TYPES` (`apps/web/src/components/protocols/EditorBlockRenderer.tsx`) ahora incluye `vitals` y `clinical_notes`, habilitando el ítem «Editar» del menú contextual y el swap a `EditForm` para ambos tipos (antes no tenían ninguna acción de edición).
-- Nuevo `ClinicalNotesBlockEditor.tsx`: edita `label` (campo «Etiqueta») y `required` (checkbox «Obligatorio») con el mismo patrón de borrador local + `updateBlock`/`selectBlock(null)` que `DosageTableEditor`. Una etiqueta editable es lo que permite que la historia médica enrute el contenido de la nota a la sección correcta (el mapeo se hace por `block.label`).
-- Nuevo `VitalsBlockEditor.tsx`: edita el título del bloque y las filas de `fields` (etiqueta, unidad, tipo); permite añadir/quitar campos. Los campos `input_type: 'computed'` (p. ej. IMC) se renderizan bloqueados — sin botón de eliminar y sin selector de tipo — para proteger fórmulas derivadas.
-- `strings.ts`: nuevas claves `notesLabelField`, `notesRequiredField`, `vitalsTitleField`, `vitalsFieldLabel`, `vitalsFieldUnit`, `vitalsFieldType`, `vitalsTypeText`, `vitalsTypeNumber`, `vitalsTypeComputed`, `vitalsAddField`, `vitalsRemoveField(label)`.
-- `blockTypeLabel`/`blockDisplayTitle` (`EditorBlockRenderer.tsx`) ahora tienen entradas para `vitals` y `clinical_notes` en vez de caer al rótulo genérico "Bloque".
+- `EDITABLE_BLOCK_TYPES` (`apps/web/src/components/protocols/EditorBlockRenderer.tsx`) now includes `vitals` and `clinical_notes`, enabling the context menu's «Editar» item and the swap to `EditForm` for both types (previously they had no edit action).
+- New `ClinicalNotesBlockEditor.tsx`: edits `label` («Etiqueta» field) and `required` («Obligatorio» checkbox) with the same local-draft + `updateBlock`/`selectBlock(null)` pattern as `DosageTableEditor`. An editable label is what lets the medical record route the note's content to the correct section (the mapping is done by `block.label`).
+- New `VitalsBlockEditor.tsx`: edits the block title and the `fields` rows (label, unit, type); allows adding/removing fields. `input_type: 'computed'` fields (e.g. BMI) render locked — no remove button and no type selector — to protect derived formulas.
+- `strings.ts`: new keys `notesLabelField`, `notesRequiredField`, `vitalsTitleField`, `vitalsFieldLabel`, `vitalsFieldUnit`, `vitalsFieldType`, `vitalsTypeText`, `vitalsTypeNumber`, `vitalsTypeComputed`, `vitalsAddField`, `vitalsRemoveField(label)`.
+- `blockTypeLabel`/`blockDisplayTitle` (`EditorBlockRenderer.tsx`) now have entries for `vitals` and `clinical_notes` instead of falling back to the generic "Bloque" label.
 
-## [2026-07-07] Órdenes en cola se persisten al firmar la consulta
-
-### Fixed
-
-- Las órdenes agregadas con «+ Añadir a receta» (medicamentos, laboratorio, imagen) vivían solo en el store cliente `useOrderQueueStore` y se descartaban silenciosamente al firmar, dejando vacías la pestaña Recetas del paciente y el plan de tratamiento de la historia médica. Nuevo hook `useFlushOrderQueue` (`apps/web/src/hooks/consultations/use-flush-order-queue.ts`) que persiste cada grupo en cola vía los endpoints de creación existentes antes del `PATCH` de firma.
-- `Consultation/index.tsx`: `onBeforeSign` ahora compone la persistencia de modificaciones pendientes seguida del volcado de la cola de órdenes; si cualquier creación falla se aborta la firma (no se crea un registro inmutable a partir de contenido a medio guardar) y la cola queda intacta para reintentar (`toastStrings.errorFlushOrders`).
-- `Consultation/index.tsx`: al firmar con éxito se resetea `useOrderQueueStore`, evitando el desajuste entre el chip «Recetas 1» y la lista «Sin recetas en esta consulta».
-
-## [2026-07-07] Editor de protocolos — feedback visible al guardar
+## [2026-07-07] Queued orders are persisted when signing the consultation
 
 ### Fixed
 
-- `EditorHeader.tsx`, `SaveModal.tsx`, `PublishModal.tsx`: mientras un guardado está en curso, los botones «Guardar» y «Publicar»/«Guardar y publicar» ahora muestran `Spinner` + las etiquetas «Guardando…»/«Publicando…» (antes el botón de publicar no daba ninguna señal de carga).
-- `index.tsx`: los tres flujos de guardado (`handleSaveDraft`, `handleSaveModalPublish`, `handlePublishConfirm`) ahora limpian el banner de «Se recuperó un borrador no guardado» (`setDraftBanner(null)`) en su `onSuccess`; antes el banner sobrevivía a un guardado exitoso.
-- `strings.ts`: se agregó `publishing: 'Publicando…'` y se normalizó `saving` a `'Guardando…'` (elipsis unicode, consistente con el resto de la app).
+- Orders added with «+ Añadir a receta» (medications, lab, imaging) lived only in the `useOrderQueueStore` client store and were silently discarded on signing, leaving the patient's Recetas tab and the medical record's treatment plan empty. New `useFlushOrderQueue` hook (`apps/web/src/hooks/consultations/use-flush-order-queue.ts`) that persists each queued group via the existing creation endpoints before the sign `PATCH`.
+- `Consultation/index.tsx`: `onBeforeSign` now composes the persistence of pending modifications followed by draining the order queue; if any creation fails, signing is aborted (no immutable record is created from half-saved content) and the queue stays intact to retry (`toastStrings.errorFlushOrders`).
+- `Consultation/index.tsx`: on a successful sign, `useOrderQueueStore` is reset, avoiding the mismatch between the «Recetas 1» chip and the «Sin recetas en esta consulta» list.
 
-## [2026-07-07] Timeouts en el transporte para que las peticiones siempre se resuelvan
+## [2026-07-07] Protocol editor — visible feedback on saving
 
 ### Fixed
 
-- `apps/web/src/lib/api-client.ts`: `request()` y `downloadBlob()` podían quedarse colgados indefinidamente si `authClient.getToken()` nunca resolvía (p. ej. un problema de red al refrescar el token de Firebase) o si el `fetch` a la API nunca se asentaba — sin timeout, el spinner global de carga quedaba activo para siempre y no había forma de reintentar. `getToken()` ahora corre bajo un nuevo helper `withTimeout` (15s) y el `fetch` recibe `signal: AbortSignal.timeout(30_000)` (30s); ambos casos rechazan con un error legible en vez de colgarse.
-- `apps/web/src/lib/toasts.ts`: nueva cadena `errorRequestTimeout` para el mensaje de timeout.
-- Tests: `apps/web/src/lib/__tests__/api-client.test.ts` gana casos para el timeout de obtención de token y el timeout de la petición `fetch`.
+- `EditorHeader.tsx`, `SaveModal.tsx`, `PublishModal.tsx`: while a save is in progress, the «Guardar» and «Publicar»/«Guardar y publicar» buttons now show `Spinner` + the labels «Guardando…»/«Publicando…» (previously the publish button gave no loading signal).
+- `index.tsx`: the three save flows (`handleSaveDraft`, `handleSaveModalPublish`, `handlePublishConfirm`) now clear the «Se recuperó un borrador no guardado» banner (`setDraftBanner(null)`) in their `onSuccess`; previously the banner survived a successful save.
+- `strings.ts`: added `publishing: 'Publicando…'` and normalized `saving` to `'Guardando…'` (unicode ellipsis, consistent with the rest of the app).
 
-## [2026-07-07] Antecedentes del paciente y alta desde agenda
+## [2026-07-07] Transport-level timeouts so requests always resolve
+
+### Fixed
+
+- `apps/web/src/lib/api-client.ts`: `request()` and `downloadBlob()` could hang indefinitely if `authClient.getToken()` never resolved (e.g. a network problem refreshing the Firebase token) or if the API `fetch` never settled — without a timeout, the global loading spinner stayed active forever and there was no way to retry. `getToken()` now runs under a new `withTimeout` helper (15s) and the `fetch` receives `signal: AbortSignal.timeout(30_000)` (30s); both cases reject with a readable error instead of hanging.
+- `apps/web/src/lib/toasts.ts`: new `errorRequestTimeout` string for the timeout message.
+- Tests: `apps/web/src/lib/__tests__/api-client.test.ts` gains cases for the token-fetch timeout and the `fetch` request timeout.
+
+## [2026-07-07] Patient history and creation from the schedule
 
 ### Added
 
-- Componente `TagInput` en el ui-kit (chips con Enter/coma, deduplicación, Backspace, accesible por teclado).
-- Campos «Alergias» y «Condiciones crónicas» en crear paciente (`PatientModal`) y editar paciente (`EditModal`) — antes solo se mostraban, sin forma de capturarlos.
-- Opción «Nuevo paciente» al final del selector de pacientes de la agenda (`PatientCombobox`): abre el alta de paciente y selecciona automáticamente al creado.
+- `TagInput` component in the ui-kit (chips with Enter/comma, deduplication, Backspace, keyboard accessible).
+- «Alergias» and «Condiciones crónicas» fields in create patient (`PatientModal`) and edit patient (`EditModal`) — previously they were only displayed, with no way to capture them.
+- «Nuevo paciente» option at the end of the schedule's patient selector (`PatientCombobox`): opens patient creation and automatically selects the created one.
 
 ### Fixed
 
-- El envío del formulario de alta de paciente anidado ya no dispara el envío del formulario de cita (burbujeo de submit a través del portal); botones del desplegable con `type="button"`.
+- Submitting the nested patient-creation form no longer triggers the appointment form's submit (submit bubbling through the portal); dropdown buttons with `type="button"`.
 
-## [2026-07-07] Run-mode vitales y notas — correcciones de revisión final
+## [2026-07-07] Run-mode vitals and notes — final review fixes
 
 ### Fixed
 
-- `BlockRendererRunMode` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): los handlers `onBlur` de los bloques `vitals` y `clinical_notes` emitían `vitals_entered`/`notes_edited` incondicionalmente, así que enfocar un campo y salir sin editar escribía un evento falso en el historial de auditoría (append-only). Ahora cada subcomponente usa un ref `dirtySinceLastEmit` que solo permite la emisión cuando hubo un `onChange` real desde la última emisión.
-- `computeMissingRequiredFields` (`packages/shared/src/protocol/sign-validation.ts`): un bloque `vitals` requerido pasaba la validación de firma con valores todos vacíos (`{ weight: '' }`), porque solo contaba claves presentes. Ahora exige al menos un valor no vacío tras recortar espacios.
-- `ConsultationsService.updateProtocolUsage` (`apps/api/src/modules/consultations/consultations.service.ts`): no rechazaba escrituras de contenido cuando la consulta ya estaba firmada, a diferencia de `update()`. Un flush tardío desde una pestaña obsoleta podía mutar contenido clínico firmado sin dejar rastro de enmienda. Ahora rechaza con `CONSULTATION_ALREADY_SIGNED` antes de escribir.
-- `usePendingModifications.flush` (`apps/web/src/hooks/consultations/use-pending-modifications.ts`): cuando un usage tenía content edits bufferizados pero no se encontraba en la caché de React Query, el PATCH se enviaba de todas formas (con el contenido omitido en silencio, o con cuerpo vacío `{}`). Ahora ese usage se omite del flush y ambos buffers se conservan para reintentar cuando el usage reaparezca en la caché.
-- Corregida la ruta incorrecta (`apps/web/src/pages/Consultation/BlockRendererRunMode.tsx` → `apps/web/src/components/protocols/BlockRendererRunMode.tsx`), la palabra duplicada «silent silent», y el cambio de idioma a mitad de frase en la entrada de changelog del `[2026-07-07] Captura de vitales y notas clínicas en consulta`.
-- `applyContentEdits` (`apps/web/src/lib/consultation/content-edits.ts`): los bloques `section` sin ediciones internas ahora conservan la misma referencia (identidad) del objeto original en vez de clonarse siempre, cumpliendo lo que ya documentaba el comentario de la función.
-- `withDerivedBMI` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): el guard numérico ahora exige `weight > 0`, igual que el falsy-check de peso en `computeBMI`, así que un peso `'0'` ya no produce un IMC.
+- `BlockRendererRunMode` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): the `onBlur` handlers of the `vitals` and `clinical_notes` blocks emitted `vitals_entered`/`notes_edited` unconditionally, so focusing a field and leaving without editing wrote a false event into the (append-only) audit history. Each subcomponent now uses a `dirtySinceLastEmit` ref that only allows emission when there was a real `onChange` since the last emission.
+- `computeMissingRequiredFields` (`packages/shared/src/protocol/sign-validation.ts`): a required `vitals` block passed sign validation with all values empty (`{ weight: '' }`), because it only counted present keys. It now requires at least one non-empty value after trimming whitespace.
+- `ConsultationsService.updateProtocolUsage` (`apps/api/src/modules/consultations/consultations.service.ts`): it did not reject content writes when the consultation was already signed, unlike `update()`. A late flush from a stale tab could mutate signed clinical content without leaving an amendment trail. It now rejects with `CONSULTATION_ALREADY_SIGNED` before writing.
+- `usePendingModifications.flush` (`apps/web/src/hooks/consultations/use-pending-modifications.ts`): when a usage had buffered content edits but was not found in the React Query cache, the PATCH was sent anyway (with the content silently omitted, or with an empty body `{}`). That usage is now skipped from the flush and both buffers are kept to retry when the usage reappears in the cache.
+- Fixed the incorrect path (`apps/web/src/pages/Consultation/BlockRendererRunMode.tsx` → `apps/web/src/components/protocols/BlockRendererRunMode.tsx`), the duplicated word «silent silent», and the mid-sentence language switch in the changelog entry of `[2026-07-07] Captura de vitales y notas clínicas en consulta`.
+- `applyContentEdits` (`apps/web/src/lib/consultation/content-edits.ts`): `section` blocks without internal edits now keep the same reference (identity) of the original object instead of always being cloned, fulfilling what the function's comment already documented.
+- `withDerivedBMI` (`apps/web/src/components/protocols/BlockRendererRunMode.tsx`): the numeric guard now requires `weight > 0`, like the weight falsy-check in `computeBMI`, so a weight of `'0'` no longer produces a BMI.
 
-## [2026-07-07] Captura de vitales y notas clínicas en consulta
+## [2026-07-07] Vitals and clinical-note capture in the consultation
 
 ### Added
 
@@ -386,67 +386,67 @@ Antes de este cambio, ningún bloque de las plantillas semilla era `clinical_not
 
 ### Fixed
 
-- Buffered edits para un usage removido vía «Continuar sin protocolo» ahora se descartan de forma limpia. `usePendingModifications` expone `discardUsage(usageId)`, que elimina las entradas de ambos buffers (eventos y content-edit). Previamente, remover un protocolo a mitad de consulta dejaba huérfanas las ediciones bufferizadas (los flushes siguientes intentaban un PATCH a un usage eliminado, generando errores 404 u omisión silenciosa). `ProtocolPanel` ahora invoca un nuevo callback `onUsageRemoved` al remover exitosamente, encadenando `discardUsage` desde la página padre `Consultation` — el mismo patrón de composición que `onRecordModification`/`onFlushPending`.
+- Buffered edits for a usage removed via «Continuar sin protocolo» are now discarded cleanly. `usePendingModifications` exposes `discardUsage(usageId)`, which removes the entries from both buffers (events and content-edit). Previously, removing a protocol mid-consultation orphaned the buffered edits (subsequent flushes attempted a PATCH to a removed usage, generating 404 errors or silent omission). `ProtocolPanel` now invokes a new `onUsageRemoved` callback on successful removal, chaining `discardUsage` from the parent `Consultation` page — the same composition pattern as `onRecordModification`/`onFlushPending`.
 - Vitals audit events (`vitals_entered`) now coalesce to one per editing burst: the event emission is gated on block focusout (`onBlur`), not per-field `onBlur`.
 
-## [2026-07-06] Historia médica — correcciones de revisión final
+## [2026-07-06] Medical record — final review fixes
 
 ### Fixed
 
-- `generateRecordSections` (`packages/shared/src/record/generate-record-sections.ts`): el mapeador ahora deriva el estado de checklist/decisiones desde `modifications.checklist_items`/`modifications.decision_branches` (los eventos reales que escribe la app vía `appendModification`), en vez de campos que la app nunca produce (`items[].checked` embebido y `block_id`/`branch_label`). Mantiene el flag `checked` embebido como respaldo cuando no hay evento de modificación para ese ítem.
-- `resolveSection` ahora se aplica a todo destino (también al match por etiqueta por defecto, no solo a los overrides de `historia_mapping`), evitando que contenido caiga en una sección excluida por tipo de consulta.
-- Las notas fuera de protocolo (`modifications.off_protocol_notes`) ahora se incluyen en la historia médica (evolución/enfermedad actual según el tipo de consulta), con la marca de tiempo removida del texto.
-- Las secciones opcionales válidas para el tipo de consulta ya no se omiten cuando quedan vacías al generar la historia; se emiten vacías y editables (excepto `enmiendas`, que solo aparece si hay enmiendas).
-- La fecha y hora legal en el PDF de historia médica y expediente (`apps/api/src/lib/pdf.service.ts`) ahora se formatea en hora dominicana (`America/Santo_Domingo`) sin importar la zona horaria del servidor — nuevo helper exportado `formatDominicanDateTime`.
-- Las descargas de PDF clínico (`GET /v1/consultations/:id/record/pdf`, `GET /v1/patients/:id/record-export`) ahora registran un evento de auditoría no bloqueante (`category: 'system'`, `action: 'export_generated'`).
-- Filas de bloques `alert`/`text` en `HistoriaMappingTab` ahora están bloqueadas igual que `dosage_table`/`lab_order`/`imaging_order`: el interruptor de inclusión se deshabilita y no puede escribir un mapeo sin efecto.
-- Barra de historia firmada (`RecordDocument`) ahora muestra «Regenerar» cuando la consulta tiene una enmienda registrada, con confirmación específica antes de crear una nueva versión firmada.
-- Error de `ensureDraft` silenciado en `ConsultationsService.sign()` ahora se registra con `Logger.error` antes de reportar `recordOutcome: 'failed'`.
-- Fallo de firma por secciones requeridas faltantes (`RECORD_REQUIRED_SECTIONS_MISSING`) ahora muestra un mensaje específico en vez del error genérico.
-- Descargas de historia/expediente que fallan ahora muestran un toast de error en vez de fallar en silencio.
-- `getExpedienteData` ahora excluye historias cuya consulta fue eliminada (soft-delete).
+- `generateRecordSections` (`packages/shared/src/record/generate-record-sections.ts`): the mapper now derives the checklist/decision state from `modifications.checklist_items`/`modifications.decision_branches` (the real events the app writes via `appendModification`), instead of fields the app never produces (embedded `items[].checked` and `block_id`/`branch_label`). It keeps the embedded `checked` flag as a fallback when there is no modification event for that item.
+- `resolveSection` now applies to every target (also the default label match, not only the `historia_mapping` overrides), preventing content from landing in a section excluded by consultation type.
+- Off-protocol notes (`modifications.off_protocol_notes`) are now included in the medical record (evolution/current illness depending on the consultation type), with the timestamp removed from the text.
+- Optional sections valid for the consultation type are no longer omitted when they end up empty on generating the record; they are emitted empty and editable (except `enmiendas`, which only appears if there are amendments).
+- The legal date and time in the medical-record and patient-file PDF (`apps/api/src/lib/pdf.service.ts`) is now formatted in Dominican time (`America/Santo_Domingo`) regardless of the server's time zone — new exported helper `formatDominicanDateTime`.
+- Clinical PDF downloads (`GET /v1/consultations/:id/record/pdf`, `GET /v1/patients/:id/record-export`) now log a non-blocking audit event (`category: 'system'`, `action: 'export_generated'`).
+- `alert`/`text` block rows in `HistoriaMappingTab` are now locked like `dosage_table`/`lab_order`/`imaging_order`: the include switch is disabled and cannot write a mapping with no effect.
+- The signed-record bar (`RecordDocument`) now shows «Regenerar» when the consultation has a registered amendment, with a specific confirmation before creating a new signed version.
+- A silenced `ensureDraft` error in `ConsultationsService.sign()` is now logged with `Logger.error` before reporting `recordOutcome: 'failed'`.
+- A sign failure due to missing required sections (`RECORD_REQUIRED_SECTIONS_MISSING`) now shows a specific message instead of the generic error.
+- Failed record/patient-file downloads now show an error toast instead of failing silently.
+- `getExpedienteData` now excludes records whose consultation was deleted (soft-delete).
 
 ### Changed
 
-- `HistoriaMappingEntrySchema.section` (`packages/shared/src/schemas/protocol.ts`) ahora restringe las secciones seleccionables (excluye `ficha_identificacion`, `enmiendas`, `plan_tratamiento`), igual que el selector de la UI.
-- `historiaMissingSections` se movió de `apps/web/src/pages/PatientDetail/strings.ts` a `apps/web/src/lib/toasts.ts` por capas (lo usa un hook, no un componente de página).
+- `HistoriaMappingEntrySchema.section` (`packages/shared/src/schemas/protocol.ts`) now restricts the selectable sections (excludes `ficha_identificacion`, `enmiendas`, `plan_tratamiento`), like the UI selector.
+- `historiaMissingSections` was moved from `apps/web/src/pages/PatientDetail/strings.ts` to `apps/web/src/lib/toasts.ts` for layering (it is used by a hook, not a page component).
 
-## [2026-07-06] Historia médica — exportación del expediente (fase 3)
-
-### Added
-
-- `GET /v1/patients/:id/record-export`: expediente completo del paciente en un solo PDF (portada + historias firmadas, la versión más reciente por consulta, orden descendente) — derecho de copia del paciente (Ley 42-01 art. 28).
-- `generateExpediente` en `PdfService` (portada con paciente, médico tratante, conteo de consultas y fecha de emisión).
-- Botón «Exportar expediente» en la pestaña Historia del detalle de paciente.
-
-## [2026-07-06] Historia médica — mapeo por protocolo (fase 2)
+## [2026-07-06] Medical record — patient-file export (phase 3)
 
 ### Added
 
-- `historia_mapping` opcional en el contenido del protocolo: por bloque, sección destino, inclusión y etiqueta personalizada; viaja con `ProtocolVersion.content` y se congela en cada `ProtocolUsage`.
-- Pestaña «Historia médica» en el editor de protocolo (`HistoriaMappingTab`): tabla de mapeo con Auto/Personalizado y «Restaurar automático».
+- `GET /v1/patients/:id/record-export`: the patient's complete file in a single PDF (cover page + signed records, the most recent version per consultation, descending order) — the patient's right to a copy (Ley 42-01 art. 28).
+- `generateExpediente` in `PdfService` (cover page with patient, treating doctor, consultation count, and issue date).
+- «Exportar expediente» button in the Historia tab of the patient detail.
+
+## [2026-07-06] Medical record — per-protocol mapping (phase 2)
+
+### Added
+
+- Optional `historia_mapping` in the protocol content: per block, target section, inclusion, and custom label; it travels with `ProtocolVersion.content` and is frozen into each `ProtocolUsage`.
+- «Historia médica» tab in the protocol editor (`HistoriaMappingTab`): mapping table with Auto/Custom and «Restaurar automático».
 - Integration test `apps/web/src/pages/ProtocolEditor/__tests__/index.test.tsx`: renders the full `ProtocolEditor` page (mocking `useProtocols`, real router/editor store) and proves a mapping-only edit (toggling a block's include switch on the Historia médica tab, no block edits) reaches `saveVersion` with `content.historia_mapping` populated, and that clearing all overrides via "Restaurar automático" omits the `historia_mapping` key entirely from the save payload.
 
 ### Changed
 
-- `generateRecordSections` respeta los overrides de `historia_mapping`; los bloques `dosage_table`/`lab_order`/`imaging_order` permanecen fijos (mínimo legal desde órdenes firmadas).
+- `generateRecordSections` respects the `historia_mapping` overrides; the `dosage_table`/`lab_order`/`imaging_order` blocks stay fixed (legal minimum from signed orders).
 - `blockTypeCaption` in `apps/web/src/pages/ProtocolEditor/HistoriaMappingTab.tsx` no longer hardcodes the Spanish item/step/branch counters inline; moved to parameterized entries `historiaCaptionItems`/`historiaCaptionSteps`/`historiaCaptionBranches` in `apps/web/src/pages/ProtocolEditor/strings.ts`. No user-visible text change.
 
-## [2026-07-06] Historia médica — registro por consulta (fase 1)
+## [2026-07-06] Medical record — per-consultation record (phase 1)
 
 ### Added
 
-- `ConsultationRecord` model (`consultation_records`): historia médica versionada por consulta con secciones estructuradas (draft → signed, append-only).
-- Mapper `generateRecordSections` en `@rezeta/shared`: deriva las secciones legales (Reglamento MISPAS 2023 §6.3) del contenido de protocolos, con distinción primera consulta / nota de evolución.
-- Endpoints `GET/POST/PATCH /v1/consultations/:id/record`, `POST …/record/regenerate`, `POST …/record/sign`, `GET …/record/pdf` (PDF con PDFKit, streaming).
-- El firmado de consulta genera el borrador automáticamente (`recordOutcome` en la respuesta).
-- Pestaña «Historia» del detalle de paciente: lista de consultas + documento con editar/regenerar/firmar/descargar (`HistoriaTab`, `RecordDocument`).
-- Tarjeta de historia médica en el panel post-firma de la consulta.
+- `ConsultationRecord` model (`consultation_records`): per-consultation versioned medical record with structured sections (draft → signed, append-only).
+- `generateRecordSections` mapper in `@rezeta/shared`: derives the legal sections (Reglamento MISPAS 2023 §6.3) from the protocol content, distinguishing first consultation / evolution note.
+- Endpoints `GET/POST/PATCH /v1/consultations/:id/record`, `POST …/record/regenerate`, `POST …/record/sign`, `GET …/record/pdf` (PDF with PDFKit, streaming).
+- Signing a consultation generates the draft automatically (`recordOutcome` in the response).
+- «Historia» tab in the patient detail: list of consultations + document with edit/regenerate/sign/download (`HistoriaTab`, `RecordDocument`).
+- Medical-record card in the consultation's post-sign panel.
 
 ### Changed
 
-- `SignConsultationResponse` ahora incluye `recordOutcome`.
-- Nuevos códigos de error: `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
+- `SignConsultationResponse` now includes `recordOutcome`.
+- New error codes: `RECORD_NOT_FOUND`, `RECORD_NOT_DRAFT`, `RECORD_ALREADY_SIGNED`, `RECORD_REQUIRED_SECTIONS_MISSING`, `RECORD_CONSULTATION_NOT_SIGNED`.
 
 ## [2026-07-06] Dead-code sweep (part 2) — dev previews, legacy design system, unwired integration tests
 
