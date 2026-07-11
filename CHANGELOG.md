@@ -4,24 +4,24 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-09] Eliminado el script `test:integration` obsoleto
+## [2026-07-09] Removed stale `test:integration` script
 
 ### Removed
 
-- `apps/api/package.json`: eliminado el script `test:integration`, que apuntaba a `test/auth.integration.ts` y `test/protocols.integration.ts`. Ambos archivos —y el directorio `apps/api/test/` completo— se borraron en `3676dda` por no estar cableados (el `include` de `vitest.config.ts` solo cubre `src/**/*.{spec,test}.ts`), pero el script sobrevivió y fallaba al ejecutarse. Ningún workflow de CI lo invocaba.
+- `apps/api/package.json`: removed the `test:integration` script, which pointed at `test/auth.integration.ts` and `test/protocols.integration.ts`. Both files — and the entire `apps/api/test/` directory — were deleted in `3676dda` as unwired (`vitest.config.ts`'s `include` only covers `src/**/*.{spec,test}.ts`), but the script survived and failed on invocation. No CI workflow referenced it.
 
-## [2026-07-09] Onboarding concurrente ya no falla con una violación de unicidad
+## [2026-07-09] Concurrent onboarding no longer fails with a unique-constraint violation
 
 ### Fixed
 
-- `apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`: dos peticiones de onboarding simultáneas para el mismo tenant pasaban ambas la re-verificación de `seededAt` dentro de su transacción — bajo `READ COMMITTED` un `findUnique` no toma bloqueo de fila ni ve la escritura no confirmada de la otra transacción. La perdedora chocaba con el índice único parcial `(tenant_id, name)` de `protocol_categories` y filtraba un `P2002` crudo al cliente. `seedDefault` y `seedCustom` ahora bloquean la fila del tenant con `SELECT … FOR UPDATE` antes de releer `seededAt`, de modo que la segunda transacción espera al commit de la primera y observa `seededAt` ya asignado.
-- `apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`: como red de seguridad del bloqueo, ambas rutas de seeding capturan `P2002` y lo remapean a `ConflictException` con `TENANT_ALREADY_SEEDED`, siguiendo el patrón ya establecido en `users.repository.ts`. Los fallos ajenos a `P2002` se repropagan sin cambios.
-- `apps/web/src/hooks/onboarding/use-onboarding.ts`: `useOnboardingDefault` y `useOnboardingCustom` tratan `TENANT_ALREADY_SEEDED` como éxito y cargan el usuario vigente desde `GET /v1/auth/me`. El tenant sí quedó sembrado por la petición rival, así que la pantalla roja de error era incorrecta. En desarrollo esto ocurría en cada onboarding porque `StrictMode` invoca dos veces el efecto de montaje de `apps/web/src/pages/Onboarding/index.tsx`; en producción, ante un doble clic o un reintento de red.
+- `apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`: two simultaneous onboarding requests for the same tenant both passed the in-transaction `seededAt` re-check — under `READ COMMITTED` a `findUnique` takes no row lock and cannot see the other transaction's uncommitted write. The loser collided with the `(tenant_id, name)` partial unique index on `protocol_categories` and leaked a raw `P2002` to the client. `seedDefault` and `seedCustom` now lock the tenant row with `SELECT … FOR UPDATE` before re-reading `seededAt`, so the second transaction waits for the first to commit and then observes `seededAt` already set.
+- `apps/api/src/modules/tenant-seeding/tenant-seeding.service.ts`: as a backstop to the lock, both seeding paths catch `P2002` and remap it to a `ConflictException` with `TENANT_ALREADY_SEEDED`, following the pattern already established in `users.repository.ts`. Non-`P2002` failures rethrow unchanged.
+- `apps/web/src/hooks/onboarding/use-onboarding.ts`: `useOnboardingDefault` and `useOnboardingCustom` treat `TENANT_ALREADY_SEEDED` as success and load the current user from `GET /v1/auth/me`. The tenant *was* seeded by the rival request, so the red error screen was incorrect. In development this happened on every onboarding because `StrictMode` double-invokes the mount effect in `apps/web/src/pages/Onboarding/index.tsx`; in production, on a double click or a network retry.
 
 ### Added
 
-- `apps/api/src/modules/tenant-seeding/__tests__/tenant-seeding.concurrency.spec.ts`: cubre el bloqueo de fila previo a la relectura de `seededAt`, el remapeo de `P2002` a `TENANT_ALREADY_SEEDED` y la no captura de errores ajenos, en `seedDefault` y `seedCustom`.
-- `apps/web/src/hooks/__tests__/use-onboarding.test.ts`: cubre el repliegue a `GET /v1/auth/me` ante `TENANT_ALREADY_SEEDED` y la propagación intacta de fallos no relacionados.
+- `apps/api/src/modules/tenant-seeding/__tests__/tenant-seeding.concurrency.spec.ts`: covers the row lock before the `seededAt` re-read, the `P2002` → `TENANT_ALREADY_SEEDED` remap, and the non-capture of unrelated errors, for both `seedDefault` and `seedCustom`.
+- `apps/web/src/hooks/__tests__/use-onboarding.test.ts`: covers the fallback to `GET /v1/auth/me` on `TENANT_ALREADY_SEEDED` and the untouched propagation of unrelated failures.
 
 ## [2026-07-08] Borrador local recupera un mapeo de historia médica limpiado, versiones invalidadas al asegurar el registro y cobertura de invalidación silenciosa
 

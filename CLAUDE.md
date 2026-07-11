@@ -112,7 +112,7 @@ Key design decisions:
 
 ## Domain Conventions
 
-- **Language:** Spanish is the default UI language. English is a toggle. Spec docs and code are in English; user-facing strings are in Spanish.
+- **Language:** **Everything written in this repository is in English — with exactly one exception: user-facing UI strings, which are in Spanish (the default UI language; English is a runtime toggle).** "Everything" means all code, comments, commit messages, `CHANGELOG.md`, `README.md`, spec docs, plan docs, decision docs, test descriptions, and any other prose you author. The ONLY Spanish that belongs in the codebase is the literal text shown to end users (colocated UI strings, toasts, labels). If you are writing Spanish anywhere other than a user-facing string, stop — it must be English. Never write a Spanish `CHANGELOG.md` entry.
 - **Currency:** DOP primary, USD secondary.
 - **Document types:** `cedula`, `passport`, `rnc` (for Dominican tax IDs).
 - **No ICD-10 coding** — diagnoses are free-text. Latin American markets do not typically use ICD-10 in ambulatory care.
@@ -177,7 +177,7 @@ Don't leave `TODO`, `FIXME`, `HACK`, or `XXX` comments in source. Either fix the
 
 ## Changelog Rule
 
-**After every completed task, prepend a new entry to `CHANGELOG.md`.** Use the date format `[YYYY-MM-DD]` with a short title, then bullet points under `### Added`, `### Changed`, and/or `### Fixed` as applicable. Keep entries factual and specific — name the files, components, or endpoints affected. Do not wait for a commit; update the changelog as part of completing the task.
+**After every completed task, prepend a new entry to `CHANGELOG.md`.** Use the date format `[YYYY-MM-DD]` with a short title, then bullet points under `### Added`, `### Changed`, and/or `### Fixed` as applicable. Keep entries factual and specific — name the files, components, or endpoints affected. Do not wait for a commit; update the changelog as part of completing the task. **Write the entry in English** (see Domain Conventions → Language) — title and body. A Spanish changelog entry is never acceptable.
 
 ## When in Doubt
 
