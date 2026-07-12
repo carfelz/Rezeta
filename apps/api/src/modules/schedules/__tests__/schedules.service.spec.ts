@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common'
 import { SchedulesService } from '../schedules.service.js'
 import type { SchedulesRepository } from '../schedules.repository.js'
+import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
+import { NotFoundException as ReferenceNotFound } from '@nestjs/common'
 import type { ScheduleBlock, ScheduleException } from '@rezeta/shared'
+
+const TENANT_ID = 'tenant-1'
 
 function makeBlock(overrides: Partial<ScheduleBlock> = {}): ScheduleBlock {
   return {
@@ -38,6 +42,7 @@ function makeException(overrides: Partial<ScheduleException> = {}): ScheduleExce
 
 describe('SchedulesService', () => {
   let repo: SchedulesRepository
+  let references: ReferenceGuardService
   let service: SchedulesService
 
   beforeEach(() => {
@@ -55,7 +60,11 @@ describe('SchedulesService', () => {
       deleteException: vi.fn(),
     } as unknown as SchedulesRepository
 
-    service = new SchedulesService(repo)
+    references = {
+      assertLocation: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ReferenceGuardService
+
+    service = new SchedulesService(repo, references)
   })
 
   // ── Blocks ───────────────────────────────────────────────────────────────────
@@ -94,7 +103,7 @@ describe('SchedulesService', () => {
       const created = makeBlock()
       vi.mocked(repo.createBlock).mockResolvedValue(created)
 
-      const result = await service.createBlock('user-1', dto)
+      const result = await service.createBlock('user-1', TENANT_ID, dto)
 
       expect(repo.findOverlappingBlocks).toHaveBeenCalledWith({
         userId: 'user-1',
@@ -107,13 +116,38 @@ describe('SchedulesService', () => {
       expect(result).toEqual(created)
     })
 
+    it('verifies the location belongs to the caller tenant', async () => {
+      vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([])
+      vi.mocked(repo.createBlock).mockResolvedValue(makeBlock())
+
+      await service.createBlock('user-1', TENANT_ID, dto)
+
+      expect(references.assertLocation).toHaveBeenCalledWith(dto.locationId, TENANT_ID)
+    })
+
+    it('rejects when the location belongs to another tenant', async () => {
+      vi.mocked(references.assertLocation).mockRejectedValue(new ReferenceNotFound())
+
+      await expect(service.createBlock('user-1', TENANT_ID, dto)).rejects.toThrow(ReferenceNotFound)
+      expect(repo.findOverlappingBlocks).not.toHaveBeenCalled()
+      expect(repo.createBlock).not.toHaveBeenCalled()
+    })
+
     it('throws SCHEDULE_BLOCK_TIME_INVALID when startTime >= endTime', async () => {
       await expect(
-        service.createBlock('user-1', { ...dto, startTime: '12:00:00', endTime: '08:00:00' }),
+        service.createBlock('user-1', TENANT_ID, {
+          ...dto,
+          startTime: '12:00:00',
+          endTime: '08:00:00',
+        }),
       ).rejects.toThrow(BadRequestException)
 
       await expect(
-        service.createBlock('user-1', { ...dto, startTime: '10:00:00', endTime: '10:00:00' }),
+        service.createBlock('user-1', TENANT_ID, {
+          ...dto,
+          startTime: '10:00:00',
+          endTime: '10:00:00',
+        }),
       ).rejects.toThrow(BadRequestException)
 
       expect(repo.findOverlappingBlocks).not.toHaveBeenCalled()
@@ -122,7 +156,7 @@ describe('SchedulesService', () => {
     it('throws SCHEDULE_BLOCK_OVERLAP when overlapping block exists', async () => {
       vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([makeBlock()])
 
-      await expect(service.createBlock('user-1', dto)).rejects.toThrow(ConflictException)
+      await expect(service.createBlock('user-1', TENANT_ID, dto)).rejects.toThrow(ConflictException)
       expect(repo.createBlock).not.toHaveBeenCalled()
     })
   })
@@ -137,7 +171,7 @@ describe('SchedulesService', () => {
       const updated = makeBlock({ endTime: '13:00:00' })
       vi.mocked(repo.updateBlock).mockResolvedValue(updated)
 
-      const result = await service.updateBlock('block-1', 'user-1', dto)
+      const result = await service.updateBlock('block-1', 'user-1', TENANT_ID, dto)
 
       expect(repo.findBlockById).toHaveBeenCalledWith('block-1', 'user-1')
       expect(repo.findOverlappingBlocks).toHaveBeenCalledWith(
@@ -146,10 +180,42 @@ describe('SchedulesService', () => {
       expect(result).toEqual(updated)
     })
 
+    it('verifies a changed location belongs to the caller tenant', async () => {
+      vi.mocked(repo.findBlockById).mockResolvedValue(existing)
+      vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([])
+      vi.mocked(repo.updateBlock).mockResolvedValue(makeBlock())
+
+      await service.updateBlock('block-1', 'user-1', TENANT_ID, { locationId: 'loc-2' })
+
+      expect(references.assertLocation).toHaveBeenCalledWith('loc-2', TENANT_ID)
+    })
+
+    it('rejects when the changed location belongs to another tenant', async () => {
+      vi.mocked(repo.findBlockById).mockResolvedValue(existing)
+      vi.mocked(references.assertLocation).mockRejectedValue(new ReferenceNotFound())
+
+      await expect(
+        service.updateBlock('block-1', 'user-1', TENANT_ID, { locationId: 'loc-2' }),
+      ).rejects.toThrow(ReferenceNotFound)
+      expect(repo.updateBlock).not.toHaveBeenCalled()
+    })
+
+    it('does not verify the location when the dto omits it', async () => {
+      vi.mocked(repo.findBlockById).mockResolvedValue(existing)
+      vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([])
+      vi.mocked(repo.updateBlock).mockResolvedValue(makeBlock())
+
+      await service.updateBlock('block-1', 'user-1', TENANT_ID, dto)
+
+      expect(references.assertLocation).not.toHaveBeenCalled()
+    })
+
     it('throws NOT_FOUND when block does not belong to user', async () => {
       vi.mocked(repo.findBlockById).mockResolvedValue(null)
 
-      await expect(service.updateBlock('block-1', 'user-2', dto)).rejects.toThrow(NotFoundException)
+      await expect(service.updateBlock('block-1', 'user-2', TENANT_ID, dto)).rejects.toThrow(
+        NotFoundException,
+      )
       expect(repo.updateBlock).not.toHaveBeenCalled()
     })
 
@@ -158,7 +224,7 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([])
       vi.mocked(repo.updateBlock).mockResolvedValue(makeBlock())
 
-      await service.updateBlock('block-1', 'user-1', dto)
+      await service.updateBlock('block-1', 'user-1', TENANT_ID, dto)
 
       expect(repo.findOverlappingBlocks).toHaveBeenCalledWith(
         expect.objectContaining({ excludeId: 'block-1' }),
@@ -169,7 +235,10 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findBlockById).mockResolvedValue(existing)
 
       await expect(
-        service.updateBlock('block-1', 'user-1', { startTime: '14:00:00', endTime: '08:00:00' }),
+        service.updateBlock('block-1', 'user-1', TENANT_ID, {
+          startTime: '14:00:00',
+          endTime: '08:00:00',
+        }),
       ).rejects.toThrow(BadRequestException)
     })
 
@@ -177,7 +246,9 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findBlockById).mockResolvedValue(existing)
       vi.mocked(repo.findOverlappingBlocks).mockResolvedValue([makeBlock({ id: 'block-2' })])
 
-      await expect(service.updateBlock('block-1', 'user-1', dto)).rejects.toThrow(ConflictException)
+      await expect(service.updateBlock('block-1', 'user-1', TENANT_ID, dto)).rejects.toThrow(
+        ConflictException,
+      )
       expect(repo.updateBlock).not.toHaveBeenCalled()
     })
 
@@ -187,7 +258,9 @@ describe('SchedulesService', () => {
       const updated = makeBlock({ startTime: '07:00:00' })
       vi.mocked(repo.updateBlock).mockResolvedValue(updated)
 
-      const result = await service.updateBlock('block-1', 'user-1', { startTime: '07:00:00' })
+      const result = await service.updateBlock('block-1', 'user-1', TENANT_ID, {
+        startTime: '07:00:00',
+      })
 
       expect(repo.findOverlappingBlocks).toHaveBeenCalledWith(
         expect.objectContaining({ startTime: '07:00:00', endTime: existing.endTime }),
@@ -204,6 +277,7 @@ describe('SchedulesService', () => {
       await service.deleteBlock('block-1', 'user-1')
 
       expect(repo.deleteBlock).toHaveBeenCalledWith('block-1', 'user-1')
+      expect(references.assertLocation).not.toHaveBeenCalled()
     })
 
     it('throws NOT_FOUND when block does not exist for user', async () => {
@@ -234,10 +308,29 @@ describe('SchedulesService', () => {
       const created = makeException()
       vi.mocked(repo.createException).mockResolvedValue(created)
 
-      const result = await service.createException('user-1', dto)
+      const result = await service.createException('user-1', TENANT_ID, dto)
 
       expect(repo.createException).toHaveBeenCalledWith('user-1', dto)
       expect(result).toEqual(created)
+    })
+
+    it('verifies the location belongs to the caller tenant', async () => {
+      const dto = { locationId: 'loc-1', date: '2026-05-15', type: 'blocked' as const }
+      vi.mocked(repo.createException).mockResolvedValue(makeException())
+
+      await service.createException('user-1', TENANT_ID, dto)
+
+      expect(references.assertLocation).toHaveBeenCalledWith('loc-1', TENANT_ID)
+    })
+
+    it('rejects when the location belongs to another tenant', async () => {
+      const dto = { locationId: 'loc-1', date: '2026-05-15', type: 'blocked' as const }
+      vi.mocked(references.assertLocation).mockRejectedValue(new ReferenceNotFound())
+
+      await expect(service.createException('user-1', TENANT_ID, dto)).rejects.toThrow(
+        ReferenceNotFound,
+      )
+      expect(repo.createException).not.toHaveBeenCalled()
     })
 
     it('creates an exception with valid time range', async () => {
@@ -251,7 +344,7 @@ describe('SchedulesService', () => {
       const created = makeException(dto)
       vi.mocked(repo.createException).mockResolvedValue(created)
 
-      await service.createException('user-1', dto)
+      await service.createException('user-1', TENANT_ID, dto)
 
       expect(repo.createException).toHaveBeenCalledWith('user-1', dto)
     })
@@ -264,7 +357,9 @@ describe('SchedulesService', () => {
         startTime: '09:00:00',
       }
 
-      await expect(service.createException('user-1', dto)).rejects.toThrow(BadRequestException)
+      await expect(service.createException('user-1', TENANT_ID, dto)).rejects.toThrow(
+        BadRequestException,
+      )
       expect(repo.createException).not.toHaveBeenCalled()
     })
 
@@ -276,7 +371,9 @@ describe('SchedulesService', () => {
         endTime: '13:00:00',
       }
 
-      await expect(service.createException('user-1', dto)).rejects.toThrow(BadRequestException)
+      await expect(service.createException('user-1', TENANT_ID, dto)).rejects.toThrow(
+        BadRequestException,
+      )
     })
 
     it('throws TIME_INVALID when startTime >= endTime', async () => {
@@ -288,7 +385,9 @@ describe('SchedulesService', () => {
         endTime: '09:00:00',
       }
 
-      await expect(service.createException('user-1', dto)).rejects.toThrow(BadRequestException)
+      await expect(service.createException('user-1', TENANT_ID, dto)).rejects.toThrow(
+        BadRequestException,
+      )
     })
   })
 
@@ -300,18 +399,40 @@ describe('SchedulesService', () => {
       const updated = makeException({ reason: 'Día festivo' })
       vi.mocked(repo.updateException).mockResolvedValue(updated)
 
-      const result = await service.updateException('exc-1', 'user-1', { reason: 'Día festivo' })
+      const result = await service.updateException('exc-1', 'user-1', TENANT_ID, {
+        reason: 'Día festivo',
+      })
 
       expect(repo.updateException).toHaveBeenCalledWith('exc-1', 'user-1', {
         reason: 'Día festivo',
       })
+      expect(references.assertLocation).not.toHaveBeenCalled()
       expect(result).toEqual(updated)
+    })
+
+    it('verifies a changed location belongs to the caller tenant', async () => {
+      vi.mocked(repo.findExceptionById).mockResolvedValue(existing)
+      vi.mocked(repo.updateException).mockResolvedValue(existing)
+
+      await service.updateException('exc-1', 'user-1', TENANT_ID, { locationId: 'loc-2' })
+
+      expect(references.assertLocation).toHaveBeenCalledWith('loc-2', TENANT_ID)
+    })
+
+    it('rejects when the changed location belongs to another tenant', async () => {
+      vi.mocked(repo.findExceptionById).mockResolvedValue(existing)
+      vi.mocked(references.assertLocation).mockRejectedValue(new ReferenceNotFound())
+
+      await expect(
+        service.updateException('exc-1', 'user-1', TENANT_ID, { locationId: 'loc-2' }),
+      ).rejects.toThrow(ReferenceNotFound)
+      expect(repo.updateException).not.toHaveBeenCalled()
     })
 
     it('throws NOT_FOUND when exception does not exist for user', async () => {
       vi.mocked(repo.findExceptionById).mockResolvedValue(null)
 
-      await expect(service.updateException('exc-1', 'user-2', {})).rejects.toThrow(
+      await expect(service.updateException('exc-1', 'user-2', TENANT_ID, {})).rejects.toThrow(
         NotFoundException,
       )
     })
@@ -320,7 +441,7 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findExceptionById).mockResolvedValue(existing)
 
       await expect(
-        service.updateException('exc-1', 'user-1', { startTime: '16:00:00' }),
+        service.updateException('exc-1', 'user-1', TENANT_ID, { startTime: '16:00:00' }),
       ).rejects.toThrow(BadRequestException)
     })
 
@@ -329,7 +450,7 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findExceptionById).mockResolvedValue(noEndExisting)
 
       await expect(
-        service.updateException('exc-1', 'user-1', { startTime: '08:00:00' }),
+        service.updateException('exc-1', 'user-1', TENANT_ID, { startTime: '08:00:00' }),
       ).rejects.toThrow(BadRequestException)
     })
 
@@ -338,7 +459,9 @@ describe('SchedulesService', () => {
       vi.mocked(repo.findExceptionById).mockResolvedValue(noTimeExisting)
       vi.mocked(repo.updateException).mockResolvedValue(noTimeExisting)
 
-      const result = await service.updateException('exc-1', 'user-1', { reason: 'Vacación' })
+      const result = await service.updateException('exc-1', 'user-1', TENANT_ID, {
+        reason: 'Vacación',
+      })
       expect(result).toEqual(noTimeExisting)
     })
 
@@ -347,7 +470,9 @@ describe('SchedulesService', () => {
       const updated = makeException({ startTime: '08:00:00', endTime: '14:00:00' })
       vi.mocked(repo.updateException).mockResolvedValue(updated)
 
-      const result = await service.updateException('exc-1', 'user-1', { endTime: '14:00:00' })
+      const result = await service.updateException('exc-1', 'user-1', TENANT_ID, {
+        endTime: '14:00:00',
+      })
 
       expect(repo.updateException).toHaveBeenCalledWith('exc-1', 'user-1', { endTime: '14:00:00' })
       expect(result).toEqual(updated)

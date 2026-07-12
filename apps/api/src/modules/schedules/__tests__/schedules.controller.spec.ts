@@ -83,7 +83,7 @@ describe('SchedulesController', () => {
   })
 
   describe('createBlock', () => {
-    it('delegates to service with userId and dto', async () => {
+    it('delegates to service with userId, tenantId, and dto', async () => {
       const dto = {
         locationId: 'loc-1',
         dayOfWeek: 1,
@@ -92,18 +92,18 @@ describe('SchedulesController', () => {
         slotDurationMin: 30,
       }
       mockService.createBlock.mockResolvedValue(makeBlock())
-      const result = await controller.createBlock(mockUser, dto)
-      expect(mockService.createBlock).toHaveBeenCalledWith('user-1', dto)
+      const result = await controller.createBlock(mockUser, 'tenant-1', dto)
+      expect(mockService.createBlock).toHaveBeenCalledWith('user-1', 'tenant-1', dto)
       expect(result.id).toBe('block-1')
     })
   })
 
   describe('updateBlock', () => {
-    it('delegates to service with id, userId, and dto', async () => {
+    it('delegates to service with id, userId, tenantId, and dto', async () => {
       const dto = { endTime: '13:00:00' }
       mockService.updateBlock.mockResolvedValue(makeBlock({ endTime: '13:00:00' }))
-      const result = await controller.updateBlock(mockUser, 'block-1', dto)
-      expect(mockService.updateBlock).toHaveBeenCalledWith('block-1', 'user-1', dto)
+      const result = await controller.updateBlock(mockUser, 'tenant-1', 'block-1', dto)
+      expect(mockService.updateBlock).toHaveBeenCalledWith('block-1', 'user-1', 'tenant-1', dto)
       expect(result.endTime).toBe('13:00:00')
     })
   })
@@ -139,21 +139,21 @@ describe('SchedulesController', () => {
   })
 
   describe('createException', () => {
-    it('delegates to service with userId and dto', async () => {
+    it('delegates to service with userId, tenantId, and dto', async () => {
       const dto = { locationId: 'loc-1', date: '2026-05-15', type: 'blocked' as const }
       mockService.createException.mockResolvedValue(makeException())
-      const result = await controller.createException(mockUser, dto)
-      expect(mockService.createException).toHaveBeenCalledWith('user-1', dto)
+      const result = await controller.createException(mockUser, 'tenant-1', dto)
+      expect(mockService.createException).toHaveBeenCalledWith('user-1', 'tenant-1', dto)
       expect(result.id).toBe('exc-1')
     })
   })
 
   describe('updateException', () => {
-    it('delegates to service with id, userId, and dto', async () => {
+    it('delegates to service with id, userId, tenantId, and dto', async () => {
       const dto = { reason: 'Día festivo' }
       mockService.updateException.mockResolvedValue(makeException({ reason: 'Día festivo' }))
-      const result = await controller.updateException(mockUser, 'exc-1', dto)
-      expect(mockService.updateException).toHaveBeenCalledWith('exc-1', 'user-1', dto)
+      const result = await controller.updateException(mockUser, 'tenant-1', 'exc-1', dto)
+      expect(mockService.updateException).toHaveBeenCalledWith('exc-1', 'user-1', 'tenant-1', dto)
       expect(result.reason).toBe('Día festivo')
     })
   })

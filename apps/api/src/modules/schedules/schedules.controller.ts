@@ -36,6 +36,7 @@ import {
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
+import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { SchedulesService } from './schedules.service.js'
 
 @ApiTags('Schedules')
@@ -70,9 +71,10 @@ export class SchedulesController {
   @ApiResponse({ status: 409, description: 'SCHEDULE_BLOCK_OVERLAP' })
   createBlock(
     @CurrentUser() user: AuthUser,
+    @TenantId() tenantId: string,
     @Body() dto: CreateScheduleBlockDto,
   ): Promise<ScheduleBlock> {
-    return this.svc.createBlock(user.id, dto)
+    return this.svc.createBlock(user.id, tenantId, dto)
   }
 
   @Patch('blocks/:id')
@@ -85,10 +87,11 @@ export class SchedulesController {
   @ApiResponse({ status: 409, description: 'SCHEDULE_BLOCK_OVERLAP' })
   updateBlock(
     @CurrentUser() user: AuthUser,
+    @TenantId() tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateScheduleBlockDto,
   ): Promise<ScheduleBlock> {
-    return this.svc.updateBlock(id, user.id, dto)
+    return this.svc.updateBlock(id, user.id, tenantId, dto)
   }
 
   @Delete('blocks/:id')
@@ -134,9 +137,10 @@ export class SchedulesController {
   @ApiResponse({ status: 400, description: 'SCHEDULE_EXCEPTION_TIME_INVALID' })
   createException(
     @CurrentUser() user: AuthUser,
+    @TenantId() tenantId: string,
     @Body() dto: CreateScheduleExceptionDto,
   ): Promise<ScheduleException> {
-    return this.svc.createException(user.id, dto)
+    return this.svc.createException(user.id, tenantId, dto)
   }
 
   @Patch('exceptions/:id')
@@ -148,10 +152,11 @@ export class SchedulesController {
   @ApiResponse({ status: 404, description: 'SCHEDULE_EXCEPTION_NOT_FOUND' })
   updateException(
     @CurrentUser() user: AuthUser,
+    @TenantId() tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateScheduleExceptionDto,
   ): Promise<ScheduleException> {
-    return this.svc.updateException(id, user.id, dto)
+    return this.svc.updateException(id, user.id, tenantId, dto)
   }
 
   @Delete('exceptions/:id')

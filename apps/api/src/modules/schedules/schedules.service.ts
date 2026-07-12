@@ -18,10 +18,14 @@ import {
   type BlockListParams,
   type ExceptionListParams,
 } from './schedules.repository.js'
+import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
 
 @Injectable()
 export class SchedulesService {
-  constructor(@Inject(SchedulesRepository) private repo: SchedulesRepository) {}
+  constructor(
+    @Inject(SchedulesRepository) private repo: SchedulesRepository,
+    @Inject(ReferenceGuardService) private references: ReferenceGuardService,
+  ) {}
 
   // ── Blocks ──────────────────────────────────────────────────────────────────
 
@@ -29,7 +33,13 @@ export class SchedulesService {
     return this.repo.findManyBlocks(params)
   }
 
-  async createBlock(userId: string, dto: CreateScheduleBlockDto): Promise<ScheduleBlock> {
+  async createBlock(
+    userId: string,
+    tenantId: string,
+    dto: CreateScheduleBlockDto,
+  ): Promise<ScheduleBlock> {
+    await this.references.assertLocation(dto.locationId, tenantId)
+
     if (dto.startTime >= dto.endTime) {
       throw new BadRequestException({
         code: ErrorCode.SCHEDULE_BLOCK_TIME_INVALID,
@@ -57,6 +67,7 @@ export class SchedulesService {
   async updateBlock(
     id: string,
     userId: string,
+    tenantId: string,
     dto: UpdateScheduleBlockDto,
   ): Promise<ScheduleBlock> {
     const existing = await this.repo.findBlockById(id, userId)
@@ -65,6 +76,10 @@ export class SchedulesService {
         code: ErrorCode.SCHEDULE_BLOCK_NOT_FOUND,
         message: 'Schedule block not found',
       })
+    }
+
+    if (dto.locationId != null) {
+      await this.references.assertLocation(dto.locationId, tenantId)
     }
 
     const startTime = dto.startTime ?? existing.startTime
@@ -117,8 +132,11 @@ export class SchedulesService {
 
   async createException(
     userId: string,
+    tenantId: string,
     dto: CreateScheduleExceptionDto,
   ): Promise<ScheduleException> {
+    await this.references.assertLocation(dto.locationId, tenantId)
+
     const hasStart = dto.startTime != null
     const hasEnd = dto.endTime != null
 
@@ -142,6 +160,7 @@ export class SchedulesService {
   async updateException(
     id: string,
     userId: string,
+    tenantId: string,
     dto: UpdateScheduleExceptionDto,
   ): Promise<ScheduleException> {
     const existing = await this.repo.findExceptionById(id, userId)
@@ -150,6 +169,10 @@ export class SchedulesService {
         code: ErrorCode.SCHEDULE_EXCEPTION_NOT_FOUND,
         message: 'Schedule exception not found',
       })
+    }
+
+    if (dto.locationId != null) {
+      await this.references.assertLocation(dto.locationId, tenantId)
     }
 
     const startTime = dto.startTime !== undefined ? dto.startTime : existing.startTime
