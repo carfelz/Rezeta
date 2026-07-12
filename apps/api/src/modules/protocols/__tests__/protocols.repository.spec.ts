@@ -496,5 +496,67 @@ describe('ProtocolsRepository', () => {
         }),
       )
     })
+
+    it('retries once with the next version number on a P2002 race', async () => {
+      mockTx.protocol.findFirst.mockResolvedValue(makeProtocolRow())
+      mockTx.protocolVersion.findFirst
+        .mockResolvedValueOnce(makeVersionRow({ versionNumber: 2 }))
+        .mockResolvedValueOnce(makeVersionRow({ versionNumber: 3 }))
+      mockTx.protocolVersion.create
+        .mockRejectedValueOnce({ code: 'P2002' })
+        .mockResolvedValueOnce(makeVersionRow({ id: 'ver4', versionNumber: 4 }))
+      mockTx.protocol.update.mockResolvedValue({})
+
+      const result = await repo.saveVersion({
+        protocolId: 'proto1',
+        tenantId: 't1',
+        createdBy: 'u1',
+        content: minimalContent,
+        publish: false,
+      })
+
+      expect(result?.versionNumber).toBe(4)
+      expect(mockTx.protocolVersion.create).toHaveBeenCalledTimes(2)
+      expect(mockTx.protocolVersion.create).toHaveBeenLastCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ versionNumber: 4 }) }),
+      )
+      expect(mockTx.protocol.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ currentVersionId: 'ver4' }) }),
+      )
+    })
+
+    it('rethrows a non-P2002 create error without retrying', async () => {
+      mockTx.protocol.findFirst.mockResolvedValue(makeProtocolRow())
+      mockTx.protocolVersion.findFirst.mockResolvedValue(null)
+      mockTx.protocolVersion.create.mockRejectedValue({ code: 'P2003' })
+
+      await expect(
+        repo.saveVersion({
+          protocolId: 'proto1',
+          tenantId: 't1',
+          createdBy: 'u1',
+          content: minimalContent,
+          publish: false,
+        }),
+      ).rejects.toEqual({ code: 'P2003' })
+      expect(mockTx.protocolVersion.create).toHaveBeenCalledTimes(1)
+    })
+
+    it('rethrows when the retried create also fails with P2002', async () => {
+      mockTx.protocol.findFirst.mockResolvedValue(makeProtocolRow())
+      mockTx.protocolVersion.findFirst.mockResolvedValue(makeVersionRow({ versionNumber: 2 }))
+      mockTx.protocolVersion.create.mockRejectedValue({ code: 'P2002' })
+
+      await expect(
+        repo.saveVersion({
+          protocolId: 'proto1',
+          tenantId: 't1',
+          createdBy: 'u1',
+          content: minimalContent,
+          publish: false,
+        }),
+      ).rejects.toEqual({ code: 'P2002' })
+      expect(mockTx.protocolVersion.create).toHaveBeenCalledTimes(2)
+    })
   })
 })

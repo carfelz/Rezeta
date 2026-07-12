@@ -59,25 +59,41 @@ export class ProtocolImprovementsService {
     })
 
     if (currentVersion) {
-      const maxVersion = await this.prisma.protocolVersion.aggregate({
-        where: { protocolId, tenantId },
-        _max: { versionNumber: true },
-      })
+      // Atomic: the version insert and the currentVersionId pointer move together,
+      // so a crash between them can never leave a stale pointer or an orphan version.
+      await this.prisma.$transaction(async (tx) => {
+        const createNextVersion = async (): Promise<{ id: string }> => {
+          const maxVersion = await tx.protocolVersion.aggregate({
+            where: { protocolId, tenantId },
+            _max: { versionNumber: true },
+          })
+          return tx.protocolVersion.create({
+            data: {
+              protocolId,
+              tenantId,
+              versionNumber: (maxVersion._max.versionNumber ?? 0) + 1,
+              content: currentVersion.content as object,
+              changeSummary: `Applied suggestion: ${suggestion.impactSummary}`,
+              createdBy: userId,
+            },
+          })
+        }
 
-      const newVersion = await this.prisma.protocolVersion.create({
-        data: {
-          protocolId,
-          tenantId,
-          versionNumber: (maxVersion._max.versionNumber ?? 0) + 1,
-          content: currentVersion.content as object,
-          changeSummary: `Applied suggestion: ${suggestion.impactSummary}`,
-          createdBy: userId,
-        },
-      })
+        let newVersion: { id: string }
+        try {
+          newVersion = await createNextVersion()
+        } catch (err: unknown) {
+          // A concurrent apply/saveVersion may have grabbed the same version
+          // number (partial unique index arbitrates). Recompute the max and
+          // retry once so the loser gets the next number instead of a raw 409.
+          if (!this.isUniqueViolation(err)) throw err
+          newVersion = await createNextVersion()
+        }
 
-      await this.prisma.protocol.update({
-        where: { id: protocolId },
-        data: { currentVersionId: newVersion.id },
+        await tx.protocol.update({
+          where: { id: protocolId },
+          data: { currentVersionId: newVersion.id },
+        })
       })
     }
 
@@ -146,5 +162,15 @@ export class ProtocolImprovementsService {
     await this.assertProtocolExists(protocolId, tenantId)
     await this.getSuggestionOrThrow(protocolId, suggestionId, tenantId)
     await this.repo.markDismissed(suggestionId, tenantId)
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }

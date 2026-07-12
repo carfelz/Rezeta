@@ -220,22 +220,35 @@ export class ProtocolsRepository {
       })
       if (!protocol) return null
 
-      const latest = await tx.protocolVersion.findFirst({
-        where: { protocolId: data.protocolId, deletedAt: null },
-        orderBy: { versionNumber: 'desc' },
-      })
-      const nextVersion = (latest?.versionNumber ?? 0) + 1
+      const createNextVersion = async (): Promise<ProtocolVersion> => {
+        const latest = await tx.protocolVersion.findFirst({
+          where: { protocolId: data.protocolId, deletedAt: null },
+          orderBy: { versionNumber: 'desc' },
+        })
+        const nextVersion = (latest?.versionNumber ?? 0) + 1
 
-      const version = await tx.protocolVersion.create({
-        data: {
-          tenantId: data.tenantId,
-          protocolId: data.protocolId,
-          versionNumber: nextVersion,
-          content: data.content as object,
-          changeSummary: data.changeSummary ?? null,
-          createdBy: data.createdBy,
-        },
-      })
+        return tx.protocolVersion.create({
+          data: {
+            tenantId: data.tenantId,
+            protocolId: data.protocolId,
+            versionNumber: nextVersion,
+            content: data.content as object,
+            changeSummary: data.changeSummary ?? null,
+            createdBy: data.createdBy,
+          },
+        })
+      }
+
+      let version: ProtocolVersion
+      try {
+        version = await createNextVersion()
+      } catch (err: unknown) {
+        // Rare race: a concurrent writer took the same version number (the
+        // partial unique index arbitrates). Re-read the latest and retry once
+        // so the loser gets the next number instead of leaking a raw 409.
+        if (!this.isUniqueViolation(err)) throw err
+        version = await createNextVersion()
+      }
 
       await tx.protocol.update({
         where: { id: data.protocolId, tenantId: data.tenantId },
@@ -247,5 +260,15 @@ export class ProtocolsRepository {
 
       return version
     })
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }
