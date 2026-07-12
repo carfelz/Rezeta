@@ -342,7 +342,10 @@ model Prescription {
   doctor            User               @relation("PrescriptionDoctor", fields: [doctorId], references: [id])
   prescriptionItems PrescriptionItem[]
 
-  @@unique([consultationId, clientRequestId])
+  // Idempotency of (consultation_id, client_request_id) among *live* rows is
+  // enforced by a partial unique index (WHERE deleted_at IS NULL) managed in raw
+  // SQL — PSL cannot express partial indexes. Do not re-add @@unique here: a full
+  // index would let a soft-deleted order block reuse of its client_request_id.
   @@index([tenantId])
   @@index([tenantId, patientId])
   @@index([consultationId, groupOrder])
@@ -646,7 +649,10 @@ model ImagingOrder {
   doctor       User               @relation("ImagingOrderDoctor", fields: [doctorId], references: [id])
   items        ImagingOrderItem[]
 
-  @@unique([consultationId, clientRequestId])
+  // Idempotency of (consultation_id, client_request_id) among *live* rows is
+  // enforced by a partial unique index (WHERE deleted_at IS NULL) managed in raw
+  // SQL — PSL cannot express partial indexes. Do not re-add @@unique here: a full
+  // index would let a soft-deleted order block reuse of its client_request_id.
   @@index([consultationId, groupOrder])
   @@index([tenantId])
   @@index([tenantId, deletedAt])
@@ -693,7 +699,10 @@ model LabOrder {
   doctor       User           @relation("LabOrderDoctor", fields: [doctorId], references: [id])
   items        LabOrderItem[]
 
-  @@unique([consultationId, clientRequestId])
+  // Idempotency of (consultation_id, client_request_id) among *live* rows is
+  // enforced by a partial unique index (WHERE deleted_at IS NULL) managed in raw
+  // SQL — PSL cannot express partial indexes. Do not re-add @@unique here: a full
+  // index would let a soft-deleted order block reuse of its client_request_id.
   @@index([consultationId, groupOrder])
   @@index([tenantId])
   @@index([tenantId, deletedAt])
