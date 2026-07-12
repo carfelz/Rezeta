@@ -57,7 +57,7 @@ export class OnboardingService {
     for (const type of input.types) {
       if (!templateClientIds.has(type.templateClientId)) {
         throw new BadRequestException({
-          code: 'UNKNOWN_TEMPLATE_CLIENT_ID',
+          code: ErrorCode.ONBOARDING_UNKNOWN_TEMPLATE,
           message: `Type "${type.name}" references unknown templateClientId "${type.templateClientId}"`,
         })
       }

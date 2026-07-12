@@ -31,6 +31,18 @@ describe('OnboardingCustomTemplateSchema', () => {
     expect(() => OnboardingCustomTemplateSchema.parse({ ...validTemplate, name: '' })).toThrow()
   })
 
+  it('rejects an over-long clientId', () => {
+    expect(() =>
+      OnboardingCustomTemplateSchema.parse({ ...validTemplate, clientId: 'a'.repeat(201) }),
+    ).toThrow()
+  })
+
+  it('rejects an over-long name', () => {
+    expect(() =>
+      OnboardingCustomTemplateSchema.parse({ ...validTemplate, name: 'a'.repeat(201) }),
+    ).toThrow()
+  })
+
   it('rejects missing schema', () => {
     const { schema: _, ...rest } = validTemplate
     expect(() => OnboardingCustomTemplateSchema.parse(rest)).toThrow()
@@ -61,6 +73,16 @@ describe('OnboardingCustomTypeSchema', () => {
 
   it('rejects empty templateClientId', () => {
     expect(() => OnboardingCustomTypeSchema.parse({ ...validType, templateClientId: '' })).toThrow()
+  })
+
+  it('rejects an over-long name', () => {
+    expect(() => OnboardingCustomTypeSchema.parse({ ...validType, name: 'a'.repeat(201) })).toThrow()
+  })
+
+  it('rejects an over-long templateClientId', () => {
+    expect(() =>
+      OnboardingCustomTypeSchema.parse({ ...validType, templateClientId: 'a'.repeat(201) }),
+    ).toThrow()
   })
 })
 
@@ -103,5 +125,22 @@ describe('OnboardingCustomSchema', () => {
     })
     expect(result.templates).toHaveLength(2)
     expect(result.types).toHaveLength(2)
+  })
+
+  it('rejects an oversized templates array', () => {
+    const templates = Array.from({ length: 51 }, (_, i) => ({
+      clientId: `t${i}`,
+      name: `T${i}`,
+      schema: validSchema,
+    }))
+    expect(() => OnboardingCustomSchema.parse({ ...validInput, templates })).toThrow()
+  })
+
+  it('rejects an oversized types array', () => {
+    const types = Array.from({ length: 51 }, (_, i) => ({
+      name: `Type ${i}`,
+      templateClientId: 'tmpl-1',
+    }))
+    expect(() => OnboardingCustomSchema.parse({ ...validInput, types })).toThrow()
   })
 })

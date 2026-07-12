@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common'
+import { ErrorCode } from '@rezeta/shared'
 import { OnboardingService } from '../onboarding.service.js'
 
 const mockSeeder = {
@@ -136,6 +137,16 @@ describe('OnboardingService', () => {
       }
       await expect(service.seedCustom('fb1', badInput)).rejects.toThrow(BadRequestException)
       expect(mockSeeder.seedCustom).not.toHaveBeenCalled()
+    })
+
+    it('uses the typed ONBOARDING_UNKNOWN_TEMPLATE error code for unknown templateClientId', async () => {
+      const badInput = {
+        templates: [{ clientId: 'c1', name: 'T', schema: { version: '1.0', blocks: [] } }],
+        types: [{ name: 'Bad', templateClientId: 'nonexistent' }],
+      }
+      await expect(service.seedCustom('fb1', badInput)).rejects.toMatchObject({
+        response: { code: ErrorCode.ONBOARDING_UNKNOWN_TEMPLATE },
+      })
     })
 
     it('throws InternalServerErrorException when user not found initially', async () => {
