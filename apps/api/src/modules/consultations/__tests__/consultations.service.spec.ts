@@ -742,6 +742,37 @@ describe('ConsultationsService', () => {
         service.amend('consult-1', 'tenant-1', 'user-1', { reason: 'Corrección necesaria.' }),
       ).rejects.toThrow(BadRequestException)
     })
+
+    it('retries once on a P2002 amendment-number race and returns the winning result', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      const amended = mockConsultation({ status: 'amended' })
+      vi.mocked(repo.createAmendment)
+        .mockRejectedValueOnce({ code: 'P2002' })
+        .mockResolvedValueOnce(amended)
+      const result = await service.amend('consult-1', 'tenant-1', 'user-1', {
+        reason: 'Corrección concurrente.',
+      })
+      expect(result).toBe(amended)
+      expect(repo.createAmendment).toHaveBeenCalledTimes(2)
+    })
+
+    it('rethrows a second consecutive P2002 without retrying again', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      vi.mocked(repo.createAmendment).mockRejectedValue({ code: 'P2002' })
+      await expect(
+        service.amend('consult-1', 'tenant-1', 'user-1', { reason: 'Corrección concurrente.' }),
+      ).rejects.toMatchObject({ code: 'P2002' })
+      expect(repo.createAmendment).toHaveBeenCalledTimes(2)
+    })
+
+    it('rethrows a non-P2002 error from createAmendment without retrying', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      vi.mocked(repo.createAmendment).mockRejectedValue(new Error('boom'))
+      await expect(
+        service.amend('consult-1', 'tenant-1', 'user-1', { reason: 'Corrección.' }),
+      ).rejects.toThrow('boom')
+      expect(repo.createAmendment).toHaveBeenCalledTimes(1)
+    })
   })
 
   // ── remove ─────────────────────────────────────────────────────────────────
@@ -814,6 +845,19 @@ describe('ConsultationsService', () => {
   // ── addProtocolUsage ───────────────────────────────────────────────────────
 
   describe('addProtocolUsage', () => {
+    it('rejects with CONSULTATION_ALREADY_SIGNED when the consultation is signed', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      await expect(
+        service.addProtocolUsage('consult-1', 'tenant-1', 'user-1', {
+          protocolId: VALID_UUID,
+        }),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.CONSULTATION_ALREADY_SIGNED },
+      })
+      expect(prisma.protocol.findFirst).not.toHaveBeenCalled()
+      expect(repo.launchProtocolUsage).not.toHaveBeenCalled()
+    })
+
     it('throws NotFoundException when protocol not found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(prisma.protocol.findFirst).mockResolvedValue(null)
@@ -1101,6 +1145,15 @@ describe('ConsultationsService', () => {
   // ── removeProtocolUsage ───────────────────────────────────────────────────
 
   describe('removeProtocolUsage', () => {
+    it('rejects with CONSULTATION_ALREADY_SIGNED when the consultation is signed', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      await expect(service.removeProtocolUsage('consult-1', 'usage-1', 'tenant-1')).rejects.toMatchObject({
+        response: { code: ErrorCode.CONSULTATION_ALREADY_SIGNED },
+      })
+      expect(repo.findProtocolUsageById).not.toHaveBeenCalled()
+      expect(repo.removeProtocolUsage).not.toHaveBeenCalled()
+    })
+
     it('removes usage when found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(mockProtocolUsage())
@@ -1133,6 +1186,17 @@ describe('ConsultationsService', () => {
   // ── updateCheckedState ─────────────────────────────────────────────────────
 
   describe('updateCheckedState', () => {
+    it('rejects with CONSULTATION_ALREADY_SIGNED when the consultation is signed', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockConsultation({ status: 'signed' }))
+      await expect(
+        service.updateCheckedState('consult-1', 'usage-1', 'tenant-1', {}),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.CONSULTATION_ALREADY_SIGNED },
+      })
+      expect(repo.findProtocolUsageById).not.toHaveBeenCalled()
+      expect(repo.updateCheckedState).not.toHaveBeenCalled()
+    })
+
     it('throws NotFoundException when usage not found', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockConsultation())
       vi.mocked(repo.findProtocolUsageById).mockResolvedValue(null)

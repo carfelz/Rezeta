@@ -349,7 +349,18 @@ export class ConsultationsService {
         message: 'Only signed consultations can be amended',
       })
     }
-    return this.repo.createAmendment(id, tenantId, userId, dto)
+    try {
+      return await this.repo.createAmendment(id, tenantId, userId, dto)
+    } catch (err) {
+      // Amendment-number race: `createAmendment` reads the max amendment number
+      // then inserts, so two concurrent amends can pick the same number; the
+      // `(consultationId, amendmentNumber)` unique constraint arbitrates and the
+      // loser gets a P2002. Retry once — the recompute reads the winner's number
+      // and picks the next. A second collision is rethrown (the exception filter
+      // maps a raw P2002 to a 409). Mirrors `consultation-records` regenerate.
+      if (!isUniqueViolation(err)) throw err
+      return this.repo.createAmendment(id, tenantId, userId, dto)
+    }
   }
 
   async remove(id: string, tenantId: string): Promise<void> {
@@ -381,6 +392,12 @@ export class ConsultationsService {
     dto: AddProtocolUsageDto,
   ): Promise<ConsultationProtocolUsage> {
     const consultation = await this.getById(consultationId, tenantId)
+    if (consultation.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.CONSULTATION_ALREADY_SIGNED,
+        message: 'Cannot edit a signed consultation — use amend instead',
+      })
+    }
 
     const protocol = await this.prisma.protocol.findFirst({
       where: { id: dto.protocolId, tenantId, deletedAt: null },
@@ -481,7 +498,13 @@ export class ConsultationsService {
     tenantId: string,
     dto: UpdateCheckedStateDto,
   ): Promise<ConsultationProtocolUsage> {
-    await this.getById(consultationId, tenantId)
+    const consultation = await this.getById(consultationId, tenantId)
+    if (consultation.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.CONSULTATION_ALREADY_SIGNED,
+        message: 'Cannot edit a signed consultation — use amend instead',
+      })
+    }
     const usage = await this.repo.findProtocolUsageById(usageId, tenantId)
     if (!usage || usage.consultationId !== consultationId) {
       throw new NotFoundException({
@@ -519,7 +542,13 @@ export class ConsultationsService {
     usageId: string,
     tenantId: string,
   ): Promise<void> {
-    await this.getById(consultationId, tenantId)
+    const consultation = await this.getById(consultationId, tenantId)
+    if (consultation.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.CONSULTATION_ALREADY_SIGNED,
+        message: 'Cannot edit a signed consultation — use amend instead',
+      })
+    }
     const usage = await this.repo.findProtocolUsageById(usageId, tenantId)
     if (!usage || usage.consultationId !== consultationId) {
       throw new NotFoundException({
@@ -532,6 +561,16 @@ export class ConsultationsService {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+function isUniqueViolation(err: unknown): err is { code: string } {
+  return (
+    err !== null &&
+    typeof err === 'object' &&
+    'code' in err &&
+    (err as { code: string }).code === 'P2002'
+  )
+}
 
 interface StepProgress {
   currentStepNumber: number | null
