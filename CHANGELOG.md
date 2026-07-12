@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Hardening sweep, wave 1 — immutability, tenant isolation, billing, atomicity
+
+Fixes from a multi-agent audit of the shipped API (plan: `docs/superpowers/plans/2026-07-12-hardening-sweep.md`).
+
+### Fixed
+
+- `apps/api/src/modules/consultations/consultations.service.ts`: `addProtocolUsage`, `removeProtocolUsage`, and `updateCheckedState` mutated a **signed** consultation with no status guard, letting clinical blocks be added, deleted, or edited after signing — bypassing the amendment flow and violating clinical immutability. All three now throw `CONSULTATION_ALREADY_SIGNED` when `status === 'signed'`, matching the sibling `updateProtocolUsage`. Also hardened `amend` to retry once on a `P2002` amendment-number race instead of leaking a generic 409.
+- `apps/api/src/modules/orders/orders.service.ts`: `patchImagingOrder`/`patchLabOrder` and `renameImagingOrderGroup`/`renameLabOrderGroup` mutated **signed** orders with no status guard (the sibling `delete*` methods already rejected signed). They now reject with `IMAGING_ORDER_ALREADY_SIGNED`/`LAB_ORDER_ALREADY_SIGNED`; the group renames reject when any order in the group is signed.
+- `apps/api/src/modules/schedules/schedules.service.ts` + `schedules.controller.ts`: `createBlock`/`updateBlock`/`createException`/`updateException` passed the client-supplied `locationId` straight to the insert with no tenant check — the only module handling a client location FK that skipped `ReferenceGuardService`, so a doctor could attach another tenant's location and leak its name back. The caller's `tenantId` is now threaded in and `references.assertLocation(locationId, tenantId)` is enforced before persisting.
+- `apps/api/src/modules/invoices/invoices.repository.ts` + `packages/shared/src/schemas/invoice.ts`: the server summed the **client-supplied** line `total` instead of `quantity × unitPrice`, so a crafted request could under/over-charge. The server now recomputes each line total and the subtotal server-side (`round2(quantity × unitPrice)`), rounds `commissionAmount` before deriving `netToDoctor` so the split reconciles to the cent, makes `update`'s total consistent with `create` (`subtotal + tax`), and retries invoice-number generation on a `P2002` race instead of leaking a 409. `InvoiceItemSchema` gains `.max().finite()` bounds on money fields.
+- `apps/api/src/modules/protocol-improvements/protocol-improvements.service.ts` + `apps/api/src/modules/protocols/protocols.repository.ts`: `apply` wrote a protocol version and updated `currentVersionId` across separate round-trips with no transaction (a crash between them left `currentVersionId` stale). It now runs in a single `$transaction` with tx-scoped writes; both `apply` and `saveVersion` retry once on a `P2002` version-number race.
+
+### Added
+
+- Tests for every guard and retry above, colocated in each module's `__tests__/`. API suite +45 tests (1286 total), coverage held at 99.92%.
+
 ## [2026-07-12] Doctor name no longer renders as "Dr. Dr." on generated PDFs
 
 ### Fixed
