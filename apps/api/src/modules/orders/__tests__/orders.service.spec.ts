@@ -25,6 +25,10 @@ const mockRepo = {
   findLabOrderById: vi.fn(),
   softDeleteLabOrder: vi.fn(),
   getOrdersForConsultation: vi.fn(),
+  patchImagingOrder: vi.fn(),
+  patchLabOrder: vi.fn(),
+  renameImagingOrderGroup: vi.fn(),
+  renameLabOrderGroup: vi.fn(),
 }
 
 const mockPrisma = {
@@ -265,6 +269,154 @@ describe('OrdersService', () => {
       })
       await expect(service.deleteLabOrder('c1', 'lab1', 't1')).rejects.toThrow(ConflictException)
       expect(mockRepo.softDeleteLabOrder).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── patchImagingOrder ──────────────────────────────────────────────────────
+
+  describe('patchImagingOrder', () => {
+    it('patches imaging order when found and matches consultation', async () => {
+      mockRepo.findImagingOrderById.mockResolvedValue({ id: 'img1', consultationId: 'c1' })
+      const patched = { id: 'img1', consultationId: 'c1', groupTitle: 'New' }
+      mockRepo.patchImagingOrder.mockResolvedValue(patched)
+      const result = await service.patchImagingOrder('c1', 'img1', 't1', { groupTitle: 'New' })
+      expect(result).toEqual(patched)
+      expect(mockRepo.patchImagingOrder).toHaveBeenCalledWith('img1', 't1', { groupTitle: 'New' })
+    })
+
+    it('throws NotFoundException when imaging order not found', async () => {
+      mockRepo.findImagingOrderById.mockResolvedValue(null)
+      await expect(service.patchImagingOrder('c1', 'bad', 't1', {})).rejects.toThrow(
+        NotFoundException,
+      )
+    })
+
+    it('throws NotFoundException when imaging order belongs to different consultation', async () => {
+      mockRepo.findImagingOrderById.mockResolvedValue({ id: 'img1', consultationId: 'other' })
+      await expect(service.patchImagingOrder('c1', 'img1', 't1', {})).rejects.toThrow(
+        NotFoundException,
+      )
+    })
+
+    it('refuses to patch a signed imaging order (immutable clinical record)', async () => {
+      mockRepo.findImagingOrderById.mockResolvedValue({
+        id: 'img1',
+        consultationId: 'c1',
+        status: 'signed',
+      })
+      await expect(
+        service.patchImagingOrder('c1', 'img1', 't1', { groupTitle: 'New' }),
+      ).rejects.toThrow(ConflictException)
+      expect(mockRepo.patchImagingOrder).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── patchLabOrder ──────────────────────────────────────────────────────────
+
+  describe('patchLabOrder', () => {
+    it('patches lab order when found and matches consultation', async () => {
+      mockRepo.findLabOrderById.mockResolvedValue({ id: 'lab1', consultationId: 'c1' })
+      const patched = { id: 'lab1', consultationId: 'c1', groupTitle: 'New' }
+      mockRepo.patchLabOrder.mockResolvedValue(patched)
+      const result = await service.patchLabOrder('c1', 'lab1', 't1', { groupTitle: 'New' })
+      expect(result).toEqual(patched)
+      expect(mockRepo.patchLabOrder).toHaveBeenCalledWith('lab1', 't1', { groupTitle: 'New' })
+    })
+
+    it('throws NotFoundException when lab order not found', async () => {
+      mockRepo.findLabOrderById.mockResolvedValue(null)
+      await expect(service.patchLabOrder('c1', 'bad', 't1', {})).rejects.toThrow(NotFoundException)
+    })
+
+    it('throws NotFoundException when lab order belongs to different consultation', async () => {
+      mockRepo.findLabOrderById.mockResolvedValue({ id: 'lab1', consultationId: 'other' })
+      await expect(service.patchLabOrder('c1', 'lab1', 't1', {})).rejects.toThrow(NotFoundException)
+    })
+
+    it('refuses to patch a signed lab order (immutable clinical record)', async () => {
+      mockRepo.findLabOrderById.mockResolvedValue({
+        id: 'lab1',
+        consultationId: 'c1',
+        status: 'signed',
+      })
+      await expect(service.patchLabOrder('c1', 'lab1', 't1', { groupTitle: 'New' })).rejects.toThrow(
+        ConflictException,
+      )
+      expect(mockRepo.patchLabOrder).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── renameImagingOrderGroup ────────────────────────────────────────────────
+
+  describe('renameImagingOrderGroup', () => {
+    it('renames the group when no order in it is signed', async () => {
+      mockRepo.listImagingOrdersByConsultation.mockResolvedValue([
+        { id: 'img1', groupOrder: 1, status: 'draft' },
+        { id: 'img2', groupOrder: 1, status: 'draft' },
+      ])
+      const renamed = [{ id: 'img1', groupOrder: 1, groupTitle: 'New' }]
+      mockRepo.renameImagingOrderGroup.mockResolvedValue(renamed)
+      const result = await service.renameImagingOrderGroup('c1', 1, 't1', { groupTitle: 'New' })
+      expect(result).toEqual(renamed)
+      expect(mockRepo.renameImagingOrderGroup).toHaveBeenCalledWith('c1', 1, 't1', 'New')
+    })
+
+    it('refuses to rename a group when any imaging order in it is signed', async () => {
+      mockRepo.listImagingOrdersByConsultation.mockResolvedValue([
+        { id: 'img1', groupOrder: 1, status: 'draft' },
+        { id: 'img2', groupOrder: 1, status: 'signed' },
+      ])
+      await expect(
+        service.renameImagingOrderGroup('c1', 1, 't1', { groupTitle: 'New' }),
+      ).rejects.toThrow(ConflictException)
+      expect(mockRepo.renameImagingOrderGroup).not.toHaveBeenCalled()
+    })
+
+    it('ignores signed orders in a different group', async () => {
+      mockRepo.listImagingOrdersByConsultation.mockResolvedValue([
+        { id: 'img1', groupOrder: 1, status: 'draft' },
+        { id: 'img2', groupOrder: 2, status: 'signed' },
+      ])
+      mockRepo.renameImagingOrderGroup.mockResolvedValue([])
+      await service.renameImagingOrderGroup('c1', 1, 't1', { groupTitle: 'New' })
+      expect(mockRepo.renameImagingOrderGroup).toHaveBeenCalledWith('c1', 1, 't1', 'New')
+    })
+  })
+
+  // ── renameLabOrderGroup ────────────────────────────────────────────────────
+
+  describe('renameLabOrderGroup', () => {
+    it('renames the group when no order in it is signed', async () => {
+      mockRepo.listLabOrdersByConsultation.mockResolvedValue([
+        { id: 'lab1', groupOrder: 1, status: 'draft' },
+        { id: 'lab2', groupOrder: 1, status: 'draft' },
+      ])
+      const renamed = [{ id: 'lab1', groupOrder: 1, groupTitle: 'New' }]
+      mockRepo.renameLabOrderGroup.mockResolvedValue(renamed)
+      const result = await service.renameLabOrderGroup('c1', 1, 't1', { groupTitle: 'New' })
+      expect(result).toEqual(renamed)
+      expect(mockRepo.renameLabOrderGroup).toHaveBeenCalledWith('c1', 1, 't1', 'New')
+    })
+
+    it('refuses to rename a group when any lab order in it is signed', async () => {
+      mockRepo.listLabOrdersByConsultation.mockResolvedValue([
+        { id: 'lab1', groupOrder: 1, status: 'draft' },
+        { id: 'lab2', groupOrder: 1, status: 'signed' },
+      ])
+      await expect(
+        service.renameLabOrderGroup('c1', 1, 't1', { groupTitle: 'New' }),
+      ).rejects.toThrow(ConflictException)
+      expect(mockRepo.renameLabOrderGroup).not.toHaveBeenCalled()
+    })
+
+    it('ignores signed orders in a different group', async () => {
+      mockRepo.listLabOrdersByConsultation.mockResolvedValue([
+        { id: 'lab1', groupOrder: 1, status: 'draft' },
+        { id: 'lab2', groupOrder: 2, status: 'signed' },
+      ])
+      mockRepo.renameLabOrderGroup.mockResolvedValue([])
+      await service.renameLabOrderGroup('c1', 1, 't1', { groupTitle: 'New' })
+      expect(mockRepo.renameLabOrderGroup).toHaveBeenCalledWith('c1', 1, 't1', 'New')
     })
   })
 

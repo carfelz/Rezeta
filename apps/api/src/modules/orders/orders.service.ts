@@ -411,6 +411,12 @@ export class OrdersService {
         message: 'Imaging order not found',
       })
     }
+    if (order.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.IMAGING_ORDER_ALREADY_SIGNED,
+        message: 'Cannot edit a signed imaging order — use an amendment instead',
+      })
+    }
     return this.repo.patchImagingOrder(orderId, tenantId, dto)
   }
 
@@ -427,6 +433,12 @@ export class OrdersService {
         message: 'Lab order not found',
       })
     }
+    if (order.status === 'signed') {
+      throw new ConflictException({
+        code: ErrorCode.LAB_ORDER_ALREADY_SIGNED,
+        message: 'Cannot edit a signed lab order — use an amendment instead',
+      })
+    }
     return this.repo.patchLabOrder(orderId, tenantId, dto)
   }
 
@@ -437,6 +449,14 @@ export class OrdersService {
     dto: RenameOrderGroupDto,
   ): Promise<ImagingOrder[]> {
     await this.getConsultationPatient(consultationId, tenantId)
+    const orders = await this.repo.listImagingOrdersByConsultation(consultationId, tenantId)
+    const group = orders.filter((o) => o.groupOrder === groupOrder)
+    if (group.some((o) => o.status === 'signed')) {
+      throw new ConflictException({
+        code: ErrorCode.IMAGING_ORDER_ALREADY_SIGNED,
+        message: 'Cannot edit a signed imaging order — use an amendment instead',
+      })
+    }
     return this.repo.renameImagingOrderGroup(consultationId, groupOrder, tenantId, dto.groupTitle)
   }
 
@@ -447,6 +467,14 @@ export class OrdersService {
     dto: RenameOrderGroupDto,
   ): Promise<LabOrder[]> {
     await this.getConsultationPatient(consultationId, tenantId)
+    const orders = await this.repo.listLabOrdersByConsultation(consultationId, tenantId)
+    const group = orders.filter((o) => o.groupOrder === groupOrder)
+    if (group.some((o) => o.status === 'signed')) {
+      throw new ConflictException({
+        code: ErrorCode.LAB_ORDER_ALREADY_SIGNED,
+        message: 'Cannot edit a signed lab order — use an amendment instead',
+      })
+    }
     return this.repo.renameLabOrderGroup(consultationId, groupOrder, tenantId, dto.groupTitle)
   }
 }
