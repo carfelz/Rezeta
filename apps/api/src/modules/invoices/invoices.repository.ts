@@ -21,6 +21,39 @@ const BASE_INCLUDE = {
 
 export type InvoiceRow = Prisma.InvoiceGetPayload<{ include: typeof BASE_INCLUDE }>
 
+/** Round to 2 decimal places — money is 2dp DOP. */
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100
+}
+
+/**
+ * Recompute each line total from quantity * unitPrice (never trusting the
+ * client-supplied `total`) and derive the invoice subtotal from those.
+ */
+function computeLineTotals(
+  items: { description: string; quantity: number; unitPrice: number }[],
+): { lineTotals: number[]; subtotal: number } {
+  const lineTotals = items.map((it) => round2(it.quantity * it.unitPrice))
+  const subtotal = round2(lineTotals.reduce((sum, t) => sum + t, 0))
+  return { lineTotals, subtotal }
+}
+
+/**
+ * Round the commission first, then derive net as the remainder, so the two
+ * parts always reconcile with the subtotal to the cent.
+ */
+function splitCommission(
+  subtotal: number,
+  commissionPercent: number,
+): { commissionAmount: number; netToDoctor: number } {
+  const commissionAmount = round2((subtotal * commissionPercent) / 100)
+  const netToDoctor = round2(subtotal) - commissionAmount
+  return { commissionAmount, netToDoctor }
+}
+
+/** Number of attempts to place an invoice number before giving up on P2002 races. */
+const MAX_INVOICE_NUMBER_ATTEMPTS = 5
+
 @Injectable()
 export class InvoicesRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
@@ -63,42 +96,54 @@ export class InvoicesRepository {
     dto: CreateInvoiceDto,
     commissionPercent: number,
   ): Promise<InvoiceRow> {
-    const subtotal = dto.items.reduce((sum, it) => sum + it.total, 0)
+    const { lineTotals, subtotal } = computeLineTotals(dto.items)
     const tax = 0
-    const commissionAmount = (subtotal * commissionPercent) / 100
-    const netToDoctor = subtotal - commissionAmount
-    const total = subtotal + tax
+    const { commissionAmount, netToDoctor } = splitCommission(subtotal, commissionPercent)
+    const total = round2(subtotal + tax)
 
-    const invoiceNumber = await this.nextInvoiceNumber(tenantId)
+    const itemsCreate = dto.items.map((it, i) => ({
+      description: it.description,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      total: lineTotals[i]!,
+    }))
 
-    return this.prisma.invoice.create({
-      data: {
-        tenantId,
-        userId,
-        patientId: dto.patientId,
-        locationId: dto.locationId,
-        consultationId: dto.consultationId ?? null,
-        invoiceNumber,
-        currency: dto.currency ?? 'DOP',
-        status: 'draft',
-        subtotal,
-        tax,
-        commissionPercent,
-        commissionAmount,
-        netToDoctor,
-        total,
-        notes: dto.notes ?? null,
-        items: {
-          create: dto.items.map((it) => ({
-            description: it.description,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            total: it.total,
-          })),
-        },
-      },
-      include: BASE_INCLUDE,
-    })
+    // The invoice number is generated count-then-create, which can race under
+    // concurrency. The partial unique index on (tenant_id, invoice_number)
+    // rejects a collision with P2002; retry with a freshly recomputed number.
+    for (let attempt = 0; attempt < MAX_INVOICE_NUMBER_ATTEMPTS; attempt++) {
+      const invoiceNumber = await this.nextInvoiceNumber(tenantId)
+      try {
+        return await this.prisma.invoice.create({
+          data: {
+            tenantId,
+            userId,
+            patientId: dto.patientId,
+            locationId: dto.locationId,
+            consultationId: dto.consultationId ?? null,
+            invoiceNumber,
+            currency: dto.currency ?? 'DOP',
+            status: 'draft',
+            subtotal,
+            tax,
+            commissionPercent,
+            commissionAmount,
+            netToDoctor,
+            total,
+            notes: dto.notes ?? null,
+            items: { create: itemsCreate },
+          },
+          include: BASE_INCLUDE,
+        })
+      } catch (err) {
+        if (this.isUniqueViolation(err) && attempt < MAX_INVOICE_NUMBER_ATTEMPTS - 1) {
+          continue
+        }
+        throw err
+      }
+    }
+    // Unreachable: the loop either returns or throws on the final attempt.
+    throw new Error('Failed to allocate an invoice number')
   }
 
   async update(id: string, tenantId: string, dto: UpdateInvoiceDto): Promise<InvoiceRow> {
@@ -107,27 +152,28 @@ export class InvoicesRepository {
     if (dto.notes !== undefined) data['notes'] = dto.notes ?? null
 
     if (dto.items) {
-      const subtotal = dto.items.reduce((sum, it) => sum + it.total, 0)
+      const { lineTotals, subtotal } = computeLineTotals(dto.items)
       const existing = await this.prisma.invoice.findFirstOrThrow({
         where: { id, tenantId },
-        select: { commissionPercent: true },
+        select: { commissionPercent: true, tax: true },
       })
       const commissionPct = Number(existing.commissionPercent)
-      const commissionAmount = (subtotal * commissionPct) / 100
+      const tax = Number(existing.tax)
+      const { commissionAmount, netToDoctor } = splitCommission(subtotal, commissionPct)
       data['subtotal'] = subtotal
       data['commissionAmount'] = commissionAmount
-      data['netToDoctor'] = subtotal - commissionAmount
-      data['total'] = subtotal
+      data['netToDoctor'] = netToDoctor
+      data['total'] = round2(subtotal + tax)
 
       await this.prisma.invoiceItem.deleteMany({
         where: { invoiceId: id, invoice: { tenantId } },
       })
       data['items'] = {
-        create: dto.items.map((it) => ({
+        create: dto.items.map((it, i) => ({
           description: it.description,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
-          total: it.total,
+          total: lineTotals[i]!,
         })),
       }
     }
@@ -170,5 +216,15 @@ export class InvoicesRepository {
     })
     const seq = String(count + 1).padStart(5, '0')
     return `F-${year}-${seq}`
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }

@@ -2,11 +2,17 @@ import { z } from 'zod'
 
 export const CurrencySchema = z.enum(['DOP', 'USD'])
 
+// Sane upper bound for a single money field (2dp DOP). Guards against overflow
+// and absurd inputs; well above any realistic line amount.
+const MAX_MONEY = 100_000_000
+
 export const InvoiceItemSchema = z.object({
   description: z.string().min(1).max(500),
   quantity: z.number().int().min(1),
-  unitPrice: z.number().min(0),
-  total: z.number().min(0),
+  unitPrice: z.number().min(0).max(MAX_MONEY).finite(),
+  // `total` is accepted for backward compatibility (the web client still sends it)
+  // but the server never trusts it — line totals are recomputed from quantity * unitPrice.
+  total: z.number().min(0).max(MAX_MONEY).finite(),
 })
 
 export const CreateInvoiceSchema = z.object({

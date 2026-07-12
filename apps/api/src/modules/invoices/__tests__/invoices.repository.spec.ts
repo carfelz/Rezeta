@@ -200,6 +200,76 @@ describe('InvoicesRepository', () => {
       expect(items).toHaveLength(1)
       expect(items[0].description).toBe('Consulta')
     })
+
+    it('recomputes line total from quantity * unitPrice, ignoring client total', async () => {
+      await repo.create('tenant-1', 'user-1', {
+        ...dto,
+        items: [{ description: 'Consulta', quantity: 2, unitPrice: 100, total: 100 }],
+      }, 10)
+      const data = mockPrisma.invoice.create.mock.calls[0]![0].data
+      expect(data.items.create[0].total).toBe(200)
+      expect(data.subtotal).toBe(200)
+    })
+
+    it('sums recomputed line totals across multiple items', async () => {
+      await repo.create('tenant-1', 'user-1', {
+        ...dto,
+        items: [
+          { description: 'A', quantity: 3, unitPrice: 50, total: 0 },
+          { description: 'B', quantity: 1, unitPrice: 25.5, total: 999 },
+        ],
+      }, 10)
+      const data = mockPrisma.invoice.create.mock.calls[0]![0].data
+      expect(data.items.create[0].total).toBe(150)
+      expect(data.items.create[1].total).toBe(25.5)
+      expect(data.subtotal).toBe(175.5)
+    })
+
+    it('rounds commission first so commissionAmount + netToDoctor === total to the cent', async () => {
+      await repo.create('tenant-1', 'user-1', {
+        ...dto,
+        items: [{ description: 'Consulta', quantity: 1, unitPrice: 10, total: 10 }],
+      }, 1.25)
+      const data = mockPrisma.invoice.create.mock.calls[0]![0].data
+      expect(data.subtotal).toBe(10)
+      expect(data.commissionAmount).toBe(0.13)
+      expect(data.netToDoctor).toBe(9.87)
+      expect(data.total).toBe(10)
+      expect(data.commissionAmount + data.netToDoctor).toBe(data.total)
+    })
+
+    it('retries with a recomputed number when the invoice-number insert races (P2002)', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+      mockPrisma.invoice.count.mockReset()
+      mockPrisma.invoice.count.mockResolvedValueOnce(0).mockResolvedValueOnce(1)
+      mockPrisma.invoice.create.mockReset()
+      mockPrisma.invoice.create.mockRejectedValueOnce(p2002).mockResolvedValueOnce(makeRow())
+      const result = await repo.create('tenant-1', 'user-1', dto, 10)
+      expect(result.id).toBe('inv-1')
+      expect(mockPrisma.invoice.count).toHaveBeenCalledTimes(2)
+      const year = new Date().getFullYear()
+      expect(mockPrisma.invoice.create.mock.calls[0]![0].data.invoiceNumber).toBe(`F-${year}-00001`)
+      expect(mockPrisma.invoice.create.mock.calls[1]![0].data.invoiceNumber).toBe(`F-${year}-00002`)
+    })
+
+    it('rethrows a non-P2002 error from create without retrying', async () => {
+      mockPrisma.invoice.count.mockReset()
+      mockPrisma.invoice.count.mockResolvedValue(0)
+      mockPrisma.invoice.create.mockReset()
+      mockPrisma.invoice.create.mockRejectedValue(new Error('boom'))
+      await expect(repo.create('tenant-1', 'user-1', dto, 10)).rejects.toThrow('boom')
+      expect(mockPrisma.invoice.create).toHaveBeenCalledTimes(1)
+    })
+
+    it('rethrows P2002 after exhausting all attempts', async () => {
+      const p2002 = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+      mockPrisma.invoice.count.mockReset()
+      mockPrisma.invoice.count.mockResolvedValue(0)
+      mockPrisma.invoice.create.mockReset()
+      mockPrisma.invoice.create.mockRejectedValue(p2002)
+      await expect(repo.create('tenant-1', 'user-1', dto, 10)).rejects.toBe(p2002)
+      expect(mockPrisma.invoice.create.mock.calls.length).toBeGreaterThan(1)
+    })
   })
 
   // ── update ──────────────────────────────────────────────────────────────────
@@ -227,7 +297,10 @@ describe('InvoicesRepository', () => {
     })
 
     it('recalculates totals and deletes old items when items provided', async () => {
-      mockPrisma.invoice.findFirstOrThrow.mockResolvedValue({ commissionPercent: new Decimal(10) })
+      mockPrisma.invoice.findFirstOrThrow.mockResolvedValue({
+        commissionPercent: new Decimal(10),
+        tax: new Decimal(0),
+      })
       mockPrisma.invoiceItem.deleteMany.mockResolvedValue({ count: 1 })
       mockPrisma.invoice.update.mockResolvedValue(makeRow())
       await repo.update('inv-1', 'tenant-1', {
@@ -240,6 +313,38 @@ describe('InvoicesRepository', () => {
       expect(data.subtotal).toBe(2000)
       expect(data.commissionAmount).toBe(200)
       expect(data.netToDoctor).toBe(1800)
+      expect(data.total).toBe(2000)
+    })
+
+    it('recomputes line total from quantity * unitPrice on update, ignoring client total', async () => {
+      mockPrisma.invoice.findFirstOrThrow.mockResolvedValue({
+        commissionPercent: new Decimal(10),
+        tax: new Decimal(0),
+      })
+      mockPrisma.invoiceItem.deleteMany.mockResolvedValue({ count: 1 })
+      mockPrisma.invoice.update.mockResolvedValue(makeRow())
+      await repo.update('inv-1', 'tenant-1', {
+        items: [{ description: 'Servicio', quantity: 2, unitPrice: 100, total: 100 }],
+      })
+      const data = mockPrisma.invoice.update.mock.calls[0]![0].data
+      expect(data.items.create[0].total).toBe(200)
+      expect(data.subtotal).toBe(200)
+      expect(data.total).toBe(200)
+    })
+
+    it('derives total from subtotal + existing tax on update', async () => {
+      mockPrisma.invoice.findFirstOrThrow.mockResolvedValue({
+        commissionPercent: new Decimal(10),
+        tax: new Decimal(18),
+      })
+      mockPrisma.invoiceItem.deleteMany.mockResolvedValue({ count: 1 })
+      mockPrisma.invoice.update.mockResolvedValue(makeRow())
+      await repo.update('inv-1', 'tenant-1', {
+        items: [{ description: 'Servicio', quantity: 1, unitPrice: 2000, total: 2000 }],
+      })
+      const data = mockPrisma.invoice.update.mock.calls[0]![0].data
+      expect(data.subtotal).toBe(2000)
+      expect(data.total).toBe(2018)
     })
   })
 
