@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Hardening sweep, wave 2 — appointments, query validation, error mapping, idempotency indexes
+
+Second batch from the audit (plan: `docs/superpowers/plans/2026-07-12-hardening-sweep.md`).
+
+### Fixed
+
+- `apps/api/src/modules/appointments/appointments.service.ts` + `appointments.repository.ts`: the overlap check (`hasConflict`) and the insert were separate steps with no lock, so two concurrent requests for overlapping slots both passed and both booked. The check-then-write now runs inside a `$transaction` guarded by a per-doctor `pg_advisory_xact_lock(hashtext(userId))` (userId bound as a parameter), so concurrent bookings for the same doctor serialize; a resubmit of an identical appointment overlaps itself and is rejected, covering the double-submit case. Also replaced the off-enum `'INVALID_TIME_RANGE'` throws with `ErrorCode.APPOINTMENT_TIME_INVALID`.
+- `apps/api/src/common/pipes/zod-validation.pipe.ts`: the pipe short-circuited `if (metadata.type !== 'body')`, so `@Query`/`@Param` Zod schemas never ran — a malformed `?categoryId=abc` reached Prisma and returned a 500. The pipe now validates whatever it is bound to. Added `AppointmentListQuerySchema`, `ConsultationListQuerySchema`, `InvoiceListQuerySchema`, `ScheduleBlockListQuerySchema`/`ScheduleExceptionListQuerySchema` in `packages/shared/src/schemas/` and applied them to the list endpoints (protocols already had one, now actually enforced).
+- `apps/api/src/common/filters/http-exception.filter.ts`: only Prisma `P2002` was mapped; `P2003`/`P2025`/`P2023` and `PrismaClientValidationError` fell through to 500 (leaking name+stack in non-prod). Now mapped to `404 NOT_FOUND` (P2025), `409 RESOURCE_CONFLICT` (P2003), and `400 VALIDATION_ERROR` (P2023 / validation), with prod detail suppression preserved.
+- `packages/shared/src/schemas/onboarding.ts` + `apps/api/src/modules/onboarding/onboarding.service.ts`: bounded the previously unbounded onboarding payload (`templates`/`types` arrays `.max(50)`, `name`/`clientId`/`templateClientId` `.max(200)`) and replaced the off-enum `'UNKNOWN_TEMPLATE_CLIENT_ID'` with `ErrorCode.ONBOARDING_UNKNOWN_TEMPLATE`.
+- `packages/db/prisma/schema.prisma` + `migrations/20260712000000_order_client_request_id_partial_unique`: converted the `(consultation_id, client_request_id)` idempotency indexes on `prescriptions`/`imaging_orders`/`lab_orders` from full unique to **partial** (`WHERE deleted_at IS NULL`), matching the soft-delete convention already used elsewhere. A full index let a soft-deleted order block reuse of its `client_request_id`; the partial index only constrains live rows. Verified applied against the dev DB.
+
+### Added
+
+- Tests for the advisory lock, query validation, expanded error mapping, and onboarding bounds, colocated per module. API suite +21 tests (1307 total), coverage held at 99.92%.
+
 ## [2026-07-12] Hardening sweep, wave 1 — immutability, tenant isolation, billing, atomicity
 
 Fixes from a multi-agent audit of the shipped API (plan: `docs/superpowers/plans/2026-07-12-hardening-sweep.md`).
