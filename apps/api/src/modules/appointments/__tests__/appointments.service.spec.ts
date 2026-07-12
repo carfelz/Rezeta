@@ -6,6 +6,7 @@ import type { AppointmentsRepository } from '../appointments.repository.js'
 import type { ReferenceGuardService } from '../../../common/references/reference-guard.service.js'
 import { ErrorCode } from '@rezeta/shared'
 import type { AppointmentWithDetails } from '@rezeta/shared'
+import type { PrismaService } from '../../../lib/prisma.service.js'
 
 function makeReferencesMock(): ReferenceGuardService {
   return {
@@ -47,6 +48,10 @@ function mockAppt(overrides: Partial<AppointmentWithDetails> = {}): AppointmentW
 describe('AppointmentsService', () => {
   let repo: AppointmentsRepository
   let references: ReferenceGuardService
+  let prisma: PrismaService
+  // Sentinel the mocked $transaction hands to the callback; repo mocks receive
+  // it so tests can assert the conflict check and write ran on the same tx.
+  const tx = { __tx: true }
   let service: AppointmentsService
 
   beforeEach(() => {
@@ -58,10 +63,14 @@ describe('AppointmentsService', () => {
       updateStatus: vi.fn(),
       softDelete: vi.fn(),
       hasConflict: vi.fn(),
+      acquireDoctorLock: vi.fn().mockResolvedValue(undefined),
       findLiveConsultation: vi.fn(),
     } as unknown as AppointmentsRepository
     references = makeReferencesMock()
-    service = new AppointmentsService(repo, references)
+    prisma = {
+      $transaction: vi.fn((cb: (client: unknown) => unknown) => cb(tx)),
+    } as unknown as PrismaService
+    service = new AppointmentsService(repo, references, prisma)
   })
 
   // ── list ─────────────────────────────────────────────────────────────────────
@@ -117,6 +126,44 @@ describe('AppointmentsService', () => {
       await expect(
         service.create('tenant-1', 'user-1', { ...dto, endsAt: ENDS_BEFORE }),
       ).rejects.toThrow(BadRequestException)
+    })
+
+    it('invalid time range error has APPOINTMENT_TIME_INVALID code', async () => {
+      try {
+        await service.create('tenant-1', 'user-1', { ...dto, endsAt: ENDS_BEFORE })
+        expect.unreachable('should have thrown')
+      } catch (err) {
+        const body = (err as BadRequestException).getResponse() as { code: string }
+        expect(body.code).toBe(ErrorCode.APPOINTMENT_TIME_INVALID)
+      }
+    })
+
+    it('runs the conflict check and insert inside a per-doctor advisory-locked transaction', async () => {
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.create).mockResolvedValue(mockAppt())
+
+      await service.create('tenant-1', 'user-1', dto)
+
+      // The whole check-then-insert is wrapped in one interactive transaction.
+      expect(prisma.$transaction).toHaveBeenCalledOnce()
+      // The advisory lock is taken on the tx, keyed by the doctor's userId.
+      expect(repo.acquireDoctorLock).toHaveBeenCalledWith(tx, 'user-1')
+      // The conflict check and the insert both run on the SAME tx.
+      expect(repo.hasConflict).toHaveBeenCalledWith('user-1', 'tenant-1', expect.any(Date), expect.any(Date), undefined, tx)
+      expect(repo.create).toHaveBeenCalledWith('tenant-1', 'user-1', dto, tx)
+    })
+
+    it('takes the advisory lock before checking conflicts and inserting', async () => {
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.create).mockResolvedValue(mockAppt())
+
+      await service.create('tenant-1', 'user-1', dto)
+
+      const lockOrder = vi.mocked(repo.acquireDoctorLock).mock.invocationCallOrder[0]!
+      const checkOrder = vi.mocked(repo.hasConflict).mock.invocationCallOrder[0]!
+      const insertOrder = vi.mocked(repo.create).mock.invocationCallOrder[0]!
+      expect(lockOrder).toBeLessThan(checkOrder)
+      expect(checkOrder).toBeLessThan(insertOrder)
     })
 
     it('throws ConflictException when time slot conflicts', async () => {
@@ -208,12 +255,64 @@ describe('AppointmentsService', () => {
       ).rejects.toThrow(BadRequestException)
     })
 
+    it('invalid time range error has APPOINTMENT_TIME_INVALID code in update', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      try {
+        await service.update('appt-1', 'tenant-1', 'user-1', {
+          startsAt: STARTS,
+          endsAt: ENDS_BEFORE,
+        })
+        expect.unreachable('should have thrown')
+      } catch (err) {
+        const body = (err as BadRequestException).getResponse() as { code: string }
+        expect(body.code).toBe(ErrorCode.APPOINTMENT_TIME_INVALID)
+      }
+    })
+
     it('throws ConflictException when updated time conflicts', async () => {
       vi.mocked(repo.findById).mockResolvedValue(mockAppt())
       vi.mocked(repo.hasConflict).mockResolvedValue(true)
       await expect(
         service.update('appt-1', 'tenant-1', 'user-1', { startsAt: STARTS, endsAt: ENDS }),
       ).rejects.toThrow(ConflictException)
+    })
+
+    it('updated conflict has APPOINTMENT_CONFLICT code', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(true)
+      try {
+        await service.update('appt-1', 'tenant-1', 'user-1', { startsAt: STARTS, endsAt: ENDS })
+        expect.unreachable('should have thrown')
+      } catch (err) {
+        const body = (err as ConflictException).getResponse() as { code: string }
+        expect(body.code).toBe(ErrorCode.APPOINTMENT_CONFLICT)
+      }
+    })
+
+    it('runs the reschedule conflict check and write inside a per-doctor advisory-locked transaction', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.hasConflict).mockResolvedValue(false)
+      vi.mocked(repo.update).mockResolvedValue(mockAppt())
+
+      await service.update('appt-1', 'tenant-1', 'user-1', { startsAt: STARTS, endsAt: ENDS })
+
+      expect(prisma.$transaction).toHaveBeenCalledOnce()
+      expect(repo.acquireDoctorLock).toHaveBeenCalledWith(tx, 'user-1')
+      expect(repo.hasConflict).toHaveBeenCalledWith('user-1', 'tenant-1', expect.any(Date), expect.any(Date), 'appt-1', tx)
+      expect(repo.update).toHaveBeenCalledWith('appt-1', 'tenant-1', { startsAt: STARTS, endsAt: ENDS }, tx)
+      const lockOrder = vi.mocked(repo.acquireDoctorLock).mock.invocationCallOrder[0]!
+      const checkOrder = vi.mocked(repo.hasConflict).mock.invocationCallOrder[0]!
+      const writeOrder = vi.mocked(repo.update).mock.invocationCallOrder[0]!
+      expect(lockOrder).toBeLessThan(checkOrder)
+      expect(checkOrder).toBeLessThan(writeOrder)
+    })
+
+    it('does not open a transaction when no time change is requested', async () => {
+      vi.mocked(repo.findById).mockResolvedValue(mockAppt())
+      vi.mocked(repo.update).mockResolvedValue(mockAppt({ reason: 'Follow-up' }))
+      await service.update('appt-1', 'tenant-1', 'user-1', { reason: 'Follow-up' })
+      expect(prisma.$transaction).not.toHaveBeenCalled()
+      expect(repo.acquireDoctorLock).not.toHaveBeenCalled()
     })
 
     it('updates when time change is valid and no conflict', async () => {

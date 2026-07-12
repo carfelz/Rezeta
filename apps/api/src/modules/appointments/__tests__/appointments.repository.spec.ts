@@ -216,6 +216,42 @@ describe('AppointmentsRepository', () => {
     })
   })
 
+  describe('acquireDoctorLock', () => {
+    it('issues a per-doctor pg_advisory_xact_lock on the given transaction client', async () => {
+      const tx = { $executeRaw: vi.fn().mockResolvedValue(1) }
+      await repo.acquireDoctorLock(tx as never, 'u1')
+      expect(tx.$executeRaw).toHaveBeenCalledOnce()
+      const sql = String(tx.$executeRaw.mock.calls[0]![0])
+      expect(sql).toMatch(/pg_advisory_xact_lock/i)
+      expect(sql).toMatch(/hashtext/i)
+      // The userId is passed as a bound parameter, not interpolated into the SQL.
+      expect(tx.$executeRaw.mock.calls[0]![1]).toBe('u1')
+    })
+  })
+
+  describe('transaction client passthrough', () => {
+    it('hasConflict counts on the tx client when one is provided', async () => {
+      const tx = { appointment: { count: vi.fn().mockResolvedValue(0) } }
+      await repo.hasConflict('u1', 't1', now, later, undefined, tx as never)
+      expect(tx.appointment.count).toHaveBeenCalledOnce()
+      expect(mockPrisma.appointment.count).not.toHaveBeenCalled()
+    })
+
+    it('create inserts on the tx client when one is provided', async () => {
+      const tx = { appointment: { create: vi.fn().mockResolvedValue(makeApptRow()) } }
+      await repo.create('t1', 'u1', { patientId: 'p1', locationId: 'loc1', startsAt: now.toISOString(), endsAt: later.toISOString() } as never, tx as never)
+      expect(tx.appointment.create).toHaveBeenCalledOnce()
+      expect(mockPrisma.appointment.create).not.toHaveBeenCalled()
+    })
+
+    it('update writes on the tx client when one is provided', async () => {
+      const tx = { appointment: { update: vi.fn().mockResolvedValue(makeApptRow()) } }
+      await repo.update('apt1', 't1', { reason: 'x' } as never, tx as never)
+      expect(tx.appointment.update).toHaveBeenCalledOnce()
+      expect(mockPrisma.appointment.update).not.toHaveBeenCalled()
+    })
+  })
+
   describe('findLiveConsultation', () => {
     it('returns the newest non-deleted consultation for the appointment', async () => {
       mockPrisma.consultation.findFirst.mockResolvedValue({ id: 'c1', status: 'open' })

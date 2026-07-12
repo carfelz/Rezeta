@@ -14,12 +14,14 @@ import type {
 import { ErrorCode } from '@rezeta/shared'
 import { AppointmentsRepository, type AppointmentListParams } from './appointments.repository.js'
 import { ReferenceGuardService } from '../../common/references/reference-guard.service.js'
+import { PrismaService } from '../../lib/prisma.service.js'
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     @Inject(AppointmentsRepository) private repo: AppointmentsRepository,
     @Inject(ReferenceGuardService) private references: ReferenceGuardService,
+    @Inject(PrismaService) private prisma: PrismaService,
   ) {}
 
   list(params: AppointmentListParams): Promise<AppointmentWithDetails[]> {
@@ -50,20 +52,28 @@ export class AppointmentsService {
 
     if (endsAt <= startsAt) {
       throw new BadRequestException({
-        code: 'INVALID_TIME_RANGE',
+        code: ErrorCode.APPOINTMENT_TIME_INVALID,
         message: 'endsAt must be after startsAt',
       })
     }
 
-    const conflict = await this.repo.hasConflict(userId, tenantId, startsAt, endsAt)
-    if (conflict) {
-      throw new ConflictException({
-        code: ErrorCode.APPOINTMENT_CONFLICT,
-        message: 'Time slot overlaps with an existing appointment',
-      })
-    }
+    // Serialize the overlap check and the insert under a per-doctor advisory
+    // lock so two concurrent requests for overlapping slots cannot both pass the
+    // check and both insert (TOCTOU double-booking). A resubmit of an identical
+    // appointment overlaps itself and is therefore rejected as a conflict too.
+    return this.prisma.$transaction(async (tx) => {
+      await this.repo.acquireDoctorLock(tx, userId)
 
-    return this.repo.create(tenantId, userId, dto)
+      const conflict = await this.repo.hasConflict(userId, tenantId, startsAt, endsAt, undefined, tx)
+      if (conflict) {
+        throw new ConflictException({
+          code: ErrorCode.APPOINTMENT_CONFLICT,
+          message: 'Time slot overlaps with an existing appointment',
+        })
+      }
+
+      return this.repo.create(tenantId, userId, dto, tx)
+    })
   }
 
   async update(
@@ -88,18 +98,27 @@ export class AppointmentsService {
 
       if (endsAt <= startsAt) {
         throw new BadRequestException({
-          code: 'INVALID_TIME_RANGE',
+          code: ErrorCode.APPOINTMENT_TIME_INVALID,
           message: 'endsAt must be after startsAt',
         })
       }
 
-      const conflict = await this.repo.hasConflict(userId, tenantId, startsAt, endsAt, id)
-      if (conflict) {
-        throw new ConflictException({
-          code: ErrorCode.APPOINTMENT_CONFLICT,
-          message: 'Time slot overlaps with an existing appointment',
-        })
-      }
+      // Same TOCTOU guard as create: serialize the overlap check and the write
+      // under a per-doctor advisory lock so a concurrent reschedule cannot slip
+      // an overlapping slot in between the check and the update.
+      return this.prisma.$transaction(async (tx) => {
+        await this.repo.acquireDoctorLock(tx, userId)
+
+        const conflict = await this.repo.hasConflict(userId, tenantId, startsAt, endsAt, id, tx)
+        if (conflict) {
+          throw new ConflictException({
+            code: ErrorCode.APPOINTMENT_CONFLICT,
+            message: 'Time slot overlaps with an existing appointment',
+          })
+        }
+
+        return this.repo.update(id, tenantId, dto, tx)
+      })
     }
 
     return this.repo.update(id, tenantId, dto)

@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common'
+import type { Prisma } from '@rezeta/db'
 import type {
   Appointment,
   AppointmentConsultationStatus,
@@ -6,6 +7,9 @@ import type {
 } from '@rezeta/shared'
 import type { CreateAppointmentDto, UpdateAppointmentDto } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
+
+/** Prisma client scoped to an interactive transaction (`$transaction(async (tx) => …)`). */
+type TransactionClient = Prisma.TransactionClient
 
 /** Shared relations loaded on every appointment read that returns AppointmentWithDetails. */
 const DETAILS_INCLUDE = {
@@ -85,6 +89,21 @@ export interface AppointmentListParams {
 export class AppointmentsRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
+  /** Resolve to the transaction client when inside a transaction, else the base client. */
+  private db(tx?: TransactionClient): PrismaService | TransactionClient {
+    return tx ?? this.prisma
+  }
+
+  /**
+   * Takes a per-doctor Postgres transaction-level advisory lock so concurrent
+   * check-then-insert flows for the same doctor serialize. The lock auto-releases
+   * when the surrounding transaction commits or rolls back. `hashtext` maps the
+   * userId string to the bigint the advisory-lock API expects.
+   */
+  async acquireDoctorLock(tx: TransactionClient, userId: string): Promise<void> {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`
+  }
+
   async findMany(params: AppointmentListParams): Promise<AppointmentWithDetails[]> {
     const rows = await this.prisma.appointment.findMany({
       where: {
@@ -121,8 +140,9 @@ export class AppointmentsRepository {
     tenantId: string,
     userId: string,
     dto: CreateAppointmentDto,
+    tx?: TransactionClient,
   ): Promise<AppointmentWithDetails> {
-    const row = await this.prisma.appointment.create({
+    const row = await this.db(tx).appointment.create({
       data: {
         tenantId,
         userId,
@@ -143,8 +163,9 @@ export class AppointmentsRepository {
     id: string,
     tenantId: string,
     dto: UpdateAppointmentDto,
+    tx?: TransactionClient,
   ): Promise<AppointmentWithDetails> {
-    const row = await this.prisma.appointment.update({
+    const row = await this.db(tx).appointment.update({
       where: { id, tenantId, deletedAt: null },
       data: {
         ...(dto.patientId !== undefined ? { patientId: dto.patientId } : {}),
@@ -200,8 +221,9 @@ export class AppointmentsRepository {
     startsAt: Date,
     endsAt: Date,
     excludeId?: string,
+    tx?: TransactionClient,
   ): Promise<boolean> {
-    const count = await this.prisma.appointment.count({
+    const count = await this.db(tx).appointment.count({
       where: {
         userId,
         tenantId,
