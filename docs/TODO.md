@@ -20,9 +20,11 @@
    restore `historia_mapping` alongside `blocks`; old blocks-only drafts still load fine
    (`79d9764`).
 
-4. ~~**Decide CIE/ICD coding for definitive diagnoses**~~ — decision doc drafted
-   2026-07-08, pending Carlos's decision:
-   `docs/superpowers/specs/2026-07-08-cie-coding-decision.md` (STATUS: DRAFT) (`8602dbf`).
+4. **Decide CIE/ICD coding for definitive diagnoses** — decision doc drafted 2026-07-08;
+   decision on 2026-07-12: **deferred** pending verification that historia clínica diagnosis
+   CIE coding is actually inspected in a DR ARS/MISPAS audit (the load-bearing §3 assumption).
+   Free-text convention in `CLAUDE.md` stands unchanged until then. Doc stays DRAFT:
+   `docs/superpowers/specs/2026-07-08-cie-coding-decision.md` (`8602dbf`).
 
 5. ~~**Add optimistic-concurrency guard to usage content updates**~~ — done 2026-07-08:
    `expectedUpdatedAt` precondition on `updateProtocolUsage` rejects a stale `content`

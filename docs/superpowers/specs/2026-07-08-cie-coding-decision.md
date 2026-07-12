@@ -97,4 +97,12 @@ mandatory-coding UX before the licensing question in §3 is resolved.
 
 ---
 
-**Decision:** ______
+**Decision (2026-07-12, Carlos):** **Deferred** — do not adopt A, B, or C yet. The §3
+"ARS/SISALRIL audit expectations" point is an unverified assumption, and it is load-bearing:
+whether MISPAS/ARS inspections actually check historia clínica diagnosis coding (vs. billing
+codes) determines whether §6.12.4 is a real compliance risk or a dormant one. Confirm this with
+someone who has been through an ARS/MISPAS audit before choosing an option.
+
+**Blocking action before this can be re-decided:** verify whether historia clínica definitive-
+diagnosis CIE coding is actually inspected in a DR ARS/MISPAS audit. Until then this doc stays
+DRAFT and the current free-text convention in `CLAUDE.md` stands unchanged.
