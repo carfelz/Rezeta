@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { BadRequestException } from '@nestjs/common'
 import { SchedulesController } from '../schedules.controller.js'
-import type { AuthUser, ScheduleBlock, ScheduleException } from '@rezeta/shared'
+import {
+  ScheduleExceptionListQuerySchema,
+  ErrorCode,
+  type AuthUser,
+  type ScheduleBlock,
+  type ScheduleException,
+} from '@rezeta/shared'
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 
 const mockService = {
   listBlocks: vi.fn(),
@@ -70,14 +78,14 @@ describe('SchedulesController', () => {
   describe('listBlocks', () => {
     it('delegates to service with userId', async () => {
       mockService.listBlocks.mockResolvedValue([makeBlock()])
-      const result = await controller.listBlocks(mockUser)
+      const result = await controller.listBlocks(mockUser, {})
       expect(mockService.listBlocks).toHaveBeenCalledWith({ userId: 'user-1' })
       expect(result).toHaveLength(1)
     })
 
     it('passes locationId filter when provided', async () => {
       mockService.listBlocks.mockResolvedValue([])
-      await controller.listBlocks(mockUser, 'loc-2')
+      await controller.listBlocks(mockUser, { locationId: 'loc-2' })
       expect(mockService.listBlocks).toHaveBeenCalledWith({ userId: 'user-1', locationId: 'loc-2' })
     })
   })
@@ -121,20 +129,37 @@ describe('SchedulesController', () => {
   describe('listExceptions', () => {
     it('delegates to service with userId', async () => {
       mockService.listExceptions.mockResolvedValue([makeException()])
-      const result = await controller.listExceptions(mockUser)
+      const result = await controller.listExceptions(mockUser, {})
       expect(mockService.listExceptions).toHaveBeenCalledWith({ userId: 'user-1' })
       expect(result).toHaveLength(1)
     })
 
     it('passes all optional filters when provided', async () => {
       mockService.listExceptions.mockResolvedValue([])
-      await controller.listExceptions(mockUser, 'loc-1', '2026-05-01', '2026-05-31')
+      await controller.listExceptions(mockUser, {
+        locationId: 'loc-1',
+        from: '2026-05-01',
+        to: '2026-05-31',
+      })
       expect(mockService.listExceptions).toHaveBeenCalledWith({
         userId: 'user-1',
         locationId: 'loc-1',
         from: '2026-05-01',
         to: '2026-05-31',
       })
+    })
+
+    it('rejects a malformed date filter with 400 VALIDATION_ERROR', () => {
+      const pipe = new ZodValidationPipe(ScheduleExceptionListQuerySchema)
+      try {
+        pipe.transform({ from: 'not-a-date' }, { type: 'query', metatype: undefined, data: '' })
+        expect.fail('should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException)
+        const body = (err as BadRequestException).getResponse() as Record<string, unknown>
+        expect(body['code']).toBe(ErrorCode.VALIDATION_ERROR)
+      }
+      expect(mockService.listExceptions).not.toHaveBeenCalled()
     })
   })
 

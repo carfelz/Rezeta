@@ -35,6 +35,17 @@ export const UpdateInvoiceStatusSchema = z.object({
   paymentMethod: z.string().max(100).nullable().optional(),
 })
 
+// Full lifecycle of the invoice `status` column (`draft` is set on create),
+// used to filter the list endpoint. `cursor` is the id of the last row seen.
+export const InvoiceListQuerySchema = z.object({
+  status: z.enum(['draft', 'issued', 'paid', 'cancelled']).optional(),
+  patientId: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.string().optional(),
+})
+
 export type CreateInvoiceDto = z.infer<typeof CreateInvoiceSchema>
 export type UpdateInvoiceDto = z.infer<typeof UpdateInvoiceSchema>
 export type UpdateInvoiceStatusDto = z.infer<typeof UpdateInvoiceStatusSchema>
+export type InvoiceListQuery = z.infer<typeof InvoiceListQuerySchema>

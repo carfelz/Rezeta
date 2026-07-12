@@ -1,4 +1,5 @@
-import { PipeTransform, Injectable, BadRequestException, ArgumentMetadata } from '@nestjs/common'
+import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common'
+import type { ArgumentMetadata } from '@nestjs/common'
 import type { ZodSchema } from 'zod'
 import { ErrorCode } from '@rezeta/shared'
 
@@ -6,8 +7,12 @@ import { ErrorCode } from '@rezeta/shared'
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown, metadata: ArgumentMetadata): unknown {
-    if (metadata.type !== 'body') return value
+  // Validates whatever argument it is attached to (`@Body`, `@Query`, or
+  // `@Param`). Previously this short-circuited on `metadata.type !== 'body'`,
+  // so a schema attached to `@Query`/`@Param` was silently ignored and a
+  // malformed value (e.g. a non-UUID `?categoryId=`) reached Prisma and
+  // surfaced as a 500 instead of a 400.
+  transform(value: unknown, _metadata: ArgumentMetadata): unknown {
     const result = this.schema.safeParse(value)
     if (!result.success) {
       throw new BadRequestException({

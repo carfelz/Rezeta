@@ -29,9 +29,11 @@ import {
   CreateInvoiceSchema,
   UpdateInvoiceSchema,
   UpdateInvoiceStatusSchema,
+  InvoiceListQuerySchema,
   type CreateInvoiceDto,
   type UpdateInvoiceDto,
   type UpdateInvoiceStatusDto,
+  type InvoiceListQuery,
   type AuthUser,
   type InvoiceWithDetails,
 } from '@rezeta/shared'
@@ -65,20 +67,16 @@ export class InvoicesController {
   list(
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
-    @Query('status') status?: string,
-    @Query('patientId') patientId?: string,
-    @Query('locationId') locationId?: string,
-    @Query('cursor') cursor?: string,
-    @Query('limit') limit?: string,
+    @Query(new ZodValidationPipe(InvoiceListQuerySchema)) query: InvoiceListQuery,
   ): Promise<InvoiceListResult> {
     return this.svc.list({
       tenantId,
       userId: user.id,
-      ...(status ? { status } : {}),
-      ...(patientId ? { patientId } : {}),
-      ...(locationId ? { locationId } : {}),
-      ...(cursor ? { cursor } : {}),
-      limit: parseLimit(limit),
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.patientId ? { patientId: query.patientId } : {}),
+      ...(query.locationId ? { locationId: query.locationId } : {}),
+      ...(query.cursor ? { cursor: query.cursor } : {}),
+      limit: parseLimit(query.limit),
     })
   }
 

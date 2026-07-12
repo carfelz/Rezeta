@@ -29,9 +29,11 @@ import {
   CreateAppointmentSchema,
   UpdateAppointmentSchema,
   UpdateAppointmentStatusSchema,
+  AppointmentListQuerySchema,
   type CreateAppointmentDto,
   type UpdateAppointmentDto,
   type UpdateAppointmentStatusDto,
+  type AppointmentListQuery,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -63,20 +65,16 @@ export class AppointmentsController {
   list(
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
-    @Query('locationId') locationId?: string,
-    @Query('patientId') patientId?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-    @Query('status') status?: string,
+    @Query(new ZodValidationPipe(AppointmentListQuerySchema)) query: AppointmentListQuery,
   ): Promise<AppointmentWithDetails[]> {
     return this.svc.list({
       tenantId,
       userId: user.id,
-      ...(locationId ? { locationId } : {}),
-      ...(patientId ? { patientId } : {}),
-      ...(from ? { from: new Date(from) } : {}),
-      ...(to ? { to: new Date(to) } : {}),
-      ...(status ? { status } : {}),
+      ...(query.locationId ? { locationId: query.locationId } : {}),
+      ...(query.patientId ? { patientId: query.patientId } : {}),
+      ...(query.from ? { from: new Date(query.from) } : {}),
+      ...(query.to ? { to: new Date(query.to) } : {}),
+      ...(query.status ? { status: query.status } : {}),
     })
   }
 

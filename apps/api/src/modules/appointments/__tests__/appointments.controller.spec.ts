@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { BadRequestException } from '@nestjs/common'
+import { AppointmentListQuerySchema, ErrorCode } from '@rezeta/shared'
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 import { AppointmentsController } from '../appointments.controller.js'
 
 const mockService = {
@@ -54,22 +57,20 @@ describe('AppointmentsController', () => {
 
   it('list: delegates to service.list with tenantId and userId', async () => {
     mockService.list.mockResolvedValue([appointment])
-    const result = await controller.list('t1', user)
+    const result = await controller.list('t1', user, {})
     expect(mockService.list).toHaveBeenCalledWith({ tenantId: 't1', userId: 'u1' })
     expect(result).toEqual([appointment])
   })
 
   it('list: passes optional filters when provided', async () => {
     mockService.list.mockResolvedValue([appointment])
-    await controller.list(
-      't1',
-      user,
-      'l1',
-      'p1',
-      '2026-01-01T00:00:00Z',
-      '2026-01-02T00:00:00Z',
-      'scheduled',
-    )
+    await controller.list('t1', user, {
+      locationId: 'l1',
+      patientId: 'p1',
+      from: '2026-01-01T00:00:00Z',
+      to: '2026-01-02T00:00:00Z',
+      status: 'scheduled',
+    })
     expect(mockService.list).toHaveBeenCalledWith({
       tenantId: 't1',
       userId: 'u1',
@@ -79,6 +80,21 @@ describe('AppointmentsController', () => {
       to: new Date('2026-01-02T00:00:00Z'),
       status: 'scheduled',
     })
+  })
+
+  it('list: rejects a malformed query param with 400 VALIDATION_ERROR (never reaches Prisma)', () => {
+    // The `@Query` pipe validates before the handler runs, so a non-UUID
+    // patientId is turned into a 400 instead of flowing to Prisma as a 500.
+    const pipe = new ZodValidationPipe(AppointmentListQuerySchema)
+    try {
+      pipe.transform({ patientId: 'not-a-uuid' }, { type: 'query', metatype: undefined, data: '' })
+      expect.fail('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(BadRequestException)
+      const body = (err as BadRequestException).getResponse() as Record<string, unknown>
+      expect(body['code']).toBe(ErrorCode.VALIDATION_ERROR)
+    }
+    expect(mockService.list).not.toHaveBeenCalled()
   })
 
   // ── getById ────────────────────────────────────────────────────────────────

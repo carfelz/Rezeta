@@ -36,10 +36,12 @@ import {
   AmendConsultationSchema,
   AddProtocolUsageSchema,
   UpdateProtocolUsageSchema,
+  ConsultationListQuerySchema,
   type CreateConsultationDto,
   type AmendConsultationDto,
   type AddProtocolUsageDto,
   type UpdateProtocolUsageDto,
+  type ConsultationListQuery,
 } from '@rezeta/shared'
 import { z } from 'zod'
 
@@ -73,18 +75,15 @@ export class ConsultationsController {
   list(
     @TenantId() tenantId: string,
     @CurrentUser() user: AuthUser,
-    @Query('patientId') patientId?: string,
-    @Query('locationId') locationId?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query(new ZodValidationPipe(ConsultationListQuerySchema)) query: ConsultationListQuery,
   ): Promise<ConsultationWithDetails[]> {
     return this.svc.list({
       tenantId,
       userId: user.id,
-      ...(patientId ? { patientId } : {}),
-      ...(locationId ? { locationId } : {}),
-      ...(from ? { from: new Date(from) } : {}),
-      ...(to ? { to: new Date(to) } : {}),
+      ...(query.patientId ? { patientId: query.patientId } : {}),
+      ...(query.locationId ? { locationId: query.locationId } : {}),
+      ...(query.from ? { from: new Date(query.from) } : {}),
+      ...(query.to ? { to: new Date(query.to) } : {}),
     })
   }
 

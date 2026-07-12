@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { BadRequestException } from '@nestjs/common'
 import { InvoicesController } from '../invoices.controller.js'
 import type { InvoicesService } from '../invoices.service.js'
-import type { AuthUser, InvoiceWithDetails } from '@rezeta/shared'
+import { InvoiceListQuerySchema, ErrorCode, type AuthUser, type InvoiceWithDetails } from '@rezeta/shared'
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 
 vi.mock('../../../lib/pdf.service.js', () => ({
   PdfService: class {
@@ -108,7 +110,7 @@ describe('InvoicesController', () => {
         hasMore: false,
         nextCursor: undefined,
       })
-      const result = await controller.list(tenantId, mockUser)
+      const result = await controller.list(tenantId, mockUser, {})
       expect(service.list).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, userId: 'user-1' }),
       )
@@ -121,7 +123,13 @@ describe('InvoicesController', () => {
         hasMore: false,
         nextCursor: undefined,
       })
-      await controller.list(tenantId, mockUser, 'issued', 'patient-1', 'loc-1', 'cursor-x', '25')
+      await controller.list(tenantId, mockUser, {
+        status: 'issued',
+        patientId: 'patient-1',
+        locationId: 'loc-1',
+        cursor: 'cursor-x',
+        limit: '25',
+      })
       expect(service.list).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'issued',
@@ -139,15 +147,7 @@ describe('InvoicesController', () => {
         hasMore: false,
         nextCursor: undefined,
       })
-      await controller.list(
-        tenantId,
-        mockUser,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )
+      await controller.list(tenantId, mockUser, {})
       expect(service.list).toHaveBeenCalledWith({ tenantId, userId: 'user-1', limit: 50 })
     })
 
@@ -157,16 +157,21 @@ describe('InvoicesController', () => {
         hasMore: false,
         nextCursor: undefined,
       })
-      await controller.list(
-        tenantId,
-        mockUser,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '100000000',
-      )
+      await controller.list(tenantId, mockUser, { limit: '100000000' })
       expect(service.list).toHaveBeenCalledWith(expect.objectContaining({ limit: 100 }))
+    })
+
+    it('rejects a malformed query param with 400 VALIDATION_ERROR (never reaches Prisma)', () => {
+      const pipe = new ZodValidationPipe(InvoiceListQuerySchema)
+      try {
+        pipe.transform({ patientId: 'not-a-uuid' }, { type: 'query', metatype: undefined, data: '' })
+        expect.fail('should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException)
+        const body = (err as BadRequestException).getResponse() as Record<string, unknown>
+        expect(body['code']).toBe(ErrorCode.VALIDATION_ERROR)
+      }
+      expect(service.list).not.toHaveBeenCalled()
     })
   })
 

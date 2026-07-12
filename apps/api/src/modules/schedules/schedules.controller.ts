@@ -29,10 +29,14 @@ import {
   UpdateScheduleBlockSchema,
   CreateScheduleExceptionSchema,
   UpdateScheduleExceptionSchema,
+  ScheduleBlockListQuerySchema,
+  ScheduleExceptionListQuerySchema,
   type CreateScheduleBlockDto,
   type UpdateScheduleBlockDto,
   type CreateScheduleExceptionDto,
   type UpdateScheduleExceptionDto,
+  type ScheduleBlockListQuery,
+  type ScheduleExceptionListQuery,
 } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
@@ -54,11 +58,11 @@ export class SchedulesController {
   @ApiResponse({ status: 200, description: 'Array of schedule blocks' })
   listBlocks(
     @CurrentUser() user: AuthUser,
-    @Query('locationId') locationId?: string,
+    @Query(new ZodValidationPipe(ScheduleBlockListQuerySchema)) query: ScheduleBlockListQuery,
   ): Promise<ScheduleBlock[]> {
     return this.svc.listBlocks({
       userId: user.id,
-      ...(locationId ? { locationId } : {}),
+      ...(query.locationId ? { locationId: query.locationId } : {}),
     })
   }
 
@@ -117,15 +121,14 @@ export class SchedulesController {
   @ApiResponse({ status: 200, description: 'Array of schedule exceptions' })
   listExceptions(
     @CurrentUser() user: AuthUser,
-    @Query('locationId') locationId?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query(new ZodValidationPipe(ScheduleExceptionListQuerySchema))
+    query: ScheduleExceptionListQuery,
   ): Promise<ScheduleException[]> {
     return this.svc.listExceptions({
       userId: user.id,
-      ...(locationId ? { locationId } : {}),
-      ...(from ? { from } : {}),
-      ...(to ? { to } : {}),
+      ...(query.locationId ? { locationId: query.locationId } : {}),
+      ...(query.from ? { from: query.from } : {}),
+      ...(query.to ? { to: query.to } : {}),
     })
   }
 

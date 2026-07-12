@@ -164,9 +164,53 @@ describe('HttpExceptionFilter', () => {
     }
   })
 
-  it('treats non-P2002 Prisma errors as 500 INTERNAL_ERROR', () => {
+  it('maps Prisma P2025 record-not-found to 404 NOT_FOUND', () => {
     const exception = new Prisma.PrismaClientKnownRequestError('Record not found', {
       code: 'P2025',
+      clientVersion: 'test',
+    })
+    filter.catch(exception, host)
+    expect(statusFn).toHaveBeenCalledWith(404)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string } }
+    expect(arg.error.code).toBe(ErrorCode.NOT_FOUND)
+  })
+
+  it('maps Prisma P2003 foreign-key violation to 409 RESOURCE_CONFLICT', () => {
+    const exception = new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
+      code: 'P2003',
+      clientVersion: 'test',
+      meta: { field_name: 'patient_id' },
+    })
+    filter.catch(exception, host)
+    expect(statusFn).toHaveBeenCalledWith(409)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string } }
+    expect(arg.error.code).toBe(ErrorCode.RESOURCE_CONFLICT)
+  })
+
+  it('maps Prisma P2023 malformed input value to 400 VALIDATION_ERROR', () => {
+    const exception = new Prisma.PrismaClientKnownRequestError('Malformed UUID', {
+      code: 'P2023',
+      clientVersion: 'test',
+    })
+    filter.catch(exception, host)
+    expect(statusFn).toHaveBeenCalledWith(400)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string } }
+    expect(arg.error.code).toBe(ErrorCode.VALIDATION_ERROR)
+  })
+
+  it('maps PrismaClientValidationError to 400 VALIDATION_ERROR', () => {
+    const exception = new Prisma.PrismaClientValidationError('Invalid arguments', {
+      clientVersion: 'test',
+    })
+    filter.catch(exception, host)
+    expect(statusFn).toHaveBeenCalledWith(400)
+    const arg = jsonFn.mock.calls[0]?.[0] as { error: { code: string } }
+    expect(arg.error.code).toBe(ErrorCode.VALIDATION_ERROR)
+  })
+
+  it('treats other Prisma known errors as 500 INTERNAL_ERROR', () => {
+    const exception = new Prisma.PrismaClientKnownRequestError('Timed out', {
+      code: 'P2024',
       clientVersion: 'test',
     })
     filter.catch(exception, host)

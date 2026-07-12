@@ -1,8 +1,16 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { BadRequestException } from '@nestjs/common'
 import { ConsultationsController } from '../consultations.controller.js'
 import type { ConsultationsService } from '../consultations.service.js'
-import type { AuthUser, ConsultationWithDetails, ConsultationProtocolUsage } from '@rezeta/shared'
+import {
+  ConsultationListQuerySchema,
+  ErrorCode,
+  type AuthUser,
+  type ConsultationWithDetails,
+  type ConsultationProtocolUsage,
+} from '@rezeta/shared'
+import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 
 const mockUser: AuthUser = {
   id: 'user-1',
@@ -93,17 +101,35 @@ describe('ConsultationsController', () => {
 
   it('list delegates to service with tenantId and userId', async () => {
     vi.mocked(svc.list).mockResolvedValue([makeConsultation()])
-    const result = await controller.list(tenantId, mockUser)
+    const result = await controller.list(tenantId, mockUser, {})
     expect(svc.list).toHaveBeenCalledWith({ tenantId, userId: 'user-1' })
     expect(result).toHaveLength(1)
   })
 
   it('list passes optional query params', async () => {
     vi.mocked(svc.list).mockResolvedValue([])
-    await controller.list(tenantId, mockUser, 'p1', 'l1', '2026-01-01', '2026-12-31')
+    await controller.list(tenantId, mockUser, {
+      patientId: 'p1',
+      locationId: 'l1',
+      from: '2026-01-01',
+      to: '2026-12-31',
+    })
     expect(svc.list).toHaveBeenCalledWith(
       expect.objectContaining({ patientId: 'p1', locationId: 'l1' }),
     )
+  })
+
+  it('list rejects a malformed query param with 400 VALIDATION_ERROR', () => {
+    const pipe = new ZodValidationPipe(ConsultationListQuerySchema)
+    try {
+      pipe.transform({ patientId: 'not-a-uuid' }, { type: 'query', metatype: undefined, data: '' })
+      expect.fail('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(BadRequestException)
+      const body = (err as BadRequestException).getResponse() as Record<string, unknown>
+      expect(body['code']).toBe(ErrorCode.VALIDATION_ERROR)
+    }
+    expect(svc.list).not.toHaveBeenCalled()
   })
 
   it('getById delegates to service', async () => {

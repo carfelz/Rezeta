@@ -13,6 +13,20 @@ export const AddProtocolUsageSchema = z.object({
   triggerBlockId: z.string().max(100).optional(),
 })
 
+// A string parseable as a date/datetime. The list endpoint forwards `from`/`to`
+// to `new Date(...)`; rejecting garbage here keeps malformed input away from
+// Prisma (which would otherwise 500 on a bad date range).
+const DateLikeString = z.string().refine((v) => !Number.isNaN(Date.parse(v)), {
+  message: 'Invalid date',
+})
+
+export const ConsultationListQuerySchema = z.object({
+  patientId: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+  from: DateLikeString.optional(),
+  to: DateLikeString.optional(),
+})
+
 const ProtocolContentSchema = z.object({
   version: z.string(),
   template_version: z.string().optional(),
@@ -146,6 +160,7 @@ export const UpdateLabOrderGroupSchema = z.object({
   items: z.array(LabOrderItemSchema).optional(),
 })
 
+export type ConsultationListQuery = z.infer<typeof ConsultationListQuerySchema>
 export type CreateConsultationDto = z.infer<typeof CreateConsultationSchema>
 export type AmendConsultationDto = z.infer<typeof AmendConsultationSchema>
 export type AddProtocolUsageDto = z.infer<typeof AddProtocolUsageSchema>

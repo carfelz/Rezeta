@@ -24,7 +24,21 @@ export const CreateScheduleExceptionSchema = z.object({
 
 export const UpdateScheduleExceptionSchema = CreateScheduleExceptionSchema.partial()
 
+export const ScheduleBlockListQuerySchema = z.object({
+  locationId: z.string().uuid().optional(),
+})
+
+// `from`/`to` are inclusive YYYY-MM-DD bounds forwarded to `new Date(...)` in
+// the repository; rejecting malformed values keeps them away from Prisma.
+export const ScheduleExceptionListQuerySchema = z.object({
+  locationId: z.string().uuid().optional(),
+  from: z.string().regex(dateRegex, 'Must be YYYY-MM-DD').optional(),
+  to: z.string().regex(dateRegex, 'Must be YYYY-MM-DD').optional(),
+})
+
 export type CreateScheduleBlockDto = z.infer<typeof CreateScheduleBlockSchema>
 export type UpdateScheduleBlockDto = z.infer<typeof UpdateScheduleBlockSchema>
 export type CreateScheduleExceptionDto = z.infer<typeof CreateScheduleExceptionSchema>
 export type UpdateScheduleExceptionDto = z.infer<typeof UpdateScheduleExceptionSchema>
+export type ScheduleBlockListQuery = z.infer<typeof ScheduleBlockListQuerySchema>
+export type ScheduleExceptionListQuery = z.infer<typeof ScheduleExceptionListQuerySchema>

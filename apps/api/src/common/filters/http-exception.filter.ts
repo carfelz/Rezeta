@@ -45,6 +45,35 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message: 'A record with these values already exists',
         ...(isProd ? {} : { details: { target: exception.meta?.target } }),
       }
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2025'
+    ) {
+      // Record required by the operation was not found — a clean 404.
+      status = HttpStatus.NOT_FOUND
+      error = { code: ErrorCode.NOT_FOUND, message: 'Resource not found' }
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2003'
+    ) {
+      // Foreign-key constraint failure — a referenced record is missing or in
+      // use. Surface as a 409 conflict instead of a 500.
+      status = HttpStatus.CONFLICT
+      const isProd = process.env.NODE_ENV === 'production'
+      error = {
+        code: ErrorCode.RESOURCE_CONFLICT,
+        message: 'The operation violates a reference constraint',
+        ...(isProd ? {} : { details: { field: exception.meta?.field_name } }),
+      }
+    } else if (
+      (exception instanceof Prisma.PrismaClientKnownRequestError &&
+        exception.code === 'P2023') ||
+      exception instanceof Prisma.PrismaClientValidationError
+    ) {
+      // Malformed input value (e.g. a non-UUID id) or otherwise invalid query
+      // arguments — the caller sent bad data, so this is a 400, not a 500.
+      status = HttpStatus.BAD_REQUEST
+      error = { code: ErrorCode.VALIDATION_ERROR, message: 'Invalid request value' }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR
       const isProd = process.env.NODE_ENV === 'production'
