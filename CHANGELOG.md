@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Doctor name no longer renders as "Dr. Dr." on generated PDFs
+
+### Fixed
+
+- `apps/api/src/lib/pdf.service.ts`: every PDF (prescription, imaging/lab order, historia médica, expediente) hard-prepended `Dr. ` to the doctor's `fullName`. Doctors routinely enter their own honorific at signup (`Dr. Juan García`, `Dra. María Pérez`), so those documents rendered `Dr. Dr. Juan García` — including on the legal expediente cover ("Médico tratante") and the historia médica header and signature. Added a `formatDoctorName` helper that prepends `Dr. ` only when the name does not already begin with a doctoral honorific (`Dr`/`Dra`, optional period, case-insensitive), preserves an existing `Dra.` instead of forcing `Dr.`, and falls back to a plain `Médico` (not a dangling `Dr.`) when the name is missing. Routed all 11 render sites through it. Verified against real seeded records: the expediente cover, historia header, and signature block now show a single `Dr. Test García`.
+
+### Added
+
+- `apps/api/src/lib/__tests__/pdf.service.doctor-name.spec.ts`: covers `formatDoctorName` — bare name gets `Dr. `, existing `Dr.`/`Dra.` not doubled, case-insensitive and period-optional honorific detection, no false positive on names like `Drew`/`Drake`, whitespace trimming, and the `Médico` fallback for a missing name.
+
 ## [2026-07-09] Removed stale `test:integration` script
 
 ### Removed

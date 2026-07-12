@@ -165,11 +165,28 @@ export interface InvoicePdfData {
   }
 }
 
+/**
+ * Renders a doctor's name for display on a PDF, with exactly one honorific.
+ *
+ * Doctors routinely enter their own title at signup ("Dr. Juan García",
+ * "Dra. María Pérez"), so blindly prepending "Dr. " produced "Dr. Dr. …". This
+ * prepends "Dr. " only when the name does not already start with a doctoral
+ * honorific (Dr / Dra, optional period, case-insensitive), and preserves a
+ * "Dra." so female doctors are not relabelled. A missing name falls back to a
+ * plain "Médico" rather than a bare, dangling "Dr.".
+ */
+export function formatDoctorName(fullName: string | null | undefined): string {
+  const name = (fullName ?? '').trim()
+  if (!name) return 'Médico'
+  if (/^dra?\.?\s/i.test(name)) return name
+  return `Dr. ${name}`
+}
+
 // ─── Prescription PDF ─────────────────────────────────────────────────────────
 function buildPrescription(doc: PDFKit.PDFDocument, data: PrescriptionPdfData): void {
   const { prescription, doctor, patient, location } = data
   const items: PrescriptionItemRow[] = prescription.prescriptionItems ?? []
-  const doctorName = doctor.fullName ?? 'Médico'
+  const doctorName = formatDoctorName(doctor.fullName)
   const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
   const age = calcAge(patient.dateOfBirth)
   const docId = patient.documentNumber
@@ -182,7 +199,7 @@ function buildPrescription(doc: PDFKit.PDFDocument, data: PrescriptionPdfData): 
   // ── Header band ──
   // Doctor name (left)
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  doc.text(doctorName, MARGIN, y, { lineBreak: false })
   y += 18
 
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
@@ -302,7 +319,7 @@ function buildPrescription(doc: PDFKit.PDFDocument, data: PrescriptionPdfData): 
   const sigX = MARGIN + CONTENT_W - 160
   strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
-  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+  doc.text(doctorName, sigX, footerY + 10, {
     width: 160,
     align: 'center',
     lineBreak: false,
@@ -352,14 +369,14 @@ function formatCurrency(amount: number, currency: string): string {
 
 function buildInvoice(doc: PDFKit.PDFDocument, data: InvoicePdfData): void {
   const { invoice, doctor } = data
-  const doctorName = doctor.fullName ?? 'Médico'
+  const doctorName = formatDoctorName(doctor.fullName)
   const { bg, text: textColor } = statusColor(invoice.status)
 
   let y = MARGIN
 
   // ── Header band ──
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  doc.text(doctorName, MARGIN, y, { lineBreak: false })
   y += 18
 
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
@@ -526,7 +543,7 @@ function buildInvoice(doc: PDFKit.PDFDocument, data: InvoicePdfData): void {
   const sigX = MARGIN + CONTENT_W - 160
   strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
-  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+  doc.text(doctorName, sigX, footerY + 10, {
     width: 160,
     align: 'center',
     lineBreak: false,
@@ -564,7 +581,7 @@ export interface LabOrderGroupPdfData extends OrderGroupPdfCommon {
 // ─── Imaging order group PDF ──────────────────────────────────────────────────
 function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroupPdfData): void {
   const { doctor, patient, location, groupTitle, orders, issuedAt } = data
-  const doctorName = doctor.fullName ?? 'Médico'
+  const doctorName = formatDoctorName(doctor.fullName)
   const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
   const age = calcAge(patient.dateOfBirth)
   const docId = patient.documentNumber
@@ -576,7 +593,7 @@ function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroup
 
   // Header
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  doc.text(doctorName, MARGIN, y, { lineBreak: false })
   y += 18
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.specialty) {
@@ -679,7 +696,7 @@ function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroup
   const sigX = MARGIN + CONTENT_W - 160
   strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
-  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+  doc.text(doctorName, sigX, footerY + 10, {
     width: 160,
     align: 'center',
     lineBreak: false,
@@ -696,7 +713,7 @@ function buildImagingOrderGroup(doc: PDFKit.PDFDocument, data: ImagingOrderGroup
 // ─── Lab order group PDF ──────────────────────────────────────────────────────
 function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData): void {
   const { doctor, patient, location, groupTitle, orders, issuedAt } = data
-  const doctorName = doctor.fullName ?? 'Médico'
+  const doctorName = formatDoctorName(doctor.fullName)
   const patientFullName = `${patient.firstName} ${patient.lastName}`.trim()
   const age = calcAge(patient.dateOfBirth)
   const docId = patient.documentNumber
@@ -708,7 +725,7 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
 
   // Header
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctorName}`, MARGIN, y, { lineBreak: false })
+  doc.text(doctorName, MARGIN, y, { lineBreak: false })
   y += 18
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.specialty) {
@@ -816,7 +833,7 @@ function buildLabOrderGroup(doc: PDFKit.PDFDocument, data: LabOrderGroupPdfData)
   const sigX = MARGIN + CONTENT_W - 160
   strokeLine(doc, sigX, footerY + 4, sigX + 160, footerY + 4, T.n400)
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
-  doc.text(`Dr. ${doctorName}`, sigX, footerY + 10, {
+  doc.text(doctorName, sigX, footerY + 10, {
     width: 160,
     align: 'center',
     lineBreak: false,
@@ -889,7 +906,7 @@ function buildExpedienteCover(doc: PDFKit.PDFDocument, data: ExpedientePdfData):
   if (meta) doc.text(meta)
   doc.moveDown(1)
   doc.fontSize(9).fillColor(T.n500)
-  doc.text(`Médico tratante: Dr. ${data.doctor.fullName ?? ''}${data.doctor.specialty ? ` · ${data.doctor.specialty}` : ''}`)
+  doc.text(`Médico tratante: ${formatDoctorName(data.doctor.fullName)}${data.doctor.specialty ? ` · ${data.doctor.specialty}` : ''}`)
   if (data.doctor.licenseNumber) doc.text(`Exequátur: ${data.doctor.licenseNumber}`)
   doc.text(`Consultas incluidas: ${data.entries.length}`)
   const generated = formatDominicanDateTime(data.generatedAt)
@@ -914,7 +931,7 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
 
   // Header (same visual language as prescriptions)
   doc.font('Helvetica-Bold').fontSize(16).fillColor(T.teal)
-  doc.text(`Dr. ${doctor.fullName ?? 'Médico'}`, MARGIN, MARGIN, { width: CONTENT_W - 150 })
+  doc.text(formatDoctorName(doctor.fullName), MARGIN, MARGIN, { width: CONTENT_W - 150 })
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.specialty) doc.text(doctor.specialty)
   if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
@@ -963,7 +980,7 @@ function buildHistoriaMedica(doc: PDFKit.PDFDocument, data: HistoriaMedicaPdfDat
   strokeLine(doc, MARGIN, doc.y, MARGIN + 200, doc.y, T.n300, 1)
   doc.moveDown(0.3)
   doc.font('Helvetica-Bold').fontSize(10).fillColor(T.n800)
-  doc.text(`Dr. ${doctor.fullName ?? ''}`, MARGIN)
+  doc.text(formatDoctorName(doctor.fullName), MARGIN)
   doc.font('Helvetica').fontSize(9).fillColor(T.n500)
   if (doctor.licenseNumber) doc.text(`Exequátur: ${doctor.licenseNumber}`)
   if (record.signedAt) {

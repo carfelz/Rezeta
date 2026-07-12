@@ -42,8 +42,16 @@
    flow (fill vitals/notes → sign → order queue → historia) surfaced 17 findings, fixed on
    `fix/e2e-consultation-flow-findings` (see `CHANGELOG.md` entries dated 2026-07-07 and
    `docs/superpowers/plans/2026-07-07-06-e2e-findings-fixes.md`). Historia PDF
-   download/export expediente were not covered by that pass — still worth a follow-up
-   click-through.
+   download/export expediente were not covered by that pass — ~~still worth a follow-up
+   click-through~~. Done 2026-07-12: exercised both `getPdfData`→`generateHistoriaMedica`
+   and `getExpedienteData`→`generateExpediente` against real seeded signed records and
+   inspected the rendered PDFs. Both render correctly (cover page, 8 clinical sections,
+   signature). Surfaced and fixed a real defect — the doctor name rendered as "Dr. Dr.
+   Test García" on every PDF when `fullName` already carried an honorific (see
+   `CHANGELOG.md` 2026-07-12, `formatDoctorName` in `apps/api/src/lib/pdf.service.ts`).
+   Note: the live in-browser click of the download buttons remains unverified because
+   the PDF endpoints require a real Firebase login; the service→render path (the actual
+   PDF-content risk) is verified.
 
 ## Follow-ups from the E2E consultation flow fixes (2026-07-07)
 
