@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Backfill user profile on re-provision so signup name is not dropped
+
+### Fixed
+
+- `apps/api/src/modules/users/users.repository.ts`: `provisionUser` now backfills `fullName`/`specialty` on an already-existing user when the stored `fullName` is blank and a profile is supplied. At signup two callers race to `POST /v1/auth/provision`: `AuthProvider` fires an empty-body provision on Firebase `onAuthStateChanged` and wins, creating the row with no name, so the signup provision that carries `{ fullName, specialty }` hit the existing-user branch and returned the row unchanged — dropping the name (F1: "Mi cuenta" showed "Sin definir", `users.full_name` empty). The backfill is idempotent: it only fills a blank name via a tenant-scoped `updateMany`, so a later empty provision cannot blank an existing name and a real profile cannot clobber a name the user has since edited. Added repository tests covering blank-name backfill, non-empty-name preservation, and empty-provision no-op.
+
 ## [2026-07-13] Fix oversized fonts / dead responsive classes (Tailwind config extended, not overriding)
 
 ### Fixed

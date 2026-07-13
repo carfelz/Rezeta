@@ -115,6 +115,49 @@ describe('UsersRepository', () => {
       expect(mockPrisma.$transaction).not.toHaveBeenCalled()
     })
 
+    it('backfills profile on an existing user whose fullName is blank (F1)', async () => {
+      // A racing empty provision created the row first with no name; the signup
+      // provision that carries the profile must patch it, not silently drop it.
+      const blankUser = { ...existingUser, fullName: '', specialty: null }
+      mockPrisma.user.findUnique.mockResolvedValue(blankUser)
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 })
+
+      const result = await repo.provisionUser(verified, {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+      })
+
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'u1', tenantId: 't1', deletedAt: null },
+        data: { fullName: 'Dr. García', specialty: 'Cardiología' },
+      })
+      expect(result).toMatchObject({ fullName: 'Dr. García', specialty: 'Cardiología' })
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled()
+    })
+
+    it('does not overwrite an already-set fullName when a profile is supplied', async () => {
+      const namedUser = { ...existingUser, fullName: 'Dr. Existing', specialty: 'Pediatría' }
+      mockPrisma.user.findUnique.mockResolvedValue(namedUser)
+
+      const result = await repo.provisionUser(verified, {
+        fullName: 'Dr. García',
+        specialty: 'Cardiología',
+      })
+
+      expect(mockPrisma.user.updateMany).not.toHaveBeenCalled()
+      expect(result).toEqual(namedUser)
+    })
+
+    it('does not blank out an existing named user on an empty provision', async () => {
+      const namedUser = { ...existingUser, fullName: 'Dr. Existing', specialty: 'Pediatría' }
+      mockPrisma.user.findUnique.mockResolvedValue(namedUser)
+
+      const result = await repo.provisionUser(verified)
+
+      expect(mockPrisma.user.updateMany).not.toHaveBeenCalled()
+      expect(result).toEqual(namedUser)
+    })
+
     it('creates tenant + user in a transaction when user does not exist', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null)
       const tenant = { id: 't1', seededAt }

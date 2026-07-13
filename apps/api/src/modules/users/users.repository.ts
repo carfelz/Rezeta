@@ -75,6 +75,27 @@ export class UsersRepository {
       include: TENANT_SELECT,
     })
     if (existing) {
+      // Backfill the profile when a racing empty provision (e.g. the
+      // onAuthStateChanged call at signup) created this row before the signup
+      // flow's provision carrying the profile arrived. Only fill a blank name so
+      // this stays idempotent: a later empty provision cannot blank an existing
+      // name, and a real profile cannot clobber a name the user has since edited.
+      const suppliedName = profile?.fullName?.trim()
+      const storedNameBlank = !existing.fullName || existing.fullName.trim() === ''
+      if (suppliedName && storedNameBlank) {
+        this.logger.log(`Provision: backfilling blank profile for externalUid=${externalUid}`)
+        const data: Prisma.UserUpdateManyMutationInput = { fullName: suppliedName }
+        if (profile?.specialty) data.specialty = profile.specialty
+        await this.prisma.user.updateMany({
+          where: { id: existing.id, tenantId: existing.tenantId, deletedAt: null },
+          data,
+        })
+        return {
+          ...existing,
+          fullName: suppliedName,
+          ...(profile?.specialty ? { specialty: profile.specialty } : {}),
+        }
+      }
       this.logger.debug(`Provision: user already exists for externalUid=${externalUid}`)
       return existing
     }
