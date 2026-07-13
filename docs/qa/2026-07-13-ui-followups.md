@@ -14,39 +14,45 @@ Each is scoped enough to pick up as its own change. Context:
 - Registered the custom font-size tokens with `cn()`'s tailwind-merge config so they aren't stripped as
   text-colors (they were, which made `Badge` inherit 16px); `Badge` moved off composite `text-overline`
   to plain `text-xs`.
+- Follow-up pass (this doc): removed the dead pre-v2 vitals code (FU1), cleared the last `font-normal`
+  in the vendored calendar (FU2), and collapsed signup to a single provision write (FU3).
 
-## Follow-ups (open)
+## Follow-ups
 
-### FU1 — Consolidate the two vital-signs components (audit U10)
-`components/protocols/blocks/VitalsBlock.tsx` (mono, used in the consultation/protocol blocks) and
-`components/consultations/VitalsSection.tsx` + `VitalInput.tsx` (sans) are two implementations of the
-same "vital signs" UI with different type and layout. Consolidate to one component so vitals look
-identical everywhere and sizing lives in one place. Medium effort, no user-visible change intended.
+**Status (2026-07-13):** FU1–FU3 done, FU4 done except one deferred item, FU5 was documentation only.
+The only work left open is the optional spacing/line-height token pass (see FU4).
 
-### FU2 — Normalize the vendored shadcn `calendar.tsx`
-`components/ui/calendar.tsx` is a shadcn/react-day-picker island still using non-design-system
-conventions: `font-normal` (dead weight — should be `font-regular`), `text-muted-foreground`,
-`bg-primary`, `min-w-[--cell-size]`, `[&>span]:text-xs`, data-attribute variants. Its `text-[0.8rem]`
-was already migrated to `text-sm`. Decide whether to (a) normalize it onto the design tokens or
-(b) formally treat `components/ui/calendar.tsx` as vendored and add an ESLint override documenting that.
-Low priority; the date-picker renders fine.
+### FU1 — Consolidate the two vital-signs components (audit U10) — ✅ DONE
+**Resolved:** on investigation `VitalsSection.tsx` + `VitalInput.tsx` (and their `lib/consultation/vitals.ts`
+helper) were **dead code** — nothing imported them; `components/protocols/blocks/VitalsBlock.tsx` is the
+only live vitals component (v2 moved clinical content into protocol blocks). Deleted the obsolete
+components, the helper, their tests, and the unused `vitalsSectionStrings`; reworded the
+`BlockRendererRunMode` BMI comments that referenced the deleted helper. So "consolidation" was deletion,
+not a merge. (typecheck confirmed no live references.)
 
-### FU3 — Collapse the redundant empty `/v1/auth/provision` write (F1 follow-up)
-`providers/AuthProvider.tsx` fires an empty-body `/v1/auth/provision` on every `onAuthStateChanged`
-(so it also runs on plain logins, not just signup). The backend backfill (commit `1d0c09b`) makes this
-harmless for correctness, but the redundant write could be removed by threading the signup profile
-through the store into a single provision call. Low priority; purely an efficiency/cleanup item.
+### FU2 — Normalize the vendored shadcn `calendar.tsx` — ✅ DONE
+**Resolved (option a, minimal):** the only actual defect was `font-normal` (dead weight) → changed to
+`font-regular`. The remaining shadcn/react-day-picker classes (`text-muted-foreground`, `bg-primary`,
+`min-w-[--cell-size]`, `[&>span]:text-xs`, data-attribute variants) resolve correctly against the config,
+and the file has no raw pixel font sizes, so it passes the guardrail — no ESLint override needed.
+
+### FU3 — Collapse the redundant empty `/v1/auth/provision` write (F1 follow-up) — ✅ DONE
+**Resolved:** `signUp` now stashes the profile in a transient `_pendingProfile` (cleared if signUp
+throws) instead of posting a second provision; `AuthProvider` consumes it via `_consumePendingProfile()`
+so the single `onAuthStateChanged`-driven provision creates the user with its name/specialty. Logins
+provision with an empty body as before (verified live: 200 OK, app authenticated).
 
 ### FU4 — Residual off-token hygiene (audit U9 tail, U7)
-- `font-normal` remains only in the vendored `calendar.tsx` (see FU2).
-- A few semantic-token conversions were intentionally NOT applied because they change weight, e.g.
-  converting a `text-xs` label to `text-caption` adds `font-medium`. If a uniform "caption = medium"
-  look is wanted, apply it deliberately and verify per component.
-- Raw arbitrary values in NON-font properties (`leading-[..]`, `min-w-[..]`, `w-[..px]`, `px-[..px]`,
-  `tracking-[..]`) were left as-is; the migration and guardrail cover font-size only. A separate pass
-  could extend token discipline (and the guardrail) to spacing/line-height if desired.
+- `font-normal` — ✅ DONE: the last one was in `calendar.tsx`, fixed under FU2. None remain app-wide.
+- Semantic-token weight change — ✅ DECIDED (won't-do): converting a plain `text-xs` label to
+  `text-caption` would add `font-medium`, a deliberate style change. Left as-is; apply per component only
+  if a uniform "caption = medium" look is explicitly wanted.
+- **Non-font raw arbitrary values (`leading-[..]`, `min-w-[..]`, `w-[..px]`, `px-[..px]`, `tracking-[..]`)
+  — ⏳ OPEN / deferred.** This is a separate, app-wide migration of the same shape as the font one and was
+  not scoped here. The spacing scale is already tokenized in `tailwind.config.ts`; a future pass could
+  migrate raw spacing/line-height values and extend the guardrail to cover them. Left for its own change.
 
-### FU5 — Custom font-size tokens have a two-file coupling (maintenance trap)
+### FU5 — Custom font-size tokens have a two-file coupling (maintenance trap) — ✅ DOCUMENTED
 Adding a new custom font-size token requires editing **two** files, or the token is silently stripped
 and the element inherits the body's 16px:
 1. `apps/web/tailwind.config.ts` — define it in `theme.extend.fontSize`.
