@@ -92,7 +92,7 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
             size="md"
             disabled={disabled}
             className={cn(
-              'w-full justify-between font-normal',
+              'w-full justify-between font-regular',
               !value && 'text-n-400',
               error && 'border-danger-solid',
               className,

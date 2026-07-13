@@ -123,7 +123,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
                   <p className="text-[13px] font-sans text-n-500">{topbarStrings.noLocations}</p>
                   <Link
                     to="/ajustes/ubicaciones"
-                    className="text-[13px] font-sans font-medium text-p-600 hover:text-p-700"
+                    className="text-[13px] font-sans font-medium text-p-500 hover:text-p-700"
                     onClick={() => setDropdownOpen(false)}
                   >
                     {topbarStrings.addLocation}

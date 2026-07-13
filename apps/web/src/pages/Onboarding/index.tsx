@@ -61,7 +61,7 @@ export function Onboarding(): JSX.Element {
         <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6 mx-auto">
           R
         </div>
-        <Spinner size="lg" className="text-p-400 mb-4 block" decorative />
+        <Spinner size="lg" className="text-p-500 mb-4 block" decorative />
         <p className="text-body-sm text-n-500">{onboardingStrings.loading}</p>
       </div>
     </div>

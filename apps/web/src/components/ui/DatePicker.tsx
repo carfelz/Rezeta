@@ -50,7 +50,7 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             size="md"
             disabled={disabled}
             className={cn(
-              'w-full justify-between font-normal',
+              'w-full justify-between font-regular',
               !selected && 'text-n-400',
               error && 'border-danger-solid',
               className,

@@ -194,7 +194,7 @@ export function ProtocolPanel({
       {!readOnly && activeUsage && (
         <div className="mt-4 flex justify-center">
           <button
-            className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-400 hover:text-p-600 transition-colors justify-center text-[13px]"
+            className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-500 hover:text-p-500 transition-colors justify-center text-[13px]"
             onClick={() => onShowPickerChange(true)}
           >
             <i className="ph ph-plus text-[15px]" />

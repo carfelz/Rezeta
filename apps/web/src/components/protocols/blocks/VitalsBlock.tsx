@@ -25,13 +25,13 @@ export const VitalsBlock: FC<VitalsBlockProps> = ({ fields, values = {}, readOnl
             {field.unit && <span className="ml-1 text-n-400">({field.unit})</span>}
           </label>
           {field.input_type === 'computed' ? (
-            <div className="h-touch flex items-center px-3 bg-n-50 rounded-sm border border-n-200 text-n-600 font-mono text-sm">
+            <div className="h-touch flex items-center px-3 bg-n-50 rounded-sm border border-n-200 text-n-600 font-mono text-body-sm">
               {values[field.id] ?? '—'}
             </div>
           ) : (
             <input
               type={field.input_type === 'number' ? 'number' : 'text'}
-              className="h-touch px-3 rounded-sm border border-n-200 bg-n-0 text-n-900 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-p-400 disabled:bg-n-50"
+              className="h-touch px-3 rounded-sm border border-n-200 bg-n-0 text-n-900 font-mono text-body-sm focus:outline-none focus:ring-1 focus:ring-p-500 disabled:bg-n-50"
               value={String(values[field.id] ?? '')}
               disabled={readOnly}
               onChange={(e) => onChange?.(field.id, e.target.value)}

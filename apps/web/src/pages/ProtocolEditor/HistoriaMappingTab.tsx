@@ -99,19 +99,19 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-normal text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[34%]">
+            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[34%]">
               {s.historiaColBlock}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-normal text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[8%]">
+            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[8%]">
               {s.historiaColInclude}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-normal text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[26%]">
+            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[26%]">
               {s.historiaColSection}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-normal text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[22%]">
+            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[22%]">
               {s.historiaColLabel}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-normal text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[10%]">
+            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[10%]">
               {s.historiaColOrigin}
             </th>
           </tr>

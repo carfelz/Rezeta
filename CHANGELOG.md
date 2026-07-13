@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Remove remaining dead Tailwind classes and align vitals to the type token
+
+### Fixed
+
+- `apps/web/src/components/ui/DatePicker.tsx`, `TimePicker.tsx`, `apps/web/src/pages/ProtocolEditor/HistoriaMappingTab.tsx`: replaced `font-normal` (a Tailwind default weight that the design system's three-weight override — `regular`/`medium`/`semibold` — deletes, so it emitted no CSS and inherited the surrounding weight) with the equivalent `font-regular` (400). No visual weight change intended; removes the last dead font-weight class.
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`, `ClinicalNotesBlock.tsx`, `apps/web/src/pages/Consultation/ProtocolPanel.tsx`, `apps/web/src/pages/Onboarding/index.tsx`, `apps/web/src/components/layout/Topbar.tsx`: fixed undefined `p`-scale color steps `p-400`/`p-600` (the `p` scale is 50/100/300/500/700/900, so these generated no color and the element fell back to an inherited color) to `p-500` — the brand teal — on the vitals/notes focus rings, the add-protocol button hover, the onboarding spinner, and the add-location link (whose `hover:text-p-700` is preserved, so the base is now lighter than its hover).
+- `apps/web/src/components/protocols/blocks/VitalsBlock.tsx`: the vital-signs value fields used `text-sm` (the Tailwind-default safety net restored by the config fix, 14px); moved them to the semantic `text-body-sm` token (13px, the intended size) — verified live, with font family (mono) and weight (400) unchanged. Resolves U1/U9 (vitals) and the `p-400` dead-color note in `docs/qa/2026-07-13-ui-design-system-audit.md`. The vendored `components/ui/calendar.tsx` (shadcn) still uses `font-normal` and is left for a separate normalization pass.
+
 ## [2026-07-13] Render a single protocol picker dialog in the consultation
 
 ### Fixed
