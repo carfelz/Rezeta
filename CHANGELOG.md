@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Fix the last dead `font-normal` weight in the vendored calendar (FU2/FU4)
+
+### Fixed
+
+- `apps/web/src/components/ui/calendar.tsx`: `font-normal` → `font-regular` (2 uses). The design system's three-weight override (`regular`/`medium`/`semibold`) deletes Tailwind's `font-normal`, so it emitted no CSS and inherited the surrounding weight. This was the last `font-normal` in the app. The remaining vendored shadcn/react-day-picker classes (`text-muted-foreground`, `bg-primary`, `min-w-[--cell-size]`, …) resolve correctly against the config, so no further normalization is needed and no ESLint override is required (the calendar has no raw pixel font sizes). Resolves FU2 and the `font-normal` item of FU4.
+
 ## [2026-07-13] Remove the obsolete pre-v2 vitals-section components (FU1)
 
 ### Removed
