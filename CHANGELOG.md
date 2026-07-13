@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Fix oversized fonts / dead responsive classes (Tailwind config extended, not overriding)
+
+### Fixed
+
+- `apps/web/tailwind.config.ts`: `fontSize` and `screens` were set directly on `theme`, which **replaces** Tailwind's built-in scales rather than extending them — so `text-xs`/`text-sm`/`text-base`/`text-lg` and the `sm:`/`md:`/`2xl:` breakpoints generated no CSS at all, and any component still using them silently inherited the `<body>`'s 16px (or never triggered its responsive layout). Measured live: the consultation's vital-signs values, unit labels, allergy/chronic header chips, and clinical-notes text all rendered at 16px instead of ~12–14px, and no `sm:`/`md:` media queries existed in the compiled CSS. Moved both keys under `theme.extend` so the semantic scale (`text-caption`, `text-body-sm`, …) and the stock utilities coexist, and `sm` (640) / `md` (768) / `2xl` (1536) are live again (`xl` stays tightened to 1440). The deliberate design-system overrides (`colors`, `spacing`, `borderRadius`, `borderWidth`, `fontWeight`) are unchanged, so token discipline is preserved. Verified live: header allergy chip 16px → 12px, vitals values 16px → 14px, clinical notes 16px → 14px. Documented as U1–U3/U5/U6/U8 in `docs/qa/2026-07-13-ui-design-system-audit.md`.
+
 ## [2026-07-13] Fix write endpoints broken by over-eager query validation
 
 ### Fixed

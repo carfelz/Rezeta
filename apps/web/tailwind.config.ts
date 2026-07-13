@@ -101,22 +101,6 @@ const config: Config = {
       mono: ['var(--font-mono)'],
     },
 
-    // ── Font sizes ───────────────────────────────────────────────────────────
-    // Includes lineHeight and letterSpacing per the type scale spec.
-    // fontWeight and fontFamily per step live in .text-* CSS classes
-    // (components.css) — those are the full composite type styles.
-    fontSize: {
-      display: ['56px', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
-      h1: ['40px', { lineHeight: '1.10', letterSpacing: '-0.015em' }],
-      h2: ['28px', { lineHeight: '1.20', letterSpacing: '-0.01em' }],
-      h3: ['18px', { lineHeight: '1.35', letterSpacing: '-0.005em' }],
-      'body-lg': ['16px', { lineHeight: '1.55' }],
-      body: ['14px', { lineHeight: '1.55' }],
-      'body-sm': ['13px', { lineHeight: '1.50' }],
-      caption: ['12px', { lineHeight: '1.40' }],
-      overline: ['11px', { lineHeight: '1.40', letterSpacing: '0.10em' }],
-    },
-
     // ── Font weights ─────────────────────────────────────────────────────────
     // Three weights only, matching the spec exactly.
     fontWeight: {
@@ -134,13 +118,6 @@ const config: Config = {
       'focus-danger': 'var(--shadow-focus-danger)',
     },
 
-    // ── Breakpoints ──────────────────────────────────────────────────────────
-    // Matches layout tokens. Only two breakpoints — no sm, md, 2xl.
-    screens: {
-      lg: '1024px',
-      xl: '1440px',
-    },
-
     // ── Border widths ────────────────────────────────────────────────────────
     // Keep 1px and 2px for the design system border/accent patterns.
     borderWidth: {
@@ -152,6 +129,33 @@ const config: Config = {
 
     // ── Opacity, z-index, transitions kept at defaults ───────────────────────
     extend: {
+      // ── Font sizes (design type scale) ─────────────────────────────────────
+      // EXTENDS (does not replace) Tailwind's default scale so BOTH the semantic
+      // names below AND stock utilities (text-xs/text-sm/text-base/…) resolve.
+      // Replacing the scale silently deleted text-xs/sm/base — they then emitted
+      // no CSS and inherited 16px (design-system audit 2026-07-13, U1–U3/U6/U8).
+      // Prefer the semantic names in new code; the stock names stay as a
+      // safety net so a stray class never renders at the inherited size again.
+      // Per-step fontWeight/fontFamily live in the .text-* CSS classes.
+      fontSize: {
+        display: ['56px', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
+        h1: ['40px', { lineHeight: '1.10', letterSpacing: '-0.015em' }],
+        h2: ['28px', { lineHeight: '1.20', letterSpacing: '-0.01em' }],
+        h3: ['18px', { lineHeight: '1.35', letterSpacing: '-0.005em' }],
+        'body-lg': ['16px', { lineHeight: '1.55' }],
+        body: ['14px', { lineHeight: '1.55' }],
+        'body-sm': ['13px', { lineHeight: '1.50' }],
+        caption: ['12px', { lineHeight: '1.40' }],
+        overline: ['11px', { lineHeight: '1.40', letterSpacing: '0.10em' }],
+      },
+      // ── Breakpoints ────────────────────────────────────────────────────────
+      // EXTENDS Tailwind's defaults so `sm:` (640) / `md:` (768) / `2xl:` (1536)
+      // stay live (they were deleted and rendered dead — audit U5). `xl` is
+      // tightened to the layout max width (1440px); `lg` matches the default.
+      screens: {
+        lg: '1024px',
+        xl: '1440px',
+      },
       // shadcn semantic color names — reference the CSS vars from index.css
       colors: {
         background: 'var(--background)',
