@@ -1,7 +1,17 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Logger, UsePipes } from '@nestjs/common'
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  UsePipes,
+  UseGuards,
+} from '@nestjs/common'
 import { ApiTags, ApiOperation } from '@nestjs/swagger'
 import { Public } from '../../common/decorators/public.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
+import { ClientErrorThrottleGuard } from '../../common/guards/client-error-throttle.guard.js'
 import { ClientErrorSchema, type ClientErrorDto } from '@rezeta/shared'
 
 @ApiTags('Logs')
@@ -12,6 +22,7 @@ export class LogsController {
   @Public()
   @Post('client-error')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(ClientErrorThrottleGuard)
   @UsePipes(new ZodValidationPipe(ClientErrorSchema))
   @ApiOperation({ summary: 'Report a frontend error to server logs' })
   report(@Body() dto: ClientErrorDto): void {

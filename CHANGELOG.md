@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Rate-limit the public client-error log endpoint
+
+### Added
+
+- `apps/api/src/common/guards/client-error-throttle.guard.ts`: `ClientErrorThrottleGuard`, an in-memory per-client fixed-window rate limiter (20 requests / 60s), applied to the `@Public()` `POST /v1/logs/client-error` endpoint (`logs.controller.ts`, registered in `logs.module.ts`). That endpoint writes caller-supplied text to the server logs with no auth, so it was open to log spam; over-limit requests now get `429 RATE_LIMITED` (new `ErrorCode.RATE_LIMITED`). Client key is the first `x-forwarded-for` hop, falling back to `req.ip`. State is per-instance (sufficient for spam protection) and the tracking map is swept of expired windows past a 10k-client cap to bound memory.
+
 ## [2026-07-12] Removed the unused DoctorLocation.commission_pct column
 
 ### Removed

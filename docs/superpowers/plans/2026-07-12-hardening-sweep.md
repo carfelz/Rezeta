@@ -196,8 +196,8 @@ Add to `packages/shared/src/errors.ts`:
     are **full** unique indexes despite `deletedAt`; a create→soft-delete→retry-with-same-token
     hits a raw P2002. Convert to partial `WHERE deleted_at IS NULL` indexes (new migration),
     matching migration `20260626000000`.
-  - **Validation #7 (note only):** the public `POST /v1/logs/client-error` is unauthenticated and
-    log-writable; body is length-capped so impact is bounded. Recommend a rate limit later — not
-    fixed here beyond a doc note.
+  - **Validation #7:** the public `POST /v1/logs/client-error` is unauthenticated and
+    log-writable; body is length-capped so impact is bounded. FIXED 2026-07-12 (`ClientErrorThrottleGuard`,
+    20 req/60s per client → 429 `RATE_LIMITED`).
 - **Tests:** oversized onboarding payload rejected; soft-deleted order token reusable after the
   migration.

@@ -106,6 +106,7 @@ export const ErrorCode = {
   // ── Generic ─────────────────────────────────────────────────
   NOT_FOUND: 'NOT_FOUND',
   RESOURCE_CONFLICT: 'RESOURCE_CONFLICT',
+  RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const
 
