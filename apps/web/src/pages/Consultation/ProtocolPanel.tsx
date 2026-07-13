@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { CanvasView, type BlockModificationEvent } from '@/components/consultations/CanvasView'
-import { ProtocolPickerModal } from '@/components/protocols/ProtocolPickerModal'
 import { ProtocolBar } from './ProtocolBar'
 import {
   useAddProtocolUsage,
@@ -204,19 +203,8 @@ export function ProtocolPanel({
         </div>
       )}
 
-      <ProtocolPickerModal
-        open={showPicker}
-        onOpenChange={onShowPickerChange}
-        onSelect={(protocol) => {
-          addUsageMutation.mutate(
-            { protocolId: protocol.id },
-            { onSuccess: () => onShowPickerChange(false) },
-          )
-        }}
-        excludeIds={protocolIds}
-        isPending={addUsageMutation.isPending}
-      />
-
+      {/* The protocol picker is owned solely by ConsultationModals below so a
+          single dialog instance backs both the empty-state and rail triggers. */}
       <ConsultationModals
         consultationId={id}
         activeUsage={activeUsage}

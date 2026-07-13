@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Render a single protocol picker dialog in the consultation
+
+### Fixed
+
+- `apps/web/src/pages/Consultation/ProtocolPanel.tsx`: the consultation mounted the `ProtocolPickerModal` twice — once directly in `ProtocolPanel` and once inside the `ConsultationModals` container it also renders — both bound to the same `showPicker` state, so clicking "Agregar protocolo" opened two stacked, identical "Seleccionar protocolo" dialogs. Removed the redundant inline mount (its `onSelect`/`excludeIds`/`isPending` wiring was identical to the `ConsultationModals` one), leaving `ConsultationModals` as the single owner so the empty-state button and the right-rail "Agregar" button open the same instance. Added `ProtocolPanel.picker.test.tsx` asserting exactly one picker dialog is in the DOM when opened and none when closed (F4 in `docs/qa/2026-07-13-live-e2e-findings.md`).
+
 ## [2026-07-13] Omit document-type segment when patient has no document type
 
 ### Fixed
