@@ -4,6 +4,14 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Teach tailwind-merge the custom font-size tokens (fix stripped sizes)
+
+### Fixed
+
+- `apps/web/src/lib/utils.ts`: registered the custom font-size tokens (`text-2xs`/`overline`/`caption`/`body-sm`/`body`/`body-lg`/`h3`/`h2`/`h1`/`display`) with `extendTailwindMerge`'s `font-size` class group. tailwind-merge only knows the stock size names, so it classified e.g. `text-overline` as a text-*color* and, in any `cn()`-composed element that also set a real color (`text-success-text`), **stripped the size class** — the element then inherited the body's 16px. This surfaced after the typography migration replaced raw `text-[..px]` (which twMerge parses as sizes) with the custom tokens. `Badge` was the visible symptom (rendered at 16px); the fix restores correct sizes wherever a custom font-size token meets a color class.
+- `apps/web/src/components/ui/Badge.tsx`: the migration had mapped the badge's `text-[11.5px]` onto `text-overline`, a **composite** token that also forces `uppercase`/`mono`/tracking — so badges rendered "ACTIVO" instead of "Activo". Switched to the plain `text-xs` size token (12px, no case change), matching the original look.
+- `apps/web/src/lib/__tests__/utils.test.ts`: new tests asserting `cn()` keeps each custom font-size token alongside a color class, still dedupes conflicting sizes, and preserves the `font-sans`/`font-regular` distinction.
+
 ## [2026-07-13] Migrate app-wide typography to tokens and add a raw-pixel guardrail
 
 ### Changed
