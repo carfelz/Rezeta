@@ -1,5 +1,22 @@
 # Hardening sweep — findings and fix plan
 
+> **STATUS: COMPLETE — 2026-07-12.** Every confirmed work item shipped to `main`. The only
+> remaining items are the three under "Not fixed here (deliberate)". Full suite green on `main`
+> (API 1,308, shared 467, web 1,252), coverage 99.92%.
+>
+> Shipped commits:
+> - Foundation (error codes + this plan): `6a7803d`
+> - WI-A consultation immutability guards + amend retry: `6e24e64`
+> - WI-B order immutability guards: `dce3522`
+> - WI-C schedules cross-tenant location check: `30658a6`
+> - WI-D invoice correctness: `065ce8c`
+> - WI-G protocol version atomicity: `c5a201c`
+> - WI-E appointments advisory lock + error code: `10a123c`
+> - WI-F validation infra (pipe/filter/query schemas): `d5ad483`
+> - WI-H onboarding bounds + error code: `fa10ccb`; order idempotency partial indexes (imm #7): `470abea`
+> - Commission source resolved (billing #2): `ef32069`; follow-up column drop: `b8517a6`
+> - Changelogs: `edc35c7` (wave 1), `5586613` (wave 2)
+
 > Created 2026-07-12. Source: a 5-agent parallel audit (concurrency, tenant isolation,
 > clinical immutability/soft-delete, validation/error-leakage, billing) of the shipped
 > Rezeta API, followed by independent verification of every finding against the code and
