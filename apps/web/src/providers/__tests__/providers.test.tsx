@@ -108,6 +108,45 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() => expect(screen.getByText('withuser')).toBeInTheDocument())
   })
 
+  it('includes the pending signup profile in the single provision call and clears it', async () => {
+    const { useAuthStore } = await import('@/store/auth.store')
+    act(() => {
+      useAuthStore.setState({ _pendingProfile: { fullName: 'Dr. Nueva', specialty: 'Pediatría' } })
+    })
+    mocks.apiPost.mockResolvedValue({
+      id: 'u',
+      tenantId: 't',
+      email: 'doc@test.com',
+      fullName: 'Dr. Nueva',
+      role: 'owner',
+      externalUid: 'fb-uid',
+      specialty: 'Pediatría',
+      licenseNumber: null,
+      tenantSeededAt: null,
+    })
+
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>profilecase</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', {
+        fullName: 'Dr. Nueva',
+        specialty: 'Pediatría',
+      }),
+    )
+    expect(useAuthStore.getState()._pendingProfile).toBeNull()
+  })
+
   it('signs out when provision fails with an Error', async () => {
     mocks.apiPost.mockRejectedValue(new Error('provision failed'))
 

@@ -4,6 +4,16 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Provision the signup profile in a single call (FU3)
+
+### Changed
+
+- `apps/web/src/store/auth.store.ts` + `apps/web/src/providers/AuthProvider.tsx`: `signUp` used to `POST /v1/auth/provision` a second time (with the profile) after `authClient.signUp` had already triggered `AuthProvider`'s empty-body provision — two writes per signup. Now `signUp` stashes the profile in a transient `_pendingProfile` (cleared if `authClient.signUp` throws), and `AuthProvider` consumes it via `_consumePendingProfile()` so the single provision call fired by `onAuthStateChanged` creates the user with its name/specialty. Plain logins provision with an empty body exactly as before (verified live: `POST /v1/auth/provision` → 200, app authenticated). Removes the redundant write flagged as FU3.
+
+### Added
+
+- Tests for the pending-profile flow in `store/__tests__/auth.store.actions.test.ts` (signUp captures the profile, never posts directly, clears on failure; `_consumePendingProfile` is one-shot) and `providers/__tests__/providers.test.tsx` (`AuthProvider` includes the pending profile in the single provision body and clears it).
+
 ## [2026-07-13] Fix the last dead `font-normal` weight in the vendored calendar (FU2/FU4)
 
 ### Fixed
