@@ -147,6 +147,42 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     expect(useAuthStore.getState()._pendingProfile).toBeNull()
   })
 
+  it('provisions with only fullName when the pending profile has no specialty', async () => {
+    const { useAuthStore } = await import('@/store/auth.store')
+    act(() => {
+      useAuthStore.setState({ _pendingProfile: { fullName: 'Dr. Solo' } })
+    })
+    mocks.apiPost.mockResolvedValue({
+      id: 'u',
+      tenantId: 't',
+      email: 'doc@test.com',
+      fullName: 'Dr. Solo',
+      role: 'owner',
+      externalUid: 'fb-uid',
+      specialty: null,
+      licenseNumber: null,
+      tenantSeededAt: null,
+    })
+
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>nospecialty</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', { fullName: 'Dr. Solo' }),
+    )
+    expect(useAuthStore.getState()._pendingProfile).toBeNull()
+  })
+
   it('signs out when provision fails with an Error', async () => {
     mocks.apiPost.mockRejectedValue(new Error('provision failed'))
 
