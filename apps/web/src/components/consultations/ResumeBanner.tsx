@@ -60,7 +60,7 @@ export function ResumeBanner({
               {resumeBannerStrings.startNewButton}
             </Button>
           </div>
-          <p className="text-[11.5px] text-n-400 text-center">
+          <p className="text-overline text-n-400 text-center">
             {resumeBannerStrings.draftRetentionNote}
           </p>
         </div>
@@ -70,12 +70,12 @@ export function ResumeBanner({
         <div className="flex items-center gap-3 mb-3">
           <Avatar initials={initials} size="default" />
           <div className="min-w-0">
-            <div className="text-[13.5px] font-medium text-n-900 truncate">
+            <div className="text-sm font-medium text-n-900 truncate">
               {patientName}
               {patientAge != null && resumeBannerStrings.patientAge(patientAge)}
             </div>
             {currentStep && (
-              <div className="text-[11.5px] text-n-500 mt-px">
+              <div className="text-overline text-n-500 mt-px">
                 {resumeBannerStrings.protocolStep(
                   usage.protocolTitle,
                   currentStep.number,
@@ -102,7 +102,7 @@ export function ResumeBanner({
         )}
 
         {(lastEditField || lastEditTime) && (
-          <div className="flex items-center justify-between text-[11.5px] text-n-500">
+          <div className="flex items-center justify-between text-overline text-n-500">
             {lastEditField && (
               <span>
                 {resumeBannerStrings.lastEditLabel}{' '}

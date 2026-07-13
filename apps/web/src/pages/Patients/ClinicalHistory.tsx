@@ -17,11 +17,11 @@ export function ClinicalHistory({
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-[13px] font-sans font-semibold text-n-800 uppercase tracking-[0.06em]">
+          <h3 className="text-sm font-sans font-semibold text-n-800 uppercase tracking-[0.06em]">
             Historia clínica
           </h3>
           {!isLoading && (
-            <span className="text-[11px] font-mono text-n-400 border border-n-200 rounded px-2 py-1">
+            <span className="text-overline font-mono text-n-400 border border-n-200 rounded px-2 py-1">
               {consultations.length}
             </span>
           )}
@@ -35,19 +35,19 @@ export function ClinicalHistory({
             )
           }
         >
-          <i className="ph ph-plus text-[12px]" />
+          <i className="ph ph-plus text-xs" />
           Nueva consulta
         </TextLink>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 py-6 text-[12.5px] text-n-400 justify-center">
+        <div className="flex items-center gap-2 py-6 text-xs text-n-400 justify-center">
           <Spinner size="sm" decorative /> Cargando…
         </div>
       ) : consultations.length === 0 ? (
         <div className="flex flex-col items-center py-8 border border-dashed border-n-200 rounded-md">
-          <i className="ph ph-notepad text-[28px] text-n-300 mb-2" />
-          <p className="text-[13px] text-n-400">No hay consultas registradas</p>
+          <i className="ph ph-notepad text-h2 text-n-300 mb-2" />
+          <p className="text-sm text-n-400">No hay consultas registradas</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

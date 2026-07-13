@@ -26,20 +26,20 @@ export function KpiCard({
 
   return (
     <div className="bg-n-0 border border-n-200 rounded-md px-5 py-[18px]">
-      <div className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-n-500 mb-[10px]">
+      <div className="font-mono text-2xs tracking-[0.1em] uppercase text-n-500 mb-[10px]">
         {label}
       </div>
       {loading ? (
         <div className="h-10 w-[96px] bg-n-100 rounded animate-pulse" />
       ) : (
-        <div className="font-serif font-medium text-[34px] text-n-900 leading-none tracking-[-0.015em]">
+        <div className="font-serif font-medium text-h1 text-n-900 leading-none tracking-[-0.015em]">
           {value}
           {unit && (
-            <span className="font-sans font-medium text-[13px] text-n-400 ml-1">{unit}</span>
+            <span className="font-sans font-medium text-sm text-n-400 ml-1">{unit}</span>
           )}
         </div>
       )}
-      <div className={`font-mono text-[11px] mt-2 flex items-center gap-1 ${deltaColor}`}>
+      <div className={`font-mono text-overline mt-2 flex items-center gap-1 ${deltaColor}`}>
         <i className={`ph ${deltaIcon}`} />
         {delta}
       </div>

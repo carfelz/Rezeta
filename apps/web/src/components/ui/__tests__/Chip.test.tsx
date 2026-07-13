@@ -42,9 +42,9 @@ describe('Chip', () => {
   })
 
   it.each([
-    ['xs', 'text-[9.5px]'],
-    ['sm', 'text-[10px]'],
-    ['md', 'text-[11px]'],
+    ['xs', 'text-2xs'],
+    ['sm', 'text-2xs'],
+    ['md', 'text-overline'],
   ] as const)('size=%s applies %s class', (size, expected) => {
     const { container } = render(<Chip size={size}>x</Chip>)
     expect(container.firstChild).toHaveClass(expected)

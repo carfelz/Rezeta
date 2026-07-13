@@ -22,7 +22,7 @@ const Group = (): JSX.Element => {
     <div className="flex flex-col gap-2 max-w-md">
       {REASONS.map((r) => (
         <RadioCard key={r.value} selected={v === r.value} onClick={() => setV(r.value)}>
-          <span className="text-[13px] text-n-800">{r.label}</span>
+          <span className="text-sm text-n-800">{r.label}</span>
         </RadioCard>
       ))}
     </div>
@@ -34,14 +34,14 @@ export const Group_: Story = { name: 'Reason group', render: () => <Group /> }
 export const Default: Story = {
   args: {
     selected: false,
-    children: <span className="text-[13px] text-n-800">Default option</span>,
+    children: <span className="text-sm text-n-800">Default option</span>,
   },
 }
 
 export const Selected: Story = {
   args: {
     selected: true,
-    children: <span className="text-[13px] text-n-800">Selected option</span>,
+    children: <span className="text-sm text-n-800">Selected option</span>,
   },
 }
 
@@ -49,6 +49,6 @@ export const Disabled: Story = {
   args: {
     selected: false,
     disabled: true,
-    children: <span className="text-[13px] text-n-500">Disabled option</span>,
+    children: <span className="text-sm text-n-500">Disabled option</span>,
   },
 }

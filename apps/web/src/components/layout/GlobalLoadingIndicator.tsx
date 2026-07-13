@@ -23,7 +23,7 @@ export function GlobalLoadingIndicator(): JSX.Element {
       {visible ? (
         <div className="flex items-center gap-2 bg-n-0 border border-n-200 rounded-md shadow-floating px-3 py-2">
           <Spinner size="sm" className="text-p-500" decorative />
-          <span className="text-[11.5px] font-mono text-n-600">{globalLoadingStrings.loadingLabel}</span>
+          <span className="text-overline font-mono text-n-600">{globalLoadingStrings.loadingLabel}</span>
         </div>
       ) : null}
     </div>

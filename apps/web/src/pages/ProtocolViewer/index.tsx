@@ -36,8 +36,8 @@ export function ProtocolViewer(): JSX.Element {
   if (error || !protocol) {
     return (
       <div className="flex flex-col items-center justify-center h-[256px] gap-4">
-        <p className="text-[14px] font-sans text-n-600">{protocolViewerStrings.notFound}</p>
-        <Link to="/protocolos" className="text-[13px] font-sans text-p-500 hover:text-p-700">
+        <p className="text-base font-sans text-n-600">{protocolViewerStrings.notFound}</p>
+        <Link to="/protocolos" className="text-sm font-sans text-p-500 hover:text-p-700">
           ← {protocolViewerStrings.back}
         </Link>
       </div>
@@ -59,9 +59,9 @@ export function ProtocolViewer(): JSX.Element {
       <div className="flex items-center justify-between mb-6">
         <Link
           to="/protocolos"
-          className="flex items-center gap-2 text-[12.5px] font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
+          className="flex items-center gap-2 text-xs font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-arrow-left text-[14px]" />
+          <i className="ph ph-arrow-left text-base" />
           {protocolViewerStrings.back}
         </Link>
         <Button
@@ -71,7 +71,7 @@ export function ProtocolViewer(): JSX.Element {
             void navigate(`/protocolos/${id}/edit`)
           }}
         >
-          <i className="ph ph-pencil-simple mr-2 text-[14px]" />
+          <i className="ph ph-pencil-simple mr-2 text-base" />
           {protocolViewerStrings.editButton}
         </Button>
       </div>
@@ -90,8 +90,8 @@ export function ProtocolViewer(): JSX.Element {
       >
         {blocks.length === 0 ? (
           <div className="flex flex-col items-center py-8 gap-2 text-center">
-            <i className="ph ph-file-text text-[32px] text-n-300" />
-            <p className="text-[13px] font-sans text-n-400">{protocolViewerStrings.noContent}</p>
+            <i className="ph ph-file-text text-h2 text-n-300" />
+            <p className="text-sm font-sans text-n-400">{protocolViewerStrings.noContent}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3 mt-4">

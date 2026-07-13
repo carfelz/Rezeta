@@ -75,28 +75,28 @@ export function Templates(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {templatesStrings.listCategory}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Actualizado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
               {templates!.map((t) => (
                 <tr key={t.id} className="hover:bg-n-25">
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-semibold text-n-800">
                     {t.name}
                     {t.isSeeded && (
-                      <span className="ml-2 text-[11px] font-mono text-n-400 uppercase tracking-[0.06em]">
+                      <span className="ml-2 text-overline font-mono text-n-400 uppercase tracking-[0.06em]">
                         {templatesStrings.listSeeded}
                       </span>
                     )}
@@ -110,21 +110,21 @@ export function Templates(): JSX.Element {
                       <span className="text-n-700">{t.category.name}</span>
                     </span>
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     {t.isSeeded ? (
                       <Badge variant="draft">{templatesStrings.listSeededBadge}</Badge>
                     ) : (
                       <Badge variant="active">Activa</Badge>
                     )}
                   </td>
-                  <td className="text-[12px] px-4 py-3 border-b border-n-100 font-mono text-n-500">
+                  <td className="text-xs px-4 py-3 border-b border-n-100 font-mono text-n-500">
                     {new Date(t.updatedAt).toLocaleDateString('es-DO', {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
                     })}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="secondary"
@@ -146,7 +146,7 @@ export function Templates(): JSX.Element {
                         onClick={() => handleDelete(t)}
                       >
                         <i
-                          className="ph ph-trash text-[15px]"
+                          className="ph ph-trash text-base"
                           style={{
                             color: t.isSeeded
                               ? 'var(--color-n-300)'

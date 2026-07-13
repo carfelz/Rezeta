@@ -82,6 +82,20 @@ export default [
           message:
             'Throw HTTP exceptions with an ErrorCode object: new XException({ code: ErrorCode.X, message }). Raw string messages bypass the closed error-code enum.',
         },
+        {
+          // Guardrail: no raw pixel/rem font sizes in Tailwind classes. Use a
+          // type-scale token — base UI text is text-sm (13px) / text-xs (12px);
+          // also text-2xs, text-base, text-body-lg, text-h3/h2/h1, text-display.
+          // Raw `text-[13px]`-style values fragmented the scale into 27 sizes.
+          selector: "Literal[value=/text-\\[[0-9.]+(px|rem)\\]/]",
+          message:
+            'Use a font-size token (text-xs/sm/base/body-lg/h3/h2/h1/display), not a raw pixel value. Base UI text is text-sm (13px) / text-xs (12px). See CLAUDE.md > Design System.',
+        },
+        {
+          selector: "TemplateElement[value.raw=/text-\\[[0-9.]+(px|rem)\\]/]",
+          message:
+            'Use a font-size token (text-xs/sm/base/body-lg/h3/h2/h1/display), not a raw pixel value. Base UI text is text-sm (13px) / text-xs (12px). See CLAUDE.md > Design System.',
+        },
       ],
     },
   },

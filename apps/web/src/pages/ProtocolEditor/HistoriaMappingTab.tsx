@@ -82,13 +82,13 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
     <div className="bg-n-0 border border-n-200 rounded-md">
       <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-n-100">
         <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-n-400">
+          <span className="font-mono text-overline uppercase tracking-[0.08em] text-n-400">
             {s.historiaTabLabel}
           </span>
-          <h3 className="font-serif font-medium text-[18px] text-n-900 mt-[2px] mb-1">
+          <h3 className="font-serif font-medium text-h3 text-n-900 mt-[2px] mb-1">
             {s.historiaMapTitle}
           </h3>
-          <p className="text-[13px] text-n-500 max-w-[56ch]">{s.historiaMapDescription}</p>
+          <p className="text-sm text-n-500 max-w-[56ch]">{s.historiaMapDescription}</p>
         </div>
         <Button variant="secondary" onClick={() => onChange({})}>
           <i className="ph ph-arrow-counter-clockwise" />
@@ -99,19 +99,19 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[34%]">
+            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[34%]">
               {s.historiaColBlock}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[8%]">
+            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[8%]">
               {s.historiaColInclude}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[26%]">
+            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[26%]">
               {s.historiaColSection}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[22%]">
+            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[22%]">
               {s.historiaColLabel}
             </th>
-            <th className="text-left font-mono text-[11px] uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[10%]">
+            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[10%]">
               {s.historiaColOrigin}
             </th>
           </tr>
@@ -140,7 +140,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                       >
                         {blockName(block)}
                       </span>
-                      <span className="block font-mono text-[10.5px] text-n-400">
+                      <span className="block font-mono text-2xs text-n-400">
                         {blockTypeCaption(block)}
                       </span>
                     </div>
@@ -167,9 +167,9 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                 </td>
                 <td className="px-4 py-[10px] border-b border-n-100 align-middle">
                   {LOCKED_TYPES.has(block.type) ? (
-                    <span className="text-[13px] text-n-400">{s.historiaLockedPlan}</span>
+                    <span className="text-sm text-n-400">{s.historiaLockedPlan}</span>
                   ) : locked || !included ? (
-                    <span className="text-[13px] text-n-400">{s.historiaNotIncluded}</span>
+                    <span className="text-sm text-n-400">{s.historiaNotIncluded}</span>
                   ) : (
                     <NativeSelect
                       value={sectionValue}
@@ -190,7 +190,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                 </td>
                 <td className="px-4 py-[10px] border-b border-n-100 align-middle">
                   {locked || !included ? (
-                    <span className="text-[13px] text-n-400">—</span>
+                    <span className="text-sm text-n-400">—</span>
                   ) : (
                     <Input
                       value={entry?.label ?? ''}
@@ -201,7 +201,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                 </td>
                 <td className="px-4 py-[10px] border-b border-n-100 align-middle">
                   <span
-                    className={`inline-flex items-center font-mono text-[10px] uppercase tracking-[0.05em] px-[6px] py-[2px] rounded-sm border whitespace-nowrap ${
+                    className={`inline-flex items-center font-mono text-2xs uppercase tracking-[0.05em] px-[6px] py-[2px] rounded-sm border whitespace-nowrap ${
                       isCustom
                         ? 'border-p-100 text-p-500 bg-p-50'
                         : 'border-n-200 text-n-400 bg-n-25'
@@ -216,8 +216,8 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
         </tbody>
       </table>
 
-      <div className="flex items-center gap-2 px-6 py-[14px] text-n-500 text-[12.5px] bg-n-25 border-t border-n-100 rounded-b-md">
-        <i className="ph ph-info text-[14px] text-n-400 shrink-0" />
+      <div className="flex items-center gap-2 px-6 py-[14px] text-n-500 text-xs bg-n-25 border-t border-n-100 rounded-b-md">
+        <i className="ph ph-info text-base text-n-400 shrink-0" />
         {s.historiaFootnote}
       </div>
     </div>

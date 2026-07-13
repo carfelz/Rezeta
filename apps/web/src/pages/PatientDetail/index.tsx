@@ -37,8 +37,8 @@ export function PatientDetail(): JSX.Element {
   if (isError || !patient) {
     return (
       <div className="flex flex-col items-center justify-center h-[256px] gap-4">
-        <p className="text-[14px] font-sans text-n-600">Paciente no encontrado.</p>
-        <Link to="/pacientes" className="text-[13px] font-sans text-p-500 hover:text-p-700">
+        <p className="text-base font-sans text-n-600">Paciente no encontrado.</p>
+        <Link to="/pacientes" className="text-sm font-sans text-p-500 hover:text-p-700">
           ← Volver a pacientes
         </Link>
       </div>

@@ -56,9 +56,9 @@ export function ConfirmDialog({
         />
         <ModalBody>
           {subtitle ? (
-            <p className="text-[14px] font-sans text-n-700 leading-normal">{description}</p>
+            <p className="text-base font-sans text-n-700 leading-normal">{description}</p>
           ) : (
-            <Dialog.Description className="text-[14px] font-sans text-n-700 leading-normal">
+            <Dialog.Description className="text-base font-sans text-n-700 leading-normal">
               {description}
             </Dialog.Description>
           )}

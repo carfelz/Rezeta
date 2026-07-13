@@ -22,9 +22,9 @@ const iconButtonVariants = cva(
         warning: 'text-warning-text hover:opacity-70',
       },
       size: {
-        sm: 'w-6 h-6 [&>i]:text-[12px]',
-        md: 'w-7 h-7 [&>i]:text-[14px]',
-        lg: 'w-8 h-8 [&>i]:text-[16px]',
+        sm: 'w-6 h-6 [&>i]:text-xs',
+        md: 'w-7 h-7 [&>i]:text-base',
+        lg: 'w-8 h-8 [&>i]:text-body-lg',
       },
     },
     defaultVariants: {

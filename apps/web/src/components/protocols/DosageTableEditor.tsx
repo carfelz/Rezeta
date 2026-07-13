@@ -84,13 +84,13 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
 
       <Field label={blockEditorStrings.dosageRowsLabel}>
         <div className="overflow-x-auto rounded-sm border border-n-200">
-          <table className="w-full text-[12px] font-sans">
+          <table className="w-full text-xs font-sans">
             <thead>
               <tr className="bg-n-50 border-b border-n-200">
                 {COLUMNS.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-2 text-left text-[10.5px] font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
                   >
                     {COLUMN_LABELS[col]}
                   </th>

@@ -463,13 +463,13 @@ function DosageRowsEditor({ block, isLocked, parentId, onUpdate }: DosageRowsEdi
     <Field label={templateEditorWidgetStrings.dosageRowsLabel}>
       {rows.length > 0 && (
         <div className="overflow-x-auto rounded-sm border border-n-200 mb-2">
-          <table className="w-full text-[12px] font-sans">
+          <table className="w-full text-xs font-sans">
             <thead>
               <tr className="bg-n-50 border-b border-n-200">
                 {DOSAGE_COLUMNS.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-2 text-left text-[10.5px] font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
                   >
                     {templateEditorWidgetStrings.dosageColumnLabels[col]}
                   </th>
@@ -499,7 +499,7 @@ function DosageRowsEditor({ block, isLocked, parentId, onUpdate }: DosageRowsEdi
                         title={templateEditorWidgetStrings.dosageRemoveRow}
                         onClick={() => removeRow(row.id)}
                       >
-                        <i className="ph ph-x text-[14px]" />
+                        <i className="ph ph-x text-base" />
                       </Button>
                     </td>
                   )}
@@ -705,7 +705,7 @@ function BlockRow({
               title={templateEditorWidgetStrings.moveUp}
               onClick={() => onMove(block.id, 'up', parentId)}
             >
-              <i className="ph ph-caret-up text-[14px]" />
+              <i className="ph ph-caret-up text-base" />
             </Button>
             <Button
               variant="ghost"
@@ -714,7 +714,7 @@ function BlockRow({
               title={templateEditorWidgetStrings.moveDown}
               onClick={() => onMove(block.id, 'down', parentId)}
             >
-              <i className="ph ph-caret-down text-[14px]" />
+              <i className="ph ph-caret-down text-base" />
             </Button>
             <Button
               variant="ghost"
@@ -736,7 +736,7 @@ function BlockRow({
               }}
             >
               <i
-                className="ph ph-trash text-[14px]"
+                className="ph ph-trash text-base"
                 style={{
                   color: isRequired ? 'var(--color-n-300)' : 'var(--color-danger-text)',
                 }}
@@ -1061,7 +1061,7 @@ export function TemplateEditor({
         <h1 className="text-h2 flex-1 m-0">{state.name || templateEditorWidgetStrings.newTitle}</h1>
         {statusLabel && <Badge variant={isLocked ? 'review' : 'draft'}>{statusLabel}</Badge>}
         {state.isDirty && !isLocked && (
-          <span className="text-[12px] text-n-500">{templateEditorWidgetStrings.unsaved}</span>
+          <span className="text-xs text-n-500">{templateEditorWidgetStrings.unsaved}</span>
         )}
         {selectedCategory && (
           <Badge
@@ -1102,7 +1102,7 @@ export function TemplateEditor({
           >
             {templateEditorWidgetStrings.lockedBanner}
             {blockingTypeIds.length > 0 && (
-              <div className="mt-1 text-[12px] text-warning-text">
+              <div className="mt-1 text-xs text-warning-text">
                 {templateEditorWidgetStrings.lockedTypesPrefix}{' '}
                 {blockingTypeIds.map((id) => (
                   <a

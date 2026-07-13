@@ -171,7 +171,7 @@ export function PatientModal({
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 py-5 border-b border-n-100">
                 {patient.allergies.length > 0 && (
                   <div>
-                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
+                    <div className="text-2xs font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                       {patientModalStrings.allergiesLabel}
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -185,7 +185,7 @@ export function PatientModal({
                 )}
                 {patient.chronicConditions.length > 0 && (
                   <div>
-                    <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
+                    <div className="text-2xs font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
                       {patientModalStrings.chronicConditionsLabel}
                     </div>
                     <div className="flex flex-wrap gap-1">

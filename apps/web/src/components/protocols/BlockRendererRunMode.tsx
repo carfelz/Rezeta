@@ -62,7 +62,7 @@ function StepsRunMode({
             <div className="flex gap-3">
               <span
                 className={cn(
-                  'font-mono text-[12px] shrink-0 mt-1 w-5 text-right',
+                  'font-mono text-xs shrink-0 mt-1 w-5 text-right',
                   state !== 'pending' ? 'text-n-400' : 'text-p-700',
                 )}
               >
@@ -71,7 +71,7 @@ function StepsRunMode({
               <div className="flex-1">
                 <div
                   className={cn(
-                    'text-[13.5px] font-sans font-semibold text-n-800',
+                    'text-sm font-sans font-semibold text-n-800',
                     state === 'skipped' && 'line-through text-n-400',
                     state === 'completed' && 'text-n-600',
                   )}
@@ -79,18 +79,18 @@ function StepsRunMode({
                   {step.title}
                 </div>
                 {step.detail && (
-                  <div className="text-[12.5px] font-sans text-n-500 mt-1 leading-[1.4]">
+                  <div className="text-xs font-sans text-n-500 mt-1 leading-[1.4]">
                     {step.detail}
                   </div>
                 )}
               </div>
               {state === 'completed' && (
-                <span className="shrink-0 text-[11px] font-mono text-success-text bg-success-bg border border-success-border px-2 py-1 rounded-sm h-fit mt-1">
+                <span className="shrink-0 text-overline font-mono text-success-text bg-success-bg border border-success-border px-2 py-1 rounded-sm h-fit mt-1">
                   {blockRendererRunModeStrings.completedStep}
                 </span>
               )}
               {state === 'skipped' && (
-                <span className="shrink-0 text-[11px] font-mono text-n-400 bg-n-50 border border-n-200 px-2 py-1 rounded-sm h-fit mt-1">
+                <span className="shrink-0 text-overline font-mono text-n-400 bg-n-50 border border-n-200 px-2 py-1 rounded-sm h-fit mt-1">
                   {blockRendererRunModeStrings.skippedStep}
                 </span>
               )}
@@ -170,14 +170,14 @@ function ChecklistRunMode({
             />
             <span
               className={cn(
-                'text-[13px] font-sans text-n-700',
+                'text-sm font-sans text-n-700',
                 done && 'line-through text-n-400',
                 item.critical && !done && 'font-semibold text-n-800',
               )}
             >
               {item.text}
               {item.critical && (
-                <span className="ml-2 text-[10.5px] font-mono text-danger-text uppercase">
+                <span className="ml-2 text-2xs font-mono text-danger-text uppercase">
                   {blockRendererRunModeStrings.criticalItem}
                 </span>
               )}
@@ -213,7 +213,7 @@ function DecisionRunMode({
   const selectedId = branches.find((b) => checkedState[b.id])?.id ?? null
   return (
     <div>
-      <div className="text-[13px] font-sans font-semibold text-n-800 mb-3 pb-3 border-b border-n-100">
+      <div className="text-sm font-sans font-semibold text-n-800 mb-3 pb-3 border-b border-n-100">
         {condition}
       </div>
       <div className="flex flex-col gap-2">
@@ -247,7 +247,7 @@ function DecisionRunMode({
               >
                 <span
                   className={cn(
-                    'text-[11.5px] font-mono font-medium px-2 py-1 rounded-sm shrink-0 h-fit mt-1',
+                    'text-overline font-mono font-medium px-2 py-1 rounded-sm shrink-0 h-fit mt-1',
                     selected
                       ? 'bg-p-500 text-n-0 border border-p-500'
                       : 'bg-p-50 text-p-700 border border-p-100',
@@ -255,7 +255,7 @@ function DecisionRunMode({
                 >
                   {branch.label}
                 </span>
-                <div className="text-[13px] leading-[1.45] flex-1">{branch.action}</div>
+                <div className="text-sm leading-[1.45] flex-1">{branch.action}</div>
               </SelectableCard>
               {selected && branch.linked_protocol_id && onLaunchLinkedProtocol && (
                 <TextLink
@@ -264,7 +264,7 @@ function DecisionRunMode({
                   onClick={() => onLaunchLinkedProtocol(branch.linked_protocol_id!, blockId)}
                   className="ml-3"
                 >
-                  <i className="ph ph-arrow-square-out text-[14px]" />
+                  <i className="ph ph-arrow-square-out text-base" />
                   {blockRendererRunModeStrings.openLinkedProtocol}
                 </TextLink>
               )}
@@ -306,10 +306,10 @@ function ImagingOrderRunMode({
           className="flex items-start justify-between gap-3 px-3 py-3 border border-n-200 rounded bg-n-0"
         >
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-sans font-semibold text-n-800">{order.study_type}</div>
-            <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
+            <div className="text-sm font-sans font-semibold text-n-800">{order.study_type}</div>
+            <div className="text-xs font-sans text-n-500 mt-1">{order.indication}</div>
             {order.urgency !== 'routine' && (
-              <span className="text-[11px] font-mono uppercase text-warning-text bg-warning-bg border border-warning-border px-2 py-1 rounded-sm mt-1 inline-block">
+              <span className="text-overline font-mono uppercase text-warning-text bg-warning-bg border border-warning-border px-2 py-1 rounded-sm mt-1 inline-block">
                 {order.urgency}
               </span>
             )}
@@ -380,16 +380,16 @@ function DosageTableRunMode({
             className="flex items-start justify-between gap-3 px-3 py-3 border border-n-200 rounded bg-n-0"
           >
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-sans font-semibold text-n-800">{row.drug}</div>
-              <div className="text-[12px] font-mono text-n-500 mt-1">
+              <div className="text-sm font-sans font-semibold text-n-800">{row.drug}</div>
+              <div className="text-xs font-mono text-n-500 mt-1">
                 {row.dose} · {row.route} · {row.frequency}
               </div>
               {row.notes && (
-                <div className="text-[12px] font-sans text-n-500 mt-1 italic">{row.notes}</div>
+                <div className="text-xs font-sans text-n-500 mt-1 italic">{row.notes}</div>
               )}
             </div>
             {alreadyQueued ? (
-              <span className="shrink-0 text-[12px] font-mono text-success-text bg-success-bg border border-success-border px-3 py-1 rounded-sm">
+              <span className="shrink-0 text-xs font-mono text-success-text bg-success-bg border border-success-border px-3 py-1 rounded-sm">
                 {blockRendererRunModeStrings.alreadyQueued}
               </span>
             ) : (
@@ -662,10 +662,10 @@ function LabOrderRunMode({
           className="flex items-start justify-between gap-3 px-3 py-3 border border-n-200 rounded bg-n-0"
         >
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-sans font-semibold text-n-800">{order.test_name}</div>
-            <div className="text-[12px] font-sans text-n-500 mt-1">{order.indication}</div>
+            <div className="text-sm font-sans font-semibold text-n-800">{order.test_name}</div>
+            <div className="text-xs font-sans text-n-500 mt-1">{order.indication}</div>
             {order.urgency !== 'routine' && (
-              <span className="text-[11px] font-mono uppercase text-warning-text bg-warning-bg border border-warning-border px-2 py-1 rounded-sm mt-1 inline-block">
+              <span className="text-overline font-mono uppercase text-warning-text bg-warning-bg border border-warning-border px-2 py-1 rounded-sm mt-1 inline-block">
                 {order.urgency}
               </span>
             )}
@@ -745,7 +745,7 @@ export function BlockRendererRunMode({
           title={blockRendererRunModeStrings.textType}
           nested={nested}
         >
-          <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
+          <p className="text-sm font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
             {b.content}
           </p>
         </ProtocolBlock>

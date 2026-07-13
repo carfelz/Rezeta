@@ -42,7 +42,7 @@ describe('Callout', () => {
   it('renders without icon when not provided', () => {
     const { container } = render(<Callout>No icon</Callout>)
     // icon span is conditionally rendered
-    const iconSpan = container.querySelector('.text-\\[18px\\]')
+    const iconSpan = container.querySelector('.text-h3')
     expect(iconSpan).not.toBeInTheDocument()
   })
 
@@ -57,7 +57,7 @@ describe('Callout', () => {
         Content
       </Callout>,
     )
-    const iconSpan = container.querySelector('.text-\\[13px\\]')
+    const iconSpan = container.querySelector('.text-sm')
     expect(iconSpan).toBeInTheDocument()
   })
 
@@ -67,7 +67,7 @@ describe('Callout', () => {
         Content
       </Callout>,
     )
-    const iconSpan = container.querySelector('.text-\\[18px\\]')
+    const iconSpan = container.querySelector('.text-h3')
     expect(iconSpan).toBeInTheDocument()
   })
 })

@@ -20,7 +20,7 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
       }}
     >
       {sections.length === 0 ? (
-        <p className="text-[12px] font-sans text-n-400 italic px-2 py-3">
+        <p className="text-xs font-sans text-n-400 italic px-2 py-3">
           {protocolEditorStrings.tocEmptySections}
         </p>
       ) : (
@@ -32,7 +32,7 @@ export function EditorTOC({ sections, onSectionClick }: EditorTOCProps): JSX.Ele
             onClick={() => onSectionClick(section.id)}
             className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-[3px]"
           >
-            <span className="font-mono text-[10.5px] text-n-400 min-w-[18px] shrink-0">
+            <span className="font-mono text-2xs text-n-400 min-w-[18px] shrink-0">
               {idx + 1}
             </span>
             <span className="truncate">

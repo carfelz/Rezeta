@@ -137,6 +137,13 @@ const config: Config = {
       // Prefer the semantic names in new code; the stock names stay as a
       // safety net so a stray class never renders at the inherited size again.
       // Per-step fontWeight/fontFamily live in the .text-* CSS classes.
+      //
+      // The numeric names (2xs/xs/sm/base) are the canonical UI sizes — `sm`
+      // (13px) is the base body size and `xs` (12px) the small size, per the
+      // design-system rule in CLAUDE.md. They intentionally REDEFINE Tailwind's
+      // stock `xs`/`sm`/`base` (12/14/16) to the values this app actually uses
+      // (12/13/14), so raw `text-[13px]`-style pixel classes migrate onto them.
+      // The semantic names (body-lg/h3/h2/h1/display) carry the larger steps.
       fontSize: {
         display: ['56px', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
         h1: ['40px', { lineHeight: '1.10', letterSpacing: '-0.015em' }],
@@ -147,6 +154,11 @@ const config: Config = {
         'body-sm': ['13px', { lineHeight: '1.50' }],
         caption: ['12px', { lineHeight: '1.40' }],
         overline: ['11px', { lineHeight: '1.40', letterSpacing: '0.10em' }],
+        // Canonical UI sizes (redefine Tailwind stock; add the 10px step).
+        '2xs': ['10px', { lineHeight: '1.40' }],
+        xs: ['12px', { lineHeight: '1.40' }],
+        sm: ['13px', { lineHeight: '1.50' }],
+        base: ['14px', { lineHeight: '1.55' }],
       },
       // ── Breakpoints ────────────────────────────────────────────────────────
       // EXTENDS Tailwind's defaults so `sm:` (640) / `md:` (768) / `2xl:` (1536)

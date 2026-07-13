@@ -34,42 +34,42 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
         }
       }}
     >
-      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+      <td className="text-sm px-4 py-3 border-b border-n-100">
         <div className="flex items-center gap-2">
-          <div className="w-[30px] h-[30px] rounded-full bg-p-50 text-p-700 text-[11px] font-semibold flex items-center justify-center shrink-0">
+          <div className="w-[30px] h-[30px] rounded-full bg-p-50 text-p-700 text-overline font-semibold flex items-center justify-center shrink-0">
             {initials}
           </div>
           <div>
             <div className="font-semibold text-n-800">{name}</div>
-            {patient.phone && <div className="text-[12px] text-n-500">{patient.phone}</div>}
+            {patient.phone && <div className="text-xs text-n-500">{patient.phone}</div>}
           </div>
         </div>
       </td>
-      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+      <td className="text-sm px-4 py-3 border-b border-n-100">
         {patient.documentNumber ? (
           <div className="flex flex-col leading-tight">
-            <span className="font-mono text-[12px] text-n-600">{patient.documentNumber}</span>
+            <span className="font-mono text-xs text-n-600">{patient.documentNumber}</span>
             {(() => {
               const docType = resolveDocumentType(patient.documentType, patient.documentNumber)
               if (!docType) return null
               return (
-                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-n-400 mt-0.5">
+                <span className="font-mono text-2xs uppercase tracking-[0.08em] text-n-400 mt-0.5">
                   {DOC_LABELS_UPPER[docType]}
                 </span>
               )
             })()}
           </div>
         ) : (
-          <span className="font-mono text-[12px] text-n-600">—</span>
+          <span className="font-mono text-xs text-n-600">—</span>
         )}
       </td>
-      <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-600">
+      <td className="text-sm px-4 py-3 border-b border-n-100 text-n-600">
         {formatAge(patient.dateOfBirth)}
       </td>
-      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+      <td className="text-sm px-4 py-3 border-b border-n-100">
         <Badge variant="active">{patientRowStrings.statusActive}</Badge>
       </td>
-      <td className="text-[13px] px-4 py-3 border-b border-n-100">
+      <td className="text-sm px-4 py-3 border-b border-n-100">
         <Row gap={1} justify="end">
           <IconButton
             icon="ph ph-eye"

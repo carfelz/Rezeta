@@ -19,7 +19,7 @@ export function Onboarding(): JSX.Element {
     return (
       <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
         <div className="w-full max-w-[560px]">
-          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6">
+          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mb-6">
             R
           </div>
           <h1 className="text-h1 mb-4">
@@ -44,7 +44,7 @@ export function Onboarding(): JSX.Element {
           <div className="text-center mt-4">
             <Button
               variant="ghost"
-              className="text-n-600 text-[13px]"
+              className="text-n-600 text-sm"
               onClick={() => void navigate('/bienvenido/personalizar')}
             >
               {onboardingStrings.customizeLink}
@@ -58,7 +58,7 @@ export function Onboarding(): JSX.Element {
   return (
     <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
       <div className="w-full max-w-[560px] text-center">
-        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mb-6 mx-auto">
+        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mb-6 mx-auto">
           R
         </div>
         <Spinner size="lg" className="text-p-500 mb-4 block" decorative />

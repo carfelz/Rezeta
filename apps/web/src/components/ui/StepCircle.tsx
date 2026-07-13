@@ -17,9 +17,9 @@ const stepCircleVariants = cva(
         pending: 'bg-n-0 border-n-300 hover:border-p-500 text-n-400',
       },
       size: {
-        sm: 'w-5 h-5 [&>i]:text-[10px] [&>span]:text-[9px]',
-        md: 'w-6 h-6 [&>i]:text-[12px] [&>span]:text-[10px]',
-        lg: 'w-7 h-7 [&>i]:text-[14px] [&>span]:text-[11px]',
+        sm: 'w-5 h-5 [&>i]:text-2xs [&>span]:text-2xs',
+        md: 'w-6 h-6 [&>i]:text-xs [&>span]:text-2xs',
+        lg: 'w-7 h-7 [&>i]:text-base [&>span]:text-overline',
       },
     },
     defaultVariants: {

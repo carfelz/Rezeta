@@ -64,11 +64,11 @@ export function RecordDocument({
 
   if (!record) {
     if (consultationStatus === 'open') {
-      return <p className="text-[13px] text-n-500 p-5">{s.historiaOnlySigned}</p>
+      return <p className="text-sm text-n-500 p-5">{s.historiaOnlySigned}</p>
     }
     return (
       <div className="flex flex-col items-center justify-center h-[200px] gap-3">
-        <p className="text-[13px] text-n-500">{s.historiaChipNone}</p>
+        <p className="text-sm text-n-500">{s.historiaChipNone}</p>
         <Button variant="secondary" size="sm" onClick={() => ensure.mutate(consultationId)}>
           {s.historiaGenerate}
         </Button>
@@ -122,7 +122,7 @@ export function RecordDocument({
     <div>
       {isViewingOlder ? (
         <div className="flex items-center gap-2 px-5 py-2 bg-n-50 border-b border-n-200">
-          <span className="text-[12px] font-medium text-n-500">{s.olderVersionNotice}</span>
+          <span className="text-xs font-medium text-n-500">{s.olderVersionNotice}</span>
           <div className="ml-auto flex gap-2">
             <Button
               variant="secondary"
@@ -135,7 +135,7 @@ export function RecordDocument({
         </div>
       ) : isDraft ? (
         <div className="flex items-center gap-2 px-5 py-2 bg-warning-bg border-b border-warning-border">
-          <span className="text-[12px] font-medium text-warning-text">{s.historiaDraftBar}</span>
+          <span className="text-xs font-medium text-warning-text">{s.historiaDraftBar}</span>
           <div className="ml-auto flex gap-2">
             <Button variant="ghost" size="sm" onClick={confirmRegenerate}>
               {s.historiaRegenerate}
@@ -171,7 +171,7 @@ export function RecordDocument({
         </div>
       ) : (
         <div className="flex items-center gap-2 px-5 py-2 bg-success-bg border-b border-success-border">
-          <span className="text-[12px] font-medium text-success-text">{s.historiaSignedBar}</span>
+          <span className="text-xs font-medium text-success-text">{s.historiaSignedBar}</span>
           <div className="ml-auto flex gap-2">
             {consultationStatus === 'amended' && (
               <Button variant="ghost" size="sm" onClick={confirmRegenerateAmended}>
@@ -225,7 +225,7 @@ export function RecordDocument({
                 {section.title}
               </Overline>
               {section.source === 'edited' && (
-                <span className="font-mono text-[9px] uppercase px-1 rounded-sm bg-p-50 border border-p-100 text-p-500">
+                <span className="font-mono text-2xs uppercase px-1 rounded-sm bg-p-50 border border-p-100 text-p-500">
                   {s.historiaEditedFlag}
                 </span>
               )}
@@ -239,7 +239,7 @@ export function RecordDocument({
                 }
               />
             ) : (
-              <p className="text-[13px] text-n-600 whitespace-pre-line m-0">{section.content}</p>
+              <p className="text-sm text-n-600 whitespace-pre-line m-0">{section.content}</p>
             )}
           </div>
         ))}

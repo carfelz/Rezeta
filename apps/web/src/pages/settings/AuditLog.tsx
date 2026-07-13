@@ -112,7 +112,7 @@ function CategoryBadge({ category }: { category: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-[3px] rounded-sm text-[11.5px] font-medium ${cls}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-[3px] rounded-sm text-overline font-medium ${cls}`}
     >
       <span className="w-[5px] h-[5px] rounded-full bg-current opacity-70 shrink-0" />
       {label}
@@ -125,8 +125,8 @@ function CategoryBadge({ category }: { category: string }) {
 function StatusDot({ status }: { status: string }) {
   if (status === 'failed') {
     return (
-      <span className="inline-flex items-center gap-1 text-warning-text text-[12px]">
-        <i className="ph ph-warning text-[13px]" />
+      <span className="inline-flex items-center gap-1 text-warning-text text-xs">
+        <i className="ph ph-warning text-sm" />
         {auditLogStrings.statusFailed}
       </span>
     )
@@ -157,10 +157,10 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
         {/* header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-n-200 shrink-0">
           <div>
-            <p className="text-[16px] font-serif font-medium text-n-900">
+            <p className="text-body-lg font-serif font-medium text-n-900">
               {ACTION_LABELS[item.action] ?? item.action}
             </p>
-            <p className="text-[12px] font-mono text-n-500 mt-0.5">{formatTs(item.createdAt)}</p>
+            <p className="text-xs font-mono text-n-500 mt-0.5">{formatTs(item.createdAt)}</p>
           </div>
           <IconButton
             icon="ph ph-x"
@@ -177,11 +177,11 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           <div className="flex items-center gap-3">
             <CategoryBadge category={item.category} />
             {item.status === 'failed' && (
-              <span className="inline-flex items-center gap-1 text-warning-text text-[12px]">
+              <span className="inline-flex items-center gap-1 text-warning-text text-xs">
                 <i className="ph ph-warning" />
                 {auditLogStrings.statusFailed}
                 {item.errorCode && (
-                  <span className="font-mono text-[11px] ml-1 text-n-500">{item.errorCode}</span>
+                  <span className="font-mono text-overline ml-1 text-n-500">{item.errorCode}</span>
                 )}
               </span>
             )}
@@ -190,9 +190,9 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {/* actor */}
           <section>
             <p className="text-overline mb-2">{auditLogStrings.drawerActorSection}</p>
-            <p className="text-[13px] text-n-800 font-medium">{actorLabel}</p>
+            <p className="text-sm text-n-800 font-medium">{actorLabel}</p>
             {item.ipAddress && (
-              <p className="text-[12px] font-mono text-n-500 mt-0.5">{item.ipAddress}</p>
+              <p className="text-xs font-mono text-n-500 mt-0.5">{item.ipAddress}</p>
             )}
           </section>
 
@@ -200,10 +200,10 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {item.entityType && (
             <section>
               <p className="text-overline mb-2">{auditLogStrings.drawerEntitySection}</p>
-              <p className="text-[13px] text-n-700">
+              <p className="text-sm text-n-700">
                 <span className="font-medium">{item.entityType}</span>
                 {item.entityId && (
-                  <span className="font-mono text-n-500 ml-2 text-[11px]">{item.entityId}</span>
+                  <span className="font-mono text-n-500 ml-2 text-overline">{item.entityId}</span>
                 )}
               </p>
             </section>
@@ -216,8 +216,8 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 {Object.entries(item.changes).map(([field, diff]) => (
                   <div key={field} className="px-3 py-2 border-b border-n-100 last:border-0">
-                    <p className="text-[11px] font-mono text-n-500 mb-1">{field}</p>
-                    <div className="flex items-start gap-2 text-[12px]">
+                    <p className="text-overline font-mono text-n-500 mb-1">{field}</p>
+                    <div className="flex items-start gap-2 text-xs">
                       <span className="text-danger-text line-through break-all">
                         {renderValue(diff.before)}
                       </span>
@@ -237,10 +237,10 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 {Object.entries(item.metadata).map(([k, v]) => (
                   <div key={k} className="flex gap-3 px-3 py-2 border-b border-n-100 last:border-0">
-                    <span className="text-[11px] font-mono text-n-500 shrink-0 w-[120px] truncate">
+                    <span className="text-overline font-mono text-n-500 shrink-0 w-[120px] truncate">
                       {k}
                     </span>
-                    <span className="text-[12px] text-n-700 break-all">{String(v)}</span>
+                    <span className="text-xs text-n-700 break-all">{String(v)}</span>
                   </div>
                 ))}
               </div>
@@ -251,7 +251,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
           {item.requestId && (
             <section>
               <p className="text-overline mb-2">{auditLogStrings.drawerRequestIdSection}</p>
-              <p className="text-[11px] font-mono text-n-500 break-all">{item.requestId}</p>
+              <p className="text-overline font-mono text-n-500 break-all">{item.requestId}</p>
             </section>
           )}
         </div>
@@ -283,7 +283,7 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 mb-5">
       <div className="flex items-center gap-2">
-        <label className="text-[11.5px] font-medium text-n-600 shrink-0">
+        <label className="text-overline font-medium text-n-600 shrink-0">
           {auditLogStrings.filterFrom}
         </label>
         <Input
@@ -293,7 +293,7 @@ function FiltersBar({ filters, onChange }: FiltersBarProps) {
         />
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-[11.5px] font-medium text-n-600 shrink-0">
+        <label className="text-overline font-medium text-n-600 shrink-0">
           {auditLogStrings.filterTo}
         </label>
         <Input type="date" value={filters.dateTo} onChange={(e) => set('dateTo', e.target.value)} />
@@ -332,8 +332,8 @@ function PlanBanner({ plan }: { plan: string }) {
   const days = plan === 'free' ? 30 : 365
   return (
     <div className="mb-5 px-4 py-3 bg-info-bg border border-info-border rounded-sm flex items-center gap-3">
-      <i className="ph ph-info text-info-text text-[16px] shrink-0" />
-      <p className="text-[13px] text-info-text">
+      <i className="ph ph-info text-info-text text-body-lg shrink-0" />
+      <p className="text-sm text-info-text">
         {auditLogStrings.planBannerDays(days)}{' '}
         <span className="font-medium">{auditLogStrings.planBannerUpgrade}</span>
       </p>
@@ -472,7 +472,7 @@ export function AuditLog(): JSX.Element {
                   ].map((col) => (
                     <th
                       key={col}
-                      className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"
+                      className="text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"
                     >
                       {col}
                     </th>
@@ -500,17 +500,17 @@ export function AuditLog(): JSX.Element {
                       {isSelected && (
                         <td className="absolute left-0 top-[6px] bottom-[6px] w-[2px] bg-p-500 rounded-sm p-0" />
                       )}
-                      <td className="px-4 py-3 font-mono text-[12px] text-n-600 whitespace-nowrap">
+                      <td className="px-4 py-3 font-mono text-xs text-n-600 whitespace-nowrap">
                         {formatTs(item.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-n-700">{actorLabel}</td>
+                      <td className="px-4 py-3 text-sm text-n-700">{actorLabel}</td>
                       <td className="px-4 py-3">
                         <CategoryBadge category={item.category} />
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-n-700">
+                      <td className="px-4 py-3 text-sm text-n-700">
                         {ACTION_LABELS[item.action] ?? item.action}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-n-600">
+                      <td className="px-4 py-3 text-sm text-n-600">
                         {item.entityType ? (
                           <span>
                             {typeof item.metadata?.entityName === 'string' ? (
@@ -523,7 +523,7 @@ export function AuditLog(): JSX.Element {
                                   {ENTITY_TYPE_LABELS[item.entityType] ?? item.entityType}
                                 </span>
                                 {item.entityId && (
-                                  <span className="font-mono text-[11px] text-n-400 ml-1.5">
+                                  <span className="font-mono text-overline text-n-400 ml-1.5">
                                     {item.entityId.slice(0, 8)}…
                                   </span>
                                 )}
@@ -546,7 +546,7 @@ export function AuditLog(): JSX.Element {
 
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
-            <p className="text-[12px] text-n-500">
+            <p className="text-xs text-n-500">
               {auditLogStrings.recordCount(data!.data.length)}
             </p>
             <div className="flex gap-2">

@@ -147,7 +147,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             {!isEdit && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[12.5px] font-medium text-n-700">
+                  <label className="text-xs font-medium text-n-700">
                     {billingStrings.fieldPatient} <span className="text-danger-solid">*</span>
                   </label>
                   <Select
@@ -170,7 +170,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[12.5px] font-medium text-n-700">
+                  <label className="text-xs font-medium text-n-700">
                     {billingStrings.fieldLocation} <span className="text-danger-solid">*</span>
                   </label>
                   <Select
@@ -196,7 +196,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-[12.5px] font-medium text-n-700">
+              <label className="text-xs font-medium text-n-700">
                 {billingStrings.fieldCurrency}
               </label>
               <div className="flex gap-2">
@@ -214,11 +214,11 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[12.5px] font-medium text-n-700">
+              <label className="text-xs font-medium text-n-700">
                 {billingStrings.fieldItems} <span className="text-danger-solid">*</span>
               </label>
               <div className="border border-n-200 rounded-sm overflow-hidden">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-n-50 text-n-600 text-left">
                       <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[50%]">
@@ -245,7 +245,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                             onChange={(e) => updateItem(idx, 'description', e.target.value)}
                             placeholder={billingStrings.itemDescriptionPlaceholder}
                             required
-                            className="text-[12px]"
+                            className="text-xs"
                           />
                         </td>
                         <td className="px-2 py-1.5">
@@ -254,7 +254,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                             min={1}
                             value={item.quantity}
                             onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
-                            className="text-[12px]"
+                            className="text-xs"
                           />
                         </td>
                         <td className="px-2 py-1.5">
@@ -264,7 +264,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                             step="0.01"
                             value={item.unitPrice}
                             onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
-                            className="text-[12px]"
+                            className="text-xs"
                           />
                         </td>
                         <td className="px-3 py-1.5 text-right font-mono text-n-700 whitespace-nowrap">
@@ -287,12 +287,12 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                 </table>
               </div>
               <TextLink tone="primary" size="md" onClick={addItem} className="self-start">
-                <i className="ph ph-plus text-[13px]" /> {billingStrings.addItemLink}
+                <i className="ph ph-plus text-sm" /> {billingStrings.addItemLink}
               </TextLink>
             </div>
 
             {(commissionPct > 0 || isEdit) && (
-              <div className="bg-n-50 border border-n-200 rounded-sm p-3 flex flex-col gap-1 text-[12px] font-mono">
+              <div className="bg-n-50 border border-n-200 rounded-sm p-3 flex flex-col gap-1 text-xs font-mono">
                 <div className="flex justify-between text-n-600">
                   <span>{billingStrings.summarySubtotal}</span>
                   <span>{formatCurrency(subtotal, currency)}</span>
@@ -313,7 +313,7 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-[12.5px] font-medium text-n-700">
+              <label className="text-xs font-medium text-n-700">
                 {billingStrings.fieldNotes}
               </label>
               <Textarea

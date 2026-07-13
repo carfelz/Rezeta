@@ -50,7 +50,7 @@ export function Signup(): JSX.Element {
     <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
       <Card className="w-full max-w-[440px]">
         <div className="mb-6 text-center">
-          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-[24px] font-medium text-n-0 mx-auto mb-4">
+          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mx-auto mb-4">
             R
           </div>
           <h1 className="text-h2">{signupStrings.title}</h1>

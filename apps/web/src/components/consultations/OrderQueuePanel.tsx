@@ -70,7 +70,7 @@ function UrgencyChip({ urgency }: { urgency: keyof typeof URGENCY_TONES }): JSX.
 function SavedChip(): JSX.Element {
   return (
     <Chip tone="success" size="md" format="sentence">
-      <i className="ph ph-check text-[10px]" />
+      <i className="ph ph-check text-2xs" />
       {orderQueueStrings.savedChip}
     </Chip>
   )
@@ -112,7 +112,7 @@ function SavedPrescriptionCard({
       <GroupSectionCard
         title={
           <span className="flex items-center gap-2">
-            <span className="text-[12.5px] font-semibold text-n-800">
+            <span className="text-xs font-semibold text-n-800">
               {prescription.groupTitle ??
                 orderQueueStrings.prescriptionGroupFallback(prescription.groupOrder)}
             </span>
@@ -145,7 +145,7 @@ function SavedPrescriptionCard({
               </>
             ) : (
               <>
-                <i className="ph ph-download-simple mr-1 text-[12px]" />
+                <i className="ph ph-download-simple mr-1 text-xs" />
                 {orderQueueStrings.downloadPdf}
               </>
             )}
@@ -155,7 +155,7 @@ function SavedPrescriptionCard({
         <div className="divide-y divide-n-100">
           {prescription.prescriptionItems.map((item) => (
             <div key={item.id} className="px-4 py-3">
-              <div className="text-[13px] font-semibold text-n-800">{item.drug}</div>
+              <div className="text-sm font-semibold text-n-800">{item.drug}</div>
               <Caption tone="muted" size="md" as="div" className="font-mono mt-1">
                 {item.dose} · {item.route} · {item.frequency}
                 {item.duration && ` · ${item.duration}`}
@@ -243,7 +243,7 @@ function SavedImagingGroupCard({
                   if (e.key === 'Enter') handleRenameSubmit()
                   if (e.key === 'Escape') setRenaming(false)
                 }}
-                className="h-6 text-[12px] py-0 px-2 w-36"
+                className="h-6 text-xs py-0 px-2 w-36"
               />
               <Button variant="ghost" size="sm" onClick={handleRenameSubmit}>
                 {orderQueueStrings.renameGroupSave}
@@ -254,7 +254,7 @@ function SavedImagingGroupCard({
             </div>
           ) : (
             <span className="flex items-center gap-2">
-              <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+              <span className="text-xs font-semibold text-n-800">{groupTitle}</span>
               <SavedChip />
               {!isSigned && (
                 <IconButton
@@ -285,7 +285,7 @@ function SavedImagingGroupCard({
               </>
             ) : (
               <>
-                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                <i className="ph ph-file-pdf mr-1 text-xs" />
                 {orderQueueStrings.downloadImagingPdf}
               </>
             )}
@@ -298,7 +298,7 @@ function SavedImagingGroupCard({
               <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-n-800">{item.studyType}</span>
+                    <span className="text-sm font-semibold text-n-800">{item.studyType}</span>
                     <UrgencyChip urgency={item.urgency} />
                   </div>
                   <Caption tone="muted" size="md" as="div" className="mt-1">
@@ -325,7 +325,7 @@ function SavedImagingGroupCard({
                           patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
                         }
                       >
-                        <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                        <SelectTrigger className="h-6 w-auto text-overline px-2 border-none shadow-none">
                           <SelectValue placeholder={orderQueueStrings.moveToGroup} />
                         </SelectTrigger>
                         <SelectContent>
@@ -421,7 +421,7 @@ function SavedLabGroupCard({
                   if (e.key === 'Enter') handleRenameSubmit()
                   if (e.key === 'Escape') setRenaming(false)
                 }}
-                className="h-6 text-[12px] py-0 px-2 w-36"
+                className="h-6 text-xs py-0 px-2 w-36"
               />
               <Button variant="ghost" size="sm" onClick={handleRenameSubmit}>
                 {orderQueueStrings.renameGroupSave}
@@ -432,7 +432,7 @@ function SavedLabGroupCard({
             </div>
           ) : (
             <span className="flex items-center gap-2">
-              <span className="text-[12.5px] font-semibold text-n-800">{groupTitle}</span>
+              <span className="text-xs font-semibold text-n-800">{groupTitle}</span>
               <SavedChip />
               {!isSigned && (
                 <IconButton
@@ -463,7 +463,7 @@ function SavedLabGroupCard({
               </>
             ) : (
               <>
-                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                <i className="ph ph-file-pdf mr-1 text-xs" />
                 {orderQueueStrings.downloadLabPdf}
               </>
             )}
@@ -476,7 +476,7 @@ function SavedLabGroupCard({
               <div key={item.id} className="flex items-start gap-3 px-4 py-3 group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-n-800">{item.testName}</span>
+                    <span className="text-sm font-semibold text-n-800">{item.testName}</span>
                   </div>
                   <Caption tone="muted" size="md" as="div" className="mt-1">
                     {item.indication}
@@ -503,7 +503,7 @@ function SavedLabGroupCard({
                           patch.mutate({ orderId: order.id, dto: { groupOrder: Number(val) } })
                         }
                       >
-                        <SelectTrigger className="h-6 w-auto text-[11px] px-2 border-none shadow-none">
+                        <SelectTrigger className="h-6 w-auto text-overline px-2 border-none shadow-none">
                           <SelectValue placeholder={orderQueueStrings.moveToGroup} />
                         </SelectTrigger>
                         <SelectContent>
@@ -611,7 +611,7 @@ function MedicationGroup({
               </>
             ) : (
               <>
-                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                <i className="ph ph-file-pdf mr-1 text-xs" />
                 {orderQueueStrings.generatePrescription}
               </>
             )}
@@ -629,7 +629,7 @@ function MedicationGroup({
             {medications.map((med) => (
               <div key={med.id} className="flex items-start gap-3 px-4 py-3 group">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold text-n-800">{med.drug}</div>
+                  <div className="text-sm font-semibold text-n-800">{med.drug}</div>
                   <Caption tone="muted" size="md" as="div" className="font-mono mt-1">
                     {med.dose} · {med.route} · {med.frequency}
                     {med.duration && ` · ${med.duration}`}
@@ -737,7 +737,7 @@ function ImagingGroup({
               </>
             ) : (
               <>
-                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                <i className="ph ph-file-pdf mr-1 text-xs" />
                 {orderQueueStrings.generateImaging}
               </>
             )}
@@ -756,7 +756,7 @@ function ImagingGroup({
               <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-n-800">{order.study_type}</span>
+                    <span className="text-sm font-semibold text-n-800">{order.study_type}</span>
                     <UrgencyChip urgency={order.urgency} />
                   </div>
                   <Caption tone="muted" size="md" as="div" className="mt-1">
@@ -867,7 +867,7 @@ function LabGroup({
               </>
             ) : (
               <>
-                <i className="ph ph-file-pdf mr-1 text-[12px]" />
+                <i className="ph ph-file-pdf mr-1 text-xs" />
                 {orderQueueStrings.generateLab}
               </>
             )}
@@ -886,7 +886,7 @@ function LabGroup({
               <div key={order.id} className="flex items-start gap-3 px-4 py-3 group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-n-800">{order.test_name}</span>
+                    <span className="text-sm font-semibold text-n-800">{order.test_name}</span>
                     {order.test_code && (
                       <Caption tone="muted" size="xs" className="font-mono">
                         {order.test_code}
@@ -949,7 +949,7 @@ function AddMedicationForm({ groups, onAdd }: AddMedicationFormProps): JSX.Eleme
   if (!open) {
     return (
       <DashedButton tone="neutral" size="sm" onClick={() => setOpen(true)}>
-        <i className="ph ph-plus text-[12px]" />
+        <i className="ph ph-plus text-xs" />
         {orderQueueStrings.addMedicationButton}
       </DashedButton>
     )
@@ -1134,8 +1134,8 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
   return (
     <div className="bg-n-0 border border-n-200 rounded-md overflow-hidden">
       <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-        <i className="ph ph-prescription text-[16px] text-p-500" />
-        <h3 className="text-[13.5px] font-semibold text-n-800">{orderQueueStrings.panelTitle}</h3>
+        <i className="ph ph-prescription text-body-lg text-p-500" />
+        <h3 className="text-sm font-semibold text-n-800">{orderQueueStrings.panelTitle}</h3>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
@@ -1256,7 +1256,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                 />
               ))}
               <DashedButton tone="subtle" size="sm" onClick={() => addImagingGroup()}>
-                <i className="ph ph-plus text-[11px]" />
+                <i className="ph ph-plus text-overline" />
                 {orderQueueStrings.newImagingOrder}
               </DashedButton>
             </>
@@ -1314,7 +1314,7 @@ export function OrderQueuePanel({ consultationId, isSigned }: OrderQueuePanelPro
                 />
               ))}
               <DashedButton tone="subtle" size="sm" onClick={() => addLabGroup()}>
-                <i className="ph ph-plus text-[11px]" />
+                <i className="ph ph-plus text-overline" />
                 {orderQueueStrings.newLabOrder}
               </DashedButton>
             </>
@@ -1341,7 +1341,7 @@ function TabRailTrigger({
   count: number
 }): JSX.Element {
   return (
-    <TabsTrigger value={value} className="text-[12.5px] px-3 py-3">
+    <TabsTrigger value={value} className="text-xs px-3 py-3">
       {label}
       {count > 0 && (
         <Chip tone="primarySolid" size="md" className="ml-2">

@@ -33,7 +33,7 @@ export function CardTitle({
   className?: string
 }): JSX.Element {
   return (
-    <div className={cn('text-[14px] font-sans font-semibold text-n-800 leading-tight', className)}>
+    <div className={cn('text-base font-sans font-semibold text-n-800 leading-tight', className)}>
       {children}
     </div>
   )
@@ -46,5 +46,5 @@ export function CardSubtitle({
   children: ReactNode
   className?: string
 }): JSX.Element {
-  return <div className={cn('text-[12.5px] font-sans text-n-500 mt-1', className)}>{children}</div>
+  return <div className={cn('text-xs font-sans text-n-500 mt-1', className)}>{children}</div>
 }

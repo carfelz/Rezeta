@@ -60,8 +60,8 @@ export const buttonVariants = cva(
         ],
       },
       size: {
-        sm: 'h-btn-sm text-[12.5px] px-[10px]',
-        md: 'h-btn-md text-[13px] px-[14px]',
+        sm: 'h-btn-sm text-xs px-[10px]',
+        md: 'h-btn-md text-sm px-[14px]',
         lg: 'h-btn-lg text-body px-[18px]',
         xl: 'h-btn-xl text-body px-[20px]',
         icon: 'h-btn-md w-btn-md p-0 [&>svg]:w-[16px] [&>svg]:h-[16px]',

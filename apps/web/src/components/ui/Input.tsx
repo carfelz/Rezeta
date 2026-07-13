@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cn(
-          'w-full h-input-md px-3 text-[13px] font-sans',
+          'w-full h-input-md px-3 text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'outline-none',
           'transition-[border-color,box-shadow] duration-[100ms]',
@@ -52,7 +52,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         className={cn(
-          'w-full px-3 text-[13px] font-sans',
+          'w-full px-3 text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'outline-none',
           'transition-[border-color,box-shadow] duration-[100ms]',
@@ -120,7 +120,7 @@ export function InputAdorn({
   return (
     <span
       className={cn(
-        'flex items-center px-3 text-[13px] font-sans text-n-500 whitespace-nowrap shrink-0',
+        'flex items-center px-3 text-sm font-sans text-n-500 whitespace-nowrap shrink-0',
         !plain && 'bg-n-50',
         side === 'left' && !plain && 'border-r border-n-300',
         side === 'right' && !plain && 'border-l border-n-300',
@@ -189,19 +189,19 @@ export function Field({
   return (
     <div className={cn('flex flex-col gap-[6px]', className)}>
       {label && (
-        <label htmlFor={id} className="text-[12.5px] font-sans font-medium text-n-700 leading-none">
+        <label htmlFor={id} className="text-xs font-sans font-medium text-n-700 leading-none">
           {label}
           {required && <span className="text-danger-solid ml-1">*</span>}
         </label>
       )}
       {children}
       {error ? (
-        <span className="flex items-center gap-1 text-[11.5px] font-sans text-danger-solid leading-tight">
+        <span className="flex items-center gap-1 text-overline font-sans text-danger-solid leading-tight">
           <i className="ph ph-warning" style={{ fontSize: 13 }} />
           {error}
         </span>
       ) : helper ? (
-        <span className="text-[11.5px] font-sans text-n-500 leading-tight">{helper}</span>
+        <span className="text-overline font-sans text-n-500 leading-tight">{helper}</span>
       ) : null}
     </div>
   )

@@ -47,7 +47,7 @@ export function ProtocolBar({
       {activeUsage && !isSigned && (
         <Row justify="end" className="mb-3">
           <Button variant="secondary" size="sm" onClick={onAddOffProtocolNote}>
-            <i className="ph ph-pencil-simple text-[12px]" />
+            <i className="ph ph-pencil-simple text-xs" />
             Añadir nota fuera de protocolo
           </Button>
         </Row>

@@ -21,13 +21,13 @@ describe('Spinner', () => {
   it('applies size variants', () => {
     render(<Spinner size="lg" />)
     const glyph = screen.getByRole('status').querySelector('i')
-    expect(glyph?.className).toContain('text-[32px]')
+    expect(glyph?.className).toContain('text-h2')
   })
 
   it('defaults to md', () => {
     render(<Spinner />)
     const glyph = screen.getByRole('status').querySelector('i')
-    expect(glyph?.className).toContain('text-[20px]')
+    expect(glyph?.className).toContain('text-h3')
   })
 
   it('accepts a custom label and className', () => {

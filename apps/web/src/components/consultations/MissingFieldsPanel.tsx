@@ -69,8 +69,8 @@ export function MissingFieldsPanel({
     return (
       <div className="flex items-center justify-between gap-3 px-4 py-3 bg-success-bg border border-success-border rounded-md">
         <div className="flex items-center gap-2 text-success-text">
-          <i className="ph ph-check-circle text-[16px]" aria-hidden />
-          <p className="text-[12.5px] font-medium leading-tight">
+          <i className="ph ph-check-circle text-body-lg" aria-hidden />
+          <p className="text-xs font-medium leading-tight">
             {missingFieldsStrings.readyMessage}
           </p>
         </div>
@@ -84,7 +84,7 @@ export function MissingFieldsPanel({
   return (
     <div className="bg-n-0 border border-danger-border rounded-md overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-danger-text">
+        <span className="font-mono text-2xs uppercase tracking-[0.08em] text-danger-text">
           {missingFieldsStrings.panelTitle(fields.length)}
         </span>
         {onDismiss && (
@@ -96,7 +96,7 @@ export function MissingFieldsPanel({
           />
         )}
       </div>
-      <p className="px-4 pb-3 text-[12px] text-n-500 leading-snug">
+      <p className="px-4 pb-3 text-xs text-n-500 leading-snug">
         {missingFieldsStrings.panelDescription}
       </p>
       <ul className="flex flex-col gap-2 px-3 pb-3 list-none m-0">
@@ -105,13 +105,13 @@ export function MissingFieldsPanel({
             key={field.id}
             className="flex items-center gap-3 px-3 py-2 rounded-sm bg-danger-bg/40"
           >
-            <i className="ph ph-circle text-[12px] text-danger-text shrink-0" aria-hidden />
+            <i className="ph ph-circle text-xs text-danger-text shrink-0" aria-hidden />
             <div className="flex-1 min-w-0">
-              <div className="text-[12.5px] font-semibold text-danger-text truncate">
+              <div className="text-xs font-semibold text-danger-text truncate">
                 {field.label}
               </div>
               {field.description && (
-                <div className="text-[10.5px] font-mono uppercase tracking-[0.08em] text-danger-text/70 mt-0.5 truncate">
+                <div className="text-2xs font-mono uppercase tracking-[0.08em] text-danger-text/70 mt-0.5 truncate">
                   {field.description}
                 </div>
               )}

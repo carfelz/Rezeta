@@ -70,7 +70,7 @@ export function PatientCombobox({
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-n-0 border border-n-200 rounded shadow-floating z-50 max-h-[200px] overflow-y-auto">
           {patients.length === 0 ? (
-            <div className="px-3 py-2 text-[12px] text-n-400">
+            <div className="px-3 py-2 text-xs text-n-400">
               {search ? patientComboboxStrings.noResults : patientComboboxStrings.typeToSearch}
             </div>
           ) : (
@@ -83,11 +83,11 @@ export function PatientCombobox({
                 className="w-full flex flex-col items-start px-3 py-2 text-left"
                 onClick={() => handleSelect(p)}
               >
-                <span className="text-[13px] font-medium text-n-800">
+                <span className="text-sm font-medium text-n-800">
                   {p.firstName} {p.lastName}
                 </span>
                 {p.documentNumber && (
-                  <span className="text-[11.5px] font-mono text-n-400">{p.documentNumber}</span>
+                  <span className="text-overline font-mono text-n-400">{p.documentNumber}</span>
                 )}
               </Button>
             ))
@@ -100,7 +100,7 @@ export function PatientCombobox({
             onClick={() => setShowCreateModal(true)}
           >
             <i className="ph ph-plus" style={{ fontSize: 14 }} />
-            <span className="text-[13px] font-medium text-n-800">
+            <span className="text-sm font-medium text-n-800">
               {patientComboboxStrings.newPatient}
             </span>
           </Button>

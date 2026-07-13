@@ -15,7 +15,7 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
   return (
     <div className="bg-n-0 border border-n-200 rounded-md p-5">
       <div className="flex items-center justify-between mb-[14px]">
-        <h3 className="font-serif font-medium text-[18px] text-n-900 m-0 tracking-[-0.005em]">
+        <h3 className="font-serif font-medium text-h3 text-n-900 m-0 tracking-[-0.005em]">
           {dashboardStrings.recentProtocolsTitle}
         </h3>
         <TextLink tone="neutral" size="md" onClick={() => void navigate('/protocolos')}>
@@ -39,7 +39,7 @@ export function RecentProtocols({ protocols }: RecentProtocolsProps): JSX.Elemen
               }`}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-n-900 truncate">{proto.title}</div>
+                <div className="text-sm font-semibold text-n-900 truncate">{proto.title}</div>
                 <Caption tone="neutral" size="sm" as="div" className="mt-1">
                   {proto.currentVersionNumber !== null ? `v${proto.currentVersionNumber} · ` : ''}
                   {dashboardStrings.recentProtocolsUpdated}{' '}

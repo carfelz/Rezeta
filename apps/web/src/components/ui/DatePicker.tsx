@@ -57,12 +57,12 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             )}
           >
             <span className="flex items-center gap-2">
-              <i className="ph ph-calendar text-[16px]" />
+              <i className="ph ph-calendar text-body-lg" />
               {selected
                 ? format(selected, 'PPP', { locale: es })
                 : placeholder ?? datePickerStrings.placeholder}
             </span>
-            <i className="ph ph-caret-down text-[14px] text-n-500" />
+            <i className="ph ph-caret-down text-base text-n-500" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-n-0 border border-n-200" align="start">

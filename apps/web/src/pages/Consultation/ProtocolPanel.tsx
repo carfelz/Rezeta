@@ -138,7 +138,7 @@ export function ProtocolPanel({
           <Button variant="ghost" size="sm" onClick={handleBackInChain}>
             ← {chainBreadcrumbStrings.backButton}
           </Button>
-          <div className="flex items-center gap-1 text-[12px] font-mono text-n-500 flex-wrap">
+          <div className="flex items-center gap-1 text-xs font-mono text-n-500 flex-wrap">
             {[...usageIdStack, activeUsage.id].map((uid, i) => {
               const isActive = uid === activeUsage.id
               const title = isActive
@@ -181,7 +181,7 @@ export function ProtocolPanel({
       ) : (
         !readOnly && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <i className="ph ph-clipboard-text text-[32px] text-n-300" />
+            <i className="ph ph-clipboard-text text-h2 text-n-300" />
             <p className="text-body text-n-500 m-0">{protocolPanelStrings.noProtocolTitle}</p>
             <Button variant="primary" onClick={() => onShowPickerChange(true)}>
               <i className="ph ph-plus mr-2" />
@@ -194,10 +194,10 @@ export function ProtocolPanel({
       {!readOnly && activeUsage && (
         <div className="mt-4 flex justify-center">
           <button
-            className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-500 hover:text-p-500 transition-colors justify-center text-[13px]"
+            className="flex items-center gap-2 w-full max-w-xl py-4 border-2 border-dashed border-n-200 rounded-md text-n-400 hover:border-p-500 hover:text-p-500 transition-colors justify-center text-sm"
             onClick={() => onShowPickerChange(true)}
           >
-            <i className="ph ph-plus text-[15px]" />
+            <i className="ph ph-plus text-base" />
             {protocolPanelStrings.addProtocol}
           </button>
         </div>

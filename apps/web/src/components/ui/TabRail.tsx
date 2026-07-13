@@ -67,11 +67,11 @@ export const TabRailItem = forwardRef<HTMLButtonElement, TabRailItemProps>(
         ref={ref}
         type={type}
         aria-pressed={active}
-        className={cn(tabVariants({ active }), 'text-[13px]', className)}
+        className={cn(tabVariants({ active }), 'text-sm', className)}
         {...props}
       >
         <span>{children}</span>
-        {meta && <span className="font-mono text-[11px] text-n-400">{meta}</span>}
+        {meta && <span className="font-mono text-overline text-n-400">{meta}</span>}
         {active && (
           <span className="absolute left-0 right-0 bottom-0 bg-p-500" style={{ height: '2px' }} />
         )}
@@ -91,13 +91,13 @@ export const TabRailAdd = forwardRef<
       ref={ref}
       type={type}
       className={cn(
-        'flex items-center gap-1 px-4 py-3 text-[12.5px] text-n-500 hover:text-n-700 transition-colors',
+        'flex items-center gap-1 px-4 py-3 text-xs text-n-500 hover:text-n-700 transition-colors',
         'focus-visible:outline-none focus-visible:bg-n-50',
         className,
       )}
       {...props}
     >
-      <i className="ph ph-plus text-[12px]" />
+      <i className="ph ph-plus text-xs" />
       {children}
     </button>
   )

@@ -36,7 +36,7 @@ export function HistoryDrawer({
       }}
     >
       <div className="flex items-center justify-between px-5 py-3 border-b border-n-200 shrink-0">
-        <span className="text-[13.5px] font-sans font-semibold text-n-800">
+        <span className="text-sm font-sans font-semibold text-n-800">
           {protocolEditorStrings.historyTitle}
         </span>
         <IconButton
@@ -54,7 +54,7 @@ export function HistoryDrawer({
             <Spinner size="md" className="text-n-400" />
           </div>
         ) : !versionHistory || versionHistory.length === 0 ? (
-          <p className="text-[12.5px] font-sans text-n-400 text-center py-6">
+          <p className="text-xs font-sans text-n-400 text-center py-6">
             {protocolEditorStrings.historyEmpty}
           </p>
         ) : (
@@ -70,18 +70,18 @@ export function HistoryDrawer({
                 onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
                 className="flex items-center gap-3 flex-1 min-w-0 text-left"
               >
-                <span className="text-[12.5px] font-mono font-medium text-n-800 shrink-0">
+                <span className="text-xs font-mono font-medium text-n-800 shrink-0">
                   {protocolEditorStrings.version(v.versionNumber)}
                 </span>
                 {v.isCurrent && (
-                  <span className="text-[10.5px] font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
+                  <span className="text-2xs font-mono text-p-700 bg-p-50 border border-p-100 rounded px-2 py-1 shrink-0">
                     {protocolEditorStrings.historyCurrent}
                   </span>
                 )}
-                <span className="flex-1 text-[12px] font-sans text-n-500 truncate">
+                <span className="flex-1 text-xs font-sans text-n-500 truncate">
                   {v.changeSummary ?? protocolEditorStrings.historyNoSummary}
                 </span>
-                <span className="text-[11px] font-mono text-n-400 shrink-0">
+                <span className="text-overline font-mono text-n-400 shrink-0">
                   {new Date(v.createdAt).toLocaleDateString('es-DO', {
                     day: 'numeric',
                     month: 'short',
@@ -92,7 +92,7 @@ export function HistoryDrawer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[11.5px] px-2 h-7"
+                  className="text-overline px-2 h-7"
                   onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
                   aria-label={protocolEditorStrings.historyView}
                 >
@@ -102,7 +102,7 @@ export function HistoryDrawer({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-[11.5px] px-2 h-7"
+                    className="text-overline px-2 h-7"
                     onClick={() => onSelectVersion(v.id === selectedVersionId ? null : v.id)}
                     aria-label={protocolEditorStrings.historyCompare}
                   >
@@ -128,7 +128,7 @@ export function HistoryDrawer({
       <div className="flex-1 overflow-y-auto">
         {!selectedVersionId ? (
           <div className="flex items-center justify-center h-full p-6">
-            <p className="text-[12.5px] font-sans text-n-400 text-center">
+            <p className="text-xs font-sans text-n-400 text-center">
               {protocolEditorStrings.historySelectPrompt}
             </p>
           </div>
@@ -138,7 +138,7 @@ export function HistoryDrawer({
           </div>
         ) : (
           <div className="p-4 flex flex-col gap-2">
-            <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
+            <div className="text-2xs font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
               {protocolEditorStrings.historyPreviewTitle}
             </div>
             {selectedVersion?.content.blocks.map((block) => (

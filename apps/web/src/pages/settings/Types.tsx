@@ -328,16 +328,16 @@ export function Types(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Color
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
@@ -349,17 +349,17 @@ export function Types(): JSX.Element {
                       style={{ backgroundColor: c.color }}
                     />
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-semibold text-n-800">
                     {c.name}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     {c.isSeeded ? (
                       <Badge variant="draft">{typesStrings.seededBadge}</Badge>
                     ) : (
                       <Badge variant="active">{typesStrings.activeBadge}</Badge>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="secondary"
@@ -378,7 +378,7 @@ export function Types(): JSX.Element {
                         onClick={() => handleDelete(c)}
                       >
                         <i
-                          className="ph ph-trash text-[15px]"
+                          className="ph ph-trash text-base"
                           style={{
                             color: c.isSeeded ? 'var(--color-n-300)' : 'var(--color-danger-text)',
                           }}

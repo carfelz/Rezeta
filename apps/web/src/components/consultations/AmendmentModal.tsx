@@ -43,7 +43,7 @@ export function AmendmentModal({ consultationId, onClose }: AmendmentModalProps)
             />
           </Field>
           {amendMutation.isError && (
-            <p className="text-[12px] text-danger-text">{amendmentModalStrings.errorMessage}</p>
+            <p className="text-xs text-danger-text">{amendmentModalStrings.errorMessage}</p>
           )}
         </div>
       </ModalBody>

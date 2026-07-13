@@ -16,14 +16,14 @@ export function VitalsSection({ vitals, onChange, disabled }: VitalsSectionProps
   if (disabled) {
     const hasData = Object.values(vitals).some(Boolean)
     if (!hasData) {
-      return <p className="text-[13px] text-n-300">{vitalsSectionStrings.emptyDash}</p>
+      return <p className="text-sm text-n-300">{vitalsSectionStrings.emptyDash}</p>
     }
   }
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div className="field">
-        <label className="block text-[12px] font-sans font-medium text-n-700 mb-1">
+        <label className="block text-xs font-sans font-medium text-n-700 mb-1">
           {vitalsSectionStrings.bloodPressureLabel}
         </label>
         <InputGroup>

@@ -61,7 +61,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
         <Stack gap={2}>
           {draftItems.map((item, idx) => (
             <Row key={item.id} gap={2}>
-              <span className="text-[11px] font-mono text-n-400 w-4 shrink-0 text-right">
+              <span className="text-overline font-mono text-n-400 w-4 shrink-0 text-right">
                 {idx + 1}
               </span>
               <Input
@@ -77,7 +77,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                   checked={item.critical ?? false}
                   onChange={(e) => updateItem(item.id, { critical: e.target.checked })}
                 />
-                <span className="text-[11px] font-mono text-n-500 uppercase tracking-[0.05em]">
+                <span className="text-overline font-mono text-n-500 uppercase tracking-[0.05em]">
                   {blockEditorStrings.checklistCriticalLabel}
                 </span>
               </Row>

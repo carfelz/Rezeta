@@ -31,10 +31,10 @@ describe('TextLink', () => {
   })
 
   it.each([
-    ['xs', 'text-[11px]'],
-    ['sm', 'text-[11.5px]'],
-    ['md', 'text-[12px]'],
-    ['lg', 'text-[12.5px]'],
+    ['xs', 'text-overline'],
+    ['sm', 'text-overline'],
+    ['md', 'text-xs'],
+    ['lg', 'text-xs'],
   ] as const)('size=%s applies %s class', (size, expected) => {
     render(<TextLink size={size}>x</TextLink>)
     expect(screen.getByText('x')).toHaveClass(expected)

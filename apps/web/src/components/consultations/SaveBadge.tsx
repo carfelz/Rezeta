@@ -24,7 +24,7 @@ export function SaveBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-2 text-[11.5px] font-mono px-3 py-1 rounded border',
+        'inline-flex items-center gap-2 text-overline font-mono px-3 py-1 rounded border',
         (status === 'dirty' || status === 'saving') && 'bg-n-50 border-n-200 text-n-500',
         status === 'saved' && 'bg-success-bg border-success-border text-success-text',
         status === 'error' && 'bg-danger-bg border-danger-border text-danger-text',
@@ -44,14 +44,14 @@ export function SaveBadge({
       )}
       {status === 'saved' && (
         <>
-          <i className="ph ph-check text-[11px]" />
+          <i className="ph ph-check text-overline" />
           {saveBadgeStrings.saved}
           {savedAt ? ` · ${formatElapsed(savedAt)}` : ''}
         </>
       )}
       {status === 'error' && (
         <>
-          <i className="ph ph-warning text-[11px]" />
+          <i className="ph ph-warning text-overline" />
           {saveBadgeStrings.error}
           {onRetry && (
             <TextLink

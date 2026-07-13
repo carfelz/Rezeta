@@ -72,7 +72,7 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
             className={({ isActive }) => {
               const active = isActive || matchesExtraRoute
               return cn(
-                'relative flex items-center gap-3 px-5 py-[7px] text-[13px] font-sans transition-colors duration-[100ms]',
+                'relative flex items-center gap-3 px-5 py-[7px] text-sm font-sans transition-colors duration-[100ms]',
                 active
                   ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-[2px] before:bg-p-500 before:rounded-sm'
                   : 'text-n-600 hover:bg-n-50 hover:text-n-800',
@@ -87,13 +87,13 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
                     className={cn(
                       active ? 'ph-fill' : 'ph',
                       `ph-${icon}`,
-                      'text-[16px] shrink-0',
+                      'text-body-lg shrink-0',
                       active ? 'text-p-500' : 'text-n-500',
                     )}
                   />
                   <span className="flex-1">{itemLabel}</span>
                   {count !== undefined && (
-                    <span className="text-[11px] font-mono text-n-400">{count}</span>
+                    <span className="text-overline font-mono text-n-400">{count}</span>
                   )}
                 </>
               )
@@ -137,10 +137,10 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
         )}
       >
         <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
-          <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-base shrink-0">
+          <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-body-lg shrink-0">
             R
           </div>
-          <span className="text-[18px] font-serif font-medium text-n-900 tracking-[-0.01em]">
+          <span className="text-h3 font-serif font-medium text-n-900 tracking-[-0.01em]">
             Rezeta
           </span>
         </div>
@@ -162,14 +162,14 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                 >
                   <Avatar initials={initials(user.fullName)} size="sm" />
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-[12.5px] font-sans font-semibold text-n-800 truncate">
+                    <div className="text-xs font-sans font-semibold text-n-800 truncate">
                       {user.fullName ?? sidebarStrings.defaultName}
                     </div>
                     <Caption tone="neutral" size="xs" as="div">
                       {user.specialty ?? sidebarStrings.defaultSpecialty}
                     </Caption>
                   </div>
-                  <i className="ph ph-caret-up-down text-n-400 text-[14px] shrink-0" />
+                  <i className="ph ph-caret-up-down text-n-400 text-base shrink-0" />
                 </button>
               </DropdownMenu.Trigger>
 
@@ -183,9 +183,9 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   <DropdownMenu.Item asChild>
                     <NavLink
                       to="/ajustes"
-                      className="flex items-center gap-2 px-3 py-2 text-[13px] font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-[100ms]"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-[100ms]"
                     >
-                      <i className="ph ph-gear-six text-[15px] text-n-500" />
+                      <i className="ph ph-gear-six text-base text-n-500" />
                       {sidebarStrings.userMenuSettings}
                     </NavLink>
                   </DropdownMenu.Item>
@@ -193,12 +193,12 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   <DropdownMenu.Separator className="my-1 h-px bg-n-100" />
 
                   <DropdownMenu.Item
-                    className="flex items-center gap-2 px-3 py-2 text-[13px] font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none transition-colors duration-[100ms]"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none transition-colors duration-[100ms]"
                     onSelect={() => {
                       void handleSignOut()
                     }}
                   >
-                    <i className="ph ph-sign-out text-[15px] text-n-500" />
+                    <i className="ph ph-sign-out text-base text-n-500" />
                     {sidebarStrings.userMenuSignOut}
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>

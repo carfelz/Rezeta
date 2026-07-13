@@ -25,7 +25,7 @@ export function EditorPalette({
         overflowY: 'auto',
       }}
     >
-      <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
+      <h4 className="text-overline font-sans font-semibold text-n-700 mb-3">
         {protocolEditorStrings.paletteHeader}
       </h4>
       <div className="flex flex-col gap-2 mb-6">
@@ -38,23 +38,23 @@ export function EditorPalette({
               onClick={() => onPaletteClick(type)}
               className="flex items-center gap-3 w-full px-3 py-2 text-left"
             >
-              <i className={`ph ${icon} text-p-500 text-[16px] shrink-0`} />
+              <i className={`ph ${icon} text-p-500 text-body-lg shrink-0`} />
               {label}
             </Button>
           ) : (
             <div
               key={type}
               title={protocolEditorStrings.paletteDisabledTooltip}
-              className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-50 text-[12.5px] font-sans text-n-400 cursor-not-allowed"
+              className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-50 text-xs font-sans text-n-400 cursor-not-allowed"
             >
-              <i className={`ph ${icon} text-n-300 text-[16px] shrink-0`} />
+              <i className={`ph ${icon} text-n-300 text-body-lg shrink-0`} />
               {label}
             </div>
           ),
         )}
       </div>
 
-      <h4 className="text-[11.5px] font-sans font-semibold text-n-700 mb-3">
+      <h4 className="text-overline font-sans font-semibold text-n-700 mb-3">
         {protocolEditorStrings.historyButton}
       </h4>
       {historyLoading ? (
@@ -62,13 +62,13 @@ export function EditorPalette({
           <Spinner size="md" className="text-n-400" />
         </div>
       ) : !versionHistory || versionHistory.length === 0 ? (
-        <p className="text-[12px] font-sans text-n-400 italic">
+        <p className="text-xs font-sans text-n-400 italic">
           {protocolEditorStrings.historyEmpty}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
           {versionHistory.slice(0, 3).map((v) => (
-            <div key={v.id} className="text-[12px] font-sans text-n-500">
+            <div key={v.id} className="text-xs font-sans text-n-500">
               <span className="font-semibold text-n-800">
                 {protocolEditorStrings.version(v.versionNumber)}
               </span>

@@ -67,12 +67,12 @@ function ProtocolRow({
       className="flex items-center gap-4 w-full h-auto px-5 py-4 border-b border-n-100 text-left group"
     >
       <div className="w-[36px] h-[36px] rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors">
-        <i className="ph ph-stack text-[16px]" />
+        <i className="ph ph-stack text-body-lg" />
       </div>
 
       <div className="flex-1 min-w-0">
         <Row gap={2}>
-          <span className="text-[13.5px] font-semibold text-n-800 truncate">{protocol.title}</span>
+          <span className="text-sm font-semibold text-n-800 truncate">{protocol.title}</span>
           {protocol.categoryName && (
             <Caption tone="muted" size="xs" className="font-mono truncate hidden sm:block">
               {protocol.categoryName}
@@ -157,7 +157,7 @@ export function Protocols(): JSX.Element {
   return (
     <div>
       <Row justify="between" align="center" className="mb-6">
-        <h1 className="text-[28px] font-serif font-medium text-n-900 leading-tight">
+        <h1 className="text-h2 font-serif font-medium text-n-900 leading-tight">
           {protocolsStrings.pageTitle}
         </h1>
         <Button variant="primary" onClick={() => setPickerOpen(true)}>
@@ -202,7 +202,7 @@ export function Protocols(): JSX.Element {
             onClick={() => setFavoritesOnly(!favoritesOnly)}
             title={protocolsStrings.filterFavorites}
           >
-            <i className={cn(favoritesOnly ? 'ph-fill ph-star' : 'ph ph-star', 'text-[13px]')} />
+            <i className={cn(favoritesOnly ? 'ph-fill ph-star' : 'ph ph-star', 'text-sm')} />
             {protocolsStrings.filterFavorites}
           </Button>
 

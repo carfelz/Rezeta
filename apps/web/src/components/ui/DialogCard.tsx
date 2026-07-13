@@ -71,10 +71,10 @@ export const DialogCard = forwardRef<HTMLDivElement, DialogCardProps>(
           <Overline tone={overlineTone} className="mb-2">
             {overline}
           </Overline>
-          <h2 className="font-serif font-medium text-[20px] text-n-900 leading-tight tracking-[-0.005em] mb-2">
+          <h2 className="font-serif font-medium text-h3 text-n-900 leading-tight tracking-[-0.005em] mb-2">
             {title}
           </h2>
-          {description && <p className="text-[12.5px] text-n-500 leading-snug">{description}</p>}
+          {description && <p className="text-xs text-n-500 leading-snug">{description}</p>}
         </div>
         {children !== undefined && <div className="px-5 pb-3">{children}</div>}
         {footer && (

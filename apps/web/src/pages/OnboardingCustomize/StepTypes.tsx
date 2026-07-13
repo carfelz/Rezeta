@@ -70,7 +70,7 @@ export function StepTypes({
             key={i}
             className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
-            <i className="ph ph-tag text-[16px] text-p-500 shrink-0" />
+            <i className="ph ph-tag text-body-lg text-p-500 shrink-0" />
             <Input
               variant="ghost"
               className="flex-1 p-0"
@@ -97,7 +97,7 @@ export function StepTypes({
               onClick={() => remove(i)}
               title={onboardingCustomizeStrings.step2DeleteLabel}
             >
-              <i className="ph ph-trash text-[15px] text-danger-text" />
+              <i className="ph ph-trash text-base text-danger-text" />
             </Button>
           </div>
         ))}

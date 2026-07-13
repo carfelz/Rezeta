@@ -13,10 +13,10 @@ const overlineVariants = cva(['font-mono'], {
       success: 'text-success-text',
     },
     size: {
-      xs: 'text-[9.5px] tracking-[0.06em]',
-      sm: 'text-[10px] tracking-[0.10em]',
-      md: 'text-[10.5px] tracking-[0.12em]',
-      lg: 'text-[11px] tracking-[0.12em]',
+      xs: 'text-2xs tracking-[0.06em]',
+      sm: 'text-2xs tracking-[0.10em]',
+      md: 'text-2xs tracking-[0.12em]',
+      lg: 'text-overline tracking-[0.12em]',
     },
     weight: {
       regular: 'font-regular',

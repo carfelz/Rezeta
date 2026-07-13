@@ -360,63 +360,63 @@ export function Locations(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderName}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderAddress}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderPhone}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderFee}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderCommission}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderType}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left" />
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left" />
               </tr>
             </thead>
             <tbody>
               {locations!.map((loc) => (
                 <tr key={loc.id} className="hover:bg-n-25">
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-semibold text-n-800">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-semibold text-n-800">
                     {loc.name}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 text-n-600">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 text-n-600">
                     {[loc.address, loc.city].filter(Boolean).join(', ') || (
                       <span className="text-n-400">—</span>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-mono text-n-600">
                     {loc.phone ?? <span className="text-n-400">—</span>}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-mono text-n-600">
                     {Number(loc.consultationFee) > 0 ? (
                       `RD$ ${Number(loc.consultationFee).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
                     ) : (
                       <span className="text-n-400">—</span>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100 font-mono text-n-600">
+                  <td className="text-sm px-4 py-3 border-b border-n-100 font-mono text-n-600">
                     {Number(loc.commissionPercent) > 0 ? (
                       `${loc.commissionPercent}%`
                     ) : (
                       <span className="text-n-400">—</span>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     {loc.isOwned ? (
                       <Badge variant="active">{locationsStrings.ownedBadge}</Badge>
                     ) : (
                       <Badge variant="draft">{locationsStrings.externalBadge}</Badge>
                     )}
                   </td>
-                  <td className="text-[13px] px-4 py-3 border-b border-n-100">
+                  <td className="text-sm px-4 py-3 border-b border-n-100">
                     <div className="flex gap-2 justify-end">
                       <Button variant="secondary" size="sm" onClick={() => setEditing(loc)}>
                         {locationsStrings.editButton}
@@ -432,7 +432,7 @@ export function Locations(): JSX.Element {
                         }}
                       >
                         <i
-                          className="ph ph-archive text-[15px]"
+                          className="ph ph-archive text-base"
                           style={{ color: 'var(--color-n-500)' }}
                         />
                       </Button>

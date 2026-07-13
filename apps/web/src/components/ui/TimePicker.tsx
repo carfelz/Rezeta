@@ -99,10 +99,10 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
             )}
           >
             <span className="flex items-center gap-2">
-              <i className="ph ph-clock text-[16px]" />
+              <i className="ph ph-clock text-body-lg" />
               {value ? formatDisplay(value) : placeholder ?? timePickerStrings.placeholder}
             </span>
-            <i className="ph ph-caret-down text-[14px] text-n-500" />
+            <i className="ph ph-caret-down text-base text-n-500" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -125,7 +125,7 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
                     setOpen(false)
                   }}
                   className={cn(
-                    'h-btn-md px-3 text-[13px] font-mono text-left rounded-sm transition-colors',
+                    'h-btn-md px-3 text-sm font-mono text-left rounded-sm transition-colors',
                     'hover:bg-n-50',
                     isActive && 'bg-p-500 text-n-0 hover:bg-p-700',
                   )}

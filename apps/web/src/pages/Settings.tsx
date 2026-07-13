@@ -172,10 +172,10 @@ export function Settings(): JSX.Element {
           to="/ajustes/ubicaciones"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-map-pin text-[18px] text-p-500" />
+          <i className="ph ph-map-pin text-h3 text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{settingsStrings.locationsTitle}</div>
-            <div className="text-[12px] text-n-500">{settingsStrings.locationsDescription}</div>
+            <div className="text-sm font-semibold">{settingsStrings.locationsTitle}</div>
+            <div className="text-xs text-n-500">{settingsStrings.locationsDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -183,10 +183,10 @@ export function Settings(): JSX.Element {
           to="/ajustes/plantillas"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-file-text text-[18px] text-p-500" />
+          <i className="ph ph-file-text text-h3 text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{templatesStrings.pageTitle}</div>
-            <div className="text-[12px] text-n-500">{settingsStrings.templatesDescription}</div>
+            <div className="text-sm font-semibold">{templatesStrings.pageTitle}</div>
+            <div className="text-xs text-n-500">{settingsStrings.templatesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -194,10 +194,10 @@ export function Settings(): JSX.Element {
           to="/ajustes/tipos"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-tag text-[18px] text-p-500" />
+          <i className="ph ph-tag text-h3 text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{typesStrings.pageTitle}</div>
-            <div className="text-[12px] text-n-500">{settingsStrings.typesDescription}</div>
+            <div className="text-sm font-semibold">{typesStrings.pageTitle}</div>
+            <div className="text-xs text-n-500">{settingsStrings.typesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -205,10 +205,10 @@ export function Settings(): JSX.Element {
           to="/ajustes/registros"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-clipboard-text text-[18px] text-p-500" />
+          <i className="ph ph-clipboard-text text-h3 text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{settingsStrings.auditLogTitle}</div>
-            <div className="text-[12px] text-n-500">{settingsStrings.auditLogDescription}</div>
+            <div className="text-sm font-semibold">{settingsStrings.auditLogTitle}</div>
+            <div className="text-xs text-n-500">{settingsStrings.auditLogDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
@@ -216,10 +216,10 @@ export function Settings(): JSX.Element {
           to="/ajustes/horarios"
           className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-[100ms]"
         >
-          <i className="ph ph-calendar-check text-[18px] text-p-500" />
+          <i className="ph ph-calendar-check text-h3 text-p-500" />
           <div>
-            <div className="text-[13px] font-semibold">{settingsStrings.schedulesTitle}</div>
-            <div className="text-[12px] text-n-500">{settingsStrings.schedulesDescription}</div>
+            <div className="text-sm font-semibold">{settingsStrings.schedulesTitle}</div>
+            <div className="text-xs text-n-500">{settingsStrings.schedulesDescription}</div>
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>

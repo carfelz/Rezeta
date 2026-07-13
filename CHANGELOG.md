@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Migrate app-wide typography to tokens and add a raw-pixel guardrail
+
+### Changed
+
+- `apps/web/tailwind.config.ts`: added `text-2xs` (10px) and redefined the canonical UI sizes `text-xs` (12px), `text-sm` (13px), `text-base` (14px) under `theme.extend.fontSize` — `text-sm` is now the base body size and `text-xs` the small size (matching the app's de-facto 13px/12px), so the semantic scale and these numeric aliases coexist.
+- Migrated **all ~669 raw `text-[..px]`/`text-[..rem]` font-size classes across 133 files** onto the token scale via a deterministic value→token map (9–10.5→`text-2xs`, 11–11.5→`text-overline`, 12–12.5→`text-xs`, 13–13.5/`0.8rem`→`text-sm`, 14–15→`text-base`, 16–17→`text-body-lg`, 18–22→`text-h3`, 24–32→`text-h2`, 34–36→`text-h1`, 48→`text-display`). The rendered type scale collapsed from 27 ad-hoc sizes to the 10 tokens; verified live on dashboard, consultation, and billing. `apps/web/src/components/layout/Sidebar.tsx` logo mark moved `text-base`→`text-body-lg` to stay 16px after the `text-base` redefinition; `Callout.test.tsx` selectors updated to the new classes.
+
+### Added
+
+- `eslint.config.js`: `no-restricted-syntax` guardrail that fails CI on any raw `text-[<number>px]` / `text-[<number>rem]` font-size class (string literal or template), pointing to the token scale. Verified it passes on the migrated code and flags an injected violation.
+- `CLAUDE.md` (Design System): rule codifying `text-sm` (13px) / `text-xs` (12px) as the base sizes, the full 10-token scale, and the no-raw-pixels guardrail.
+- `docs/qa/2026-07-13-ui-followups.md`: tracked follow-ups (consolidate the two vitals components, normalize the vendored `calendar.tsx`, collapse the redundant empty `/auth/provision` write, residual off-token hygiene).
+
 ## [2026-07-13] Remove remaining dead Tailwind classes and align vitals to the type token
 
 ### Fixed

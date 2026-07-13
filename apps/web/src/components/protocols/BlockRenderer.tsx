@@ -158,7 +158,7 @@ export function BlockRenderer({
 
     case 'text': {
       const content = (
-        <p className="text-[13.5px] font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
+        <p className="text-sm font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
           {b.content}
         </p>
       )
@@ -246,7 +246,7 @@ export function BlockRenderer({
       const content = (
         <div className="flex flex-col gap-2">
           {b.orders.map((o) => (
-            <div key={o.id} className="text-[13px] font-sans text-n-700">
+            <div key={o.id} className="text-sm font-sans text-n-700">
               <span className="font-medium">{o.study_type}</span>
               {o.indication && <span className="text-n-500"> · {o.indication}</span>}
             </div>
@@ -269,7 +269,7 @@ export function BlockRenderer({
       const content = (
         <div className="flex flex-col gap-2">
           {b.orders.map((o) => (
-            <div key={o.id} className="text-[13px] font-sans text-n-700">
+            <div key={o.id} className="text-sm font-sans text-n-700">
               <span className="font-medium">{o.test_name}</span>
               {o.indication && <span className="text-n-500"> · {o.indication}</span>}
             </div>

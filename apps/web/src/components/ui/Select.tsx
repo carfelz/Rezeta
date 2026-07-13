@@ -15,7 +15,7 @@ export const SelectTrigger = forwardRef<
     ref={ref}
     className={cn(
       'flex items-center justify-between w-full h-input-md px-3 gap-2',
-      'text-[13px] font-sans text-n-700 bg-n-0',
+      'text-sm font-sans text-n-700 bg-n-0',
       'border border-n-300 rounded-sm outline-none',
       'transition-[border-color,box-shadow] duration-[100ms]',
       'focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
@@ -27,7 +27,7 @@ export const SelectTrigger = forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <i className="ph ph-caret-down text-[12px] text-n-400 shrink-0" />
+      <i className="ph ph-caret-down text-xs text-n-400 shrink-0" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))
@@ -67,7 +67,7 @@ export const SelectLabel = forwardRef<
   <SelectPrimitive.Label
     ref={ref}
     className={cn(
-      'px-3 py-2 text-[11px] font-mono uppercase tracking-[0.06em] text-n-400',
+      'px-3 py-2 text-overline font-mono uppercase tracking-[0.06em] text-n-400',
       className,
     )}
     {...props}
@@ -83,7 +83,7 @@ export const SelectItem = forwardRef<
     ref={ref}
     className={cn(
       'relative flex items-center px-3 py-[7px] pr-8',
-      'text-[13px] font-sans text-n-700',
+      'text-sm font-sans text-n-700',
       'cursor-pointer select-none outline-none',
       'transition-colors duration-[100ms]',
       'hover:bg-n-50 focus:bg-n-50',
@@ -96,7 +96,7 @@ export const SelectItem = forwardRef<
   >
     <span className="absolute right-2 flex h-4 w-4 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <i className="ph ph-check text-[13px] text-p-500" />
+        <i className="ph ph-check text-sm text-p-500" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

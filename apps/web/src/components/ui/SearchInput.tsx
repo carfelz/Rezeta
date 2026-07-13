@@ -12,8 +12,8 @@ const searchInputVariants = cva(
   {
     variants: {
       size: {
-        sm: 'h-input-md pl-8 pr-3 text-[13px]',
-        md: 'h-btn-lg pl-10 pr-3 text-[13.5px] rounded-[5px]',
+        sm: 'h-input-md pl-8 pr-3 text-sm',
+        md: 'h-btn-lg pl-10 pr-3 text-sm rounded-[5px]',
       },
     },
     defaultVariants: { size: 'md' },
@@ -21,8 +21,8 @@ const searchInputVariants = cva(
 )
 
 const iconPositionBySize: Record<'sm' | 'md', string> = {
-  sm: 'left-3 text-[14px]',
-  md: 'left-3 text-[15px]',
+  sm: 'left-3 text-base',
+  md: 'left-3 text-base',
 }
 
 export interface SearchInputProps

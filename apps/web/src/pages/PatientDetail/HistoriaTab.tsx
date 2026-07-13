@@ -32,7 +32,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
   }
 
   if (list.length === 0) {
-    return <p className="text-[13px] text-n-500 p-5">{s.historiaEmpty}</p>
+    return <p className="text-sm text-n-500 p-5">{s.historiaEmpty}</p>
   }
 
   // list is non-empty here, so activeId always resolves to an id present in list,
@@ -61,7 +61,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
               c.id === activeId ? 'border-l-p-500 bg-n-0' : 'border-l-transparent'
             }`}
           >
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-n-800">
+            <div className="flex items-center gap-2 text-sm font-semibold text-n-800">
               {new Date(c.startedAt).toLocaleDateString('es-DO', {
                 day: 'numeric',
                 month: 'short',
@@ -73,7 +73,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
                 </Badge>
               )}
             </div>
-            <div className="text-[12px] text-n-500">
+            <div className="text-xs text-n-500">
               {c.locationName} · {c.doctorName}
             </div>
           </button>

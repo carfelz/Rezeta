@@ -24,7 +24,7 @@ export function Billing(): JSX.Element {
       <div className="flex items-center mb-6 gap-4">
         <h1 className="text-h1 flex-1">{billingStrings.pageTitle}</h1>
         <Button variant="primary" size="md" onClick={() => setActiveModal({ type: 'create' })}>
-          <i className="ph ph-plus text-[14px]" />
+          <i className="ph ph-plus text-base" />
           {billingStrings.newInvoiceButton}
         </Button>
       </div>
@@ -46,7 +46,7 @@ export function Billing(): JSX.Element {
         </div>
 
         {isLoading && (
-          <div className="p-8 text-center text-n-400 text-[13px]">
+          <div className="p-8 text-center text-n-400 text-sm">
             {billingStrings.loadingInvoices}
           </div>
         )}
@@ -77,16 +77,16 @@ export function Billing(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {billingStrings.tableColNumber}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {billingStrings.tableColPatientLocation}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
                   {billingStrings.tableColStatus}
                 </th>
-                <th className="bg-n-50 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-right">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-right">
                   {billingStrings.tableColAmount}
                 </th>
                 <th className="bg-n-50 px-4 py-3" />

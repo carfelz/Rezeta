@@ -80,7 +80,7 @@ export function StepsBlockEditor({ id, title, steps }: StepsBlockEditorProps): J
         <Stack gap={2}>
           {draftSteps.map((step, idx) => (
             <Row key={step.id} gap={2} align="start">
-              <span className="text-[11px] font-mono text-n-400 mt-[9px] w-5 shrink-0 text-right">
+              <span className="text-overline font-mono text-n-400 mt-[9px] w-5 shrink-0 text-right">
                 {idx + 1}.
               </span>
               <Stack gap={1} className="flex-1">

@@ -13,8 +13,8 @@ const calloutVariants = cva('flex rounded border font-sans', {
     // Standard = full callout box (icon left, optional title, body).
     // Compact = chip-like row, single line, used for inline alerts in right rails.
     density: {
-      standard: 'gap-3 p-[14px_16px] text-[13px] leading-[1.45]',
-      compact: 'gap-2 px-3 py-2 text-[12px] items-center',
+      standard: 'gap-3 p-[14px_16px] text-sm leading-[1.45]',
+      compact: 'gap-2 px-3 py-2 text-xs items-center',
     },
   },
   defaultVariants: {
@@ -50,7 +50,7 @@ export function Callout({
 }: CalloutProps): JSX.Element {
   const finalVariant = variant ?? tone ?? 'info'
   const finalDensity = density ?? (compact ? 'compact' : 'standard')
-  const iconSize = finalDensity === 'compact' ? 'text-[13px]' : 'text-[18px]'
+  const iconSize = finalDensity === 'compact' ? 'text-sm' : 'text-h3'
   return (
     <div
       className={cn(calloutVariants({ variant: finalVariant, density: finalDensity }), className)}

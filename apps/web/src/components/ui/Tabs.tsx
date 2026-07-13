@@ -24,7 +24,7 @@ export const TabsTrigger = forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'relative px-4 py-3 text-[13px] font-sans font-medium text-n-500',
+      'relative px-4 py-3 text-sm font-sans font-medium text-n-500',
       'transition-colors duration-[100ms]',
       'hover:text-n-800',
       'focus-visible:outline-none focus-visible:shadow-focus',

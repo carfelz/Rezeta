@@ -66,7 +66,7 @@ export function ProtocolPickerModal({
           <Dialog.Title className="text-h3 text-n-800 mb-1">
             {protocolPickerModalStrings.title}
           </Dialog.Title>
-          <Dialog.Description className="text-[13px] text-n-500">
+          <Dialog.Description className="text-sm text-n-500">
             {protocolPickerModalStrings.description}
           </Dialog.Description>
           <div className="mt-4">
@@ -102,7 +102,7 @@ export function ProtocolPickerModal({
                   className="border-x-0 border-t-0 rounded-none"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="text-[13.5px] font-semibold text-n-800 truncate">
+                    <div className="text-sm font-semibold text-n-800 truncate">
                       {protocol.title}
                     </div>
                     <Caption tone="neutral" size="md" as="div" className="mt-1">
@@ -110,7 +110,7 @@ export function ProtocolPickerModal({
                     </Caption>
                   </div>
                   {protocol.isFavorite && (
-                    <i className="ph-fill ph-star text-warning-text text-[14px] shrink-0" />
+                    <i className="ph-fill ph-star text-warning-text text-base shrink-0" />
                   )}
                 </SelectableCard>
               )

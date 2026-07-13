@@ -31,7 +31,7 @@ export function DiagnosesSection({
       {diagnoses.map((d) => (
         <span
           key={d}
-          className="inline-flex items-center gap-2 text-[12.5px] font-sans px-3 py-1 rounded bg-p-50 border border-p-100 text-p-700"
+          className="inline-flex items-center gap-2 text-xs font-sans px-3 py-1 rounded bg-p-50 border border-p-100 text-p-700"
         >
           {d}
           {!disabled && (
@@ -59,7 +59,7 @@ export function DiagnosesSection({
               }
             }}
             placeholder={diagnosesSectionStrings.addPlaceholder}
-            className="h-[30px] text-[12.5px] border-dashed w-[200px]"
+            className="h-[30px] text-xs border-dashed w-[200px]"
           />
           {input.trim() && (
             <TextLink tone="primary" size="sm" weight="medium" onClick={addDiagnosis}>
@@ -69,7 +69,7 @@ export function DiagnosesSection({
         </div>
       )}
       {diagnoses.length === 0 && disabled && (
-        <span className="text-[13px] text-n-300">{diagnosesSectionStrings.emptyDash}</span>
+        <span className="text-sm text-n-300">{diagnosesSectionStrings.emptyDash}</span>
       )}
     </div>
   )

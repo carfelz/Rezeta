@@ -31,10 +31,10 @@ describe('Overline', () => {
   })
 
   it.each([
-    ['xs', 'text-[9.5px]'],
-    ['sm', 'text-[10px]'],
-    ['md', 'text-[10.5px]'],
-    ['lg', 'text-[11px]'],
+    ['xs', 'text-2xs'],
+    ['sm', 'text-2xs'],
+    ['md', 'text-2xs'],
+    ['lg', 'text-overline'],
   ] as const)('applies size=%s class', (size, expected) => {
     const { container } = render(<Overline size={size}>x</Overline>)
     expect(container.firstChild).toHaveClass(expected)

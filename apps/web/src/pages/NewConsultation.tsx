@@ -142,7 +142,7 @@ export function NewConsultation(): JSX.Element {
 
       {error && (
         <div className="mx-auto max-w-[880px] mt-6">
-          <div className="text-[12.5px] text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
+          <div className="text-xs text-danger-text bg-danger-bg border border-danger-border rounded-sm px-3 py-2">
             {error}
           </div>
         </div>
@@ -183,12 +183,12 @@ export function NewConsultation(): JSX.Element {
       {ready && (!resumable || resumeDismissed || !resumable.protocolUsage) && (
         <div className="max-w-[880px] mx-auto pt-8">
           <div className="flex flex-col items-center gap-4 py-16 border border-dashed border-n-200 rounded-md text-center">
-            <i className="ph ph-stethoscope text-[32px] text-n-400" />
+            <i className="ph ph-stethoscope text-h2 text-n-400" />
             <div>
-              <p className="text-[15px] font-medium text-n-800 mb-1">
+              <p className="text-base font-medium text-n-800 mb-1">
                 {newConsultationStrings.readyTitle}
               </p>
-              <p className="text-[13px] text-n-500">
+              <p className="text-sm text-n-500">
                 {newConsultationStrings.readyDescription}
               </p>
             </div>

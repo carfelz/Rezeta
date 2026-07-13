@@ -13,9 +13,9 @@ const chipVariants = cva(['inline-flex items-center gap-1 rounded-sm border tran
       neutral: 'bg-n-50 border-n-200 text-n-600',
     },
     size: {
-      xs: 'text-[9.5px] tracking-[0.06em] px-2 py-px',
-      sm: 'text-[10px] tracking-[0.10em] px-2 py-px',
-      md: 'text-[11px] tracking-[0.06em] px-2 py-1',
+      xs: 'text-2xs tracking-[0.06em] px-2 py-px',
+      sm: 'text-2xs tracking-[0.10em] px-2 py-px',
+      md: 'text-overline tracking-[0.06em] px-2 py-1',
     },
     // mono+upper = canonical "EN CURSO" / "MÁS PROBABLE" pill
     // sans+normal = small ghost button like "Ver pasos"

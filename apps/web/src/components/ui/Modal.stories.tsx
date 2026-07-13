@@ -34,7 +34,7 @@ export const DestructiveAction: StoryObj = {
           subtitle="El expediente quedará en solo lectura."
         />
         <ModalBody>
-          <p className="text-[13px] font-sans text-n-700 leading-relaxed">
+          <p className="text-sm font-sans text-n-700 leading-relaxed">
             ¿Estás seguro de que deseas archivar a <strong>Ana María Reyes</strong>? El expediente
             quedará disponible pero no podrá ser modificado. Esta acción puede revertirse.
           </p>
@@ -66,7 +66,7 @@ export const DeleteAction: StoryObj = {
           subtitle="Esta acción no puede deshacerse."
         />
         <ModalBody>
-          <p className="text-[13px] font-sans text-n-700 leading-relaxed">
+          <p className="text-sm font-sans text-n-700 leading-relaxed">
             Se eliminará permanentemente el protocolo <strong>"Manejo de anafilaxia"</strong>. No
             podrá recuperarse.
           </p>
@@ -134,7 +134,7 @@ export const SuccessModal: StoryObj = {
           showClose={false}
         />
         <ModalBody>
-          <p className="text-[13px] font-sans text-n-700 leading-relaxed">
+          <p className="text-sm font-sans text-n-700 leading-relaxed">
             RD$ 3,450.00 acreditados a la cuenta de Ana María Reyes. Factura F-2026-01142 marcada
             como pagada.
           </p>

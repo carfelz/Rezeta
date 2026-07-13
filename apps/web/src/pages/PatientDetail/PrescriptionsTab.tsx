@@ -24,7 +24,7 @@ export function PrescriptionsTab({ patientId }: PrescriptionsTabProps): JSX.Elem
   }
 
   if (isError) {
-    return <p className="text-[13px] font-sans text-danger-text">{s.loadError}</p>
+    return <p className="text-sm font-sans text-danger-text">{s.loadError}</p>
   }
 
   if (prescriptions.length === 0) {
@@ -48,13 +48,13 @@ function PrescriptionRow({ prescription }: { prescription: Prescription }): JSX.
   return (
     <li className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-[13px] font-sans text-n-800 whitespace-nowrap">
+        <span className="text-sm font-sans text-n-800 whitespace-nowrap">
           {formatDate(prescription.createdAt)}
         </span>
-        <span className="text-[12px] font-sans text-n-600 truncate">
+        <span className="text-xs font-sans text-n-600 truncate">
           {first ? first.drug : (prescription.groupTitle ?? '—')}
         </span>
-        <span className="text-[12px] font-sans text-n-400 whitespace-nowrap">
+        <span className="text-xs font-sans text-n-400 whitespace-nowrap">
           {s.prescriptionItemsCount(prescription.prescriptionItems.length)}
         </span>
       </div>
@@ -63,9 +63,9 @@ function PrescriptionRow({ prescription }: { prescription: Prescription }): JSX.
         {prescription.consultationId !== null && (
           <Link
             to={`/consultas/${prescription.consultationId}`}
-            className="inline-flex items-center gap-1 text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
+            className="inline-flex items-center gap-1 text-xs font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
           >
-            <i className="ph ph-file-text text-[14px]" />
+            <i className="ph ph-file-text text-base" />
             {s.viewConsultation}
           </Link>
         )}

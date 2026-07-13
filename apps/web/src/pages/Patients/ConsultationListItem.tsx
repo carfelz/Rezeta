@@ -17,9 +17,9 @@ export function ConsultationListItem({
 
   return (
     <SelectableCard density="compact" onClick={onClick}>
-      <i className="ph ph-notepad text-[16px] text-n-400 shrink-0" />
+      <i className="ph ph-notepad text-body-lg text-n-400 shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-semibold text-n-800 truncate">
+        <div className="text-sm font-semibold text-n-800 truncate">
           {consultation.protocolUsages[0]?.protocolTitle ?? 'Consulta'}
         </div>
         <Caption tone="neutral" size="sm" as="div" className="mt-1">
@@ -29,7 +29,7 @@ export function ConsultationListItem({
       <Chip tone={isSigned ? 'primarySolid' : 'neutral'} size="sm">
         {isSigned ? 'Firmada' : 'Borrador'}
       </Chip>
-      <i className="ph ph-caret-right text-[13px] text-n-300 shrink-0" />
+      <i className="ph ph-caret-right text-sm text-n-300 shrink-0" />
     </SelectableCard>
   )
 }

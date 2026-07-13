@@ -34,7 +34,7 @@ export function DateNavigation({
         onClick={onNext}
       />
       <Row gap={2}>
-        <span className="text-[15px] font-semibold text-n-800">{formatDate(currentDate)}</span>
+        <span className="text-base font-semibold text-n-800">{formatDate(currentDate)}</span>
         {isToday && (
           <Chip tone="primarySolid" size="md" format="sentence">
             {dateNavigationStrings.todayChip}

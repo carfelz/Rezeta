@@ -28,7 +28,7 @@ export function AppointmentsTab({ patientId }: AppointmentsTabProps): JSX.Elemen
   }
 
   if (isError) {
-    return <p className="text-[13px] font-sans text-danger-text">{s.loadError}</p>
+    return <p className="text-sm font-sans text-danger-text">{s.loadError}</p>
   }
 
   if (appointments.length === 0) {
@@ -61,22 +61,22 @@ function AppointmentRow({ appt, onStart, isStarting }: AppointmentRowProps): JSX
   return (
     <li className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-[13px] font-sans text-n-800 whitespace-nowrap">
+        <span className="text-sm font-sans text-n-800 whitespace-nowrap">
           {formatDate(appt.startsAt)}
         </span>
-        <span className="text-[12px] font-mono text-n-500 whitespace-nowrap">
+        <span className="text-xs font-mono text-n-500 whitespace-nowrap">
           {formatTime(appt.startsAt)}
         </span>
-        <span className="text-[12px] font-sans text-n-500 truncate">{appt.locationName}</span>
+        <span className="text-xs font-sans text-n-500 truncate">{appt.locationName}</span>
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <Badge variant={statusBadgeVariant(appt.status)}>{statusLabel(appt.status)}</Badge>
         {appt.consultationId !== null ? (
           <Link
             to={`/consultas/${appt.consultationId}`}
-            className="inline-flex items-center gap-1 text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
+            className="inline-flex items-center gap-1 text-xs font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
           >
-            <i className="ph ph-file-text text-[14px]" />
+            <i className="ph ph-file-text text-base" />
             {s.viewConsultation}
           </Link>
         ) : (
@@ -88,7 +88,7 @@ function AppointmentRow({ appt, onStart, isStarting }: AppointmentRowProps): JSX
               onClick={onStart}
               disabled={isStarting}
             >
-              <i className="ph ph-play-circle text-[14px]" />
+              <i className="ph ph-play-circle text-base" />
               {s.startConsultation}
             </TextLink>
           )

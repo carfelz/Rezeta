@@ -75,7 +75,7 @@ export function Consultation(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="text-[13px] text-n-500 flex items-center gap-2">
+        <div className="text-sm text-n-500 flex items-center gap-2">
           <Spinner decorative size="sm" /> {consultationPageStrings.loading}
         </div>
       </div>
@@ -85,8 +85,8 @@ export function Consultation(): JSX.Element {
   if (isError || !consultation) {
     return (
       <div className="max-w-lg mx-auto mt-16 text-center">
-        <i className="ph ph-warning text-[32px] text-n-300 mb-3" />
-        <p className="text-[14px] text-n-600 mb-4">{consultationPageStrings.loadError}</p>
+        <i className="ph ph-warning text-h2 text-n-300 mb-3" />
+        <p className="text-base text-n-600 mb-4">{consultationPageStrings.loadError}</p>
         <Button variant="secondary" onClick={() => void navigate(-1)}>
           {consultationPageStrings.backButton}
         </Button>

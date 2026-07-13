@@ -30,12 +30,12 @@ export function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.
   return (
     <tr className="hover:bg-n-25">
       <td className="px-4 py-3 border-b border-n-100">
-        <div className="text-[13px] font-mono font-medium text-n-700">{invoice.invoiceNumber}</div>
-        <div className="text-[11.5px] text-n-500 mt-1">{formatDate(invoice.createdAt)}</div>
+        <div className="text-sm font-mono font-medium text-n-700">{invoice.invoiceNumber}</div>
+        <div className="text-overline text-n-500 mt-1">{formatDate(invoice.createdAt)}</div>
       </td>
       <td className="px-4 py-3 border-b border-n-100">
-        <div className="text-[13px] font-sans font-semibold text-n-800">{invoice.patientName}</div>
-        <div className="text-[11.5px] text-n-500 mt-1">{invoice.locationName}</div>
+        <div className="text-sm font-sans font-semibold text-n-800">{invoice.patientName}</div>
+        <div className="text-overline text-n-500 mt-1">{invoice.locationName}</div>
       </td>
       <td className="px-4 py-3 border-b border-n-100">
         <Badge variant={statusVariant(invoice.status)} showDot={false}>
@@ -43,11 +43,11 @@ export function InvoiceRow({ invoice, onEdit, onDelete }: InvoiceRowProps): JSX.
         </Badge>
       </td>
       <td className="px-4 py-3 border-b border-n-100 text-right">
-        <div className="text-[13px] font-mono font-semibold text-n-800">
+        <div className="text-sm font-mono font-semibold text-n-800">
           {formatCurrency(invoice.total, invoice.currency)}
         </div>
         {invoice.commissionPercent > 0 && (
-          <div className="text-[11px] font-mono text-n-500 mt-1">
+          <div className="text-overline font-mono text-n-500 mt-1">
             {billingStrings.netLabel(formatCurrency(invoice.netToDoctor, invoice.currency))}
           </div>
         )}

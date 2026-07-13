@@ -36,10 +36,10 @@ export const SkipStep: Story = {
     <DialogCard {...args}>
       <div className="flex flex-col gap-2">
         <RadioCard selected={false}>
-          <span className="text-[13px] text-n-800">Paciente no cooperaba</span>
+          <span className="text-sm text-n-800">Paciente no cooperaba</span>
         </RadioCard>
         <RadioCard selected>
-          <span className="text-[13px] text-n-800">No clínicamente relevante hoy</span>
+          <span className="text-sm text-n-800">No clínicamente relevante hoy</span>
         </RadioCard>
       </div>
     </DialogCard>
@@ -65,7 +65,7 @@ export const SwitchProtocol: Story = {
   },
   render: (args) => (
     <DialogCard {...args}>
-      <div className="border border-n-200 rounded p-4 bg-n-25 text-[12.5px] text-n-700">
+      <div className="border border-n-200 rounded p-4 bg-n-25 text-xs text-n-700">
         Impact card content
       </div>
     </DialogCard>
@@ -91,7 +91,7 @@ export const ResumeBanner: Story = {
   },
   render: (args) => (
     <DialogCard {...args}>
-      <div className="border border-n-200 rounded p-4 bg-n-25 text-[12.5px] text-n-700">
+      <div className="border border-n-200 rounded p-4 bg-n-25 text-xs text-n-700">
         Patient mini-card content
       </div>
     </DialogCard>

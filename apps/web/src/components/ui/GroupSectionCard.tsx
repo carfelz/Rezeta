@@ -72,7 +72,7 @@ export const GroupSectionCard = forwardRef<HTMLDivElement, GroupSectionCardProps
             <div className="flex items-center justify-between px-4 py-3 bg-n-25 border-b border-n-100">
               <div className="flex items-center gap-2 min-w-0">
                 {typeof title === 'string' ? (
-                  <span className="text-[12.5px] font-semibold text-n-800">{title}</span>
+                  <span className="text-xs font-semibold text-n-800">{title}</span>
                 ) : (
                   title
                 )}

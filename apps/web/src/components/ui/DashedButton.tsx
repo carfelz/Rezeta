@@ -19,8 +19,8 @@ const dashedButtonVariants = cva(
           'border-n-300 text-n-600 hover:border-warning-border hover:text-warning-text hover:bg-warning-bg',
       },
       size: {
-        sm: 'py-2 text-[12px]',
-        md: 'py-3 text-[12.5px]',
+        sm: 'py-2 text-xs',
+        md: 'py-3 text-xs',
       },
     },
     defaultVariants: {

@@ -40,10 +40,10 @@ export function CanvasView({
         <Overline tone="warning" size="md">
           {canvasViewStrings.emptyProtocolOverline}
         </Overline>
-        <h2 className="font-serif font-medium text-[24px] text-n-900 leading-tight tracking-[-0.01em] m-0">
+        <h2 className="font-serif font-medium text-h2 text-n-900 leading-tight tracking-[-0.01em] m-0">
           {canvasViewStrings.emptyProtocolHeading}
         </h2>
-        <p className="text-[13px] text-n-500 max-w-[440px] leading-snug">
+        <p className="text-sm text-n-500 max-w-[440px] leading-snug">
           {canvasViewStrings.emptyProtocolDescription}
         </p>
         {(onContinueWithoutProtocol || onEditProtocol) && (

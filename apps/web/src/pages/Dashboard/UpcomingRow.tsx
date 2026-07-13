@@ -75,15 +75,15 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
           }
         }}
       >
-      <div className="w-[28px] h-[28px] rounded-full bg-p-50 text-p-700 text-[10px] font-semibold flex items-center justify-center shrink-0">
+      <div className="w-[28px] h-[28px] rounded-full bg-p-50 text-p-700 text-2xs font-semibold flex items-center justify-center shrink-0">
         {initials}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[13.5px] font-semibold text-n-900 truncate">{appt.patientName}</div>
-        {appt.reason && <div className="text-[12px] text-n-500 truncate mt-1">{appt.reason}</div>}
+        <div className="text-sm font-semibold text-n-900 truncate">{appt.patientName}</div>
+        {appt.reason && <div className="text-xs text-n-500 truncate mt-1">{appt.reason}</div>}
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <span className="font-mono text-[12px] text-n-500">{formatTime(appt.startsAt)}</span>
+        <span className="font-mono text-xs text-n-500">{formatTime(appt.startsAt)}</span>
         <Badge variant={badgeVariant} showDot>
           {badgeLabel}
         </Badge>

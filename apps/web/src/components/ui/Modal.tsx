@@ -81,7 +81,7 @@ export function ModalHeader({
       {icon && (
         <span
           className={cn(
-            'flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-[18px]',
+            'flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-h3',
             iconStyles[iconVariant],
           )}
         >
@@ -89,18 +89,18 @@ export function ModalHeader({
         </span>
       )}
       <div className="flex-1 min-w-0">
-        <Dialog.Title className="text-[19px] font-serif font-medium text-n-900 leading-tight tracking-[-0.005em]">
+        <Dialog.Title className="text-h3 font-serif font-medium text-n-900 leading-tight tracking-[-0.005em]">
           {title}
         </Dialog.Title>
         {subtitle && (
-          <Dialog.Description className="text-[13px] font-sans text-n-600 mt-1 leading-tight">
+          <Dialog.Description className="text-sm font-sans text-n-600 mt-1 leading-tight">
             {subtitle}
           </Dialog.Description>
         )}
       </div>
       {showClose && (
         <Dialog.Close className="flex items-center justify-center w-8 h-8 rounded-sm text-n-400 hover:text-n-700 hover:bg-n-50 transition-colors duration-[100ms] shrink-0 -mr-1 mt-[-2px]">
-          <i className="ph ph-x text-[16px]" />
+          <i className="ph ph-x text-body-lg" />
           <span className="sr-only">Cerrar</span>
         </Dialog.Close>
       )}

@@ -38,7 +38,7 @@ export function SaveModal({
         />
         <ModalBody>
           <div className="flex flex-col gap-2">
-            <label className="text-[12.5px] font-sans font-medium text-n-700">
+            <label className="text-xs font-sans font-medium text-n-700">
               {protocolEditorStrings.saveModalLabel}
             </label>
             <Textarea

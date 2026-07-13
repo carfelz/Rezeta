@@ -297,8 +297,8 @@ function BlockRow({ block, onDelete }: { block: ScheduleBlock; onDelete: () => v
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-n-100 last:border-b-0 hover:bg-n-25">
       <div className="flex-1">
-        <div className="text-[13px] font-semibold text-n-800">{DAY_LABELS[block.dayOfWeek]}</div>
-        <div className="text-[12px] text-n-500 font-mono">
+        <div className="text-sm font-semibold text-n-800">{DAY_LABELS[block.dayOfWeek]}</div>
+        <div className="text-xs text-n-500 font-mono">
           {block.startTime.slice(0, 5)} – {block.endTime.slice(0, 5)} · {block.slotDurationMin}{' '}
           {schedulesStrings.slotDurationSuffix}
         </div>
@@ -327,9 +327,9 @@ function ExceptionRow({
     <div className="flex items-center gap-3 px-4 py-3 border-b border-n-100 last:border-b-0 hover:bg-n-25">
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <div className="text-[13px] font-semibold text-n-800">{ex.date}</div>
+          <div className="text-sm font-semibold text-n-800">{ex.date}</div>
           <span
-            className={`text-[11px] font-mono px-2 py-0.5 rounded-sm border ${
+            className={`text-overline font-mono px-2 py-0.5 rounded-sm border ${
               ex.type === 'blocked'
                 ? 'bg-danger-bg border-danger-border text-danger-text'
                 : 'bg-success-bg border-success-border text-success-text'
@@ -341,7 +341,7 @@ function ExceptionRow({
           </span>
         </div>
         {(ex.startTime || ex.reason) && (
-          <div className="text-[12px] text-n-500 font-mono mt-0.5">
+          <div className="text-xs text-n-500 font-mono mt-0.5">
             {ex.startTime && ex.endTime
               ? `${ex.startTime.slice(0, 5)} – ${ex.endTime.slice(0, 5)}`
               : null}
@@ -435,10 +435,10 @@ export function Schedules(): JSX.Element {
               )}
               {!blocksLoading && (!blocks || blocks.length === 0) && (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-[13px] font-serif text-n-800 mb-1">
+                  <p className="text-sm font-serif text-n-800 mb-1">
                     {schedulesStrings.noBlocks}
                   </p>
-                  <p className="text-[12px] text-n-500">{schedulesStrings.noBlocksDescription}</p>
+                  <p className="text-xs text-n-500">{schedulesStrings.noBlocksDescription}</p>
                 </div>
               )}
               {!blocksLoading &&
@@ -473,10 +473,10 @@ export function Schedules(): JSX.Element {
               )}
               {!exceptionsLoading && (!exceptions || exceptions.length === 0) && (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-[13px] font-serif text-n-800 mb-1">
+                  <p className="text-sm font-serif text-n-800 mb-1">
                     {schedulesStrings.noExceptions}
                   </p>
-                  <p className="text-[12px] text-n-500">
+                  <p className="text-xs text-n-500">
                     {schedulesStrings.noExceptionsDescription}
                   </p>
                 </div>

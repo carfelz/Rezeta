@@ -12,7 +12,7 @@ import { postSignPanelStrings } from './strings'
 const BILLING_PATH = '/facturacion'
 const LOCATIONS_SETTINGS_PATH = '/ajustes/ubicaciones'
 
-const navLinkClass = 'text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline'
+const navLinkClass = 'text-xs font-sans text-p-500 hover:text-p-700 hover:underline'
 
 export interface PostSignPanelProps {
   invoiceOutcome: InvoiceOutcome
@@ -49,10 +49,10 @@ export function PostSignPanel({
 
       <div className="mt-4 flex items-center justify-between border-t border-n-100 pt-4">
         <div>
-          <div className="text-[14px] font-semibold text-n-800">
+          <div className="text-base font-semibold text-n-800">
             {postSignPanelStrings.followUpHeading}
           </div>
-          <div className="text-[12px] text-n-500">{postSignPanelStrings.followUpCaption}</div>
+          <div className="text-xs text-n-500">{postSignPanelStrings.followUpCaption}</div>
         </div>
         <Button variant="secondary" size="sm" onClick={() => setShowFollowUp(true)}>
           <i className="ph ph-calendar-plus" />
@@ -123,10 +123,10 @@ function RecordCard({
   return (
     <div className="mt-4 flex items-center justify-between border-t border-n-100 pt-4">
       <div>
-        <div className="text-[14px] font-semibold text-n-800">
+        <div className="text-base font-semibold text-n-800">
           {postSignPanelStrings.historiaHeading}
         </div>
-        <div className="text-[12px] text-n-500">
+        <div className="text-xs text-n-500">
           {outcome.status === 'created'
             ? postSignPanelStrings.historiaCreated
             : postSignPanelStrings.historiaFailed}
@@ -171,14 +171,14 @@ function CreatedInvoiceCard({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-[13px] text-n-700">
-        <i className="ph ph-receipt text-[16px] text-p-500" />
+      <div className="flex items-center gap-2 text-sm text-n-700">
+        <i className="ph ph-receipt text-body-lg text-p-500" />
         <span>{postSignPanelStrings.invoiceCreatedLabel(formatCurrency(total, currency))}</span>
       </div>
       <div className="flex items-center gap-3">
         {issued ? (
-          <span className="flex items-center gap-1.5 text-[13px] text-success-text">
-            <i className="ph ph-check-circle text-[15px]" />
+          <span className="flex items-center gap-1.5 text-sm text-success-text">
+            <i className="ph ph-check-circle text-base" />
             {postSignPanelStrings.issuedLabel}
           </span>
         ) : (

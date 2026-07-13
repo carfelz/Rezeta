@@ -11,7 +11,7 @@ export const NativeSelect = forwardRef<HTMLSelectElement, NativeSelectProps>(
       <select
         ref={ref}
         className={cn(
-          'w-full h-input-md px-3 text-[13px] font-sans',
+          'w-full h-input-md px-3 text-sm font-sans',
           'bg-n-0 text-n-700 border rounded-sm',
           'outline-none transition-[border-color] duration-[100ms]',
           !error && 'border-n-300 focus:border-p-500',

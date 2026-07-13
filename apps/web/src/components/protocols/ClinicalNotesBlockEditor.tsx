@@ -41,7 +41,7 @@ export function ClinicalNotesBlockEditor({
           checked={draftRequired}
           onChange={(e) => setDraftRequired(e.target.checked)}
         />
-        <span className="text-[12px] font-sans text-n-600">
+        <span className="text-xs font-sans text-n-600">
           {blockEditorStrings.notesRequiredField}
         </span>
       </Row>

@@ -43,7 +43,7 @@ function TemplateCard({ template, selected, onSelect }: TemplateCardProps): JSX.
           className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
           style={{ backgroundColor: template.category.color }}
         />
-        <span className="block text-[13.5px] font-semibold text-n-800 leading-snug">
+        <span className="block text-sm font-semibold text-n-800 leading-snug">
           {template.name}
         </span>
       </div>
@@ -101,14 +101,14 @@ export function TemplatePickerModal({ isOpen, onClose }: TemplatePickerModalProp
             </div>
           ) : hasNoTemplates ? (
             <Stack gap={3} align="center" className="py-8 text-center">
-              <i className="ph ph-stack text-[32px] text-n-300" />
+              <i className="ph ph-stack text-h2 text-n-300" />
               <Caption tone="neutral" size="lg" as="p">
                 {blockEditorStrings.templatePickerEmpty}
               </Caption>
               <Link
                 to="/ajustes/plantillas/new"
                 onClick={handleClose}
-                className="text-[13px] text-p-500 hover:text-p-700 transition-colors"
+                className="text-sm text-p-500 hover:text-p-700 transition-colors"
               >
                 {blockEditorStrings.templatePickerEmptyCta} →
               </Link>

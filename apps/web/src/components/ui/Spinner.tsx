@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils'
 const spinnerVariants = cva('ph ph-spinner animate-spin inline-block leading-none', {
   variants: {
     size: {
-      sm: 'text-[14px]',
-      md: 'text-[20px]',
-      lg: 'text-[32px]',
+      sm: 'text-base',
+      md: 'text-h3',
+      lg: 'text-h2',
     },
   },
   defaultVariants: { size: 'md' },

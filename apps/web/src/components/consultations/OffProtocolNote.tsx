@@ -38,7 +38,7 @@ export function OffProtocolNote({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={offProtocolNoteStrings.titlePlaceholder}
-          className="font-serif font-medium text-[18px] text-n-900 leading-tight mb-2 h-auto px-0"
+          className="font-serif font-medium text-h3 text-n-900 leading-tight mb-2 h-auto px-0"
         />
 
         <Textarea
@@ -65,7 +65,7 @@ export function OffProtocolNote({
           {offProtocolNoteStrings.cancelButton}
         </TextLink>
 
-        <span className="text-[11.5px] text-n-400 ml-auto">
+        <span className="text-overline text-n-400 ml-auto">
           {time} · {doctorName}
         </span>
       </div>

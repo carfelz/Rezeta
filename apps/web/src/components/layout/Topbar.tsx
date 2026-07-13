@@ -57,7 +57,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
         onClick={onMenuClick}
         aria-label={topbarStrings.openMenuLabel}
       >
-        <i className="ph ph-list text-[20px]" />
+        <i className="ph ph-list text-h3" />
       </button>
       <div className="relative shrink-0" ref={dropdownRef}>
         <Button
@@ -67,7 +67,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
           onClick={() => setDropdownOpen((o) => !o)}
         >
           <span className="w-2 h-2 bg-p-500 rounded-full shrink-0" />
-          <span className="text-[13px] font-medium text-n-800">
+          <span className="text-sm font-medium text-n-800">
             {activeLocation ? activeLocation.name : topbarStrings.selectLocation}
           </span>
           {activeLocation?.city && (
@@ -75,7 +75,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
               · {activeLocation.city}
             </Caption>
           )}
-          <i className="ph ph-caret-down text-[12px] text-n-400 ml-1" />
+          <i className="ph ph-caret-down text-xs text-n-400 ml-1" />
         </Button>
 
         {dropdownOpen && (
@@ -103,8 +103,8 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
                     <div
                       className={
                         loc.id === activeLocationId
-                          ? 'text-[13px] font-semibold text-n-800'
-                          : 'text-[13px] font-regular text-n-800'
+                          ? 'text-sm font-semibold text-n-800'
+                          : 'text-sm font-regular text-n-800'
                       }
                     >
                       {loc.name}
@@ -120,10 +120,10 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
             ) : (
               !locationsLoading && (
                 <div className="px-4 py-3 flex flex-col gap-2">
-                  <p className="text-[13px] font-sans text-n-500">{topbarStrings.noLocations}</p>
+                  <p className="text-sm font-sans text-n-500">{topbarStrings.noLocations}</p>
                   <Link
                     to="/ajustes/ubicaciones"
-                    className="text-[13px] font-sans font-medium text-p-500 hover:text-p-700"
+                    className="text-sm font-sans font-medium text-p-500 hover:text-p-700"
                     onClick={() => setDropdownOpen(false)}
                   >
                     {topbarStrings.addLocation}
@@ -137,10 +137,10 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
 
       <div className="flex-1 max-w-[480px] relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400 flex items-center pointer-events-none">
-          <i className="ph ph-magnifying-glass text-[16px]" />
+          <i className="ph ph-magnifying-glass text-body-lg" />
         </span>
         <Input type="search" placeholder={topbarStrings.searchPlaceholder} className="pl-8 pr-12" />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-2xs font-mono text-n-500 border border-n-200 bg-n-25 rounded px-1 py-1 pointer-events-none">
           ⌘K
         </span>
       </div>
@@ -157,7 +157,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
           <div className="flex items-center gap-3 pl-4 border-l border-n-200">
             <Avatar initials={initials(user.fullName)} size="default" />
             <div>
-              <div className="text-[13px] font-semibold text-n-800">{user.fullName}</div>
+              <div className="text-sm font-semibold text-n-800">{user.fullName}</div>
               <Caption tone="neutral" size="md" as="div">
                 {user.specialty ?? topbarStrings.defaultSpecialty}
               </Caption>

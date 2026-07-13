@@ -51,7 +51,7 @@ export function EditorHeader({
   return (
     <div className="flex items-start gap-6 mb-6">
       <div className="flex-1 min-w-0">
-        <div className="text-[11.5px] font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
+        <div className="text-overline font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
           {[typeName, formatRelativeTime(updatedAt)].filter(Boolean).join(' · ')}
         </div>
 
@@ -67,20 +67,20 @@ export function EditorHeader({
               if (e.key === 'Enter') onCommitTitle()
               if (e.key === 'Escape') onCancelTitleEdit()
             }}
-            className="text-[28px] font-serif font-medium text-n-900 pb-1 mb-2 leading-tight border-b-2 border-p-500"
+            className="text-h2 font-serif font-medium text-n-900 pb-1 mb-2 leading-tight border-b-2 border-p-500"
             disabled={isRenaming}
           />
         ) : (
           <h1
             onClick={onStartEditing}
-            className="text-[28px] font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-[100ms] leading-tight"
+            className="text-h2 font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-[100ms] leading-tight"
             title={protocolEditorStrings.titleRenameTooltip}
           >
             {title}
           </h1>
         )}
 
-        <p className="text-[13px] font-sans text-n-500">
+        <p className="text-sm font-sans text-n-500">
           {protocolEditorStrings.blockCount(totalBlocks)}
           {sectionCount > 0 && ` · ${protocolEditorStrings.sectionCount(sectionCount)}`}
         </p>

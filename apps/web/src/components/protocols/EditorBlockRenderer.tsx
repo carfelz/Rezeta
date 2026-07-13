@@ -145,8 +145,8 @@ function SectionEditor({
       />
       {/* Section header with 2px teal left rule */}
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
-        <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
+        <i className="ph ph-dots-six-vertical text-body-lg text-n-300 cursor-grab shrink-0" />
+        <span className="text-2xs font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {blockTypeStrings.section}
         </span>
 
@@ -157,12 +157,12 @@ function SectionEditor({
           onChange={(e) => setTitleDraft(e.target.value)}
           onBlur={commitTitle}
           onKeyDown={handleTitleKeyDown}
-          className="flex-1 min-w-0 font-serif text-[17px] font-medium text-n-900 pb-px"
+          className="flex-1 min-w-0 font-serif text-body-lg font-medium text-n-900 pb-px"
           placeholder={blockEditorStrings.sectionTitlePlaceholder}
         />
 
         {isRequired && (
-          <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
+          <span className="text-2xs font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
             {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
@@ -202,7 +202,7 @@ function SectionEditor({
             ))}
           </div>
         ) : (
-          <p className="text-[12.5px] font-sans text-n-400 italic text-center py-3">
+          <p className="text-xs font-sans text-n-400 italic text-center py-3">
             {blockEditorStrings.sectionEmpty}
           </p>
         )}
@@ -262,15 +262,15 @@ function LeafBlockEditor({
       />
       {/* Block header with 2px teal left rule */}
       <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
-        <i className="ph ph-dots-six-vertical text-[16px] text-n-300 cursor-grab shrink-0" />
-        <span className="text-[10.5px] font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
+        <i className="ph ph-dots-six-vertical text-body-lg text-n-300 cursor-grab shrink-0" />
+        <span className="text-2xs font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {blockTypeLabel(block.type)}
         </span>
-        <span className="flex-1 min-w-0 truncate text-[15px] font-serif font-medium text-n-700">
+        <span className="flex-1 min-w-0 truncate text-base font-serif font-medium text-n-700">
           {blockDisplayTitle(block)}
         </span>
         {isRequired && (
-          <span className="text-[10px] font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
+          <span className="text-2xs font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
             {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
@@ -360,42 +360,42 @@ function BlockContextMenu({
           {isEditable && onEdit && (
             <DropdownMenu.Item
               onSelect={onEdit}
-              className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+              className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
             >
-              <i className="ph ph-pencil-simple text-[13px] text-n-400" />
+              <i className="ph ph-pencil-simple text-sm text-n-400" />
               {blockEditorStrings.blockCtxEdit}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item
             onSelect={onMoveUp}
             disabled={isFirst}
-            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
-            <i className="ph ph-arrow-up text-[13px] text-n-400" />
+            <i className="ph ph-arrow-up text-sm text-n-400" />
             {blockEditorStrings.blockCtxMoveUp}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onSelect={onMoveDown}
             disabled={isLast}
-            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
-            <i className="ph ph-arrow-down text-[13px] text-n-400" />
+            <i className="ph ph-arrow-down text-sm text-n-400" />
             {blockEditorStrings.blockCtxMoveDown}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onSelect={onDuplicate}
-            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
           >
-            <i className="ph ph-copy text-[13px] text-n-400" />
+            <i className="ph ph-copy text-sm text-n-400" />
             {blockEditorStrings.blockCtxDuplicate}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="h-px bg-n-100 my-1" />
           <DropdownMenu.Item
             onSelect={onDelete}
             disabled={isRequired}
-            className="flex items-center gap-2 px-3 py-[7px] text-[12.5px] font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
-            <i className="ph ph-trash text-[13px]" />
+            <i className="ph ph-trash text-sm" />
             {blockEditorStrings.blockCtxDelete}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
@@ -507,7 +507,7 @@ function ImagingOrderBlockEditor({
   return (
     <div className="p-4 flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
+        <label className="text-xs font-sans font-medium text-n-600">
           {imagingOrderEditorStrings.titleLabel}
         </label>
         <Input
@@ -519,13 +519,13 @@ function ImagingOrderBlockEditor({
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-[12px] font-sans font-medium text-n-600">
+        <label className="text-xs font-sans font-medium text-n-600">
           {imagingOrderEditorStrings.studiesLabel}
         </label>
         {draftOrders.map((order, idx) => (
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
+              <span className="text-overline font-mono text-n-400 shrink-0">{idx + 1}.</span>
               <Input
                 type="text"
                 className="flex-1"
@@ -573,7 +573,7 @@ function ImagingOrderBlockEditor({
                   checked={order.contrast}
                   onChange={(e) => updateOrder(order.id, { contrast: e.target.checked })}
                 />
-                <span className="text-[12px] font-sans text-n-600">
+                <span className="text-xs font-sans text-n-600">
                   {imagingOrderEditorStrings.contrastLabel}
                 </span>
               </label>
@@ -582,7 +582,7 @@ function ImagingOrderBlockEditor({
                   checked={order.fasting_required}
                   onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
                 />
-                <span className="text-[12px] font-sans text-n-600">
+                <span className="text-xs font-sans text-n-600">
                   {imagingOrderEditorStrings.fastingLabel}
                 </span>
               </label>
@@ -663,7 +663,7 @@ function LabOrderBlockEditor({
   return (
     <div className="p-4 flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-[12px] font-sans font-medium text-n-600">
+        <label className="text-xs font-sans font-medium text-n-600">
           {labOrderEditorStrings.titleLabel}
         </label>
         <Input
@@ -675,13 +675,13 @@ function LabOrderBlockEditor({
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-[12px] font-sans font-medium text-n-600">
+        <label className="text-xs font-sans font-medium text-n-600">
           {labOrderEditorStrings.testsLabel}
         </label>
         {draftOrders.map((order, idx) => (
           <div key={order.id} className="border border-n-200 rounded-sm p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-n-400 shrink-0">{idx + 1}.</span>
+              <span className="text-overline font-mono text-n-400 shrink-0">{idx + 1}.</span>
               <Input
                 type="text"
                 className="flex-1"
@@ -743,7 +743,7 @@ function LabOrderBlockEditor({
                 checked={order.fasting_required}
                 onChange={(e) => updateOrder(order.id, { fasting_required: e.target.checked })}
               />
-              <span className="text-[12px] font-sans text-n-600">
+              <span className="text-xs font-sans text-n-600">
                 {labOrderEditorStrings.fastingLabel}
               </span>
             </label>

@@ -66,7 +66,7 @@ export function SkipStepDialog({
             selected={selected === r.value}
             onClick={() => setSelected(r.value)}
           >
-            <span className="text-[13px] text-n-800">{r.label}</span>
+            <span className="text-sm text-n-800">{r.label}</span>
           </RadioCard>
         ))}
         {isOther && (

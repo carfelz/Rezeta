@@ -46,9 +46,9 @@ export function ConsultationSidebar({
             {patient.allergies.map((a) => (
               <div
                 key={a}
-                className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-[12.5px] text-danger-text leading-[1.4]"
+                className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-xs text-danger-text leading-[1.4]"
               >
-                <i className="ph ph-x-circle text-[16px] shrink-0 mt-1" />
+                <i className="ph ph-x-circle text-body-lg shrink-0 mt-1" />
                 <div>
                   <strong>{consultationSidebarStrings.allergyPrefix}</strong> · {a}
                 </div>
@@ -57,9 +57,9 @@ export function ConsultationSidebar({
             {patient.chronicConditions.map((c) => (
               <div
                 key={c}
-                className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-[12.5px] text-warning-text leading-[1.4]"
+                className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-xs text-warning-text leading-[1.4]"
               >
-                <i className="ph ph-warning-circle text-[16px] shrink-0 mt-1" />
+                <i className="ph ph-warning-circle text-body-lg shrink-0 mt-1" />
                 <div>{c}</div>
               </div>
             ))}
@@ -70,19 +70,19 @@ export function ConsultationSidebar({
       {!hasProtocols && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-mono uppercase tracking-[0.06em] text-n-400">
+            <span className="text-overline font-mono uppercase tracking-[0.06em] text-n-400">
               {consultationSidebarStrings.protocolsLabel}
             </span>
             {!isSigned && (
               <Button variant="secondary" size="sm" onClick={onAddProtocol}>
-                <i className="ph ph-plus text-[12px]" />
+                <i className="ph ph-plus text-xs" />
                 {consultationSidebarStrings.addProtocolButton}
               </Button>
             )}
           </div>
           <div className="flex flex-col items-center gap-2 py-6 border border-dashed border-n-200 rounded-md text-center">
-            <i className="ph ph-stack text-[22px] text-n-400" />
-            <p className="text-[12.5px] text-n-400">
+            <i className="ph ph-stack text-h3 text-n-400" />
+            <p className="text-xs text-n-400">
               {isSigned
                 ? consultationSidebarStrings.noProtocolsSigned
                 : consultationSidebarStrings.noProtocolsUnsigned}
@@ -105,7 +105,7 @@ export function ConsultationSidebar({
                 <span className="truncate flex-1 text-left">
                   {c.chiefComplaint ?? consultationSidebarStrings.noChiefComplaint}
                 </span>
-                <span className="font-mono text-n-400 text-[11px] shrink-0 ml-2">
+                <span className="font-mono text-n-400 text-overline shrink-0 ml-2">
                   {formatDate(c.consultedAt)}
                 </span>
               </Button>

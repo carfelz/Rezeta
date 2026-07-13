@@ -88,6 +88,7 @@ The frontend uses **React + Tailwind CSS + Radix UI + CVA** (shadcn-style). Desi
 - In Tailwind: use `text-n-700`, `bg-p-500`, `border-n-200`, `rounded-sm`, `shadow-floating` — never raw CSS values.
 - Before building any new UI, check `specs/design-system/components.md` and `apps/web/src/components/ui/` for an existing component that fits. Only create a new component if nothing in the system covers the need.
 - Follow the typography scale exactly. Do not introduce new sizes or weights.
+- **Font size — always a token, never raw pixels.** The base UI text size is **`text-sm` (13px)** and the small size is **`text-xs` (12px)**; use these for body/UI text. The full scale is `text-2xs` (10) · `text-overline` (11) · `text-xs` (12) · `text-sm` (13) · `text-base` (14) · `text-body-lg` (16) · `text-h3` (18) · `text-h2` (28) · `text-h1` (40) · `text-display` (56). **Never write `text-[13px]` or any `text-[..px]`/`text-[..rem]`** — an ESLint `no-restricted-syntax` guardrail fails CI on raw pixel/rem font sizes. Round to the nearest token instead of inventing a size.
 - Stick to the defined spacing scale. No `p-[14px]` if the scale is 1/2/3/4/5/6/8/10/12/16.
 - When in doubt, reference `design-system/ui_kit/index.html` before making a judgment call.
 

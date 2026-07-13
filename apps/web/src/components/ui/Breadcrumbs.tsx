@@ -22,7 +22,7 @@ export const Breadcrumbs = forwardRef<HTMLElement, BreadcrumbsProps>(
       <nav
         ref={ref}
         aria-label="Breadcrumb"
-        className={cn('flex items-center gap-2 text-[12px] text-n-500', className)}
+        className={cn('flex items-center gap-2 text-xs text-n-500', className)}
         {...props}
       >
         {items.map((b, i) => {
@@ -36,7 +36,7 @@ export const Breadcrumbs = forwardRef<HTMLElement, BreadcrumbsProps>(
               ) : (
                 <span className={isLast ? 'text-n-800 font-medium' : ''}>{b.label}</span>
               )}
-              {!isLast && <i className="ph ph-caret-right text-[10px] text-n-300" />}
+              {!isLast && <i className="ph ph-caret-right text-2xs text-n-300" />}
             </span>
           )
         })}

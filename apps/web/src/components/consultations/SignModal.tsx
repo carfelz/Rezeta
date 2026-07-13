@@ -43,8 +43,8 @@ export function SignModal({
       <ModalHeader title={signModalStrings.title} subtitle={signModalStrings.subtitle} />
       <ModalBody>
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-md px-4 py-3">
-          <i className="ph ph-warning text-[18px] text-warning-text shrink-0 mt-1" />
-          <p className="text-[13px] text-warning-text leading-[1.45]">
+          <i className="ph ph-warning text-h3 text-warning-text shrink-0 mt-1" />
+          <p className="text-sm text-warning-text leading-[1.45]">
             {signModalStrings.warningMessage}
           </p>
         </div>

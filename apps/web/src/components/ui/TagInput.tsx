@@ -87,7 +87,7 @@ export function TagInput({
       {value.map((tag, index) => (
         <span
           key={`${tag}-${index}`}
-          className="inline-flex items-center gap-1 bg-n-50 border border-n-200 text-n-700 rounded-sm px-2 py-0.5 text-[12.5px] font-sans"
+          className="inline-flex items-center gap-1 bg-n-50 border border-n-200 text-n-700 rounded-sm px-2 py-0.5 text-xs font-sans"
         >
           {tag}
           {!disabled && (
@@ -112,7 +112,7 @@ export function TagInput({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          'flex-1 min-w-[80px] outline-none bg-transparent text-[13px] font-sans',
+          'flex-1 min-w-[80px] outline-none bg-transparent text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'disabled:cursor-not-allowed',
         )}

@@ -18,7 +18,7 @@ export function InvoicesTab({ patientId }: InvoicesTabProps): JSX.Element {
   }
 
   if (isError) {
-    return <p className="text-[13px] font-sans text-danger-text">{s.loadError}</p>
+    return <p className="text-sm font-sans text-danger-text">{s.loadError}</p>
   }
 
   if (invoices.length === 0) {
@@ -38,13 +38,13 @@ function InvoiceRow({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element {
   return (
     <li className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-[13px] font-mono text-n-800 whitespace-nowrap">
+        <span className="text-sm font-mono text-n-800 whitespace-nowrap">
           {invoice.invoiceNumber}
         </span>
-        <span className="text-[12px] font-sans text-n-500 whitespace-nowrap">
+        <span className="text-xs font-sans text-n-500 whitespace-nowrap">
           {formatDate(invoice.createdAt)}
         </span>
-        <span className="text-[13px] font-sans text-n-800 whitespace-nowrap">
+        <span className="text-sm font-sans text-n-800 whitespace-nowrap">
           {formatCurrency(invoice.total, invoice.currency)}
         </span>
       </div>
@@ -53,17 +53,17 @@ function InvoiceRow({ invoice }: { invoice: InvoiceWithDetails }): JSX.Element {
         {invoice.consultationId !== null && (
           <Link
             to={`/consultas/${invoice.consultationId}`}
-            className="inline-flex items-center gap-1 text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
+            className="inline-flex items-center gap-1 text-xs font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
           >
-            <i className="ph ph-file-text text-[14px]" />
+            <i className="ph ph-file-text text-base" />
             {s.viewConsultation}
           </Link>
         )}
         <Link
           to="/facturacion"
-          className="inline-flex items-center gap-1 text-[12px] font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
+          className="inline-flex items-center gap-1 text-xs font-sans text-p-500 hover:text-p-700 hover:underline underline-offset-2"
         >
-          <i className="ph ph-arrow-square-out text-[14px]" />
+          <i className="ph ph-arrow-square-out text-base" />
           {s.viewInvoice}
         </Link>
       </div>

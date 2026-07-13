@@ -23,7 +23,7 @@ function SuggestionCard({
   return (
     <Callout tone="warning" icon="ph ph-lightbulb" title={suggestionBannerStrings.calloutTitle}>
       <Stack gap={2}>
-        <p className="text-[12.5px] text-n-700 leading-[1.45]">{suggestion.impactSummary}</p>
+        <p className="text-xs text-n-700 leading-[1.45]">{suggestion.impactSummary}</p>
         <Caption tone="muted" size="sm" className="font-mono">
           {suggestionBannerStrings.detectedIn(
             suggestion.occurrenceCount,

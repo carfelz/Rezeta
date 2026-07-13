@@ -41,7 +41,7 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
             key={t.clientId}
             className="flex items-center gap-3 bg-n-0 border border-n-200 rounded-md px-4 py-3"
           >
-            <i className="ph ph-file-text text-[16px] text-p-500 shrink-0" />
+            <i className="ph ph-file-text text-body-lg text-p-500 shrink-0" />
             <Input
               variant="ghost"
               className="flex-1 p-0"
@@ -56,7 +56,7 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
               onClick={() => remove(t.clientId)}
               title={onboardingCustomizeStrings.step1DeleteLabel}
             >
-              <i className="ph ph-trash text-[15px] text-danger-text" />
+              <i className="ph ph-trash text-base text-danger-text" />
             </Button>
           </div>
         ))}

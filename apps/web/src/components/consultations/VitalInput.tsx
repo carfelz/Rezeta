@@ -21,7 +21,7 @@ export function VitalInput({
 }: VitalInputProps): JSX.Element {
   return (
     <div className="field">
-      <label className="block text-[12px] font-sans font-medium text-n-700 mb-1">{label}</label>
+      <label className="block text-xs font-sans font-medium text-n-700 mb-1">{label}</label>
       <InputGroup>
         <Input
           type="number"
