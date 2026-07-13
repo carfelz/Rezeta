@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Omit document-type segment when patient has no document type
+
+### Fixed
+
+- `apps/web/src/pages/PatientDetail/PageHeader.tsx`: the patient-detail subtitle interpolated the raw `documentType` when no matching label existed, so a patient with a document number but a null `documentType` rendered a literal `null` (e.g. `46 años · null 001-9999999-9`). The document-type label is now resolved via the existing `DOC_LABELS` map and the segment is omitted entirely when the type is absent or unknown — the subtitle shows just the number (`46 años · 001-9999999-9`). Added `PageHeader` component tests covering the label-present, null-type (no `null` text), no-number, and no-birthdate cases (F5 in `docs/qa/2026-07-13-live-e2e-findings.md`).
+
 ## [2026-07-13] Backfill user profile on re-provision so signup name is not dropped
 
 ### Fixed

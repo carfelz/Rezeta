@@ -13,8 +13,11 @@ export interface PageHeaderProps {
 export function PageHeader({ patient, onEdit, onNewConsultation }: PageHeaderProps): JSX.Element {
   const fullName = `${patient.firstName} ${patient.lastName}`.trim()
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
+  // Omit the type segment entirely when the document type is absent or unknown,
+  // so the subtitle never interpolates a literal "null" ahead of the number.
+  const docTypeLabel = patient.documentType ? DOC_LABELS[patient.documentType] : undefined
   const docLabel = patient.documentNumber
-    ? `${DOC_LABELS[patient.documentType ?? ''] ?? patient.documentType} ${patient.documentNumber}`
+    ? [docTypeLabel, patient.documentNumber].filter(Boolean).join(' ')
     : s.noDocument
 
   return (
