@@ -4,7 +4,38 @@ import {
   CreateImagingOrderGroupSchema,
   CreateLabOrderGroupSchema,
   UpdateProtocolUsageSchema,
+  ConsultationListQuerySchema,
 } from '../consultation.js'
+
+const UUID = '00000000-0000-0000-0000-000000000001'
+
+describe('ConsultationListQuerySchema', () => {
+  it('accepts uuid filters and parseable from/to dates', () => {
+    const result = ConsultationListQuerySchema.safeParse({
+      patientId: UUID,
+      locationId: UUID,
+      from: '2026-07-01',
+      to: '2026-07-31T23:59:59Z',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an empty query (every filter is optional)', () => {
+    expect(ConsultationListQuerySchema.safeParse({}).success).toBe(true)
+  })
+
+  it('rejects an unparseable from date', () => {
+    expect(ConsultationListQuerySchema.safeParse({ from: 'not-a-date' }).success).toBe(false)
+  })
+
+  it('rejects an unparseable to date', () => {
+    expect(ConsultationListQuerySchema.safeParse({ to: 'garbage' }).success).toBe(false)
+  })
+
+  it('rejects a non-uuid patientId', () => {
+    expect(ConsultationListQuerySchema.safeParse({ patientId: 'abc' }).success).toBe(false)
+  })
+})
 
 describe('UpdateProtocolUsageSchema modifications', () => {
   it('accepts a valid vitals_entered event', () => {

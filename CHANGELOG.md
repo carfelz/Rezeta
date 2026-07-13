@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Cover the list-query schema date refinements
+
+### Added
+
+- `packages/shared/src/schemas/__tests__/appointment.test.ts` and `consultation.spec.ts`: tests for `AppointmentListQuerySchema` and `ConsultationListQuerySchema` that exercise the `DateLikeString` `.refine` callback (valid and unparseable `from`/`to`) plus uuid-filter validation. The refine functions added with the query schemas (WI-F) were only exercised by controller tests in `apps/api`, leaving `packages/shared`'s `schemas` directory at 33% function coverage; it is now 100%.
+
 ## [2026-07-12] Rate-limit the public client-error log endpoint
 
 ### Added
