@@ -163,13 +163,21 @@ export class InvoicesService {
     try {
       const dl = await this.prisma.doctorLocation.findFirst({
         where: { userId: params.userId, locationId: params.locationId },
-        select: { consultationFee: true, commissionPct: true },
+        select: { consultationFee: true },
       })
 
       if (!dl || Number(dl.consultationFee) === 0) return { status: 'skipped_no_fee' }
 
       const fee = Number(dl.consultationFee)
-      const commissionPct = Number(dl.commissionPct)
+      // Commission is read from Location.commissionPercent — the single source the
+      // settings UI maintains and the manual-invoice path already uses.
+      // DoctorLocation.commissionPct is only stamped at create time and never updated,
+      // so reading it here produced a stale commission on auto-invoices.
+      const location = await this.prisma.location.findFirst({
+        where: { id: params.locationId, tenantId: params.tenantId, deletedAt: null },
+        select: { commissionPercent: true },
+      })
+      const commissionPct = location ? Number(location.commissionPercent) : 0
 
       const row = await this.repo.create(
         params.tenantId,

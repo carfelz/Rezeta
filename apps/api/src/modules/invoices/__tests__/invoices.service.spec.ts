@@ -445,13 +445,19 @@ describe('InvoicesService', () => {
       tenantId: 'tenant-1',
     }
 
-    it('creates draft invoice using DoctorLocation fee', async () => {
+    it('uses the DoctorLocation fee and the authoritative Location commission', async () => {
+      // DoctorLocation.commissionPct is a stale create-time copy the settings UI never
+      // updates; the auto-invoice must read commission from Location.commissionPercent,
+      // matching the manual-invoice path. Here the two disagree (25 vs 15) and 25 must win.
       vi.mocked(
         (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(2000),
         commissionPct: new Decimal(15),
+      } as never)
+      vi.mocked(prisma.location.findFirst).mockResolvedValue({
+        commissionPercent: new Decimal(25),
       } as never)
       vi.mocked(repo.create).mockResolvedValue(makeRow())
       await service.createFromConsultation(params)
@@ -470,8 +476,22 @@ describe('InvoicesService', () => {
             }),
           ],
         }),
-        15,
+        25,
       )
+    })
+
+    it('defaults commission to 0 when the Location cannot be read', async () => {
+      vi.mocked(
+        (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
+          .doctorLocation.findFirst,
+      ).mockResolvedValue({
+        consultationFee: new Decimal(2000),
+        commissionPct: new Decimal(15),
+      } as never)
+      vi.mocked(prisma.location.findFirst).mockResolvedValue(null)
+      vi.mocked(repo.create).mockResolvedValue(makeRow())
+      await service.createFromConsultation(params)
+      expect(repo.create).toHaveBeenCalledWith('tenant-1', 'user-1', expect.anything(), 0)
     })
 
     it('returns created outcome with invoiceId, total and currency', async () => {

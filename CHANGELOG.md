@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Auto-invoice commission now reads the authoritative Location rate
+
+### Fixed
+
+- `apps/api/src/modules/invoices/invoices.service.ts`: `createFromConsultation` (the auto-invoice created when a consultation is signed) computed commission from `DoctorLocation.commissionPct`, but the settings UI (`locations.repository.ts` update path) only maintains `Location.commissionPercent` — `DoctorLocation.commissionPct` is stamped once at create and never updated (and set to 0 in the fee-only upsert branch). So a doctor who edited their commission got the correct rate on manually created invoices (which already read `Location.commissionPercent`) but a stale rate on auto-invoices. `createFromConsultation` now reads commission from `Location.commissionPercent` too — both invoice paths use the same authoritative source — while still reading the fee from `DoctorLocation.consultationFee`. Commission defaults to 0 if the Location cannot be read. `DoctorLocation.commissionPct` is now unused (read nowhere) and can be dropped in a future schema cleanup.
+
 ## [2026-07-12] Hardening sweep, wave 2 — appointments, query validation, error mapping, idempotency indexes
 
 Second batch from the audit (plan: `docs/superpowers/plans/2026-07-12-hardening-sweep.md`).

@@ -27,8 +27,14 @@ Add to `packages/shared/src/errors.ts`:
 ## Not fixed here (deliberate)
 
 - **Commission source divergence** (billing #2: `Location.commissionPercent` vs
-  `DoctorLocation.commissionPct`): a product decision on which column is authoritative, not a
-  mechanical fix. Deferred to Carlos.
+  `DoctorLocation.commissionPct`): RESOLVED 2026-07-12. Investigation showed it is a bug, not a
+  toss-up — the settings UI (`locations.repository.ts` update path) maintains only
+  `Location.commissionPercent`, while `DoctorLocation.commissionPct` is stamped once at create
+  and never updated. The manual-invoice path already read the authoritative
+  `Location.commissionPercent`; the auto-invoice-on-sign path read the stale
+  `DoctorLocation.commissionPct`. Fixed so both read `Location.commissionPercent`.
+  `DoctorLocation.commissionPct` is now write-only (still stamped at create/seed but read
+  nowhere) — a candidate for removal in a future schema-cleanup migration.
 - **Patient / consultation `ownerUserId` gaps** (tenant #2/#3): latent until multi-user ships,
   which is explicitly deferred (CLAUDE.md Non-Goals). Left as-is.
 - **`ConsultationRecord (consultationId, versionNumber)` full-unique** (imm #8): no soft-delete
