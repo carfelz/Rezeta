@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-12] Removed the unused DoctorLocation.commission_pct column
+
+### Removed
+
+- `packages/db/prisma/schema.prisma` + `migrations/20260712010000_drop_doctor_location_commission_pct`: dropped `DoctorLocation.commissionPct` (`commission_pct`). After the commission-source fix, commission is read exclusively from `Location.commissionPercent`; `commission_pct` was only ever written (at create/seed) and read nowhere. Removed the writes in `apps/api/src/modules/locations/locations.repository.ts` (create + fee-upsert branches) and `packages/db/src/seed.ts`, and cleaned the now-irrelevant field from the invoice service test mocks. Verified applied against the dev DB.
+
 ## [2026-07-12] Auto-invoice commission now reads the authoritative Location rate
 
 ### Fixed

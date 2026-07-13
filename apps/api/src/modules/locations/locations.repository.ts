@@ -100,7 +100,6 @@ export class LocationsRepository {
           userId,
           locationId: location.id,
           consultationFee: dto.consultationFee ?? 0,
-          commissionPct: dto.commissionPercent ?? 0,
         },
       })
 
@@ -140,7 +139,6 @@ export class LocationsRepository {
             userId,
             locationId: id,
             consultationFee: dto.consultationFee,
-            commissionPct: 0,
           },
         })
       }

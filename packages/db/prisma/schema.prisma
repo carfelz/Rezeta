@@ -122,7 +122,6 @@ model DoctorLocation {
   userId          String   @map("user_id") @db.Uuid
   locationId      String   @map("location_id") @db.Uuid
   consultationFee Decimal  @default(0) @map("consultation_fee") @db.Decimal(10, 2)
-  commissionPct   Decimal  @default(0) @map("commission_pct") @db.Decimal(5, 2)
   roomOrOffice    String?  @map("room_or_office") @db.VarChar(100)
   createdAt       DateTime @default(now()) @map("created_at")
 

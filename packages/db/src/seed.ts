@@ -581,12 +581,11 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
     })
     await prisma.doctorLocation.upsert({
       where: { userId_locationId: { userId: uId, locationId: lId } },
-      update: { consultationFee: loc.consultationFee, commissionPct: loc.commissionPercent },
+      update: { consultationFee: loc.consultationFee },
       create: {
         userId: uId,
         locationId: lId,
         consultationFee: loc.consultationFee,
-        commissionPct: loc.commissionPercent,
       },
     })
   }

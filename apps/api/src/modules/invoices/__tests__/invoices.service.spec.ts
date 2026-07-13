@@ -446,15 +446,14 @@ describe('InvoicesService', () => {
     }
 
     it('uses the DoctorLocation fee and the authoritative Location commission', async () => {
-      // DoctorLocation.commissionPct is a stale create-time copy the settings UI never
-      // updates; the auto-invoice must read commission from Location.commissionPercent,
-      // matching the manual-invoice path. Here the two disagree (25 vs 15) and 25 must win.
+      // The auto-invoice reads the fee from DoctorLocation but the commission from
+      // Location.commissionPercent (the single source the settings UI maintains), matching
+      // the manual-invoice path.
       vi.mocked(
         (prisma as never as { doctorLocation: { findFirst: ReturnType<typeof vi.fn> } })
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(2000),
-        commissionPct: new Decimal(15),
       } as never)
       vi.mocked(prisma.location.findFirst).mockResolvedValue({
         commissionPercent: new Decimal(25),
@@ -486,7 +485,6 @@ describe('InvoicesService', () => {
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(2000),
-        commissionPct: new Decimal(15),
       } as never)
       vi.mocked(prisma.location.findFirst).mockResolvedValue(null)
       vi.mocked(repo.create).mockResolvedValue(makeRow())
@@ -500,7 +498,6 @@ describe('InvoicesService', () => {
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(2000),
-        commissionPct: new Decimal(15),
       } as never)
       vi.mocked(repo.create).mockResolvedValue(makeRow({ id: 'inv-9', total: new Decimal(2000) }))
       const outcome = await service.createFromConsultation(params)
@@ -518,7 +515,6 @@ describe('InvoicesService', () => {
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(0),
-        commissionPct: new Decimal(10),
       } as never)
       const outcome = await service.createFromConsultation(params)
       expect(repo.create).not.toHaveBeenCalled()
@@ -565,7 +561,6 @@ describe('InvoicesService', () => {
           .doctorLocation.findFirst,
       ).mockResolvedValue({
         consultationFee: new Decimal(2000),
-        commissionPct: new Decimal(15),
       } as never)
       vi.mocked(repo.create).mockRejectedValue(new Error('DB error'))
       const outcome = await service.createFromConsultation(params)

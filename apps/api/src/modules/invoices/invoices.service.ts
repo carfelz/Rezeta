@@ -170,9 +170,7 @@ export class InvoicesService {
 
       const fee = Number(dl.consultationFee)
       // Commission is read from Location.commissionPercent — the single source the
-      // settings UI maintains and the manual-invoice path already uses.
-      // DoctorLocation.commissionPct is only stamped at create time and never updated,
-      // so reading it here produced a stale commission on auto-invoices.
+      // settings UI maintains and the manual-invoice path also uses.
       const location = await this.prisma.location.findFirst({
         where: { id: params.locationId, tenantId: params.tenantId, deletedAt: null },
         select: { commissionPercent: true },
