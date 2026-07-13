@@ -157,20 +157,6 @@ export const offProtocolNoteStrings = {
   cancelButton: 'Cancelar',
 } as const
 
-// ── VitalsSection ───────────────────────────────────────────────────────────────
-
-export const vitalsSectionStrings = {
-  emptyDash: '—',
-  bloodPressureLabel: 'Presión arterial',
-  heartRateLabel: 'Frec. cardíaca',
-  temperatureLabel: 'Temperatura',
-  spo2Label: 'Saturación O₂',
-  weightLabel: 'Peso',
-  heightLabel: 'Talla',
-  bmiLabel: 'IMC · calculado',
-  respiratoryRateLabel: 'Frec. respiratoria',
-} as const
-
 // ── MissingFieldsPanel ──────────────────────────────────────────────────────────
 
 export const missingFieldsStrings = {

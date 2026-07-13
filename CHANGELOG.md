@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Remove the obsolete pre-v2 vitals-section components (FU1)
+
+### Removed
+
+- Deleted `apps/web/src/components/consultations/VitalsSection.tsx` and `VitalInput.tsx` (plus their tests) and `apps/web/src/lib/consultation/vitals.ts` (plus its test). These were the SOAP-era consultation vitals UI and its `LocalVitals`/`computeBMI` helpers — dead since the v2 redesign moved clinical content into `ProtocolUsage` blocks; `components/protocols/blocks/VitalsBlock.tsx` is the only live vitals component. Nothing imported them (confirmed by typecheck). Also removed the now-unused `vitalsSectionStrings` from `components/consultations/strings.ts` and reworded the two `BlockRendererRunMode.tsx` BMI comments that pointed at the deleted `computeBMI`. Resolves FU1 / audit U10 in `docs/qa/2026-07-13-ui-followups.md`.
+
 ## [2026-07-13] Teach tailwind-merge the custom font-size tokens (fix stripped sizes)
 
 ### Fixed

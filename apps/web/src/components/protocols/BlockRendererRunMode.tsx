@@ -440,12 +440,11 @@ type VitalsFieldDef = {
 }
 
 /**
- * Recomputes BMI (decision 2: mirrors `computeBMI` in
- * `lib/consultation/vitals.ts`) when the block defines a `bmi` field with
+ * Recomputes BMI inline when the block defines a `bmi` field with
  * `input_type: 'computed'` and both `weight`/`height` hold positive numeric
  * values. Returns `nextValues` with `bmi` set to one decimal place, or with
  * `bmi` cleared (omitted) when weight/height aren't both positive numbers
- * (mirrors `computeBMI`'s falsy-weight/height guard, so `0` doesn't divide).
+ * (guards against falsy/zero weight/height so `0` doesn't divide).
  */
 function withDerivedBMI(
   fields: VitalsFieldDef[],
