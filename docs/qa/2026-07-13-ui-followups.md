@@ -11,6 +11,9 @@ Each is scoped enough to pick up as its own change. Context:
   (12) are the canonical base sizes (see CLAUDE.md).
 - ESLint guardrail bans raw `text-[..px|rem]` font sizes.
 - Dead `font-normal` → `font-regular` and undefined `p-400`/`p-600` → `p-500` in app code.
+- Registered the custom font-size tokens with `cn()`'s tailwind-merge config so they aren't stripped as
+  text-colors (they were, which made `Badge` inherit 16px); `Badge` moved off composite `text-overline`
+  to plain `text-xs`.
 
 ## Follow-ups (open)
 
@@ -42,6 +45,20 @@ through the store into a single provision call. Low priority; purely an efficien
 - Raw arbitrary values in NON-font properties (`leading-[..]`, `min-w-[..]`, `w-[..px]`, `px-[..px]`,
   `tracking-[..]`) were left as-is; the migration and guardrail cover font-size only. A separate pass
   could extend token discipline (and the guardrail) to spacing/line-height if desired.
+
+### FU5 — Custom font-size tokens have a two-file coupling (maintenance trap)
+Adding a new custom font-size token requires editing **two** files, or the token is silently stripped
+and the element inherits the body's 16px:
+1. `apps/web/tailwind.config.ts` — define it in `theme.extend.fontSize`.
+2. `apps/web/src/lib/utils.ts` — register the name in the `font-size` class group of
+   `extendTailwindMerge`. `cn()` runs tailwind-merge, which only knows the stock size names; an
+   unregistered custom token is misclassified as a text-*color* and dropped whenever a `cn()`-composed
+   element also sets a color class.
+The same coupling applies to any custom token whose name collides with a standard utility prefix
+(`text-`/`font-`/`h-`/`w-`). This is now documented in CLAUDE.md (Design System). No open work — logged
+here so anyone extending the scale from the follow-ups sees it. Related: `text-overline`/`caption`/`h*`
+are **composite** type styles (they set family/weight/color/casing, not just size) — use the numeric
+tokens (`2xs`/`xs`/`sm`/`base`) for plain text, which is why FU-era `Badge` uses `text-xs`.
 
 ## Test-gap note (addressed)
 The typography guardrail (`eslint.config.js` `no-restricted-syntax`) now fails CI on any new
