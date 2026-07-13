@@ -70,11 +70,21 @@ describe('ZodValidationPipe', () => {
     }
   })
 
-  it('validates param values too', () => {
+  // @UsePipes broadcasts a body-schema pipe to EVERY argument of a handler,
+  // including @Param('id'), @TenantId() and @CurrentUser(). Those must pass
+  // through untouched — validating them against the body/query schema wrongly
+  // rejects valid requests (see the F3 regression). They are validated
+  // elsewhere (ParseUUIDPipe / the auth guard).
+  it('does not validate param args — passes them through unchanged', () => {
     const paramMeta: ArgumentMetadata = { type: 'param', metatype: undefined, data: 'id' }
-    const idPipe = new ZodValidationPipe(z.string().uuid())
-    const uuid = '018e3f2a-3333-7000-8000-000000000001'
-    expect(idPipe.transform(uuid, paramMeta)).toBe(uuid)
-    expect(() => idPipe.transform('bad', paramMeta)).toThrow(BadRequestException)
+    expect(pipe.transform('any-id-string', paramMeta)).toBe('any-id-string')
+  })
+
+  it('does not validate custom args (auth/context) — passes them through unchanged', () => {
+    const customMeta: ArgumentMetadata = { type: 'custom', metatype: undefined, data: undefined }
+    // e.g. @TenantId() string and @CurrentUser() object
+    expect(pipe.transform('tenant-uuid', customMeta)).toBe('tenant-uuid')
+    const user = { id: 'u1', role: 'owner' }
+    expect(pipe.transform(user, customMeta)).toBe(user)
   })
 })

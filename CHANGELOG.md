@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Fix write endpoints broken by over-eager query validation
+
+### Fixed
+
+- `apps/api/src/common/pipes/zod-validation.pipe.ts`: the pipe validated **every** argument type, so a method-level `@UsePipes(new ZodValidationPipe(BodySchema))` (used by create/update handlers across locations, patients, invoices, appointments, schedules, consultations, orders, consultation-records) also validated the `@TenantId()`/`@CurrentUser()`/`@Param('id')` arguments against the *body* schema — failing with `VALIDATION_ERROR` (`name: ["Required"]`) even for valid requests, breaking nearly all writes. Introduced by the 2026-07-12 query-validation change, which removed the original body-only short-circuit. The pipe now validates only `body` and `query` args and passes `param`/`custom` args through untouched (params are validated by `ParseUUIDPipe`, auth/context by the guard) — restoring query validation without clobbering the other arguments. Found in live testing; unit tests missed it because they call handlers directly, bypassing Nest's pipe pipeline.
+
 ## [2026-07-12] Cover the list-query schema date refinements
 
 ### Added

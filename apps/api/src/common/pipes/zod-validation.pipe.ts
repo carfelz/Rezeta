@@ -7,12 +7,16 @@ import { ErrorCode } from '@rezeta/shared'
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  // Validates whatever argument it is attached to (`@Body`, `@Query`, or
-  // `@Param`). Previously this short-circuited on `metadata.type !== 'body'`,
-  // so a schema attached to `@Query`/`@Param` was silently ignored and a
-  // malformed value (e.g. a non-UUID `?categoryId=`) reached Prisma and
-  // surfaced as a 500 instead of a 400.
-  transform(value: unknown, _metadata: ArgumentMetadata): unknown {
+  // Validates `@Body` and `@Query` arguments only. It deliberately does NOT
+  // touch `param` or `custom` args: `@UsePipes(new ZodValidationPipe(schema))`
+  // broadcasts the pipe to EVERY handler argument, so validating the
+  // `@Param('id')` string or the `@TenantId()`/`@CurrentUser()` args against a
+  // body schema would reject valid requests (they lack the body's fields).
+  // Params are validated by `ParseUUIDPipe`; auth/context args by the guard.
+  // (A prior version short-circuited on `!== 'body'`, which silently ignored
+  // `@Query` schemas; the opposite over-reach then broke every write endpoint.)
+  transform(value: unknown, metadata: ArgumentMetadata): unknown {
+    if (metadata.type !== 'body' && metadata.type !== 'query') return value
     const result = this.schema.safeParse(value)
     if (!result.success) {
       throw new BadRequestException({
