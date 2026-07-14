@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Broaden the arbitrary-value guardrail to all design values
+
+### Changed
+
+- `eslint.config.js`: extended the `no-restricted-syntax` guardrail from font-size only to **all** design-value `prop-[value]` classes (`w`/`h`/`max-w`/`min-*`, spacing, `tracking`/`leading`, `rounded`/`z`/`shadow`/`bg`/`border`/`ring`/`duration`/`transition`/`grid-cols`/…). Runtime CSS-var bindings (`[--x]`, `[var(--x)]`) and arbitrary variant selectors (`data-[…]`, `group-…`, `[&>…]`) are exempt (their prefixes aren't in the list). Verified: clean on the migrated code (incl. `calendar.tsx`), and it flags an injected `w-[999px]`. Closes FU4.
+
 ## [2026-07-13] Migrate all arbitrary `prop-[value]` classes to tokens (design unchanged)
 
 ### Changed

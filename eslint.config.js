@@ -83,18 +83,23 @@ export default [
             'Throw HTTP exceptions with an ErrorCode object: new XException({ code: ErrorCode.X, message }). Raw string messages bypass the closed error-code enum.',
         },
         {
-          // Guardrail: no raw pixel/rem font sizes in Tailwind classes. Use a
-          // type-scale token — base UI text is text-sm (13px) / text-xs (12px);
-          // also text-2xs, text-base, text-body-lg, text-h3/h2/h1, text-display.
-          // Raw `text-[13px]`-style values fragmented the scale into 27 sizes.
-          selector: "Literal[value=/text-\\[[0-9.]+(px|rem)\\]/]",
+          // Guardrail: no arbitrary design values in Tailwind classes. Every
+          // size/spacing/color/radius/shadow/etc. must map to a token in
+          // tailwind.config.ts (font-size, letterSpacing, spacing, w/h/max-w,
+          // …). Exempt: runtime CSS-var bindings (`[--x]`, `[var(--x)]`) and
+          // arbitrary *variant* selectors (`data-[…]`, `group-…`, `[&>…]`),
+          // whose prefixes are not in this list. See CLAUDE.md > Design System
+          // and docs/qa/2026-07-13-arbitrary-value-migration-scope.md.
+          selector:
+            "Literal[value=/(?<![\\w-])(max-w|min-w|max-h|min-h|w|h|size|px|py|pt|pb|pl|pr|p|mx|my|mt|mb|ml|mr|m|gap|top|right|bottom|left|inset|tracking|leading|text|rounded|z|shadow|bg|border|ring|duration|delay|transition|grid-cols|grid-rows|basis|opacity)-\\[(?!--|var\\()/]",
           message:
-            'Use a font-size token (text-xs/sm/base/body-lg/h3/h2/h1/display), not a raw pixel value. Base UI text is text-sm (13px) / text-xs (12px). See CLAUDE.md > Design System.',
+            'Use a design token, not an arbitrary value — every size/spacing/color/etc. must map to a tailwind.config token. Exempt: CSS-var bindings ([--x]/[var(--x)]) and variant selectors (data-[…]). See CLAUDE.md > Design System.',
         },
         {
-          selector: "TemplateElement[value.raw=/text-\\[[0-9.]+(px|rem)\\]/]",
+          selector:
+            "TemplateElement[value.raw=/(?<![\\w-])(max-w|min-w|max-h|min-h|w|h|size|px|py|pt|pb|pl|pr|p|mx|my|mt|mb|ml|mr|m|gap|top|right|bottom|left|inset|tracking|leading|text|rounded|z|shadow|bg|border|ring|duration|delay|transition|grid-cols|grid-rows|basis|opacity)-\\[(?!--|var\\()/]",
           message:
-            'Use a font-size token (text-xs/sm/base/body-lg/h3/h2/h1/display), not a raw pixel value. Base UI text is text-sm (13px) / text-xs (12px). See CLAUDE.md > Design System.',
+            'Use a design token, not an arbitrary value — every size/spacing/color/etc. must map to a tailwind.config token. Exempt: CSS-var bindings ([--x]/[var(--x)]) and variant selectors (data-[…]). See CLAUDE.md > Design System.',
         },
       ],
     },
