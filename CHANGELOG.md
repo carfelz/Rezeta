@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Add design tokens for the arbitrary-value migration
+
+### Added
+
+- `apps/web/tailwind.config.ts`: new/extended token scales to replace arbitrary `prop-[value]` classes with the design kept pixel-identical — `letterSpacing` (heading/label tiers), `lineHeight`, `zIndex` (overlay/modal), `boxShadow` (`focus-subtle`), `transitionProperty`, off-grid `spacing` (fractional keys 0.5–4.5 = 2–18px), and `width`/`height`/`maxWidth`/`minWidth`/`minHeight`/`maxHeight` tokens (component sizes + by-value layout one-offs + `ch` measures + `%` column widths). `apps/web/src/index.css`: `--color-danger-hover`, `--color-danger-active`, `--color-overlay`. Registered the custom size/tracking/leading token names with `cn()`'s tailwind-merge (FU5 coupling) so they aren't stripped. Additive only — no visual change yet; the codemod that uses them follows.
+
 ## [2026-07-13] Provision the signup profile in a single call (FU3)
 
 ### Changed

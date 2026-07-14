@@ -41,6 +41,10 @@
     --color-danger-border: #d9b4ae;
     --color-danger-text: #7a2b22;
     --color-danger-solid: #8c2a20;
+    --color-danger-hover: #6e2018;
+    --color-danger-active: #52170f;
+    /* Modal/scrim overlay — n-900 at 35%. */
+    --color-overlay: rgba(14, 14, 13, 0.35);
 
     --color-info-bg: #ecf0f3;
     --color-info-border: #b8c6d0;

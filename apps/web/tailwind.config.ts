@@ -52,7 +52,12 @@ const config: Config = {
         border: 'var(--color-danger-border)',
         text: 'var(--color-danger-text)',
         solid: 'var(--color-danger-solid)',
+        hover: 'var(--color-danger-hover)',
+        active: 'var(--color-danger-active)',
       },
+
+      // Modal/scrim overlay.
+      overlay: 'var(--color-overlay)',
 
       info: {
         bg: 'var(--color-info-bg)',
@@ -88,6 +93,18 @@ const config: Config = {
       '10': 'var(--space-10)', // 40px
       '12': 'var(--space-12)', // 48px
       '16': 'var(--space-16)', // 64px
+      // Off-grid steps (legacy drift, exact-preserved — see the arbitrary-value
+      // migration scope). Prefer the whole steps above; these exist so no raw
+      // `p-[7px]`-style values remain. Fractional keys keep Tailwind's ×4 rule.
+      '0.5': '2px',
+      '0.75': '3px',
+      '1.25': '5px',
+      '1.5': '6px',
+      '1.75': '7px',
+      '2.25': '9px',
+      '2.5': '10px',
+      '3.5': '14px',
+      '4.5': '18px',
       // Layout-level values for sidebar/topbar utilities
       sidebar: 'var(--layout-sidebar-width)', // 240px  → w-sidebar, ml-sidebar
       topbar: 'var(--layout-topbar-height)', // 56px   → h-topbar, pt-topbar
@@ -212,10 +229,58 @@ const config: Config = {
       transitionTimingFunction: {
         DEFAULT: 'ease',
       },
-      // Min/max sizes for touch targets and component heights
+      // ── Type-adjacent scales (arbitrary-value migration) ────────────────────
+      letterSpacing: {
+        // Negative = heading tightening (mirror the type scale); positive = eyebrow/label tracking.
+        'heading-lg': '-0.015em',
+        heading: '-0.01em',
+        'heading-sm': '-0.005em',
+        'label-tight': '0.02em',
+        label: '0.06em',
+        'label-wide': '0.08em',
+        caps: '0.12em',
+        // (0.05em → tracking-wider, 0.10em → tracking-widest use Tailwind defaults.)
+      },
+      lineHeight: {
+        'display-tight': '1.15',
+        label: '1.4',
+        'prose-snug': '1.45',
+        prose: '1.55',
+        // (1.5 → leading-normal uses the Tailwind default.)
+      },
+      zIndex: {
+        overlay: '500',
+        modal: '600',
+      },
+      boxShadow: {
+        'focus-subtle': '0 0 0 3px rgba(45, 87, 96, 0.12)',
+        'focus-subtle-sm': '0 0 0 2px rgba(45, 87, 96, 0.12)',
+      },
+      transitionProperty: {
+        'border-shadow': 'border-color, box-shadow',
+        'colors-border': 'background-color, border-color, color',
+        border: 'border-color',
+        left: 'left',
+      },
+      // ── Sizes / dimensions ──────────────────────────────────────────────────
+      // Named component sizes + by-value tokens for layout one-offs (exact-
+      // preserved). Small px sizes (2–20px) resolve from the spacing scale
+      // (w-1.5 = 6px, h-4 = 16px, …), so only ≥26px and %/ch values are listed.
       minHeight: {
         touch: 'var(--size-touch-min)', // 44px
         'input-md': 'var(--size-input-md)', // 34px
+        '60': '60px',
+        '80': '80px',
+        '120': '120px',
+        '300': '300px',
+        '400': '400px',
+        'screen-60': '60vh',
+      },
+      maxHeight: {
+        '200': '200px',
+        '240': '240px',
+        '260': '260px',
+        '320': '320px',
       },
       height: {
         'btn-sm': 'var(--size-btn-sm)', // 28px
@@ -223,15 +288,66 @@ const config: Config = {
         'btn-lg': 'var(--size-btn-lg)', // 40px
         'input-md': 'var(--size-input-md)', // 34px
         'touch-min': 'var(--size-touch-min)', // 44px
+        '30': '30px',
+        '36': '36px',
+        '52': '52px',
+        '200': '200px',
+        '256': '256px',
       },
       width: {
         'btn-sm': 'var(--size-btn-sm)',
         'btn-md': 'var(--size-btn-md)',
         'btn-lg': 'var(--size-btn-lg)',
         'touch-min': 'var(--size-touch-min)',
+        'input-md': 'var(--size-input-md)', // 34px
+        '30': '30px',
+        '36': '36px',
+        '52': '52px',
+        '56': '56px',
+        '96': '96px',
+        '110': '110px',
+        '120': '120px',
+        '180': '180px',
+        '200': '200px',
+        '380': '380px',
+        '440': '440px',
+        '460': '460px',
+        '480': '480px',
+        '520': '520px',
+        '540': '540px',
+        '560': '560px',
+        'pct-8': '8%',
+        'pct-10': '10%',
+        'pct-15': '15%',
+        'pct-22': '22%',
+        'pct-26': '26%',
+        'pct-34': '34%',
+      },
+      minWidth: {
+        menu: '8rem', // 128px — dropdown/select menu min
+        '72': '72px',
+        '80': '80px',
+        '168': '168px',
+        '180': '180px',
+        '200': '200px',
+        '220': '220px',
       },
       maxWidth: {
         layout: 'var(--layout-max-width)', // 1440px
+        '260': '260px',
+        '320': '320px',
+        '400': '400px',
+        '440': '440px',
+        '480': '480px',
+        '560': '560px',
+        '640': '640px',
+        '800': '800px',
+        '880': '880px',
+        // Reading measures (ch).
+        'measure-xs': '28ch',
+        'measure-sm': '36ch',
+        measure: '42ch',
+        'measure-lg': '56ch',
       },
     },
   },

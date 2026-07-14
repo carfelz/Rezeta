@@ -32,8 +32,43 @@ const customMerge = extendTailwindMerge({
           ],
         },
       ],
-      h: [{ h: ['btn-sm', 'btn-md', 'btn-lg', 'btn-xl'] }],
-      w: [{ w: ['btn-sm', 'btn-md', 'btn-lg', 'btn-xl'] }],
+      // Custom size/dimension + tracking/leading tokens (arbitrary-value
+      // migration). twMerge only knows stock keys; register ours so a
+      // cn()-composed `w-440`/`tracking-label` isn't dropped against another
+      // class in the same group.
+      h: [
+        {
+          h: [
+            'btn-sm', 'btn-md', 'btn-lg', 'btn-xl', 'input-md', 'touch-min',
+            '30', '36', '52', '200', '256',
+          ],
+        },
+      ],
+      w: [
+        {
+          w: [
+            'btn-sm', 'btn-md', 'btn-lg', 'btn-xl', 'touch-min', 'input-md',
+            '30', '36', '52', '56', '96', '110', '120', '180', '200', '380',
+            '440', '460', '480', '520', '540', '560',
+            'pct-8', 'pct-10', 'pct-15', 'pct-22', 'pct-26', 'pct-34',
+          ],
+        },
+      ],
+      'min-w': [{ 'min-w': ['menu', '72', '80', '168', '180', '200', '220'] }],
+      'max-w': [
+        {
+          'max-w': [
+            'layout', '260', '320', '400', '440', '480', '560', '640', '800', '880',
+            'measure-xs', 'measure-sm', 'measure', 'measure-lg',
+          ],
+        },
+      ],
+      'min-h': [{ 'min-h': ['touch', 'input-md', '60', '80', '120', '300', '400', 'screen-60'] }],
+      'max-h': [{ 'max-h': ['200', '240', '260', '320'] }],
+      tracking: [
+        { tracking: ['heading-lg', 'heading', 'heading-sm', 'label-tight', 'label', 'label-wide', 'caps'] },
+      ],
+      leading: [{ leading: ['display-tight', 'label', 'prose-snug', 'prose'] }],
     },
   },
   override: {
