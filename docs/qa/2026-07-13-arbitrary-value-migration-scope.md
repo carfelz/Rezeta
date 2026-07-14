@@ -1,5 +1,9 @@
 # Scope — full arbitrary-value (`..-[…]`) migration to tokens
 
+> **STATUS: ✅ EXECUTED (2026-07-13).** All ~408 design-value arbitrary classes migrated to tokens
+> (design pixel-identical), ~90 tokens added, guardrail broadened. See `CHANGELOG.md`. This doc is kept
+> as the record of the plan and decisions.
+
 **Goal:** eliminate every arbitrary Tailwind value class (`prop-[value]`) that encodes a *design value*,
 replacing it with a named token from `tailwind.config.ts`. **Rule (per request): keep the rendered design
 exactly as-is** — preserve every value; only swap to an existing token when the value already matches one;

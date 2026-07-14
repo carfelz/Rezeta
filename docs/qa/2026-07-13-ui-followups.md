@@ -19,8 +19,8 @@ Each is scoped enough to pick up as its own change. Context:
 
 ## Follow-ups
 
-**Status (2026-07-13):** FU1–FU3 done, FU4 done except one deferred item, FU5 was documentation only.
-The only work left open is the optional spacing/line-height token pass (see FU4).
+**Status (2026-07-13):** all closed. FU1–FU4 done, FU5 was documentation only. The final open item
+(the full arbitrary-value → token migration) is complete — see FU4 and the scope doc.
 
 ### FU1 — Consolidate the two vital-signs components (audit U10) — ✅ DONE
 **Resolved:** on investigation `VitalsSection.tsx` + `VitalInput.tsx` (and their `lib/consultation/vitals.ts`
@@ -48,9 +48,10 @@ provision with an empty body as before (verified live: 200 OK, app authenticated
   `text-caption` would add `font-medium`, a deliberate style change. Left as-is; apply per component only
   if a uniform "caption = medium" look is explicitly wanted.
 - **Non-font raw arbitrary values (`leading-[..]`, `min-w-[..]`, `w-[..px]`, `px-[..px]`, `tracking-[..]`)
-  — ⏳ OPEN / deferred.** This is a separate, app-wide migration of the same shape as the font one and was
-  not scoped here. The spacing scale is already tokenized in `tailwind.config.ts`; a future pass could
-  migrate raw spacing/line-height values and extend the guardrail to cover them. Left for its own change.
+  — ✅ DONE.** Full app-wide migration executed: ~408 arbitrary `prop-[value]` classes across 95 files
+  replaced with tokens (design kept pixel-identical), ~90 tokens added across ~13 scales, and the ESLint
+  guardrail broadened to flag any design-value arbitrary class (CSS-vars + variant selectors exempt). See
+  `docs/qa/2026-07-13-arbitrary-value-migration-scope.md` for the scope and `CHANGELOG.md` for the commits.
 
 ### FU5 — Custom font-size tokens have a two-file coupling (maintenance trap) — ✅ DOCUMENTED
 Adding a new custom font-size token requires editing **two** files, or the token is silently stripped
