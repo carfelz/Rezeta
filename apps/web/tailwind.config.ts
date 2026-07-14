@@ -252,6 +252,9 @@ const config: Config = {
         overlay: '500',
         modal: '600',
       },
+      gridTemplateColumns: {
+        'panel-fixed': '280px 1fr', // fixed left panel + fluid content
+      },
       boxShadow: {
         'focus-subtle': '0 0 0 3px rgba(45, 87, 96, 0.12)',
         'focus-subtle-sm': '0 0 0 2px rgba(45, 87, 96, 0.12)',
