@@ -10,13 +10,13 @@ describe('Badge', () => {
 
   it('renders dot by default', () => {
     const { container } = render(<Badge>Draft</Badge>)
-    const dot = container.querySelector('.w-\\[6px\\]')
+    const dot = container.querySelector('.w-1\\.5')
     expect(dot).toBeInTheDocument()
   })
 
   it('hides dot when showDot is false', () => {
     const { container } = render(<Badge showDot={false}>Draft</Badge>)
-    const dot = container.querySelector('.w-\\[6px\\]')
+    const dot = container.querySelector('.w-1\\.5')
     expect(dot).not.toBeInTheDocument()
   })
 

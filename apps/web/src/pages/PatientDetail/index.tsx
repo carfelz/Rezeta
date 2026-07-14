@@ -28,7 +28,7 @@ export function PatientDetail(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[256px]">
+      <div className="flex items-center justify-center h-256">
         <Spinner size="lg" className="text-n-400" />
       </div>
     )
@@ -36,7 +36,7 @@ export function PatientDetail(): JSX.Element {
 
   if (isError || !patient) {
     return (
-      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
+      <div className="flex flex-col items-center justify-center h-256 gap-4">
         <p className="text-base font-sans text-n-600">Paciente no encontrado.</p>
         <Link to="/pacientes" className="text-sm font-sans text-p-500 hover:text-p-700">
           ← Volver a pacientes
@@ -46,7 +46,7 @@ export function PatientDetail(): JSX.Element {
   }
 
   return (
-    <div className="max-w-[800px] m-auto">
+    <div className="max-w-800 m-auto">
       {showEdit && <EditModal patient={patient} onClose={() => setShowEdit(false)} />}
 
       {showNewConsultation && (

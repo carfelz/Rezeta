@@ -11,7 +11,7 @@ type Story = StoryObj<typeof GroupSectionCard>
 
 export const RailSection: Story = {
   render: () => (
-    <div className="max-w-[260px]">
+    <div className="max-w-260">
       <GroupSectionCard label="Pasos del protocolo" compact>
         <div className="text-xs text-n-700 py-1">01 Motivo</div>
         <div className="text-xs text-n-700 py-1">02 Vitales</div>
@@ -54,7 +54,7 @@ export const WithFooter: Story = {
 
 export const DangerTone: Story = {
   render: () => (
-    <div className="max-w-[260px]">
+    <div className="max-w-260">
       <GroupSectionCard label="Faltantes (3)" tone="danger" compact>
         <div className="text-xs text-danger-text py-1">Temperatura</div>
         <div className="text-xs text-danger-text py-1">Peso</div>

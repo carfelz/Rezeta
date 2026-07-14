@@ -102,7 +102,7 @@ export function Patients(): JSX.Element {
 
       <Card className="p-0 overflow-hidden">
         <div className="flex items-center p-4 border-b border-n-100">
-          <InputGroup className="max-w-[320px]">
+          <InputGroup className="max-w-320">
             <InputIcon side="left">
               <i className="ph ph-magnifying-glass text-body-lg" />
             </InputIcon>
@@ -145,19 +145,19 @@ export function Patients(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {patientsPageStrings.tableHeaderPatient}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {patientsPageStrings.tableHeaderDocument}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {patientsPageStrings.tableHeaderAge}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {patientsPageStrings.tableHeaderStatus}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3" />
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3" />
               </tr>
             </thead>
             <tbody>

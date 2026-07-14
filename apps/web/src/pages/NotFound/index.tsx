@@ -17,12 +17,12 @@ export function NotFound(): JSX.Element {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
-      <Card className="w-full max-w-[480px] text-center">
-        <div className="w-[44px] h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mx-auto mb-6">
+      <Card className="w-full max-w-480 text-center">
+        <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mx-auto mb-6">
           R
         </div>
         <h1 className="text-h2 mb-3">{title}</h1>
-        <p className="text-sm font-sans text-n-500 max-w-[42ch] leading-relaxed mx-auto mb-6">
+        <p className="text-sm font-sans text-n-500 max-w-measure leading-relaxed mx-auto mb-6">
           {description}
         </p>
         <div className="flex items-center justify-center gap-3">

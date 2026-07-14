@@ -44,7 +44,7 @@ export function SignModal({
       <ModalBody>
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-md px-4 py-3">
           <i className="ph ph-warning text-h3 text-warning-text shrink-0 mt-1" />
-          <p className="text-sm text-warning-text leading-[1.45]">
+          <p className="text-sm text-warning-text leading-prose-snug">
             {signModalStrings.warningMessage}
           </p>
         </div>

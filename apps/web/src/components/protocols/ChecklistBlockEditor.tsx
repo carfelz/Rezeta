@@ -77,7 +77,7 @@ export function ChecklistBlockEditor({ id, title, items }: ChecklistBlockEditorP
                   checked={item.critical ?? false}
                   onChange={(e) => updateItem(item.id, { critical: e.target.checked })}
                 />
-                <span className="text-overline font-mono text-n-500 uppercase tracking-[0.05em]">
+                <span className="text-overline font-mono text-n-500 uppercase tracking-wider">
                   {blockEditorStrings.checklistCriticalLabel}
                 </span>
               </Row>

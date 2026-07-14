@@ -84,7 +84,7 @@ export function MissingFieldsPanel({
   return (
     <div className="bg-n-0 border border-danger-border rounded-md overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <span className="font-mono text-2xs uppercase tracking-[0.08em] text-danger-text">
+        <span className="font-mono text-2xs uppercase tracking-label-wide text-danger-text">
           {missingFieldsStrings.panelTitle(fields.length)}
         </span>
         {onDismiss && (
@@ -111,7 +111,7 @@ export function MissingFieldsPanel({
                 {field.label}
               </div>
               {field.description && (
-                <div className="text-2xs font-mono uppercase tracking-[0.08em] text-danger-text/70 mt-0.5 truncate">
+                <div className="text-2xs font-mono uppercase tracking-label-wide text-danger-text/70 mt-0.5 truncate">
                   {field.description}
                 </div>
               )}

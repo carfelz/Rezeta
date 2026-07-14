@@ -46,7 +46,7 @@ export function ConsultationSidebar({
             {patient.allergies.map((a) => (
               <div
                 key={a}
-                className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-xs text-danger-text leading-[1.4]"
+                className="flex gap-3 px-3 py-3 bg-danger-bg border border-danger-border rounded text-xs text-danger-text leading-label"
               >
                 <i className="ph ph-x-circle text-body-lg shrink-0 mt-1" />
                 <div>
@@ -57,7 +57,7 @@ export function ConsultationSidebar({
             {patient.chronicConditions.map((c) => (
               <div
                 key={c}
-                className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-xs text-warning-text leading-[1.4]"
+                className="flex gap-3 px-3 py-3 bg-warning-bg border border-warning-border rounded text-xs text-warning-text leading-label"
               >
                 <i className="ph ph-warning-circle text-body-lg shrink-0 mt-1" />
                 <div>{c}</div>
@@ -70,7 +70,7 @@ export function ConsultationSidebar({
       {!hasProtocols && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-overline font-mono uppercase tracking-[0.06em] text-n-400">
+            <span className="text-overline font-mono uppercase tracking-label text-n-400">
               {consultationSidebarStrings.protocolsLabel}
             </span>
             {!isSigned && (

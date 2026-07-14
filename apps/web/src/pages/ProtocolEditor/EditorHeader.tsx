@@ -51,7 +51,7 @@ export function EditorHeader({
   return (
     <div className="flex items-start gap-6 mb-6">
       <div className="flex-1 min-w-0">
-        <div className="text-overline font-mono uppercase tracking-[0.08em] text-n-400 mb-2">
+        <div className="text-overline font-mono uppercase tracking-label-wide text-n-400 mb-2">
           {[typeName, formatRelativeTime(updatedAt)].filter(Boolean).join(' · ')}
         </div>
 
@@ -73,7 +73,7 @@ export function EditorHeader({
         ) : (
           <h1
             onClick={onStartEditing}
-            className="text-h2 font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-[100ms] leading-tight"
+            className="text-h2 font-serif font-medium text-n-900 mb-2 cursor-pointer hover:text-p-700 transition-colors duration-fast leading-tight"
             title={protocolEditorStrings.titleRenameTooltip}
           >
             {title}

@@ -30,7 +30,7 @@ export function EmptyState({
       </div>
       <h3 className="text-h3 font-serif font-medium text-n-800 leading-snug mb-2">{title}</h3>
       {description && (
-        <p className="text-sm font-sans text-n-500 max-w-[42ch] leading-relaxed mb-6">
+        <p className="text-sm font-sans text-n-500 max-w-measure leading-relaxed mb-6">
           {description}
         </p>
       )}

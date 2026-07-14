@@ -23,8 +23,8 @@ export function AppointmentCard({
   isStartingConsultation,
 }: AppointmentCardProps): JSX.Element {
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md p-4 flex gap-4 hover:border-n-300 transition-colors duration-[100ms]">
-      <div className="flex flex-col items-center shrink-0 w-[56px]">
+    <div className="bg-n-0 border border-n-200 rounded-md p-4 flex gap-4 hover:border-n-300 transition-colors duration-fast">
+      <div className="flex flex-col items-center shrink-0 w-56">
         <span className="text-sm font-mono font-medium text-n-700">
           {formatTime(appt.startsAt)}
         </span>
@@ -32,7 +32,7 @@ export function AppointmentCard({
       </div>
 
       <div
-        className="w-[2px] shrink-0 rounded-full self-stretch"
+        className="w-0.5 shrink-0 rounded-full self-stretch"
         style={{ background: 'var(--color-p-500)' }}
       />
 

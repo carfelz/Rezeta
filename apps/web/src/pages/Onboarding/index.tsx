@@ -18,7 +18,7 @@ export function Onboarding(): JSX.Element {
   if (defaultMutation.isError) {
     return (
       <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
-        <div className="w-full max-w-[560px]">
+        <div className="w-full max-w-560">
           <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mb-6">
             R
           </div>
@@ -57,7 +57,7 @@ export function Onboarding(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-n-25 flex items-center justify-center p-8">
-      <div className="w-full max-w-[560px] text-center">
+      <div className="w-full max-w-560 text-center">
         <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mb-6 mx-auto">
           R
         </div>

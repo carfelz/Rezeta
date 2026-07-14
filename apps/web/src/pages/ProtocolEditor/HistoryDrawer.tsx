@@ -30,7 +30,7 @@ export function HistoryDrawer({
 }: HistoryDrawerProps): JSX.Element {
   return (
     <div
-      className="fixed right-0 top-0 bottom-0 w-[380px] bg-n-0 border-l border-n-200 flex flex-col z-50"
+      className="fixed right-0 top-0 bottom-0 w-380 bg-n-0 border-l border-n-200 flex flex-col z-50"
       style={{
         boxShadow: '0 1px 0 rgba(14,14,13,.04), -8px 0 24px -8px rgba(14,14,13,.10)',
       }}
@@ -48,7 +48,7 @@ export function HistoryDrawer({
         />
       </div>
 
-      <div className="flex flex-col overflow-y-auto shrink-0 max-h-[260px] border-b border-n-200">
+      <div className="flex flex-col overflow-y-auto shrink-0 max-h-260 border-b border-n-200">
         {historyLoading ? (
           <div className="flex justify-center py-6">
             <Spinner size="md" className="text-n-400" />
@@ -138,7 +138,7 @@ export function HistoryDrawer({
           </div>
         ) : (
           <div className="p-4 flex flex-col gap-2">
-            <div className="text-2xs font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
+            <div className="text-2xs font-mono uppercase tracking-widest text-n-400 mb-1">
               {protocolEditorStrings.historyPreviewTitle}
             </div>
             {selectedVersion?.content.blocks.map((block) => (

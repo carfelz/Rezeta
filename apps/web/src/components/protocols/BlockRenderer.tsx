@@ -158,7 +158,7 @@ export function BlockRenderer({
 
     case 'text': {
       const content = (
-        <p className="text-sm font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
+        <p className="text-sm font-sans text-n-700 leading-prose whitespace-pre-wrap">
           {b.content}
         </p>
       )

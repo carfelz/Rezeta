@@ -106,12 +106,12 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[180px] p-1 bg-n-0 border border-n-200"
+          className="w-180 p-1 bg-n-0 border border-n-200"
           align="start"
         >
           <div
             ref={listRef}
-            className="max-h-[240px] overflow-y-auto flex flex-col gap-0.5"
+            className="max-h-240 overflow-y-auto flex flex-col gap-0.5"
           >
             {slots.map((slot) => {
               const isActive = slot === value

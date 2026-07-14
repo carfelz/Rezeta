@@ -79,7 +79,7 @@ function StepsRunMode({
                   {step.title}
                 </div>
                 {step.detail && (
-                  <div className="text-xs font-sans text-n-500 mt-1 leading-[1.4]">
+                  <div className="text-xs font-sans text-n-500 mt-1 leading-label">
                     {step.detail}
                   </div>
                 )}
@@ -255,7 +255,7 @@ function DecisionRunMode({
                 >
                   {branch.label}
                 </span>
-                <div className="text-sm leading-[1.45] flex-1">{branch.action}</div>
+                <div className="text-sm leading-prose-snug flex-1">{branch.action}</div>
               </SelectableCard>
               {selected && branch.linked_protocol_id && onLaunchLinkedProtocol && (
                 <TextLink
@@ -744,7 +744,7 @@ export function BlockRendererRunMode({
           title={blockRendererRunModeStrings.textType}
           nested={nested}
         >
-          <p className="text-sm font-sans text-n-700 leading-[1.55] whitespace-pre-wrap">
+          <p className="text-sm font-sans text-n-700 leading-prose whitespace-pre-wrap">
             {b.content}
           </p>
         </ProtocolBlock>

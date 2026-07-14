@@ -53,7 +53,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
     <header className="fixed top-0 left-0 lg:left-sidebar right-0 h-topbar bg-n-0 border-b border-n-200 flex items-center px-4 lg:px-5 gap-3 z-30">
       <button
         type="button"
-        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-md text-n-600 hover:bg-n-50 transition-colors duration-[100ms] shrink-0"
+        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-md text-n-600 hover:bg-n-50 transition-colors duration-fast shrink-0"
         onClick={onMenuClick}
         aria-label={topbarStrings.openMenuLabel}
       >
@@ -79,7 +79,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
         </Button>
 
         {dropdownOpen && (
-          <div className="absolute top-full left-0 mt-1 min-w-[220px] bg-n-0 border border-n-200 rounded-md shadow-floating z-50 py-1">
+          <div className="absolute top-full left-0 mt-1 min-w-220 bg-n-0 border border-n-200 rounded-md shadow-floating z-50 py-1">
             {locations && locations.length > 0 ? (
               locations.map((loc) => (
                 <Button
@@ -135,7 +135,7 @@ export function Topbar({ onMenuClick }: TopbarProps): JSX.Element {
         )}
       </div>
 
-      <div className="flex-1 max-w-[480px] relative">
+      <div className="flex-1 max-w-480 relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400 flex items-center pointer-events-none">
           <i className="ph ph-magnifying-glass text-body-lg" />
         </span>

@@ -52,7 +52,7 @@ export function StepTemplates({ templates, onContinue, onBack }: StepTemplatesPr
             <Button
               variant="ghost"
               size="sm"
-              className="w-[28px] px-0"
+              className="w-btn-sm px-0"
               onClick={() => remove(t.clientId)}
               title={onboardingCustomizeStrings.step1DeleteLabel}
             >

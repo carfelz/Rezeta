@@ -69,6 +69,7 @@ const customMerge = extendTailwindMerge({
         { tracking: ['heading-lg', 'heading', 'heading-sm', 'label-tight', 'label', 'label-wide', 'caps'] },
       ],
       leading: [{ leading: ['display-tight', 'label', 'prose-snug', 'prose'] }],
+      'grid-cols': [{ 'grid-cols': ['panel-fixed'] }],
     },
   },
   override: {

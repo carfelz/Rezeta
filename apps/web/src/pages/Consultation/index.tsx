@@ -74,7 +74,7 @@ export function Consultation(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
+      <div className="flex items-center justify-center min-h-300">
         <div className="text-sm text-n-500 flex items-center gap-2">
           <Spinner decorative size="sm" /> {consultationPageStrings.loading}
         </div>

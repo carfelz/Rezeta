@@ -75,13 +75,13 @@ export function VitalsBlockEditor({ id, title, fields }: VitalsBlockEditorProps)
         <table className="w-full text-xs font-sans">
           <thead>
             <tr className="bg-n-50 border-b border-n-200">
-              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap">
+              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-label text-n-600 whitespace-nowrap">
                 {blockEditorStrings.vitalsFieldLabel}
               </th>
-              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap">
+              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-label text-n-600 whitespace-nowrap">
                 {blockEditorStrings.vitalsFieldUnit}
               </th>
-              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap">
+              <th className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-label text-n-600 whitespace-nowrap">
                 {blockEditorStrings.vitalsFieldType}
               </th>
               <th className="px-2 py-2 w-8" />
@@ -107,7 +107,7 @@ export function VitalsBlockEditor({ id, title, fields }: VitalsBlockEditorProps)
                   </td>
                   <td className="px-1 py-1">
                     {isComputed ? (
-                      <span className="inline-block text-2xs font-mono uppercase tracking-[0.05em] text-n-500 px-2 py-1 border border-n-200 rounded-sm whitespace-nowrap">
+                      <span className="inline-block text-2xs font-mono uppercase tracking-wider text-n-500 px-2 py-1 border border-n-200 rounded-sm whitespace-nowrap">
                         {blockEditorStrings.vitalsTypeComputed}
                       </span>
                     ) : (
@@ -117,7 +117,7 @@ export function VitalsBlockEditor({ id, title, fields }: VitalsBlockEditorProps)
                           updateField(field.id, { input_type: v as EditableInputType })
                         }
                       >
-                        <SelectTrigger className="w-[110px]">
+                        <SelectTrigger className="w-110">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

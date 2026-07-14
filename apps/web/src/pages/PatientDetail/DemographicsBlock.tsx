@@ -6,7 +6,7 @@ import { patientDetailStrings } from './strings'
 export function DemographicsBlock({ patient }: { patient: Patient }): JSX.Element {
   return (
     <div className="border border-n-200 rounded-md bg-n-0 p-5 mb-4">
-      <h2 className="text-xs font-mono font-semibold text-n-600 uppercase tracking-[0.08em] mb-4">
+      <h2 className="text-xs font-mono font-semibold text-n-600 uppercase tracking-label-wide mb-4">
         {patientDetailStrings.sectionTitle}
       </h2>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">

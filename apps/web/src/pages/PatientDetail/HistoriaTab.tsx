@@ -25,7 +25,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[200px]">
+      <div className="flex items-center justify-center h-200">
         <Spinner size="md" className="text-n-400" />
       </div>
     )
@@ -41,7 +41,7 @@ export function HistoriaTab({ patientId }: HistoriaTabProps): JSX.Element {
   const active = list.find((c) => c.id === activeId) as (typeof list)[number]
 
   return (
-    <div className="grid grid-cols-[280px_1fr] min-h-[400px] -m-5">
+    <div className="grid grid-cols-panel-fixed min-h-400 -m-5">
       <div className="border-r border-n-200 bg-n-25" data-testid="historia-consultation-list">
         <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
           <Overline as="span" size="lg" tone="neutral">

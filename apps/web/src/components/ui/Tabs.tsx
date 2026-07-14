@@ -25,13 +25,13 @@ export const TabsTrigger = forwardRef<
     ref={ref}
     className={cn(
       'relative px-4 py-3 text-sm font-sans font-medium text-n-500',
-      'transition-colors duration-[100ms]',
+      'transition-colors duration-fast',
       'hover:text-n-800',
       'focus-visible:outline-none focus-visible:shadow-focus',
       'disabled:opacity-40 disabled:cursor-not-allowed',
       // Active state — 2px teal bottom border, design system signature
       'data-[state=active]:text-n-900',
-      'data-[state=active]:after:absolute data-[state=active]:after:bottom-[-1px] data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-[2px] data-[state=active]:after:bg-p-500',
+      'data-[state=active]:after:absolute data-[state=active]:after:-bottom-px data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-p-500',
       className,
     )}
     {...props}

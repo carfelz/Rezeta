@@ -13,8 +13,8 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
 
   return (
     <div className="bg-n-0 border border-n-200 rounded-md p-5">
-      <div className="flex items-center justify-between mb-[14px]">
-        <h3 className="font-serif font-medium text-h3 text-n-900 m-0 tracking-[-0.005em]">
+      <div className="flex items-center justify-between mb-3.5">
+        <h3 className="font-serif font-medium text-h3 text-n-900 m-0 tracking-heading-sm">
           {dashboardStrings.recentPatientsTitle}
         </h3>
         <TextLink tone="neutral" size="md" onClick={() => void navigate('/pacientes')}>
@@ -24,7 +24,7 @@ export function RecentPatients({ patients, isLoading }: RecentPatientsProps): JS
       {isLoading ? (
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-[40px] bg-n-50 rounded animate-pulse" />
+            <div key={i} className="h-btn-lg bg-n-50 rounded animate-pulse" />
           ))}
         </div>
       ) : patients.length === 0 ? (

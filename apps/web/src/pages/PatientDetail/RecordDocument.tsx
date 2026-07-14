@@ -56,7 +56,7 @@ export function RecordDocument({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[200px]">
+      <div className="flex items-center justify-center h-200">
         <Spinner size="md" className="text-n-400" />
       </div>
     )
@@ -67,7 +67,7 @@ export function RecordDocument({
       return <p className="text-sm text-n-500 p-5">{s.historiaOnlySigned}</p>
     }
     return (
-      <div className="flex flex-col items-center justify-center h-[200px] gap-3">
+      <div className="flex flex-col items-center justify-center h-200 gap-3">
         <p className="text-sm text-n-500">{s.historiaChipNone}</p>
         <Button variant="secondary" size="sm" onClick={() => ensure.mutate(consultationId)}>
           {s.historiaGenerate}
@@ -78,7 +78,7 @@ export function RecordDocument({
 
   if (isViewingOlder && !olderRecord) {
     return (
-      <div className="flex items-center justify-center h-[200px]">
+      <div className="flex items-center justify-center h-200">
         <Spinner size="md" className="text-n-400" />
       </div>
     )
@@ -189,7 +189,7 @@ export function RecordDocument({
         </div>
       )}
 
-      <div className="p-5 max-w-[640px]">
+      <div className="p-5 max-w-640">
         <div className="mb-4 pb-3 border-b border-n-200 flex items-center justify-between gap-3">
           <Overline size="sm" tone="neutral">
             {viewedRecord.kind === 'first_visit' ? s.historiaKindFirstVisit : s.historiaKindEvolution}
@@ -204,7 +204,7 @@ export function RecordDocument({
                 setSelectedVersion(versionNumber === latestVersionNumber ? null : versionNumber)
               }}
             >
-              <SelectTrigger aria-label={s.versionSelectorAria} className="w-auto min-w-[72px]">
+              <SelectTrigger aria-label={s.versionSelectorAria} className="w-auto min-w-72">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -232,7 +232,7 @@ export function RecordDocument({
             </div>
             {editing && !isViewingOlder && section.key !== 'ficha_identificacion' ? (
               <Textarea
-                className="min-h-[80px]"
+                className="min-h-80"
                 value={draftTexts[section.key] as string}
                 onChange={(e) =>
                   setDraftTexts((prev) => ({ ...prev, [section.key]: e.target.value }))

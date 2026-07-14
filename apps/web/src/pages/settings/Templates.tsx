@@ -75,19 +75,19 @@ export function Templates(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {templatesStrings.listCategory}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Actualizado
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +96,7 @@ export function Templates(): JSX.Element {
                   <td className="text-sm px-4 py-3 border-b border-n-100 font-semibold text-n-800">
                     {t.name}
                     {t.isSeeded && (
-                      <span className="ml-2 text-overline font-mono text-n-400 uppercase tracking-[0.06em]">
+                      <span className="ml-2 text-overline font-mono text-n-400 uppercase tracking-label">
                         {templatesStrings.listSeeded}
                       </span>
                     )}
@@ -136,7 +136,7 @@ export function Templates(): JSX.Element {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-[28px] px-0"
+                        className="w-btn-sm px-0"
                         title={
                           t.isSeeded
                             ? templatesStrings.deleteSeeded

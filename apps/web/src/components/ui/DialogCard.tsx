@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils'
 const dialogCardVariants = cva(['bg-n-0 border border-n-200 rounded-md max-w-full'], {
   variants: {
     width: {
-      sm: 'w-[440px]',
-      md: 'w-[460px]',
-      lg: 'w-[520px]',
-      xl: 'w-[540px]',
+      sm: 'w-440',
+      md: 'w-460',
+      lg: 'w-520',
+      xl: 'w-540',
     },
     elevation: {
       none: '',
@@ -71,7 +71,7 @@ export const DialogCard = forwardRef<HTMLDivElement, DialogCardProps>(
           <Overline tone={overlineTone} className="mb-2">
             {overline}
           </Overline>
-          <h2 className="font-serif font-medium text-h3 text-n-900 leading-tight tracking-[-0.005em] mb-2">
+          <h2 className="font-serif font-medium text-h3 text-n-900 leading-tight tracking-heading-sm mb-2">
             {title}
           </h2>
           {description && <p className="text-xs text-n-500 leading-snug">{description}</p>}

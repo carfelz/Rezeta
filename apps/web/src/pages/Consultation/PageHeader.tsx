@@ -40,12 +40,12 @@ export function PageHeader({
   return (
     <div className="flex items-start justify-between gap-6 mb-6">
       <div className="min-w-0">
-        <div className="text-overline font-mono uppercase tracking-[0.08em] text-n-400 mb-1">
+        <div className="text-overline font-mono uppercase tracking-label-wide text-n-400 mb-1">
           {formatKicker(consultedAt, locationName)}
         </div>
         <h1
           className={cn(
-            'text-h2 font-serif font-medium tracking-[-0.01em] leading-tight mb-1',
+            'text-h2 font-serif font-medium tracking-heading leading-tight mb-1',
             pageTitle === 'Nueva consulta' ? 'text-n-400' : 'text-n-900',
           )}
         >

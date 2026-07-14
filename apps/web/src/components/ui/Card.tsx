@@ -15,7 +15,7 @@ export function Card({ children, selected, className }: CardProps): JSX.Element 
       className={cn(
         'relative bg-n-0 border rounded p-5',
         selected
-          ? 'border-p-500 before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[2px] before:bg-p-500 before:rounded-r-sm'
+          ? 'border-p-500 before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:bg-p-500 before:rounded-r-sm'
           : 'border-n-200',
         className,
       )}

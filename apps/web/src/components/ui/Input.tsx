@@ -18,11 +18,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           'w-full h-input-md px-3 text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'outline-none',
-          'transition-[border-color,box-shadow] duration-[100ms]',
+          'transition-border-shadow duration-fast',
           !isGhost && [
             'bg-n-0 border rounded-sm',
             !error &&
-              'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+              'border-n-300 focus:border-p-500 focus:shadow-focus-subtle',
             error && 'border-danger-solid focus:border-danger-solid',
             'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
             'read-only:bg-n-25 read-only:border-n-200 read-only:cursor-default',
@@ -55,11 +55,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           'w-full px-3 text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'outline-none',
-          'transition-[border-color,box-shadow] duration-[100ms]',
+          'transition-border-shadow duration-fast',
           !isGhost && [
             'py-3 bg-n-0 border rounded-sm resize-y',
             !error &&
-              'border-n-300 focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+              'border-n-300 focus:border-p-500 focus:shadow-focus-subtle',
             error && 'border-danger-solid focus:border-danger-solid',
             'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
           ],
@@ -88,8 +88,8 @@ export function InputGroup({ children, error, className }: InputGroupProps): JSX
       className={cn(
         'flex items-stretch w-full',
         'border rounded-sm',
-        'transition-[border-color,box-shadow] duration-[100ms]',
-        'focus-within:border-p-500 focus-within:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+        'transition-border-shadow duration-fast',
+        'focus-within:border-p-500 focus-within:shadow-focus-subtle',
         error
           ? 'border-danger-solid focus-within:border-danger-solid focus-within:shadow-none'
           : 'border-n-300',
@@ -187,7 +187,7 @@ export function Field({
   id,
 }: FieldProps): JSX.Element {
   return (
-    <div className={cn('flex flex-col gap-[6px]', className)}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
         <label htmlFor={id} className="text-xs font-sans font-medium text-n-700 leading-none">
           {label}

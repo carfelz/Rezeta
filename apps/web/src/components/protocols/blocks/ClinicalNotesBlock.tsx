@@ -22,7 +22,7 @@ export const ClinicalNotesBlock: FC<ClinicalNotesBlockProps> = ({
         {required && <span className="text-xs text-danger-text">*</span>}
       </div>
       <textarea
-        className="w-full min-h-[120px] px-3 py-2 rounded-sm border border-n-200 bg-n-0 text-n-900 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-p-500 disabled:bg-n-50"
+        className="w-full min-h-120 px-3 py-2 rounded-sm border border-n-200 bg-n-0 text-n-900 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-p-500 disabled:bg-n-50"
         value={content}
         disabled={readOnly}
         onChange={(e) => onChange?.(e.target.value)}

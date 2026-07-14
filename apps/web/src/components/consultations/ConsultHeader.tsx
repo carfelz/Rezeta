@@ -25,7 +25,7 @@ export function ConsultHeader({
         <Overline tone="neutral" size="md">
           {datetimeOverline}
         </Overline>
-        <h1 className="font-serif font-medium text-h1 text-n-900 leading-tight tracking-[-0.015em]">
+        <h1 className="font-serif font-medium text-h1 text-n-900 leading-tight tracking-heading-lg">
           {title}
         </h1>
         {subtitle && <p className="text-sm text-n-500">{subtitle}</p>}

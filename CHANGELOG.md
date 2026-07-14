@@ -4,6 +4,12 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-13] Migrate all arbitrary `prop-[value]` classes to tokens (design unchanged)
+
+### Changed
+
+- Replaced **~408 arbitrary `prop-[value]` classes across 95 files** with the tokens added in the previous entry — `tracking-`/`leading-`/`duration-`/`rounded-`/`z-`/`shadow-`/`transition-`/`ring-`/`bg-`/`border-`/`grid-cols-` and the spacing/`w-`/`h-`/`max-w-`/`min-w-`/`min-h-`/`max-h-` scales. The design is **pixel-identical**: computed values verified (e.g. `w-440`→440px, `py-1.75`→7px, `tracking-label`→0.06em, `bg-overlay`→rgba(14,14,13,0.35)), and dashboard/consultation/billing render unchanged. Runtime CSS-var bindings (`w-[--cell-size]`, `[var(--radix-…)]`) and arbitrary variant selectors (`data-[state=…]`) were intentionally left (allowlisted). Updated `Badge.test.tsx` / `Modal.test.tsx` selectors to the new class names.
+
 ## [2026-07-13] Add design tokens for the arbitrary-value migration
 
 ### Added

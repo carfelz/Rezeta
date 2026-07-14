@@ -17,7 +17,7 @@ export function ClinicalHistory({
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-sans font-semibold text-n-800 uppercase tracking-[0.06em]">
+          <h3 className="text-sm font-sans font-semibold text-n-800 uppercase tracking-label">
             Historia clínica
           </h3>
           {!isLoading && (

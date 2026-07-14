@@ -19,9 +19,9 @@ export function AppToaster(): JSX.Element {
       toastOptions={{
         classNames: {
           toast:
-            'flex items-start gap-3 p-[12px_16px] bg-n-0 border border-n-200 rounded shadow-floating text-sm font-sans',
+            'flex items-start gap-3 py-3 px-4 bg-n-0 border border-n-200 rounded shadow-floating text-sm font-sans',
           title: 'text-sm font-semibold text-n-800 leading-snug',
-          description: 'text-xs text-n-500 leading-[1.45] mt-1',
+          description: 'text-xs text-n-500 leading-prose-snug mt-1',
           icon: 'shrink-0 mt-px',
           closeButton: 'text-n-400 hover:text-n-700',
         },

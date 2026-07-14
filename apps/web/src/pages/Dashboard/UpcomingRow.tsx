@@ -58,9 +58,9 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
       variant="item"
       size="sm"
       className={[
-        'relative flex items-center gap-4 w-full h-auto text-left py-[10px] pl-[14px] pr-4',
+        'relative flex items-center gap-4 w-full h-auto text-left py-2.5 pl-3.5 pr-4',
         'border-b border-n-100 last:border-b-0',
-        'before:absolute before:left-0 before:top-[12px] before:bottom-[12px] before:w-[2px] before:bg-p-500',
+        'before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:bg-p-500',
         !isFirst && isCompleted ? 'opacity-70' : '',
       ].join(' ')}
     >
@@ -75,7 +75,7 @@ export function UpcomingRow({ appt, isFirst }: UpcomingRowProps): JSX.Element {
           }
         }}
       >
-      <div className="w-[28px] h-[28px] rounded-full bg-p-50 text-p-700 text-2xs font-semibold flex items-center justify-center shrink-0">
+      <div className="w-btn-sm h-btn-sm rounded-full bg-p-50 text-p-700 text-2xs font-semibold flex items-center justify-center shrink-0">
         {initials}
       </div>
       <div className="flex-1 min-w-0">

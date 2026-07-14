@@ -130,6 +130,6 @@ describe('Modal', () => {
         </ModalContent>
       </Modal>,
     )
-    expect(document.querySelector('.w-\\[560px\\]')).toBeInTheDocument()
+    expect(document.querySelector('.w-560')).toBeInTheDocument()
   })
 })

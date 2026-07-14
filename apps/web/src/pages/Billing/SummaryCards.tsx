@@ -17,7 +17,7 @@ export function SummaryCards({ invoices }: { invoices: InvoiceWithDetails[] }): 
   return (
     <div className="grid grid-cols-3 gap-3 mb-5">
       <div className="border border-n-200 rounded-md bg-n-0 p-4">
-        <div className="text-2xs font-mono uppercase tracking-[0.08em] text-n-400">
+        <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">
           Total facturado
         </div>
         <div className="text-h3 font-serif font-medium text-n-900 mt-1">
@@ -25,7 +25,7 @@ export function SummaryCards({ invoices }: { invoices: InvoiceWithDetails[] }): 
         </div>
       </div>
       <div className="border border-n-200 rounded-md bg-n-0 p-4">
-        <div className="text-2xs font-mono uppercase tracking-[0.08em] text-n-400">
+        <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">
           Neto al médico
         </div>
         <div className="text-h3 font-serif font-medium text-n-900 mt-1">
@@ -33,7 +33,7 @@ export function SummaryCards({ invoices }: { invoices: InvoiceWithDetails[] }): 
         </div>
       </div>
       <div className="border border-n-200 rounded-md bg-n-0 p-4">
-        <div className="text-2xs font-mono uppercase tracking-[0.08em] text-n-400">
+        <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">
           Facturas activas
         </div>
         <div className="text-h3 font-serif font-medium text-n-900 mt-1">{activeCount}</div>

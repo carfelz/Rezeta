@@ -72,9 +72,9 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
             className={({ isActive }) => {
               const active = isActive || matchesExtraRoute
               return cn(
-                'relative flex items-center gap-3 px-5 py-[7px] text-sm font-sans transition-colors duration-[100ms]',
+                'relative flex items-center gap-3 px-5 py-1.75 text-sm font-sans transition-colors duration-fast',
                 active
-                  ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-[6px] before:bottom-[6px] before:w-[2px] before:bg-p-500 before:rounded-sm'
+                  ? 'bg-n-0 text-n-900 font-medium before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-p-500 before:rounded-sm'
                   : 'text-n-600 hover:bg-n-50 hover:text-n-800',
               )
             }}
@@ -137,10 +137,10 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
         )}
       >
         <div className="flex items-center gap-3 px-5 pt-5 pb-5 border-b border-n-100 shrink-0">
-          <div className="w-[28px] h-[28px] bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-body-lg shrink-0">
+          <div className="w-btn-sm h-btn-sm bg-p-500 rounded-sm flex items-center justify-center text-n-0 font-serif font-medium text-body-lg shrink-0">
             R
           </div>
-          <span className="text-h3 font-serif font-medium text-n-900 tracking-[-0.01em]">
+          <span className="text-h3 font-serif font-medium text-n-900 tracking-heading">
             Rezeta
           </span>
         </div>
@@ -157,7 +157,7 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  className="w-full flex items-center gap-3 px-5 py-2 hover:bg-n-50 transition-colors duration-[100ms] cursor-pointer"
+                  className="w-full flex items-center gap-3 px-5 py-2 hover:bg-n-50 transition-colors duration-fast cursor-pointer"
                   aria-label={sidebarStrings.userMenuLabel}
                 >
                   <Avatar initials={initials(user.fullName)} size="sm" />
@@ -178,12 +178,12 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   side="top"
                   align="start"
                   sideOffset={4}
-                  className="z-50 min-w-[200px] bg-n-0 border border-n-200 rounded-md shadow-floating py-1 animate-in fade-in-0 zoom-in-95"
+                  className="z-50 min-w-200 bg-n-0 border border-n-200 rounded-md shadow-floating py-1 animate-in fade-in-0 zoom-in-95"
                 >
                   <DropdownMenu.Item asChild>
                     <NavLink
                       to="/ajustes"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-[100ms]"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-fast"
                     >
                       <i className="ph ph-gear-six text-base text-n-500" />
                       {sidebarStrings.userMenuSettings}
@@ -193,7 +193,7 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   <DropdownMenu.Separator className="my-1 h-px bg-n-100" />
 
                   <DropdownMenu.Item
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none transition-colors duration-[100ms]"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none transition-colors duration-fast"
                     onSelect={() => {
                       void handleSignOut()
                     }}

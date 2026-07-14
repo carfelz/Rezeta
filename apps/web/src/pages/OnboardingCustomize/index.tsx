@@ -57,7 +57,7 @@ export function OnboardingCustomize(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-n-25 flex items-start justify-center pt-16 px-8">
-      <div className="w-full max-w-[560px]">
+      <div className="w-full max-w-560">
         <StepDots current={step} />
 
         {step === 1 && (

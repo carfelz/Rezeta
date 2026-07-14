@@ -83,7 +83,7 @@ export function DecisionBlockEditor({
           {draftBranches.map((branch, idx) => (
             <Stack key={branch.id} gap={2} className="border border-n-200 rounded-sm p-3 bg-n-25">
               <Row gap={2}>
-                <Overline tone="neutral" size="sm" className="shrink-0 tracking-[0.05em]">
+                <Overline tone="neutral" size="sm" className="shrink-0 tracking-wider">
                   {blockEditorStrings.decisionBranchLabel} {idx + 1}
                 </Overline>
                 <Input

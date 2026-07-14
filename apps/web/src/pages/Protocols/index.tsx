@@ -66,7 +66,7 @@ function ProtocolRow({
       onClick={onClick}
       className="flex items-center gap-4 w-full h-auto px-5 py-4 border-b border-n-100 text-left group"
     >
-      <div className="w-[36px] h-[36px] rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors">
+      <div className="w-36 h-36 rounded bg-n-50 flex items-center justify-center text-n-500 shrink-0 group-hover:bg-p-50 group-hover:text-p-700 transition-colors">
         <i className="ph ph-stack text-body-lg" />
       </div>
 
@@ -167,7 +167,7 @@ export function Protocols(): JSX.Element {
       </Row>
 
       <Row gap={3} wrap className="mb-5">
-        <div className="flex-1 min-w-[180px] max-w-[320px]">
+        <div className="flex-1 min-w-180 max-w-320">
           <SearchInput
             size="sm"
             value={search}
@@ -210,7 +210,7 @@ export function Protocols(): JSX.Element {
             value={sort}
             onValueChange={(v) => setSort(v as NonNullable<ProtocolListFilters['sort']>)}
           >
-            <SelectTrigger className="h-[32px]">
+            <SelectTrigger className="h-btn-md">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -331,7 +331,7 @@ function FilterChip({
       onClick={onClick}
       className={cn(
         active ? 'bg-p-500 border-p-500 text-n-0 hover:bg-p-700' : 'hover:border-n-400',
-        'h-[28px]',
+        'h-btn-sm',
       )}
     >
       {children}

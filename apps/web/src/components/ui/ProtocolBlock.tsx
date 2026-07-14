@@ -25,11 +25,11 @@ export function ProtocolContainer({
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           {kicker && (
-            <div className="text-overline font-mono uppercase tracking-[0.10em] text-n-400 mb-1">
+            <div className="text-overline font-mono uppercase tracking-widest text-n-400 mb-1">
               {kicker}
             </div>
           )}
-          <h1 className="text-h2 font-serif font-medium text-n-900 tracking-[-0.005em] leading-tight">
+          <h1 className="text-h2 font-serif font-medium text-n-900 tracking-heading-sm leading-tight">
             {title}
           </h1>
           {meta && <div className="text-xs font-sans text-n-500 mt-1">{meta}</div>}
@@ -73,11 +73,11 @@ export function ProtocolBlock({
       )}
     >
       {/* Header with 2px teal left rule */}
-      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-[18px] py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-3 bg-n-25 border-b border-n-100 px-4.5 py-2 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
         <span className="text-n-300 cursor-grab shrink-0">
           <i className="ph ph-dots-six-vertical text-body-lg" />
         </span>
-        <span className="text-2xs font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
+        <span className="text-2xs font-mono uppercase tracking-wider text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {type}
         </span>
         {title && (
@@ -86,7 +86,7 @@ export function ProtocolBlock({
           </span>
         )}
         {required && (
-          <span className="text-2xs font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
+          <span className="text-2xs font-mono uppercase tracking-wider text-n-400 shrink-0">
             REQUERIDA
           </span>
         )}
@@ -94,7 +94,7 @@ export function ProtocolBlock({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-[100ms]"
+              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors duration-fast"
               aria-label="Editar bloque"
             >
               <i className="ph ph-pencil-simple text-base" />
@@ -103,7 +103,7 @@ export function ProtocolBlock({
           {onDelete && !required && (
             <button
               onClick={onDelete}
-              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-[100ms]"
+              className="flex items-center justify-center w-btn-sm h-btn-sm rounded-sm text-n-400 hover:text-danger-text hover:bg-danger-bg transition-colors duration-fast"
               aria-label="Eliminar bloque"
             >
               <i className="ph ph-trash text-base" />
@@ -111,7 +111,7 @@ export function ProtocolBlock({
           )}
         </div>
       </div>
-      {children && <div className="px-[18px] py-4">{children}</div>}
+      {children && <div className="px-4.5 py-4">{children}</div>}
     </div>
   )
 }
@@ -137,7 +137,7 @@ export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): 
         <li
           key={item.id}
           className={cn(
-            'flex items-center gap-3 py-2 px-1 hover:bg-n-25 rounded transition-colors duration-[100ms]',
+            'flex items-center gap-3 py-2 px-1 hover:bg-n-25 rounded transition-colors duration-fast',
             item.done && 'opacity-60',
           )}
         >
@@ -149,14 +149,14 @@ export function ProtocolChecklist({ items, onToggle }: ProtocolChecklistProps): 
           />
           <span
             className={cn(
-              'text-sm font-sans text-n-700 leading-[1.5] flex-1',
+              'text-sm font-sans text-n-700 leading-normal flex-1',
               item.done && 'line-through text-n-400',
             )}
           >
             {item.text}
           </span>
           {item.critical && !item.done && (
-            <span className="text-overline font-mono uppercase text-danger-solid tracking-[0.02em] shrink-0">
+            <span className="text-overline font-mono uppercase text-danger-solid tracking-label-tight shrink-0">
               CRÍTICO
             </span>
           )}
@@ -190,7 +190,7 @@ export function ProtocolSteps({ steps }: ProtocolStepsProps): JSX.Element {
           <div className="flex-1">
             <div className="text-sm font-sans font-semibold text-n-800">{step.title}</div>
             {step.detail && (
-              <div className="text-xs font-sans text-n-500 mt-1 leading-[1.4]">
+              <div className="text-xs font-sans text-n-500 mt-1 leading-label">
                 {step.detail}
               </div>
             )}
@@ -226,7 +226,7 @@ export function ProtocolDecision({ condition, branches }: ProtocolDecisionProps)
             <span className="text-overline font-mono font-medium text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0 h-fit mt-1">
               {branch.label}
             </span>
-            <div className="text-sm font-sans text-n-700 leading-[1.45]">{branch.action}</div>
+            <div className="text-sm font-sans text-n-700 leading-prose-snug">{branch.action}</div>
           </div>
         ))}
       </div>
@@ -261,7 +261,7 @@ export function ProtocolDosageTable({ title, rows }: ProtocolDosageTableProps): 
             {cols.map((col) => (
               <th
                 key={col}
-                className="text-overline font-mono uppercase tracking-[0.06em] text-n-600 bg-n-50 px-3 py-2 border-b border-n-200 font-semibold"
+                className="text-overline font-mono uppercase tracking-label text-n-600 bg-n-50 px-3 py-2 border-b border-n-200 font-semibold"
               >
                 {col}
               </th>
@@ -313,7 +313,7 @@ export function ProtocolAlert({ severity, title, content }: ProtocolAlertProps):
   return (
     <div
       className={cn(
-        'px-4 py-3 rounded border text-sm font-sans leading-[1.45]',
+        'px-4 py-3 rounded border text-sm font-sans leading-prose-snug',
         alertStyles[severity],
       )}
     >
@@ -335,7 +335,7 @@ export function AddBlockButton({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-n-200 rounded text-xs font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-[100ms]"
+      className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-n-200 rounded text-xs font-sans text-n-500 hover:border-n-400 hover:text-n-800 transition-colors duration-fast"
     >
       <i className="ph ph-plus text-base" />
       {label}

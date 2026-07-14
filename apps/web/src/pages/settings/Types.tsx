@@ -328,16 +328,16 @@ export function Types(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Color
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Nombre
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   Estado
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"></th>
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
@@ -372,7 +372,7 @@ export function Types(): JSX.Element {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-[28px] px-0"
+                        className="w-btn-sm px-0"
                         title={c.isSeeded ? typesStrings.deleteSeeded : typesStrings.listDelete}
                         disabled={c.isSeeded || deletingId === c.id}
                         onClick={() => handleDelete(c)}

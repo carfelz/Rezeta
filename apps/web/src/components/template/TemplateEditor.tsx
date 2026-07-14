@@ -469,7 +469,7 @@ function DosageRowsEditor({ block, isLocked, parentId, onUpdate }: DosageRowsEdi
                 {DOSAGE_COLUMNS.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-label text-n-600 whitespace-nowrap"
                   >
                     {templateEditorWidgetStrings.dosageColumnLabels[col]}
                   </th>
@@ -495,7 +495,7 @@ function DosageRowsEditor({ block, isLocked, parentId, onUpdate }: DosageRowsEdi
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-[28px] px-0"
+                        className="w-btn-sm px-0"
                         title={templateEditorWidgetStrings.dosageRemoveRow}
                         onClick={() => removeRow(row.id)}
                       >
@@ -701,7 +701,7 @@ function BlockRow({
             <Button
               variant="ghost"
               size="sm"
-              className="w-[28px] px-0"
+              className="w-btn-sm px-0"
               title={templateEditorWidgetStrings.moveUp}
               onClick={() => onMove(block.id, 'up', parentId)}
             >
@@ -710,7 +710,7 @@ function BlockRow({
             <Button
               variant="ghost"
               size="sm"
-              className="w-[28px] px-0"
+              className="w-btn-sm px-0"
               title={templateEditorWidgetStrings.moveDown}
               onClick={() => onMove(block.id, 'down', parentId)}
             >
@@ -719,7 +719,7 @@ function BlockRow({
             <Button
               variant="ghost"
               size="sm"
-              className="w-[28px] px-0"
+              className="w-btn-sm px-0"
               title={
                 isRequired
                   ? templateEditorWidgetStrings.requiredTooltip

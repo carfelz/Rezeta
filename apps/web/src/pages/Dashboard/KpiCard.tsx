@@ -25,14 +25,14 @@ export function KpiCard({
         : 'text-n-500'
 
   return (
-    <div className="bg-n-0 border border-n-200 rounded-md px-5 py-[18px]">
-      <div className="font-mono text-2xs tracking-[0.1em] uppercase text-n-500 mb-[10px]">
+    <div className="bg-n-0 border border-n-200 rounded-md px-5 py-4.5">
+      <div className="font-mono text-2xs tracking-widest uppercase text-n-500 mb-2.5">
         {label}
       </div>
       {loading ? (
-        <div className="h-10 w-[96px] bg-n-100 rounded animate-pulse" />
+        <div className="h-10 w-96 bg-n-100 rounded animate-pulse" />
       ) : (
-        <div className="font-serif font-medium text-h1 text-n-900 leading-none tracking-[-0.015em]">
+        <div className="font-serif font-medium text-h1 text-n-900 leading-none tracking-heading-lg">
           {value}
           {unit && (
             <span className="font-sans font-medium text-sm text-n-400 ml-1">{unit}</span>

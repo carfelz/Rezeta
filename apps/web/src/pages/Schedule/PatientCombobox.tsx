@@ -68,7 +68,7 @@ export function PatientCombobox({
         autoComplete="off"
       />
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-n-0 border border-n-200 rounded shadow-floating z-50 max-h-[200px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-n-0 border border-n-200 rounded shadow-floating z-50 max-h-200 overflow-y-auto">
           {patients.length === 0 ? (
             <div className="px-3 py-2 text-xs text-n-400">
               {search ? patientComboboxStrings.noResults : patientComboboxStrings.typeToSearch}

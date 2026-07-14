@@ -45,7 +45,7 @@ export function EditorPalette({
             <div
               key={type}
               title={protocolEditorStrings.paletteDisabledTooltip}
-              className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-[3px] bg-n-50 text-xs font-sans text-n-400 cursor-not-allowed"
+              className="flex items-center gap-3 px-3 py-2 border border-n-200 rounded-sm bg-n-50 text-xs font-sans text-n-400 cursor-not-allowed"
             >
               <i className={`ph ${icon} text-n-300 text-body-lg shrink-0`} />
               {label}

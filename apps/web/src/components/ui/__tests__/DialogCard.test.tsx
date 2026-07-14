@@ -39,10 +39,10 @@ describe('DialogCard', () => {
   })
 
   it.each([
-    ['sm', 'w-[440px]'],
-    ['md', 'w-[460px]'],
-    ['lg', 'w-[520px]'],
-    ['xl', 'w-[540px]'],
+    ['sm', 'w-440'],
+    ['md', 'w-460'],
+    ['lg', 'w-520'],
+    ['xl', 'w-540'],
   ] as const)('width=%s applies %s class', (width, expected) => {
     const { container } = render(<DialogCard overline="X" title="T" width={width} />)
     expect(container.firstChild).toHaveClass(expected)

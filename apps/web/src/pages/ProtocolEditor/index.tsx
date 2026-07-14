@@ -148,7 +148,7 @@ export function ProtocolEditor(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[256px]">
+      <div className="flex items-center justify-center h-256">
         <Spinner size="lg" className="text-n-400" />
       </div>
     )
@@ -156,7 +156,7 @@ export function ProtocolEditor(): JSX.Element {
 
   if (error || !protocol) {
     return (
-      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
+      <div className="flex flex-col items-center justify-center h-256 gap-4">
         <p className="text-base font-sans text-n-600">{protocolEditorStrings.notFound}</p>
         <Link to="/protocolos" className="text-sm font-sans text-p-500 hover:text-p-700">
           ← {protocolEditorStrings.back}
@@ -301,10 +301,10 @@ export function ProtocolEditor(): JSX.Element {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen-60 gap-4 px-6 text-center">
         <i className="ph ph-desktop text-display text-n-300" />
         <h2 className="text-h2 text-n-800">{protocolEditorStrings.mobileGateTitle}</h2>
-        <p className="text-body-sm text-n-500 max-w-[36ch]">
+        <p className="text-body-sm text-n-500 max-w-measure-sm">
           {protocolEditorStrings.mobileGateBody}
         </p>
         <Link to="/protocolos" className="text-sm font-sans text-p-500 hover:text-p-700">
@@ -319,7 +319,7 @@ export function ProtocolEditor(): JSX.Element {
       {draftBanner && <DraftBanner onUse={applyDraft} onDiscard={discardDraft} />}
 
       <div className="flex items-center gap-2 text-sm font-sans text-n-500 mb-5">
-        <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-[100ms]">
+        <Link to="/protocolos" className="hover:text-n-800 transition-colors duration-fast">
           {protocolEditorStrings.back}
         </Link>
         <i className="ph ph-caret-right text-overline text-n-300" />
@@ -372,7 +372,7 @@ export function ProtocolEditor(): JSX.Element {
               {blocks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
                   <i className="ph ph-file-text text-h1 text-n-300" />
-                  <p className="text-sm font-sans text-n-400 max-w-[28ch]">
+                  <p className="text-sm font-sans text-n-400 max-w-measure-xs">
                     {protocolEditorStrings.noContent}
                   </p>
                 </div>

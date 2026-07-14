@@ -13,7 +13,7 @@ export const NativeSelect = forwardRef<HTMLSelectElement, NativeSelectProps>(
         className={cn(
           'w-full h-input-md px-3 text-sm font-sans',
           'bg-n-0 text-n-700 border rounded-sm',
-          'outline-none transition-[border-color] duration-[100ms]',
+          'outline-none transition-border duration-fast',
           !error && 'border-n-300 focus:border-p-500',
           error && 'border-danger-solid focus:border-danger-solid',
           'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',

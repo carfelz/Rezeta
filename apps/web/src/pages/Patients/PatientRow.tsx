@@ -36,7 +36,7 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
     >
       <td className="text-sm px-4 py-3 border-b border-n-100">
         <div className="flex items-center gap-2">
-          <div className="w-[30px] h-[30px] rounded-full bg-p-50 text-p-700 text-overline font-semibold flex items-center justify-center shrink-0">
+          <div className="w-30 h-30 rounded-full bg-p-50 text-p-700 text-overline font-semibold flex items-center justify-center shrink-0">
             {initials}
           </div>
           <div>
@@ -53,7 +53,7 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
               const docType = resolveDocumentType(patient.documentType, patient.documentNumber)
               if (!docType) return null
               return (
-                <span className="font-mono text-2xs uppercase tracking-[0.08em] text-n-400 mt-0.5">
+                <span className="font-mono text-2xs uppercase tracking-label-wide text-n-400 mt-0.5">
                   {DOC_LABELS_UPPER[docType]}
                 </span>
               )

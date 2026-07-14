@@ -360,25 +360,25 @@ export function Locations(): JSX.Element {
           <table className="w-full border-collapse bg-n-0">
             <thead>
               <tr>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderName}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderAddress}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderPhone}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderFee}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderCommission}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left">
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left">
                   {locationsStrings.tableHeaderType}
                 </th>
-                <th className="bg-n-50 text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left" />
+                <th className="bg-n-50 text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left" />
               </tr>
             </thead>
             <tbody>
@@ -424,7 +424,7 @@ export function Locations(): JSX.Element {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-[28px] px-0"
+                        className="w-btn-sm px-0"
                         title={locationsStrings.archiveButtonTitle}
                         onClick={() => {
                           setArchiveError(null)

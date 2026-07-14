@@ -90,7 +90,7 @@ export function DosageTableEditor({ id, title, rows }: DosageTableEditorProps): 
                 {COLUMNS.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-[0.06em] text-n-600 whitespace-nowrap"
+                    className="px-2 py-2 text-left text-2xs font-mono uppercase tracking-label text-n-600 whitespace-nowrap"
                   >
                     {COLUMN_LABELS[col]}
                   </th>

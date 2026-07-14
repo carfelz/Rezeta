@@ -79,7 +79,7 @@ export function ProtocolPickerModal({
           </div>
         </div>
 
-        <div className="overflow-y-auto max-h-[320px]">
+        <div className="overflow-y-auto max-h-320">
           {isLoading && (
             <Caption tone="muted" size="lg" as="div" className="text-center py-12">
               {protocolPickerModalStrings.loading}

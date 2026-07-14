@@ -13,7 +13,7 @@ const calloutVariants = cva('flex rounded border font-sans', {
     // Standard = full callout box (icon left, optional title, body).
     // Compact = chip-like row, single line, used for inline alerts in right rails.
     density: {
-      standard: 'gap-3 p-[14px_16px] text-sm leading-[1.45]',
+      standard: 'gap-3 py-3.5 px-4 text-sm leading-prose-snug',
       compact: 'gap-2 px-3 py-2 text-xs items-center',
     },
   },
@@ -56,7 +56,7 @@ export function Callout({
       className={cn(calloutVariants({ variant: finalVariant, density: finalDensity }), className)}
     >
       {icon && (
-        <span className={cn('shrink-0 leading-none mt-[1px]', iconSize)}>
+        <span className={cn('shrink-0 leading-none mt-px', iconSize)}>
           {typeof icon === 'string' ? <i className={icon} /> : icon}
         </span>
       )}

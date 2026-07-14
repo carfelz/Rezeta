@@ -82,13 +82,13 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
     <div className="bg-n-0 border border-n-200 rounded-md">
       <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-n-100">
         <div>
-          <span className="font-mono text-overline uppercase tracking-[0.08em] text-n-400">
+          <span className="font-mono text-overline uppercase tracking-label-wide text-n-400">
             {s.historiaTabLabel}
           </span>
-          <h3 className="font-serif font-medium text-h3 text-n-900 mt-[2px] mb-1">
+          <h3 className="font-serif font-medium text-h3 text-n-900 mt-0.5 mb-1">
             {s.historiaMapTitle}
           </h3>
-          <p className="text-sm text-n-500 max-w-[56ch]">{s.historiaMapDescription}</p>
+          <p className="text-sm text-n-500 max-w-measure-lg">{s.historiaMapDescription}</p>
         </div>
         <Button variant="secondary" onClick={() => onChange({})}>
           <i className="ph ph-arrow-counter-clockwise" />
@@ -99,19 +99,19 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[34%]">
+            <th className="text-left font-mono text-overline uppercase tracking-label-wide font-regular text-n-400 bg-n-25 px-4 py-2.5 border-b border-n-100 w-pct-34">
               {s.historiaColBlock}
             </th>
-            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[8%]">
+            <th className="text-left font-mono text-overline uppercase tracking-label-wide font-regular text-n-400 bg-n-25 px-4 py-2.5 border-b border-n-100 w-pct-8">
               {s.historiaColInclude}
             </th>
-            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[26%]">
+            <th className="text-left font-mono text-overline uppercase tracking-label-wide font-regular text-n-400 bg-n-25 px-4 py-2.5 border-b border-n-100 w-pct-26">
               {s.historiaColSection}
             </th>
-            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[22%]">
+            <th className="text-left font-mono text-overline uppercase tracking-label-wide font-regular text-n-400 bg-n-25 px-4 py-2.5 border-b border-n-100 w-pct-22">
               {s.historiaColLabel}
             </th>
-            <th className="text-left font-mono text-overline uppercase tracking-[0.08em] font-regular text-n-400 bg-n-25 px-4 py-[10px] border-b border-n-100 w-[10%]">
+            <th className="text-left font-mono text-overline uppercase tracking-label-wide font-regular text-n-400 bg-n-25 px-4 py-2.5 border-b border-n-100 w-pct-10">
               {s.historiaColOrigin}
             </th>
           </tr>
@@ -128,9 +128,9 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
 
             return (
               <tr key={block.id} className={!included ? 'text-n-400' : undefined}>
-                <td className="px-4 py-[10px] border-b border-n-100 align-middle">
+                <td className="px-4 py-2.5 border-b border-n-100 align-middle">
                   <div
-                    className={`flex items-center gap-[10px] pl-[10px] border-l-2 ${
+                    className={`flex items-center gap-2.5 pl-2.5 border-l-2 ${
                       included ? 'border-p-500' : 'border-n-200'
                     }`}
                   >
@@ -146,7 +146,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-[10px] border-b border-n-100 align-middle">
+                <td className="px-4 py-2.5 border-b border-n-100 align-middle">
                   <button
                     type="button"
                     role="switch"
@@ -154,18 +154,18 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                     aria-label={s.historiaColInclude}
                     disabled={locked}
                     onClick={() => setEntry(block.id, { ...entry, include: !included })}
-                    className={`w-8 h-[18px] rounded-full relative shrink-0 transition-colors duration-[100ms] ${
+                    className={`w-8 h-4.5 rounded-full relative shrink-0 transition-colors duration-fast ${
                       included ? 'bg-p-500' : 'bg-n-200'
                     } ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <span
-                      className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-n-0 transition-[left] duration-[100ms] ${
-                        included ? 'left-4' : 'left-[2px]'
+                      className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-n-0 transition-left duration-fast ${
+                        included ? 'left-4' : 'left-0.5'
                       }`}
                     />
                   </button>
                 </td>
-                <td className="px-4 py-[10px] border-b border-n-100 align-middle">
+                <td className="px-4 py-2.5 border-b border-n-100 align-middle">
                   {LOCKED_TYPES.has(block.type) ? (
                     <span className="text-sm text-n-400">{s.historiaLockedPlan}</span>
                   ) : locked || !included ? (
@@ -188,7 +188,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                     </NativeSelect>
                   )}
                 </td>
-                <td className="px-4 py-[10px] border-b border-n-100 align-middle">
+                <td className="px-4 py-2.5 border-b border-n-100 align-middle">
                   {locked || !included ? (
                     <span className="text-sm text-n-400">—</span>
                   ) : (
@@ -199,9 +199,9 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
                     />
                   )}
                 </td>
-                <td className="px-4 py-[10px] border-b border-n-100 align-middle">
+                <td className="px-4 py-2.5 border-b border-n-100 align-middle">
                   <span
-                    className={`inline-flex items-center font-mono text-2xs uppercase tracking-[0.05em] px-[6px] py-[2px] rounded-sm border whitespace-nowrap ${
+                    className={`inline-flex items-center font-mono text-2xs uppercase tracking-wider px-1.5 py-0.5 rounded-sm border whitespace-nowrap ${
                       isCustom
                         ? 'border-p-100 text-p-500 bg-p-50'
                         : 'border-n-200 text-n-400 bg-n-25'
@@ -216,7 +216,7 @@ export function HistoriaMappingTab({ blocks, mapping, onChange }: Props): JSX.El
         </tbody>
       </table>
 
-      <div className="flex items-center gap-2 px-6 py-[14px] text-n-500 text-xs bg-n-25 border-t border-n-100 rounded-b-md">
+      <div className="flex items-center gap-2 px-6 py-3.5 text-n-500 text-xs bg-n-25 border-t border-n-100 rounded-b-md">
         <i className="ph ph-info text-base text-n-400 shrink-0" />
         {s.historiaFootnote}
       </div>

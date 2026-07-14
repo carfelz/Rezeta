@@ -93,7 +93,7 @@ export function StepTypes({
             <Button
               variant="ghost"
               size="sm"
-              className="w-[28px] px-0"
+              className="w-btn-sm px-0"
               onClick={() => remove(i)}
               title={onboardingCustomizeStrings.step2DeleteLabel}
             >

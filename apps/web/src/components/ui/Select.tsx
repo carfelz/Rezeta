@@ -17,8 +17,8 @@ export const SelectTrigger = forwardRef<
       'flex items-center justify-between w-full h-input-md px-3 gap-2',
       'text-sm font-sans text-n-700 bg-n-0',
       'border border-n-300 rounded-sm outline-none',
-      'transition-[border-color,box-shadow] duration-[100ms]',
-      'focus:border-p-500 focus:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+      'transition-border-shadow duration-fast',
+      'focus:border-p-500 focus:shadow-focus-subtle',
       'disabled:bg-n-50 disabled:text-n-400 disabled:border-n-200 disabled:cursor-not-allowed',
       'data-[placeholder]:text-n-400',
       className,
@@ -41,7 +41,7 @@ export const SelectContent = forwardRef<
     ref={ref}
     position={position}
     className={cn(
-      'relative z-[600] min-w-[8rem] bg-n-0 border border-n-200 rounded',
+      'relative z-modal min-w-menu bg-n-0 border border-n-200 rounded',
       'overflow-hidden',
       'data-[state=open]:animate-in data-[state=closed]:animate-out',
       'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
@@ -67,7 +67,7 @@ export const SelectLabel = forwardRef<
   <SelectPrimitive.Label
     ref={ref}
     className={cn(
-      'px-3 py-2 text-overline font-mono uppercase tracking-[0.06em] text-n-400',
+      'px-3 py-2 text-overline font-mono uppercase tracking-label text-n-400',
       className,
     )}
     {...props}
@@ -82,10 +82,10 @@ export const SelectItem = forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex items-center px-3 py-[7px] pr-8',
+      'relative flex items-center px-3 py-1.75 pr-8',
       'text-sm font-sans text-n-700',
       'cursor-pointer select-none outline-none',
-      'transition-colors duration-[100ms]',
+      'transition-colors duration-fast',
       'hover:bg-n-50 focus:bg-n-50',
       'data-[highlighted]:bg-n-50',
       'data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed',

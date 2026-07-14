@@ -6,9 +6,9 @@ const avatarVariants = cva(
   {
     variants: {
       size: {
-        default: 'w-[36px] h-[36px] text-sm',
-        sm: 'w-[30px] h-[30px] text-overline',
-        xs: 'w-[28px] h-[28px] text-overline',
+        default: 'w-36 h-36 text-sm',
+        sm: 'w-30 h-30 text-overline',
+        xs: 'w-btn-sm h-btn-sm text-overline',
       },
     },
     defaultVariants: {

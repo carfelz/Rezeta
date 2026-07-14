@@ -112,9 +112,9 @@ function CategoryBadge({ category }: { category: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-[3px] rounded-sm text-overline font-medium ${cls}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.75 rounded-sm text-overline font-medium ${cls}`}
     >
-      <span className="w-[5px] h-[5px] rounded-full bg-current opacity-70 shrink-0" />
+      <span className="w-1.25 h-1.25 rounded-full bg-current opacity-70 shrink-0" />
       {label}
     </span>
   )
@@ -131,7 +131,7 @@ function StatusDot({ status }: { status: string }) {
       </span>
     )
   }
-  return <span className="inline-block w-[6px] h-[6px] rounded-full bg-n-300" />
+  return <span className="inline-block w-1.5 h-1.5 rounded-full bg-n-300" />
 }
 
 // ─── Detail Drawer ────────────────────────────────────────────────────────────
@@ -150,10 +150,10 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* backdrop */}
-      <div className="absolute inset-0 bg-[rgba(14,14,13,0.35)]" onClick={onClose} />
+      <div className="absolute inset-0 bg-overlay" onClick={onClose} />
 
       {/* drawer panel */}
-      <div className="relative z-10 w-[480px] max-w-full h-full bg-n-0 border-l border-n-200 flex flex-col shadow-floating overflow-y-auto">
+      <div className="relative z-10 w-480 max-w-full h-full bg-n-0 border-l border-n-200 flex flex-col shadow-floating overflow-y-auto">
         {/* header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-n-200 shrink-0">
           <div>
@@ -237,7 +237,7 @@ function DetailDrawer({ item, onClose }: DrawerProps) {
               <div className="border border-n-200 rounded-sm overflow-hidden">
                 {Object.entries(item.metadata).map(([k, v]) => (
                   <div key={k} className="flex gap-3 px-3 py-2 border-b border-n-100 last:border-0">
-                    <span className="text-overline font-mono text-n-500 shrink-0 w-[120px] truncate">
+                    <span className="text-overline font-mono text-n-500 shrink-0 w-120 truncate">
                       {k}
                     </span>
                     <span className="text-xs text-n-700 break-all">{String(v)}</span>
@@ -472,7 +472,7 @@ export function AuditLog(): JSX.Element {
                   ].map((col) => (
                     <th
                       key={col}
-                      className="text-overline font-semibold uppercase tracking-[0.06em] text-n-600 px-4 py-3 text-left"
+                      className="text-overline font-semibold uppercase tracking-label text-n-600 px-4 py-3 text-left"
                     >
                       {col}
                     </th>
@@ -492,13 +492,13 @@ export function AuditLog(): JSX.Element {
                     <tr
                       key={item.id}
                       onClick={() => setSelectedItem(item)}
-                      className={`border-t border-n-100 cursor-pointer relative transition-colors duration-[100ms] ${
+                      className={`border-t border-n-100 cursor-pointer relative transition-colors duration-fast ${
                         isSelected ? 'bg-n-25' : 'hover:bg-n-25'
                       }`}
                     >
                       {/* Active indicator */}
                       {isSelected && (
-                        <td className="absolute left-0 top-[6px] bottom-[6px] w-[2px] bg-p-500 rounded-sm p-0" />
+                        <td className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-p-500 rounded-sm p-0" />
                       )}
                       <td className="px-4 py-3 font-mono text-xs text-n-600 whitespace-nowrap">
                         {formatTs(item.createdAt)}

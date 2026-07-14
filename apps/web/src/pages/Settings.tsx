@@ -132,7 +132,7 @@ export function Settings(): JSX.Element {
       <h1 className="text-h1 mb-6">{settingsStrings.pageTitle}</h1>
 
       {user && (
-        <Card className="max-w-[560px] mb-6">
+        <Card className="max-w-560 mb-6">
           <div className="flex items-start justify-between mb-4">
             <CardTitle>{settingsStrings.accountSectionTitle}</CardTitle>
             <Button variant="secondary" size="sm" onClick={() => setEditingProfile(true)}>
@@ -167,10 +167,10 @@ export function Settings(): JSX.Element {
         </Card>
       )}
 
-      <Card className="max-w-[560px] mb-6 p-0">
+      <Card className="max-w-560 mb-6 p-0">
         <Link
           to="/ajustes/ubicaciones"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-fast"
         >
           <i className="ph ph-map-pin text-h3 text-p-500" />
           <div>
@@ -181,7 +181,7 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/plantillas"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-fast"
         >
           <i className="ph ph-file-text text-h3 text-p-500" />
           <div>
@@ -192,7 +192,7 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/tipos"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-fast"
         >
           <i className="ph ph-tag text-h3 text-p-500" />
           <div>
@@ -203,7 +203,7 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/registros"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-fast"
         >
           <i className="ph ph-clipboard-text text-h3 text-p-500" />
           <div>
@@ -214,7 +214,7 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/horarios"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-[100ms]"
+          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast"
         >
           <i className="ph ph-calendar-check text-h3 text-p-500" />
           <div>

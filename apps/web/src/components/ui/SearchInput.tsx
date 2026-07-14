@@ -13,7 +13,7 @@ const searchInputVariants = cva(
     variants: {
       size: {
         sm: 'h-input-md pl-8 pr-3 text-sm',
-        md: 'h-btn-lg pl-10 pr-3 text-sm rounded-[5px]',
+        md: 'h-btn-lg pl-10 pr-3 text-sm rounded-md',
       },
     },
     defaultVariants: { size: 'md' },

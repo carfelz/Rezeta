@@ -79,8 +79,8 @@ export function TagInput({
       className={cn(
         'flex flex-wrap items-center gap-1.5 w-full min-h-input-md px-3 py-1.5',
         'bg-n-0 border rounded-sm',
-        'transition-[border-color,box-shadow] duration-[100ms]',
-        'border-n-300 focus-within:border-p-500 focus-within:shadow-[0_0_0_3px_rgba(45,87,96,0.12)]',
+        'transition-border-shadow duration-fast',
+        'border-n-300 focus-within:border-p-500 focus-within:shadow-focus-subtle',
         disabled && 'bg-n-50 border-n-200 cursor-not-allowed',
       )}
     >
@@ -112,7 +112,7 @@ export function TagInput({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          'flex-1 min-w-[80px] outline-none bg-transparent text-sm font-sans',
+          'flex-1 min-w-80 outline-none bg-transparent text-sm font-sans',
           'text-n-700 placeholder:text-n-400',
           'disabled:cursor-not-allowed',
         )}

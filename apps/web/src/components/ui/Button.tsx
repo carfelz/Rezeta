@@ -10,7 +10,7 @@ export const buttonVariants = cva(
     'font-sans font-medium leading-none',
     'rounded-sm border',
     'whitespace-nowrap select-none cursor-pointer',
-    'transition-[background-color,border-color,color] duration-[100ms] ease-[ease]',
+    'transition-colors-border duration-fast ease-[ease]',
     'focus-visible:outline-none',
   ],
   {
@@ -46,8 +46,8 @@ export const buttonVariants = cva(
         ],
         danger: [
           'bg-danger-solid text-n-0 border-danger-solid',
-          'hover:bg-[#6E2018] hover:border-[#6E2018]',
-          'active:bg-[#52170F] active:border-[#52170F]',
+          'hover:bg-danger-hover hover:border-danger-hover',
+          'active:bg-danger-active active:border-danger-active',
           'focus-visible:shadow-focus-danger',
           'disabled:bg-n-200 disabled:border-n-200 disabled:text-n-400 disabled:cursor-not-allowed',
         ],
@@ -60,11 +60,11 @@ export const buttonVariants = cva(
         ],
       },
       size: {
-        sm: 'h-btn-sm text-xs px-[10px]',
-        md: 'h-btn-md text-sm px-[14px]',
-        lg: 'h-btn-lg text-body px-[18px]',
-        xl: 'h-btn-xl text-body px-[20px]',
-        icon: 'h-btn-md w-btn-md p-0 [&>svg]:w-[16px] [&>svg]:h-[16px]',
+        sm: 'h-btn-sm text-xs px-2.5',
+        md: 'h-btn-md text-sm px-3.5',
+        lg: 'h-btn-lg text-body px-4.5',
+        xl: 'h-btn-xl text-body px-5',
+        icon: 'h-btn-md w-btn-md p-0 [&>svg]:w-4 [&>svg]:h-4',
       },
       iconOnly: {
         true: 'px-0',
@@ -72,10 +72,10 @@ export const buttonVariants = cva(
       },
     },
     compoundVariants: [
-      { size: 'sm', iconOnly: true, class: 'w-[28px] [&>svg]:w-[14px] [&>svg]:h-[14px]' },
-      { size: 'md', iconOnly: true, class: 'w-[32px] [&>svg]:w-[16px] [&>svg]:h-[16px]' },
-      { size: 'lg', iconOnly: true, class: 'w-[40px] [&>svg]:w-[18px] [&>svg]:h-[18px]' },
-      { size: 'xl', iconOnly: true, class: 'w-[44px] [&>svg]:w-[20px] [&>svg]:h-[20px]' },
+      { size: 'sm', iconOnly: true, class: 'w-btn-sm [&>svg]:w-3.5 [&>svg]:h-3.5' },
+      { size: 'md', iconOnly: true, class: 'w-btn-md [&>svg]:w-4 [&>svg]:h-4' },
+      { size: 'lg', iconOnly: true, class: 'w-btn-lg [&>svg]:w-4.5 [&>svg]:h-4.5' },
+      { size: 'xl', iconOnly: true, class: 'w-touch-min [&>svg]:w-5 [&>svg]:h-5' },
     ],
     defaultVariants: {
       variant: 'primary',

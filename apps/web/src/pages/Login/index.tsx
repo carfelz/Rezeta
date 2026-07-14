@@ -41,9 +41,9 @@ export function Login(): JSX.Element {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-n-25 p-8">
-      <Card className="w-full max-w-[400px]">
+      <Card className="w-full max-w-400">
         <div className="mb-6 text-center">
-          <div className="w-[44px] h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mx-auto mb-4">
+          <div className="w-touch-min h-touch-min bg-p-500 rounded-lg flex items-center justify-center font-serif text-h2 font-medium text-n-0 mx-auto mb-4">
             R
           </div>
           <h1 className="text-h2">{loginStrings.title}</h1>
@@ -100,7 +100,7 @@ export function Login(): JSX.Element {
             {loginStrings.noAccount}{' '}
             <Link
               to="/signup"
-              className="text-p-500 font-medium hover:text-p-700 transition-colors duration-[100ms]"
+              className="text-p-500 font-medium hover:text-p-700 transition-colors duration-fast"
             >
               {loginStrings.signupLink}
             </Link>

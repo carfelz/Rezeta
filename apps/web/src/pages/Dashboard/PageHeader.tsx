@@ -23,10 +23,10 @@ export function PageHeader({ now, greeting, subtitle }: PageHeaderProps): JSX.El
         />
       )}
       <div>
-        <div className="font-mono text-2xs tracking-[0.1em] text-n-400 mb-[6px]">
+        <div className="font-mono text-2xs tracking-widest text-n-400 mb-1.5">
           {formatDateKicker(now)}
         </div>
-        <h1 className="font-serif font-medium text-h2 text-n-900 leading-[1.15] tracking-[-0.015em] m-0">
+        <h1 className="font-serif font-medium text-h2 text-n-900 leading-display-tight tracking-heading-lg m-0">
           {greeting}
         </h1>
         <p className="text-sm text-n-500 mt-1 mb-0">{subtitle}</p>

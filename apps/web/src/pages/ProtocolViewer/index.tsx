@@ -27,7 +27,7 @@ export function ProtocolViewer(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[256px]">
+      <div className="flex items-center justify-center h-256">
         <Spinner size="lg" className="text-n-400" />
       </div>
     )
@@ -35,7 +35,7 @@ export function ProtocolViewer(): JSX.Element {
 
   if (error || !protocol) {
     return (
-      <div className="flex flex-col items-center justify-center h-[256px] gap-4">
+      <div className="flex flex-col items-center justify-center h-256 gap-4">
         <p className="text-base font-sans text-n-600">{protocolViewerStrings.notFound}</p>
         <Link to="/protocolos" className="text-sm font-sans text-p-500 hover:text-p-700">
           ← {protocolViewerStrings.back}
@@ -54,12 +54,12 @@ export function ProtocolViewer(): JSX.Element {
   })
 
   return (
-    <div className="max-w-[800px] m-auto">
+    <div className="max-w-800 m-auto">
       {/* Back nav */}
       <div className="flex items-center justify-between mb-6">
         <Link
           to="/protocolos"
-          className="flex items-center gap-2 text-xs font-sans text-n-500 hover:text-n-800 transition-colors duration-[100ms]"
+          className="flex items-center gap-2 text-xs font-sans text-n-500 hover:text-n-800 transition-colors duration-fast"
         >
           <i className="ph ph-arrow-left text-base" />
           {protocolViewerStrings.back}

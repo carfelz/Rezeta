@@ -144,9 +144,9 @@ function SectionEditor({
         onCancel={() => setConfirmOpen(false)}
       />
       {/* Section header with 2px teal left rule */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-4.5 pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-body-lg text-n-300 cursor-grab shrink-0" />
-        <span className="text-2xs font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
+        <span className="text-2xs font-mono uppercase tracking-wider text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {blockTypeStrings.section}
         </span>
 
@@ -162,7 +162,7 @@ function SectionEditor({
         />
 
         {isRequired && (
-          <span className="text-2xs font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
+          <span className="text-2xs font-mono uppercase tracking-wider text-n-400 shrink-0">
             {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
@@ -188,7 +188,7 @@ function SectionEditor({
       </div>
 
       {/* Section body */}
-      <div className="px-[18px] py-4">
+      <div className="px-4.5 py-4">
         {block.blocks.length > 0 ? (
           <div className="ml-6 border-l border-n-200">
             {block.blocks.map((child, idx) => (
@@ -245,7 +245,7 @@ function LeafBlockEditor({
     <div
       className={cn(
         'bg-n-0 border border-n-200 rounded mb-3',
-        isSelected && 'border-p-500 shadow-[0_0_0_2px_rgba(45,87,96,0.12)]',
+        isSelected && 'border-p-500 shadow-focus-subtle-sm',
       )}
     >
       <ConfirmDialog
@@ -261,16 +261,16 @@ function LeafBlockEditor({
         onCancel={() => setConfirmOpen(false)}
       />
       {/* Block header with 2px teal left rule */}
-      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-[18px] pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-p-500 before:rounded-tl-sm">
+      <div className="relative flex items-center gap-2 bg-n-25 border-b border-n-100 pl-4.5 pr-4 py-3 rounded-t before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-p-500 before:rounded-tl-sm">
         <i className="ph ph-dots-six-vertical text-body-lg text-n-300 cursor-grab shrink-0" />
-        <span className="text-2xs font-mono uppercase tracking-[0.05em] text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
+        <span className="text-2xs font-mono uppercase tracking-wider text-p-700 bg-p-50 border border-p-100 px-2 py-1 rounded-sm shrink-0">
           {blockTypeLabel(block.type)}
         </span>
         <span className="flex-1 min-w-0 truncate text-base font-serif font-medium text-n-700">
           {blockDisplayTitle(block)}
         </span>
         {isRequired && (
-          <span className="text-2xs font-mono uppercase tracking-[0.05em] text-n-400 shrink-0">
+          <span className="text-2xs font-mono uppercase tracking-wider text-n-400 shrink-0">
             {blockEditorStrings.blockRequiredLabel}
           </span>
         )}
@@ -294,8 +294,8 @@ function LeafBlockEditor({
       ) : (
         <div
           className={cn(
-            'px-[18px] py-4',
-            isEditable && 'cursor-pointer hover:bg-n-25 transition-colors duration-[100ms]',
+            'px-4.5 py-4',
+            isEditable && 'cursor-pointer hover:bg-n-25 transition-colors duration-fast',
           )}
           onClick={() => isEditable && !isSelected && selectBlock(block.id)}
           title={isEditable && !isSelected ? blockEditorStrings.blockEdit : undefined}
@@ -351,7 +351,7 @@ function BlockContextMenu({
         <DropdownMenu.Content
           align="end"
           sideOffset={4}
-          className="z-50 min-w-[168px] bg-n-0 border border-n-200 rounded-[5px] py-1"
+          className="z-50 min-w-168 bg-n-0 border border-n-200 rounded-md py-1"
           style={{
             boxShadow:
               '0 1px 0 rgba(14,14,13,.04), 0 8px 24px -8px rgba(14,14,13,.12), 0 2px 6px rgba(14,14,13,.06)',
@@ -360,7 +360,7 @@ function BlockContextMenu({
           {isEditable && onEdit && (
             <DropdownMenu.Item
               onSelect={onEdit}
-              className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+              className="flex items-center gap-2 px-3 py-1.75 text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
             >
               <i className="ph ph-pencil-simple text-sm text-n-400" />
               {blockEditorStrings.blockCtxEdit}
@@ -369,7 +369,7 @@ function BlockContextMenu({
           <DropdownMenu.Item
             onSelect={onMoveUp}
             disabled={isFirst}
-            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-1.75 text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-arrow-up text-sm text-n-400" />
             {blockEditorStrings.blockCtxMoveUp}
@@ -377,14 +377,14 @@ function BlockContextMenu({
           <DropdownMenu.Item
             onSelect={onMoveDown}
             disabled={isLast}
-            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-1.75 text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50 data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-arrow-down text-sm text-n-400" />
             {blockEditorStrings.blockCtxMoveDown}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onSelect={onDuplicate}
-            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
+            className="flex items-center gap-2 px-3 py-1.75 text-xs font-sans text-n-700 cursor-pointer select-none outline-none hover:bg-n-50 data-[highlighted]:bg-n-50"
           >
             <i className="ph ph-copy text-sm text-n-400" />
             {blockEditorStrings.blockCtxDuplicate}
@@ -393,7 +393,7 @@ function BlockContextMenu({
           <DropdownMenu.Item
             onSelect={onDelete}
             disabled={isRequired}
-            className="flex items-center gap-2 px-3 py-[7px] text-xs font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
+            className="flex items-center gap-2 px-3 py-1.75 text-xs font-sans text-danger-text cursor-pointer select-none outline-none hover:bg-danger-bg data-[highlighted]:bg-danger-bg data-[disabled]:opacity-40 data-[disabled]:cursor-default"
           >
             <i className="ph ph-trash text-sm" />
             {blockEditorStrings.blockCtxDelete}
@@ -555,7 +555,7 @@ function ImagingOrderBlockEditor({
                 value={order.urgency}
                 onValueChange={(v) => updateOrder(order.id, { urgency: v as OrderUrgency })}
               >
-                <SelectTrigger className="w-[120px]">
+                <SelectTrigger className="w-120">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -711,7 +711,7 @@ function LabOrderBlockEditor({
                 value={order.urgency}
                 onValueChange={(v) => updateOrder(order.id, { urgency: v as OrderUrgency })}
               >
-                <SelectTrigger className="w-[110px]">
+                <SelectTrigger className="w-110">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -726,7 +726,7 @@ function LabOrderBlockEditor({
                 value={order.sample_type}
                 onValueChange={(v) => updateOrder(order.id, { sample_type: v as LabSampleType })}
               >
-                <SelectTrigger className="w-[110px]">
+                <SelectTrigger className="w-110">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

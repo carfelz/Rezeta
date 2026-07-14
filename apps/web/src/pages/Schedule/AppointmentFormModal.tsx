@@ -258,7 +258,7 @@ export function AppointmentFormModal({
                 placeholder={appointmentFormModalStrings.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px]"
+                className="min-h-60"
               />
             </Field>
 

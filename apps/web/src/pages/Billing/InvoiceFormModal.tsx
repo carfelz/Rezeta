@@ -221,19 +221,19 @@ export function InvoiceFormModal({ invoice, onClose }: InvoiceFormModalProps): J
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-n-50 text-n-600 text-left">
-                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[50%]">
+                      <th className="px-3 py-2 font-semibold uppercase tracking-wider w-1/2">
                         {billingStrings.itemColDescription}
                       </th>
-                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[15%]">
+                      <th className="px-3 py-2 font-semibold uppercase tracking-wider w-pct-15">
                         {billingStrings.itemColQty}
                       </th>
-                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] w-[25%]">
+                      <th className="px-3 py-2 font-semibold uppercase tracking-wider w-1/4">
                         {billingStrings.itemColUnitPrice}
                       </th>
-                      <th className="px-3 py-2 font-semibold uppercase tracking-[0.05em] text-right w-[10%]">
+                      <th className="px-3 py-2 font-semibold uppercase tracking-wider text-right w-pct-10">
                         {billingStrings.itemColTotal}
                       </th>
-                      <th className="w-[32px]" />
+                      <th className="w-btn-md" />
                     </tr>
                   </thead>
                   <tbody>

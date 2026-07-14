@@ -59,7 +59,7 @@ export function DiagnosesSection({
               }
             }}
             placeholder={diagnosesSectionStrings.addPlaceholder}
-            className="h-[30px] text-xs border-dashed w-[200px]"
+            className="h-30 text-xs border-dashed w-200"
           />
           {input.trim() && (
             <TextLink tone="primary" size="sm" weight="medium" onClick={addDiagnosis}>

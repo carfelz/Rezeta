@@ -16,20 +16,20 @@ describe('Avatar', () => {
   it('renders default size (36px)', () => {
     render(<Avatar initials="AB" />)
     const el = screen.getByText('AB')
-    expect(el.className).toContain('w-[36px]')
-    expect(el.className).toContain('h-[36px]')
+    expect(el.className).toContain('w-36')
+    expect(el.className).toContain('h-36')
   })
 
   it('renders sm size', () => {
     render(<Avatar initials="AB" size="sm" />)
     const el = screen.getByText('AB')
-    expect(el.className).toContain('w-[30px]')
+    expect(el.className).toContain('w-30')
   })
 
   it('renders xs size', () => {
     render(<Avatar initials="AB" size="xs" />)
     const el = screen.getByText('AB')
-    expect(el.className).toContain('w-[28px]')
+    expect(el.className).toContain('w-btn-sm')
   })
 
   it('applies custom className', () => {

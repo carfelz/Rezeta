@@ -171,7 +171,7 @@ export function EditModal({ patient, onClose }: EditModalProps): JSX.Element {
                 placeholder={patientDetailStrings.fieldNotesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px]"
+                className="min-h-60"
               />
             </Field>
 
