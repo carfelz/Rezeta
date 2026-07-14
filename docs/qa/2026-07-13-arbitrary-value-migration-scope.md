@@ -82,7 +82,18 @@ proposal in **D2**.
 
 ---
 
-## Decisions needed before execution
+## Decisions — RESOLVED (2026-07-13)
+
+- **D1 → Add exact tokens (keep pixel-identical).** Off-grid spacing/inset (2/3/6/7/9/10/14/18px) get real
+  tokens under an "off-grid" block; zero visual change. (Chosen over rounding to the 4px scale.)
+- **D2 → Hybrid naming.** Semantic tokens for recurring roles (`overlay`, `max-w-modal`, `max-w-prose*`,
+  `min-w-menu`, `w-rail`, panel heights), by-value (`w-440`, `h-256`) for true one-offs.
+- **D3 → Tokenize percentages as-is** now (keep design); `50%`→`w-1/2`. Grid refactor of table columns is an
+  optional later cleanup, not part of this migration.
+- **D4 → Guardrail allowlist:** exempt `[--…]`, `[var(--…)]`, and arbitrary *variant* selectors
+  (`data-`/`group-`/`peer-`/`aria-`/`has-`/`*:`) + animation utilities; flag every other `prop-[…]`.
+
+## Decisions (detail)
 
 **D1 — Off-grid spacing & inset (2, 3, 6, 7, 9, 10, 14, 18 px).**
 `tokens.md` states spacing is *"only these steps — no arbitrary values"* (4/8/12/16/20/24/32/40/48/64).
