@@ -238,6 +238,69 @@ describe('UsersService.createUser — rank rule', () => {
     })
     expect(mockRepo.createProvisionedUser).toHaveBeenCalled()
   })
+
+  it('rejects super_admin -> super_admin by default (rank rule holds)', async () => {
+    const svc = makeService()
+    await expect(
+      svc.createUser('t1', 'super_admin', 'actor-1', {
+        email: 'a@b.com',
+        fullName: 'Ana',
+        role: 'super_admin',
+      }),
+    ).rejects.toThrow(ForbiddenException)
+  })
+
+  it('allows the super_admin bootstrap with a null actor when bypassRankCheck is set', async () => {
+    const svc = makeService()
+    mockRepo.createProvisionedUser.mockResolvedValue({
+      id: 'u3',
+      email: 'a@b.com',
+      fullName: 'Ana',
+      role: 'super_admin',
+      isActive: true,
+      createdAt: new Date('2026-07-16'),
+      lastLoginAt: null,
+    })
+    const user = await svc.createUser(
+      't1',
+      'super_admin',
+      null, // actor is a PlatformUser, not an institution user
+      { email: 'a@b.com', fullName: 'Ana', role: 'super_admin' },
+      { bypassRankCheck: true },
+    )
+    expect(user).toBeDefined()
+    expect(mockProvider.createUser).toHaveBeenCalledWith('a@b.com')
+  })
+
+  it('audits the bootstrap user_invited event as system with no actorUserId when the actor is null', async () => {
+    const svc = makeService()
+    mockRepo.createProvisionedUser.mockResolvedValue({
+      id: 'u3',
+      email: 'a@b.com',
+      fullName: 'Ana',
+      role: 'super_admin',
+      isActive: true,
+      createdAt: new Date('2026-07-16'),
+      lastLoginAt: null,
+    })
+    await svc.createUser(
+      't1',
+      'super_admin',
+      null,
+      { email: 'a@b.com', fullName: 'Ana', role: 'super_admin' },
+      { bypassRankCheck: true },
+    )
+    expect(mockAudit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't1',
+        actorType: 'system',
+        action: 'user_invited',
+        category: 'auth',
+      }),
+    )
+    const call = mockAudit.record.mock.calls[0]![0] as Record<string, unknown>
+    expect(call.actorUserId).toBeUndefined()
+  })
 })
 
 describe('UsersService.changeRole — rank rule', () => {

@@ -73,13 +73,24 @@ export class UsersService {
     return users.map(toManagedUser)
   }
 
+  /**
+   * `actorUserId` is `string | null` because this method also serves the
+   * platform-staff bootstrap of a brand-new institution's initial super_admin
+   * (see StaffService.createInstitution): the actor there is a PlatformUser,
+   * not an institution user, so there is no institution actorUserId to record.
+   * `options.bypassRankCheck` skips the `canManageRole` rank check for that
+   * same bootstrap case — there is no existing super_admin to rank against.
+   */
   async createUser(
     tenantId: string,
     actorRole: UserRole,
-    actorUserId: string,
+    actorUserId: string | null,
     dto: CreateUserDto,
+    options?: { bypassRankCheck?: boolean },
   ): Promise<ManagedUserDto> {
-    this.assertCanManage(actorRole, dto.role)
+    if (!options?.bypassRankCheck) {
+      this.assertCanManage(actorRole, dto.role)
+    }
 
     const { externalUid } = await this.authProvider.createUser(dto.email)
     const created = await this.repository.createProvisionedUser({
@@ -95,8 +106,8 @@ export class UsersService {
 
     void this.auditLog.record({
       tenantId,
-      actorUserId,
-      actorType: 'user',
+      ...(actorUserId ? { actorUserId } : {}),
+      actorType: actorUserId ? 'user' : 'system',
       category: 'auth',
       action: 'user_invited',
       entityType: 'User',
