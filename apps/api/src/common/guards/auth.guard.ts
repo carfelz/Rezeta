@@ -9,18 +9,21 @@ import {
 import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
 import { ErrorCode, UserPreferencesSchema } from '@rezeta/shared'
-import type { AuthUser, UserPreferences } from '@rezeta/shared'
+import type { AuthUser, UserPreferences, PlatformPrincipal } from '@rezeta/shared'
 import { UsersRepository } from '../../modules/users/users.repository.js'
+import { PlatformUsersRepository } from '../../modules/platform-users/platform-users.repository.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { AuditLogService } from '../audit-log/audit-log.service.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
+import { IS_PLATFORM_ROUTE_KEY } from '../decorators/platform-route.decorator.js'
 import { PermissionsService } from '../../modules/permissions/permissions.service.js'
 
 export interface AuthenticatedRequest extends Request {
   user: AuthUser
   tenantId: string
   verifiedToken?: VerifiedToken // only populated on provision route
+  platformUser?: PlatformPrincipal // only populated on @PlatformRoute() routes
 }
 
 @Injectable()
@@ -31,6 +34,7 @@ export class AuthGuard implements CanActivate {
     @Inject(Reflector) private reflector: Reflector,
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
     @Inject(UsersRepository) private users: UsersRepository,
+    @Inject(PlatformUsersRepository) private platformUsers: PlatformUsersRepository,
     @Inject(AuditLogService) private auditLog: AuditLogService,
     @Inject(PermissionsService) private permissions: PermissionsService,
   ) {}
@@ -77,6 +81,27 @@ export class AuthGuard implements CanActivate {
     ])
     if (isProvisionRoute) {
       request.verifiedToken = verified
+      return true
+    }
+
+    const isPlatformRoute = this.reflector.getAllAndOverride<boolean>(IS_PLATFORM_ROUTE_KEY, [
+      handler,
+      classRef,
+    ])
+    if (isPlatformRoute) {
+      const platformUser = await this.platformUsers.findByExternalUid(verified.externalUid)
+      if (!platformUser || !platformUser.isActive) {
+        throw new UnauthorizedException({
+          code: ErrorCode.UNAUTHORIZED,
+          message: 'Platform user not found or inactive',
+        })
+      }
+      request.platformUser = {
+        id: platformUser.id,
+        externalUid: platformUser.externalUid,
+        email: platformUser.email,
+        fullName: platformUser.fullName,
+      }
       return true
     }
 

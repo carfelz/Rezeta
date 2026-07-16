@@ -10,6 +10,7 @@ const mockAuthProvider = {
   deleteUser: vi.fn(),
 }
 const mockUsers = { findByExternalUid: vi.fn(), markSignedIn: vi.fn() }
+const mockPlatformUsers = { findByExternalUid: vi.fn(), create: vi.fn() }
 const mockReflector = { getAllAndOverride: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 const mockPermissions = {
@@ -20,11 +21,13 @@ function makeCtx(overrides: {
   headers?: Record<string, string>
   isPublic?: boolean
   isProvision?: boolean
+  isPlatformRoute?: boolean
   ip?: string
 }) {
   mockReflector.getAllAndOverride.mockImplementation((key: string) => {
     if (key === 'isPublic') return overrides.isPublic ?? false
     if (key === 'isProvisionRoute') return overrides.isProvision ?? false
+    if (key === 'isPlatformRoute') return overrides.isPlatformRoute ?? false
     return false
   })
   const req = {
@@ -69,6 +72,7 @@ describe('AuthGuard', () => {
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
       mockUsers as never,
+      mockPlatformUsers as never,
       mockAuditLog as never,
       mockPermissions as never,
     )
@@ -197,5 +201,67 @@ describe('AuthGuard', () => {
     await guard.canActivate(ctx as never)
     const req = ctx._req
     expect((req.user as Record<string, unknown>).tenantSeededAt).toBeNull()
+  })
+
+  it('sets request.platformUser for a @PlatformRoute() with an active PlatformUser', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'ext-1',
+      email: 's@r.com',
+      rawClaims: {},
+    })
+    mockPlatformUsers.findByExternalUid.mockResolvedValue({
+      id: 'p1',
+      externalUid: 'ext-1',
+      email: 's@r.com',
+      fullName: 'Staff',
+      isActive: true,
+    })
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer tok' },
+      isPlatformRoute: true,
+    })
+    await expect(guard.canActivate(ctx as never)).resolves.toBe(true)
+    expect(ctx._req['platformUser']).toEqual({
+      id: 'p1',
+      externalUid: 'ext-1',
+      email: 's@r.com',
+      fullName: 'Staff',
+    })
+    expect(ctx._req['user']).toBeUndefined()
+    expect(mockUsers.findByExternalUid).not.toHaveBeenCalled()
+  })
+
+  it('401s on a @PlatformRoute() when no PlatformUser matches (tenant user cannot enter staff routes)', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'ext-2',
+      email: 'x@y.com',
+      rawClaims: {},
+    })
+    mockPlatformUsers.findByExternalUid.mockResolvedValue(null)
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer tok' },
+      isPlatformRoute: true,
+    })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('401s on a @PlatformRoute() when the PlatformUser is inactive', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'ext-3',
+      email: 'z@y.com',
+      rawClaims: {},
+    })
+    mockPlatformUsers.findByExternalUid.mockResolvedValue({
+      id: 'p3',
+      externalUid: 'ext-3',
+      email: 'z@y.com',
+      fullName: null,
+      isActive: false,
+    })
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer tok' },
+      isPlatformRoute: true,
+    })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
   })
 })
