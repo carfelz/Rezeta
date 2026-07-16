@@ -204,15 +204,17 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   sideOffset={4}
                   className="z-50 min-w-200 bg-n-0 border border-n-200 rounded-md shadow-floating py-1 animate-in fade-in-0 zoom-in-95"
                 >
-                  <DropdownMenu.Item asChild>
-                    <NavLink
-                      to="/ajustes"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-fast"
-                    >
-                      <i className="ph ph-gear-six text-base text-n-500" />
-                      {sidebarStrings.userMenuSettings}
-                    </NavLink>
-                  </DropdownMenu.Item>
+                  {canViewNav(capabilities, 'templates') && (
+                    <DropdownMenu.Item asChild>
+                      <NavLink
+                        to="/ajustes"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-sans text-n-700 hover:bg-n-50 hover:text-n-900 cursor-pointer outline-none no-underline transition-colors duration-fast"
+                      >
+                        <i className="ph ph-gear-six text-base text-n-500" />
+                        {sidebarStrings.userMenuSettings}
+                      </NavLink>
+                    </DropdownMenu.Item>
+                  )}
 
                   <DropdownMenu.Separator className="my-1 h-px bg-n-100" />
 

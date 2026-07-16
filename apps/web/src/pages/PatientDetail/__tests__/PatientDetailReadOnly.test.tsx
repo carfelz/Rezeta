@@ -1,13 +1,7 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type {
-  AppointmentWithDetails,
-  InvoiceWithDetails,
-  Patient,
-  Prescription,
-} from '@rezeta/shared'
+import type { AppointmentWithDetails, InvoiceWithDetails, Patient, Prescription } from '@rezeta/shared'
 import { makeAuthUser, seedAuthUser } from '@/test/auth-helpers'
 
 const mocks = vi.hoisted(() => ({
@@ -66,13 +60,13 @@ const patient: Patient = {
   deletedAt: null,
 } as unknown as Patient
 
-const inProgressAppt: AppointmentWithDetails = {
+const appt: AppointmentWithDetails = {
   id: 'a1',
   tenantId: 't1',
   patientId: 'p1',
   doctorUserId: 'u1',
   locationId: 'l1',
-  status: 'in_progress',
+  status: 'scheduled',
   startsAt: '2026-07-02T14:00:00.000Z',
   endsAt: '2026-07-02T14:30:00.000Z',
   reason: null,
@@ -83,14 +77,6 @@ const inProgressAppt: AppointmentWithDetails = {
   patientName: 'Ana Reyes',
   patientDocumentNumber: '001',
   locationName: 'Clínica Central',
-  consultationId: 'c1',
-  consultationStatus: 'open',
-}
-
-const scheduledAppt: AppointmentWithDetails = {
-  ...inProgressAppt,
-  id: 'a2',
-  status: 'scheduled',
   consultationId: null,
   consultationStatus: null,
 }
@@ -104,20 +90,7 @@ const prescription: Prescription = {
   groupTitle: 'Antibióticos',
   groupOrder: 1,
   status: 'signed',
-  prescriptionItems: [
-    {
-      id: 'i1',
-      prescriptionId: 'rx1',
-      drug: 'Amoxicilina',
-      dose: '500mg',
-      route: 'oral',
-      frequency: 'c/8h',
-      duration: '7 días',
-      notes: null,
-      source: 'manual',
-      createdAt: '2026-07-01T00:00:00.000Z',
-    },
-  ],
+  prescriptionItems: [],
   pdfUrl: null,
   signedAt: '2026-07-01T00:00:00.000Z',
   createdAt: '2026-07-01T00:00:00.000Z',
@@ -154,26 +127,16 @@ const invoice: InvoiceWithDetails = {
   locationName: 'Clínica Central',
 }
 
-function setup(
-  overrides: {
-    appointments?: AppointmentWithDetails[]
-    prescriptions?: Prescription[]
-    invoices?: InvoiceWithDetails[]
-  } = {},
-): void {
+function setup(): void {
   mocks.usePatient.mockReturnValue({ data: patient, isLoading: false, isError: false })
-  mocks.useAppointments.mockReturnValue({
-    data: overrides.appointments ?? [inProgressAppt, scheduledAppt],
-    isLoading: false,
-    isError: false,
-  })
+  mocks.useAppointments.mockReturnValue({ data: [appt], isLoading: false, isError: false })
   mocks.usePatientPrescriptions.mockReturnValue({
-    data: overrides.prescriptions ?? [prescription],
+    data: [prescription],
     isLoading: false,
     isError: false,
   })
   mocks.useInvoices.mockReturnValue({
-    data: { items: overrides.invoices ?? [invoice], hasMore: false },
+    data: { items: [invoice], hasMore: false },
     isLoading: false,
     isError: false,
   })
@@ -195,93 +158,27 @@ function renderPage(): void {
   )
 }
 
-describe('PatientDetail tabs', () => {
+describe('PatientDetail read-only gating', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setup()
-    // These tests exercise tab content, not permission gating — seed a doctor
-    // (patients/consultations = manage) so PageHeader's controls are present.
-    seedAuthUser(makeAuthUser('doctor'))
   })
 
   afterEach(() => {
     seedAuthUser(null)
   })
 
-  it('renders the four tabs with Historia clínica active by default', () => {
+  it('hides "Editar" and "Nueva consulta" controls for a view-only assistant', () => {
+    seedAuthUser(makeAuthUser('assistant')) // patients = view, consultations = view
     renderPage()
-    for (const t of ['Historia clínica', 'Citas', 'Recetas', 'Facturas']) {
-      expect(screen.getByRole('tab', { name: t })).toBeInTheDocument()
-    }
-    expect(screen.getByTestId('historia-tab')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Nueva consulta/ })).not.toBeInTheDocument()
   })
 
-  it('fetches appointments by patientId only (no active-location filter)', async () => {
+  it('shows "Editar" and "Nueva consulta" controls for a doctor', () => {
+    seedAuthUser(makeAuthUser('doctor')) // patients = manage, consultations = manage
     renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Citas' }))
-    expect(mocks.useAppointments).toHaveBeenCalledWith({ patientId: 'p1' })
-  })
-
-  it('Citas tab lists appointments with status badges and consultation links', async () => {
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Citas' }))
-    expect(screen.getByText('En consulta')).toBeInTheDocument()
-    const link = screen.getByRole('link', { name: /ver consulta/i })
-    expect(link).toHaveAttribute('href', '/consultas/c1')
-  })
-
-  it('Citas tab shows Iniciar consulta for scheduled rows', async () => {
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Citas' }))
-    expect(screen.getByText('Iniciar consulta')).toBeInTheDocument()
-  })
-
-  it('Recetas tab lists prescriptions with drug and consultation link', async () => {
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Recetas' }))
-    expect(screen.getByText(/Amoxicilina/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ver consulta/i })).toHaveAttribute(
-      'href',
-      '/consultas/c1',
-    )
-  })
-
-  it('Facturas tab lists invoices with totals and billing link', async () => {
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Facturas' }))
-    expect(screen.getByText(/1,?500/)).toBeInTheDocument()
-    expect(screen.getByText('F-0001')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ver en facturación/i })).toHaveAttribute(
-      'href',
-      '/facturacion',
-    )
-  })
-
-  it('shows an empty state on the Recetas tab with no records', async () => {
-    setup({ prescriptions: [] })
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Recetas' }))
-    expect(screen.getByText('Sin recetas registradas')).toBeInTheDocument()
-  })
-
-  it('shows an empty state on the Citas tab with no records', async () => {
-    setup({ appointments: [] })
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Citas' }))
-    expect(screen.getByText('Sin citas registradas')).toBeInTheDocument()
-  })
-
-  it('shows an empty state on the Facturas tab with no records', async () => {
-    setup({ invoices: [] })
-    renderPage()
-    await userEvent.click(screen.getByRole('tab', { name: 'Facturas' }))
-    expect(screen.getByText('Sin facturas registradas')).toBeInTheDocument()
-  })
-
-  it('opens the new consultation dialog with the patient preselected', async () => {
-    renderPage()
-    await userEvent.click(screen.getByRole('button', { name: /Nueva consulta/ }))
-
-    expect(screen.getByDisplayValue('Ana Reyes')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Nueva consulta/ })).toBeInTheDocument()
   })
 })

@@ -6,11 +6,19 @@ import { patientDetailStrings as s } from './strings'
 
 export interface PageHeaderProps {
   patient: Patient
+  canEditPatient: boolean
+  canCreateConsultation: boolean
   onEdit: () => void
   onNewConsultation: () => void
 }
 
-export function PageHeader({ patient, onEdit, onNewConsultation }: PageHeaderProps): JSX.Element {
+export function PageHeader({
+  patient,
+  canEditPatient,
+  canCreateConsultation,
+  onEdit,
+  onNewConsultation,
+}: PageHeaderProps): JSX.Element {
   const fullName = `${patient.firstName} ${patient.lastName}`.trim()
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
   // Omit the type segment entirely when the document type is absent or unknown,
@@ -31,14 +39,18 @@ export function PageHeader({ patient, onEdit, onNewConsultation }: PageHeaderPro
           <span className="text-n-800 font-medium">{fullName}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={onEdit}>
-            <i className="ph ph-pencil-simple mr-2 text-base" />
-            {s.editButton}
-          </Button>
-          <Button variant="primary" size="sm" onClick={onNewConsultation}>
-            <i className="ph ph-plus mr-2 text-base" />
-            {s.newConsultation}
-          </Button>
+          {canEditPatient && (
+            <Button variant="secondary" size="sm" onClick={onEdit}>
+              <i className="ph ph-pencil-simple mr-2 text-base" />
+              {s.editButton}
+            </Button>
+          )}
+          {canCreateConsultation && (
+            <Button variant="primary" size="sm" onClick={onNewConsultation}>
+              <i className="ph ph-plus mr-2 text-base" />
+              {s.newConsultation}
+            </Button>
+          )}
         </div>
       </div>
 

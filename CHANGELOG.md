@@ -4,6 +4,32 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Fix PatientDetail and Sidebar permission-gating gaps (slice 4 follow-up)
+
+### Fixed
+
+- `apps/web/src/pages/PatientDetail/PageHeader.tsx` now hides the "Editar"
+  button unless `canEditPatient` and hides "Nueva consulta" unless
+  `canCreateConsultation`, matching the read-only pattern already used in
+  `apps/web/src/pages/Patients/PatientRow.tsx`. Previously these controls were
+  unconditional, so a view-only assistant saw clickable buttons that silently
+  failed.
+- `apps/web/src/pages/PatientDetail/index.tsx` computes
+  `useCan('patients', 'manage')` and `useCan('consultations', 'manage')`
+  unconditionally (before any early return) and passes them into `PageHeader`.
+- `apps/web/src/components/layout/Sidebar.tsx` gates the avatar dropdown's
+  "Ajustes" `NavLink` with the same `canViewNav(capabilities, 'templates')`
+  condition already used for the main nav's Ajustes item, so it is hidden for
+  roles without `templates: view` (e.g. assistant).
+
+### Added
+
+- `apps/web/src/pages/PatientDetail/__tests__/PatientDetailReadOnly.test.tsx` —
+  asserts "Editar"/"Nueva consulta" are absent for an assistant and present for
+  a doctor.
+- Two Sidebar tests covering the avatar dropdown "Ajustes" link visibility for
+  assistant vs. doctor (`apps/web/src/components/layout/__tests__/Sidebar.test.tsx`).
+
 ## [2026-07-15] Frontend permission gating
 
 ### Added

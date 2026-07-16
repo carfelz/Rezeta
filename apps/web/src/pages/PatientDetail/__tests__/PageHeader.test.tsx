@@ -32,7 +32,13 @@ function makePatient(overrides: Partial<Patient> = {}): Patient {
 function renderHeader(patient: Patient): void {
   render(
     <MemoryRouter>
-      <PageHeader patient={patient} onEdit={vi.fn()} onNewConsultation={vi.fn()} />
+      <PageHeader
+        patient={patient}
+        canEditPatient
+        canCreateConsultation
+        onEdit={vi.fn()}
+        onNewConsultation={vi.fn()}
+      />
     </MemoryRouter>,
   )
 }

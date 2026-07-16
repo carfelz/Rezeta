@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePatient } from '@/hooks/patients/use-patients'
+import { useCan } from '@/hooks/use-can'
 import { Spinner, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
 import { NewConsultationDialog } from '@/components/consultations/NewConsultationDialog'
 import { AppointmentsTab } from './AppointmentsTab'
@@ -20,6 +21,9 @@ export function PatientDetail(): JSX.Element {
   const [showNewConsultation, setShowNewConsultation] = useState(false)
 
   const { data: patient, isLoading, isError } = usePatient(id ?? '')
+  // Called unconditionally, before any early return, per Rules of Hooks.
+  const canEditPatient = useCan('patients', 'manage')
+  const canCreateConsultation = useCan('consultations', 'manage')
 
   if (!id) {
     void navigate('/pacientes', { replace: true })
@@ -62,6 +66,8 @@ export function PatientDetail(): JSX.Element {
 
       <PageHeader
         patient={patient}
+        canEditPatient={canEditPatient}
+        canCreateConsultation={canCreateConsultation}
         onEdit={() => setShowEdit(true)}
         onNewConsultation={() => setShowNewConsultation(true)}
       />
