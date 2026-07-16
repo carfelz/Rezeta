@@ -68,6 +68,46 @@ export const usersStrings = {
   createSuccess: 'Usuario creado. Se envió un enlace para crear la contraseña.',
 } as const
 
+export const permissionsStrings = {
+  pageTitle: 'Permisos',
+  menuTitle: 'Permisos',
+  menuDescription: 'Define qué puede ver y gestionar cada rol',
+  loading: 'Cargando permisos...',
+  loadError: 'No se pudieron cargar los permisos. Intenta recargar la página.',
+  colModule: 'Módulo',
+  // Role column headers (super_admin replaces the old "owner")
+  roleAssistant: 'Asistente',
+  roleDoctor: 'Doctor',
+  roleAdmin: 'Administrador',
+  roleSuperAdmin: 'Propietario',
+  // Access levels
+  levelNone: 'Sin acceso',
+  levelView: 'Ver',
+  levelManage: 'Gestionar',
+  levelMixed: 'Mixto',
+  // Sections
+  sectionClinical: 'Trabajo clínico',
+  sectionAdmin: 'Administración',
+  sectionApplyAll: 'Aplicar a toda la sección',
+  readOnlyNotice: 'Solo puedes editar los permisos de roles por debajo del tuyo.',
+  // Module display names (Spanish labels for each ModuleKey in the catalog)
+  moduleLabels: {
+    patients: 'Pacientes',
+    consultations: 'Consultas',
+    protocols: 'Protocolos',
+    appointments: 'Citas',
+    orders: 'Órdenes',
+    billing: 'Facturación',
+    locations: 'Ubicaciones',
+    templates: 'Plantillas',
+    categories: 'Categorías',
+    schedules_config: 'Horarios',
+    audit_log: 'Registros de actividad',
+    users: 'Usuarios',
+    permissions: 'Permisos',
+  },
+} as const
+
 export const templatesStrings = {
   pageTitle: 'Plantillas',
   newButton: 'Nueva plantilla',

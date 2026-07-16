@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useUpdateProfile } from '@/hooks/users/use-update-profile'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
-import { settingsStrings, templatesStrings, typesStrings } from './settings/strings'
+import { settingsStrings, templatesStrings, typesStrings, permissionsStrings } from './settings/strings'
 import {
   Button,
   Card,
@@ -122,6 +122,7 @@ export function Settings(): JSX.Element {
   const navigate = useNavigate()
   const [editingProfile, setEditingProfile] = useState(false)
   const canViewUsers = useCan('users', 'view')
+  const canViewPermissions = useCan('permissions', 'view')
 
   async function handleSignOut() {
     await signOut()
@@ -219,7 +220,7 @@ export function Settings(): JSX.Element {
           to="/ajustes/horarios"
           className={cn(
             'flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast',
-            canViewUsers && 'border-b border-n-100',
+            (canViewUsers || canViewPermissions) && 'border-b border-n-100',
           )}
         >
           <i className="ph ph-calendar-check text-h3 text-p-500" />
@@ -232,12 +233,28 @@ export function Settings(): JSX.Element {
         {canViewUsers && (
           <Link
             to="/ajustes/usuarios"
-            className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast"
+            className={cn(
+              'flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast',
+              canViewPermissions && 'border-b border-n-100',
+            )}
           >
             <i className="ph ph-users text-h3 text-p-500" />
             <div>
               <div className="text-sm font-semibold">{settingsStrings.usersTitle}</div>
               <div className="text-xs text-n-500">{settingsStrings.usersDescription}</div>
+            </div>
+            <i className="ph ph-caret-right ml-auto text-n-400" />
+          </Link>
+        )}
+        {canViewPermissions && (
+          <Link
+            to="/ajustes/permisos"
+            className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast"
+          >
+            <i className="ph ph-shield-check text-h3 text-p-500" />
+            <div>
+              <div className="text-sm font-semibold">{permissionsStrings.menuTitle}</div>
+              <div className="text-xs text-n-500">{permissionsStrings.menuDescription}</div>
             </div>
             <i className="ph ph-caret-right ml-auto text-n-400" />
           </Link>
