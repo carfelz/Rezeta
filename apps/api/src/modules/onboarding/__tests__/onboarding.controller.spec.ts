@@ -13,7 +13,7 @@ const user = {
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
-  role: 'owner' as const,
+  role: 'super_admin' as const,
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,

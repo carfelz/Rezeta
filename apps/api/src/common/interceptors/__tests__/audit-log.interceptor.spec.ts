@@ -16,7 +16,7 @@ function makeRequest(overrides: Record<string, unknown> = {}): Record<string, un
       tenantId: 'tenant-id',
       email: 'doc@test.com',
       fullName: 'Dr Test',
-      role: 'owner',
+      role: 'super_admin',
       externalUid: 'fb-uid',
       specialty: null,
       licenseNumber: null,

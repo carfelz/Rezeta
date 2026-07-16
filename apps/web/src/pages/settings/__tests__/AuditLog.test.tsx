@@ -43,7 +43,7 @@ const sampleItem = {
   status: 'success' as const,
   errorCode: null,
   createdAt: '2026-04-18T10:23:00.000Z',
-  actor: { id: 'user-001', fullName: 'Ana García', email: 'ana@test.com', role: 'owner' },
+  actor: { id: 'user-001', fullName: 'Ana García', email: 'ana@test.com', role: 'super_admin' },
 }
 
 function setup(plan = 'free') {

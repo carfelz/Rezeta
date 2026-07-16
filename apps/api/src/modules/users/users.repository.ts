@@ -119,7 +119,7 @@ export class UsersRepository {
             tenantId: tenant.id,
             externalUid,
             email: email ?? '',
-            role: 'owner',
+            role: 'super_admin',
             ...(profile?.fullName ? { fullName: profile.fullName } : {}),
             ...(profile?.specialty ? { specialty: profile.specialty } : {}),
           },

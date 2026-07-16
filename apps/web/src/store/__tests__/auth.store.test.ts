@@ -27,7 +27,7 @@ describe('useAuthStore — internal setters', () => {
       tenantId: 'tenant-1',
       email: 'doctor@rezeta.app',
       fullName: 'Dr. Juan García',
-      role: 'owner' as const,
+      role: 'super_admin' as const,
       specialty: 'Cardiología',
       licenseNumber: 'CMP-001',
       tenantSeededAt: null,
@@ -35,7 +35,7 @@ describe('useAuthStore — internal setters', () => {
     }
     act(() => result.current._setUser(mockUser))
     expect(result.current.user?.email).toBe('doctor@rezeta.app')
-    expect(result.current.user?.role).toBe('owner')
+    expect(result.current.user?.role).toBe('super_admin')
   })
 
   it('_setUser can clear the user with null', () => {
@@ -47,7 +47,7 @@ describe('useAuthStore — internal setters', () => {
         tenantId: 't',
         email: 'e@e.com',
         fullName: null,
-        role: 'owner',
+        role: 'super_admin',
         specialty: null,
         licenseNumber: null,
         tenantSeededAt: null,
@@ -95,7 +95,7 @@ describe('useAuthStore — internal setters', () => {
         tenantId: 't',
         email: 'e@e.com',
         fullName: null,
-        role: 'owner',
+        role: 'super_admin',
         specialty: null,
         licenseNumber: null,
         tenantSeededAt: null,
@@ -121,7 +121,7 @@ describe('useAuthStore — internal setters', () => {
       tenantId: 't2',
       email: 'new@rezeta.app',
       fullName: 'Dr. New',
-      role: 'owner' as const,
+      role: 'super_admin' as const,
       specialty: 'Neurología',
       licenseNumber: null,
       tenantSeededAt: null,

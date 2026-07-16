@@ -84,7 +84,7 @@ describe('ZodValidationPipe', () => {
     const customMeta: ArgumentMetadata = { type: 'custom', metatype: undefined, data: undefined }
     // e.g. @TenantId() string and @CurrentUser() object
     expect(pipe.transform('tenant-uuid', customMeta)).toBe('tenant-uuid')
-    const user = { id: 'u1', role: 'owner' }
+    const user = { id: 'u1', role: 'super_admin' }
     expect(pipe.transform(user, customMeta)).toBe(user)
   })
 })

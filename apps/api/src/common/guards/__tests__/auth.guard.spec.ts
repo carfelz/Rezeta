@@ -42,7 +42,7 @@ const validUser = {
   tenantId: 'tenant-1',
   email: 'doc@test.com',
   fullName: 'Dr. Test',
-  role: 'owner',
+  role: 'super_admin',
   specialty: null,
   licenseNumber: null,
   isActive: true,

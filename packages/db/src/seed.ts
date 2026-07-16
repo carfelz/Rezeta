@@ -548,7 +548,7 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
       fullName: acc.fullName,
       specialty: acc.specialty,
       licenseNumber: acc.licenseNumber,
-      role: 'owner',
+      role: 'super_admin',
     },
   })
 

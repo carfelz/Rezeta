@@ -1,6 +1,7 @@
 export * from './errors.js'
 export * from './types/index.js'
 export * from './schemas/index.js'
+export * from './permissions/roles.js'
 export * from './protocol/content-builder.js'
 export * from './protocol/conditional-rule-evaluator.js'
 export * from './protocol/sign-validation.js'

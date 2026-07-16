@@ -26,7 +26,7 @@ function makeItem(overrides: Record<string, unknown> = {}) {
     status: 'success',
     errorCode: null,
     createdAt: '2026-04-18T10:00:00.000Z',
-    actor: { id: 'user-1', fullName: 'Dr. Test', email: 'dr@test.com', role: 'owner' },
+    actor: { id: 'user-1', fullName: 'Dr. Test', email: 'dr@test.com', role: 'super_admin' },
     ...overrides,
   }
 }

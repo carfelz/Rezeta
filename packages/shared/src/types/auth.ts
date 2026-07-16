@@ -1,6 +1,6 @@
 import type { UserPreferences } from '../schemas/user-preferences.js'
 
-export type UserRole = 'owner' | 'doctor'
+export type UserRole = 'assistant' | 'doctor' | 'admin' | 'super_admin'
 
 export interface AuthUser {
   id: string

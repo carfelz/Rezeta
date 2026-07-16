@@ -4,6 +4,21 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-15] Roles foundation (permissions slice 1)
+
+### Added
+
+- `packages/shared/src/permissions/roles.ts` — `ROLE_RANK` and `canManageRole(actorRole, targetRole)` (returns true only when the target's rank is strictly below the actor's), exported from the shared barrel.
+- Prisma migration `20260716025235_role_owner_to_super_admin` — promotes existing `owner` rows to `super_admin` and sets the `users.role` column default to `assistant`.
+
+### Changed
+
+- Widened `UserRole` (`packages/shared/src/types/auth.ts`) and `UserApiSchema.role` (`packages/shared/src/schemas/auth.ts`) from `owner | doctor` to `assistant | doctor | admin | super_admin`.
+- `User.role` Prisma default changed from `owner` to `assistant` (`packages/db/prisma/schema.prisma`).
+- `UsersRepository.provisionUser` now creates the initial user as `super_admin` (interim; the provisioning path is replaced in permissions slice 5).
+- `packages/db/src/seed.ts` now seeds the primary account as `super_admin` instead of the retired `owner`.
+- Updated the `GET /v1/auth/me` Swagger `role` enum/example (`apps/api/src/modules/auth/auth.controller.ts`) and every `role: 'owner'` test fixture across `apps/api` and `apps/web` to the new vocabulary.
+
 ## [2026-07-13] Broaden the arbitrary-value guardrail to all design values
 
 ### Changed

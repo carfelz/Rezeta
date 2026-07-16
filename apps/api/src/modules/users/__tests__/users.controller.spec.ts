@@ -14,7 +14,7 @@ const user: AuthUser = {
   tenantId: 't1',
   email: 'doc@test',
   fullName: null,
-  role: 'owner',
+  role: 'super_admin',
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: null,

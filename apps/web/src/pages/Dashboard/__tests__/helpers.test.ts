@@ -29,7 +29,7 @@ describe('describeAuditEntry', () => {
   it('never emits HTML — a malicious fullName is returned verbatim as the actor text', () => {
     const payload = '<img src=x onerror="alert(1)">'
     const result = describeAuditEntry(
-      entry({ actor: { id: 'user-1', fullName: payload, email: 'doc@rezeta.app', role: 'owner' } }),
+      entry({ actor: { id: 'user-1', fullName: payload, email: 'doc@rezeta.app', role: 'super_admin' } }),
     )
     // The actor is a plain string the component renders as a text node; it must
     // not be wrapped in markup here (that was the stored-XSS sink).

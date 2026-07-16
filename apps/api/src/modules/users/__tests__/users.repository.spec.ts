@@ -175,7 +175,7 @@ describe('UsersRepository', () => {
           data: expect.objectContaining({
             externalUid: 'fb1',
             email: 'dr@test.com',
-            role: 'owner',
+            role: 'super_admin',
           }),
         }),
       )

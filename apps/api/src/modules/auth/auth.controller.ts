@@ -171,7 +171,11 @@ export class AuthController {
         },
         email: { type: 'string', example: 'dr.garcia@rezeta.app' },
         fullName: { type: 'string', example: 'Dr. Juan García' },
-        role: { type: 'string', enum: ['owner', 'doctor'], example: 'owner' },
+        role: {
+          type: 'string',
+          enum: ['assistant', 'doctor', 'admin', 'super_admin'],
+          example: 'super_admin',
+        },
         specialty: { type: 'string', nullable: true, example: 'Cardiología' },
         licenseNumber: { type: 'string', nullable: true, example: '12345-DR' },
         tenantSeededAt: { type: 'string', format: 'date-time', nullable: true },

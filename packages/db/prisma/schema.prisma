@@ -55,7 +55,7 @@ model User {
   externalUid   String    @unique @map("external_uid") @db.VarChar(128)
   email         String    @db.VarChar(320)
   fullName      String?   @map("full_name") @db.VarChar(200)
-  role          String    @default("owner") @db.VarChar(50) // owner | doctor
+  role          String    @default("assistant") @db.VarChar(50) // assistant | doctor | admin | super_admin
   specialty     String?   @db.VarChar(100)
   licenseNumber String?   @map("license_number") @db.VarChar(100)
   isActive      Boolean   @default(true) @map("is_active")

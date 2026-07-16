@@ -9,7 +9,7 @@ const mockUser = {
   tenantId: 'tenant-1',
   email: 'doctor@rezeta.app',
   fullName: 'Dr. Juan García',
-  role: 'owner' as const,
+  role: 'super_admin' as const,
   specialty: 'Cardiología',
   licenseNumber: 'CMP-001',
   tenantSeededAt: null,

@@ -58,7 +58,7 @@ export const UserApiSchema = z.object({
   tenantId: z.string().uuid(),
   email: z.string().email(),
   fullName: z.string().nullable(),
-  role: z.enum(['owner', 'doctor']),
+  role: z.enum(['assistant', 'doctor', 'admin', 'super_admin']),
   specialty: z.string().nullable(),
   licenseNumber: z.string().nullable(),
   isActive: z.boolean(),

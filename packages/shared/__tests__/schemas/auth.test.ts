@@ -162,7 +162,7 @@ describe('UserApiSchema', () => {
     tenantId: '00000000-0000-0000-0000-000000000002',
     email: 'doctor@rezeta.app',
     fullName: 'Dr. Juan García',
-    role: 'owner' as const,
+    role: 'super_admin' as const,
     specialty: 'Cardiología',
     licenseNumber: 'CMP-12345',
     isActive: true,
@@ -171,7 +171,7 @@ describe('UserApiSchema', () => {
 
   it('accepts valid user API response', () => {
     const result = UserApiSchema.parse(valid)
-    expect(result.role).toBe('owner')
+    expect(result.role).toBe('super_admin')
   })
 
   it('accepts null optional fields', () => {
@@ -184,13 +184,19 @@ describe('UserApiSchema', () => {
     expect(result.fullName).toBeNull()
   })
 
-  it('rejects invalid role', () => {
-    expect(() => UserApiSchema.parse({ ...valid, role: 'admin' })).toThrow()
+  it('accepts every institution role', () => {
+    for (const role of ['assistant', 'doctor', 'admin', 'super_admin'] as const) {
+      const result = UserApiSchema.parse({ ...valid, role })
+      expect(result.role).toBe(role)
+    }
   })
 
-  it('accepts doctor role', () => {
-    const result = UserApiSchema.parse({ ...valid, role: 'doctor' })
-    expect(result.role).toBe('doctor')
+  it('rejects the retired owner role', () => {
+    expect(() => UserApiSchema.parse({ ...valid, role: 'owner' })).toThrow()
+  })
+
+  it('rejects an unknown role', () => {
+    expect(() => UserApiSchema.parse({ ...valid, role: 'superuser' })).toThrow()
   })
 
   it('rejects invalid email', () => {

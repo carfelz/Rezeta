@@ -15,7 +15,7 @@ const mockUser: AuthUser = {
   tenantId: 'tenant-1',
   email: 'doc@test.com',
   fullName: 'Dr. Test',
-  role: 'owner',
+  role: 'super_admin',
   specialty: null,
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
