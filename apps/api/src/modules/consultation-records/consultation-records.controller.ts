@@ -28,6 +28,7 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { ParsePositiveIntPipe } from '../../common/pipes/parse-positive-int.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ConsultationRecordsService } from './consultation-records.service.js'
 import { PdfService } from '../../lib/pdf.service.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
@@ -44,6 +45,7 @@ export class ConsultationRecordsController {
     @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
+  @RequirePermission('consultations', 'view')
   @Get()
   @ApiOperation({ summary: 'Get the latest consultation record (historia médica)' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -56,6 +58,7 @@ export class ConsultationRecordsController {
     return this.svc.getLatest(consultationId, tenantId)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Ensure a draft record exists for this consultation' })
@@ -69,6 +72,7 @@ export class ConsultationRecordsController {
     return this.svc.ensureDraft(consultationId, tenantId)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Patch()
   @UsePipes(new ZodValidationPipe(UpdateRecordSectionsSchema))
   @ApiOperation({ summary: 'Update draft record sections' })
@@ -83,6 +87,7 @@ export class ConsultationRecordsController {
     return this.svc.updateSections(consultationId, tenantId, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Post('regenerate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Regenerate record sections from current consultation content' })
@@ -96,6 +101,7 @@ export class ConsultationRecordsController {
     return this.svc.regenerate(consultationId, tenantId)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Post('sign')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign the draft record (makes it immutable)' })
@@ -111,6 +117,7 @@ export class ConsultationRecordsController {
     return this.svc.sign(consultationId, tenantId, user.id)
   }
 
+  @RequirePermission('consultations', 'view')
   @Get('versions')
   @ApiOperation({ summary: 'List the version history of the consultation record' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -122,6 +129,7 @@ export class ConsultationRecordsController {
     return this.svc.listVersions(consultationId, tenantId)
   }
 
+  @RequirePermission('consultations', 'view')
   @Get('versions/:versionNumber')
   @ApiOperation({ summary: 'Get a specific consultation record version' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -136,6 +144,7 @@ export class ConsultationRecordsController {
     return this.svc.getVersion(consultationId, tenantId, versionNumber)
   }
 
+  @RequirePermission('consultations', 'view')
   @Get('pdf')
   @ApiOperation({ summary: 'Download the consultation record as PDF (latest, or a specific version)' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })

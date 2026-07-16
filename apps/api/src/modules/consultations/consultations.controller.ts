@@ -56,6 +56,7 @@ type UpdateCheckedStateDto = z.infer<typeof UpdateCheckedStateSchema>
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ConsultationsService } from './consultations.service.js'
 
 @ApiTags('Consultations')
@@ -65,6 +66,7 @@ import { ConsultationsService } from './consultations.service.js'
 export class ConsultationsController {
   constructor(@Inject(ConsultationsService) private svc: ConsultationsService) {}
 
+  @RequirePermission('consultations', 'view')
   @Get()
   @ApiOperation({ summary: 'List consultations' })
   @ApiQuery({ name: 'patientId', required: false, type: String })
@@ -87,6 +89,7 @@ export class ConsultationsController {
     })
   }
 
+  @RequirePermission('consultations', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get consultation by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
@@ -99,6 +102,7 @@ export class ConsultationsController {
     return this.svc.getById(id, tenantId)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateConsultationSchema))
@@ -112,6 +116,7 @@ export class ConsultationsController {
     return this.svc.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateConsultationSchema))
   @ApiOperation({ summary: 'Update draft consultation' })
@@ -126,6 +131,7 @@ export class ConsultationsController {
     return this.svc.update(id, tenantId, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Patch(':id/sign')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign consultation (makes it immutable)' })
@@ -140,6 +146,7 @@ export class ConsultationsController {
     return this.svc.sign(id, tenantId, user.id)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Post(':id/amend')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(AmendConsultationSchema))
@@ -156,6 +163,7 @@ export class ConsultationsController {
     return this.svc.amend(id, tenantId, user.id, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete draft consultation (soft delete)' })
@@ -171,6 +179,7 @@ export class ConsultationsController {
 
   // ── Protocol usages ───────────────────────────────────────────────────────
 
+  @RequirePermission('consultations', 'manage')
   @Post(':id/protocols')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(AddProtocolUsageSchema))
@@ -188,6 +197,7 @@ export class ConsultationsController {
     return this.svc.addProtocolUsage(id, tenantId, user.id, dto)
   }
 
+  @RequirePermission('consultations', 'view')
   @Get(':id/protocols/:usageId')
   @ApiOperation({ summary: 'Get a protocol usage by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
@@ -202,6 +212,7 @@ export class ConsultationsController {
     return this.svc.getProtocolUsage(id, usageId, tenantId)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Patch(':id/protocols/:usageId')
   @UsePipes(new ZodValidationPipe(UpdateProtocolUsageSchema))
   @ApiOperation({ summary: 'Update protocol usage (working copy, modifications, status)' })
@@ -218,6 +229,7 @@ export class ConsultationsController {
     return this.svc.updateProtocolUsage(id, usageId, tenantId, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Patch(':id/protocols/:usageId/checked-state')
   @UsePipes(new ZodValidationPipe(UpdateCheckedStateSchema))
   @ApiOperation({ summary: 'Update checked state for a protocol usage' })
@@ -234,6 +246,7 @@ export class ConsultationsController {
     return this.svc.updateCheckedState(id, usageId, tenantId, dto)
   }
 
+  @RequirePermission('consultations', 'manage')
   @Delete(':id/protocols/:usageId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove a protocol from this consultation' })
@@ -257,6 +270,7 @@ export class ConsultationsController {
 export class PatientConsultationsController {
   constructor(@Inject(ConsultationsService) private svc: ConsultationsService) {}
 
+  @RequirePermission('consultations', 'view')
   @Get('in-progress-consultation')
   @ApiOperation({
     summary: 'Most recent in-progress (draft) consultation for a patient — for resume banner',
@@ -271,6 +285,7 @@ export class PatientConsultationsController {
     return this.svc.getResumableForPatient(tenantId, user.id, patientId)
   }
 
+  @RequirePermission('consultations', 'view')
   @Get('prescriptions')
   @ApiOperation({ summary: 'List prescriptions for a patient (newest first)' })
   @ApiParam({ name: 'patientId', type: String, format: 'uuid' })

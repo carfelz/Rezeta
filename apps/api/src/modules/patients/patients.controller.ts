@@ -37,6 +37,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { PatientsService } from './patients.service.js'
 import { ConsultationRecordsService } from '../consultation-records/consultation-records.service.js'
@@ -73,6 +74,7 @@ export class PatientsController {
     @Inject(AuditLogService) private auditLog: AuditLogService,
   ) {}
 
+  @RequirePermission('patients', 'view')
   @Get()
   @ApiOperation({
     summary: 'List patients',
@@ -123,6 +125,7 @@ export class PatientsController {
     })
   }
 
+  @RequirePermission('patients', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get a patient by ID' })
   @ApiParam({ name: 'id', format: 'uuid', example: '018e3f2a-1111-7000-8000-000000000001' })
@@ -136,6 +139,7 @@ export class PatientsController {
     return this.service.getById(id, tenantId)
   }
 
+  @RequirePermission('patients', 'manage')
   @Post()
   @UsePipes(new ZodValidationPipe(CreatePatientSchema))
   @ApiOperation({ summary: 'Create a patient' })
@@ -169,6 +173,7 @@ export class PatientsController {
     return this.service.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('patients', 'manage')
   @Patch(':id')
   @ApiOperation({ summary: 'Update a patient' })
   @ApiParam({ name: 'id', format: 'uuid', example: '018e3f2a-1111-7000-8000-000000000001' })
@@ -198,6 +203,7 @@ export class PatientsController {
     return this.service.update(id, tenantId, dto)
   }
 
+  @RequirePermission('patients', 'manage')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft-delete a patient' })
@@ -208,6 +214,7 @@ export class PatientsController {
     return this.service.remove(id, tenantId)
   }
 
+  @RequirePermission('patients', 'view')
   @Get(':id/record-export')
   @ApiOperation({ summary: 'Download the patient expediente (all signed records) as PDF' })
   @ApiParam({ name: 'id', format: 'uuid', example: '018e3f2a-1111-7000-8000-000000000001' })

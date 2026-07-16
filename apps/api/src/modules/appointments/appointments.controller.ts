@@ -38,6 +38,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { AppointmentsService } from './appointments.service.js'
 
 @ApiTags('Appointments')
@@ -47,6 +48,7 @@ import { AppointmentsService } from './appointments.service.js'
 export class AppointmentsController {
   constructor(@Inject(AppointmentsService) private svc: AppointmentsService) {}
 
+  @RequirePermission('appointments', 'view')
   @Get()
   @ApiOperation({ summary: 'List appointments' })
   @ApiQuery({ name: 'locationId', required: false, type: String })
@@ -78,6 +80,7 @@ export class AppointmentsController {
     })
   }
 
+  @RequirePermission('appointments', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get appointment by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
@@ -90,6 +93,7 @@ export class AppointmentsController {
     return this.svc.getById(id, tenantId)
   }
 
+  @RequirePermission('appointments', 'manage')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateAppointmentSchema))
@@ -118,6 +122,7 @@ export class AppointmentsController {
     return this.svc.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('appointments', 'manage')
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateAppointmentSchema))
   @ApiOperation({ summary: 'Update appointment' })
@@ -134,6 +139,7 @@ export class AppointmentsController {
     return this.svc.update(id, tenantId, user.id, dto)
   }
 
+  @RequirePermission('appointments', 'manage')
   @Patch(':id/status')
   @UsePipes(new ZodValidationPipe(UpdateAppointmentStatusSchema))
   @ApiOperation({ summary: 'Update appointment status' })
@@ -161,6 +167,7 @@ export class AppointmentsController {
     return this.svc.updateStatus(id, tenantId, dto)
   }
 
+  @RequirePermission('appointments', 'manage')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Cancel / soft-delete appointment' })
