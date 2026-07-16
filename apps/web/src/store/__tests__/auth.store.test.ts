@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { useAuthStore } from '@/store/auth.store'
 
 describe('useAuthStore — internal setters', () => {
@@ -32,6 +33,7 @@ describe('useAuthStore — internal setters', () => {
       licenseNumber: 'CMP-001',
       tenantSeededAt: null,
       preferences: {},
+      capabilities: defaultCapabilitiesFor('super_admin'),
     }
     act(() => result.current._setUser(mockUser))
     expect(result.current.user?.email).toBe('doctor@rezeta.app')
@@ -52,6 +54,7 @@ describe('useAuthStore — internal setters', () => {
         licenseNumber: null,
         tenantSeededAt: null,
         preferences: {},
+        capabilities: defaultCapabilitiesFor('super_admin'),
       }),
     )
     act(() => result.current._setUser(null))
@@ -100,6 +103,7 @@ describe('useAuthStore — internal setters', () => {
         licenseNumber: null,
         tenantSeededAt: null,
         preferences: {},
+        capabilities: defaultCapabilitiesFor('super_admin'),
       }),
     )
     act(() => result.current.setPreferences({ consultationViewMode: 'canvas' }))
@@ -126,6 +130,7 @@ describe('useAuthStore — internal setters', () => {
       licenseNumber: null,
       tenantSeededAt: null,
       preferences: {},
+      capabilities: defaultCapabilitiesFor('super_admin'),
     }
     act(() => result.current.setUser(user))
     expect(result.current.user?.email).toBe('new@rezeta.app')

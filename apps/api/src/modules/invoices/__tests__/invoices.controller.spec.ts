@@ -3,7 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BadRequestException } from '@nestjs/common'
 import { InvoicesController } from '../invoices.controller.js'
 import type { InvoicesService } from '../invoices.service.js'
-import { InvoiceListQuerySchema, ErrorCode, type AuthUser, type InvoiceWithDetails } from '@rezeta/shared'
+import {
+  InvoiceListQuerySchema,
+  ErrorCode,
+  defaultCapabilitiesFor,
+  type AuthUser,
+  type InvoiceWithDetails,
+} from '@rezeta/shared'
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 
 vi.mock('../../../lib/pdf.service.js', () => ({
@@ -24,6 +30,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 const tenantId = 'tenant-1'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { AuthUser } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type AuthUser } from '@rezeta/shared'
 import { UsersController } from '../users.controller.js'
 
 const mockSvc = {
@@ -19,6 +19,7 @@ const user: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 describe('UsersController', () => {

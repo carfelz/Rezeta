@@ -6,6 +6,7 @@ import {
   UpdateProfileSchema,
   UserApiSchema,
 } from '../../src/schemas/auth.js'
+import { defaultCapabilitiesFor } from '../../src/permissions/capabilities.js'
 
 describe('SignUpSchema', () => {
   const valid = {
@@ -166,6 +167,7 @@ describe('UserApiSchema', () => {
     specialty: 'Cardiología',
     licenseNumber: 'CMP-12345',
     isActive: true,
+    capabilities: defaultCapabilitiesFor('super_admin'),
     createdAt: '2026-04-01T00:00:00.000Z',
   }
 

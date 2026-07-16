@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BadRequestException } from '@nestjs/common'
-import { AppointmentListQuerySchema, ErrorCode } from '@rezeta/shared'
+import { AppointmentListQuerySchema, ErrorCode, defaultCapabilitiesFor } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe.js'
 import { AppointmentsController } from '../appointments.controller.js'
 
@@ -26,6 +26,7 @@ const user = {
   licenseNumber: null,
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 const appointment = {

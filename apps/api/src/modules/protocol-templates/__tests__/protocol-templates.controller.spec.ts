@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { ProtocolTemplatesController } from '../protocol-templates.controller.js'
 
 const TENANT_ID = 'tenant-1'
@@ -24,6 +25,7 @@ const user = {
   licenseNumber: null,
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 const templateDto = {

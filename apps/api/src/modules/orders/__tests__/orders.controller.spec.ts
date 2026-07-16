@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OrdersController } from '../orders.controller.js'
 import type { OrdersService } from '../orders.service.js'
-import type { AuthUser } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type AuthUser } from '@rezeta/shared'
 
 vi.mock('../../../lib/pdf.service.js', () => ({
   PdfService: class {
@@ -24,6 +24,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 const tenantId = 'tenant-1'
 const consultationId = 'c1'

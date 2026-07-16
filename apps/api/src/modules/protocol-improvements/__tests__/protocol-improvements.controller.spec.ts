@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ProtocolImprovementsController } from '../protocol-improvements.controller.js'
 import type { ProtocolImprovementsService } from '../protocol-improvements.service.js'
-import type { AuthUser, ProtocolSuggestion } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type AuthUser, type ProtocolSuggestion } from '@rezeta/shared'
 
 const mockUser: AuthUser = {
   id: 'user-1',
@@ -15,6 +15,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 const tenantId = 'tenant-1'
 const protocolId = 'proto-1'

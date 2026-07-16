@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LocationsController } from '../locations.controller.js'
 import type { LocationsService } from '../locations.service.js'
-import type { Location, AuthUser } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type Location, type AuthUser } from '@rezeta/shared'
 
 const mockUser: AuthUser = {
   id: 'user-1',
@@ -15,6 +15,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 const tenantId = 'tenant-1'
 

@@ -4,6 +4,7 @@ import { SchedulesController } from '../schedules.controller.js'
 import {
   ScheduleExceptionListQuerySchema,
   ErrorCode,
+  defaultCapabilitiesFor,
   type AuthUser,
   type ScheduleBlock,
   type ScheduleException,
@@ -32,6 +33,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 function makeBlock(overrides: Partial<ScheduleBlock> = {}): ScheduleBlock {

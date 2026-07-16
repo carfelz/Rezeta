@@ -7,7 +7,7 @@ import type { PdfService, ExpedientePdfData } from '../../../lib/pdf.service.js'
 import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
 import { httpAuditContextStore } from '../../../common/audit-log/audit-context.store.js'
 import type { Patient } from '@rezeta/db'
-import type { AuthUser } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type AuthUser } from '@rezeta/shared'
 
 const mockUser: AuthUser = {
   id: 'user-1',
@@ -20,6 +20,7 @@ const mockUser: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 const tenantId = 'tenant-1'
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { ProtocolsController } from '../protocols.controller.js'
 
 const mockService = {
@@ -27,6 +28,7 @@ const user = {
   licenseNumber: null,
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 const protocol = {

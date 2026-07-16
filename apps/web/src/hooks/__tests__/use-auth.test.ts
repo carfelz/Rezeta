@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { useAuth } from '../use-auth'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -14,6 +15,7 @@ const mockUser = {
   licenseNumber: 'CMP-001',
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 describe('useAuth', () => {

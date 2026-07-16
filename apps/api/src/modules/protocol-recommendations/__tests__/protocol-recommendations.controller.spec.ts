@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ProtocolRecommendationsController } from '../protocol-recommendations.controller.js'
 import type { ProtocolRecommendationsService } from '../protocol-recommendations.service.js'
-import type { AuthUser } from '@rezeta/shared'
+import { defaultCapabilitiesFor, type AuthUser } from '@rezeta/shared'
 
 const user: AuthUser = {
   id: 'doc-1',
@@ -14,6 +14,7 @@ const user: AuthUser = {
   licenseNumber: null,
   tenantSeededAt: null,
   preferences: {},
+  capabilities: defaultCapabilitiesFor('doctor'),
 }
 
 describe('ProtocolRecommendationsController', () => {
