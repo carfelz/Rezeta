@@ -12,6 +12,9 @@ const mockAuthProvider = {
 const mockUsers = { findByExternalUid: vi.fn() }
 const mockReflector = { getAllAndOverride: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
+const mockPermissions = {
+  resolveCapabilities: vi.fn().mockResolvedValue({ patients: 'view', users: 'none' }),
+}
 
 function makeCtx(overrides: {
   headers?: Record<string, string>
@@ -60,11 +63,13 @@ describe('AuthGuard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPermissions.resolveCapabilities.mockResolvedValue({ patients: 'view', users: 'none' })
     guard = new AuthGuard(
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
       mockUsers as never,
       mockAuditLog as never,
+      mockPermissions as never,
     )
   })
 
@@ -156,6 +161,11 @@ describe('AuthGuard', () => {
     expect((req.user as Record<string, unknown>).id).toBe('user-1')
     expect((req.user as Record<string, unknown>).tenantId).toBe('tenant-1')
     expect((req.user as Record<string, unknown>).externalUid).toBe('fb-uid')
+    expect(mockPermissions.resolveCapabilities).toHaveBeenCalledWith('tenant-1', 'super_admin')
+    expect((req.user as Record<string, unknown>).capabilities).toEqual({
+      patients: 'view',
+      users: 'none',
+    })
   })
 
   it('sets tenantSeededAt to null when seededAt is null', async () => {

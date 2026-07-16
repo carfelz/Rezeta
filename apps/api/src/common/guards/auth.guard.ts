@@ -15,6 +15,7 @@ import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib
 import { AuditLogService } from '../audit-log/audit-log.service.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
+import { PermissionsService } from '../../modules/permissions/permissions.service.js'
 
 export interface AuthenticatedRequest extends Request {
   user: AuthUser
@@ -31,6 +32,7 @@ export class AuthGuard implements CanActivate {
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
     @Inject(UsersRepository) private users: UsersRepository,
     @Inject(AuditLogService) private auditLog: AuditLogService,
+    @Inject(PermissionsService) private permissions: PermissionsService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -94,18 +96,22 @@ export class AuthGuard implements CanActivate {
       })
     }
 
+    const role = user.role as AuthUser['role']
+    const capabilities = await this.permissions.resolveCapabilities(user.tenantId, role)
+
     request.user = {
       id: user.id,
       externalUid: user.externalUid,
       tenantId: user.tenantId,
       email: user.email,
       fullName: user.fullName,
-      role: user.role as AuthUser['role'],
+      role,
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
       preferences: parseUserPreferences(user.preferences),
+      capabilities,
     }
 
     return true

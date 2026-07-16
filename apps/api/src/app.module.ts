@@ -19,6 +19,7 @@ import { ProtocolTemplatesModule } from './modules/protocol-templates/index.js'
 import { ProtocolsModule } from './modules/protocols/index.js'
 import { AuthFeatureModule } from './modules/auth/index.js'
 import { UsersModule } from './modules/users/index.js'
+import { PermissionsModule } from './modules/permissions/index.js'
 import { TenantSeedingModule } from './modules/tenant-seeding/index.js'
 import { ProtocolCategoriesModule } from './modules/protocol-categories/index.js'
 import { OnboardingModule } from './modules/onboarding/index.js'
@@ -57,6 +58,7 @@ class AppController {
     AuthModule,
     AuthFeatureModule,
     UsersModule,
+    PermissionsModule,
     PatientsModule,
     LocationsModule,
     ProtocolTemplatesModule,
