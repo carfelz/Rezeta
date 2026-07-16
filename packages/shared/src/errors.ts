@@ -4,6 +4,7 @@ export const ErrorCode = {
   FORBIDDEN: 'FORBIDDEN',
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   TOKEN_INVALID: 'TOKEN_INVALID',
+  INSUFFICIENT_PERMISSION: 'INSUFFICIENT_PERMISSION',
 
   // ── Tenant ──────────────────────────────────────────────────
   TENANT_NOT_FOUND: 'TENANT_NOT_FOUND',
