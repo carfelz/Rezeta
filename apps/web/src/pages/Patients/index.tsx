@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Callout, Card, EmptyState, Input, InputGroup, InputIcon } from '@/components/ui'
 import { usePatients, useDeletePatient } from '@/hooks/patients/use-patients'
+import { useCan } from '@/hooks/use-can'
 import type { Patient } from '@rezeta/shared'
 import { PatientModal, type PatientModalMode } from './PatientModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
@@ -23,6 +24,7 @@ export function Patients(): JSX.Element {
     debouncedSearch ? { search: debouncedSearch } : undefined,
   )
   const deleteMutation = useDeletePatient()
+  const canManage = useCan('patients', 'manage')
 
   function handleSearch(value: string): void {
     setSearch(value)
@@ -94,10 +96,12 @@ export function Patients(): JSX.Element {
 
       <div className="flex items-center mb-6 gap-4">
         <h1 className="text-h1 flex-1">{patientsPageStrings.pageTitle}</h1>
-        <Button variant="primary" onClick={openCreate}>
-          <i className="ph ph-plus mr-2" />
-          {patientsPageStrings.registerButton}
-        </Button>
+        {canManage && (
+          <Button variant="primary" onClick={openCreate}>
+            <i className="ph ph-plus mr-2" />
+            {patientsPageStrings.registerButton}
+          </Button>
+        )}
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -132,11 +136,15 @@ export function Patients(): JSX.Element {
             icon={<i className="ph ph-user" />}
             title={patientsPageStrings.emptyTitle}
             description={patientsPageStrings.emptyDescription}
-            action={
-              <Button variant="primary" onClick={openCreate}>
-                {patientsPageStrings.registerButton}
-              </Button>
-            }
+            {...(canManage
+              ? {
+                  action: (
+                    <Button variant="primary" onClick={openCreate}>
+                      {patientsPageStrings.registerButton}
+                    </Button>
+                  ),
+                }
+              : {})}
             className="rounded-none border-0"
           />
         )}
@@ -165,6 +173,7 @@ export function Patients(): JSX.Element {
                 <PatientRow
                   key={patient.id}
                   patient={patient}
+                  canManage={canManage}
                   onView={() => openView(patient)}
                   onEdit={() => openEdit(patient)}
                   onDelete={() => openDelete(patient)}

@@ -6,12 +6,19 @@ import { patientRowStrings } from './strings'
 
 export interface PatientRowProps {
   patient: Patient
+  canManage: boolean
   onView: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
-export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProps): JSX.Element {
+export function PatientRow({
+  patient,
+  canManage,
+  onView,
+  onEdit,
+  onDelete,
+}: PatientRowProps): JSX.Element {
   const name = `${patient.firstName} ${patient.lastName}`
   const initials = `${patient.firstName[0] ?? ''}${patient.lastName[0] ?? ''}`.toUpperCase()
 
@@ -78,20 +85,24 @@ export function PatientRow({ patient, onView, onEdit, onDelete }: PatientRowProp
             size="md"
             onClick={onView}
           />
-          <IconButton
-            icon="ph ph-pencil-simple"
-            aria-label={patientRowStrings.editLabel}
-            tone="neutral"
-            size="md"
-            onClick={onEdit}
-          />
-          <IconButton
-            icon="ph ph-trash"
-            aria-label={patientRowStrings.deleteLabel}
-            tone="danger"
-            size="md"
-            onClick={onDelete}
-          />
+          {canManage && (
+            <>
+              <IconButton
+                icon="ph ph-pencil-simple"
+                aria-label={patientRowStrings.editLabel}
+                tone="neutral"
+                size="md"
+                onClick={onEdit}
+              />
+              <IconButton
+                icon="ph ph-trash"
+                aria-label={patientRowStrings.deleteLabel}
+                tone="danger"
+                size="md"
+                onClick={onDelete}
+              />
+            </>
+          )}
         </Row>
       </td>
     </tr>
