@@ -9,6 +9,7 @@ import { AuthModule } from './lib/auth/index.js'
 import { PdfService } from './lib/pdf.service.js'
 import { ReferenceGuardService } from './common/references/reference-guard.service.js'
 import { AuthGuard } from './common/guards/auth.guard.js'
+import { PlatformGuard } from './common/guards/platform.guard.js'
 import { TenantGuard } from './common/guards/tenant.guard.js'
 import { PermissionGuard } from './common/guards/permission.guard.js'
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js'
@@ -82,10 +83,13 @@ class AppController {
   controllers: [AppController],
   providers: [
     PrismaService,
-    // Global guards — order matters: AuthGuard resolves the user and its
-    // capabilities, TenantGuard sets tenantId, PermissionGuard enforces
-    // @RequirePermission against the resolved capability map.
+    // Global guards — order matters: AuthGuard resolves the user (or platform
+    // principal) and its capabilities, PlatformGuard enforces the platform
+    // boundary on @PlatformRoute() endpoints, TenantGuard sets tenantId,
+    // PermissionGuard enforces @RequirePermission against the resolved
+    // capability map.
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: PlatformGuard },
     { provide: APP_GUARD, useClass: TenantGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
     // Global interceptors
