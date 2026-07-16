@@ -124,6 +124,9 @@ export const toastStrings = {
   suggestionVariantCreated: 'Variante creada',
   suggestionDismissed: 'Sugerencia descartada',
 
+  // ── Permissions ─────────────────────────────────────────────────────────────
+  errorPermissionUpdate: 'No se pudo actualizar el permiso. Intenta de nuevo.',
+
   // ── Session ─────────────────────────────────────────────────────────────────
   orderQueueRestored: 'Órdenes en cola restauradas de tu sesión anterior.',
 
