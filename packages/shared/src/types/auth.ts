@@ -1,4 +1,5 @@
 import type { UserPreferences } from '../schemas/user-preferences.js'
+import type { CapabilityMap } from '../permissions/capabilities.js'
 
 export type UserRole = 'assistant' | 'doctor' | 'admin' | 'super_admin'
 
@@ -14,6 +15,7 @@ export interface AuthUser {
   tenantSeededAt: string | null // ISO string; null means onboarding not yet complete
   tenantPlan?: string
   preferences: UserPreferences
+  capabilities: CapabilityMap
 }
 
 export interface Tenant {

@@ -62,6 +62,7 @@ export const UserApiSchema = z.object({
   specialty: z.string().nullable(),
   licenseNumber: z.string().nullable(),
   isActive: z.boolean(),
+  capabilities: z.record(z.enum(['none', 'view', 'manage'])),
   createdAt: z.string(),
 })
 
