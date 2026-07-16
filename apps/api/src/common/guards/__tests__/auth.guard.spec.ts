@@ -9,7 +9,7 @@ const mockAuthProvider = {
   revokeUserSessions: vi.fn(),
   deleteUser: vi.fn(),
 }
-const mockUsers = { findByExternalUid: vi.fn() }
+const mockUsers = { findByExternalUid: vi.fn(), markSignedIn: vi.fn() }
 const mockReflector = { getAllAndOverride: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 const mockPermissions = {
@@ -49,6 +49,7 @@ const validUser = {
   specialty: null,
   licenseNumber: null,
   isActive: true,
+  lastLoginAt: new Date('2026-07-01T00:00:00Z'),
   tenant: { seededAt: new Date('2026-01-01'), plan: 'free' },
 }
 
@@ -166,6 +167,24 @@ describe('AuthGuard', () => {
       patients: 'view',
       users: 'none',
     })
+  })
+
+  it('stamps lastLoginAt on the first authenticated request', async () => {
+    const user = { ...validUser, lastLoginAt: null }
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue(user)
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+    await guard.canActivate(ctx as never)
+    expect(mockUsers.markSignedIn).toHaveBeenCalledWith(user.id)
+  })
+
+  it('does not re-stamp lastLoginAt once set', async () => {
+    const user = { ...validUser, lastLoginAt: new Date('2026-07-01T00:00:00Z') }
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue(user)
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+    await guard.canActivate(ctx as never)
+    expect(mockUsers.markSignedIn).not.toHaveBeenCalled()
   })
 
   it('sets tenantSeededAt to null when seededAt is null', async () => {

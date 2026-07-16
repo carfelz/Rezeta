@@ -96,6 +96,10 @@ export class AuthGuard implements CanActivate {
       })
     }
 
+    if (user.lastLoginAt === null) {
+      void this.users.markSignedIn(user.id)
+    }
+
     const role = user.role as AuthUser['role']
     const capabilities = await this.permissions.resolveCapabilities(user.tenantId, role)
 

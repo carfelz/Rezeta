@@ -49,6 +49,10 @@ export class UsersRepository {
     })
   }
 
+  async markSignedIn(id: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } })
+  }
+
   async findByExternalUid(externalUid: string): Promise<UserWithTenant | null> {
     return this.prisma.user.findUnique({
       where: { externalUid, deletedAt: null },
