@@ -1,3 +1,5 @@
 export { UsersModule } from './users.module.js'
 export { UsersService } from './users.service.js'
 export { UsersRepository } from './users.repository.js'
+export { UsersManagementController } from './users-management.controller.js'
+export { InvitationMailerService } from './invitation-mailer.service.js'
