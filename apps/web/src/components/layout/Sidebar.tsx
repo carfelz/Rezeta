@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { hasCapability } from '@rezeta/shared'
+import type { CapabilityMap, ModuleKey } from '@rezeta/shared'
 import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
@@ -19,11 +21,13 @@ interface NavItem {
   count?: number
   /** Extra path prefixes that should also mark this item active. */
   alsoActiveOn?: string[]
+  /** Module this item maps to; when set, hidden unless the user can `view` it. */
+  module?: ModuleKey
 }
 
 const NAV_HOY: NavItem[] = [
   { to: '/dashboard', icon: 'squares-four', label: sidebarStrings.navDashboard },
-  { to: '/agenda', icon: 'calendar-blank', label: sidebarStrings.navAgenda },
+  { to: '/agenda', icon: 'calendar-blank', label: sidebarStrings.navAgenda, module: 'appointments' },
 ]
 
 const NAV_CLINICO: NavItem[] = [
@@ -32,13 +36,16 @@ const NAV_CLINICO: NavItem[] = [
     icon: 'user',
     label: sidebarStrings.navPatients,
     alsoActiveOn: ['/consultas'],
+    module: 'patients',
   },
-  { to: '/protocolos', icon: 'stack', label: sidebarStrings.navProtocols },
+  { to: '/protocolos', icon: 'stack', label: sidebarStrings.navProtocols, module: 'protocols' },
 ]
 
 const NAV_ADMIN: NavItem[] = [
-  { to: '/facturacion', icon: 'receipt', label: sidebarStrings.navBilling },
-  { to: '/ajustes', icon: 'gear-six', label: sidebarStrings.navSettings },
+  { to: '/facturacion', icon: 'receipt', label: sidebarStrings.navBilling, module: 'billing' },
+  // 'templates' represents the admin section: doctor/admin/super_admin have it,
+  // assistant does not — matching the settings route guard in App.tsx.
+  { to: '/ajustes', icon: 'gear-six', label: sidebarStrings.navSettings, module: 'templates' },
 ]
 
 function initials(name: string | null): string {
@@ -51,13 +58,20 @@ function initials(name: string | null): string {
     .toUpperCase()
 }
 
+function canViewNav(caps: CapabilityMap | undefined, module?: ModuleKey): boolean {
+  if (!module) return true
+  if (!caps) return false
+  return hasCapability(caps, module, 'view')
+}
+
 interface NavGroupProps {
   label: string
   items: NavItem[]
 }
 
-function NavGroup({ label, items }: NavGroupProps): JSX.Element {
+function NavGroup({ label, items }: NavGroupProps): JSX.Element | null {
   const { pathname } = useLocation()
+  if (items.length === 0) return null
   return (
     <div className="mb-4">
       <Overline tone="neutral" size="sm" className="block px-5 mb-1">
@@ -108,6 +122,7 @@ function NavGroup({ label, items }: NavGroupProps): JSX.Element {
 export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
   const { user } = useAuth()
   const { signOut } = useAuthStore()
+  const capabilities = useAuthStore((s) => s.user?.capabilities)
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -146,9 +161,18 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
         </div>
 
         <div className="flex-1 pt-4">
-          <NavGroup label={sidebarStrings.navTodayLabel} items={NAV_HOY} />
-          <NavGroup label={sidebarStrings.navClinicalLabel} items={NAV_CLINICO} />
-          <NavGroup label={sidebarStrings.navAdminLabel} items={NAV_ADMIN} />
+          <NavGroup
+            label={sidebarStrings.navTodayLabel}
+            items={NAV_HOY.filter((item) => canViewNav(capabilities, item.module))}
+          />
+          <NavGroup
+            label={sidebarStrings.navClinicalLabel}
+            items={NAV_CLINICO.filter((item) => canViewNav(capabilities, item.module))}
+          />
+          <NavGroup
+            label={sidebarStrings.navAdminLabel}
+            items={NAV_ADMIN.filter((item) => canViewNav(capabilities, item.module))}
+          />
         </div>
 
         {user && (
