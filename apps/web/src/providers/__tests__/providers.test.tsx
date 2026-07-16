@@ -175,6 +175,29 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() => expect(screen.getByText('nonerrcase')).toBeInTheDocument())
     expect(mocks.signOut).toHaveBeenCalled()
   })
+
+  it('does NOT sign out when provision 401s with USER_NOT_PROVISIONED (platform-staff identity)', async () => {
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),
+    )
+
+    const session = { uid: 'staff-uid', email: 'staff@rezeta.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>platformcase</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(screen.getByText('platformcase')).toBeInTheDocument())
+    expect(mocks.signOut).not.toHaveBeenCalled()
+  })
 })
 
 describe('Providers (composed)', () => {
