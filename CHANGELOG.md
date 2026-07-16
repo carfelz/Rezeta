@@ -4,6 +4,36 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Permissions module (matrix UI + edit endpoints, permissions slice 6)
+
+### Added
+
+- `GET /v1/permissions` — returns `{ matrix, modules }`: the tenant's resolved
+  `Record<UserRole, CapabilityMap>` plus the catalog structure in display
+  order. `PATCH /v1/permissions` — updates one `{ role, moduleKey, accessLevel }`
+  triple, rank-rule enforced (`canManageRole`), emits `permission_granted`/
+  `permission_revoked` audit events. Both in
+  `apps/api/src/modules/permissions/permissions.controller.ts`, gated by
+  `@RequirePermission('permissions', 'view'|'manage')`.
+- `PermissionsService.getMatrix`/`updateModule` and
+  `PermissionsRepository.upsertModule` in
+  `apps/api/src/modules/permissions/permissions.service.ts` /
+  `permissions.repository.ts`.
+- `UpdatePermissionSchema` + `PermissionMatrixResponse`/`PermissionCatalogEntry`
+  types in `packages/shared/src/schemas/permissions.ts`.
+- `usePermissionMatrix`/`useUpdatePermission` TanStack Query hooks in
+  `apps/web/src/hooks/permissions/use-permissions.ts`.
+- `/ajustes/permisos` matrix page
+  (`apps/web/src/pages/settings/Permissions.tsx`): roles x modules grouped by
+  section (Trabajo clínico / Administración), per-module `<select>` cells
+  (`none`/`view`/`manage`), and a frontend-only section bulk-apply control
+  that issues one PATCH per module in the section (the API has no section
+  concept) and shows "Mixto" when a section's modules disagree for a role.
+  Own-rank and higher-rank columns are disabled per `canManageRole`; the
+  whole matrix is read-only when the user lacks `permissions:manage`. Wired
+  into `App.tsx` (route, `RequireCan`) and the Settings menu
+  (`apps/web/src/pages/Settings.tsx`), shown only with `permissions:view`.
+
 ## [2026-07-16] Provisioning rework + Users module (permissions slice 5)
 
 ### Added
