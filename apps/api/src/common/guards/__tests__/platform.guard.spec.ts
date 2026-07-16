@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi } from 'vitest'
 import { ForbiddenException } from '@nestjs/common'
 import { PlatformGuard } from '../platform.guard.js'
