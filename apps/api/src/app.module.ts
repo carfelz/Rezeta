@@ -10,6 +10,7 @@ import { PdfService } from './lib/pdf.service.js'
 import { ReferenceGuardService } from './common/references/reference-guard.service.js'
 import { AuthGuard } from './common/guards/auth.guard.js'
 import { TenantGuard } from './common/guards/tenant.guard.js'
+import { PermissionGuard } from './common/guards/permission.guard.js'
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js'
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor.js'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js'
@@ -79,9 +80,12 @@ class AppController {
   controllers: [AppController],
   providers: [
     PrismaService,
-    // Global guards — order matters: AuthGuard runs first, then TenantGuard
+    // Global guards — order matters: AuthGuard resolves the user and its
+    // capabilities, TenantGuard sets tenantId, PermissionGuard enforces
+    // @RequirePermission against the resolved capability map.
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: TenantGuard },
+    { provide: APP_GUARD, useClass: PermissionGuard },
     // Global interceptors
     { provide: APP_INTERCEPTOR, useClass: ResponseEnvelopeInterceptor },
     { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
