@@ -80,12 +80,16 @@ export class PermissionsService {
   /**
    * Update one role/module access level. Only an actor whose rank is strictly
    * above the target role's rank may edit it (own-rank and higher are rejected).
-   * Emits a `permission_granted`/`permission_revoked` audit event based on the
-   * new level, then returns the target role's refreshed capability map.
+   * Captures the effective access level for (targetRole, moduleKey) before the
+   * write so the audit event records "who, when, what changed": `actorUserId`
+   * and `changes.accessLevel.before/after`. Emits a `permission_granted`/
+   * `permission_revoked` audit event based on the new level, then returns the
+   * target role's refreshed capability map.
    */
   async updateModule(
     tenantId: string,
     actorRole: UserRole,
+    actorUserId: string,
     targetRole: UserRole,
     moduleKey: ModuleKey,
     level: AccessLevel,
@@ -96,15 +100,18 @@ export class PermissionsService {
         message: 'Cannot edit permissions for a role at or above your own',
       })
     }
+    const before = (await this.resolveCapabilities(tenantId, targetRole))[moduleKey]
     await this.repo.upsertModule(tenantId, targetRole, moduleKey, level)
     void this.auditLog.record({
       tenantId,
+      actorUserId,
       actorType: 'user',
       category: 'auth',
       action: level === 'none' ? 'permission_revoked' : 'permission_granted',
       entityType: 'role_permission',
       entityId: `${targetRole}:${moduleKey}`,
       metadata: { role: targetRole, moduleKey, accessLevel: level },
+      changes: { accessLevel: { before, after: level } },
     })
     return this.resolveCapabilities(tenantId, targetRole)
   }

@@ -43,6 +43,13 @@ export class PermissionsController {
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(UpdatePermissionSchema)) dto: UpdatePermissionDto,
   ): Promise<CapabilityMap> {
-    return this.svc.updateModule(tenantId, user.role, dto.role, dto.moduleKey, dto.accessLevel)
+    return this.svc.updateModule(
+      tenantId,
+      user.role,
+      user.id,
+      dto.role,
+      dto.moduleKey,
+      dto.accessLevel,
+    )
   }
 }

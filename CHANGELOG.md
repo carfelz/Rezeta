@@ -4,6 +4,28 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Permissions audit fix: actor + before/after level (permissions slice 6 follow-up)
+
+### Fixed
+
+- `PermissionsService.updateModule`
+  (`apps/api/src/modules/permissions/permissions.service.ts`) now takes an
+  `actorUserId` parameter and threads it into the `permission_granted`/
+  `permission_revoked` audit record (`actorUserId` field), matching the
+  "who, when, what changed" audit rule. It also resolves the target role's
+  effective access level for the module *before* the upsert and records
+  `changes: { accessLevel: { before, after } }`, mirroring the pattern in
+  `apps/api/src/modules/users/users.service.ts` `changeRole`.
+- `PermissionsController`'s `PATCH /v1/permissions` handler
+  (`apps/api/src/modules/permissions/permissions.controller.ts`) now passes
+  `@CurrentUser()`'s `user.id` through as `actorUserId`.
+- Tightened `apps/api/src/modules/permissions/__tests__/permissions.service.spec.ts`
+  `updateModule` assertions from `expect.objectContaining(...)` to exact
+  `toEqual(...)` matches on the recorded audit event, so a future regression
+  that drops `actorUserId` or `changes.accessLevel` is caught. Updated
+  `apps/api/src/modules/permissions/__tests__/permissions.controller.spec.ts`
+  to expect the new call signature.
+
 ## [2026-07-16] Permissions module (matrix UI + edit endpoints, permissions slice 6)
 
 ### Added

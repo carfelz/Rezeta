@@ -71,6 +71,7 @@ describe('PermissionsController', () => {
       expect(mockSvc.updateModule).toHaveBeenCalledWith(
         't1',
         'super_admin',
+        'u1',
         'doctor',
         'patients',
         'manage',

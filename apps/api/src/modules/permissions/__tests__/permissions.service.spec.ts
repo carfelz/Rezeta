@@ -109,44 +109,65 @@ describe('PermissionsService', () => {
   })
 
   describe('updateModule', () => {
-    it('happy path: super_admin editing doctor grants a module and audits permission_granted', async () => {
+    it('happy path: super_admin editing doctor grants a module and audits actorUserId + before/after levels', async () => {
       mockRepo.upsertModule.mockResolvedValue(undefined)
-      mockRepo.findByTenantAndRole.mockResolvedValue([
-        { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
-      ])
+      mockRepo.findByTenantAndRole
+        // before-capture resolveCapabilities call: prior stored level is 'view'
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+        // final resolveCapabilities call (post-upsert): new stored level is 'manage'
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' }])
 
-      const result = await service.updateModule('t1', 'super_admin', 'doctor', 'patients', 'manage')
+      const result = await service.updateModule(
+        't1',
+        'super_admin',
+        'actor-1',
+        'doctor',
+        'patients',
+        'manage',
+      )
 
       expect(mockRepo.upsertModule).toHaveBeenCalledWith('t1', 'doctor', 'patients', 'manage')
       expect(mockAuditLog.record).toHaveBeenCalledTimes(1)
-      expect(mockAuditLog.record).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tenantId: 't1',
-          actorType: 'user',
-          category: 'auth',
-          action: 'permission_granted',
-          entityType: 'role_permission',
-          entityId: 'doctor:patients',
-          metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
-        }),
-      )
+      expect(mockAuditLog.record).toHaveBeenCalledWith({
+        tenantId: 't1',
+        actorUserId: 'actor-1',
+        actorType: 'user',
+        category: 'auth',
+        action: 'permission_granted',
+        entityType: 'role_permission',
+        entityId: 'doctor:patients',
+        metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
+        changes: { accessLevel: { before: 'view', after: 'manage' } },
+      })
       expect(result.patients).toBe('manage')
     })
 
-    it('revoke: level none audits permission_revoked', async () => {
+    it('revoke: level none audits permission_revoked with before/after levels and actorUserId', async () => {
       mockRepo.upsertModule.mockResolvedValue(undefined)
-      mockRepo.findByTenantAndRole.mockResolvedValue([])
+      mockRepo.findByTenantAndRole
+        // before-capture: no stored row yet, so before is the catalog default ('manage' for doctor/patients)
+        .mockResolvedValueOnce([])
+        // final resolveCapabilities call (post-upsert): stored row now says 'none'
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'none' }])
 
-      await service.updateModule('t1', 'super_admin', 'doctor', 'patients', 'none')
+      await service.updateModule('t1', 'super_admin', 'actor-2', 'doctor', 'patients', 'none')
 
-      expect(mockAuditLog.record).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'permission_revoked' }),
-      )
+      expect(mockAuditLog.record).toHaveBeenCalledWith({
+        tenantId: 't1',
+        actorUserId: 'actor-2',
+        actorType: 'user',
+        category: 'auth',
+        action: 'permission_revoked',
+        entityType: 'role_permission',
+        entityId: 'doctor:patients',
+        metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'none' },
+        changes: { accessLevel: { before: 'manage', after: 'none' } },
+      })
     })
 
     it('rejects an admin editing their own rank (admin -> admin) without touching repo/audit', async () => {
       await expect(
-        service.updateModule('t1', 'admin', 'admin', 'patients', 'manage'),
+        service.updateModule('t1', 'admin', 'actor-3', 'admin', 'patients', 'manage'),
       ).rejects.toThrow(ForbiddenException)
       expect(mockRepo.upsertModule).not.toHaveBeenCalled()
       expect(mockAuditLog.record).not.toHaveBeenCalled()
@@ -154,7 +175,7 @@ describe('PermissionsService', () => {
 
     it('rejects an admin editing a higher rank (admin -> super_admin) without touching repo/audit', async () => {
       await expect(
-        service.updateModule('t1', 'admin', 'super_admin', 'patients', 'manage'),
+        service.updateModule('t1', 'admin', 'actor-4', 'super_admin', 'patients', 'manage'),
       ).rejects.toThrow(ForbiddenException)
       expect(mockRepo.upsertModule).not.toHaveBeenCalled()
       expect(mockAuditLog.record).not.toHaveBeenCalled()
