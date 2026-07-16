@@ -19,6 +19,8 @@ export interface PageHeaderProps {
   onAmend: () => void
   onRetry: () => void
   onSignClick: () => void
+  /** Whether the user may sign/amend; when false, both actions are hidden. */
+  canManage?: boolean
 }
 
 export function PageHeader({
@@ -36,6 +38,7 @@ export function PageHeader({
   onAmend,
   onRetry,
   onSignClick,
+  canManage = true,
 }: PageHeaderProps): JSX.Element {
   return (
     <div className="flex items-start justify-between gap-6 mb-6">
@@ -85,23 +88,24 @@ export function PageHeader({
           {...(savedAt !== undefined ? { savedAt } : {})}
           onRetry={onRetry}
         />
-        {isSigned ? (
-          <Button variant="secondary" size="sm" onClick={onAmend}>
-            <i className="ph ph-pencil-simple mr-1" />
-            Enmienda
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onSignClick}
-            disabled={!canSign}
-            title={canSign ? undefined : pageHeaderStrings.signRequiresProtocol}
-          >
-            <i className="ph ph-check mr-1" />
-            {pageHeaderStrings.signButton}
-          </Button>
-        )}
+        {canManage &&
+          (isSigned ? (
+            <Button variant="secondary" size="sm" onClick={onAmend}>
+              <i className="ph ph-pencil-simple mr-1" />
+              Enmienda
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onSignClick}
+              disabled={!canSign}
+              title={canSign ? undefined : pageHeaderStrings.signRequiresProtocol}
+            >
+              <i className="ph ph-check mr-1" />
+              {pageHeaderStrings.signButton}
+            </Button>
+          ))}
       </div>
     </div>
   )

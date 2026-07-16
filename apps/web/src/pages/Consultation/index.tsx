@@ -7,6 +7,7 @@ import { useOrderQueueStore } from '@/store/order-queue.store'
 import { useOrderQueueSession } from '@/hooks/consultations/use-order-queue-session'
 import { useFlushOrderQueue } from '@/hooks/consultations/use-flush-order-queue'
 import { useBeforeUnloadGuard } from '@/hooks/use-before-unload-guard'
+import { useCan } from '@/hooks/use-can'
 import { MissingFieldsPanel } from '@/components/consultations/MissingFieldsPanel'
 import { Breadcrumb } from './Breadcrumb'
 import { PageHeader } from './PageHeader'
@@ -71,6 +72,9 @@ export function Consultation(): JSX.Element {
     resetOrderQueue()
   }
   useBeforeUnloadGuard((hasUnsavedOrders || hasPending) && !consultationSigned)
+  // Read before the early returns below so this hook is always called in the
+  // same order regardless of loading/error state (Rules of Hooks).
+  const canManageConsultations = useCan('consultations', 'manage')
 
   if (isLoading) {
     return (
@@ -95,6 +99,7 @@ export function Consultation(): JSX.Element {
   }
 
   const isSigned = consultationSigned
+  const readOnly = isSigned || !canManageConsultations
   const canSign = consultation.protocolUsages.length > 0
   const dateShort = formatBreadcrumbDate(new Date(consultation.startedAt))
   const hasContent = consultation.protocolUsages.length > 0
@@ -131,6 +136,7 @@ export function Consultation(): JSX.Element {
           onAmend={() => setShowAmend(true)}
           onRetry={() => undefined}
           onSignClick={handleSignClick}
+          canManage={canManageConsultations}
         />
 
         {isSigned && consultation.signedAt && (
@@ -165,7 +171,7 @@ export function Consultation(): JSX.Element {
         <main className="flex-1 overflow-y-auto p-6">
           <ProtocolPanel
             consultation={consultation}
-            readOnly={isSigned}
+            readOnly={readOnly}
             onRecordModification={recordModification}
             onFlushPending={handleBeforeSign}
             onUsageRemoved={discardUsage}
@@ -185,7 +191,7 @@ export function Consultation(): JSX.Element {
         >
           <OrdersRail
             consultation={consultation}
-            readOnly={isSigned}
+            readOnly={readOnly}
             onAddProtocol={() => setShowPicker(true)}
           />
         </aside>

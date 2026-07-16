@@ -53,6 +53,16 @@ describe('PageHeader', () => {
     expect(screen.queryByRole('button', { name: /Firmar/i })).not.toBeInTheDocument()
   })
 
+  it('hides the "Firmar y cerrar" button when the user cannot manage', () => {
+    render(<PageHeader {...baseProps} canManage={false} />)
+    expect(screen.queryByRole('button', { name: /Firmar y cerrar/i })).not.toBeInTheDocument()
+  })
+
+  it('hides the "Enmienda" button on a signed consultation when the user cannot manage', () => {
+    render(<PageHeader {...baseProps} isSigned canManage={false} />)
+    expect(screen.queryByRole('button', { name: /Enmienda/i })).not.toBeInTheDocument()
+  })
+
   it('calls onAmend when "Enmienda" clicked', async () => {
     const user = userEvent.setup()
     const onAmend = vi.fn()
