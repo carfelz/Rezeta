@@ -35,6 +35,7 @@ import { ProtocolRecommendationsModule } from './modules/protocol-recommendation
 import { InvoicesModule } from './modules/invoices/index.js'
 import { SchedulesModule } from './modules/schedules/index.js'
 import { LogsModule } from './modules/logs/index.js'
+import { StaffModule } from './modules/staff/index.js'
 import { AuditLogModule } from './common/audit-log/audit-log.module.js'
 import { Public } from './common/decorators/public.decorator.js'
 
@@ -79,6 +80,7 @@ class AppController {
     InvoicesModule,
     SchedulesModule,
     LogsModule,
+    StaffModule,
   ],
   controllers: [AppController],
   providers: [
