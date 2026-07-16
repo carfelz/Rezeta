@@ -23,6 +23,7 @@ import { Schedules } from '@/pages/settings/Schedules'
 import { AppPrototype } from '@/pages/settings/AppPrototype'
 import { DesignSystemReference } from '@/pages/settings/DesignSystemReference'
 import { Login } from '@/pages/Login'
+import { SetPassword } from '@/pages/SetPassword'
 import { NotFound } from '@/pages/NotFound'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
     element: (
       <PublicOnlyGate>
         <Login />
+      </PublicOnlyGate>
+    ),
+  },
+  {
+    path: '/establecer-contrasena',
+    element: (
+      <PublicOnlyGate>
+        <SetPassword />
       </PublicOnlyGate>
     ),
   },

@@ -4,6 +4,8 @@ const m = vi.hoisted(() => {
   const onAuthStateChanged = vi.fn()
   const signInWithEmailAndPassword = vi.fn()
   const signOut = vi.fn()
+  const verifyPasswordResetCode = vi.fn()
+  const confirmPasswordReset = vi.fn()
   const getAuth = vi.fn(() => ({ currentUser: null }))
   const initializeApp = vi.fn(() => ({ name: 'mock-app' }))
   const getApps = vi.fn(() => [])
@@ -11,6 +13,8 @@ const m = vi.hoisted(() => {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     signOut,
+    verifyPasswordResetCode,
+    confirmPasswordReset,
     getAuth,
     initializeApp,
     getApps,
@@ -22,6 +26,8 @@ vi.mock('firebase/auth', () => ({
   onAuthStateChanged: m.onAuthStateChanged,
   signInWithEmailAndPassword: m.signInWithEmailAndPassword,
   signOut: m.signOut,
+  verifyPasswordResetCode: m.verifyPasswordResetCode,
+  confirmPasswordReset: m.confirmPasswordReset,
 }))
 
 vi.mock('firebase/app', () => ({
@@ -137,6 +143,32 @@ describe('FirebaseAuthClient', () => {
       await expect(client.signIn('a@b', 'pw')).rejects.toMatchObject({
         code: 'auth/user-not-found',
       })
+    })
+  })
+
+  // ── verifyPasswordResetCode ───────────────────────────────────────────────
+
+  describe('verifyPasswordResetCode', () => {
+    it('returns the email for a valid code', async () => {
+      m.verifyPasswordResetCode.mockResolvedValue('nurse@clinic.do')
+      const email = await client.verifyPasswordResetCode('oob-1')
+      expect(m.verifyPasswordResetCode).toHaveBeenCalledWith(expect.anything(), 'oob-1')
+      expect(email).toBe('nurse@clinic.do')
+    })
+
+    it('propagates errors for an invalid/expired code', async () => {
+      m.verifyPasswordResetCode.mockRejectedValue(new Error('expired-action-code'))
+      await expect(client.verifyPasswordResetCode('bad')).rejects.toThrow('expired-action-code')
+    })
+  })
+
+  // ── confirmPasswordReset ──────────────────────────────────────────────────
+
+  describe('confirmPasswordReset', () => {
+    it('delegates to firebase confirmPasswordReset', async () => {
+      m.confirmPasswordReset.mockResolvedValue(undefined)
+      await client.confirmPasswordReset('oob-1', 'NewPass123')
+      expect(m.confirmPasswordReset).toHaveBeenCalledWith(expect.anything(), 'oob-1', 'NewPass123')
     })
   })
 

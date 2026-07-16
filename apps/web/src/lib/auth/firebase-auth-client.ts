@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
   type Auth,
 } from 'firebase/auth'
 import { firebaseErrorToSpanish } from '../toasts'
@@ -43,6 +45,14 @@ export class FirebaseAuthClient implements IAuthClient {
     } catch {
       // Swallow — caller already invariant-broken; best-effort cleanup.
     }
+  }
+
+  async verifyPasswordResetCode(oobCode: string): Promise<string> {
+    return verifyPasswordResetCode(this.auth, oobCode)
+  }
+
+  async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+    await confirmPasswordReset(this.auth, oobCode, newPassword)
   }
 
   errorCodeToMessage(code: string): string {

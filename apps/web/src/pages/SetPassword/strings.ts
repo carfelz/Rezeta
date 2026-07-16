@@ -1,0 +1,15 @@
+export const setPasswordStrings = {
+  title: 'Crea tu contraseña',
+  subtitle: 'Establece una contraseña para acceder a tu cuenta.',
+  fieldPassword: 'Contraseña',
+  fieldPasswordPlaceholder: 'Mínimo 8 caracteres',
+  fieldConfirm: 'Confirmar contraseña',
+  fieldConfirmPlaceholder: 'Repite la contraseña',
+  submit: 'Guardar y entrar',
+  submitting: 'Guardando...',
+  verifying: 'Verificando el enlace...',
+  invalidLink: 'El enlace no es válido o ya expiró. Solicita uno nuevo a tu administrador.',
+  passwordTooShort: 'La contraseña debe tener al menos 8 caracteres',
+  passwordMismatch: 'Las contraseñas no coinciden',
+  genericError: 'No se pudo guardar la contraseña. Intenta de nuevo.',
+} as const
