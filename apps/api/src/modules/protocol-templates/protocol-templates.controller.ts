@@ -18,6 +18,7 @@ import type {
 import { CreateProtocolTemplateSchema, UpdateProtocolTemplateSchema } from '@rezeta/shared'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { ProtocolTemplatesService } from './protocol-templates.service.js'
 
@@ -65,6 +66,7 @@ export class ProtocolTemplatesController {
     @Inject(ProtocolTemplatesService) private readonly service: ProtocolTemplatesService,
   ) {}
 
+  @RequirePermission('templates', 'view')
   @Get()
   @ApiOperation({
     summary: 'List templates',
@@ -75,6 +77,7 @@ export class ProtocolTemplatesController {
     return this.service.getTemplates(tenantId)
   }
 
+  @RequirePermission('templates', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get a template by ID' })
   @ApiParam({ name: 'id', format: 'uuid', example: TEMPLATE_ID })
@@ -87,6 +90,7 @@ export class ProtocolTemplatesController {
     return this.service.findById(id, tenantId)
   }
 
+  @RequirePermission('templates', 'manage')
   @Post()
   @ApiOperation({
     summary: 'Create a template',
@@ -118,6 +122,7 @@ export class ProtocolTemplatesController {
     return this.service.create(tenantId, dto, user.id)
   }
 
+  @RequirePermission('templates', 'manage')
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a template',
@@ -145,6 +150,7 @@ export class ProtocolTemplatesController {
     return this.service.update(id, tenantId, dto)
   }
 
+  @RequirePermission('templates', 'manage')
   @Delete(':id')
   @HttpCode(204)
   @ApiOperation({

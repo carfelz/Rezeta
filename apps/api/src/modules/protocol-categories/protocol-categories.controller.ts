@@ -17,6 +17,7 @@ import {
 } from '@rezeta/shared'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { ProtocolCategoriesService } from './protocol-categories.service.js'
 
@@ -31,6 +32,7 @@ export class ProtocolCategoriesController {
     @Inject(ProtocolCategoriesService) private readonly service: ProtocolCategoriesService,
   ) {}
 
+  @RequirePermission('categories', 'view')
   @Get()
   @ApiOperation({
     summary: 'List categories',
@@ -41,6 +43,7 @@ export class ProtocolCategoriesController {
     return this.service.findAll(tenantId)
   }
 
+  @RequirePermission('categories', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get a category by ID' })
   @ApiParam({ name: 'id', format: 'uuid', example: CATEGORY_ID })
@@ -50,6 +53,7 @@ export class ProtocolCategoriesController {
     return this.service.findById(tenantId, id)
   }
 
+  @RequirePermission('categories', 'manage')
   @Post()
   @ApiOperation({
     summary: 'Create a category',
@@ -74,6 +78,7 @@ export class ProtocolCategoriesController {
     return this.service.create(tenantId, body as CreateProtocolCategoryDto)
   }
 
+  @RequirePermission('categories', 'manage')
   @Patch(':id')
   @ApiOperation({ summary: 'Update a category' })
   @ApiParam({ name: 'id', format: 'uuid', example: CATEGORY_ID })
@@ -87,6 +92,7 @@ export class ProtocolCategoriesController {
     return this.service.update(tenantId, id, body as UpdateProtocolCategoryDto)
   }
 
+  @RequirePermission('categories', 'manage')
   @Delete(':id')
   @HttpCode(204)
   @ApiOperation({

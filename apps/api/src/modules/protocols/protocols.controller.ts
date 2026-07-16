@@ -42,6 +42,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ProtocolsService } from './protocols.service.js'
 
 const PROTOCOL_ID = '018e3f2a-2222-7000-8000-000000000001'
@@ -56,6 +57,7 @@ const VERSION_ID = '018e3f2a-4444-7000-8000-000000000001'
 export class ProtocolsController {
   constructor(@Inject(ProtocolsService) private service: ProtocolsService) {}
 
+  @RequirePermission('protocols', 'view')
   @Get()
   @ApiOperation({
     summary: 'List protocols',
@@ -88,6 +90,7 @@ export class ProtocolsController {
     return this.service.list(tenantId, query)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateProtocolSchema))
@@ -116,6 +119,7 @@ export class ProtocolsController {
     return this.service.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('protocols', 'view')
   @Get(':id')
   @ApiOperation({
     summary: 'Get a protocol by ID',
@@ -131,6 +135,7 @@ export class ProtocolsController {
     return this.service.getById(id, tenantId)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateProtocolTitleSchema))
   @ApiOperation({ summary: 'Rename a protocol' })
@@ -151,6 +156,7 @@ export class ProtocolsController {
     return this.service.rename(id, tenantId, dto)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Post(':id/versions')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(SaveProtocolVersionSchema))
@@ -211,6 +217,7 @@ export class ProtocolsController {
     return this.service.saveVersion(id, tenantId, user.id, dto)
   }
 
+  @RequirePermission('protocols', 'view')
   @Get(':id/versions')
   @ApiOperation({
     summary: 'List versions',
@@ -225,6 +232,7 @@ export class ProtocolsController {
     return this.service.listVersions(id, tenantId)
   }
 
+  @RequirePermission('protocols', 'view')
   @Get(':id/versions/:versionId')
   @ApiOperation({ summary: 'Get a specific version' })
   @ApiParam({ name: 'id', format: 'uuid', example: PROTOCOL_ID })
@@ -238,6 +246,7 @@ export class ProtocolsController {
     return this.service.getVersion(id, versionId, tenantId)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Post(':id/versions/:versionId/restore')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -261,6 +270,7 @@ export class ProtocolsController {
     return this.service.restoreVersion(id, versionId, tenantId, user.id)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Patch(':id/archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Archive a protocol' })
@@ -271,6 +281,7 @@ export class ProtocolsController {
     return this.service.archive(id, tenantId)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Post(':id/favorite')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Add to favorites' })
@@ -280,6 +291,7 @@ export class ProtocolsController {
     return this.service.setFavorite(id, tenantId, true)
   }
 
+  @RequirePermission('protocols', 'manage')
   @Delete(':id/favorite')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove from favorites' })

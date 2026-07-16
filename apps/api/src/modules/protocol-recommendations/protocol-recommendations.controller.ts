@@ -12,6 +12,7 @@ import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { ProtocolRecommendation, AuthUser } from '@rezeta/shared'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ProtocolRecommendationsService } from './protocol-recommendations.service.js'
 
 @ApiTags('Protocol Recommendations')
@@ -24,6 +25,7 @@ export class ProtocolRecommendationsController {
     private readonly svc: ProtocolRecommendationsService,
   ) {}
 
+  @RequirePermission('protocols', 'view')
   @Get()
   @ApiOperation({
     summary: 'List ranked protocol recommendations for a patient (gate screen)',
