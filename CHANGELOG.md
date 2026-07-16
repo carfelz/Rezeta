@@ -4,6 +4,18 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-15] Backend permission enforcement
+
+### Added
+
+- `ErrorCode.INSUFFICIENT_PERMISSION` (`packages/shared/src/errors.ts`) — returned as HTTP 403 when a caller's effective access level is below what an endpoint requires.
+- `@RequirePermission(module, level)` decorator (`apps/api/src/common/decorators/require-permission.decorator.ts`, metadata key `PERMISSION_KEY`).
+- `PermissionGuard` (`apps/api/src/common/guards/permission.guard.ts`), registered as the third global guard after `AuthGuard` and `TenantGuard`. It enforces `@RequirePermission` against the capability map resolved onto `request.user.capabilities`; skips public and un-annotated routes.
+
+### Changed
+
+- Annotated every clinical and admin controller endpoint with `@RequirePermission` (GET → `view`, mutations → `manage`): patients, appointments, consultations, consultation-records, orders, invoices (billing), protocols, protocol-templates, protocol-categories, protocol-improvements, protocol-recommendations, locations, schedules (reads → `appointments`, writes → `schedules_config`), and audit-log. Auth, onboarding, client-error logging, and `/v1/users/me` self-service routes stay exempt.
+
 ## [2026-07-15] Permission catalog + RolePermission + capability resolution
 
 ### Added
