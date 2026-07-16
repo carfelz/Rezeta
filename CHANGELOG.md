@@ -4,6 +4,27 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-15] Frontend permission gating
+
+### Added
+
+- `useCan(module, level)` hook (`apps/web/src/hooks/use-can.ts`) reading the auth
+  store capability map via shared `hasCapability`.
+- `<RequireCan>` route wrapper (`apps/web/src/components/auth/RequireCan.tsx`)
+  redirecting to `/dashboard` when the user lacks the required module access;
+  applied to protocol, billing, patient, consultation, and settings routes in
+  `apps/web/src/App.tsx`.
+- Capability-based sidebar nav filtering in
+  `apps/web/src/components/layout/Sidebar.tsx` (each item declares a `ModuleKey`).
+- `makeAuthUser`/`seedAuthUser` test helpers (`apps/web/src/test/auth-helpers.ts`).
+
+### Changed
+
+- Patients list (`apps/web/src/pages/Patients/index.tsx`, `PatientRow.tsx`) and
+  consultation surface (`apps/web/src/pages/Consultation/index.tsx`,
+  `PageHeader.tsx`) hide create/edit/delete and sign/amend controls for roles
+  with `view` but not `manage`.
+
 ## [2026-07-15] Backend permission enforcement
 
 ### Added
