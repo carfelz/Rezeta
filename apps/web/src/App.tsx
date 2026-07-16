@@ -18,6 +18,7 @@ import { Templates } from '@/pages/settings/Templates'
 import { TemplateEditor, TemplateEditorNew } from '@/pages/settings/TemplateEditor'
 import { Types } from '@/pages/settings/Types'
 import { Locations } from '@/pages/settings/Locations'
+import { Users } from '@/pages/settings/Users'
 import { AuditLog } from '@/pages/settings/AuditLog'
 import { Schedules } from '@/pages/settings/Schedules'
 import { AppPrototype } from '@/pages/settings/AppPrototype'
@@ -177,6 +178,14 @@ const router = createBrowserRouter([
         element: (
           <RequireCan module="categories">
             <Types />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/usuarios',
+        element: (
+          <RequireCan module="users">
+            <Users />
           </RequireCan>
         ),
       },

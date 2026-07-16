@@ -4,9 +4,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { UpdateProfileSchema, type UpdateProfileDto } from '@rezeta/shared'
 import { useAuth } from '@/hooks/use-auth'
+import { useCan } from '@/hooks/use-can'
 import { useAuthStore } from '@/store/auth.store'
 import { useUpdateProfile } from '@/hooks/users/use-update-profile'
 import { logger } from '@/lib/logger'
+import { cn } from '@/lib/utils'
 import { settingsStrings, templatesStrings, typesStrings } from './settings/strings'
 import {
   Button,
@@ -119,6 +121,7 @@ export function Settings(): JSX.Element {
   const { signOut } = useAuthStore()
   const navigate = useNavigate()
   const [editingProfile, setEditingProfile] = useState(false)
+  const canViewUsers = useCan('users', 'view')
 
   async function handleSignOut() {
     await signOut()
@@ -214,7 +217,10 @@ export function Settings(): JSX.Element {
         </Link>
         <Link
           to="/ajustes/horarios"
-          className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast"
+          className={cn(
+            'flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast',
+            canViewUsers && 'border-b border-n-100',
+          )}
         >
           <i className="ph ph-calendar-check text-h3 text-p-500" />
           <div>
@@ -223,6 +229,19 @@ export function Settings(): JSX.Element {
           </div>
           <i className="ph ph-caret-right ml-auto text-n-400" />
         </Link>
+        {canViewUsers && (
+          <Link
+            to="/ajustes/usuarios"
+            className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast"
+          >
+            <i className="ph ph-users text-h3 text-p-500" />
+            <div>
+              <div className="text-sm font-semibold">{settingsStrings.usersTitle}</div>
+              <div className="text-xs text-n-500">{settingsStrings.usersDescription}</div>
+            </div>
+            <i className="ph ph-caret-right ml-auto text-n-400" />
+          </Link>
+        )}
       </Card>
 
       <Button
