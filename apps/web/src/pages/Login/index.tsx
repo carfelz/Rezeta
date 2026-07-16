@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { loginStrings } from './strings'
 import { authClient } from '@/lib/auth'
@@ -95,16 +95,6 @@ export function Login(): JSX.Element {
           >
             {isLoading ? loginStrings.submitting : loginStrings.submit}
           </Button>
-
-          <p className="text-body-sm text-center mt-2">
-            {loginStrings.noAccount}{' '}
-            <Link
-              to="/signup"
-              className="text-p-500 font-medium hover:text-p-700 transition-colors duration-fast"
-            >
-              {loginStrings.signupLink}
-            </Link>
-          </p>
         </form>
       </Card>
     </div>

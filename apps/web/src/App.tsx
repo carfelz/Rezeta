@@ -24,7 +24,6 @@ import { AppPrototype } from '@/pages/settings/AppPrototype'
 import { DesignSystemReference } from '@/pages/settings/DesignSystemReference'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
-import { Signup } from '@/pages/Signup'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
@@ -39,15 +38,6 @@ const router = createBrowserRouter([
       </PublicOnlyGate>
     ),
   },
-  {
-    path: '/signup',
-    element: (
-      <PublicOnlyGate>
-        <Signup />
-      </PublicOnlyGate>
-    ),
-  },
-
   // ── Onboarding routes (auth required, redirect away if already seeded) ──────
   {
     element: (

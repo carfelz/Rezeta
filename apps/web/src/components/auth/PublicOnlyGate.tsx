@@ -16,7 +16,7 @@ function isSafeRedirect(path: string | null): path is string {
 }
 
 /**
- * PublicOnlyGate — wraps /login and /signup.
+ * PublicOnlyGate — wraps /login and /establecer-contrasena.
  *
  * status === 'loading'         → show full-page spinner (same as AuthGate — don't flash content)
  * status === 'authenticated'   → redirect to ?redirectTo param (validated) or /dashboard

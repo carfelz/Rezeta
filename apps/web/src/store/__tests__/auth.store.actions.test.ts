@@ -3,25 +3,16 @@ import { act, renderHook } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
-  signUp: vi.fn(),
   signOut: vi.fn(),
-  apiPost: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({
   authClient: {
     signIn: mocks.signIn,
-    signUp: mocks.signUp,
     signOut: mocks.signOut,
     onAuthStateChanged: vi.fn(),
     getToken: vi.fn().mockResolvedValue(null),
     errorCodeToMessage: vi.fn((c: string) => c),
-  },
-}))
-
-vi.mock('@/lib/api-client', () => ({
-  apiClient: {
-    post: mocks.apiPost,
   },
 }))
 
@@ -63,72 +54,6 @@ describe('useAuthStore — signIn', () => {
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow(
       'network failure',
     )
-  })
-})
-
-describe('useAuthStore — signUp', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mocks.signUp.mockResolvedValue(undefined)
-    mocks.apiPost.mockResolvedValue(undefined)
-    resetStore()
-  })
-
-  it('delegates to authClient.signUp and never provisions directly', async () => {
-    const { result } = renderHook(() => useAuthStore())
-    await act(() => result.current.signUp('doc@rezeta.app', 'securepass'))
-    expect(mocks.signUp).toHaveBeenCalledWith('doc@rezeta.app', 'securepass')
-    expect(mocks.apiPost).not.toHaveBeenCalled()
-    expect(result.current._pendingProfile).toBeNull()
-  })
-
-  it('captures the profile as pending instead of posting a second provision', async () => {
-    const { result } = renderHook(() => useAuthStore())
-    await act(() =>
-      result.current.signUp('doc@rezeta.app', 'securepass', { fullName: 'Dr. García' }),
-    )
-    expect(mocks.signUp).toHaveBeenCalledWith('doc@rezeta.app', 'securepass')
-    expect(mocks.apiPost).not.toHaveBeenCalled()
-    expect(result.current._pendingProfile).toEqual({ fullName: 'Dr. García' })
-  })
-
-  it('captures specialty in the pending profile', async () => {
-    const { result } = renderHook(() => useAuthStore())
-    await act(() =>
-      result.current.signUp('doc@rezeta.app', 'securepass', {
-        fullName: 'Dr. García',
-        specialty: 'Cardiología',
-      }),
-    )
-    expect(result.current._pendingProfile).toEqual({
-      fullName: 'Dr. García',
-      specialty: 'Cardiología',
-    })
-  })
-
-  it('_consumePendingProfile returns the profile once, then null', async () => {
-    const { result } = renderHook(() => useAuthStore())
-    await act(() => result.current.signUp('doc@rezeta.app', 'pw', { fullName: 'Dr. X' }))
-    let consumed: unknown
-    act(() => {
-      consumed = result.current._consumePendingProfile()
-    })
-    expect(consumed).toEqual({ fullName: 'Dr. X' })
-    expect(result.current._pendingProfile).toBeNull()
-    let again: unknown = 'sentinel'
-    act(() => {
-      again = result.current._consumePendingProfile()
-    })
-    expect(again).toBeNull()
-  })
-
-  it('clears the pending profile when authClient.signUp throws', async () => {
-    mocks.signUp.mockRejectedValue(new Error('email in use'))
-    const { result } = renderHook(() => useAuthStore())
-    await expect(
-      act(() => result.current.signUp('doc@rezeta.app', 'pw', { fullName: 'Dr. Y' })),
-    ).rejects.toThrow('email in use')
-    expect(result.current._pendingProfile).toBeNull()
   })
 })
 

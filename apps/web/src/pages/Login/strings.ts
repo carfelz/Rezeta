@@ -9,6 +9,4 @@ export const loginStrings = {
   fieldPasswordPlaceholder: '••••••••',
   submit: 'Iniciar sesión',
   submitting: 'Iniciando sesión...',
-  noAccount: '¿No tienes cuenta?',
-  signupLink: 'Regístrate',
 } as const

@@ -6,7 +6,6 @@ vi.mock('@/lib/auth', () => ({
     signOut: vi.fn().mockResolvedValue(undefined),
     onAuthStateChanged: vi.fn(),
     signIn: vi.fn(),
-    signUp: vi.fn(),
     errorCodeToMessage: vi.fn((c: string) => c),
   },
 }))

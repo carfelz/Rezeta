@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   SignInSchema,
-  SignUpSchema,
   TenantApiSchema,
   UpdateProfileSchema,
   UserApiSchema,
@@ -51,30 +50,6 @@ describe('TenantApiSchema', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
     })
     expect(parsed.name).toBe('Clínica Central')
-  })
-})
-
-describe('SignUpSchema', () => {
-  const base = {
-    fullName: 'Dr. Test',
-    email: 'doc@test.com',
-    password: 'Abcdef12',
-    confirmPassword: 'Abcdef12',
-  }
-
-  it('accepts matching strong passwords', () => {
-    expect(SignUpSchema.safeParse(base).success).toBe(true)
-  })
-
-  it('rejects mismatched passwords', () => {
-    expect(SignUpSchema.safeParse({ ...base, confirmPassword: 'Abcdef13' }).success).toBe(false)
-  })
-
-  it('rejects a weak password (no uppercase/number)', () => {
-    expect(
-      SignUpSchema.safeParse({ ...base, password: 'abcdefgh', confirmPassword: 'abcdefgh' })
-        .success,
-    ).toBe(false)
   })
 })
 

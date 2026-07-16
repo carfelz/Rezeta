@@ -1,81 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
-  SignUpSchema,
   SignInSchema,
   TenantApiSchema,
   UpdateProfileSchema,
   UserApiSchema,
 } from '../../src/schemas/auth.js'
 import { defaultCapabilitiesFor } from '../../src/permissions/capabilities.js'
-
-describe('SignUpSchema', () => {
-  const valid = {
-    fullName: 'Dra. María García',
-    specialty: 'Cardiología',
-    email: 'doctor@rezeta.app',
-    password: 'Secure123!',
-    confirmPassword: 'Secure123!',
-  }
-
-  it('accepts valid signup data', () => {
-    const result = SignUpSchema.parse(valid)
-    expect(result.email).toBe('doctor@rezeta.app')
-    expect(result.fullName).toBe('Dra. María García')
-  })
-
-  it('accepts signup without specialty (optional)', () => {
-    const { specialty: _, ...rest } = valid
-    const result = SignUpSchema.parse(rest)
-    expect(result.specialty).toBeUndefined()
-  })
-
-  it('rejects missing fullName', () => {
-    const { fullName: _, ...rest } = valid
-    expect(() => SignUpSchema.parse(rest)).toThrow()
-  })
-
-  it('rejects fullName shorter than 2 chars', () => {
-    expect(() => SignUpSchema.parse({ ...valid, fullName: 'A' })).toThrow()
-  })
-
-  it('rejects invalid email', () => {
-    expect(() => SignUpSchema.parse({ ...valid, email: 'not-an-email' })).toThrow()
-  })
-
-  it('rejects password shorter than 8 chars', () => {
-    expect(() =>
-      SignUpSchema.parse({ ...valid, password: 'Short1', confirmPassword: 'Short1' }),
-    ).toThrow()
-  })
-
-  it('rejects password longer than 128 chars', () => {
-    const longPwd = 'Aa1' + 'b'.repeat(126)
-    expect(() =>
-      SignUpSchema.parse({ ...valid, password: longPwd, confirmPassword: longPwd }),
-    ).toThrow()
-  })
-
-  it('rejects password without mix requirements', () => {
-    expect(() =>
-      SignUpSchema.parse({ ...valid, password: '12345678', confirmPassword: '12345678' }),
-    ).toThrow()
-  })
-
-  it('rejects password without uppercase', () => {
-    expect(() =>
-      SignUpSchema.parse({ ...valid, password: 'secure123!', confirmPassword: 'secure123!' }),
-    ).toThrow()
-  })
-
-  it('rejects mismatched passwords', () => {
-    expect(() => SignUpSchema.parse({ ...valid, confirmPassword: 'DifferentPass1!' })).toThrow()
-  })
-
-  it('rejects missing email', () => {
-    const { email: _, ...rest } = valid
-    expect(() => SignUpSchema.parse(rest)).toThrow()
-  })
-})
 
 describe('UpdateProfileSchema', () => {
   const valid = {

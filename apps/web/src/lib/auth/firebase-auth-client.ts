@@ -4,7 +4,6 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   type Auth,
 } from 'firebase/auth'
@@ -36,10 +35,6 @@ export class FirebaseAuthClient implements IAuthClient {
 
   async signIn(email: string, password: string): Promise<void> {
     await signInWithEmailAndPassword(this.auth, email, password)
-  }
-
-  async signUp(email: string, password: string): Promise<void> {
-    await createUserWithEmailAndPassword(this.auth, email, password)
   }
 
   async signOut(): Promise<void> {

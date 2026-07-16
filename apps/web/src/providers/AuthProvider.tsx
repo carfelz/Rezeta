@@ -22,13 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
 
         try {
           const { apiClient } = await import('@/lib/api-client')
-          // Include the signup profile (if this state change came from signUp),
-          // so provisioning creates the user with its name/specialty in one call.
-          const profile = useAuthStore.getState()._consumePendingProfile()
-          const body = profile
-            ? { fullName: profile.fullName, ...(profile.specialty ? { specialty: profile.specialty } : {}) }
-            : {}
-          const user = await apiClient.post<AuthUser>('/v1/auth/provision', body)
+          const user = await apiClient.post<AuthUser>('/v1/auth/provision', {})
           _setUser(user)
           _setStatus('authenticated')
         } catch (err) {

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { loginStrings } from '@/pages/Login/strings'
-import { signupStrings } from '@/pages/Signup/strings'
 import { protocolsStrings } from '@/pages/Protocols/strings'
 import { onboardingStrings } from '@/pages/Onboarding/strings'
 import { dashboardStrings } from '@/pages/Dashboard/strings'
@@ -14,17 +13,6 @@ import { protocolStatusLabel, PROTOCOL_STATUS_LABELS } from '@/lib/protocol-stat
 describe('loginStrings', () => {
   it('exports appName', () => {
     expect(loginStrings.appName).toBe('Rezeta')
-  })
-})
-
-describe('signupStrings', () => {
-  it('exports title', () => {
-    expect(signupStrings.title).toBeDefined()
-    expect(typeof signupStrings.title).toBe('string')
-  })
-
-  it('exports submit', () => {
-    expect(signupStrings.submit).toBeDefined()
   })
 })
 

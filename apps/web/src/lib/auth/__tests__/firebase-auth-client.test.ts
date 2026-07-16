@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const m = vi.hoisted(() => {
   const onAuthStateChanged = vi.fn()
   const signInWithEmailAndPassword = vi.fn()
-  const createUserWithEmailAndPassword = vi.fn()
   const signOut = vi.fn()
   const getAuth = vi.fn(() => ({ currentUser: null }))
   const initializeApp = vi.fn(() => ({ name: 'mock-app' }))
@@ -11,7 +10,6 @@ const m = vi.hoisted(() => {
   return {
     onAuthStateChanged,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut,
     getAuth,
     initializeApp,
@@ -23,7 +21,6 @@ vi.mock('firebase/auth', () => ({
   getAuth: m.getAuth,
   onAuthStateChanged: m.onAuthStateChanged,
   signInWithEmailAndPassword: m.signInWithEmailAndPassword,
-  createUserWithEmailAndPassword: m.createUserWithEmailAndPassword,
   signOut: m.signOut,
 }))
 
@@ -139,28 +136,6 @@ describe('FirebaseAuthClient', () => {
       m.signInWithEmailAndPassword.mockRejectedValue(err)
       await expect(client.signIn('a@b', 'pw')).rejects.toMatchObject({
         code: 'auth/user-not-found',
-      })
-    })
-  })
-
-  // ── signUp ─────────────────────────────────────────────────────────────────
-
-  describe('signUp', () => {
-    it('delegates to firebase createUserWithEmailAndPassword', async () => {
-      m.createUserWithEmailAndPassword.mockResolvedValue({ user: {} })
-      await client.signUp('a@b.com', 'pw')
-      expect(m.createUserWithEmailAndPassword).toHaveBeenCalledWith(
-        expect.anything(),
-        'a@b.com',
-        'pw',
-      )
-    })
-
-    it('propagates errors with code intact', async () => {
-      const err = Object.assign(new Error('exists'), { code: 'auth/email-already-in-use' })
-      m.createUserWithEmailAndPassword.mockRejectedValue(err)
-      await expect(client.signUp('a@b', 'pw')).rejects.toMatchObject({
-        code: 'auth/email-already-in-use',
       })
     })
   })

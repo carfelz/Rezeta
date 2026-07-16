@@ -22,7 +22,6 @@ vi.mock('@/lib/auth', () => ({
     },
     signOut: mocks.signOut,
     signIn: vi.fn(),
-    signUp: vi.fn(),
     getToken: vi.fn().mockResolvedValue(null),
     errorCodeToMessage: vi.fn((c: string) => c),
   },
@@ -108,50 +107,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() => expect(screen.getByText('withuser')).toBeInTheDocument())
   })
 
-  it('includes the pending signup profile in the single provision call and clears it', async () => {
-    const { useAuthStore } = await import('@/store/auth.store')
-    act(() => {
-      useAuthStore.setState({ _pendingProfile: { fullName: 'Dr. Nueva', specialty: 'Pediatría' } })
-    })
-    mocks.apiPost.mockResolvedValue({
-      id: 'u',
-      tenantId: 't',
-      email: 'doc@test.com',
-      fullName: 'Dr. Nueva',
-      role: 'super_admin',
-      externalUid: 'fb-uid',
-      specialty: 'Pediatría',
-      licenseNumber: null,
-      tenantSeededAt: null,
-    })
-
-    const session = { uid: 'fb-uid', email: 'doc@test.com' }
-    const { AuthProvider } = await import('../AuthProvider')
-    await act(async () => {
-      render(
-        <AuthProvider>
-          <span>profilecase</span>
-        </AuthProvider>,
-      )
-    })
-    await act(async () => {
-      mocks.onAuthStateChangedCb?.(session)
-      await Promise.resolve()
-    })
-    await waitFor(() =>
-      expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', {
-        fullName: 'Dr. Nueva',
-        specialty: 'Pediatría',
-      }),
-    )
-    expect(useAuthStore.getState()._pendingProfile).toBeNull()
-  })
-
-  it('provisions with only fullName when the pending profile has no specialty', async () => {
-    const { useAuthStore } = await import('@/store/auth.store')
-    act(() => {
-      useAuthStore.setState({ _pendingProfile: { fullName: 'Dr. Solo' } })
-    })
+  it('always provisions with an empty body (no signup-profile path)', async () => {
     mocks.apiPost.mockResolvedValue({
       id: 'u',
       tenantId: 't',
@@ -177,10 +133,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       mocks.onAuthStateChangedCb?.(session)
       await Promise.resolve()
     })
-    await waitFor(() =>
-      expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', { fullName: 'Dr. Solo' }),
-    )
-    expect(useAuthStore.getState()._pendingProfile).toBeNull()
+    await waitFor(() => expect(mocks.apiPost).toHaveBeenCalledWith('/v1/auth/provision', {}))
   })
 
   it('signs out when provision fails with an Error', async () => {
