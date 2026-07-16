@@ -18,6 +18,19 @@ export interface AuthUser {
   capabilities: CapabilityMap
 }
 
+/**
+ * A Rezeta platform-staff principal (control plane). Distinct from AuthUser:
+ * a PlatformUser has NO tenant, NO role, and NO capabilities — it exists only
+ * to administer institutions through the /v1/staff/* endpoints. Set on
+ * `request.platformUser` for @PlatformRoute() handlers; never alongside `user`.
+ */
+export interface PlatformPrincipal {
+  id: string
+  externalUid: string
+  email: string
+  fullName: string | null
+}
+
 export interface Tenant {
   id: string
   name: string | null // nullable until onboarding is complete
