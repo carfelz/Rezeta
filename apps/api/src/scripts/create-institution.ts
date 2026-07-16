@@ -1,0 +1,114 @@
+import { NestFactory } from '@nestjs/core'
+import type { CreateInstitutionDto, InstitutionCreatedDto } from '@rezeta/shared'
+import { AppModule } from '../app.module.js'
+import { StaffService } from '../modules/staff/index.js'
+import { PlatformUsersRepository } from '../modules/platform-users/index.js'
+import { AUTH_PROVIDER, type IAuthProvider } from '../lib/auth/index.js'
+
+export interface BootstrapArgs {
+  platformEmail: string
+  platformName: string | null
+  institution: CreateInstitutionDto | null
+}
+
+export interface BootstrapDeps {
+  authProvider: Pick<IAuthProvider, 'createUser' | 'generatePasswordResetLink'>
+  platformUsers: Pick<PlatformUsersRepository, 'create'>
+  staff: Pick<StaffService, 'createInstitution'>
+}
+
+export interface BootstrapResult {
+  platformUserId: string
+  setPasswordLink: string
+  institution: InstitutionCreatedDto | null
+}
+
+/**
+ * Parses `--platform-email` (required), `--platform-name` (optional), and the
+ * optional institution block (`--name`, `--type`, `--plan`, `--admin-name`,
+ * `--admin-email` — all required together). Value-set validation for the
+ * institution is delegated to CreateInstitutionSchema inside StaffService.
+ */
+export function parseArgs(argv: string[]): BootstrapArgs {
+  const map = new Map<string, string>()
+  for (const arg of argv) {
+    const match = /^--([^=]+)=(.*)$/.exec(arg)
+    if (match) map.set(match[1]!, match[2]!)
+  }
+  const platformEmail = map.get('platform-email')
+  if (!platformEmail || platformEmail.trim() === '') {
+    throw new Error('Missing required flag --platform-email')
+  }
+  const instKeys = ['name', 'type', 'plan', 'admin-name', 'admin-email']
+  const anyInst = instKeys.some((k) => map.has(k))
+  let institution: CreateInstitutionDto | null = null
+  if (anyInst) {
+    for (const k of instKeys) {
+      if (!map.get(k)) throw new Error(`Institution flag --${k} is required when creating one`)
+    }
+    institution = {
+      institutionName: map.get('name')!,
+      type: map.get('type')! as CreateInstitutionDto['type'],
+      plan: map.get('plan')! as CreateInstitutionDto['plan'],
+      adminFullName: map.get('admin-name')!,
+      adminEmail: map.get('admin-email')!,
+    }
+  }
+  return {
+    platformEmail,
+    platformName: map.get('platform-name') ?? null,
+    institution,
+  }
+}
+
+export async function bootstrapPlatform(
+  deps: BootstrapDeps,
+  args: BootstrapArgs,
+): Promise<BootstrapResult> {
+  // 1. Control-plane identity: Admin SDK user + platform_users row.
+  const { externalUid } = await deps.authProvider.createUser(args.platformEmail)
+  const platformUser = await deps.platformUsers.create({
+    externalUid,
+    email: args.platformEmail,
+    fullName: args.platformName,
+  })
+  const setPasswordLink = await deps.authProvider.generatePasswordResetLink(args.platformEmail)
+
+  // 2. Optionally create the first institution, attributed to this platform user.
+  let institution: InstitutionCreatedDto | null = null
+  if (args.institution) {
+    institution = await deps.staff.createInstitution(args.institution, platformUser.id)
+  }
+
+  return { platformUserId: platformUser.id, setPasswordLink, institution }
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2))
+  const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] })
+  try {
+    const deps: BootstrapDeps = {
+      authProvider: app.get<IAuthProvider>(AUTH_PROVIDER),
+      platformUsers: app.get(PlatformUsersRepository),
+      staff: app.get(StaffService),
+    }
+    const result = await bootstrapPlatform(deps, args)
+    console.log(
+      `✓ Platform user ${result.platformUserId} (${args.platformEmail}) created.\n` +
+        `  Set-password link: ${result.setPasswordLink}` +
+        (result.institution
+          ? `\n✓ Institution ${result.institution.tenantId}; super_admin ${result.institution.userId} (${result.institution.email})`
+          : ''),
+    )
+  } finally {
+    await app.close()
+  }
+}
+
+// Only self-invoke when run as a script (not when imported by tests).
+if (process.argv[1]?.endsWith('create-institution.ts')) {
+  main().catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
+}
