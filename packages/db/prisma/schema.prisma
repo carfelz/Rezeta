@@ -795,3 +795,21 @@ model Attachment {
   @@index([tenantId, entityType, entityId])
   @@map("attachments")
 }
+
+// Control-plane identity for Rezeta platform staff. Deliberately has NO
+// tenantId and NO relation to Tenant — a platform principal can never be
+// returned by a tenant-scoped query. See specs/updated-specs for the staff
+// platform design.
+model PlatformUser {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalUid String    @unique @map("external_uid") @db.VarChar(128)
+  email       String    @db.VarChar(320)
+  fullName    String?   @map("full_name") @db.VarChar(200)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([externalUid])
+  @@map("platform_users")
+}
