@@ -99,8 +99,9 @@ export class AuthController {
   /**
    * POST /v1/auth/provision
    *
-   * Idempotent. On first call: creates a Tenant + User atomically and returns the user.
-   * On repeat calls: returns the existing user unchanged.
+   * Idempotent. Resolves the existing User row for the verified token and
+   * returns it unchanged on every call. Never creates a Tenant or User —
+   * there is no public signup; unknown identities get USER_NOT_PROVISIONED.
    */
   @Post('provision')
   @ProvisionRoute()

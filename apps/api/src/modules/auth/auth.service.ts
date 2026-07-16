@@ -30,7 +30,10 @@ export class AuthService {
 
   /**
    * Idempotent provision: called by POST /v1/auth/provision.
-   * Returns the User row (existing or newly created) with tenant data.
+   * Resolves the pre-created User row (with tenant data) for a verified token.
+   * Never creates a tenant or user — users are created internally by an
+   * admin/staff (see UsersService.createUser); an unknown identity is rejected
+   * with USER_NOT_PROVISIONED.
    */
   async provision(verified: VerifiedToken, meta?: ProvisionMeta): Promise<UserWithTenant> {
     const user = await this.repository.provisionUser(verified)
