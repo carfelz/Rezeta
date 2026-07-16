@@ -32,12 +32,8 @@ export class AuthService {
    * Idempotent provision: called by POST /v1/auth/provision.
    * Returns the User row (existing or newly created) with tenant data.
    */
-  async provision(
-    verified: VerifiedToken,
-    meta?: ProvisionMeta,
-    profile?: { fullName?: string; specialty?: string },
-  ): Promise<UserWithTenant> {
-    const user = await this.repository.provisionUser(verified, profile)
+  async provision(verified: VerifiedToken, meta?: ProvisionMeta): Promise<UserWithTenant> {
+    const user = await this.repository.provisionUser(verified)
     void this.auditLog.record({
       tenantId: user.tenantId,
       actorUserId: user.id,

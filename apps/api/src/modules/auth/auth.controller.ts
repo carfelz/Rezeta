@@ -108,20 +108,21 @@ export class AuthController {
   @ApiBearerAuth(AUTH_BEARER_SCHEME)
   @ApiSecurity(AUTH_OAUTH2_SCHEME)
   @ApiOperation({
-    summary: 'Provision user + tenant',
+    summary: 'Resolve the provisioned user',
     description:
-      'Idempotent. Creates a Tenant + User on first call; returns the existing user on ' +
-      'subsequent calls. Must be called once after signup before any other endpoint.',
+      'Resolves the User row for the verified bearer token. Users are provisioned ' +
+      'internally by an admin (POST /v1/users) — this endpoint does not create a Tenant ' +
+      'or User; it rejects USER_NOT_PROVISIONED if no row exists yet for this token.',
   })
   @ApiResponse({
     status: 200,
-    description: 'The provisioned (or existing) user.',
+    description: 'The resolved user.',
     schema: { $ref: '#/components/schemas/AuthUser' },
   })
+  @ApiResponse({ status: 401, description: 'USER_NOT_PROVISIONED — no User row for this token.' })
   async provision(
     @VerifiedTokenParam() verified: VerifiedToken,
     @Req() req: Request,
-    @Body() body: Record<string, unknown>,
   ): Promise<AuthUser> {
     const meta = {
       ...(req.ip ? { ip: req.ip } : {}),
@@ -132,15 +133,7 @@ export class AuthController {
         ? { requestId: req.headers['x-request-id'] }
         : {}),
     }
-    const profile = {
-      ...(typeof body['fullName'] === 'string' ? { fullName: body['fullName'] } : {}),
-      ...(typeof body['specialty'] === 'string' ? { specialty: body['specialty'] } : {}),
-    }
-    const user = await this.service.provision(
-      verified,
-      meta,
-      Object.keys(profile).length ? profile : undefined,
-    )
+    const user = await this.service.provision(verified, meta)
     return this.service.toAuthUser(user)
   }
 

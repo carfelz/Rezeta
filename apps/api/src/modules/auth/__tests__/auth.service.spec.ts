@@ -14,6 +14,8 @@ const mockAuthProvider = {
   signInWithPassword: vi.fn(),
   revokeUserSessions: vi.fn(),
   deleteUser: vi.fn(),
+  createUser: vi.fn(),
+  generatePasswordResetLink: vi.fn(),
 }
 
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
@@ -65,7 +67,7 @@ describe('AuthService', () => {
       const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       const result = await service.provision(verified)
       expect(result).toEqual(baseUser)
-      expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified, undefined)
+      expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified)
     })
 
     it('records login audit event after successful provision', async () => {
