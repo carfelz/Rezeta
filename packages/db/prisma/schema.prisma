@@ -45,6 +45,7 @@ model Tenant {
   labOrders           LabOrder[]
   auditLogs           AuditLog[]
   attachments         Attachment[]
+  rolePermissions     RolePermission[]
 
   @@map("tenants")
 }
@@ -88,6 +89,22 @@ model User {
   @@index([externalUid])
   @@index([tenantId, deletedAt])
   @@map("users")
+}
+
+model RolePermission {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  role        String   @db.VarChar(50)
+  moduleKey   String   @map("module_key") @db.VarChar(50)
+  accessLevel String   @map("access_level") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, role, moduleKey])
+  @@index([tenantId])
+  @@map("role_permissions")
 }
 
 model Location {
