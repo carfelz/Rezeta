@@ -121,6 +121,8 @@ describe('AuthService', () => {
         licenseNumber: 'MED-001',
         tenantSeededAt: '2026-01-01T00:00:00.000Z',
       })
+      expect(auth.capabilities.patients).toBe('manage') // super_admin default
+      expect(auth.capabilities.users).toBe('manage') // super_admin default
     })
 
     it('returns null tenantSeededAt when seededAt is null', () => {

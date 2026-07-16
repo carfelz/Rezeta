@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BadRequestException } from '@nestjs/common'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { AuthController } from '../auth.controller.js'
 
 const mockService = {
@@ -31,6 +32,7 @@ const authUser = {
   licenseNumber: null,
   tenantSeededAt: '2026-01-01T00:00:00.000Z',
   preferences: {},
+  capabilities: defaultCapabilitiesFor('super_admin'),
 }
 
 describe('AuthController', () => {

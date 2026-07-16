@@ -1,7 +1,7 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { AuthUser, UserPreferences } from '@rezeta/shared'
-import { UserPreferencesSchema, ErrorCode } from '@rezeta/shared'
+import { UserPreferencesSchema, ErrorCode, defaultCapabilitiesFor } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
@@ -87,6 +87,7 @@ export class AuthService {
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
       preferences: parsePreferences(user.preferences),
+      capabilities: defaultCapabilitiesFor(user.role as AuthUser['role']),
     }
   }
 }

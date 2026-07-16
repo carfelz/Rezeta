@@ -179,6 +179,11 @@ export class AuthController {
         specialty: { type: 'string', nullable: true, example: 'Cardiología' },
         licenseNumber: { type: 'string', nullable: true, example: '12345-DR' },
         tenantSeededAt: { type: 'string', format: 'date-time', nullable: true },
+        capabilities: {
+          type: 'object',
+          additionalProperties: { type: 'string', enum: ['none', 'view', 'manage'] },
+          example: { patients: 'manage', users: 'none' },
+        },
       },
     },
   })

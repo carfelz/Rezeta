@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-15] Permission catalog + RolePermission + capability resolution
+
+### Added
+
+- Shared permission catalog (`packages/shared/src/permissions/catalog.ts`) with `AccessLevel`, `SectionKey`, `ModuleKey`, `MODULE_KEYS`, and `PERMISSION_CATALOG` default matrix; capability helpers (`capabilities.ts`) `hasCapability` and `defaultCapabilitiesFor`.
+- `RolePermission` Prisma model (`role_permissions` table), with migration `20260716030735_add_role_permissions`.
+- `PermissionsModule` (`apps/api/src/modules/permissions/`) with `resolveCapabilities` (catalog defaults merged with stored rows) and `seedDefaults`, hooked into `TenantSeedingService`.
+
+### Changed
+
+- `AuthUser` and `UserApiSchema` now carry `capabilities`.
+- `AuthGuard` resolves and attaches `capabilities` to `request.user`; `AuthService.toAuthUser` and `GET /v1/auth/me` (with its Swagger example) return it.
+
 ## [2026-07-15] Roles foundation (permissions slice 1)
 
 ### Added
