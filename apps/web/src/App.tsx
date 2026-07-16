@@ -1,8 +1,10 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { StaffLayout } from '@/components/layout/StaffLayout'
 import { AuthGate } from '@/components/auth/AuthGate'
 import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
 import { RequireCan } from '@/components/auth/RequireCan'
+import { RequirePlatform } from '@/components/auth/RequirePlatform'
 import { Dashboard } from '@/pages/Dashboard'
 import { Schedule } from '@/pages/Schedule'
 import { Patients } from '@/pages/Patients'
@@ -30,6 +32,7 @@ import { NotFound } from '@/pages/NotFound'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
+import { NewInstitution } from '@/pages/staff/NewInstitution'
 
 const router = createBrowserRouter([
   // ── Public-only routes (redirect authenticated users away) ────────────────
@@ -258,6 +261,26 @@ const router = createBrowserRouter([
           </RequireCan>
         ),
       },
+    ],
+  },
+
+  // ── Staff console (platform staff only; separate from the institution app
+  //    shell). Deliberately NOT wrapped in AuthGate: a platform-staff Firebase
+  //    identity 401s on POST /v1/auth/provision (there is no institution User
+  //    row for a PlatformUser), which settles the institution auth store's
+  //    status to 'unauthenticated' for legitimate staff too — AuthGate would
+  //    redirect them to /login before RequirePlatform's own GET /v1/staff/me
+  //    check ever runs. RequirePlatform is the sole client-side gate here. ──
+  {
+    element: (
+      <RequirePlatform>
+        <StaffLayout />
+      </RequirePlatform>
+    ),
+    errorElement: <NotFound />,
+    children: [
+      { path: 'staff', element: <Navigate to="/staff/institutions/new" replace /> },
+      { path: 'staff/institutions/new', element: <NewInstitution /> },
     ],
   },
 
