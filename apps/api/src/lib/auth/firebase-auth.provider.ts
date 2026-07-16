@@ -152,4 +152,41 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
   }
+
+  async createUser(email: string): Promise<{ externalUid: string }> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    try {
+      const record = await this.app.auth().createUser({ email })
+      return { externalUid: record.uid }
+    } catch (err) {
+      this.logger.error(`Failed to create user ${email}: ${(err as Error).message}`)
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Failed to create user in auth provider',
+      })
+    }
+  }
+
+  async generatePasswordResetLink(email: string): Promise<string> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    try {
+      return await this.app.auth().generatePasswordResetLink(email)
+    } catch (err) {
+      this.logger.error(`Failed to generate reset link for ${email}: ${(err as Error).message}`)
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Failed to generate set-password link',
+      })
+    }
+  }
 }

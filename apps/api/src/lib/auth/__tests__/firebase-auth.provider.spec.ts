@@ -6,10 +6,14 @@ const m = vi.hoisted(() => {
   const mockVerifyIdToken = vi.fn()
   const mockRevokeRefreshTokens = vi.fn()
   const mockDeleteUser = vi.fn()
+  const mockCreateUser = vi.fn()
+  const mockGeneratePasswordResetLink = vi.fn()
   const mockAuth = vi.fn(() => ({
     verifyIdToken: mockVerifyIdToken,
     revokeRefreshTokens: mockRevokeRefreshTokens,
     deleteUser: mockDeleteUser,
+    createUser: mockCreateUser,
+    generatePasswordResetLink: mockGeneratePasswordResetLink,
   }))
   const mockInitializeApp = vi.fn()
   const mockCert = vi.fn((c: unknown) => c)
@@ -18,6 +22,8 @@ const m = vi.hoisted(() => {
     mockVerifyIdToken,
     mockRevokeRefreshTokens,
     mockDeleteUser,
+    mockCreateUser,
+    mockGeneratePasswordResetLink,
     mockAuth,
     mockInitializeApp,
     mockCert,
@@ -39,6 +45,8 @@ const {
   mockVerifyIdToken,
   mockRevokeRefreshTokens,
   mockDeleteUser,
+  mockCreateUser,
+  mockGeneratePasswordResetLink,
   mockInitializeApp,
   mockCert,
   mockApps,
@@ -323,6 +331,72 @@ describe('FirebaseAuthProvider', () => {
       provider.onModuleInit()
       mockDeleteUser.mockRejectedValue(new Error('boom'))
       await expect(provider.deleteUser('uid')).rejects.toThrow(InternalServerErrorException)
+    })
+  })
+
+  // ── createUser ─────────────────────────────────────────────────────────────
+
+  describe('createUser', () => {
+    it('throws InternalServerError when app not initialized', async () => {
+      provider = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(provider.createUser('nurse@clinic.do')).rejects.toThrow(
+        InternalServerErrorException,
+      )
+    })
+
+    it('creates the identity and returns its uid', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockCreateUser.mockResolvedValue({ uid: 'fb-new' })
+      const result = await provider.createUser('nurse@clinic.do')
+      expect(mockCreateUser).toHaveBeenCalledWith({ email: 'nurse@clinic.do' })
+      expect(result).toEqual({ externalUid: 'fb-new' })
+    })
+
+    it('wraps SDK errors in InternalServerErrorException', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockCreateUser.mockRejectedValue(new Error('boom'))
+      await expect(provider.createUser('nurse@clinic.do')).rejects.toThrow(
+        InternalServerErrorException,
+      )
+    })
+  })
+
+  // ── generatePasswordResetLink ────────────────────────────────────────────────
+
+  describe('generatePasswordResetLink', () => {
+    it('throws InternalServerError when app not initialized', async () => {
+      provider = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(provider.generatePasswordResetLink('nurse@clinic.do')).rejects.toThrow(
+        InternalServerErrorException,
+      )
+    })
+
+    it('returns the link from the Admin SDK', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGeneratePasswordResetLink.mockResolvedValue('https://reset.example/abc')
+      const link = await provider.generatePasswordResetLink('nurse@clinic.do')
+      expect(mockGeneratePasswordResetLink).toHaveBeenCalledWith('nurse@clinic.do')
+      expect(link).toBe('https://reset.example/abc')
+    })
+
+    it('wraps SDK errors in InternalServerErrorException', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGeneratePasswordResetLink.mockRejectedValue(new Error('boom'))
+      await expect(provider.generatePasswordResetLink('nurse@clinic.do')).rejects.toThrow(
+        InternalServerErrorException,
+      )
     })
   })
 })

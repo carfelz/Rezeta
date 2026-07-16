@@ -41,4 +41,17 @@ export interface IAuthProvider {
    * This does NOT delete the User row in Postgres — that is the caller's responsibility.
    */
   deleteUser(externalUid: string): Promise<void>
+
+  /**
+   * Create an identity record in the auth provider for an invited user.
+   * Returns the provider UID to store on the User row. No password is set —
+   * the user establishes one via the set-password link (generatePasswordResetLink).
+   */
+  createUser(email: string): Promise<{ externalUid: string }>
+
+  /**
+   * Generate a set-password / first-login link (a password-reset link) for the
+   * given email. The caller emails it (or, in dev, logs it).
+   */
+  generatePasswordResetLink(email: string): Promise<string>
 }
