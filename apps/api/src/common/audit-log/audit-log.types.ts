@@ -22,6 +22,9 @@ export type AuditAuthAction =
   | 'session_revoked'
   | 'permission_granted'
   | 'permission_revoked'
+  | 'role_changed'
+  | 'user_invited'
+  | 'user_deactivated'
 
 export type AuditCommunicationAction =
   | 'email_queued'
