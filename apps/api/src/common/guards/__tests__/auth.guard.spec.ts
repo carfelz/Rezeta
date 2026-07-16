@@ -175,7 +175,7 @@ describe('AuthGuard', () => {
     mockUsers.findByExternalUid.mockResolvedValue(user)
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await guard.canActivate(ctx as never)
-    expect(mockUsers.markSignedIn).toHaveBeenCalledWith(user.id)
+    expect(mockUsers.markSignedIn).toHaveBeenCalledWith(user.id, user.tenantId)
   })
 
   it('does not re-stamp lastLoginAt once set', async () => {

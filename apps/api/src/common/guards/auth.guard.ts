@@ -97,7 +97,7 @@ export class AuthGuard implements CanActivate {
     }
 
     if (user.lastLoginAt === null) {
-      void this.users.markSignedIn(user.id)
+      void this.users.markSignedIn(user.id, user.tenantId)
     }
 
     const role = user.role as AuthUser['role']

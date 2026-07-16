@@ -85,6 +85,19 @@ describe('UsersRepository', () => {
     })
   })
 
+  // ── markSignedIn ───────────────────────────────────────────────────────────
+
+  describe('markSignedIn', () => {
+    it('stamps lastLoginAt scoped by id and tenantId', async () => {
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 })
+      await repo.markSignedIn('u1', 't1')
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'u1', tenantId: 't1' },
+        data: { lastLoginAt: expect.any(Date) },
+      })
+    })
+  })
+
   // ── findByExternalUid ──────────────────────────────────────────────────────
 
   describe('findByExternalUid', () => {

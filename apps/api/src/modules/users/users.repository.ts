@@ -49,8 +49,11 @@ export class UsersRepository {
     })
   }
 
-  async markSignedIn(id: string): Promise<void> {
-    await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } })
+  async markSignedIn(id: string, tenantId: string): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { id, tenantId },
+      data: { lastLoginAt: new Date() },
+    })
   }
 
   async findByExternalUid(externalUid: string): Promise<UserWithTenant | null> {
