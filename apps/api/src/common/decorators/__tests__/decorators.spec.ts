@@ -3,6 +3,7 @@ import { IS_PUBLIC_KEY, Public } from '../public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY, ProvisionRoute } from '../provision-route.decorator.js'
 import { TenantId } from '../tenant-id.decorator.js'
 import { CurrentUser } from '../current-user.decorator.js'
+import { PERMISSION_KEY, RequirePermission } from '../require-permission.decorator.js'
 
 describe('Public decorator', () => {
   it('sets IS_PUBLIC_KEY metadata to true', () => {
@@ -51,5 +52,27 @@ describe('TenantId decorator', () => {
 describe('CurrentUser decorator', () => {
   it('is defined', () => {
     expect(CurrentUser).toBeDefined()
+  })
+})
+
+describe('RequirePermission decorator', () => {
+  it('PERMISSION_KEY equals requiredPermission', () => {
+    expect(PERMISSION_KEY).toBe('requiredPermission')
+  })
+
+  it('sets PERMISSION_KEY metadata to { module, level }', () => {
+    const decorator = RequirePermission('patients', 'manage')
+    const target = {}
+    const descriptor = Object.getOwnPropertyDescriptor(target, 'method') ?? {
+      value: function () {},
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    }
+    decorator(target, 'method', descriptor)
+    expect(Reflect.getMetadata(PERMISSION_KEY, descriptor.value)).toEqual({
+      module: 'patients',
+      level: 'manage',
+    })
   })
 })
