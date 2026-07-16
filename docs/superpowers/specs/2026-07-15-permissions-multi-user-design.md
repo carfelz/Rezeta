@@ -13,8 +13,9 @@ per-institution permission matrix, internal (non-self-service) user creation, an
 a cross-institution **platform** layer operated by Rezeta staff.
 
 Nothing here changes the multi-tenancy invariant: every record still carries
-`tenant_id` and every repository still filters by it. The one deliberate
-exception is the platform admin (§8), which is isolated and audited.
+`tenant_id` and every repository still filters by it. Platform staff (§8) live in
+a separate `PlatformUser` table and reach only their own `/v1/staff/*` endpoints,
+so the tenant-scoped data path is never widened for them.
 
 ## 2. Decisions (locked)
 
@@ -28,8 +29,10 @@ the implementation plans:
    `super_admin` from the staff platform (§7).
 3. **Four institution roles, one per user**, ordered by privilege rank:
    `assistant` (1) < `doctor` (2) < `admin` (3) < `super_admin` (4).
-4. **Platform admin is a separate, cross-institution concept** (§8), not one of the
-   four institution roles. Built in this milestone ("owner + full platform admin").
+4. **Platform staff are a separate identity table** (§8), not one of the four
+   institution roles and not a flag on `User`. Rezeta staff live in a `PlatformUser`
+   table (no `tenant_id`) — the control plane — kept fully distinct from institution
+   users. Built in this milestone.
 5. **Per-institution editable permissions.** Each institution stores and can edit
    its own role→permission mappings, seeded from a code-defined catalog.
 6. **Section-level control is a bulk-apply convenience**, not a stored tier
@@ -192,22 +195,37 @@ point into the system and is therefore in scope for this milestone.
 - **Create institution:** staff supply institution name, type, plan, and the
   initial `super_admin`'s name + email. This creates the `Tenant`, seeds its
   `RolePermission` rows and starter data, and creates the initial `super_admin`
-  user via the §5.2 flow (Admin SDK + set-password email).
-- For dev bootstrapping before the staff UI exists, a seed/CLI performs the same
-  operation.
+  user via the §5.2 flow (Admin SDK + set-password email). The actor is a
+  `PlatformUser` (§8), so `createUser` is called with a null institution actor and
+  `bypassRankCheck`.
+- All staff endpoints live under `/v1/staff/*`, marked `@PlatformRoute()`.
+- For dev bootstrapping before the staff UI exists, a seed/CLI creates the first
+  `PlatformUser` and the first institution.
 
-## 8. Platform admin (cross-institution)
+## 8. Platform staff identity (`PlatformUser`)
 
-A Rezeta-staff capability that operates across tenants — the one deliberate break
-in tenant isolation.
+Rezeta staff are modeled as a **separate table**, `PlatformUser` — the control
+plane — kept fully distinct from institution `User` rows. This is the standard
+control-plane / data-plane separation, chosen over an `isPlatformAdmin` flag so a
+platform principal can never be returned by a tenant-scoped query.
 
-- Modeled as `User.isPlatformAdmin` (boolean) plus a dedicated guard path that,
-  for platform-admin requests, does not apply the tenant filter.
-- Cross-tenant access is explicit (staff select the target institution) and
-  **always audited** with the acting user and target tenant.
-- This is the highest-risk slice; it is built last and kept isolated from the
-  normal request path so the default "every query filters `tenant_id`" guarantee
-  is never weakened for ordinary users.
+- `PlatformUser` has **no `tenant_id`**; it carries its own `externalUid`, email,
+  name, and active flag.
+- A verified token resolves to **either** a `PlatformUser` **or** an institution
+  `User`, never both. Routes marked `@PlatformRoute()` resolve the platform
+  identity into `request.platformUser`; all other routes resolve the institution
+  identity into `request.user`.
+- **Isolation guarantee (stronger than a bypass):** platform principals do not
+  access tenant-scoped endpoints at all. A platform token hitting a tenant route
+  resolves no institution `User` and is rejected (401). A tenant user hitting a
+  `/v1/staff/*` route is rejected by `PlatformGuard`. There is **no
+  `X-Target-Tenant` bypass** and no weakening of the "every query filters
+  `tenant_id`" invariant for ordinary users.
+- Staff operate only on `/v1/staff/*` endpoints, whose services perform their
+  (cross-tenant by nature) writes — e.g. creating an institution — directly and
+  **audited**, with the acting `PlatformUser` recorded.
+- This is the highest-risk slice; it is built last and owns all platform identity
+  end to end.
 
 ## 9. Enforcement
 
@@ -221,7 +239,10 @@ in tenant isolation.
   require `manage`, against the module that owns them.
 - New `ErrorCode.INSUFFICIENT_PERMISSION` (closed enum in
   `packages/shared/src/errors.ts`). Returns HTTP 403.
-- Platform-admin requests bypass tenant + permission checks via the §8 path.
+- Staff routes are marked `@PlatformRoute()` and carry no `@RequirePermission`;
+  `PermissionGuard` and `TenantGuard` skip them, and a `PlatformGuard` requires a
+  `PlatformUser` (§8). Guard order: `AuthGuard → PlatformGuard → TenantGuard →
+  PermissionGuard`.
 
 ### 9.2 Frontend
 
@@ -237,7 +258,8 @@ Reuse the reserved audit actions and add the missing ones:
 
 - Existing: `permission_granted`, `permission_revoked`.
 - Add: `role_changed`, `user_invited`, `user_deactivated`.
-- Platform-admin cross-tenant access is always recorded (actor + target tenant).
+- Institution creation by staff is always recorded, with the acting `PlatformUser`
+  captured in the audit metadata.
 
 ## 11. Pricing (out of scope, model-ready)
 
@@ -262,8 +284,9 @@ One design doc, implemented in ordered slices — each its own plan/PR:
    SDK + role select + set-password email; Users module UI.
 6. **Permissions module** — matrix UI (per-module + section bulk-apply) + edit
    endpoints + rank rule.
-7. **Staff platform + platform admin** — create-institution flow + cross-
-   institution admin. Isolation-sensitive; may warrant its own follow-up spec.
+7. **Staff platform + `PlatformUser`** — `PlatformUser` table + identity
+   resolution (`@PlatformRoute`, `PlatformGuard`) + create-institution flow + CLI
+   bootstrap + staff console. Isolation-sensitive; owns all platform identity.
 
 ## 13. Non-goals (this milestone)
 
@@ -272,3 +295,7 @@ One design doc, implemented in ordered slices — each its own plan/PR:
 - Inherited section tiers (section is bulk-apply only).
 - Custom institution-defined roles beyond the four.
 - Cross-tenant sharing of clinical data between institutions.
+- **Cross-tenant access to institution data by platform staff** (support
+  impersonation). Staff act only on `/v1/staff/*` administration endpoints; viewing
+  or editing a specific institution's clinical data is a future, separately
+  designed feature.

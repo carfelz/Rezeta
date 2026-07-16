@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a code-defined permission catalog and a per-tenant editable `RolePermission` table, seed its defaults on tenant creation, and surface the resolved capability map (plus a platform-admin flag) on every authenticated request and on `GET /v1/auth/me`.
+**Goal:** Add a code-defined permission catalog and a per-tenant editable `RolePermission` table, seed its defaults on tenant creation, and surface the resolved capability map on every authenticated request and on `GET /v1/auth/me`.
 
-**Architecture:** A static catalog in `packages/shared` defines `section → module` structure and each module's default access level per role. A new `RolePermission` Prisma table stores per-tenant overrides. A backend `PermissionsService.resolveCapabilities` merges catalog defaults with stored rows (stored wins; missing → default) and `PermissionsService.seedDefaults` writes the full default matrix inside the existing tenant-seeding transaction. `AuthGuard` attaches the resolved `capabilities` map and `isPlatformAdmin` to `request.user`; `/auth/me` returns them.
+**Architecture:** A static catalog in `packages/shared` defines `section → module` structure and each module's default access level per role. A new `RolePermission` Prisma table stores per-tenant overrides. A backend `PermissionsService.resolveCapabilities` merges catalog defaults with stored rows (stored wins; missing → default) and `PermissionsService.seedDefaults` writes the full default matrix inside the existing tenant-seeding transaction. `AuthGuard` attaches the resolved `capabilities` map to `request.user`; `/auth/me` returns it. All platform-admin identity is owned by Slice 7 (separate `PlatformUser` control-plane table) and is out of scope here.
 
 **Tech Stack:** TypeScript (ESM, `.js` import specifiers), NestJS + Prisma (`@rezeta/db`), Zod (`@rezeta/shared`), PostgreSQL, Vitest.
 
@@ -24,26 +24,17 @@
 
 ---
 
-### Task 1: Prisma schema — `RolePermission` model + `User.isPlatformAdmin` + migration
+### Task 1: Prisma schema — `RolePermission` model + migration
 
 **Files:**
-- Modify: `packages/db/prisma/schema.prisma` (User model ~line 52, Tenant model ~line 18, add new `RolePermission` model)
-- Create: `packages/db/prisma/migrations/20260715010000_add_role_permissions_and_platform_admin/migration.sql`
+- Modify: `packages/db/prisma/schema.prisma` (Tenant model ~line 18, add new `RolePermission` model)
+- Create: `packages/db/prisma/migrations/20260715010000_add_role_permissions/migration.sql`
 
 **Interfaces:**
 - Consumes: nothing (foundation task).
-- Produces: Prisma models `RolePermission` (fields `id`, `tenantId`, `role`, `moduleKey`, `accessLevel`, `createdAt`, `updatedAt`) and `User.isPlatformAdmin: boolean`. Generated client exposes `prisma.rolePermission` and `tx.rolePermission.createMany`/`findMany`.
+- Produces: Prisma model `RolePermission` (fields `id`, `tenantId`, `role`, `moduleKey`, `accessLevel`, `createdAt`, `updatedAt`). Generated client exposes `prisma.rolePermission` and `tx.rolePermission.createMany`/`findMany`. (Platform-admin identity is NOT part of this slice — Slice 7 owns the separate `PlatformUser` control-plane table.)
 
-- [ ] **Step 1: Add `isPlatformAdmin` to the `User` model**
-
-In `packages/db/prisma/schema.prisma`, inside `model User`, add the field directly after the `isActive` line (line 61):
-
-```prisma
-  isActive        Boolean   @default(true) @map("is_active")
-  isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
-```
-
-- [ ] **Step 2: Add the `RolePermission` model and the `Tenant` relation**
+- [ ] **Step 1: Add the `RolePermission` model and the `Tenant` relation**
 
 Add the `rolePermissions` relation to `model Tenant` (inside the relations block, after `attachments`):
 
@@ -73,27 +64,24 @@ model RolePermission {
 }
 ```
 
-- [ ] **Step 3: Verify the schema is valid**
+- [ ] **Step 2: Verify the schema is valid**
 
 Run: `pnpm --filter @rezeta/db exec prisma validate`
 Expected: `The schema at prisma/schema.prisma is valid 🚀`
 
-- [ ] **Step 4: Write the migration SQL**
+- [ ] **Step 3: Write the migration SQL**
 
 > **Ordering:** this migration's timestamp (`20260715010000`) must sort **after**
 > Slice 1's `20260715000000_role_owner_to_super_admin`, since the default matrix
 > and seeding assume the four-role vocabulary is already live. Keep the `010000`
 > suffix (or later) if Slice 1's timestamp changes.
 
-Create `packages/db/prisma/migrations/20260715010000_add_role_permissions_and_platform_admin/migration.sql`:
+Create `packages/db/prisma/migrations/20260715010000_add_role_permissions/migration.sql`:
 
 ```sql
--- Add the cross-institution platform-admin flag on users and the per-tenant,
--- editable role -> module permission table. Columns are plain VARCHAR (no DB
--- enums), matching the existing users.role convention; values are validated in
--- application code against the shared permission catalog.
-
-ALTER TABLE "users" ADD COLUMN "is_platform_admin" BOOLEAN NOT NULL DEFAULT false;
+-- Add the per-tenant, editable role -> module permission table. Columns are plain
+-- VARCHAR (no DB enums), matching the existing users.role convention; values are
+-- validated in application code against the shared permission catalog.
 
 CREATE TABLE "role_permissions" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -114,21 +102,21 @@ CREATE INDEX "role_permissions_tenant_id_idx" ON "role_permissions"("tenant_id")
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ```
 
-- [ ] **Step 5: Regenerate the Prisma client and apply the migration**
+- [ ] **Step 4: Regenerate the Prisma client and apply the migration**
 
 Run: `pnpm --filter @rezeta/db generate`
-Expected: `Generated Prisma Client` — no errors. This makes `prisma.rolePermission` and `User.isPlatformAdmin` available to TypeScript.
+Expected: `Generated Prisma Client` — no errors. This makes `prisma.rolePermission` available to TypeScript.
 
 Then, against a running dev database:
 
 Run: `pnpm --filter @rezeta/db migrate:deploy`
-Expected: `1 migration found` / `Applying migration 20260715010000_add_role_permissions_and_platform_admin` / `All migrations have been successfully applied.` (If no DB is reachable in this environment, generate alone unblocks the typechecked tasks; apply the migration before merging.)
+Expected: `1 migration found` / `Applying migration 20260715010000_add_role_permissions` / `All migrations have been successfully applied.` (If no DB is reachable in this environment, generate alone unblocks the typechecked tasks; apply the migration before merging.)
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add packages/db/prisma/schema.prisma packages/db/prisma/migrations/20260715010000_add_role_permissions_and_platform_admin
-git commit -m "feat(db): add RolePermission model and User.isPlatformAdmin"
+git add packages/db/prisma/schema.prisma packages/db/prisma/migrations/20260715010000_add_role_permissions
+git commit -m "feat(db): add RolePermission model"
 ```
 
 ---
@@ -581,7 +569,7 @@ git commit -m "feat(shared): add capability map helpers and export permissions b
 
 **Interfaces:**
 - Consumes: `CapabilityMap` from `../permissions/capabilities.js`; `UserRole` (already in `types/auth.ts` from Slice 1).
-- Produces: `AuthUser` gains `capabilities: CapabilityMap` and `isPlatformAdmin: boolean` (both required). `UserApiSchema` gains `capabilities` (record of module → access level) and `isPlatformAdmin: boolean`. `UserApiDto` inferred type updated accordingly.
+- Produces: `AuthUser` gains `capabilities: CapabilityMap` (required). `UserApiSchema` gains `capabilities` (record of module → access level). `UserApiDto` inferred type updated accordingly.
 
 - [ ] **Step 1: Write the failing schema test**
 
@@ -607,20 +595,18 @@ const validUser = {
   specialty: 'Cardiología',
   licenseNumber: 'MED-001',
   isActive: true,
-  isPlatformAdmin: false,
   capabilities: { patients: 'manage', users: 'none' },
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
 describe('UserApiSchema', () => {
-  it('accepts a user with capabilities and isPlatformAdmin', () => {
+  it('accepts a user with capabilities', () => {
     const parsed = UserApiSchema.parse(validUser)
     expect(parsed.capabilities.patients).toBe('manage')
-    expect(parsed.isPlatformAdmin).toBe(false)
   })
 
-  it('rejects a missing isPlatformAdmin', () => {
-    const { isPlatformAdmin: _omit, ...rest } = validUser
+  it('rejects a missing capabilities', () => {
+    const { capabilities: _omit, ...rest } = validUser
     expect(UserApiSchema.safeParse(rest).success).toBe(false)
   })
 
@@ -703,32 +689,31 @@ describe('UpdateProfileSchema', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm --filter @rezeta/shared exec vitest run src/schemas/__tests__/auth.spec.ts`
-Expected: FAIL — the `UserApiSchema` tests fail because `capabilities`/`isPlatformAdmin` are not yet in the schema (the "rejects a missing isPlatformAdmin" case passes for the wrong reason; the "accepts a user with capabilities" case throws on the unknown-but-fine extra keys only if strict — it will fail on `parsed.isPlatformAdmin` being `undefined`).
+Expected: FAIL — the `UserApiSchema` tests fail because `capabilities` is not yet in the schema (the "rejects a missing capabilities" case passes for the wrong reason; the "accepts a user with capabilities" case fails on `parsed.capabilities` being `undefined`).
 
-- [ ] **Step 3: Add the fields to `AuthUser`**
+- [ ] **Step 3: Add the field to `AuthUser`**
 
-In `packages/shared/src/types/auth.ts`, add the `CapabilityMap` import at the top (after the existing `UserPreferences` import) and two fields to `AuthUser`:
+In `packages/shared/src/types/auth.ts`, add the `CapabilityMap` import at the top (after the existing `UserPreferences` import) and one field to `AuthUser`:
 
 ```ts
 import type { UserPreferences } from '../schemas/user-preferences.js'
 import type { CapabilityMap } from '../permissions/capabilities.js'
 ```
 
-Add the two fields at the end of the `AuthUser` interface (after `preferences`):
+Add the field at the end of the `AuthUser` interface (after `preferences`):
 
 ```ts
   tenantPlan?: string
   preferences: UserPreferences
   capabilities: CapabilityMap
-  isPlatformAdmin: boolean
 }
 ```
 
 (Do not touch the `UserRole` type — Slice 1 already widened it to the four roles.)
 
-- [ ] **Step 4: Add the fields to `UserApiSchema`**
+- [ ] **Step 4: Add the field to `UserApiSchema`**
 
-In `packages/shared/src/schemas/auth.ts`, add two fields to `UserApiSchema` (after `isActive`, before `createdAt`):
+In `packages/shared/src/schemas/auth.ts`, add one field to `UserApiSchema` (after `isActive`, before `createdAt`):
 
 ```ts
 export const UserApiSchema = z.object({
@@ -741,7 +726,6 @@ export const UserApiSchema = z.object({
   specialty: z.string().nullable(),
   licenseNumber: z.string().nullable(),
   isActive: z.boolean(),
-  isPlatformAdmin: z.boolean(),
   capabilities: z.record(z.enum(['none', 'view', 'manage'])),
   createdAt: z.string(),
 })
@@ -763,7 +747,7 @@ Expected: no errors.
 
 ```bash
 git add packages/shared/src/types/auth.ts packages/shared/src/schemas/auth.ts packages/shared/src/schemas/__tests__/auth.spec.ts
-git commit -m "feat(shared): add capabilities and isPlatformAdmin to AuthUser and UserApiSchema"
+git commit -m "feat(shared): add capabilities to AuthUser and UserApiSchema"
 ```
 
 ---
@@ -1236,7 +1220,7 @@ git commit -m "feat(api): seed RolePermission defaults during tenant seeding"
 
 ---
 
-### Task 7: Attach capabilities + isPlatformAdmin in `AuthGuard`
+### Task 7: Attach capabilities in `AuthGuard`
 
 **Files:**
 - Modify: `apps/api/src/common/guards/auth.guard.ts` (constructor + `request.user` build)
@@ -1244,8 +1228,8 @@ git commit -m "feat(api): seed RolePermission defaults during tenant seeding"
 - Modify: `apps/api/src/common/guards/__tests__/auth.guard.spec.ts`
 
 **Interfaces:**
-- Consumes: `PermissionsService.resolveCapabilities(tenantId, role)` (Task 5); `AuthUser` now requires `capabilities` + `isPlatformAdmin` (Task 4); DB `user.isPlatformAdmin` (Task 1).
-- Produces: `request.user.capabilities: CapabilityMap` and `request.user.isPlatformAdmin: boolean` on every authenticated (non-public, non-provision) request.
+- Consumes: `PermissionsService.resolveCapabilities(tenantId, role)` (Task 5); `AuthUser` now requires `capabilities` (Task 4).
+- Produces: `request.user.capabilities: CapabilityMap` on every authenticated (non-public, non-provision) request.
 
 - [ ] **Step 1: Update the guard spec to expect capabilities (failing test)**
 
@@ -1257,16 +1241,6 @@ Add a permissions mock next to the others:
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 const mockPermissions = {
   resolveCapabilities: vi.fn().mockResolvedValue({ patients: 'view', users: 'none' }),
-}
-```
-
-Add `isPlatformAdmin` to `validUser`:
-
-```ts
-  licenseNumber: null,
-  isActive: true,
-  isPlatformAdmin: false,
-  tenant: { seededAt: new Date('2026-01-01'), plan: 'free' },
 }
 ```
 
@@ -1294,22 +1268,9 @@ Add two assertions inside the existing "populates req.user and returns true for 
       patients: 'view',
       users: 'none',
     })
-    expect((req.user as Record<string, unknown>).isPlatformAdmin).toBe(false)
 ```
 
 > Note: `validUser.role` is `'owner'` in the current fixture. Slice 1 migrated these fixtures to a four-role value; if `role` is already `'super_admin'` in the working tree, change the `resolveCapabilities` assertion argument to match the fixture's role (`'super_admin'`). The guard passes `user.role` through unchanged.
-
-Add a new test asserting the platform-admin flag propagates:
-
-```ts
-  it('propagates isPlatformAdmin from the DB user', async () => {
-    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
-    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isPlatformAdmin: true })
-    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
-    await guard.canActivate(ctx as never)
-    expect((ctx._req.user as Record<string, unknown>).isPlatformAdmin).toBe(true)
-  })
-```
 
 - [ ] **Step 2: Run the guard spec to verify it fails**
 
@@ -1356,7 +1317,6 @@ Replace the `request.user = { … }` assignment block with one that resolves cap
       tenantPlan: user.tenant.plan,
       preferences: parseUserPreferences(user.preferences),
       capabilities,
-      isPlatformAdmin: user.isPlatformAdmin,
     }
 
     return true
@@ -1383,13 +1343,13 @@ Add it to the `imports` array (after `UsersModule`):
 - [ ] **Step 5: Run the guard spec to verify it passes**
 
 Run: `pnpm --filter @rezeta/api exec vitest run src/common/guards/__tests__/auth.guard.spec.ts`
-Expected: PASS (including the two new assertions and the new platform-admin test).
+Expected: PASS (including the new capabilities assertion).
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/common/guards/auth.guard.ts apps/api/src/common/guards/__tests__/auth.guard.spec.ts apps/api/src/app.module.ts
-git commit -m "feat(api): attach capabilities and isPlatformAdmin to authenticated requests"
+git commit -m "feat(api): attach capabilities to authenticated requests"
 ```
 
 ---
@@ -1403,12 +1363,12 @@ git commit -m "feat(api): attach capabilities and isPlatformAdmin to authenticat
 - Modify: `apps/api/src/modules/auth/__tests__/auth.controller.spec.ts`
 
 **Interfaces:**
-- Consumes: `defaultCapabilitiesFor(role)` (Task 3); `AuthUser` requires `capabilities` + `isPlatformAdmin` (Task 4); DB `user.isPlatformAdmin` (Task 1).
-- Produces: `AuthService.toAuthUser` returns an `AuthUser` including `capabilities` (from catalog defaults — the provision path targets a freshly created tenant with no stored overrides) and `isPlatformAdmin`. `GET /v1/auth/me` returns them (the guard already attached them). Swagger example documents both.
+- Consumes: `defaultCapabilitiesFor(role)` (Task 3); `AuthUser` requires `capabilities` (Task 4).
+- Produces: `AuthService.toAuthUser` returns an `AuthUser` including `capabilities` (from catalog defaults — the provision path targets a freshly created tenant with no stored overrides). `GET /v1/auth/me` returns it (the guard already attached it). Swagger example documents it.
 
 - [ ] **Step 1: Update the service spec (failing test)**
 
-In `apps/api/src/modules/auth/__tests__/auth.service.spec.ts`, update `baseUser` to a valid four-role value plus the platform flag:
+In `apps/api/src/modules/auth/__tests__/auth.service.spec.ts`, update `baseUser` to a valid four-role value:
 
 ```ts
 const baseUser = {
@@ -1420,12 +1380,11 @@ const baseUser = {
   role: 'doctor',
   specialty: 'cardiology',
   licenseNumber: 'MED-001',
-  isPlatformAdmin: false,
   tenant: { seededAt: new Date('2026-01-01') },
 }
 ```
 
-Update the "maps user fields correctly" test's `toMatchObject` `role` to `'doctor'` and add capability + platform assertions after it:
+Update the "maps user fields correctly" test's `toMatchObject` `role` to `'doctor'` and add capability assertions after it:
 
 ```ts
     it('maps user fields correctly', () => {
@@ -1441,7 +1400,6 @@ Update the "maps user fields correctly" test's `toMatchObject` `role` to `'docto
         licenseNumber: 'MED-001',
         tenantSeededAt: '2026-01-01T00:00:00.000Z',
       })
-      expect(auth.isPlatformAdmin).toBe(false)
       expect(auth.capabilities.patients).toBe('manage') // doctor default
       expect(auth.capabilities.users).toBe('none') // doctor default
     })
@@ -1460,14 +1418,13 @@ In `apps/api/src/modules/auth/auth.service.ts`, add `defaultCapabilitiesFor` to 
 import { UserPreferencesSchema, ErrorCode, defaultCapabilitiesFor } from '@rezeta/shared'
 ```
 
-Add the two fields to the object returned by `toAuthUser` (after `preferences`):
+Add the field to the object returned by `toAuthUser` (after `preferences`):
 
 ```ts
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
       preferences: parsePreferences(user.preferences),
       capabilities: defaultCapabilitiesFor(user.role as AuthUser['role']),
-      isPlatformAdmin: user.isPlatformAdmin,
     }
 ```
 
@@ -1478,7 +1435,7 @@ Expected: PASS.
 
 - [ ] **Step 5: Update the controller `authUser` fixture and Swagger example**
 
-In `apps/api/src/modules/auth/__tests__/auth.controller.spec.ts`, add the two fields to the `authUser` fixture (after `preferences: {}`), and align `role` with the four-role set:
+In `apps/api/src/modules/auth/__tests__/auth.controller.spec.ts`, add the field to the `authUser` fixture (after `preferences: {}`), and align `role` with the four-role set:
 
 ```ts
 const authUser = {
@@ -1493,13 +1450,12 @@ const authUser = {
   tenantSeededAt: '2026-01-01T00:00:00.000Z',
   preferences: {},
   capabilities: { patients: 'manage' },
-  isPlatformAdmin: false,
 }
 ```
 
 (The existing `me` test `expect(result).toBe(authUser)` still holds — `me()` returns the injected user unchanged.)
 
-In `apps/api/src/modules/auth/auth.controller.ts`, update the `/me` `@ApiResponse` schema `properties`: fix the `role` enum to the four roles and add `capabilities` + `isPlatformAdmin` (after `tenantSeededAt`):
+In `apps/api/src/modules/auth/auth.controller.ts`, update the `/me` `@ApiResponse` schema `properties`: fix the `role` enum to the four roles and add `capabilities` (after `tenantSeededAt`):
 
 ```ts
         role: {
@@ -1510,7 +1466,6 @@ In `apps/api/src/modules/auth/auth.controller.ts`, update the `/me` `@ApiRespons
         specialty: { type: 'string', nullable: true, example: 'Cardiología' },
         licenseNumber: { type: 'string', nullable: true, example: '12345-DR' },
         tenantSeededAt: { type: 'string', format: 'date-time', nullable: true },
-        isPlatformAdmin: { type: 'boolean', example: false },
         capabilities: {
           type: 'object',
           additionalProperties: { type: 'string', enum: ['none', 'view', 'manage'] },
@@ -1526,7 +1481,7 @@ Expected: PASS.
 - [ ] **Step 7: Typecheck the API package**
 
 Run: `pnpm --filter @rezeta/api typecheck`
-Expected: no errors (every `AuthUser` construction now sets `capabilities` + `isPlatformAdmin`).
+Expected: no errors (every `AuthUser` construction now sets `capabilities`).
 
 - [ ] **Step 8: Update the changelog**
 
@@ -1538,13 +1493,13 @@ Prepend to `CHANGELOG.md` (below the top heading), in English:
 ### Added
 
 - Shared permission catalog (`packages/shared/src/permissions/catalog.ts`) with `AccessLevel`, `SectionKey`, `ModuleKey`, `MODULE_KEYS`, and `PERMISSION_CATALOG` default matrix; capability helpers (`capabilities.ts`) `hasCapability` and `defaultCapabilitiesFor`.
-- `RolePermission` Prisma model (`role_permissions` table) and `User.isPlatformAdmin` column, with migration `20260715010000_add_role_permissions_and_platform_admin`.
+- `RolePermission` Prisma model (`role_permissions` table), with migration `20260715010000_add_role_permissions`.
 - `PermissionsModule` (`apps/api/src/modules/permissions/`) with `resolveCapabilities` (catalog defaults merged with stored rows) and `seedDefaults`, hooked into `TenantSeedingService`.
 
 ### Changed
 
-- `AuthUser` and `UserApiSchema` now carry `capabilities` and `isPlatformAdmin`.
-- `AuthGuard` resolves and attaches `capabilities` + `isPlatformAdmin` to `request.user`; `AuthService.toAuthUser` and `GET /v1/auth/me` (with its Swagger example) return them.
+- `AuthUser` and `UserApiSchema` now carry `capabilities`.
+- `AuthGuard` resolves and attaches `capabilities` to `request.user`; `AuthService.toAuthUser` and `GET /v1/auth/me` (with its Swagger example) return it.
 ```
 
 - [ ] **Step 9: Full verification**
@@ -1560,7 +1515,7 @@ Expected: all packages green.
 
 ```bash
 git add apps/api/src/modules/auth CHANGELOG.md
-git commit -m "feat(api): return capabilities and isPlatformAdmin from /auth/me"
+git commit -m "feat(api): return capabilities from /auth/me"
 ```
 
 ---
@@ -1571,16 +1526,16 @@ git commit -m "feat(api): return capabilities and isPlatformAdmin from /auth/me"
 
 - Catalog (`AccessLevel`, `ACCESS_LEVEL_RANK`, `SectionKey`, `ModuleKey`, `MODULE_KEYS`, `PERMISSION_CATALOG` with the exact §4.3 matrix) → Task 2. ✅
 - `CapabilityMap`, `hasCapability`, `defaultCapabilitiesFor` + barrel export → Task 3. ✅
-- `RolePermission` model verbatim + `Tenant.rolePermissions` relation + `User.isPlatformAdmin` + migration → Task 1. ✅
+- `RolePermission` model verbatim + `Tenant.rolePermissions` relation + migration (only `role_permissions`, no `users` column) → Task 1. ✅
 - `PermissionsService.resolveCapabilities` (merge, stored wins, missing → default) + `seedDefaults` (all role×module rows); `getMatrix`/`updateModule` deferred to Slice 6 (not implemented) → Task 5. ✅
 - `seedDefaults` hooked into tenant-seeding inside the locked transaction → Task 6. ✅
-- `AuthGuard` injects `PermissionsService`, sets `capabilities` + `isPlatformAdmin` → Task 7. ✅
-- `AuthUser` + `UserApiSchema` gain both fields → Task 4. ✅
+- `AuthGuard` injects `PermissionsService`, sets `capabilities` → Task 7. ✅
+- `AuthUser` + `UserApiSchema` gain `capabilities` → Task 4. ✅
 - `/auth/me` + Swagger example → Task 8. ✅
 - Tests: catalog/capabilities unit (defaults per role, ordering, merge/override) → Tasks 2–3; `seedDefaults` test → Task 5; AuthGuard test asserts capabilities attached → Task 7. ✅
 
 **2. Placeholder scan:** No `TBD`/`TODO`/"add error handling"/"similar to Task N". Every code step shows full code; every run step shows an exact command and expected result. ✅
 
-**3. Type consistency:** `resolveCapabilities(tenantId, role: UserRole)`, `seedDefaults(tx: Prisma.TransactionClient, tenantId)`, `findByTenantAndRole(tenantId, role): StoredRolePermission[]`, `CapabilityMap = Record<ModuleKey, AccessLevel>`, `hasCapability(caps, module, required)`, `defaultCapabilitiesFor(role)` are used identically across Tasks 3, 5, 6, 7, 8. `PermissionsService` is exported from the module (Task 5) and injected in Tasks 6–7. `User.isPlatformAdmin` (Task 1) is read in Tasks 7–8 and validated in Task 4's schema. ✅
+**3. Type consistency:** `resolveCapabilities(tenantId, role: UserRole)`, `seedDefaults(tx: Prisma.TransactionClient, tenantId)`, `findByTenantAndRole(tenantId, role): StoredRolePermission[]`, `CapabilityMap = Record<ModuleKey, AccessLevel>`, `hasCapability(caps, module, required)`, `defaultCapabilitiesFor(role)` are used identically across Tasks 3, 5, 6, 7, 8. `PermissionsService` is exported from the module (Task 5) and injected in Tasks 6–7. `AuthUser` carries `capabilities` only (no platform field) across Tasks 4, 7, 8 — all platform-admin identity is owned by Slice 7 (separate `PlatformUser` control-plane table) and is out of scope here. ✅
 
 **Note on Slice 1 coupling:** several test fixtures currently use the pre-Slice-1 `role: 'owner'`. Slice 1 migrates those to four-role values. Where a fixture's role matters for capability resolution (Tasks 7, 8), this plan sets a valid four-role value (`'doctor'`/`'super_admin'`) and flags the reconciliation inline. `defaultCapabilitiesFor` requires a valid `UserRole`; an out-of-range role would yield undefined map values, so the fixture role must be one of the four.

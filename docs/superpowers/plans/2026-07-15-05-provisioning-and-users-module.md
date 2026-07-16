@@ -140,7 +140,36 @@ describe('SetActiveSchema', () => {
     expect(SetActiveSchema.safeParse({ isActive: 'no' }).success).toBe(false)
   })
 })
+
+describe('ManagedUserSchema', () => {
+  const base = {
+    id: '018e3f2a-1111-7000-8000-000000000001',
+    email: 'a@b.do',
+    fullName: 'Ana',
+    role: 'doctor',
+    isActive: true,
+    createdAt: '2026-07-15T10:00:00.000Z',
+  }
+  it('accepts an active user with a lastLoginAt and status', () => {
+    const r = ManagedUserSchema.safeParse({
+      ...base,
+      lastLoginAt: '2026-07-15T12:00:00.000Z',
+      status: 'active',
+    })
+    expect(r.success).toBe(true)
+  })
+  it('accepts an invited user with null lastLoginAt', () => {
+    const r = ManagedUserSchema.safeParse({ ...base, lastLoginAt: null, status: 'invited' })
+    expect(r.success).toBe(true)
+  })
+  it('rejects an unknown status', () => {
+    const r = ManagedUserSchema.safeParse({ ...base, lastLoginAt: null, status: 'pending' })
+    expect(r.success).toBe(false)
+  })
+})
 ```
+
+Add `ManagedUserSchema` to the import at the top of this test file alongside the other schemas.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -186,6 +215,10 @@ export const ManagedUserSchema = z.object({
   role: UserRoleSchema,
   isActive: z.boolean(),
   createdAt: z.string(),
+  /** ISO timestamp of the user's first successful sign-in; null until they accept the invite. */
+  lastLoginAt: z.string().nullable(),
+  /** Derived roster status: 'invited' until first sign-in, then 'active'. */
+  status: z.enum(['invited', 'active']),
 })
 
 export type UserRoleValue = z.infer<typeof UserRoleSchema>
@@ -211,6 +244,114 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 Run: `git add -A && git commit -m "feat(shared): add user-management schemas"`
+
+---
+
+### Task 2A: `User.lastLoginAt` column + first-sign-in activation
+
+Adds the field that distinguishes an **invited** user (created by an admin, has
+never signed in) from an **active** one, so the roster can show the "Invitación
+enviada" status from the design mockup. `AuthGuard` stamps it on the user's first
+authenticated request.
+
+**Files:**
+- Modify: `packages/db/prisma/schema.prisma` (User model)
+- Create: `packages/db/prisma/migrations/20260715030000_user_last_login_at/migration.sql`
+- Modify: `apps/api/src/common/guards/auth.guard.ts`
+- Modify: `apps/api/src/common/guards/__tests__/auth.guard.spec.ts`
+
+**Interfaces:**
+- Consumes: `UsersRepository` (already injected into `AuthGuard`); the `User` row
+  resolved by `findByExternalUid` now carries `lastLoginAt: Date | null`.
+- Produces: `UsersRepository.markSignedIn(id: string): Promise<void>` — sets
+  `lastLoginAt = now()` for a user. `AuthGuard` calls it (fire-and-forget) only
+  when the resolved user's `lastLoginAt` is still `null`, so it writes exactly
+  once per user lifetime (no per-request write amplification).
+
+> **Migration ordering:** timestamp `20260715030000` sorts after Slice 1's
+> `20260715000000` and Slice 2's `20260715010000`. This is Slice 5's only schema
+> change.
+
+- [ ] **Step 1: Add the column to the Prisma schema**
+
+In `packages/db/prisma/schema.prisma`, in the `User` model, add after `isActive`:
+
+```prisma
+  lastLoginAt   DateTime? @map("last_login_at")
+```
+
+- [ ] **Step 2: Write the migration SQL**
+
+Create `packages/db/prisma/migrations/20260715030000_user_last_login_at/migration.sql`:
+
+```sql
+-- Track the user's first successful sign-in. NULL means the account was created
+-- by an admin (invitation sent) but the person has not yet signed in. The roster
+-- derives an "invited" vs "active" status from this column.
+ALTER TABLE "users" ADD COLUMN "last_login_at" TIMESTAMP(3);
+```
+
+- [ ] **Step 3: Generate the client + apply**
+
+Run: `pnpm --filter @rezeta/db exec prisma generate && pnpm --filter @rezeta/db migrate:deploy`
+Expected: client regenerated; `Applying migration 20260715030000_user_last_login_at`. (If no DB is reachable here, `generate` alone unblocks typecheck; apply before merging.)
+
+- [ ] **Step 4: Write the failing guard test**
+
+In `apps/api/src/common/guards/__tests__/auth.guard.spec.ts`, reuse the existing
+harness and add:
+
+```typescript
+it('stamps lastLoginAt on the first authenticated request', async () => {
+  const user = { ...activeUserFixture, lastLoginAt: null }
+  users.findByExternalUid.mockResolvedValue(user)
+  await guard.canActivate(ctx)
+  expect(users.markSignedIn).toHaveBeenCalledWith(user.id)
+})
+
+it('does not re-stamp lastLoginAt once set', async () => {
+  const user = { ...activeUserFixture, lastLoginAt: new Date('2026-07-01T00:00:00Z') }
+  users.findByExternalUid.mockResolvedValue(user)
+  await guard.canActivate(ctx)
+  expect(users.markSignedIn).not.toHaveBeenCalled()
+})
+```
+
+Add `markSignedIn: vi.fn()` to the mocked `UsersRepository` and `lastLoginAt` to
+the user fixtures already used in this spec.
+
+- [ ] **Step 5: Run test to verify it fails**
+
+Run: `pnpm --filter @rezeta/api exec vitest run src/common/guards/__tests__/auth.guard.spec.ts`
+Expected: FAIL — `markSignedIn` is not defined / not called.
+
+- [ ] **Step 6: Implement `markSignedIn` + the guard write**
+
+In `apps/api/src/modules/users/users.repository.ts`, add:
+
+```typescript
+  async markSignedIn(id: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } })
+  }
+```
+
+In `apps/api/src/common/guards/auth.guard.ts`, right after the resolved `user`
+is confirmed active (before building `request.user`), add:
+
+```typescript
+    if (user.lastLoginAt === null) {
+      void this.users.markSignedIn(user.id)
+    }
+```
+
+- [ ] **Step 7: Run test to verify it passes**
+
+Run: `pnpm --filter @rezeta/api exec vitest run src/common/guards/__tests__/auth.guard.spec.ts`
+Expected: PASS.
+
+- [ ] **Step 8: Commit**
+
+Run: `git add -A && git commit -m "feat(api): stamp User.lastLoginAt on first sign-in for roster status"`
 
 ---
 
@@ -1009,6 +1150,7 @@ function toManagedUser(user: {
   role: string
   isActive: boolean
   createdAt: Date
+  lastLoginAt: Date | null
 }): ManagedUserDto {
   return {
     id: user.id,
@@ -1017,11 +1159,14 @@ function toManagedUser(user: {
     role: user.role as ManagedUserDto['role'],
     isActive: user.isActive,
     createdAt: user.createdAt.toISOString(),
+    lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
+    // 'invited' until the user's first sign-in stamps lastLoginAt (see Task 2A).
+    status: user.lastLoginAt ? 'active' : 'invited',
   }
 }
 ```
 
-Note: `setActive` returns the target with the new `isActive` optimistically (avoids a second read); the `deletedAt`/timestamp is DB-side only and not part of `ManagedUserDto`.
+Note: `setActive` returns the target with the new `isActive` optimistically (avoids a second read); the `deletedAt`/timestamp is DB-side only and not part of `ManagedUserDto`. Every caller passes a full Prisma `User` row (which includes `lastLoginAt`), so the mapper's derivation always has the field. Update any `toManagedUser`/fixture user objects in the service + repository specs to include `lastLoginAt` (use `null` for invited fixtures, a `new Date(...)` for active ones).
 
 - [ ] **Step 4: Run tests to verify green**
 
@@ -1776,6 +1921,7 @@ export const usersStrings = {
   tableStatus: 'Estado',
   statusActive: 'Activo',
   statusInactive: 'Inactivo',
+  statusInvited: 'Invitación enviada',
   activateButton: 'Activar',
   deactivateButton: 'Desactivar',
   formTitle: 'Nuevo usuario',
@@ -1946,7 +2092,8 @@ export function useSetUserActive(
 
 - Top of component: `const canManage = useCan('users', 'manage')`.
 - If `!canManage`, render an `EmptyState` titled `usersStrings.noAccessTitle` / `usersStrings.noAccessDescription` and NO "Nuevo usuario" button and NO form.
-- Otherwise: header with `usersStrings.newButton`, a table (`tableName`/`tableEmail`/`tableRole`/`tableStatus`) rendering `useUsers().data`, an active/inactive `Badge`, an activate/deactivate `Button` per row (calls `useSetUserActive(row.id)`), and a create `Modal` whose form has `Input` (name), `Input` (email), and a native `<select id="user-role" aria-label={usersStrings.roleLabel}>` with the four roles, submitting `{ email, fullName, role }` via `useCreateUser`.
+- Otherwise: header with `usersStrings.newButton`, a table (`tableName`/`tableEmail`/`tableRole`/`tableStatus`) rendering `useUsers().data`, a status `Badge` per row, an activate/deactivate `Button` per row (calls `useSetUserActive(row.id)`), and a create `Modal` whose form has `Input` (name), `Input` (email), and a native `<select id="user-role" aria-label={usersStrings.roleLabel}>` with the four roles, submitting `{ email, fullName, role }` via `useCreateUser`.
+- **Status badge (three states, derived from `row.isActive` + `row.status`):** if `!row.isActive` → `usersStrings.statusInactive` (neutral/danger tone); else if `row.status === 'invited'` → `usersStrings.statusInvited` (warning tone); else → `usersStrings.statusActive` (success tone). This surfaces the "Invitación enviada" state from the design mockup for users who have been created but have not yet completed their first sign-in. Add a test asserting a fixture user with `status: 'invited'` renders `Invitación enviada`, and one with `status: 'active'` renders `Activo`. Include `lastLoginAt` + `status` on every `ManagedUserDto` fixture in this page's test.
 - Wrap the role `<select>` in a `Field label={usersStrings.roleLabel}` and give it `aria-label={usersStrings.roleLabel}` so the test's `getByLabelText('Rol')` resolves.
 - Handle create errors into a `Callout` using `usersStrings.createError` and log via `logger.error` (context `'Users.submit'`).
 

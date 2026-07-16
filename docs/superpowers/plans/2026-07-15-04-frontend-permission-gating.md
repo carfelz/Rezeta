@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Dependency on Slices 1–2.** This plan assumes `@rezeta/shared` already exports (via `packages/shared/src/index.ts`): `hasCapability(caps: CapabilityMap, module: ModuleKey, required: AccessLevel): boolean`, `defaultCapabilitiesFor(role: UserRole): CapabilityMap`, and the types `CapabilityMap`, `ModuleKey`, `AccessLevel`, `UserRole`; and that `AuthUser` (`packages/shared/src/types/auth.ts`) now carries `capabilities: CapabilityMap` and `isPlatformAdmin: boolean`. Do not redefine any of these — import them verbatim.
+- **Dependency on Slices 1–2.** This plan assumes `@rezeta/shared` already exports (via `packages/shared/src/index.ts`): `hasCapability(caps: CapabilityMap, module: ModuleKey, required: AccessLevel): boolean`, `defaultCapabilitiesFor(role: UserRole): CapabilityMap`, and the types `CapabilityMap`, `ModuleKey`, `AccessLevel`, `UserRole`; and that `AuthUser` (`packages/shared/src/types/auth.ts`) now carries `capabilities: CapabilityMap`. Do not redefine any of these — import them verbatim.
 - **`ModuleKey` values are exact strings** (from the catalog): `'patients' | 'consultations' | 'protocols' | 'appointments' | 'orders' | 'billing' | 'locations' | 'templates' | 'categories' | 'schedules_config' | 'audit_log' | 'users' | 'permissions'`. Use these keys verbatim — never invent a key.
 - **`AccessLevel`** is `'none' | 'view' | 'manage'`. GET/read surfaces gate on `'view'`; create/edit/delete controls gate on `'manage'`.
 - **Language:** ALL code, comments, tests, and commit messages in English. The ONLY Spanish permitted is user-facing UI strings, and those live in the colocated `strings.ts` next to their component. Do not hardcode any new Spanish string in a component — this slice reuses existing `strings.ts` labels and adds none.
@@ -124,7 +124,6 @@ export function makeAuthUser(role: UserRole, overrides: Partial<AuthUser> = {}):
     tenantSeededAt: '2026-01-01T00:00:00Z',
     preferences: {},
     capabilities: defaultCapabilitiesFor(role),
-    isPlatformAdmin: false,
     ...overrides,
   }
 }

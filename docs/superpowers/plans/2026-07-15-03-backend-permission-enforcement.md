@@ -4,13 +4,15 @@
 
 **Goal:** Enforce the per-tenant permission matrix on every existing API endpoint. Add a closed-enum `INSUFFICIENT_PERMISSION` error code, a `@RequirePermission(module, level)` decorator, and a global `PermissionGuard` that runs third (after `AuthGuard`, `TenantGuard`), reads the resolved `capabilities` map already placed on `request.user` by Slice 2, and returns HTTP 403 when the caller's effective access level for the endpoint's module is below what the endpoint requires. Annotate every non-auth/non-onboarding controller endpoint: GET/read routes require `'view'`, mutations require `'manage'`.
 
-**Architecture:** NestJS 10 + Prisma, pnpm monorepo. Global guards are registered via `APP_GUARD` providers in `apps/api/src/app.module.ts`; order is significant — `AuthGuard` (resolves `request.user`, populates `capabilities` + `isPlatformAdmin` from Slice 2) → `TenantGuard` (sets `request.tenantId`) → **new `PermissionGuard`**. The guard is a thin, synchronous check: it does no DB work because Slice 2 pre-resolves the capability map onto `request.user.capabilities`. Enforcement is always per-module; the frontend section bulk-control (Slice 6) never reaches the API. Platform-admin requests bypass the guard entirely (`request.user.isPlatformAdmin === true`). `ForbiddenException({ code, message })` is converted to a `403 { error: { code, message } }` envelope by the existing `HttpExceptionFilter`.
+**Architecture:** NestJS 10 + Prisma, pnpm monorepo. Global guards are registered via `APP_GUARD` providers in `apps/api/src/app.module.ts`; order is significant — `AuthGuard` (resolves `request.user`, populates `capabilities` from Slice 2) → `TenantGuard` (sets `request.tenantId`) → **new `PermissionGuard`**. The guard is a thin, synchronous check: it does no DB work because Slice 2 pre-resolves the capability map onto `request.user.capabilities`. Enforcement is always per-module; the frontend section bulk-control (Slice 6) never reaches the API. `ForbiddenException({ code, message })` is converted to a `403 { error: { code, message } }` envelope by the existing `HttpExceptionFilter`.
+
+> **Platform/staff routes note:** Rezeta staff (platform admins) are a separate control-plane principal (`PlatformUser`), not an institution `User`, and their `/v1/staff/*` endpoints (defined in Slice 7) carry **no** `@RequirePermission` metadata. They are therefore skipped by this guard via the "no metadata → pass" rule below — this guard has no platform-admin bypass branch. Slice 7 also inserts a `PlatformGuard` right after `AuthGuard`, shifting the final global order to `AuthGuard → PlatformGuard → TenantGuard → PermissionGuard`; this plan's registration step (Task 4) still simply adds `PermissionGuard` after `TenantGuard`.
 
 **Tech Stack:** TypeScript, NestJS 10, `@nestjs/core` `Reflector`, `@rezeta/shared` (`ErrorCode`, `ModuleKey`, `AccessLevel`, `CapabilityMap`, `hasCapability`), Vitest.
 
 **Prerequisite:** Slices 1 and 2 complete and merged.
 - Slice 1 widened `UserRole` to `'assistant' | 'doctor' | 'admin' | 'super_admin'` in `packages/shared/src/types/auth.ts`.
-- Slice 2 created `packages/shared/src/permissions/{catalog,capabilities,roles}.ts` (exporting `ModuleKey`, `AccessLevel`, `CapabilityMap`, `MODULE_KEYS`, `hasCapability`, `defaultCapabilitiesFor`), created `PermissionsService.resolveCapabilities(tenantId, role)`, added `capabilities: CapabilityMap` and `isPlatformAdmin: boolean` to `AuthUser`, and made `AuthGuard` populate `request.user.capabilities` + `request.user.isPlatformAdmin`. All are exported from the `@rezeta/shared` barrel (`packages/shared/src/index.ts`).
+- Slice 2 created `packages/shared/src/permissions/{catalog,capabilities,roles}.ts` (exporting `ModuleKey`, `AccessLevel`, `CapabilityMap`, `MODULE_KEYS`, `hasCapability`, `defaultCapabilitiesFor`), created `PermissionsService.resolveCapabilities(tenantId, role)`, added `capabilities: CapabilityMap` to `AuthUser`, and made `AuthGuard` populate `request.user.capabilities`. All are exported from the `@rezeta/shared` barrel (`packages/shared/src/index.ts`).
 
 **Reference for framework/imports:** `apps/api/src/common/guards/__tests__/tenant.guard.spec.ts` and `.../auth.guard.spec.ts` (guard unit-test style: mock `Reflector`, hand-built `ExecutionContext`), `apps/api/src/common/decorators/__tests__/decorators.spec.ts` (decorator metadata assertions via `Reflect.getMetadata`), `apps/api/src/modules/patients/__tests__/patients.controller.spec.ts` (controller spec style). Tests use Vitest; `@rezeta/shared` resolves to its **built** `dist/` (see `packages/shared/package.json` `exports`), so shared must be rebuilt after editing `errors.ts` before API tests can see the new code.
 
@@ -238,7 +240,7 @@ git commit -m "feat(api): add @RequirePermission decorator"
 - Consumes:
   - `PERMISSION_KEY`, `RequiredPermission` from `../decorators/require-permission.decorator.js`.
   - `IS_PUBLIC_KEY` from `../decorators/public.decorator.js`.
-  - `AuthenticatedRequest` from `./auth.guard.js` (its `.user: AuthUser` carries `capabilities: CapabilityMap` and `isPlatformAdmin: boolean` post-Slice 2).
+  - `AuthenticatedRequest` from `./auth.guard.js` (its `.user: AuthUser` carries `capabilities: CapabilityMap` post-Slice 2).
   - `hasCapability(caps, module, level)`, `ErrorCode` from `@rezeta/shared`.
   - `Reflector` from `@nestjs/core`.
 - Produces: `export class PermissionGuard implements CanActivate` — `canActivate(ctx): boolean`.
@@ -246,9 +248,10 @@ git commit -m "feat(api): add @RequirePermission decorator"
 Guard contract:
 1. `IS_PUBLIC_KEY` truthy → return `true`.
 2. No `PERMISSION_KEY` metadata → return `true` (pass-through for un-annotated endpoints).
-3. `request.user.isPlatformAdmin` truthy → return `true` (bypass).
-4. `hasCapability(request.user.capabilities, module, level)` truthy → return `true`.
-5. Otherwise `throw new ForbiddenException({ code: ErrorCode.INSUFFICIENT_PERMISSION, message })`.
+3. `hasCapability(request.user.capabilities, module, level)` truthy → return `true`.
+4. Otherwise `throw new ForbiddenException({ code: ErrorCode.INSUFFICIENT_PERMISSION, message })`.
+
+There is **no platform-admin bypass branch**. Platform/staff routes (Slice 7) carry no `@RequirePermission` metadata, so rule 2 already skips them; platform principals never reach tenant routes.
 
 - [ ] **Step 1: Write the failing guard unit test**
 
@@ -269,7 +272,6 @@ function makeCtx(options: {
   isPublic?: boolean
   required?: RequiredPermission
   capabilities?: Partial<CapabilityMap>
-  isPlatformAdmin?: boolean
 }) {
   const reflector = {
     getAllAndOverride: vi.fn((key: string) => {
@@ -281,7 +283,6 @@ function makeCtx(options: {
   const request = {
     user: {
       capabilities: (options.capabilities ?? {}) as CapabilityMap,
-      isPlatformAdmin: options.isPlatformAdmin ?? false,
     },
   }
   const ctx = {
@@ -303,16 +304,6 @@ describe('PermissionGuard', () => {
     const { reflector, ctx } = makeCtx({
       isPublic: true,
       required: { module: 'patients', level: 'manage' },
-    })
-    const guard = new PermissionGuard(reflector as never)
-    expect(guard.canActivate(ctx as never)).toBe(true)
-  })
-
-  it('bypasses the check for platform admins', () => {
-    const { reflector, ctx } = makeCtx({
-      required: { module: 'users', level: 'manage' },
-      capabilities: { users: 'none' },
-      isPlatformAdmin: true,
     })
     const guard = new PermissionGuard(reflector as never)
     expect(guard.canActivate(ctx as never)).toBe(true)
@@ -386,7 +377,9 @@ import {
  *
  * Reads the @RequirePermission metadata on the handler and checks it against the
  * capability map that AuthGuard (Slice 2) resolved onto request.user.capabilities.
- * Does no DB work. Skips public routes, un-annotated routes, and platform admins.
+ * Does no DB work. Skips public routes and un-annotated routes (platform/staff
+ * routes carry no @RequirePermission metadata, so they fall under the un-annotated
+ * skip; this guard has no platform-admin bypass branch).
  */
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -408,9 +401,6 @@ export class PermissionGuard implements CanActivate {
     if (!required) return true
 
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
-
-    // Platform admins operate across tenants and bypass per-tenant permissions.
-    if (request.user.isPlatformAdmin) return true
 
     if (hasCapability(request.user.capabilities, required.module, required.level)) {
       return true
@@ -846,7 +836,7 @@ function ctxFor(
   handler: (...args: unknown[]) => unknown,
   capabilities: CapabilityMap,
 ): ExecutionContext {
-  const request = { user: { capabilities, isPlatformAdmin: false } }
+  const request = { user: { capabilities } }
   return {
     getHandler: () => handler,
     getClass: () => PatientsController,
@@ -901,7 +891,7 @@ pnpm --filter @rezeta/api test
 pnpm --filter @rezeta/api test:coverage
 ```
 
-Coverage note: `src/common/guards/**` is NOT in the vitest `coverage.exclude` list, so `permission.guard.ts` must hit the 95% per-file gate — the Task 3 unit spec plus this integration spec cover every branch (public skip, no-metadata skip, platform-admin bypass, allow, deny-throw). `src/common/decorators/**` IS excluded, so the decorator file needs no coverage (its metadata test in Task 2 is still added for correctness).
+Coverage note: `src/common/guards/**` is NOT in the vitest `coverage.exclude` list, so `permission.guard.ts` must hit the 95% per-file gate — the Task 3 unit spec plus this integration spec cover every branch (public skip, no-metadata skip, allow, deny-throw). `src/common/decorators/**` IS excluded, so the decorator file needs no coverage (its metadata test in Task 2 is still added for correctness).
 
 - [ ] **Step 3: Commit**
 
@@ -939,7 +929,7 @@ Prepend to `CHANGELOG.md` (English only):
 ### Added
 - `ErrorCode.INSUFFICIENT_PERMISSION` (`packages/shared/src/errors.ts`) — returned as HTTP 403 when a caller's effective access level is below what an endpoint requires.
 - `@RequirePermission(module, level)` decorator (`apps/api/src/common/decorators/require-permission.decorator.ts`, metadata key `PERMISSION_KEY`).
-- `PermissionGuard` (`apps/api/src/common/guards/permission.guard.ts`), registered as the third global guard after `AuthGuard` and `TenantGuard`. It enforces `@RequirePermission` against the capability map resolved onto `request.user.capabilities`; skips public/un-annotated routes and platform-admin requests.
+- `PermissionGuard` (`apps/api/src/common/guards/permission.guard.ts`), registered as the third global guard after `AuthGuard` and `TenantGuard`. It enforces `@RequirePermission` against the capability map resolved onto `request.user.capabilities`; skips public and un-annotated routes.
 
 ### Changed
 - Annotated every clinical and admin controller endpoint with `@RequirePermission` (GET → `view`, mutations → `manage`): patients, appointments, consultations, consultation-records, orders, invoices (billing), protocols, protocol-templates, protocol-categories, protocol-improvements, protocol-recommendations, locations, schedules (reads → `appointments`, writes → `schedules_config`), and audit-log. Auth, onboarding, client-error logging, and `/v1/users/me` self-service routes stay exempt.
