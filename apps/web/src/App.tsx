@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthGate } from '@/components/auth/AuthGate'
 import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
+import { RequireCan } from '@/components/auth/RequireCan'
 import { Dashboard } from '@/pages/Dashboard'
 import { Schedule } from '@/pages/Schedule'
 import { Patients } from '@/pages/Patients'
@@ -76,24 +77,150 @@ const router = createBrowserRouter([
         element: <Navigate to="/dashboard" replace />,
       },
       { path: 'dashboard', element: <Dashboard /> },
-      { path: 'agenda', element: <Schedule /> },
-      { path: 'pacientes', element: <Patients /> },
-      { path: 'pacientes/:id', element: <PatientDetail /> },
-      { path: 'consultas/nueva', element: <NewConsultation /> },
-      { path: 'protocolos', element: <Protocols /> },
-      { path: 'protocolos/:id', element: <ProtocolViewer /> },
-      { path: 'protocolos/:id/edit', element: <ProtocolEditor /> },
-      { path: 'facturacion', element: <Billing /> },
-      { path: 'ajustes', element: <Settings /> },
-      { path: 'ajustes/plantillas', element: <Templates /> },
-      { path: 'ajustes/plantillas/new', element: <TemplateEditorNew /> },
-      { path: 'ajustes/plantillas/:id/edit', element: <TemplateEditor /> },
-      { path: 'ajustes/tipos', element: <Types /> },
-      { path: 'ajustes/ubicaciones', element: <Locations /> },
-      { path: 'ajustes/registros', element: <AuditLog /> },
-      { path: 'ajustes/horarios', element: <Schedules /> },
-      { path: 'ajustes/design-system/prototype', element: <AppPrototype /> },
-      { path: 'ajustes/design-system/reference', element: <DesignSystemReference /> },
+      {
+        path: 'agenda',
+        element: (
+          <RequireCan module="appointments">
+            <Schedule />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'pacientes',
+        element: (
+          <RequireCan module="patients">
+            <Patients />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'pacientes/:id',
+        element: (
+          <RequireCan module="patients">
+            <PatientDetail />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'consultas/nueva',
+        element: (
+          <RequireCan module="consultations">
+            <NewConsultation />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'protocolos',
+        element: (
+          <RequireCan module="protocols">
+            <Protocols />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'protocolos/:id',
+        element: (
+          <RequireCan module="protocols">
+            <ProtocolViewer />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'protocolos/:id/edit',
+        element: (
+          <RequireCan module="protocols">
+            <ProtocolEditor />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'facturacion',
+        element: (
+          <RequireCan module="billing">
+            <Billing />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes',
+        element: (
+          <RequireCan module="templates">
+            <Settings />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/plantillas',
+        element: (
+          <RequireCan module="templates">
+            <Templates />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/plantillas/new',
+        element: (
+          <RequireCan module="templates">
+            <TemplateEditorNew />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/plantillas/:id/edit',
+        element: (
+          <RequireCan module="templates">
+            <TemplateEditor />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/tipos',
+        element: (
+          <RequireCan module="categories">
+            <Types />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/ubicaciones',
+        element: (
+          <RequireCan module="locations">
+            <Locations />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/registros',
+        element: (
+          <RequireCan module="audit_log">
+            <AuditLog />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/horarios',
+        element: (
+          <RequireCan module="schedules_config">
+            <Schedules />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/design-system/prototype',
+        element: (
+          <RequireCan module="templates">
+            <AppPrototype />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/design-system/reference',
+        element: (
+          <RequireCan module="templates">
+            <DesignSystemReference />
+          </RequireCan>
+        ),
+      },
     ],
   },
 
@@ -105,7 +232,16 @@ const router = createBrowserRouter([
       </AuthGate>
     ),
     errorElement: <NotFound />,
-    children: [{ path: 'consultas/:id', element: <Consultation /> }],
+    children: [
+      {
+        path: 'consultas/:id',
+        element: (
+          <RequireCan module="consultations">
+            <Consultation />
+          </RequireCan>
+        ),
+      },
+    ],
   },
 
   // ── Catch-all 404 ──────────────────────────────────────────────────────────
