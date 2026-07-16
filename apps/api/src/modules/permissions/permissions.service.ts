@@ -1,15 +1,20 @@
-import { Injectable, Inject } from '@nestjs/common'
+import { ForbiddenException, Injectable, Inject } from '@nestjs/common'
 import type { Prisma } from '@rezeta/db'
 import {
   MODULE_KEYS,
   PERMISSION_CATALOG,
+  canManageRole,
   defaultCapabilitiesFor,
+  ErrorCode,
   type AccessLevel,
   type CapabilityMap,
   type ModuleKey,
   type UserRole,
 } from '@rezeta/shared'
+import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { PermissionsRepository } from './permissions.repository.js'
+
+const ALL_ROLES: UserRole[] = ['assistant', 'doctor', 'admin', 'super_admin']
 
 const MODULE_KEY_SET = new Set<string>(MODULE_KEYS)
 
@@ -23,7 +28,10 @@ function isAccessLevel(value: string): value is AccessLevel {
 
 @Injectable()
 export class PermissionsService {
-  constructor(@Inject(PermissionsRepository) private repo: PermissionsRepository) {}
+  constructor(
+    @Inject(PermissionsRepository) private repo: PermissionsRepository,
+    @Inject(AuditLogService) private auditLog: AuditLogService,
+  ) {}
 
   /**
    * Resolve a role's effective capabilities for a tenant: start from the code
@@ -59,5 +67,45 @@ export class PermissionsService {
       }))
     })
     await tx.rolePermission.createMany({ data })
+  }
+
+  /** Resolve the tenant's full role x module capability matrix. */
+  async getMatrix(tenantId: string): Promise<Record<UserRole, CapabilityMap>> {
+    const entries = await Promise.all(
+      ALL_ROLES.map(async (role) => [role, await this.resolveCapabilities(tenantId, role)] as const),
+    )
+    return Object.fromEntries(entries) as Record<UserRole, CapabilityMap>
+  }
+
+  /**
+   * Update one role/module access level. Only an actor whose rank is strictly
+   * above the target role's rank may edit it (own-rank and higher are rejected).
+   * Emits a `permission_granted`/`permission_revoked` audit event based on the
+   * new level, then returns the target role's refreshed capability map.
+   */
+  async updateModule(
+    tenantId: string,
+    actorRole: UserRole,
+    targetRole: UserRole,
+    moduleKey: ModuleKey,
+    level: AccessLevel,
+  ): Promise<CapabilityMap> {
+    if (!canManageRole(actorRole, targetRole)) {
+      throw new ForbiddenException({
+        code: ErrorCode.FORBIDDEN,
+        message: 'Cannot edit permissions for a role at or above your own',
+      })
+    }
+    await this.repo.upsertModule(tenantId, targetRole, moduleKey, level)
+    void this.auditLog.record({
+      tenantId,
+      actorType: 'user',
+      category: 'auth',
+      action: level === 'none' ? 'permission_revoked' : 'permission_granted',
+      entityType: 'role_permission',
+      entityId: `${targetRole}:${moduleKey}`,
+      metadata: { role: targetRole, moduleKey, accessLevel: level },
+    })
+    return this.resolveCapabilities(tenantId, targetRole)
   }
 }
