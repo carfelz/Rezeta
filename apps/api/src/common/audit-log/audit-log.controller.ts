@@ -22,6 +22,7 @@ import {
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import type { AuditLogItem, AuditLogListResponse } from '@rezeta/shared'
 import { TenantId } from '../decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../decorators/require-permission.decorator.js'
 import { AuditLogService } from './audit-log.service.js'
 import type { AuditLogFilters } from './audit-log.types.js'
 
@@ -32,6 +33,7 @@ import type { AuditLogFilters } from './audit-log.types.js'
 export class AuditLogController {
   constructor(@Inject(AuditLogService) private readonly svc: AuditLogService) {}
 
+  @RequirePermission('audit_log', 'view')
   @Get()
   @ApiOperation({ summary: 'List audit log events (plan-aware retention)' })
   @ApiQuery({ name: 'cursor', required: false })
@@ -78,6 +80,7 @@ export class AuditLogController {
     return this.svc.list(filters)
   }
 
+  @RequirePermission('audit_log', 'view')
   @Get('export.csv')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Export audit log as CSV (Clinic plan only)' })
@@ -114,6 +117,7 @@ export class AuditLogController {
     res!.end(csv)
   }
 
+  @RequirePermission('audit_log', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get audit log event by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })

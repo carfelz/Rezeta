@@ -41,6 +41,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { SchedulesService } from './schedules.service.js'
 
 @ApiTags('Schedules')
@@ -52,6 +53,7 @@ export class SchedulesController {
 
   // ── Blocks ──────────────────────────────────────────────────────────────────
 
+  @RequirePermission('appointments', 'view')
   @Get('blocks')
   @ApiOperation({ summary: 'List schedule blocks for the authenticated doctor' })
   @ApiQuery({ name: 'locationId', required: false, type: String })
@@ -66,6 +68,7 @@ export class SchedulesController {
     })
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Post('blocks')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateScheduleBlockSchema))
@@ -81,6 +84,7 @@ export class SchedulesController {
     return this.svc.createBlock(user.id, tenantId, dto)
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Patch('blocks/:id')
   @UsePipes(new ZodValidationPipe(UpdateScheduleBlockSchema))
   @ApiOperation({ summary: 'Update a schedule block' })
@@ -98,6 +102,7 @@ export class SchedulesController {
     return this.svc.updateBlock(id, user.id, tenantId, dto)
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Delete('blocks/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a schedule block' })
@@ -113,6 +118,7 @@ export class SchedulesController {
 
   // ── Exceptions ──────────────────────────────────────────────────────────────
 
+  @RequirePermission('appointments', 'view')
   @Get('exceptions')
   @ApiOperation({ summary: 'List schedule exceptions for the authenticated doctor' })
   @ApiQuery({ name: 'locationId', required: false, type: String })
@@ -132,6 +138,7 @@ export class SchedulesController {
     })
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Post('exceptions')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateScheduleExceptionSchema))
@@ -146,6 +153,7 @@ export class SchedulesController {
     return this.svc.createException(user.id, tenantId, dto)
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Patch('exceptions/:id')
   @UsePipes(new ZodValidationPipe(UpdateScheduleExceptionSchema))
   @ApiOperation({ summary: 'Update a schedule exception' })
@@ -162,6 +170,7 @@ export class SchedulesController {
     return this.svc.updateException(id, user.id, tenantId, dto)
   }
 
+  @RequirePermission('schedules_config', 'manage')
   @Delete('exceptions/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a schedule exception' })

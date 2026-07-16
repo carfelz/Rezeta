@@ -27,6 +27,7 @@ import { CreateLocationSchema, UpdateLocationSchema } from '@rezeta/shared'
 import type { CreateLocationDto, UpdateLocationDto } from '@rezeta/shared'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { LocationsService } from './locations.service.js'
 
@@ -37,6 +38,7 @@ import { LocationsService } from './locations.service.js'
 export class LocationsController {
   constructor(@Inject(LocationsService) private service: LocationsService) {}
 
+  @RequirePermission('locations', 'view')
   @Get()
   @ApiOperation({
     summary: 'List locations',
@@ -47,6 +49,7 @@ export class LocationsController {
     return this.service.list(tenantId, user.id)
   }
 
+  @RequirePermission('locations', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get a location by ID' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -60,6 +63,7 @@ export class LocationsController {
     return this.service.getById(id, tenantId, user.id)
   }
 
+  @RequirePermission('locations', 'manage')
   @Post()
   @UsePipes(new ZodValidationPipe(CreateLocationSchema))
   @ApiOperation({ summary: 'Create a location' })
@@ -73,6 +77,7 @@ export class LocationsController {
     return this.service.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('locations', 'manage')
   @Patch(':id')
   @ApiOperation({ summary: 'Update a location' })
   @ApiParam({ name: 'id', format: 'uuid' })
@@ -88,6 +93,7 @@ export class LocationsController {
     return this.service.update(id, tenantId, user.id, dto)
   }
 
+  @RequirePermission('locations', 'manage')
   @Patch(':id/archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Archive (soft-delete) a location' })
@@ -99,6 +105,7 @@ export class LocationsController {
     return this.service.remove(id, tenantId)
   }
 
+  @RequirePermission('locations', 'manage')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft-delete a location' })
