@@ -2,16 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { TenantGuard } from '../tenant.guard.js'
 import { IS_PUBLIC_KEY } from '../../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../../decorators/provision-route.decorator.js'
+import { IS_PLATFORM_ROUTE_KEY } from '../../decorators/platform-route.decorator.js'
 
 function makeContext(options: {
   isPublic?: boolean
   isProvisionRoute?: boolean
+  isPlatformRoute?: boolean
   tenantId?: string
 }) {
   const reflector = {
     getAllAndOverride: vi.fn((key: string) => {
       if (key === IS_PUBLIC_KEY) return options.isPublic ?? false
       if (key === IS_PROVISION_ROUTE_KEY) return options.isProvisionRoute ?? false
+      if (key === IS_PLATFORM_ROUTE_KEY) return options.isPlatformRoute ?? false
       return undefined
     }),
   }
@@ -59,5 +62,13 @@ describe('TenantGuard', () => {
     const result = guard.canActivate(ctx as never)
     expect(result).toBe(true)
     expect(request['tenantId']).toBe('my-tenant')
+  })
+
+  it('returns true for platform routes without setting tenantId', () => {
+    const { reflector, ctx, request } = makeContext({ isPlatformRoute: true })
+    guard = new TenantGuard(reflector as never)
+    const result = guard.canActivate(ctx as never)
+    expect(result).toBe(true)
+    expect(request['tenantId']).toBeUndefined()
   })
 })
