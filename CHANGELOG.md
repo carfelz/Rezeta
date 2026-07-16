@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Staff platform + platform identity (slice 7)
+
+### Added
+
+- `PlatformUser` control-plane identity (`packages/db/prisma/schema.prisma` + migration `20260715040000_platform_users`) — Rezeta staff are a separate table with no `tenant_id`, keyed by Firebase `externalUid`, so a platform principal can never be returned by a tenant-scoped query. Shared `PlatformPrincipal` type in `packages/shared/src/types/auth.ts`.
+- `@PlatformRoute()` decorator (`IS_PLATFORM_ROUTE_KEY`) + `@CurrentPlatformUser()` param decorator (`apps/api/src/common/decorators/`). `AuthGuard` resolves a `PlatformUser` on `@PlatformRoute()` endpoints and sets `request.platformUser` (401 if missing/inactive); `TenantGuard` skips those routes; new global `PlatformGuard` (2nd guard) requires `request.platformUser` (403 `FORBIDDEN` otherwise). Guard order: `AuthGuard → PlatformGuard → TenantGuard → PermissionGuard`.
+- `PlatformUsersModule` + `PlatformUsersRepository` (`findByExternalUid`, `create`).
+- Staff platform module (`apps/api/src/modules/staff/`) with `POST /v1/staff/institutions` and `GET /v1/staff/me`, all `@PlatformRoute()`. Create-institution builds the `Tenant`, seeds `RolePermission` defaults + starter data, and mints the initial `super_admin` via the users provisioning flow (Admin SDK + set-password email) with `actorUserId: null` + `bypassRankCheck`; audits with `actorType: 'system'` and the acting `PlatformUser` id in metadata.
+- `CreateInstitutionSchema` + `InstitutionCreatedSchema` in `packages/shared/src/schemas/staff.ts`.
+- Dev CLI `apps/api/src/scripts/create-institution.ts` (`pnpm --filter @rezeta/api bootstrap:platform`) to seed the first `PlatformUser` (Admin SDK user + row + set-password link) and optionally the first institution.
+- Web staff console, kept entirely separate from the institution app shell: `useStaffMe` (`apps/web/src/hooks/staff/use-staff-me.ts`) and `useCreateInstitution` (`apps/web/src/hooks/staff/use-create-institution.ts`) query/mutation hooks against `/v1/staff/me` and `/v1/staff/institutions`; `RequirePlatform` route gate (`apps/web/src/components/auth/RequirePlatform.tsx`); `StaffLayout` shell (`apps/web/src/components/layout/StaffLayout.tsx`); the English "New institution" screen at `/staff/institutions/new` (`apps/web/src/pages/staff/NewInstitution.tsx`, `apps/web/src/pages/staff/strings.ts`), wired into `apps/web/src/App.tsx` as a route tree separate from `AppLayout`.
+
+### Changed
+
+- `UsersService.createUser` (`apps/api/src/modules/users/users.service.ts`) accepts an opt-in `{ bypassRankCheck }` option and a nullable `actorUserId`, used by the platform bootstrap to create the first `super_admin`.
+
+### Fixed
+
+- `AuthProvider` (`apps/web/src/providers/AuthProvider.tsx`) no longer signs the Firebase session out when `POST /v1/auth/provision` fails with `USER_NOT_PROVISIONED`. That error code is shared by two distinct identities: an institution account that hasn't been created yet, and a platform-staff (`PlatformUser`) Firebase identity, which by design never gets an institution `User` row. Forcing a sign-out there raced the staff console's independent `GET /v1/staff/me` check (`RequirePlatform`) — a legitimate platform-staff sign-in could be logged out by the app's own institution-auth bootstrap before ever reaching the gate. The institution-side auth state (`user`, `status`) is still cleared to `'unauthenticated'` in that case; only the Firebase session itself is preserved. Consequently, the `/staff` route tree in `App.tsx` is wrapped only in `RequirePlatform`, not `AuthGate` — `AuthGate`'s redirect-when-unauthenticated logic would otherwise fire (correctly, for institution routes, but wrongly here) before `RequirePlatform`'s own `GET /v1/staff/me` check completes.
+
 ## [2026-07-16] Permissions audit fix: actor + before/after level (permissions slice 6 follow-up)
 
 ### Fixed
