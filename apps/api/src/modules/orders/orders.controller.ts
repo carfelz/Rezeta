@@ -62,6 +62,7 @@ import type { AuthUser } from '@rezeta/shared'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { OrdersService, type GenerateAllOrdersResult } from './orders.service.js'
 
 @ApiTags('Orders')
@@ -73,6 +74,7 @@ export class OrdersController {
 
   // ── Combined orders ────────────────────────────────────────────────────────
 
+  @RequirePermission('orders', 'view')
   @Get('orders')
   @ApiOperation({ summary: 'Get all orders (prescriptions, imaging, lab) for consultation' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -87,6 +89,7 @@ export class OrdersController {
 
   // ── Prescriptions ──────────────────────────────────────────────────────────
 
+  @RequirePermission('orders', 'view')
   @Get('prescriptions')
   @ApiOperation({ summary: 'List prescriptions for consultation' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -98,6 +101,7 @@ export class OrdersController {
     return this.svc.listPrescriptions(consultationId, tenantId)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('prescriptions/:prescriptionId/pdf')
   @ApiOperation({ summary: 'Download prescription as PDF' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -119,6 +123,7 @@ export class OrdersController {
     res.end(buffer)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('prescriptions/:prescriptionId')
   @ApiOperation({ summary: 'Get prescription by ID' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -133,6 +138,7 @@ export class OrdersController {
     return this.svc.getPrescription(consultationId, prescriptionId, tenantId)
   }
 
+  @RequirePermission('orders', 'manage')
   @Post('prescriptions')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreatePrescriptionGroupSchema))
@@ -149,6 +155,7 @@ export class OrdersController {
     return this.svc.createPrescription(consultationId, tenantId, user.id, dto)
   }
 
+  @RequirePermission('orders', 'manage')
   @Delete('prescriptions/:prescriptionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a prescription' })
@@ -166,6 +173,7 @@ export class OrdersController {
 
   // ── Imaging orders ─────────────────────────────────────────────────────────
 
+  @RequirePermission('orders', 'view')
   @Get('imaging-orders')
   @ApiOperation({ summary: 'List imaging orders for consultation' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -177,6 +185,7 @@ export class OrdersController {
     return this.svc.listImagingOrders(consultationId, tenantId)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('imaging-orders/:orderId')
   @ApiOperation({ summary: 'Get imaging order by ID' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -191,6 +200,7 @@ export class OrdersController {
     return this.svc.getImagingOrder(consultationId, orderId, tenantId)
   }
 
+  @RequirePermission('orders', 'manage')
   @Post('imaging-orders')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateImagingOrderGroupSchema))
@@ -207,6 +217,7 @@ export class OrdersController {
     return this.svc.createImagingOrder(consultationId, tenantId, user.id, dto)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('imaging-orders/group-pdf')
   @ApiOperation({ summary: 'Download imaging order group as PDF' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -234,6 +245,7 @@ export class OrdersController {
     res.end(buffer)
   }
 
+  @RequirePermission('orders', 'manage')
   @Patch('imaging-orders/rename-group')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(RenameOrderGroupSchema))
@@ -250,6 +262,7 @@ export class OrdersController {
     return this.svc.renameImagingOrderGroup(consultationId, groupOrder, tenantId, dto)
   }
 
+  @RequirePermission('orders', 'manage')
   @Patch('imaging-orders/:orderId')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(PatchImagingOrderSchema))
@@ -267,6 +280,7 @@ export class OrdersController {
     return this.svc.patchImagingOrder(consultationId, orderId, tenantId, dto)
   }
 
+  @RequirePermission('orders', 'manage')
   @Delete('imaging-orders/:orderId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an imaging order' })
@@ -284,6 +298,7 @@ export class OrdersController {
 
   // ── Lab orders ─────────────────────────────────────────────────────────────
 
+  @RequirePermission('orders', 'view')
   @Get('lab-orders')
   @ApiOperation({ summary: 'List lab orders for consultation' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -295,6 +310,7 @@ export class OrdersController {
     return this.svc.listLabOrders(consultationId, tenantId)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('lab-orders/:orderId')
   @ApiOperation({ summary: 'Get lab order by ID' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -309,6 +325,7 @@ export class OrdersController {
     return this.svc.getLabOrder(consultationId, orderId, tenantId)
   }
 
+  @RequirePermission('orders', 'manage')
   @Post('lab-orders')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateLabOrderGroupSchema))
@@ -325,6 +342,7 @@ export class OrdersController {
     return this.svc.createLabOrder(consultationId, tenantId, user.id, dto)
   }
 
+  @RequirePermission('orders', 'view')
   @Get('lab-orders/group-pdf')
   @ApiOperation({ summary: 'Download lab order group as PDF' })
   @ApiParam({ name: 'consultationId', type: String, format: 'uuid' })
@@ -347,6 +365,7 @@ export class OrdersController {
     res.end(buffer)
   }
 
+  @RequirePermission('orders', 'manage')
   @Patch('lab-orders/rename-group')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(RenameOrderGroupSchema))
@@ -363,6 +382,7 @@ export class OrdersController {
     return this.svc.renameLabOrderGroup(consultationId, groupOrder, tenantId, dto)
   }
 
+  @RequirePermission('orders', 'manage')
   @Patch('lab-orders/:orderId')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(PatchLabOrderSchema))
@@ -380,6 +400,7 @@ export class OrdersController {
     return this.svc.patchLabOrder(consultationId, orderId, tenantId, dto)
   }
 
+  @RequirePermission('orders', 'manage')
   @Delete('lab-orders/:orderId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a lab order' })
@@ -397,6 +418,7 @@ export class OrdersController {
 
   // ── Generate all ───────────────────────────────────────────────────────────
 
+  @RequirePermission('orders', 'manage')
   @Post('orders/generate-all')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(GenerateAllOrdersSchema))

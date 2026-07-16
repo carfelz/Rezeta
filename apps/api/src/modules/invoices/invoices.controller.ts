@@ -40,6 +40,7 @@ import {
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
+import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { parseLimit } from '../../common/pagination/parse-limit.js'
 import { InvoicesService } from './invoices.service.js'
 
@@ -56,6 +57,7 @@ interface InvoiceListResult {
 export class InvoicesController {
   constructor(@Inject(InvoicesService) private svc: InvoicesService) {}
 
+  @RequirePermission('billing', 'view')
   @Get()
   @ApiOperation({ summary: 'List invoices' })
   @ApiQuery({ name: 'status', required: false })
@@ -80,6 +82,7 @@ export class InvoicesController {
     })
   }
 
+  @RequirePermission('billing', 'view')
   @Get(':id/pdf')
   @ApiOperation({ summary: 'Download invoice as PDF' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
@@ -99,6 +102,7 @@ export class InvoicesController {
     res.end(buffer)
   }
 
+  @RequirePermission('billing', 'view')
   @Get(':id')
   @ApiOperation({ summary: 'Get invoice by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
@@ -111,6 +115,7 @@ export class InvoicesController {
     return this.svc.getById(id, tenantId)
   }
 
+  @RequirePermission('billing', 'manage')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(CreateInvoiceSchema))
@@ -124,6 +129,7 @@ export class InvoicesController {
     return this.svc.create(tenantId, user.id, dto)
   }
 
+  @RequirePermission('billing', 'manage')
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateInvoiceSchema))
   @ApiOperation({ summary: 'Update draft invoice' })
@@ -137,6 +143,7 @@ export class InvoicesController {
     return this.svc.update(id, tenantId, dto)
   }
 
+  @RequirePermission('billing', 'manage')
   @Patch(':id/status')
   @UsePipes(new ZodValidationPipe(UpdateInvoiceStatusSchema))
   @ApiOperation({ summary: 'Transition invoice status' })
@@ -150,6 +157,7 @@ export class InvoicesController {
     return this.svc.updateStatus(id, tenantId, dto)
   }
 
+  @RequirePermission('billing', 'manage')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete draft invoice (soft delete)' })
