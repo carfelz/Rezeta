@@ -17,7 +17,10 @@ const mockTx = {
     create: vi.fn(),
     findFirst: vi.fn(),
   },
+  rolePermission: { createMany: vi.fn() },
 }
+
+const mockPermissions = { seedDefaults: vi.fn().mockResolvedValue(undefined) }
 
 const mockPrisma = {
   tenant: { findUnique: vi.fn() },
@@ -29,7 +32,7 @@ describe('TenantSeedingService — locale names', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    service = new TenantSeedingService(mockPrisma as never)
+    service = new TenantSeedingService(mockPrisma as never, mockPermissions as never)
 
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
     mockTx.$queryRaw.mockResolvedValue([{ id: 't1' }])

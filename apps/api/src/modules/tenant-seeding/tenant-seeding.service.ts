@@ -3,6 +3,7 @@ import type { Prisma } from '@rezeta/db'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { getStarterFixtures } from '../../lib/starter-fixtures/index.js'
 import { ErrorCode } from '@rezeta/shared'
+import { PermissionsService } from '../permissions/permissions.service.js'
 
 type TransactionClient = Prisma.TransactionClient
 
@@ -64,7 +65,10 @@ const SEEDED_CATEGORIES: Record<'es' | 'en', { name: string; color: string }[]> 
 
 @Injectable()
 export class TenantSeedingService {
-  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(PermissionsService) private permissions: PermissionsService,
+  ) {}
 
   /**
    * Seeds a tenant with 2 starter templates and 2 default protocol categories.
@@ -97,6 +101,8 @@ export class TenantSeedingService {
         if (locked?.seededAt !== null) {
           throw alreadySeeded()
         }
+
+        await this.permissions.seedDefaults(tx, tenantId)
 
         // Seed protocol categories first so templates can link to them.
         const categories = await Promise.all(
@@ -172,6 +178,8 @@ export class TenantSeedingService {
         if (locked?.seededAt !== null) {
           throw alreadySeeded()
         }
+
+        await this.permissions.seedDefaults(tx, tenantId)
 
         // Create a default category so every custom template has a valid categoryId.
         const defaultCategory = await tx.protocolCategory.create({

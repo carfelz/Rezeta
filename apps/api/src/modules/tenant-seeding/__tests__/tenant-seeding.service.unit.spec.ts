@@ -16,7 +16,10 @@ const mockTx = {
     create: vi.fn(),
     findFirst: vi.fn(),
   },
+  rolePermission: { createMany: vi.fn() },
 }
+
+const mockPermissions = { seedDefaults: vi.fn().mockResolvedValue(undefined) }
 
 const mockPrisma = {
   tenant: { findUnique: vi.fn() },
@@ -28,7 +31,7 @@ describe('TenantSeedingService (unit)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    service = new TenantSeedingService(mockPrisma as never)
+    service = new TenantSeedingService(mockPrisma as never, mockPermissions as never)
 
     // Default: unseeded tenant, transaction re-check also unseeded
     mockPrisma.tenant.findUnique.mockResolvedValue(unseededTenant)
@@ -139,6 +142,11 @@ describe('TenantSeedingService (unit)', () => {
       )[0].data.name
       expect(firstTemplateName).toBeTruthy()
     })
+
+    it('seeds RolePermission defaults inside the transaction', async () => {
+      await service.seedDefault('t1')
+      expect(mockPermissions.seedDefaults).toHaveBeenCalledWith(mockTx, 't1')
+    })
   })
 
   // ── seedCustom ─────────────────────────────────────────────────────────────
@@ -207,6 +215,11 @@ describe('TenantSeedingService (unit)', () => {
       expect(mockTx.tenant.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 't1' } }),
       )
+    })
+
+    it('seeds RolePermission defaults inside the transaction', async () => {
+      await service.seedCustom('t1', templates, types)
+      expect(mockPermissions.seedDefaults).toHaveBeenCalledWith(mockTx, 't1')
     })
   })
 })
