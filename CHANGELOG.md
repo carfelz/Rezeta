@@ -4,6 +4,48 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Provisioning rework + Users module (permissions slice 5)
+
+### Added
+
+- `IAuthProvider.createUser` and `generatePasswordResetLink` (Firebase Admin
+  SDK) in `apps/api/src/lib/auth/firebase-auth.provider.ts`.
+- `InvitationMailerService` (dev-path stub that logs the set-password link)
+  in `apps/api/src/modules/users/invitation-mailer.service.ts`.
+- `UsersManagementController` (`GET/POST /v1/users`,
+  `PATCH /v1/users/:id/role`, `PATCH /v1/users/:id/active`) with rank-rule
+  (`canManageRole`) enforcement and `user_invited`/`role_changed`/
+  `user_deactivated` audit events.
+- `User.lastLoginAt` column, stamped by `AuthGuard` on first authenticated
+  request, driving the roster's `invited` vs `active` status.
+- Shared schemas `CreateUserSchema`/`ChangeRoleSchema`/`SetActiveSchema`/
+  `ManagedUserSchema` in `packages/shared/src/schemas/user-management.ts`
+  (four-role enum).
+- Web set-password / first-login screen at `/establecer-contrasena`
+  (`apps/web/src/pages/SetPassword/`); `IAuthClient.verifyPasswordResetCode`
+  and `confirmPasswordReset` in the Firebase auth client.
+- Web Users roster page at `/ajustes/usuarios`
+  (`apps/web/src/pages/settings/Users.tsx`, `apps/web/src/hooks/users/use-users.ts`),
+  gated by `useCan('users', 'manage')` with a three-state status badge
+  (`Inactivo` / `Invitación enviada` / `Activo`), plus a capability-gated
+  entry in the Settings menu.
+
+### Changed
+
+- `UsersRepository.provisionUser` no longer creates a tenant; it resolves an
+  existing user by `externalUid` or rejects `USER_NOT_PROVISIONED`. Added
+  roster methods (`listByTenant`, `createProvisionedUser`, `updateRole`,
+  `setActive`).
+- `AuthService.provision` / `AuthController.provision` drop the
+  signup-profile path — provisioning always resolves an existing row.
+
+### Removed
+
+- Public self-signup: the `/signup` route and `Signup` page, the `signUp`
+  entry from `useAuthStore` and `IAuthClient`/`FirebaseAuthClient`, the
+  pending-profile plumbing in `AuthProvider`, the Login page's signup link,
+  and `SignUpSchema`/`SignUpDto` from `@rezeta/shared`.
+
 ## [2026-07-16] Fix PatientDetail and Sidebar permission-gating gaps (slice 4 follow-up)
 
 ### Fixed
