@@ -66,6 +66,11 @@ export const usersStrings = {
   creatingButton: 'Creando...',
   createError: 'No se pudo crear el usuario. Intenta de nuevo.',
   createSuccess: 'Usuario creado. Se envió un enlace para crear la contraseña.',
+  roleChangeLabel: 'Cambiar rol',
+  roleChangeError: 'No se pudo cambiar el rol. Intenta de nuevo.',
+  resendButton: 'Reenviar invitación',
+  resendingButton: 'Reenviando...',
+  resendError: 'No se pudo reenviar la invitación. Intenta de nuevo.',
 } as const
 
 export const permissionsStrings = {

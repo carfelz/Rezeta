@@ -9,9 +9,13 @@ const mocks = vi.hoisted(() => ({
   useCreateUser: vi.fn(),
   useChangeUserRole: vi.fn(),
   useSetUserActive: vi.fn(),
+  useResendInvite: vi.fn(),
   useCan: vi.fn(),
+  useAuth: vi.fn(),
   createMutateAsync: vi.fn(),
   setActiveMutateAsync: vi.fn(),
+  changeRoleMutateAsync: vi.fn(),
+  resendInviteMutateAsync: vi.fn(),
 }))
 
 vi.mock('@/hooks/users/use-users', () => ({
@@ -19,9 +23,11 @@ vi.mock('@/hooks/users/use-users', () => ({
   useCreateUser: mocks.useCreateUser,
   useChangeUserRole: mocks.useChangeUserRole,
   useSetUserActive: mocks.useSetUserActive,
+  useResendInvite: mocks.useResendInvite,
 }))
 
 vi.mock('@/hooks/use-can', () => ({ useCan: mocks.useCan }))
+vi.mock('@/hooks/use-auth', () => ({ useAuth: mocks.useAuth }))
 
 import { Users } from '../Users'
 
@@ -58,18 +64,59 @@ const inactiveUser: ManagedUserDto = {
   status: 'active',
 }
 
+/** A higher-rank peer than 'admin' — used to assert controls stay hidden for it. */
+const superAdminUser: ManagedUserDto = {
+  id: 'u5',
+  email: 'boss@clinic.do',
+  fullName: 'Dueña Dueño',
+  role: 'super_admin',
+  isActive: true,
+  createdAt: '2026-07-15T00:00:00.000Z',
+  lastLoginAt: '2026-07-16T00:00:00.000Z',
+  status: 'active',
+}
+
+/** A higher-rank peer who is still invited — used to assert resend also stays hidden for it. */
+const invitedSuperAdminUser: ManagedUserDto = {
+  id: 'u6',
+  email: 'newboss@clinic.do',
+  fullName: 'Nueva Dueña',
+  role: 'super_admin',
+  isActive: true,
+  createdAt: '2026-07-15T00:00:00.000Z',
+  lastLoginAt: null,
+  status: 'invited',
+}
+
 const roster = [invitedUser, activeUser, inactiveUser]
+const rosterWithHigherRank = [...roster, superAdminUser, invitedSuperAdminUser]
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.useCan.mockReturnValue(true)
+  // Default actor is super_admin (least restrictive) — individual rank-gating
+  // tests override this to 'admin' to exercise the filtering behavior.
+  mocks.useAuth.mockReturnValue({
+    user: { role: 'super_admin' },
+    isLoading: false,
+    isAuthenticated: true,
+  })
   mocks.useUsers.mockReturnValue({ data: roster, isLoading: false, isError: false })
-  mocks.createMutateAsync.mockResolvedValue({ ...invitedUser, id: 'u5' })
+  mocks.createMutateAsync.mockResolvedValue({ ...invitedUser, id: 'u7' })
   mocks.useCreateUser.mockReturnValue({ mutateAsync: mocks.createMutateAsync, isPending: false })
-  mocks.useChangeUserRole.mockReturnValue({ mutateAsync: vi.fn(), isPending: false })
+  mocks.changeRoleMutateAsync.mockResolvedValue({ ...invitedUser, role: 'doctor' })
+  mocks.useChangeUserRole.mockReturnValue({
+    mutateAsync: mocks.changeRoleMutateAsync,
+    isPending: false,
+  })
   mocks.setActiveMutateAsync.mockResolvedValue({ ...activeUser, isActive: false })
   mocks.useSetUserActive.mockReturnValue({
     mutateAsync: mocks.setActiveMutateAsync,
+    isPending: false,
+  })
+  mocks.resendInviteMutateAsync.mockResolvedValue({ ...invitedUser })
+  mocks.useResendInvite.mockReturnValue({
+    mutateAsync: mocks.resendInviteMutateAsync,
     isPending: false,
   })
 })
@@ -171,5 +218,151 @@ describe('Users page — assistant (no manage capability)', () => {
     render(<Users />)
     expect(screen.queryByRole('button', { name: /Nuevo usuario/i })).not.toBeInTheDocument()
     expect(screen.getByText('Sin acceso')).toBeInTheDocument()
+  })
+})
+
+describe('Users page — rank-filtered create-form role options', () => {
+  function openCreateForm(): void {
+    render(<Users />)
+    fireEvent.click(screen.getByRole('button', { name: /Nuevo usuario/i }))
+  }
+
+  it('an admin actor only sees assistant + doctor in the create-form role select', () => {
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    openCreateForm()
+    const select = screen.getByLabelText<HTMLSelectElement>('Rol')
+    const optionLabels = Array.from(select.options).map((o) => o.textContent)
+    expect(optionLabels).toEqual(['Asistente', 'Doctor'])
+  })
+
+  it('a super_admin actor sees assistant + doctor + admin, but not super_admin (own rank)', () => {
+    mocks.useAuth.mockReturnValue({
+      user: { role: 'super_admin' },
+      isLoading: false,
+      isAuthenticated: true,
+    })
+    openCreateForm()
+    const select = screen.getByLabelText<HTMLSelectElement>('Rol')
+    const optionLabels = Array.from(select.options).map((o) => o.textContent)
+    expect(optionLabels).toEqual(['Asistente', 'Doctor', 'Administrador'])
+  })
+})
+
+describe('Users page — rank-gated activate/deactivate control', () => {
+  beforeEach(() => {
+    mocks.useUsers.mockReturnValue({ data: rosterWithHigherRank, isLoading: false, isError: false })
+  })
+
+  it('hides the activate/deactivate control on a row outranking the actor (admin viewing a super_admin row)', () => {
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Dueña Dueño'))
+    expect(row).toBeDefined()
+    expect(within(row!).queryByRole('button', { name: 'Desactivar' })).not.toBeInTheDocument()
+    expect(within(row!).queryByRole('button', { name: 'Activar' })).not.toBeInTheDocument()
+  })
+
+  it('shows the activate/deactivate control on a row below the actor rank (admin viewing an assistant row)', () => {
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    expect(row).toBeDefined()
+    expect(within(row!).getByRole('button', { name: 'Desactivar' })).toBeInTheDocument()
+  })
+})
+
+describe('Users page — role-change control', () => {
+  it('shows a role-change select on a row below the actor rank, filtered to manageable roles', () => {
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    const select = within(row!).getByLabelText<HTMLSelectElement>('Cambiar rol')
+    const optionLabels = Array.from(select.options).map((o) => o.textContent)
+    expect(optionLabels).toEqual(['Asistente', 'Doctor'])
+  })
+
+  it('hides the role-change control on a row outranking the actor', () => {
+    mocks.useUsers.mockReturnValue({ data: rosterWithHigherRank, isLoading: false, isError: false })
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Dueña Dueño'))
+    expect(within(row!).queryByLabelText('Cambiar rol')).not.toBeInTheDocument()
+  })
+
+  it('issues the role-change PATCH via useChangeUserRole when the select changes', async () => {
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    const select = within(row!).getByLabelText('Cambiar rol')
+    fireEvent.change(select, { target: { value: 'doctor' } })
+    await waitFor(() => {
+      expect(mocks.changeRoleMutateAsync).toHaveBeenCalledWith({ role: 'doctor' })
+    })
+  })
+
+  it('surfaces a role-change error via Callout when the mutation rejects', async () => {
+    mocks.changeRoleMutateAsync.mockRejectedValue(new Error('boom'))
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    const select = within(row!).getByLabelText('Cambiar rol')
+    fireEvent.change(select, { target: { value: 'doctor' } })
+    await waitFor(() => {
+      expect(
+        within(row!).getByText('No se pudo cambiar el rol. Intenta de nuevo.'),
+      ).toBeInTheDocument()
+    })
+  })
+})
+
+describe('Users page — resend invite', () => {
+  it('shows the resend button only on invited-status rows', () => {
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const invitedRow = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    const activeRow = rows.find((r) => r.textContent?.includes('Dr. Activo'))
+    expect(within(invitedRow!).getByRole('button', { name: 'Reenviar invitación' })).toBeInTheDocument()
+    expect(
+      within(activeRow!).queryByRole('button', { name: 'Reenviar invitación' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides the resend button on an invited row that outranks the actor', () => {
+    mocks.useUsers.mockReturnValue({ data: rosterWithHigherRank, isLoading: false, isError: false })
+    mocks.useAuth.mockReturnValue({ user: { role: 'admin' }, isLoading: false, isAuthenticated: true })
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Nueva Dueña'))
+    expect(row).toBeDefined()
+    expect(within(row!).queryByRole('button', { name: 'Reenviar invitación' })).not.toBeInTheDocument()
+  })
+
+  it('calls useResendInvite mutateAsync when the resend button is clicked', async () => {
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    fireEvent.click(within(row!).getByRole('button', { name: 'Reenviar invitación' }))
+    await waitFor(() => {
+      expect(mocks.resendInviteMutateAsync).toHaveBeenCalled()
+    })
+  })
+
+  it('surfaces a resend error when the mutation rejects', async () => {
+    mocks.resendInviteMutateAsync.mockRejectedValue(new Error('boom'))
+    render(<Users />)
+    const rows = screen.getAllByRole('row')
+    const row = rows.find((r) => r.textContent?.includes('Ana Reyes'))
+    fireEvent.click(within(row!).getByRole('button', { name: 'Reenviar invitación' }))
+    await waitFor(() => {
+      expect(
+        within(row!).getByText('No se pudo reenviar la invitación. Intenta de nuevo.'),
+      ).toBeInTheDocument()
+    })
   })
 })

@@ -41,3 +41,11 @@ export function useSetUserActive(
     onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
   })
 }
+
+export function useResendInvite(id: string): UseMutationResult<ManagedUserDto, Error, void> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiClient.post<ManagedUserDto>(`/v1/users/${id}/resend-invite`, {}),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: [QK] }),
+  })
+}

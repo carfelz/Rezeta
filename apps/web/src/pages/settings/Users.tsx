@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import type { ManagedUserDto, UserRoleValue } from '@rezeta/shared'
+import { canManageRole } from '@rezeta/shared'
 import {
   useUsers,
   useCreateUser,
+  useChangeUserRole,
   useSetUserActive,
+  useResendInvite,
 } from '@/hooks/users/use-users'
 import { useCan } from '@/hooks/use-can'
+import { useAuth } from '@/hooks/use-auth'
 import { logger } from '@/lib/logger'
 import { usersStrings } from './strings'
 import {
@@ -23,13 +27,32 @@ import {
   ModalFooter,
 } from '@/components/ui'
 
+const ALL_ROLES: UserRoleValue[] = ['assistant', 'doctor', 'admin', 'super_admin']
+
+/** Roles the actor may assign or reassign — strictly below their own rank. */
+function manageableRoles(actorRole: UserRoleValue | undefined): UserRoleValue[] {
+  if (!actorRole) return []
+  return ALL_ROLES.filter((role) => canManageRole(actorRole, role))
+}
+
+/** Whether the actor outranks the given row's current role. */
+function canManageUser(actorRole: UserRoleValue | undefined, targetRole: UserRoleValue): boolean {
+  return actorRole != null && canManageRole(actorRole, targetRole)
+}
+
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
-function CreateUserModal({ onClose }: { onClose: () => void }): JSX.Element {
+function CreateUserModal({
+  assignableRoles,
+  onClose,
+}: {
+  assignableRoles: UserRoleValue[]
+  onClose: () => void
+}): JSX.Element {
   const createMutation = useCreateUser()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<UserRoleValue>('assistant')
+  const [role, setRole] = useState<UserRoleValue>(assignableRoles[0] ?? 'assistant')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
@@ -85,10 +108,11 @@ function CreateUserModal({ onClose }: { onClose: () => void }): JSX.Element {
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRoleValue)}
               >
-                <option value="assistant">{usersStrings.roleAssistant}</option>
-                <option value="doctor">{usersStrings.roleDoctor}</option>
-                <option value="admin">{usersStrings.roleAdmin}</option>
-                <option value="super_admin">{usersStrings.roleSuperAdmin}</option>
+                {assignableRoles.map((r) => (
+                  <option key={r} value={r}>
+                    {roleLabel(r)}
+                  </option>
+                ))}
               </NativeSelect>
             </Field>
             {error && (
@@ -123,11 +147,67 @@ function StatusBadge({ user }: { user: ManagedUserDto }): JSX.Element {
   return <Badge variant="active">{usersStrings.statusActive}</Badge>
 }
 
+// ─── Role-change control ────────────────────────────────────────────────────
+
+function RoleChangeControl({
+  actorRole,
+  user,
+}: {
+  actorRole: UserRoleValue | undefined
+  user: ManagedUserDto
+}): JSX.Element {
+  const changeRoleMutation = useChangeUserRole(user.id)
+  const [error, setError] = useState<string | null>(null)
+  const options = manageableRoles(actorRole)
+
+  function handleChange(e: React.ChangeEvent<HTMLSelectElement>): void {
+    const nextRole = e.target.value as UserRoleValue
+    if (nextRole === user.role) return
+    setError(null)
+    void changeRoleMutation.mutateAsync({ role: nextRole }).catch((err: unknown) => {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Users.changeRole' })
+      setError(usersStrings.roleChangeError)
+    })
+  }
+
+  return (
+    <div>
+      <NativeSelect
+        aria-label={usersStrings.roleChangeLabel}
+        value={user.role}
+        disabled={changeRoleMutation.isPending}
+        onChange={handleChange}
+      >
+        {options.map((r) => (
+          <option key={r} value={r}>
+            {roleLabel(r)}
+          </option>
+        ))}
+      </NativeSelect>
+      {error && (
+        <Callout variant="danger" compact icon={<i className="ph ph-warning" />} className="mt-1">
+          {error}
+        </Callout>
+      )}
+    </div>
+  )
+}
+
 // ─── Roster row ───────────────────────────────────────────────────────────────
 
-function UserRow({ user }: { user: ManagedUserDto }): JSX.Element {
+function UserRow({
+  actorRole,
+  user,
+}: {
+  actorRole: UserRoleValue | undefined
+  user: ManagedUserDto
+}): JSX.Element {
   const setActiveMutation = useSetUserActive(user.id)
+  const resendMutation = useResendInvite(user.id)
   const [pendingError, setPendingError] = useState<string | null>(null)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const canManageThisUser = canManageUser(actorRole, user.role)
 
   function handleToggleActive(): void {
     setPendingError(null)
@@ -138,27 +218,55 @@ function UserRow({ user }: { user: ManagedUserDto }): JSX.Element {
     })
   }
 
+  function handleResend(): void {
+    setResendError(null)
+    void resendMutation.mutateAsync().catch((err: unknown) => {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Users.resendInvite' })
+      setResendError(usersStrings.resendError)
+    })
+  }
+
   return (
     <tr className="hover:bg-n-25">
       <td className="text-sm px-4 py-3 border-b border-n-100 font-semibold text-n-800">
         {user.fullName ?? user.email}
       </td>
       <td className="text-sm px-4 py-3 border-b border-n-100">{user.email}</td>
-      <td className="text-sm px-4 py-3 border-b border-n-100">{roleLabel(user.role)}</td>
+      <td className="text-sm px-4 py-3 border-b border-n-100">
+        {canManageThisUser ? (
+          <RoleChangeControl actorRole={actorRole} user={user} />
+        ) : (
+          roleLabel(user.role)
+        )}
+      </td>
       <td className="text-sm px-4 py-3 border-b border-n-100">
         <StatusBadge user={user} />
         {pendingError && <p className="text-xs text-danger-text mt-1">{pendingError}</p>}
+        {resendError && <p className="text-xs text-danger-text mt-1">{resendError}</p>}
       </td>
       <td className="text-sm px-4 py-3 border-b border-n-100">
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={setActiveMutation.isPending}
-            onClick={handleToggleActive}
-          >
-            {user.isActive ? usersStrings.deactivateButton : usersStrings.activateButton}
-          </Button>
+        <div className="flex justify-end gap-2">
+          {canManageThisUser && user.status === 'invited' && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={resendMutation.isPending}
+              onClick={handleResend}
+            >
+              {resendMutation.isPending ? usersStrings.resendingButton : usersStrings.resendButton}
+            </Button>
+          )}
+          {canManageThisUser && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={setActiveMutation.isPending}
+              onClick={handleToggleActive}
+            >
+              {user.isActive ? usersStrings.deactivateButton : usersStrings.activateButton}
+            </Button>
+          )}
         </div>
       </td>
     </tr>
@@ -182,8 +290,10 @@ function roleLabel(role: UserRoleValue): string {
 
 export function Users(): JSX.Element {
   const canManage = useCan('users', 'manage')
+  const { user: currentUser } = useAuth()
   const { data: users, isLoading, isError } = useUsers()
   const [showCreate, setShowCreate] = useState(false)
+  const assignableRoles = manageableRoles(currentUser?.role)
 
   if (!canManage) {
     return (
@@ -200,7 +310,9 @@ export function Users(): JSX.Element {
 
   return (
     <div>
-      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}
+      {showCreate && (
+        <CreateUserModal assignableRoles={assignableRoles} onClose={() => setShowCreate(false)} />
+      )}
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-h1 m-0">{usersStrings.pageTitle}</h1>
@@ -253,7 +365,7 @@ export function Users(): JSX.Element {
             </thead>
             <tbody>
               {users!.map((u) => (
-                <UserRow key={u.id} user={u} />
+                <UserRow key={u.id} actorRole={currentUser?.role} user={u} />
               ))}
             </tbody>
           </table>
