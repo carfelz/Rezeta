@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger'
 import {
   CreateUserSchema,
@@ -67,5 +67,19 @@ export class UsersManagementController {
     @Body(new ZodValidationPipe(SetActiveSchema)) dto: SetActiveDto,
   ): Promise<ManagedUserDto> {
     return this.svc.setActive(user.tenantId, user.role, user.id, id, dto)
+  }
+
+  @Post(':id/resend-invite')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermission('users', 'manage')
+  @ApiOperation({ summary: 'Resend the set-password invite email (regenerates the link)' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 403 })
+  @ApiResponse({ status: 404 })
+  async resendInvite(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ): Promise<ManagedUserDto> {
+    return this.svc.resendInvite(user.tenantId, user.role, user.id, id)
   }
 }

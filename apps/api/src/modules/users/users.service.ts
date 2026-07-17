@@ -1,4 +1,11 @@
-import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common'
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common'
 import type { User } from '@rezeta/db'
 import {
   ErrorCode,
@@ -20,6 +27,8 @@ import { InvitationMailerService } from './invitation-mailer.service.js'
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name)
+
   constructor(
     @Inject(UsersRepository) private repository: UsersRepository,
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
@@ -92,17 +101,56 @@ export class UsersService {
       this.assertCanManage(actorRole, dto.role)
     }
 
+    // Firebase createUser rejects a duplicate email with a mapped
+    // ConflictException(USER_ALREADY_EXISTS) (see firebase-auth.provider.ts) —
+    // nothing to clean up here since no identity was created.
     const { externalUid } = await this.authProvider.createUser(dto.email)
-    const created = await this.repository.createProvisionedUser({
-      tenantId,
-      externalUid,
-      email: dto.email,
-      fullName: dto.fullName,
-      role: dto.role,
-    })
 
-    const link = await this.authProvider.generatePasswordResetLink(dto.email)
-    await this.mailer.sendSetPasswordEmail(dto.email, link)
+    let created: User
+    try {
+      created = await this.repository.createProvisionedUser({
+        tenantId,
+        externalUid,
+        email: dto.email,
+        fullName: dto.fullName,
+        role: dto.role,
+      })
+    } catch (err) {
+      // The Firebase identity now exists with no matching DB row. Clean it up
+      // best-effort so a retried invite doesn't collide with an orphaned auth
+      // account; if the cleanup itself fails, log it but still propagate the
+      // ORIGINAL error — that's what the caller needs to see/retry on.
+      try {
+        await this.authProvider.deleteUser(externalUid)
+      } catch (cleanupErr) {
+        this.logger.warn(
+          `Failed to clean up orphaned Firebase user ${externalUid} after a DB write failure for ${dto.email}`,
+          cleanupErr instanceof Error ? cleanupErr.stack : cleanupErr,
+        )
+      }
+      if (this.isUniqueViolation(err)) {
+        throw new ConflictException({
+          code: ErrorCode.USER_ALREADY_EXISTS,
+          message: `A user with email ${dto.email} already exists`,
+        })
+      }
+      throw err
+    }
+
+    // The DB row now exists — the invite has effectively succeeded. A failure
+    // sending the set-password email is non-fatal: fail loud here and the
+    // caller would retry the whole invite (colliding on the row just
+    // created); instead log a warning and return the created user. Recovery
+    // is POST /v1/users/:id/resend-invite (regenerates the link + resends).
+    try {
+      const link = await this.authProvider.generatePasswordResetLink(dto.email)
+      await this.mailer.sendSetPasswordEmail(dto.email, link)
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send the set-password email to ${dto.email} after user creation`,
+        err instanceof Error ? err.stack : err,
+      )
+    }
 
     void this.auditLog.record({
       tenantId,
@@ -177,6 +225,39 @@ export class UsersService {
     return toManagedUser({ ...target, isActive: dto.isActive })
   }
 
+  /**
+   * Regenerate the set-password link and resend it. Recovery path for the
+   * non-fatal email-step failure in `createUser`, and for a user who simply
+   * lost/ignored the first invite. Emits the same `user_invited` audit action
+   * as the initial invite, flagged with `metadata: { resend: true }`.
+   */
+  async resendInvite(
+    tenantId: string,
+    actorRole: UserRole,
+    actorUserId: string,
+    targetUserId: string,
+  ): Promise<ManagedUserDto> {
+    const target = await this.requireUser(targetUserId, tenantId)
+    this.assertCanManage(actorRole, target.role as UserRole)
+
+    const link = await this.authProvider.generatePasswordResetLink(target.email)
+    await this.mailer.sendSetPasswordEmail(target.email, link)
+
+    void this.auditLog.record({
+      tenantId,
+      actorUserId,
+      actorType: 'user',
+      category: 'auth',
+      action: 'user_invited',
+      entityType: 'User',
+      entityId: targetUserId,
+      metadata: { role: target.role, resend: true },
+      status: 'success',
+    })
+
+    return toManagedUser(target)
+  }
+
   private assertCanManage(actorRole: UserRole, targetRole: UserRole): void {
     if (!canManageRole(actorRole, targetRole)) {
       throw new ForbiddenException({
@@ -192,6 +273,16 @@ export class UsersService {
       throw new NotFoundException({ code: ErrorCode.USER_NOT_FOUND, message: `User ${id} not found` })
     }
     return user
+  }
+
+  /** Structural check for Prisma's unique-constraint violation, without importing Prisma types. */
+  private isUniqueViolation(err: unknown): err is { code: string } {
+    return (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    )
   }
 }
 

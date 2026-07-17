@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ForbiddenException } from '@nestjs/common'
+import { ForbiddenException, NotFoundException } from '@nestjs/common'
 import type { AuthUser } from '@rezeta/shared'
 import { UsersManagementController } from '../users-management.controller.js'
 
@@ -8,6 +8,7 @@ const mockSvc = {
   createUser: vi.fn(),
   changeRole: vi.fn(),
   setActive: vi.fn(),
+  resendInvite: vi.fn(),
 }
 
 const admin: AuthUser = {
@@ -62,5 +63,17 @@ describe('UsersManagementController', () => {
     mockSvc.setActive.mockResolvedValue({ id: 'u2' })
     await controller.setActive(admin, 'u2', { isActive: false })
     expect(mockSvc.setActive).toHaveBeenCalledWith('t1', 'admin', 'actor', 'u2', { isActive: false })
+  })
+
+  it('POST /v1/users/:id/resend-invite forwards actor role + tenant + target id', async () => {
+    mockSvc.resendInvite.mockResolvedValue({ id: 'u2' })
+    const result = await controller.resendInvite(admin, 'u2')
+    expect(mockSvc.resendInvite).toHaveBeenCalledWith('t1', 'admin', 'actor', 'u2')
+    expect(result).toEqual({ id: 'u2' })
+  })
+
+  it('propagates NotFound when the service rejects an unknown target id', async () => {
+    mockSvc.resendInvite.mockRejectedValue(new NotFoundException({ code: 'USER_NOT_FOUND' }))
+    await expect(controller.resendInvite(admin, 'missing')).rejects.toThrow(NotFoundException)
   })
 })

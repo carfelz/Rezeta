@@ -6,6 +6,7 @@ import {
   Logger,
   UnauthorizedException,
   InternalServerErrorException,
+  ConflictException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as admin from 'firebase-admin'
@@ -164,6 +165,12 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       const record = await this.app.auth().createUser({ email })
       return { externalUid: record.uid }
     } catch (err) {
+      if (isFirebaseErrorCode(err, 'auth/email-already-exists')) {
+        throw new ConflictException({
+          code: ErrorCode.USER_ALREADY_EXISTS,
+          message: `A user with email ${email} already exists`,
+        })
+      }
       this.logger.error(`Failed to create user ${email}: ${(err as Error).message}`)
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
@@ -189,4 +196,11 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
   }
+}
+
+/** Structural check for a Firebase Admin SDK error code, without importing firebase-admin's error types. */
+function isFirebaseErrorCode(err: unknown, code: string): boolean {
+  return (
+    err !== null && typeof err === 'object' && 'code' in err && (err as { code: string }).code === code
+  )
 }

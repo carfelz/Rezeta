@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { UnauthorizedException, InternalServerErrorException, Logger } from '@nestjs/common'
+import {
+  UnauthorizedException,
+  InternalServerErrorException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common'
+import { ErrorCode } from '@rezeta/shared'
 
 // Mock firebase-admin BEFORE importing the provider
 const m = vi.hoisted(() => {
@@ -364,6 +370,23 @@ describe('FirebaseAuthProvider', () => {
       await expect(provider.createUser('nurse@clinic.do')).rejects.toThrow(
         InternalServerErrorException,
       )
+    })
+
+    it('maps auth/email-already-exists to a 409 ConflictException with USER_ALREADY_EXISTS', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockCreateUser.mockRejectedValue(
+        Object.assign(new Error('The email address is already in use by another account.'), {
+          code: 'auth/email-already-exists',
+        }),
+      )
+      const rejection = provider.createUser('nurse@clinic.do')
+      await expect(rejection).rejects.toThrow(ConflictException)
+      await expect(rejection).rejects.toMatchObject({
+        response: { code: ErrorCode.USER_ALREADY_EXISTS },
+      })
     })
   })
 
