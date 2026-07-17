@@ -4,6 +4,15 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] In-process cache for resolved role capabilities
+
+### Added
+
+- `PermissionsService.resolveCapabilities` (`apps/api/src/modules/permissions/permissions.service.ts`) is now fronted by a private in-process `Map<string, { value, expiresAt }>` cache keyed by `` `${tenantId}:${role}` ``, avoiding a `PermissionsRepository.findByTenantAndRole` round-trip on every authenticated request (`AuthGuard.canActivate`, `AuthService.resolveAuthUser`, `getMatrix`). Cache hits return a shallow copy so callers never share a mutable map.
+- `updateModule` invalidates the written `(tenantId, targetRole)` entry only after `repo.upsertModule` succeeds — a `FORBIDDEN` rank-check rejection never touches the cache. `seedDefaults` invalidates all four roles for the seeded tenant after `createMany` succeeds. `getMatrix` is cache-backed by construction (it calls `resolveCapabilities` per role); it stays consistent on the instance that served a `PATCH` because that instance's cache was just invalidated before the write returns.
+- A 60-second TTL (`CAPABILITIES_CACHE_TTL_MS`) bounds staleness across Cloud Run instances, since instance A's invalidation cannot reach instance B's in-memory map.
+- New tests in `apps/api/src/modules/permissions/__tests__/permissions.service.spec.ts` (`describe('capabilities cache')`) cover: cache hit skips the repository, `updateModule` invalidation is visible immediately, unrelated `(tenant, role)` entries are unaffected, `seedDefaults` invalidates only the seeded tenant's four roles, TTL expiry re-queries the repository (via `vi.useFakeTimers()`), and a rejected `FORBIDDEN` `updateModule` does not invalidate.
+
 ## [2026-07-16] Permissions final review fixes (multi-user spec)
 
 ### Fixed

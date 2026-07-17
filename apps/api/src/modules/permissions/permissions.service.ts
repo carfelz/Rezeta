@@ -26,8 +26,27 @@ function isAccessLevel(value: string): value is AccessLevel {
   return value === 'none' || value === 'view' || value === 'manage'
 }
 
+/**
+ * In-process cache TTL for resolved capability maps. This API runs on Cloud
+ * Run, where multiple instances serve traffic concurrently: instance A's
+ * `updateModule`/`seedDefaults` invalidate only instance A's in-memory map, so
+ * instance B can keep serving a stale entry until it independently observes
+ * the write. The TTL bounds that cross-instance staleness window; it is not a
+ * substitute for the explicit invalidation below, which keeps same-instance
+ * reads consistent immediately after a write.
+ */
+const CAPABILITIES_CACHE_TTL_MS = 60_000
+
+interface CapabilitiesCacheEntry {
+  value: CapabilityMap
+  expiresAt: number
+}
+
 @Injectable()
 export class PermissionsService {
+  /** Keyed by `${tenantId}:${role}` — see resolveCapabilities. */
+  private readonly capabilitiesCache = new Map<string, CapabilitiesCacheEntry>()
+
   constructor(
     @Inject(PermissionsRepository) private repo: PermissionsRepository,
     @Inject(AuditLogService) private auditLog: AuditLogService,
@@ -39,8 +58,22 @@ export class PermissionsService {
    * module with no stored row keeps its catalog default, so tenants seeded before
    * a module existed still resolve it. Rows whose key or level are unrecognized
    * (e.g. a module removed from the catalog) are ignored.
+   *
+   * Fronted by an in-process cache (see `capabilitiesCache`) because this runs
+   * on every authenticated request via `AuthGuard`. A cache hit returns a copy
+   * of the cached map so callers never share a mutable reference. `getMatrix`
+   * calls this once per role and is cache-backed too: the permissions matrix
+   * UI refetches after a `PATCH /v1/permissions/...`, and `updateModule`
+   * invalidates the edited (tenant, role) entry on the instance that served
+   * the write before returning, so that refetch is consistent there.
    */
   async resolveCapabilities(tenantId: string, role: UserRole): Promise<CapabilityMap> {
+    const key = this.cacheKey(tenantId, role)
+    const cached = this.capabilitiesCache.get(key)
+    if (cached && cached.expiresAt > Date.now()) {
+      return { ...cached.value }
+    }
+
     const caps = defaultCapabilitiesFor(role)
     const stored = await this.repo.findByTenantAndRole(tenantId, role)
     for (const row of stored) {
@@ -48,7 +81,24 @@ export class PermissionsService {
         caps[row.moduleKey] = row.accessLevel
       }
     }
-    return caps
+    this.capabilitiesCache.set(key, { value: caps, expiresAt: Date.now() + CAPABILITIES_CACHE_TTL_MS })
+    return { ...caps }
+  }
+
+  private cacheKey(tenantId: string, role: UserRole): string {
+    return `${tenantId}:${role}`
+  }
+
+  /** Drop the cached entry for one (tenant, role) pair, e.g. after a write. */
+  private invalidateRole(tenantId: string, role: UserRole): void {
+    this.capabilitiesCache.delete(this.cacheKey(tenantId, role))
+  }
+
+  /** Drop cached entries for every role of one tenant, e.g. after (re)seeding. */
+  private invalidateTenant(tenantId: string): void {
+    for (const role of ALL_ROLES) {
+      this.invalidateRole(tenantId, role)
+    }
   }
 
   /**
@@ -67,6 +117,7 @@ export class PermissionsService {
       }))
     })
     await tx.rolePermission.createMany({ data })
+    this.invalidateTenant(tenantId)
   }
 
   /** Resolve the tenant's full role x module capability matrix. */
@@ -102,6 +153,7 @@ export class PermissionsService {
     }
     const before = (await this.resolveCapabilities(tenantId, targetRole))[moduleKey]
     await this.repo.upsertModule(tenantId, targetRole, moduleKey, level)
+    this.invalidateRole(tenantId, targetRole)
     void this.auditLog.record({
       tenantId,
       actorUserId,

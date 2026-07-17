@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ForbiddenException } from '@nestjs/common'
 import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { PermissionsService } from '../permissions.service.js'
@@ -179,6 +179,138 @@ describe('PermissionsService', () => {
       ).rejects.toThrow(ForbiddenException)
       expect(mockRepo.upsertModule).not.toHaveBeenCalled()
       expect(mockAuditLog.record).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('capabilities cache', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('does not hit the repository on a second resolveCapabilities call for the same (tenant, role)', async () => {
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([
+        { role: 'doctor', moduleKey: 'patients', accessLevel: 'view' },
+      ])
+
+      const first = await service.resolveCapabilities('t1', 'doctor')
+      const second = await service.resolveCapabilities('t1', 'doctor')
+
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+      expect(second).toEqual(first)
+      expect(second.patients).toBe('view')
+    })
+
+    it('updateModule invalidates the (tenant, targetRole) entry so the write is visible immediately', async () => {
+      // Populate the cache with the assistant's defaults (protocols: 'none').
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([])
+      await service.resolveCapabilities('t1', 'assistant')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      // Only one more repository call is expected: the post-invalidation
+      // resolveCapabilities inside updateModule. The pre-write "before" capture
+      // reads from the still-valid cache entry, so it does not touch the repo.
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([
+        { role: 'assistant', moduleKey: 'protocols', accessLevel: 'manage' },
+      ])
+
+      const result = await service.updateModule(
+        't1',
+        'admin',
+        'actor-1',
+        'assistant',
+        'protocols',
+        'manage',
+      )
+
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(2)
+      expect(result.protocols).toBe('manage')
+
+      // The entry updateModule just re-cached reflects the write without a
+      // further repository round-trip.
+      const after = await service.resolveCapabilities('t1', 'assistant')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(2)
+      expect(after.protocols).toBe('manage')
+    })
+
+    it('leaves other (tenant, role) cache entries untouched by an unrelated invalidation', async () => {
+      mockRepo.findByTenantAndRole
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+        .mockResolvedValueOnce([{ role: 'assistant', moduleKey: 'patients', accessLevel: 'view' }])
+
+      await service.resolveCapabilities('t1', 'doctor')
+      await service.resolveCapabilities('t1', 'assistant')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(2)
+
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([
+        { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
+      ])
+      await service.updateModule('t1', 'super_admin', 'actor-2', 'doctor', 'patients', 'manage')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(3)
+
+      // The untouched assistant entry is still cached — no extra repo call.
+      const assistantCaps = await service.resolveCapabilities('t1', 'assistant')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(3)
+      expect(assistantCaps.patients).toBe('view')
+    })
+
+    it('seedDefaults invalidates all four roles for that tenant only', async () => {
+      mockRepo.findByTenantAndRole.mockResolvedValue([])
+      await service.resolveCapabilities('t1', 'assistant')
+      await service.resolveCapabilities('t1', 'doctor')
+      await service.resolveCapabilities('t1', 'admin')
+      await service.resolveCapabilities('t1', 'super_admin')
+      await service.resolveCapabilities('t2', 'doctor')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(5)
+
+      const tx = { rolePermission: { createMany: vi.fn().mockResolvedValue({ count: 52 }) } }
+      await service.seedDefaults(tx as never, 't1')
+
+      // All four t1 roles now re-query the repository.
+      await service.resolveCapabilities('t1', 'assistant')
+      await service.resolveCapabilities('t1', 'doctor')
+      await service.resolveCapabilities('t1', 'admin')
+      await service.resolveCapabilities('t1', 'super_admin')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(9)
+
+      // t2's cached entry is unaffected.
+      await service.resolveCapabilities('t2', 'doctor')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(9)
+    })
+
+    it('re-queries the repository once the TTL has elapsed', async () => {
+      mockRepo.findByTenantAndRole.mockResolvedValue([])
+
+      await service.resolveCapabilities('t1', 'doctor')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+
+      await service.resolveCapabilities('t1', 'doctor')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+
+      vi.advanceTimersByTime(60_001)
+
+      await service.resolveCapabilities('t1', 'doctor')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not invalidate the cache when updateModule is rejected as FORBIDDEN', async () => {
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([])
+      await service.resolveCapabilities('t1', 'admin')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+
+      await expect(
+        service.updateModule('t1', 'admin', 'actor-3', 'admin', 'patients', 'manage'),
+      ).rejects.toThrow(ForbiddenException)
+      expect(mockRepo.upsertModule).not.toHaveBeenCalled()
+
+      // Still cached — the rejected attempt never reached the repo or the cache.
+      await service.resolveCapabilities('t1', 'admin')
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
     })
   })
 })
