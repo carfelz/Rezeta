@@ -111,6 +111,12 @@ export function describeAuditEntry(entry: AuditLogItem): AuditEntryDescription {
   if (action.includes('sign')) return { actor, detail: ` firmó ${friendlyEntity(entityType)}` }
   if (action.includes('login') || action.includes('signin'))
     return { actor, detail: ' inició sesión' }
+  if (action.includes('permission_granted')) return { actor, detail: ' otorgó un permiso' }
+  if (action.includes('permission_revoked')) return { actor, detail: ' revocó un permiso' }
+  if (action.includes('role_changed')) return { actor, detail: ' cambió el rol de un usuario' }
+  if (action.includes('user_invited')) return { actor, detail: ' invitó a un usuario' }
+  if (action.includes('user_deactivated')) return { actor, detail: ' desactivó a un usuario' }
+  if (action.includes('user_reactivated')) return { actor, detail: ' reactivó a un usuario' }
   return { actor, detail: ` ${entry.action} (${entityType})` }
 }
 

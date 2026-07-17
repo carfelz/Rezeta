@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-17] Audit-log labels for the permissions auth actions
+
+### Fixed
+
+- `apps/web/src/pages/settings/AuditLog.tsx`: `ACTION_LABELS` was missing entries for the auth actions the permissions feature added (`role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`), so the table and detail drawer rendered the raw action code instead of a translated label. Added the four missing entries and kept the existing `permission_granted`/`permission_revoked` entries.
+- `apps/web/src/pages/settings/strings.ts`: added `actionRoleChanged` ("Rol cambiado"), `actionUserInvited` ("Usuario invitado"), `actionUserDeactivated` ("Usuario desactivado"), `actionUserReactivated` ("Usuario reactivado"), matching the Spanish label table in `specs/audit-log-spec.md` §14.
+- `apps/web/src/pages/Dashboard/helpers.ts`: `describeAuditEntry` (a duplicate, sentence-form action-to-Spanish translator used by the dashboard activity feed) fell through to its raw-action-code fallback for the same six auth actions. Added dedicated branches for `permission_granted`, `permission_revoked`, `role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`.
+- `specs/audit-log-spec.md`: the §2.2 `auth` action table was missing `role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`; added rows with one-line descriptions. The §14 Spanish action-translation table was missing `role_changed`, `user_invited`, `user_deactivated` (it already had `user_reactivated`); added the missing rows.
+
+### Added
+
+- `apps/web/src/pages/settings/__tests__/AuditLog.test.tsx`: parameterized test asserting each of the six auth actions renders its Spanish label in the table instead of the raw action code.
+- `apps/web/src/pages/Dashboard/__tests__/helpers.test.ts`: parameterized test asserting `describeAuditEntry` produces a translated Spanish detail (not the raw action code) for the same six auth actions.
+
 ## [2026-07-16] Four permissions/auth hardening fixes (settings-hub gate, guard isolation, CLI, defensive fallback)
 
 ### Added

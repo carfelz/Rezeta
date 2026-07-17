@@ -85,6 +85,10 @@ Events on domain records in the database.
 | `session_revoked`    | A session was explicitly revoked                              |
 | `permission_granted` | A role or permission was granted to a user                    |
 | `permission_revoked` | A role or permission was removed from a user                  |
+| `role_changed`       | A user's assigned role was changed                             |
+| `user_invited`       | A new user was invited to join the tenant                     |
+| `user_deactivated`   | A user account was deactivated                                |
+| `user_reactivated`   | A previously deactivated user account was reactivated         |
 
 ### 2.3 `communication` — Outbound communications
 
@@ -630,6 +634,9 @@ All action values are translated for display in the table and the detail drawer.
 | `session_revoked`        | Sesión revocada          |
 | `permission_granted`     | Permiso otorgado         |
 | `permission_revoked`     | Permiso revocado         |
+| `role_changed`           | Rol cambiado             |
+| `user_invited`           | Usuario invitado         |
+| `user_deactivated`       | Usuario desactivado      |
 | `user_reactivated`       | Usuario reactivado       |
 | `email_queued`           | Email en cola            |
 | `email_sent`             | Email enviado            |

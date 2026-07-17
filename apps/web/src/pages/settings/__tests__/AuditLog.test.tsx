@@ -245,6 +245,27 @@ describe('AuditLog', () => {
     expect(screen.getByText(label)).toBeInTheDocument()
   })
 
+  it.each([
+    ['permission_granted', 'Permiso otorgado'],
+    ['permission_revoked', 'Permiso revocado'],
+    ['role_changed', 'Rol cambiado'],
+    ['user_invited', 'Usuario invitado'],
+    ['user_deactivated', 'Usuario desactivado'],
+    ['user_reactivated', 'Usuario reactivado'],
+  ])('renders Spanish label for auth action %s instead of the raw code', (action, label) => {
+    mocks.useAuditLogs.mockReturnValue({
+      data: {
+        data: [{ ...sampleItem, category: 'auth' as const, action }],
+        pagination: { cursor: null, hasMore: false, limit: 50 },
+      },
+      isLoading: false,
+      isError: false,
+    })
+    render(<AuditLog />)
+    expect(screen.getByText(label)).toBeInTheDocument()
+    expect(screen.queryByText(action)).not.toBeInTheDocument()
+  })
+
   it('calls downloadAuditLogCsv on export click', async () => {
     setup('clinic')
     const blob = new Blob(['csv'], { type: 'text/csv' })

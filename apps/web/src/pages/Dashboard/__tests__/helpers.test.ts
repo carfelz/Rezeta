@@ -57,4 +57,17 @@ describe('describeAuditEntry', () => {
         .detail,
     ).toBe(' creó una historia médica')
   })
+
+  it.each([
+    ['permission_granted', 'permiso'],
+    ['permission_revoked', 'permiso'],
+    ['role_changed', 'rol'],
+    ['user_invited', 'usuario'],
+    ['user_deactivated', 'usuario'],
+    ['user_reactivated', 'usuario'],
+  ])('describes the %s auth action in Spanish instead of falling back to the raw code', (action, expectedWord) => {
+    const result = describeAuditEntry(entry({ action, entityType: null }))
+    expect(result.detail).toContain(expectedWord)
+    expect(result.detail).not.toContain(action)
+  })
 })
