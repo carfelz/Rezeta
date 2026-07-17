@@ -4,6 +4,13 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Permissions final review fixes (multi-user spec)
+
+### Fixed
+
+- `AuthService.toAuthUser` (`apps/api/src/modules/auth/auth.service.ts`) no longer computes `defaultCapabilitiesFor(role)` internally — it now takes the resolved `CapabilityMap` as a parameter. A new `AuthService.resolveAuthUser(user)` resolves the tenant's effective map via the injected `PermissionsService.resolveCapabilities(tenantId, role)` and threads it into `toAuthUser`. `AuthController.provision` (`POST /v1/auth/provision`) and `OnboardingService.seedDefault`/`seedCustom` (`apps/api/src/modules/onboarding/onboarding.service.ts`) now call `resolveAuthUser` instead of `toAuthUser`, so a tenant's stored `RolePermission` overrides (edited via the Permissions matrix) are reflected in the session bootstrap response instead of always falling back to the catalog defaults — matching what `AuthGuard` already enforces on every subsequent request. `AuthFeatureModule` now imports `PermissionsModule`.
+- `AuthGuard.canActivate` (`apps/api/src/common/guards/auth.guard.ts`) attaches a `.catch` to the fire-and-forget `markSignedIn` call, logging a warning instead of leaving an unhandled promise rejection (process-fatal by default in Node) when the `lastLoginAt` stamp fails transiently.
+
 ## [2026-07-16] Staff platform review fixes (slice 7 follow-up)
 
 ### Fixed

@@ -13,7 +13,7 @@ const mockSeeder = {
 }
 
 const mockAuthService = {
-  toAuthUser: vi.fn(),
+  resolveAuthUser: vi.fn(),
 }
 
 const mockUsersRepo = {
@@ -55,7 +55,7 @@ describe('OnboardingService — conflict and multi-template coverage', () => {
       mockUsersRepo as never,
     )
     mockUsersRepo.findByExternalUid.mockResolvedValue(dbUser)
-    mockAuthService.toAuthUser.mockReturnValue(authUser)
+    mockAuthService.resolveAuthUser.mockResolvedValue(authUser)
     mockSeeder.seedDefault.mockResolvedValue(undefined)
     mockSeeder.seedCustom.mockResolvedValue(undefined)
   })

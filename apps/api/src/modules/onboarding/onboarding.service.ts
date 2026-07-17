@@ -48,7 +48,7 @@ export class OnboardingService {
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after seeding',
       })
-    return this.authService.toAuthUser(refreshed)
+    return this.authService.resolveAuthUser(refreshed)
   }
 
   async seedCustom(externalUid: string, input: OnboardingCustomInput): Promise<AuthUser> {
@@ -82,6 +82,6 @@ export class OnboardingService {
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after seeding',
       })
-    return this.authService.toAuthUser(refreshed)
+    return this.authService.resolveAuthUser(refreshed)
   }
 }

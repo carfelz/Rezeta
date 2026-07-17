@@ -6,7 +6,7 @@ import { AuthController } from '../auth.controller.js'
 const mockService = {
   devGetToken: vi.fn(),
   provision: vi.fn(),
-  toAuthUser: vi.fn(),
+  resolveAuthUser: vi.fn(),
 }
 
 const baseUser = {
@@ -42,7 +42,7 @@ describe('AuthController', () => {
     vi.clearAllMocks()
     controller = new AuthController(mockService as never)
     mockService.provision.mockResolvedValue(baseUser)
-    mockService.toAuthUser.mockReturnValue(authUser)
+    mockService.resolveAuthUser.mockResolvedValue(authUser)
     mockService.devGetToken.mockResolvedValue({
       access_token: 'tok',
       token_type: 'bearer',
@@ -93,7 +93,7 @@ describe('AuthController', () => {
         decoded,
         expect.objectContaining({ ip: '127.0.0.1' }),
       )
-      expect(mockService.toAuthUser).toHaveBeenCalledWith(baseUser)
+      expect(mockService.resolveAuthUser).toHaveBeenCalledWith(baseUser)
       expect(result).toEqual(authUser)
     })
 

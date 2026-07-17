@@ -1,11 +1,12 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import type { AuthUser, UserPreferences } from '@rezeta/shared'
-import { UserPreferencesSchema, ErrorCode, defaultCapabilitiesFor } from '@rezeta/shared'
+import type { AuthUser, CapabilityMap, UserPreferences } from '@rezeta/shared'
+import { UserPreferencesSchema, ErrorCode } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { UsersRepository, type UserWithTenant } from '../users/users.repository.js'
+import { PermissionsService } from '../permissions/permissions.service.js'
 
 export interface ProvisionMeta {
   ip?: string
@@ -26,6 +27,7 @@ export class AuthService {
     @Inject(ConfigService) private config: ConfigService<AppConfig, true>,
     @Inject(AuditLogService) private auditLog: AuditLogService,
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
+    @Inject(PermissionsService) private permissions: PermissionsService,
   ) {}
 
   /**
@@ -71,9 +73,12 @@ export class AuthService {
   }
 
   /**
-   * Map a DB User (with tenant) to the AuthUser DTO.
+   * Map a DB User (with tenant) to the AuthUser DTO. `capabilities` must be the
+   * already-resolved map (see `resolveAuthUser`) — this method never computes
+   * catalog defaults itself, so callers cannot accidentally bypass a tenant's
+   * stored `RolePermission` overrides.
    */
-  toAuthUser(user: UserWithTenant): AuthUser {
+  toAuthUser(user: UserWithTenant, capabilities: CapabilityMap): AuthUser {
     return {
       id: user.id,
       externalUid: user.externalUid,
@@ -86,8 +91,24 @@ export class AuthService {
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
       preferences: parsePreferences(user.preferences),
-      capabilities: defaultCapabilitiesFor(user.role as AuthUser['role']),
+      capabilities,
     }
+  }
+
+  /**
+   * Resolve a DB User's effective capability map (catalog defaults overlaid
+   * with any stored `RolePermission` rows for the tenant) and map it to the
+   * AuthUser DTO. Used by both the provision path (AuthController.provision)
+   * and onboarding (OnboardingService.seedDefault/seedCustom) so every
+   * AuthUser the API hands back reflects the tenant's actual Permissions
+   * matrix, not the code catalog defaults.
+   */
+  async resolveAuthUser(user: UserWithTenant): Promise<AuthUser> {
+    const capabilities = await this.permissions.resolveCapabilities(
+      user.tenantId,
+      user.role as AuthUser['role'],
+    )
+    return this.toAuthUser(user, capabilities)
   }
 }
 

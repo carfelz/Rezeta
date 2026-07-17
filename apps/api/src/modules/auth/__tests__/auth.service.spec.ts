@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
+import { defaultCapabilitiesFor } from '@rezeta/shared'
 import { AuthService } from '../auth.service.js'
 
 const mockRepo = {
@@ -16,6 +17,10 @@ const mockAuthProvider = {
   deleteUser: vi.fn(),
   createUser: vi.fn(),
   generatePasswordResetLink: vi.fn(),
+}
+
+const mockPermissions = {
+  resolveCapabilities: vi.fn(),
 }
 
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
@@ -44,6 +49,7 @@ function makeService(nodeEnv = 'development') {
     makeConfig(nodeEnv) as never,
     mockAuditLog as never,
     mockAuthProvider as never,
+    mockPermissions as never,
   )
 }
 
@@ -110,8 +116,10 @@ describe('AuthService', () => {
       service = makeService()
     })
 
-    it('maps user fields correctly', () => {
-      const auth = service.toAuthUser(baseUser as never)
+    const superAdminDefaults = defaultCapabilitiesFor('super_admin')
+
+    it('maps user fields correctly and uses the capabilities map passed in', () => {
+      const auth = service.toAuthUser(baseUser as never, superAdminDefaults)
       expect(auth).toMatchObject({
         id: 'u1',
         externalUid: 'fb1',
@@ -123,20 +131,57 @@ describe('AuthService', () => {
         licenseNumber: 'MED-001',
         tenantSeededAt: '2026-01-01T00:00:00.000Z',
       })
-      expect(auth.capabilities.patients).toBe('manage') // super_admin default
-      expect(auth.capabilities.users).toBe('manage') // super_admin default
+      expect(auth.capabilities).toBe(superAdminDefaults)
+    })
+
+    it('reflects a tenant-edited capability map rather than recomputing catalog defaults', () => {
+      // Simulates a tenant that lowered `patients` from the super_admin default
+      // (manage) to `view` via the Permissions matrix — toAuthUser must not
+      // silently override this back to the catalog default.
+      const overridden = { ...superAdminDefaults, patients: 'view' as const }
+      const auth = service.toAuthUser(baseUser as never, overridden)
+      expect(auth.capabilities.patients).toBe('view')
+      expect(auth.capabilities.patients).not.toBe(superAdminDefaults.patients)
     })
 
     it('returns null tenantSeededAt when seededAt is null', () => {
       const user = { ...baseUser, tenant: { seededAt: null } }
-      const auth = service.toAuthUser(user as never)
+      const auth = service.toAuthUser(user as never, superAdminDefaults)
       expect(auth.tenantSeededAt).toBeNull()
     })
 
     it('returns empty preferences when stored preferences fail schema validation', () => {
       const user = { ...baseUser, preferences: { consultationViewMode: 'invalid_value' } }
-      const auth = service.toAuthUser(user as never)
+      const auth = service.toAuthUser(user as never, superAdminDefaults)
       expect(auth.preferences).toEqual({})
+    })
+  })
+
+  // ── resolveAuthUser ────────────────────────────────────────────────────────
+
+  describe('resolveAuthUser', () => {
+    beforeEach(() => {
+      service = makeService()
+    })
+
+    it('resolves capabilities via PermissionsService.resolveCapabilities(tenantId, role) and threads the map into toAuthUser', async () => {
+      const defaults = defaultCapabilitiesFor('super_admin')
+      mockPermissions.resolveCapabilities.mockResolvedValue(defaults)
+      const auth = await service.resolveAuthUser(baseUser as never)
+      expect(mockPermissions.resolveCapabilities).toHaveBeenCalledWith('t1', 'super_admin')
+      expect(auth.capabilities).toEqual(defaults)
+    })
+
+    it('reflects a stored RolePermission override, not catalog defaults — the provision/onboarding contract', async () => {
+      const defaults = defaultCapabilitiesFor('super_admin')
+      // A tenant edited the matrix: patients dropped from manage -> view for super_admin.
+      const overridden = { ...defaults, patients: 'view' as const }
+      mockPermissions.resolveCapabilities.mockResolvedValue(overridden)
+
+      const auth = await service.resolveAuthUser(baseUser as never)
+
+      expect(auth.capabilities.patients).toBe('view')
+      expect(auth.capabilities.patients).not.toBe(defaults.patients)
     })
   })
 

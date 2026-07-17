@@ -135,7 +135,7 @@ export class AuthController {
         : {}),
     }
     const user = await this.service.provision(verified, meta)
-    return this.service.toAuthUser(user)
+    return this.service.resolveAuthUser(user)
   }
 
   /**
