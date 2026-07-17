@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Four permissions/auth hardening fixes (settings-hub gate, guard isolation, CLI, defensive fallback)
+
+### Added
+
+- `packages/shared/src/permissions/capabilities.ts`: new `hasAnyCapabilityInSection(caps, section, required = 'view')` derived from `PERMISSION_CATALOG`, true when ANY module whose catalog `section` matches meets `required`. Exported from the package barrel (already re-exported via `export * from './permissions/capabilities.js'`). Tests in `packages/shared/src/permissions/__tests__/capabilities.spec.ts` cover an empty map, a single granted module, a level miss, and both `admin`/`clinical` sections.
+- `apps/web/src/components/auth/RequireCan.tsx`: added an `anyOfSection: SectionKey` variant (discriminated union alongside the existing `module: ModuleKey` variant) for hub/entry-point routes that represent a whole settings section rather than one leaf module. Reads `capabilities` directly off `useAuthStore` and dispatches to `hasCapability` or `hasAnyCapabilityInSection` depending on which prop is passed.
+- `apps/web/src/App.tsx`: the `/ajustes` shell route now gates with `<RequireCan anyOfSection="admin">` instead of `<RequireCan module="templates">`; leaf routes (`/ajustes/plantillas`, `/ajustes/usuarios`, etc.) are unchanged.
+- `apps/web/src/components/layout/Sidebar.tsx`: `NavItem` gained an `anyOfSection?: SectionKey` field; the Ajustes nav item and the avatar-dropdown "Ajustes" link now gate via `anyOfSection: 'admin'` (through an updated `canViewNav` helper) instead of the `templates` module proxy.
+- `apps/api/src/common/guards/__tests__/auth.guard.spec.ts`: named regression test `rejects a platform-staff token on a tenant-scoped route (control-plane isolation)` — a verified token with no matching `Users` row (simulating a PlatformUser identity hitting a non-`@PlatformRoute()` endpoint) 401s with `ErrorCode.USER_NOT_PROVISIONED`, and asserts `PlatformUsersRepository.findByExternalUid` is never called on that path.
+- `apps/api/src/scripts/create-institution.ts`: extracted the self-invoke check into an exported pure predicate `isSelfInvoked(argvPath)`, matching `/create-institution\.(ts|js)$/` so a compiled `dist/.../create-institution.js` invocation runs `main()` instead of silently no-oping (previously matched only the `.ts` suffix). Tests added in `apps/api/src/scripts/__tests__/create-institution.spec.ts`.
+- `apps/api/src/common/guards/__tests__/permission.guard.spec.ts`: new test asserting that when `request.user` is undefined (e.g. `@RequirePermission` mistakenly combined with `@PlatformRoute()`/`@ProvisionRoute()`), the guard throws `ForbiddenException` (403 `INSUFFICIENT_PERMISSION`) rather than an unhandled `TypeError`.
+- `apps/web/src/components/auth/__tests__/RequireCan.test.tsx`, `apps/web/src/components/layout/__tests__/Sidebar.test.tsx`: new cases covering an admin-like user with `templates: 'none'` but `users: 'manage'` (hub/nav/dropdown visible) and a user with every admin-section module at `none` (hub/nav/dropdown hidden).
+
+### Fixed
+
+- `apps/api/src/common/guards/permission.guard.ts`: reads the capability map as `request.user?.capabilities ?? {}` instead of `request.user.capabilities`, so the mis-combination above fails CLOSED (403) instead of throwing an unhandled `TypeError` (500). The guard's existing skip logic (public routes, routes without `@RequirePermission`) is unchanged.
+
 ## [2026-07-16] Users module polish: rank-gated roster controls + invite-flow resilience
 
 ### Added
