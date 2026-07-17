@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { MODULE_KEYS } from '../catalog.js'
-import { defaultCapabilitiesFor, hasCapability, type CapabilityMap } from '../capabilities.js'
+import {
+  defaultCapabilitiesFor,
+  hasCapability,
+  hasAnyCapabilityInSection,
+  type CapabilityMap,
+} from '../capabilities.js'
 
 describe('hasCapability', () => {
   const caps: CapabilityMap = defaultCapabilitiesFor('assistant')
@@ -62,5 +67,39 @@ describe('defaultCapabilitiesFor', () => {
     const caps = defaultCapabilitiesFor('doctor')
     expect(caps.users).toBe('none')
     expect(caps.permissions).toBe('none')
+  })
+})
+
+describe('hasAnyCapabilityInSection', () => {
+  it('denies every section when the capability map is empty', () => {
+    const empty = {} as CapabilityMap
+    expect(hasAnyCapabilityInSection(empty, 'admin')).toBe(false)
+    expect(hasAnyCapabilityInSection(empty, 'clinical')).toBe(false)
+  })
+
+  it('denies a section when all its modules are none (assistant admin section)', () => {
+    const caps = defaultCapabilitiesFor('assistant')
+    expect(hasAnyCapabilityInSection(caps, 'admin')).toBe(false)
+  })
+
+  it('grants a section when a single module in it meets the required level', () => {
+    const caps: CapabilityMap = { ...defaultCapabilitiesFor('assistant'), users: 'manage' }
+    // assistant admin-section modules are all `none` except this one override.
+    expect(hasAnyCapabilityInSection(caps, 'admin')).toBe(true)
+  })
+
+  it('denies when the single granted module is below the required level', () => {
+    const caps: CapabilityMap = { ...defaultCapabilitiesFor('assistant'), users: 'view' }
+    expect(hasAnyCapabilityInSection(caps, 'admin', 'manage')).toBe(false)
+  })
+
+  it('grants the clinical section from the assistant defaults (patients = view)', () => {
+    const caps = defaultCapabilitiesFor('assistant')
+    expect(hasAnyCapabilityInSection(caps, 'clinical')).toBe(true)
+  })
+
+  it('defaults the required level to view', () => {
+    const caps: CapabilityMap = { ...defaultCapabilitiesFor('assistant'), users: 'view' }
+    expect(hasAnyCapabilityInSection(caps, 'admin')).toBe(true)
   })
 })

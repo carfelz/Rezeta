@@ -54,4 +54,39 @@ describe('Sidebar permission filtering', () => {
     // Now two matches exist: the main nav item and the dropdown item.
     expect(screen.getAllByText('Ajustes').length).toBe(2)
   })
+
+  it('shows Ajustes for an admin-like user with templates: none but users: manage', () => {
+    seedAuthUser(
+      makeAuthUser('admin', {
+        capabilities: {
+          ...makeAuthUser('admin').capabilities,
+          templates: 'none',
+          users: 'manage',
+        },
+      }),
+    )
+    renderSidebar()
+    expect(screen.getByText('Ajustes')).toBeInTheDocument()
+  })
+
+  it('shows the avatar dropdown "Ajustes" link for that same admin-like user', async () => {
+    seedAuthUser(
+      makeAuthUser('admin', {
+        capabilities: {
+          ...makeAuthUser('admin').capabilities,
+          templates: 'none',
+          users: 'manage',
+        },
+      }),
+    )
+    renderSidebar()
+    await userEvent.click(screen.getByRole('button', { name: 'Menú de usuario' }))
+    expect(screen.getAllByText('Ajustes').length).toBe(2)
+  })
+
+  it('hides Ajustes when every admin-section module is none (assistant defaults)', () => {
+    seedAuthUser(makeAuthUser('assistant'))
+    renderSidebar()
+    expect(screen.queryByText('Ajustes')).not.toBeInTheDocument()
+  })
 })

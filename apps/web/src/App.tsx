@@ -146,9 +146,13 @@ const router = createBrowserRouter([
         ),
       },
       {
+        // Hub entry point: gates on ANY admin-section module (not the leaf
+        // `templates` module) so an admin with `templates` revoked but e.g.
+        // `users: manage` can still reach the settings hub. See RequireCan's
+        // `anyOfSection` variant.
         path: 'ajustes',
         element: (
-          <RequireCan module="templates">
+          <RequireCan anyOfSection="admin">
             <Settings />
           </RequireCan>
         ),

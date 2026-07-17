@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { hasCapability } from '@rezeta/shared'
-import type { CapabilityMap, ModuleKey } from '@rezeta/shared'
+import { hasAnyCapabilityInSection, hasCapability } from '@rezeta/shared'
+import type { CapabilityMap, ModuleKey, SectionKey } from '@rezeta/shared'
 import { Avatar, Caption, Overline } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,6 +23,12 @@ interface NavItem {
   alsoActiveOn?: string[]
   /** Module this item maps to; when set, hidden unless the user can `view` it. */
   module?: ModuleKey
+  /**
+   * Section this item represents as a whole (e.g. the Ajustes hub entry
+   * point); when set, hidden unless the user can `view` ANY module in the
+   * section. Mutually exclusive with `module`.
+   */
+  anyOfSection?: SectionKey
 }
 
 const NAV_HOY: NavItem[] = [
@@ -43,9 +49,11 @@ const NAV_CLINICO: NavItem[] = [
 
 const NAV_ADMIN: NavItem[] = [
   { to: '/facturacion', icon: 'receipt', label: sidebarStrings.navBilling, module: 'billing' },
-  // 'templates' represents the admin section: doctor/admin/super_admin have it,
-  // assistant does not — matching the settings route guard in App.tsx.
-  { to: '/ajustes', icon: 'gear-six', label: sidebarStrings.navSettings, module: 'templates' },
+  // Gates on the whole admin section (not one leaf module) so a user who
+  // still holds any admin-section capability (e.g. `users: manage`) keeps
+  // this entry point even if `templates` itself was revoked — matching the
+  // settings hub route guard in App.tsx (RequireCan anyOfSection="admin").
+  { to: '/ajustes', icon: 'gear-six', label: sidebarStrings.navSettings, anyOfSection: 'admin' },
 ]
 
 function initials(name: string | null): string {
@@ -58,10 +66,14 @@ function initials(name: string | null): string {
     .toUpperCase()
 }
 
-function canViewNav(caps: CapabilityMap | undefined, module?: ModuleKey): boolean {
-  if (!module) return true
-  if (!caps) return false
-  return hasCapability(caps, module, 'view')
+function canViewNav(
+  caps: CapabilityMap | undefined,
+  gate: Pick<NavItem, 'module' | 'anyOfSection'>,
+): boolean {
+  if (!caps) return !gate.module && !gate.anyOfSection
+  if (gate.anyOfSection) return hasAnyCapabilityInSection(caps, gate.anyOfSection, 'view')
+  if (gate.module) return hasCapability(caps, gate.module, 'view')
+  return true
 }
 
 interface NavGroupProps {
@@ -163,15 +175,15 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
         <div className="flex-1 pt-4">
           <NavGroup
             label={sidebarStrings.navTodayLabel}
-            items={NAV_HOY.filter((item) => canViewNav(capabilities, item.module))}
+            items={NAV_HOY.filter((item) => canViewNav(capabilities, item))}
           />
           <NavGroup
             label={sidebarStrings.navClinicalLabel}
-            items={NAV_CLINICO.filter((item) => canViewNav(capabilities, item.module))}
+            items={NAV_CLINICO.filter((item) => canViewNav(capabilities, item))}
           />
           <NavGroup
             label={sidebarStrings.navAdminLabel}
-            items={NAV_ADMIN.filter((item) => canViewNav(capabilities, item.module))}
+            items={NAV_ADMIN.filter((item) => canViewNav(capabilities, item))}
           />
         </div>
 
@@ -204,7 +216,7 @@ export function Sidebar({ open, onClose }: SidebarProps): JSX.Element {
                   sideOffset={4}
                   className="z-50 min-w-200 bg-n-0 border border-n-200 rounded-md shadow-floating py-1 animate-in fade-in-0 zoom-in-95"
                 >
-                  {canViewNav(capabilities, 'templates') && (
+                  {canViewNav(capabilities, { anyOfSection: 'admin' }) && (
                     <DropdownMenu.Item asChild>
                       <NavLink
                         to="/ajustes"
