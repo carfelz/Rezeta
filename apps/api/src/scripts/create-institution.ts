@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core'
+import { CreateInstitutionSchema } from '@rezeta/shared'
 import type { CreateInstitutionDto, InstitutionCreatedDto } from '@rezeta/shared'
 import { AppModule } from '../app.module.js'
 import { StaffService } from '../modules/staff/index.js'
@@ -26,8 +27,11 @@ export interface BootstrapResult {
 /**
  * Parses `--platform-email` (required), `--platform-name` (optional), and the
  * optional institution block (`--name`, `--type`, `--plan`, `--admin-name`,
- * `--admin-email` — all required together). Value-set validation for the
- * institution is delegated to CreateInstitutionSchema inside StaffService.
+ * `--admin-email` — all required together). The institution block is run
+ * through `CreateInstitutionSchema.parse` here — the same value-set and
+ * format validation the HTTP controller gets from its `ZodValidationPipe` —
+ * so a malformed `--type`, `--plan`, or `--admin-email` fails fast in the CLI
+ * instead of reaching StaffService/the database/Firebase unvalidated.
  */
 export function parseArgs(argv: string[]): BootstrapArgs {
   const map = new Map<string, string>()
@@ -46,13 +50,13 @@ export function parseArgs(argv: string[]): BootstrapArgs {
     for (const k of instKeys) {
       if (!map.get(k)) throw new Error(`Institution flag --${k} is required when creating one`)
     }
-    institution = {
-      institutionName: map.get('name')!,
-      type: map.get('type')! as CreateInstitutionDto['type'],
-      plan: map.get('plan')! as CreateInstitutionDto['plan'],
-      adminFullName: map.get('admin-name')!,
-      adminEmail: map.get('admin-email')!,
-    }
+    institution = CreateInstitutionSchema.parse({
+      institutionName: map.get('name'),
+      type: map.get('type'),
+      plan: map.get('plan'),
+      adminFullName: map.get('admin-name'),
+      adminEmail: map.get('admin-email'),
+    })
   }
   return {
     platformEmail,

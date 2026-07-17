@@ -4,11 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Staff platform review fixes (slice 7 follow-up)
+
+### Fixed
+
+- `apps/web/src/lib/api-client.ts`: the global sign-out-on-401 side effect no longer fires unconditionally. It now inspects the 401 body first and skips `authClient.signOut()` when the error code is `USER_NOT_PROVISIONED` (fixes a platform-staff sign-in being killed mid-`POST /v1/auth/provision`, before `AuthProvider.tsx`'s existing skip could evaluate). A new `skipSignOutOn401` `RequestOptions` flag additionally covers `GET /v1/staff/me` (`apps/web/src/hooks/staff/use-staff-me.ts`), whose 401 for an institution user carries `UNAUTHORIZED` (not `USER_NOT_PROVISIONED` — see `apps/api/src/common/guards/auth.guard.ts`'s `@PlatformRoute()` branch), so browsing to `/staff` no longer signs out a valid institution user instead of letting `RequirePlatform` redirect them.
+- `apps/api/src/scripts/create-institution.ts`: `parseArgs` now runs the assembled institution payload through `CreateInstitutionSchema.parse` instead of `as`-casting `--type`/`--plan`/`--admin-email` straight through; a malformed value now throws in the CLI instead of reaching `StaffService`/the database/Firebase unvalidated. Corrected the stale doc comment that claimed this was already delegated to the schema.
+- `CHANGELOG.md`: corrected the slice-7 `PlatformUser` migration name from `20260715040000_platform_users` to the actually-shipped `20260716201440_platform_users`.
+
 ## [2026-07-16] Staff platform + platform identity (slice 7)
 
 ### Added
 
-- `PlatformUser` control-plane identity (`packages/db/prisma/schema.prisma` + migration `20260715040000_platform_users`) — Rezeta staff are a separate table with no `tenant_id`, keyed by Firebase `externalUid`, so a platform principal can never be returned by a tenant-scoped query. Shared `PlatformPrincipal` type in `packages/shared/src/types/auth.ts`.
+- `PlatformUser` control-plane identity (`packages/db/prisma/schema.prisma` + migration `20260716201440_platform_users`) — Rezeta staff are a separate table with no `tenant_id`, keyed by Firebase `externalUid`, so a platform principal can never be returned by a tenant-scoped query. Shared `PlatformPrincipal` type in `packages/shared/src/types/auth.ts`.
 - `@PlatformRoute()` decorator (`IS_PLATFORM_ROUTE_KEY`) + `@CurrentPlatformUser()` param decorator (`apps/api/src/common/decorators/`). `AuthGuard` resolves a `PlatformUser` on `@PlatformRoute()` endpoints and sets `request.platformUser` (401 if missing/inactive); `TenantGuard` skips those routes; new global `PlatformGuard` (2nd guard) requires `request.platformUser` (403 `FORBIDDEN` otherwise). Guard order: `AuthGuard → PlatformGuard → TenantGuard → PermissionGuard`.
 - `PlatformUsersModule` + `PlatformUsersRepository` (`findByExternalUid`, `create`).
 - Staff platform module (`apps/api/src/modules/staff/`) with `POST /v1/staff/institutions` and `GET /v1/staff/me`, all `@PlatformRoute()`. Create-institution builds the `Tenant`, seeds `RolePermission` defaults + starter data, and mints the initial `super_admin` via the users provisioning flow (Admin SDK + set-password email) with `actorUserId: null` + `bypassRankCheck`; audits with `actorType: 'system'` and the acting `PlatformUser` id in metadata.

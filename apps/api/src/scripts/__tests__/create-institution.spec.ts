@@ -35,6 +35,45 @@ describe('parseArgs', () => {
   it('throws when --platform-email is missing', () => {
     expect(() => parseArgs(['--platform-name=Staff'])).toThrow(/platform-email/i)
   })
+
+  it('rejects an institution --type outside the CreateInstitutionSchema enum', () => {
+    expect(() =>
+      parseArgs([
+        '--platform-email=staff@rezeta.com',
+        '--name=Clínica Norte',
+        '--type=hospital',
+        '--plan=free',
+        '--admin-name=Dra. Ana',
+        '--admin-email=ana@clinica.com',
+      ]),
+    ).toThrow(/invalid enum value/i)
+  })
+
+  it('rejects an institution --plan outside the CreateInstitutionSchema enum', () => {
+    expect(() =>
+      parseArgs([
+        '--platform-email=staff@rezeta.com',
+        '--name=Clínica Norte',
+        '--type=clinic',
+        '--plan=enterprise',
+        '--admin-name=Dra. Ana',
+        '--admin-email=ana@clinica.com',
+      ]),
+    ).toThrow(/invalid enum value/i)
+  })
+
+  it('rejects a malformed --admin-email', () => {
+    expect(() =>
+      parseArgs([
+        '--platform-email=staff@rezeta.com',
+        '--name=Clínica Norte',
+        '--type=clinic',
+        '--plan=free',
+        '--admin-name=Dra. Ana',
+        '--admin-email=not-an-email',
+      ]),
+    ).toThrow(/invalid email/i)
+  })
 })
 
 describe('bootstrapPlatform', () => {
