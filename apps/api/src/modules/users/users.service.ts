@@ -147,6 +147,12 @@ export class UsersService {
     return toManagedUser(updated)
   }
 
+  /**
+   * Toggle a user's active state. `isActive: true` also clears the target's
+   * `deletedAt` (see `UsersRepository.setActive`). Both directions leave an
+   * audit trail: deactivating records `user_deactivated`, reactivating
+   * records `user_reactivated` — same event shape either way.
+   */
   async setActive(
     tenantId: string,
     actorRole: UserRole,
@@ -158,18 +164,16 @@ export class UsersService {
     this.assertCanManage(actorRole, target.role as UserRole)
 
     await this.repository.setActive(targetUserId, tenantId, dto.isActive)
-    if (!dto.isActive) {
-      void this.auditLog.record({
-        tenantId,
-        actorUserId,
-        actorType: 'user',
-        category: 'auth',
-        action: 'user_deactivated',
-        entityType: 'User',
-        entityId: targetUserId,
-        status: 'success',
-      })
-    }
+    void this.auditLog.record({
+      tenantId,
+      actorUserId,
+      actorType: 'user',
+      category: 'auth',
+      action: dto.isActive ? 'user_reactivated' : 'user_deactivated',
+      entityType: 'User',
+      entityId: targetUserId,
+      status: 'success',
+    })
     return toManagedUser({ ...target, isActive: dto.isActive })
   }
 

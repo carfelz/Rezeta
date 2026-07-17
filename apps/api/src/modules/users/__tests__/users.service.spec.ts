@@ -378,6 +378,57 @@ describe('UsersService.setActive — rank rule', () => {
     ).rejects.toThrow(ForbiddenException)
   })
 
+  it('super_admin can reactivate an admin and audits user_reactivated', async () => {
+    const svc = makeService()
+    mockRepo.findById.mockResolvedValue({
+      id: 'u2',
+      email: 'a@b.do',
+      fullName: 'A',
+      role: 'admin',
+      isActive: false,
+      createdAt: new Date('2026-07-15'),
+      lastLoginAt: null,
+    })
+    mockRepo.setActive.mockResolvedValue(undefined)
+    await svc.setActive('t1', 'super_admin', 'actor', 'u2', { isActive: true })
+    expect(mockRepo.setActive).toHaveBeenCalledWith('u2', 't1', true)
+    expect(mockAudit.record).toHaveBeenCalledWith({
+      tenantId: 't1',
+      actorUserId: 'actor',
+      actorType: 'user',
+      category: 'auth',
+      action: 'user_reactivated',
+      entityType: 'User',
+      entityId: 'u2',
+      status: 'success',
+    })
+  })
+
+  it('deactivation still emits user_deactivated with the same event shape', async () => {
+    const svc = makeService()
+    mockRepo.findById.mockResolvedValue({
+      id: 'u2',
+      email: 'a@b.do',
+      fullName: 'A',
+      role: 'admin',
+      isActive: true,
+      createdAt: new Date('2026-07-15'),
+      lastLoginAt: null,
+    })
+    mockRepo.setActive.mockResolvedValue(undefined)
+    await svc.setActive('t1', 'super_admin', 'actor', 'u2', { isActive: false })
+    expect(mockAudit.record).toHaveBeenCalledWith({
+      tenantId: 't1',
+      actorUserId: 'actor',
+      actorType: 'user',
+      category: 'auth',
+      action: 'user_deactivated',
+      entityType: 'User',
+      entityId: 'u2',
+      status: 'success',
+    })
+  })
+
   it('throws NotFound when the target user is absent', async () => {
     const svc = makeService()
     mockRepo.findById.mockResolvedValue(null)

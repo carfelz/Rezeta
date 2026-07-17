@@ -25,6 +25,7 @@ export type AuditAuthAction =
   | 'role_changed'
   | 'user_invited'
   | 'user_deactivated'
+  | 'user_reactivated'
 
 export type AuditCommunicationAction =
   | 'email_queued'

@@ -630,6 +630,7 @@ All action values are translated for display in the table and the detail drawer.
 | `session_revoked`        | Sesión revocada          |
 | `permission_granted`     | Permiso otorgado         |
 | `permission_revoked`     | Permiso revocado         |
+| `user_reactivated`       | Usuario reactivado       |
 | `email_queued`           | Email en cola            |
 | `email_sent`             | Email enviado            |
 | `email_delivered`        | Email entregado          |

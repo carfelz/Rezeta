@@ -4,6 +4,17 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-16] Audit-semantics fixes: permission level changes + user reactivation
+
+### Fixed
+
+- `PermissionsService.updateModule` (`apps/api/src/modules/permissions/permissions.service.ts`) picked the audit action from the new `level` alone (`level === 'none' ? 'permission_revoked' : 'permission_granted'`), so a `manage -> view` downgrade wrongly logged `permission_granted`. It now compares the before/after access levels via `ACCESS_LEVEL_RANK` (`@rezeta/shared`): a rank increase audits `permission_granted`, a rank decrease audits `permission_revoked`. A no-op write (`before === after`, e.g. `manage -> manage`) now skips the repository upsert, the cache invalidation, and the audit event entirely — there is nothing to persist, invalidate, or log.
+
+### Added
+
+- `UsersService.setActive` (`apps/api/src/modules/users/users.service.ts`) now audits reactivation, not just deactivation: a new `user_reactivated` action (`apps/api/src/common/audit-log/audit-log.types.ts`, `AuditAuthAction` union) is recorded when `dto.isActive` is `true`, with the same event shape as `user_deactivated`. Added the Spanish label row (`Usuario reactivado`) to the action translation table in `specs/audit-log-spec.md`. (The frontend `AuditLog.tsx` action-label map does not yet have entries for `user_deactivated`/`user_invited`/`role_changed` either — a pre-existing gap, left untouched; those actions currently render as their raw string via the map's fallback.)
+- New tests: `apps/api/src/modules/permissions/__tests__/permissions.service.spec.ts` (`updateModule`: upgrade, downgrade, explicit revoke, no-op) and `apps/api/src/modules/users/__tests__/users.service.spec.ts` (`setActive`: reactivation audits `user_reactivated`, deactivation still audits `user_deactivated`).
+
 ## [2026-07-16] In-process cache for resolved role capabilities
 
 ### Added

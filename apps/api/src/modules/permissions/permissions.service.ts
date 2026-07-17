@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Inject } from '@nestjs/common'
 import type { Prisma } from '@rezeta/db'
 import {
+  ACCESS_LEVEL_RANK,
   MODULE_KEYS,
   PERMISSION_CATALOG,
   canManageRole,
@@ -133,9 +134,17 @@ export class PermissionsService {
    * above the target role's rank may edit it (own-rank and higher are rejected).
    * Captures the effective access level for (targetRole, moduleKey) before the
    * write so the audit event records "who, when, what changed": `actorUserId`
-   * and `changes.accessLevel.before/after`. Emits a `permission_granted`/
-   * `permission_revoked` audit event based on the new level, then returns the
-   * target role's refreshed capability map.
+   * and `changes.accessLevel.before/after`.
+   *
+   * The audit action is derived from the before/after *rank* comparison via
+   * `ACCESS_LEVEL_RANK` — not from the new level in isolation — so a
+   * `manage -> view` downgrade correctly audits `permission_revoked` instead
+   * of `permission_granted` (the new level alone can't distinguish a downgrade
+   * from an upgrade). A no-op write (`before === after`, e.g. `manage ->
+   * manage`) skips the repository upsert, the cache invalidation, and the
+   * audit event entirely: there is nothing to persist, nothing to invalidate,
+   * and nothing that happened to log. Returns the target role's refreshed
+   * capability map either way.
    */
   async updateModule(
     tenantId: string,
@@ -152,6 +161,10 @@ export class PermissionsService {
       })
     }
     const before = (await this.resolveCapabilities(tenantId, targetRole))[moduleKey]
+    if (ACCESS_LEVEL_RANK[level] === ACCESS_LEVEL_RANK[before]) {
+      return this.resolveCapabilities(tenantId, targetRole)
+    }
+
     await this.repo.upsertModule(tenantId, targetRole, moduleKey, level)
     this.invalidateRole(tenantId, targetRole)
     void this.auditLog.record({
@@ -159,7 +172,10 @@ export class PermissionsService {
       actorUserId,
       actorType: 'user',
       category: 'auth',
-      action: level === 'none' ? 'permission_revoked' : 'permission_granted',
+      action:
+        ACCESS_LEVEL_RANK[level] > ACCESS_LEVEL_RANK[before]
+          ? 'permission_granted'
+          : 'permission_revoked',
       entityType: 'role_permission',
       entityId: `${targetRole}:${moduleKey}`,
       metadata: { role: targetRole, moduleKey, accessLevel: level },

@@ -165,6 +165,79 @@ describe('PermissionsService', () => {
       })
     })
 
+    it('upgrade: view -> manage audits permission_granted', async () => {
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      mockRepo.findByTenantAndRole
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' }])
+
+      await service.updateModule('t1', 'super_admin', 'actor-1', 'doctor', 'patients', 'manage')
+
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'permission_granted',
+          changes: { accessLevel: { before: 'view', after: 'manage' } },
+        }),
+      )
+    })
+
+    it('downgrade: manage -> view audits permission_revoked (not granted)', async () => {
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      mockRepo.findByTenantAndRole
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' }])
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+
+      await service.updateModule('t1', 'super_admin', 'actor-1', 'doctor', 'patients', 'view')
+
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'permission_revoked',
+          changes: { accessLevel: { before: 'manage', after: 'view' } },
+        }),
+      )
+    })
+
+    it('explicit revoke: view -> none audits permission_revoked', async () => {
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      mockRepo.findByTenantAndRole
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'none' }])
+
+      await service.updateModule('t1', 'super_admin', 'actor-1', 'doctor', 'patients', 'none')
+
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'permission_revoked',
+          changes: { accessLevel: { before: 'view', after: 'none' } },
+        }),
+      )
+    })
+
+    it('no-op: manage -> manage does not emit an audit event, and skips the write', async () => {
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      // Only the "before" capture hits the repository. Since before === after,
+      // updateModule short-circuits before the upsert/invalidate/audit — the
+      // trailing resolveCapabilities call it returns is served from the cache
+      // that the "before" capture just populated, with no second repo call.
+      mockRepo.findByTenantAndRole.mockResolvedValueOnce([
+        { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
+      ])
+
+      const result = await service.updateModule(
+        't1',
+        'super_admin',
+        'actor-1',
+        'doctor',
+        'patients',
+        'manage',
+      )
+
+      expect(mockRepo.upsertModule).not.toHaveBeenCalled()
+      expect(mockRepo.findByTenantAndRole).toHaveBeenCalledTimes(1)
+      expect(mockAuditLog.record).not.toHaveBeenCalled()
+      expect(result.patients).toBe('manage')
+    })
+
     it('rejects an admin editing their own rank (admin -> admin) without touching repo/audit', async () => {
       await expect(
         service.updateModule('t1', 'admin', 'actor-3', 'admin', 'patients', 'manage'),
