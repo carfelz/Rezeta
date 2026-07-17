@@ -82,4 +82,35 @@ describe('PermissionGuard', () => {
     const guard = new PermissionGuard(reflector as never)
     expect(() => guard.canActivate(ctx as never)).toThrow(ForbiddenException)
   })
+
+  it('fails closed with ForbiddenException (not a TypeError) when request.user is undefined', () => {
+    // Guards against @RequirePermission ever being combined with a route
+    // decorated @PlatformRoute()/@ProvisionRoute(), where AuthGuard populates
+    // request.platformUser/verifiedToken instead of request.user, leaving
+    // request.user undefined. Reading `.capabilities` off it directly used to
+    // throw an unhandled TypeError (500); it must instead deny normally.
+    const reflector = {
+      getAllAndOverride: vi.fn((key: string) => {
+        if (key === IS_PUBLIC_KEY) return false
+        if (key === PERMISSION_KEY) return { module: 'patients', level: 'view' }
+        return undefined
+      }),
+    }
+    const request = {} // no `user` property at all
+    const ctx = {
+      getHandler: vi.fn().mockReturnValue({}),
+      getClass: vi.fn().mockReturnValue({}),
+      switchToHttp: vi.fn().mockReturnValue({ getRequest: vi.fn().mockReturnValue(request) }),
+    }
+    const guard = new PermissionGuard(reflector as never)
+    try {
+      guard.canActivate(ctx as never)
+      expect.unreachable('guard should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(ForbiddenException)
+      expect(err).not.toBeInstanceOf(TypeError)
+      const body = (err as ForbiddenException).getResponse()
+      expect(body).toMatchObject({ code: ErrorCode.INSUFFICIENT_PERMISSION })
+    }
+  })
 })

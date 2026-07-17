@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { ErrorCode, hasCapability } from '@rezeta/shared'
+import type { CapabilityMap } from '@rezeta/shared'
 import type { AuthenticatedRequest } from './auth.guard.js'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import {
@@ -42,9 +43,16 @@ export class PermissionGuard implements CanActivate {
     )
     if (!required) return true
 
-    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
+    const request = ctx.switchToHttp().getRequest<Partial<AuthenticatedRequest>>()
 
-    if (hasCapability(request.user.capabilities, required.module, required.level)) {
+    // Defensive fallback: if @RequirePermission were ever combined with
+    // @PlatformRoute()/@ProvisionRoute(), AuthGuard populates
+    // request.platformUser/verifiedToken instead of request.user, leaving
+    // request.user undefined here. Read via optional chaining so that
+    // mis-combination fails CLOSED with the normal 403 below instead of an
+    // unhandled TypeError (500).
+    const capabilities = request.user?.capabilities ?? ({} as CapabilityMap)
+    if (hasCapability(capabilities, required.module, required.level)) {
       return true
     }
 
