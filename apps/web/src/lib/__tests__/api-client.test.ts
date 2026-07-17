@@ -217,6 +217,42 @@ describe('apiClient', () => {
       await expect(apiClient.get('/v1/me')).rejects.toBeInstanceOf(ApiRequestError)
       expect(mockAuth.signOut).toHaveBeenCalled()
     })
+
+    it('does not sign out on a USER_NOT_PROVISIONED 401, but still throws with that code', async () => {
+      fetchMock.mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi
+          .fn()
+          .mockResolvedValue({ error: { code: 'USER_NOT_PROVISIONED', message: 'not provisioned' } }),
+      })
+      await expect(apiClient.post('/v1/auth/provision', {})).rejects.toMatchObject({
+        error: { code: 'USER_NOT_PROVISIONED' },
+      })
+      expect(mockAuth.signOut).not.toHaveBeenCalled()
+    })
+
+    it('signs out on a 401 with any other code (existing behavior preserved)', async () => {
+      fetchMock.mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: { code: 'UNAUTHORIZED', message: 'expired' } }),
+      })
+      await expect(apiClient.get('/v1/me')).rejects.toMatchObject({ error: { code: 'UNAUTHORIZED' } })
+      expect(mockAuth.signOut).toHaveBeenCalled()
+    })
+
+    it('does not sign out on a 401 when skipSignOutOn401 is set, even for a non-exempt code', async () => {
+      fetchMock.mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: { code: 'UNAUTHORIZED', message: 'no platform user' } }),
+      })
+      await expect(
+        apiClient.get('/v1/staff/me', { skipSignOutOn401: true }),
+      ).rejects.toBeInstanceOf(ApiRequestError)
+      expect(mockAuth.signOut).not.toHaveBeenCalled()
+    })
   })
 
   describe('triggerDownload', () => {

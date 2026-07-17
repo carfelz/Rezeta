@@ -1,6 +1,7 @@
 import { authClient } from './auth'
 import { useLoadingStore } from '@/store/loading.store'
 import { toastStrings } from './toasts'
+import { ErrorCode } from '@rezeta/shared'
 import type { ApiError } from '@rezeta/shared'
 
 const API_BASE = (import.meta.env['VITE_API_URL'] as string | undefined) ?? ''
@@ -10,6 +11,30 @@ const REQUEST_TIMEOUT_MS = 30_000
 export interface RequestOptions {
   /** Skip the global loading indicator (autosave/polling traffic). */
   silent?: boolean
+  /**
+   * Skip the global sign-out-on-401 side effect for this request. Used by
+   * probes that intentionally 401 for a whole class of legitimately-signed-in
+   * users without invalidating their Firebase session — e.g. the
+   * staff-console gate's GET /v1/staff/me, which 401s (UNAUTHORIZED) for
+   * every institution user by design; that 401 must not sign out a tenant
+   * user who simply navigated to /staff.
+   */
+  skipSignOutOn401?: boolean
+}
+
+/**
+ * A 401 whose body carries USER_NOT_PROVISIONED means "valid Firebase token,
+ * no DB user row yet" — not "your session is invalid." Signing the user out
+ * here would kill the Firebase session before callers (e.g. AuthProvider) get
+ * a chance to distinguish that case from a real auth failure. See commit
+ * 1ef4277 and AuthProvider.tsx for the institution-side half of this
+ * contract; `skipSignOutOn401` (above) covers callers whose 401 doesn't carry
+ * this code at all.
+ */
+function shouldSignOutOn401(opts: RequestOptions | undefined, body: Record<string, unknown>): boolean {
+  if (opts?.skipSignOutOn401) return false
+  const error = body['error'] as ApiError | undefined
+  return error?.code !== ErrorCode.USER_NOT_PROVISIONED
 }
 
 export class ApiRequestError extends Error {
@@ -55,11 +80,11 @@ async function request<T>(path: string, init?: RequestInit, opts?: RequestOption
 
     if (response.status === 204) return undefined as T
 
-    if (response.status === 401) {
+    const body = (await response.json()) as Record<string, unknown>
+
+    if (response.status === 401 && shouldSignOutOn401(opts, body)) {
       await authClient.signOut()
     }
-
-    const body = (await response.json()) as Record<string, unknown>
 
     if (!response.ok) {
       throw new ApiRequestError(body['error'] as ApiError)
@@ -76,11 +101,11 @@ async function downloadBlob(path: string, opts?: RequestOptions): Promise<Blob> 
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
     const response = await fetch(`${API_BASE}${path}`, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
-    if (response.status === 401) {
-      await authClient.signOut()
-    }
     if (!response.ok) {
       const body = (await response.json()) as Record<string, unknown>
+      if (response.status === 401 && shouldSignOutOn401(opts, body)) {
+        await authClient.signOut()
+      }
       throw new ApiRequestError(body['error'] as ApiError)
     }
     return response.blob()
