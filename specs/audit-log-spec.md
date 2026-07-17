@@ -85,7 +85,7 @@ Events on domain records in the database.
 | `session_revoked`    | A session was explicitly revoked                              |
 | `permission_granted` | A role or permission was granted to a user                    |
 | `permission_revoked` | A role or permission was removed from a user                  |
-| `role_changed`       | A user's assigned role was changed                             |
+| `role_changed`       | A user's assigned role was changed                            |
 | `user_invited`       | A new user was invited to join the tenant                     |
 | `user_deactivated`   | A user account was deactivated                                |
 | `user_reactivated`   | A previously deactivated user account was reactivated         |
@@ -385,7 +385,7 @@ Webhook handlers for email providers must verify the provider's HMAC signature b
 
 ## 10. Auth Event Handling
 
-Auth events (`login`, `logout`, `login_failed`, `password_change`, `mfa_enabled`, `session_revoked`, `permission_granted`, `permission_revoked`) are written via explicit `AuditLogService.record()` calls in the auth service, immediately after the Firebase Auth SDK call resolves.
+Auth events (`login`, `logout`, `login_failed`, `password_change`, `mfa_enabled`, `session_revoked`, `permission_granted`, `permission_revoked`, `role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`) are written via explicit `AuditLogService.record()` calls — the first eight in the auth service immediately after the Firebase Auth SDK call resolves, the user-management four in `UsersService`/`PermissionsService` alongside the mutation they record.
 
 ### No lockout or rate-limit logic
 

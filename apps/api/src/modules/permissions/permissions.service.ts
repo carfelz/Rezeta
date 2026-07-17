@@ -177,7 +177,10 @@ export class PermissionsService {
           ? 'permission_granted'
           : 'permission_revoked',
       entityType: 'role_permission',
-      entityId: `${targetRole}:${moduleKey}`,
+      // No entityId: a (role, module) permission has no UUID identity, and
+      // audit_log.entity_id is a UUID column — a composite `role:module` string
+      // fails Prisma UUID validation (P2023) and the fire-and-forget write is
+      // lost. The target is fully identified by metadata.role + metadata.moduleKey.
       metadata: { role: targetRole, moduleKey, accessLevel: level },
       changes: { accessLevel: { before, after: level } },
     })

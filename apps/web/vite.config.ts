@@ -75,7 +75,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   server: {
-    port: 5173,
+    // Honor the port assigned by the preview harness (PORT env); default 5173.
+    port: Number(process.env['PORT']) || 5173,
     proxy: {
       '/v1': {
         target: 'http://localhost:3000',

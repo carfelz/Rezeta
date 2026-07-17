@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-17] Fix dropped permission-change audit events
+
+### Fixed
+
+- `PermissionsService.updateModule` was setting `entityId` to a composite
+  `role:module` string (e.g. `assistant:protocols`), but `audit_log.entity_id`
+  is a UUID column — every `permission_granted`/`permission_revoked` write failed
+  Prisma UUID validation (P2023) and was silently dropped by the fire-and-forget
+  audit handler. Removed `entityId` (the target is identified by `metadata.role`
+  + `metadata.moduleKey`); added a regression test asserting no non-UUID
+  `entityId` is emitted. Found via live end-to-end testing — unit tests missed it
+  because they mock the audit repository, so the real UUID-column constraint was
+  never exercised.
+
 ## [2026-07-17] Audit-log labels for the permissions auth actions
 
 ### Fixed

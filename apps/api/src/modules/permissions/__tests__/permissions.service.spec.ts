@@ -135,7 +135,6 @@ describe('PermissionsService', () => {
         category: 'auth',
         action: 'permission_granted',
         entityType: 'role_permission',
-        entityId: 'doctor:patients',
         metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
         changes: { accessLevel: { before: 'view', after: 'manage' } },
       })
@@ -159,7 +158,6 @@ describe('PermissionsService', () => {
         category: 'auth',
         action: 'permission_revoked',
         entityType: 'role_permission',
-        entityId: 'doctor:patients',
         metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'none' },
         changes: { accessLevel: { before: 'manage', after: 'none' } },
       })
@@ -177,6 +175,28 @@ describe('PermissionsService', () => {
         expect.objectContaining({
           action: 'permission_granted',
           changes: { accessLevel: { before: 'view', after: 'manage' } },
+        }),
+      )
+    })
+
+    // Regression: audit_log.entity_id is a UUID column. A (role, module) permission
+    // has no UUID identity, so the audit event must NOT carry a composite `role:module`
+    // entityId — that fails Prisma UUID validation (P2023) and silently drops the
+    // audit write. entityId must be absent (target lives in metadata).
+    it('does not emit a non-UUID entityId on the permission audit event', async () => {
+      mockRepo.upsertModule.mockResolvedValue(undefined)
+      mockRepo.findByTenantAndRole
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'view' }])
+        .mockResolvedValueOnce([{ role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' }])
+
+      await service.updateModule('t1', 'super_admin', 'actor-1', 'doctor', 'patients', 'manage')
+
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.not.objectContaining({ entityId: expect.anything() }),
+      )
+      expect(mockAuditLog.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: { role: 'doctor', moduleKey: 'patients', accessLevel: 'manage' },
         }),
       )
     })
