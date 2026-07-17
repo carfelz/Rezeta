@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { UnauthorizedException } from '@nestjs/common'
+import { Logger, UnauthorizedException } from '@nestjs/common'
 import type { Reflector } from '@nestjs/core'
 import { AuthGuard } from '../auth.guard.js'
 import type { VerifiedToken } from '../../../lib/auth/index.js'
@@ -68,6 +68,7 @@ describe('AuthGuard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPermissions.resolveCapabilities.mockResolvedValue({ patients: 'view', users: 'none' })
+    mockUsers.markSignedIn.mockResolvedValue(undefined)
     guard = new AuthGuard(
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
@@ -189,6 +190,22 @@ describe('AuthGuard', () => {
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await guard.canActivate(ctx as never)
     expect(mockUsers.markSignedIn).not.toHaveBeenCalled()
+  })
+
+  it('does not reject canActivate when the fire-and-forget markSignedIn stamp rejects, and logs a warning instead', async () => {
+    const user = { ...validUser, lastLoginAt: null }
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue(user)
+    mockUsers.markSignedIn.mockRejectedValue(new Error('db unavailable'))
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+
+    await expect(guard.canActivate(ctx as never)).resolves.toBe(true)
+    // Flush the fire-and-forget promise's microtask queue before asserting.
+    await new Promise((resolve) => setImmediate(resolve))
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(user.id))
+    warnSpy.mockRestore()
   })
 
   it('sets tenantSeededAt to null when seededAt is null', async () => {

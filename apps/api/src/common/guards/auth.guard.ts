@@ -122,7 +122,11 @@ export class AuthGuard implements CanActivate {
     }
 
     if (user.lastLoginAt === null) {
-      void this.users.markSignedIn(user.id, user.tenantId)
+      void this.users.markSignedIn(user.id, user.tenantId).catch((err: unknown) => {
+        this.logger.warn(
+          `Failed to stamp lastLoginAt for user id=${user.id}: ${(err as Error).message}`,
+        )
+      })
     }
 
     const role = user.role as AuthUser['role']
