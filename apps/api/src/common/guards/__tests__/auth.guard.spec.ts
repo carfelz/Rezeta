@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Logger, UnauthorizedException } from '@nestjs/common'
 import type { Reflector } from '@nestjs/core'
+import { ErrorCode } from '@rezeta/shared'
 import { AuthGuard } from '../auth.guard.js'
 import type { VerifiedToken } from '../../../lib/auth/index.js'
 
@@ -149,6 +150,33 @@ describe('AuthGuard', () => {
     mockUsers.findByExternalUid.mockResolvedValue(null)
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('rejects a platform-staff token on a tenant-scoped route (control-plane isolation)', async () => {
+    // Simulates a PlatformUser identity (control-plane) whose externalUid was
+    // verified by Firebase but has no matching row in the tenant Users table,
+    // hitting a plain (non-@PlatformRoute) tenant-scoped endpoint. This must
+    // 401 with USER_NOT_PROVISIONED and must NOT fall back to consulting the
+    // platform repository — that lookup only happens on @PlatformRoute()
+    // endpoints, and this route carries no such metadata.
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'platform-staff-uid',
+      email: 'staff@rezeta.com',
+      rawClaims: { uid: 'platform-staff-uid', email: 'staff@rezeta.com' },
+    })
+    mockUsers.findByExternalUid.mockResolvedValue(null)
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    try {
+      await guard.canActivate(ctx as never)
+      expect.unreachable('guard should have thrown')
+    } catch (err) {
+      const body = (err as UnauthorizedException).getResponse()
+      expect(body).toMatchObject({ code: ErrorCode.USER_NOT_PROVISIONED })
+    }
+    expect(mockUsers.findByExternalUid).toHaveBeenCalledWith('platform-staff-uid')
+    expect(mockPlatformUsers.findByExternalUid).not.toHaveBeenCalled()
   })
 
   it('throws UnauthorizedException when user is inactive', async () => {
