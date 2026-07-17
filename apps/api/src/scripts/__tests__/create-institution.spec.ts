@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { parseArgs, bootstrapPlatform } from '../create-institution.js'
+import { parseArgs, bootstrapPlatform, isSelfInvoked } from '../create-institution.js'
 
 describe('parseArgs', () => {
   it('parses the platform flags plus optional institution flags', () => {
@@ -141,5 +141,29 @@ describe('bootstrapPlatform', () => {
       'p1',
     )
     expect(result.institution).toEqual({ tenantId: 't1', userId: 'u1', email: 'ana@clinica.com' })
+  })
+})
+
+describe('isSelfInvoked', () => {
+  it('matches the source script invocation (ts-node/tsx)', () => {
+    expect(isSelfInvoked('/app/apps/api/src/scripts/create-institution.ts')).toBe(true)
+  })
+
+  it('matches the compiled script invocation (node dist)', () => {
+    expect(isSelfInvoked('/app/apps/api/dist/scripts/create-institution.js')).toBe(true)
+  })
+
+  it('does not match when imported by a test runner', () => {
+    expect(isSelfInvoked('/app/apps/api/src/scripts/__tests__/create-institution.spec.ts')).toBe(
+      false,
+    )
+  })
+
+  it('does not match an unrelated script path', () => {
+    expect(isSelfInvoked('/app/apps/api/src/scripts/other-script.ts')).toBe(false)
+  })
+
+  it('does not match when argv[1] is undefined', () => {
+    expect(isSelfInvoked(undefined)).toBe(false)
   })
 })

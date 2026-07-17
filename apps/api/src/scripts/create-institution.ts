@@ -109,8 +109,20 @@ async function main(): Promise<void> {
   }
 }
 
+/**
+ * True when `argvPath` (typically `process.argv[1]`) is this script itself —
+ * either the TypeScript source (run via ts-node/tsx) or its compiled
+ * `dist/.../create-institution.js` counterpart — as opposed to a test file
+ * importing this module's exports (e.g. `__tests__/create-institution.spec.ts`).
+ * Exported as a pure predicate so the self-invoke guard is unit-testable
+ * without needing to spawn a subprocess.
+ */
+export function isSelfInvoked(argvPath: string | undefined): boolean {
+  return argvPath !== undefined && /create-institution\.(ts|js)$/.test(argvPath)
+}
+
 // Only self-invoke when run as a script (not when imported by tests).
-if (process.argv[1]?.endsWith('create-institution.ts')) {
+if (isSelfInvoked(process.argv[1])) {
   main().catch((err) => {
     console.error(err)
     process.exit(1)
