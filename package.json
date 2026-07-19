@@ -19,6 +19,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
+    "test:integration": "pnpm -r test:integration",
     "prepare": "husky",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -29,6 +30,7 @@
     "seed:test-user": "tsx --env-file=.env tools/seed-test-user.ts",
     "db:reset": "pnpm --filter @rezeta/db migrate:reset",
     "db:studio": "pnpm --filter @rezeta/db studio",
+    "db:test:setup": "tsx tools/db-test-setup.ts",
     "demo:data": "tsx tools/create-demo-data.ts",
     "seed:templates": "tsx tools/seed-protocol-templates.ts",
     "emulator": "firebase emulators:start --only auth --project rezeta-dev"

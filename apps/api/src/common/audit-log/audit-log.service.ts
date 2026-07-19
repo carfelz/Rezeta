@@ -9,6 +9,18 @@ function rowToItem(row: AuditLogRow): AuditLogItem {
   return { ...row, createdAt: row.createdAt.toISOString() }
 }
 
+/**
+ * Non-prod "strict mode": when set, a failed audit insert rethrows instead
+ * of being silently logged (see `record`). Gated on an explicit env var
+ * rather than `NODE_ENV` alone so normal local dev/prod fire-and-forget
+ * behavior (never let an audit failure break the calling request) is
+ * unchanged by default — only the integration suite (via `test.env` in
+ * `vitest.integration.config.ts`) and anyone explicitly opting in set it.
+ */
+function isAuditStrictMode(): boolean {
+  return process.env['AUDIT_STRICT'] === '1'
+}
+
 function getPlanDateCutoff(plan: string): Date | undefined {
   const now = Date.now()
   if (plan === 'free') return new Date(now - 30 * 24 * 60 * 60 * 1000)
@@ -35,6 +47,9 @@ export class AuditLogService {
       await this.repo.insert(sanitized)
     } catch (err) {
       this.logger.error('Failed to write audit log entry', { error: err, event })
+      if (isAuditStrictMode()) {
+        throw err
+      }
     }
   }
 

@@ -4,6 +4,24 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-19] Green the branch: integration-harness typecheck/lint/coverage fixes
+
+### Fixed
+
+- `apps/api/src/test/integration-global-setup.ts`: replaced `import.meta.url`
+  (rejected under the package's CommonJS `tsc` output — TS1470) with the native
+  `__dirname`, matching `app.module.ts`/`main.ts`; removed the now-unused
+  `no-console` eslint-disable directive.
+- `apps/api/tsconfig.json`: added `vitest.integration.config.ts` to `include` so
+  the ESLint project service can resolve it (was failing with a parsing error).
+- `apps/api/src/test/db-test-utils.ts`: typed `waitForAuditLog`'s Prisma query
+  (`prisma.auditLog.findFirst`) instead of casting through `any`, clearing three
+  `no-unsafe-*` lint errors.
+- `apps/api/vitest.config.ts`: excluded `src/test/**` (integration-test support —
+  setup hooks, fixtures, DB utils, run only by the separate integration suite that
+  needs a live Postgres) from coverage, so it no longer reads as 0% and fails the
+  95%-per-file gate.
+
 ## [2026-07-17] Fix dropped permission-change audit events
 
 ### Fixed

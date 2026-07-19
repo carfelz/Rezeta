@@ -18,6 +18,10 @@ export default defineConfig({
         'src/**/*.spec.ts',
         'src/**/*.test.ts',
         'src/**/__tests__/**',
+        // Integration-test support (setup hooks, fixtures, DB utils) — run only
+        // by the separate integration suite (vitest.integration.config.ts,
+        // needs a live Postgres), so they read as 0% under the unit run.
+        'src/test/**',
         'src/**/index.ts', // barrel re-exports
         'src/lib/starter-fixtures/**',
         'src/lib/pdf.service.ts',
