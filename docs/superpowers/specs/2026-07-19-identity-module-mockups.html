@@ -1,0 +1,549 @@
+<!-- @dsCard group="Feature designs" -->
+<title>Identity module — UI mockups</title>
+<style>
+  :root {
+    --n-0:#FFFFFF; --n-25:#FAFAF7; --n-50:#F4F4F0; --n-100:#EBEBE6; --n-200:#D8D8D2;
+    --n-300:#B9B9B3; --n-400:#8E8E88; --n-500:#6B6B66; --n-600:#4A4A46; --n-700:#2E2E2B;
+    --n-800:#1C1C1A; --n-900:#0E0E0D;
+    --p-50:#EAF0F1; --p-100:#C9D7DA; --p-300:#6A8B91; --p-500:#2D5760; --p-700:#1B3A41; --p-900:#0E2429;
+    --success-bg:#EDF3EC; --success-border:#B8CFB2; --success-text:#2F5C28;
+    --warning-bg:#F7F1E3; --warning-border:#DCC89A; --warning-text:#6E5319;
+    --danger-bg:#F6EAE8; --danger-border:#D9B4AE; --danger-text:#7A2B22;
+    --serif: "Source Serif 4", ui-serif, Georgia, serif;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --r-sm:3px; --r-md:5px; --r-lg:8px;
+    --shadow-floating: 0 1px 0 rgba(14,14,13,.04), 0 8px 24px -8px rgba(14,14,13,.12), 0 2px 6px rgba(14,14,13,.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--n-25); color:var(--n-700);
+    font-family:var(--sans); font-size:13px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection { background:var(--p-100); color:var(--p-900); }
+
+  .page { max-width:1160px; margin:0 auto; padding:40px 24px 80px; }
+
+  .page-head { display:flex; align-items:baseline; justify-content:space-between; gap:16px; border-bottom:1px solid var(--n-200); padding-bottom:20px; margin-bottom:12px; flex-wrap:wrap; }
+  .kicker { font-family:var(--mono); font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--n-400); display:block; margin-bottom:8px; }
+  .page-head h1 { font-family:var(--serif); font-weight:500; font-size:28px; line-height:1.2; letter-spacing:-.01em; color:var(--n-900); margin:0; text-wrap:balance; }
+  .page-head .meta { font-family:var(--mono); font-size:11px; color:var(--n-400); }
+  .font-note { font-size:12px; color:var(--n-500); margin:0 0 40px; }
+
+  .screen { margin-top:56px; }
+  .screen > h2 { font-family:var(--serif); font-weight:500; font-size:20px; letter-spacing:-.005em; color:var(--n-900); margin:0 0 4px; }
+  .screen > .where { font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--p-500); margin:0 0 8px; }
+  .screen > p.desc { font-size:13px; color:var(--n-500); margin:0 0 20px; max-width:70ch; }
+
+  .canvas-wrap { overflow-x:auto; border:1px solid var(--n-200); border-radius:var(--r-lg); background:var(--n-50); }
+  .canvas { min-width:1040px; padding:32px; }
+
+  .notes { margin:16px 0 0; padding:0; list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:8px 24px; }
+  .notes li { font-size:12.5px; color:var(--n-600); display:flex; gap:10px; align-items:baseline; }
+  .notes .n { flex:none; font-family:var(--mono); font-size:10.5px; color:var(--p-500); border:1px solid var(--p-100); background:var(--p-50); border-radius:999px; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; transform:translateY(2px); }
+  .notes strong { color:var(--n-800); font-weight:600; }
+
+  /* ---------- shared app pieces ---------- */
+  .surface { background:var(--n-0); border:1px solid var(--n-200); border-radius:var(--r-md); }
+  .ov { font-family:var(--mono); font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--n-400); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:32px; padding:0 12px; border-radius:var(--r-sm);
+         font-family:var(--sans); font-size:13px; font-weight:500; cursor:default; border:1px solid transparent; white-space:nowrap; }
+  .btn svg { width:15px; height:15px; }
+  .btn-primary { background:var(--p-500); color:var(--n-0); }
+  .btn-secondary { background:var(--n-0); color:var(--n-700); border-color:var(--n-200); }
+  .btn-ghost { background:transparent; color:var(--n-500); }
+  .btn-danger-ghost { background:transparent; color:var(--danger-text); }
+  .btn-lg { height:40px; padding:0 16px; }
+  .btn-block { width:100%; }
+
+  .chip { display:inline-flex; align-items:center; gap:5px; height:20px; padding:0 8px; border-radius:999px; font-size:11px; font-weight:500; border:1px solid; }
+  .chip-success { background:var(--success-bg); border-color:var(--success-border); color:var(--success-text); }
+  .chip-warning { background:var(--warning-bg); border-color:var(--warning-border); color:var(--warning-text); }
+  .chip-danger  { background:var(--danger-bg); border-color:var(--danger-border); color:var(--danger-text); }
+  .chip-neutral { background:var(--n-50); border-color:var(--n-200); color:var(--n-500); }
+  .chip-brand { background:var(--p-50); border-color:var(--p-100); color:var(--p-700); }
+  .dot { width:6px; height:6px; border-radius:999px; background:currentColor; }
+
+  .badge-mono { font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; padding:2px 6px; border-radius:var(--r-sm); border:1px solid var(--n-200); color:var(--n-400); background:var(--n-25); white-space:nowrap; }
+  .badge-mono.custom { border-color:var(--p-100); color:var(--p-500); background:var(--p-50); }
+
+  .switch { width:32px; height:18px; border-radius:999px; background:var(--p-500); position:relative; flex:none; }
+  .switch::after { content:""; position:absolute; top:2px; left:16px; width:14px; height:14px; border-radius:999px; background:var(--n-0); }
+  .switch.off { background:var(--n-200); }
+  .switch.off::after { left:2px; }
+
+  .select, .input { height:30px; display:inline-flex; align-items:center; gap:8px; padding:0 10px; border:1px solid var(--n-200); border-radius:var(--r-sm); background:var(--n-0); font-size:13px; color:var(--n-700); }
+  .select svg { width:12px; height:12px; color:var(--n-400); margin-left:auto; }
+  .input .ph { color:var(--n-400); }
+
+  table.data { width:100%; border-collapse:collapse; }
+  table.data th { text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:400; color:var(--n-400); padding:10px 16px; border-bottom:1px solid var(--n-100); background:var(--n-25); }
+  table.data td { padding:10px 16px; border-bottom:1px solid var(--n-100); vertical-align:middle; }
+  table.data tr:last-child td { border-bottom:none; }
+  .cell-main { font-weight:500; color:var(--n-800); }
+  .cell-sub { font-family:var(--mono); font-size:10.5px; color:var(--n-400); display:block; }
+  .mono-cell { font-family:var(--mono); font-size:11.5px; color:var(--n-600); font-variant-numeric:tabular-nums; }
+
+  .avatar { width:28px; height:28px; border-radius:999px; background:var(--p-50); color:var(--p-700); display:inline-flex; align-items:center; justify-content:center; font-family:var(--serif); font-size:11px; font-weight:600; flex:none; }
+
+  .rail { font-size:13px; width:200px; flex:none; }
+  .rail .rail-title { font-family:var(--serif); font-size:15px; color:var(--n-800); margin:0 0 2px; font-weight:500; }
+  .rail .rail-sub { font-family:var(--mono); font-size:10.5px; color:var(--n-400); margin-bottom:16px; }
+  .rail ul { list-style:none; margin:0; padding:0; }
+  .rail li { padding:8px 10px; color:var(--n-500); border-left:2px solid transparent; }
+  .rail li.active { border-left-color:var(--p-500); background:var(--n-0); color:var(--n-800); font-weight:500; }
+
+  .panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:18px 20px; border-bottom:1px solid var(--n-100); }
+  .panel-head h3 { font-family:var(--serif); font-weight:500; font-size:16px; color:var(--n-900); margin:2px 0 2px; }
+  .panel-head p { margin:0; font-size:12.5px; color:var(--n-500); max-width:60ch; }
+
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+  .tile { background:var(--n-0); border:1px solid var(--n-200); border-radius:var(--r-md); padding:14px 16px; }
+  .tile .num { font-family:var(--mono); font-size:22px; color:var(--n-900); font-variant-numeric:tabular-nums; line-height:1.2; }
+  .tile .num .unit { font-size:12px; color:var(--n-400); }
+  .tile .lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--n-400); margin-top:2px; }
+  .tile .delta { font-size:11px; margin-top:6px; }
+  .tile .delta.up { color:var(--success-text); }
+  .tile .delta.warn { color:var(--warning-text); }
+  .tile.accent { border-left:2px solid var(--p-500); }
+
+  .callout { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:var(--r-md); border:1px solid; font-size:12.5px; }
+  .callout svg { width:15px; height:15px; flex:none; transform:translateY(2px); }
+  .callout.warning { background:var(--warning-bg); border-color:var(--warning-border); color:var(--warning-text); }
+  .callout.info { background:var(--p-50); border-color:var(--p-100); color:var(--p-700); }
+
+  /* ============ SCREEN 1 : login states ============ */
+  .login-row { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; align-items:start; }
+  .login-card { background:var(--n-0); border:1px solid var(--n-200); border-radius:var(--r-lg); box-shadow:var(--shadow-floating); padding:28px 28px 24px; }
+  .login-card .state-tag { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--p-500); background:var(--p-50); border:1px solid var(--p-100); border-radius:var(--r-sm); padding:2px 6px; display:inline-block; margin-bottom:16px; }
+  .logo-mark { width:32px; height:32px; border-radius:var(--r-md); background:var(--p-500); color:var(--n-0); display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:600; font-size:16px; margin-bottom:14px; }
+  .login-card h3 { font-family:var(--serif); font-weight:500; font-size:20px; color:var(--n-900); margin:0 0 2px; }
+  .login-card .sub { font-size:12.5px; color:var(--n-500); margin:0 0 18px; }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--n-400); margin-bottom:5px; }
+  .field .input { width:100%; height:36px; }
+  .divider { display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--n-400); font-size:11px; }
+  .divider::before, .divider::after { content:""; height:1px; background:var(--n-200); flex:1; }
+  .login-foot { font-size:11.5px; color:var(--n-400); margin-top:16px; text-align:center; }
+  .login-foot a { color:var(--p-500); text-decoration:none; }
+  .code-row { display:flex; gap:8px; margin:6px 0 14px; }
+  .code-box { width:40px; height:44px; border:1px solid var(--n-200); border-radius:var(--r-sm); background:var(--n-0); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:18px; color:var(--n-900); }
+  .code-box.focus { border-color:var(--p-500); box-shadow:0 0 0 2px var(--p-100); }
+
+  /* ============ SCREEN 2 : profile security ============ */
+  .sec-grid { display:grid; grid-template-columns:380px 1fr; gap:20px; align-items:start; }
+  .mfa-factor { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--n-100); }
+  .mfa-factor:last-child { border-bottom:none; }
+  .factor-icon { width:32px; height:32px; border-radius:var(--r-sm); background:var(--n-50); border:1px solid var(--n-200); color:var(--n-500); display:flex; align-items:center; justify-content:center; flex:none; }
+  .factor-icon svg { width:16px; height:16px; }
+  .mfa-factor .grow { flex:1; min-width:0; }
+  .mfa-factor .name { font-weight:500; color:var(--n-800); }
+  .mfa-factor .detail { font-size:12px; color:var(--n-500); }
+
+  /* ============ SCREEN 3/4 : dashboards ============ */
+  .dash { display:flex; gap:24px; }
+  .dash-main { flex:1; min-width:0; }
+  .filter-row { display:flex; gap:8px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--n-100); background:var(--n-25); border-radius:var(--r-md) var(--r-md) 0 0; }
+  .filter-row .spacer { flex:1; }
+  .bars { display:flex; align-items:flex-end; gap:3px; height:36px; }
+  .bars i { flex:1; background:var(--p-100); border-radius:2px 2px 0 0; min-width:6px; }
+  .bars i.hi { background:var(--p-500); }
+
+  /* ============ SCREEN 5 : sso panel ============ */
+  .sso-grid { display:grid; grid-template-columns:1fr 360px; gap:20px; align-items:start; }
+  .form-stack { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .form-stack .field { margin:0; }
+  .domain-chips { display:flex; gap:6px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--n-200); border-radius:var(--r-sm); background:var(--n-0); }
+  .domain-chips .chip { height:22px; }
+  .form-foot { display:flex; align-items:center; gap:8px; padding:14px 20px; border-top:1px solid var(--n-100); background:var(--n-25); border-radius:0 0 var(--r-md) var(--r-md); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="page">
+  <header class="page-head">
+    <div>
+      <span class="kicker">Rezeta · Feature design · 2026-07-19</span>
+      <h1>Identity module — login, MFA, SSO &amp; security dashboards</h1>
+    </div>
+    <span class="meta">tokens: index.css v0.0.1</span>
+  </header>
+  <p class="font-note">Note: this environment blocks font CDNs, so Source Serif 4 / IBM Plex render with system substitutes. Spacing, color, and hierarchy follow the real tokens. UI copy is in Spanish (product default); annotations are in English per repo convention.</p>
+
+  <!-- ══════════════════ SCREEN 1 ══════════════════ -->
+  <section class="screen">
+    <p class="where">1 · Login — three states</p>
+    <h2>Sign-in with social login, enterprise SSO routing, and MFA challenge</h2>
+    <p class="desc">One login surface, three states. State B appears when the typed email matches an institution's SSO domain (login-routing endpoint). State C appears after password/Google sign-in when the account has MFA enrolled.</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="login-row">
+        <!-- state A -->
+        <div class="login-card">
+          <span class="state-tag">Estado A · credenciales</span>
+          <div class="logo-mark">R</div>
+          <h3>Iniciar sesión</h3>
+          <p class="sub">Acceda con la cuenta de su institución.</p>
+          <div class="field"><label>Correo electrónico</label><span class="input" style="width:100%"><span class="ph">nombre@institucion.do</span></span></div>
+          <div class="field"><label>Contraseña</label><span class="input" style="width:100%"><span class="ph">••••••••</span></span></div>
+          <button class="btn btn-primary btn-lg btn-block">Iniciar sesión</button>
+          <div class="divider">o</div>
+          <button class="btn btn-secondary btn-lg btn-block">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"/><path d="M14 8H8v2.4h3.4A3.6 3.6 0 0 1 8 11.6"/></svg>
+            Continuar con Google
+          </button>
+          <p class="login-foot">¿Olvidó su contraseña? <a>Restablecer</a></p>
+        </div>
+
+        <!-- state B -->
+        <div class="login-card">
+          <span class="state-tag">Estado B · dominio con SSO</span>
+          <div class="logo-mark">R</div>
+          <h3>Iniciar sesión</h3>
+          <p class="sub">Acceda con la cuenta de su institución.</p>
+          <div class="field"><label>Correo electrónico</label><span class="input" style="width:100%">dra.perez@unionmedica.do</span></div>
+          <div class="callout info" style="margin-bottom:14px">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="6.5" width="11" height="7" rx="1.5"/><path d="M5.5 6.5v-2a2.5 2.5 0 0 1 5 0v2"/></svg>
+            <span>Su institución <strong>Unión Médica</strong> gestiona el acceso con inicio de sesión corporativo.</span>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block">Continuar con SSO de Unión Médica</button>
+          <p class="login-foot"><a>Usar otra cuenta</a></p>
+        </div>
+
+        <!-- state C -->
+        <div class="login-card">
+          <span class="state-tag">Estado C · verificación MFA</span>
+          <div class="logo-mark">R</div>
+          <h3>Verificación en dos pasos</h3>
+          <p class="sub">Ingrese el código de su aplicación de autenticación.</p>
+          <div class="field"><label>Código de 6 dígitos</label></div>
+          <div class="code-row">
+            <span class="code-box">4</span><span class="code-box">7</span><span class="code-box">2</span>
+            <span class="code-box focus"></span><span class="code-box"></span><span class="code-box"></span>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block">Verificar</button>
+          <div class="divider">o</div>
+          <button class="btn btn-ghost btn-block">Enviar código por SMS al ••• 8042</button>
+          <p class="login-foot">¿Sin acceso a sus factores? <a>Contacte a su administrador</a></p>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>No signup link anywhere</strong> — access is invite-only per the permissions design; the footer offers only password reset.</span></li>
+      <li><span class="n">2</span><span><strong>State B replaces the password field</strong> once the domain matches an active `SsoConnection`; "Usar otra cuenta" returns to state A. Response shape avoids account enumeration.</span></li>
+      <li><span class="n">3</span><span><strong>MFA challenge</strong> defaults to TOTP; SMS fallback is a secondary action showing the masked enrolled number.</span></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ SCREEN 2 ══════════════════ -->
+  <section class="screen">
+    <p class="where">2 · Perfil → pestaña «Seguridad» (self-service, any role)</p>
+    <h2>Personal security: MFA factors and active devices</h2>
+    <p class="desc">Every user manages their own factors and sees every device that has signed in. Session revocation is per-user ("close all"), matching the provider capability — no per-device revoke is shown.</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="sec-grid">
+        <div class="surface">
+          <div class="panel-head">
+            <div><span class="ov">Verificación en dos pasos</span><h3>Factores de autenticación</h3></div>
+            <span class="chip chip-success"><span class="dot"></span>Activa</span>
+          </div>
+          <div class="mfa-factor">
+            <div class="factor-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="1.5" width="8" height="13" rx="1.5"/><path d="M7 12.5h2"/></svg></div>
+            <div class="grow">
+              <div class="name">Aplicación de autenticación</div>
+              <div class="detail">Configurada el 12 jul 2026 · último uso hace 2 h</div>
+            </div>
+            <button class="btn btn-ghost">Quitar</button>
+          </div>
+          <div class="mfa-factor">
+            <div class="factor-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 2.5h10v8H8l-3 3v-3H3z"/></svg></div>
+            <div class="grow">
+              <div class="name">SMS</div>
+              <div class="detail">No configurado</div>
+            </div>
+            <button class="btn btn-secondary">Agregar</button>
+          </div>
+        </div>
+
+        <div class="surface">
+          <div class="panel-head">
+            <div><span class="ov">Sesiones</span><h3>Dispositivos con acceso</h3></div>
+            <button class="btn btn-danger-ghost">Cerrar todas las sesiones</button>
+          </div>
+          <table class="data">
+            <thead><tr><th style="width:38%">Dispositivo</th><th style="width:22%">IP</th><th style="width:24%">Última actividad</th><th style="width:16%"></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="cell-main">Chrome · macOS</span><span class="cell-sub">Santo Domingo, DO</span></td>
+                <td class="mono-cell">190.80.14.22</td>
+                <td class="mono-cell">hace 5 min</td>
+                <td><span class="chip chip-brand">Este dispositivo</span></td>
+              </tr>
+              <tr>
+                <td><span class="cell-main">Safari · iPhone</span><span class="cell-sub">Santiago, DO</span></td>
+                <td class="mono-cell">148.101.9.87</td>
+                <td class="mono-cell">ayer 18:40</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td><span class="cell-main">Chrome · Windows</span><span class="cell-sub">La Romana, DO</span></td>
+                <td class="mono-cell">152.166.30.5</td>
+                <td class="mono-cell">16 jul 2026</td>
+                <td><span class="chip chip-warning"><span class="dot"></span>Nuevo</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>«Nuevo» chip</strong> marks a device first seen in the last 7 days — same event that triggers the notification email.</span></li>
+      <li><span class="n">2</span><span><strong>Removing the last factor</strong> shows a confirm dialog; if tenant policy later requires MFA for the user's role, removal is blocked with an explanatory message.</span></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ SCREEN 3 ══════════════════ -->
+  <section class="screen">
+    <p class="where">3 · Ajustes → «Seguridad» (institution admins, capability-gated)</p>
+    <h2>Institution security panel: metrics and login activity</h2>
+    <p class="desc">Tenant-scoped. Sits in the Ajustes hub next to Usuarios and Permisos, gated by the same admin-section capability. Rank rule applies to the per-user actions.</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="dash">
+        <aside class="rail">
+          <p class="rail-title">Ajustes</p>
+          <p class="rail-sub">Centro Médico Vista Alegre</p>
+          <ul>
+            <li>Institución</li>
+            <li>Usuarios</li>
+            <li>Permisos</li>
+            <li class="active">Seguridad</li>
+            <li>Facturación</li>
+          </ul>
+        </aside>
+
+        <div class="dash-main">
+          <div class="tiles">
+            <div class="tile accent"><div class="num">12</div><div class="lbl">Sesiones activas</div><div class="delta up">8 usuarios distintos</div></div>
+            <div class="tile"><div class="num">3</div><div class="lbl">Intentos fallidos · 7d</div><div class="delta warn">2 de la misma cuenta</div></div>
+            <div class="tile"><div class="num">58<span class="unit">%</span></div><div class="lbl">Adopción MFA</div><div class="delta up">+12% este mes</div></div>
+            <div class="tile"><div class="num">2</div><div class="lbl">Sin acceso · 30d</div><div class="delta warn">Revisar cuentas</div></div>
+          </div>
+
+          <div class="surface">
+            <div class="filter-row">
+              <span class="ov">Actividad de inicio de sesión</span>
+              <span class="spacer"></span>
+              <span class="select">Todos los usuarios <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></span>
+              <span class="select">Últimos 7 días <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></span>
+              <button class="btn btn-secondary">Exportar</button>
+            </div>
+            <table class="data">
+              <thead><tr>
+                <th style="width:16%">Fecha</th><th style="width:26%">Usuario</th><th style="width:20%">Método</th>
+                <th style="width:22%">Dispositivo / IP</th><th style="width:16%">Resultado</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td class="mono-cell">19 jul · 09:14</td>
+                  <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">MP</span><span><span class="cell-main">Dra. María Pérez</span><span class="cell-sub">doctor</span></span></span></td>
+                  <td><span class="chip chip-neutral">Contraseña</span> <span class="badge-mono custom">+MFA</span></td>
+                  <td class="mono-cell">Chrome · 190.80.14.22</td>
+                  <td><span class="chip chip-success"><span class="dot"></span>Exitoso</span></td>
+                </tr>
+                <tr>
+                  <td class="mono-cell">19 jul · 08:52</td>
+                  <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">JR</span><span><span class="cell-main">José Rodríguez</span><span class="cell-sub">assistant</span></span></span></td>
+                  <td><span class="chip chip-neutral">Google</span></td>
+                  <td class="mono-cell">Safari · 148.101.9.87</td>
+                  <td><span class="chip chip-success"><span class="dot"></span>Exitoso</span></td>
+                </tr>
+                <tr>
+                  <td class="mono-cell">18 jul · 22:03</td>
+                  <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">AL</span><span><span class="cell-main">Ana López</span><span class="cell-sub">admin</span></span></span></td>
+                  <td><span class="chip chip-neutral">Contraseña</span></td>
+                  <td class="mono-cell">Firefox · 152.166.30.5</td>
+                  <td><span class="chip chip-danger"><span class="dot"></span>Fallido</span></td>
+                </tr>
+                <tr>
+                  <td class="mono-cell">18 jul · 16:20</td>
+                  <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">MP</span><span><span class="cell-main">Dra. María Pérez</span><span class="cell-sub">doctor</span></span></span></td>
+                  <td><span class="chip chip-neutral">SSO</span> <span class="badge-mono custom">+MFA</span></td>
+                  <td class="mono-cell">Chrome · 190.80.14.22</td>
+                  <td><span class="chip chip-success"><span class="dot"></span>Exitoso</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>Tiles are queries over `LoginEvent`/`UserDevice`</strong>, tenant-scoped like every other repository call.</span></li>
+      <li><span class="n">2</span><span><strong>Método chip + «+MFA» badge</strong> encode `LoginEvent.method`; the failed row uses the danger chip, consistent with audit-log status styling.</span></li>
+      <li><span class="n">3</span><span><strong>Exportar</strong> produces the compliance access report (CSV) for the selected range.</span></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ SCREEN 4 ══════════════════ -->
+  <section class="screen">
+    <p class="where">4 · Plataforma staff → «Seguridad» (cross-institution)</p>
+    <h2>Staff security dashboard: platform-wide metrics per institution</h2>
+    <p class="desc">Platform staff only (`/v1/staff/identity/*`). Aggregates across institutions without touching clinical data — counts and identity telemetry only.</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="dash">
+        <aside class="rail">
+          <p class="rail-title">Plataforma</p>
+          <p class="rail-sub">staff · Rezeta</p>
+          <ul>
+            <li>Instituciones</li>
+            <li class="active">Seguridad</li>
+            <li>Conexiones SSO</li>
+          </ul>
+        </aside>
+
+        <div class="dash-main">
+          <div class="tiles">
+            <div class="tile accent"><div class="num">14</div><div class="lbl">Instituciones activas</div></div>
+            <div class="tile"><div class="num">213</div><div class="lbl">Usuarios activos · 30d</div><div class="delta up">+9 este mes</div></div>
+            <div class="tile"><div class="num">99.2<span class="unit">%</span></div><div class="lbl">Éxito de acceso · 7d</div></div>
+            <div class="tile"><div class="num">41<span class="unit">%</span></div><div class="lbl">Adopción MFA global</div><div class="delta warn">3 instituciones en 0%</div></div>
+          </div>
+
+          <div class="callout warning" style="margin-bottom:16px">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2 1.8 13h12.4L8 2z"/><path d="M8 6.5v3M8 11.6v.1"/></svg>
+            <span><strong>5 cuentas sin acceso en 60 días</strong> en 3 instituciones. Sugerencia: desactivar o reasignar.</span>
+          </div>
+
+          <div class="surface">
+            <div class="filter-row">
+              <span class="ov">Actividad por institución</span>
+              <span class="spacer"></span>
+              <span class="select">Últimos 30 días <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></span>
+            </div>
+            <table class="data">
+              <thead><tr>
+                <th style="width:28%">Institución</th><th style="width:10%">Plan</th><th style="width:12%">MAU</th>
+                <th style="width:20%">Accesos · 14d</th><th style="width:14%">MFA</th><th style="width:16%">Señales</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><span class="cell-main">Centro Médico Vista Alegre</span><span class="cell-sub">clinic · 3 ubicaciones</span></td>
+                  <td><span class="badge-mono">clinic</span></td>
+                  <td class="mono-cell">26</td>
+                  <td><div class="bars"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:48%"></i><i style="height:20%"></i><i style="height:15%"></i><i style="height:58%"></i><i style="height:62%"></i><i style="height:50%"></i><i style="height:45%"></i><i style="height:70%"></i><i style="height:52%"></i><i class="hi" style="height:80%"></i></div></td>
+                  <td class="mono-cell">58%</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Unión Médica</span><span class="cell-sub">enterprise · SSO activo</span></td>
+                  <td><span class="badge-mono custom">enterprise</span></td>
+                  <td class="mono-cell">112</td>
+                  <td><div class="bars"><i style="height:60%"></i><i style="height:64%"></i><i style="height:58%"></i><i style="height:66%"></i><i style="height:70%"></i><i style="height:30%"></i><i style="height:22%"></i><i style="height:68%"></i><i style="height:72%"></i><i style="height:65%"></i><i style="height:60%"></i><i style="height:74%"></i><i style="height:69%"></i><i class="hi" style="height:76%"></i></div></td>
+                  <td class="mono-cell">91%</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Consultorio Dr. Gómez</span><span class="cell-sub">solo · 2 ubicaciones</span></td>
+                  <td><span class="badge-mono">solo</span></td>
+                  <td class="mono-cell">2</td>
+                  <td><div class="bars"><i style="height:20%"></i><i style="height:0%"></i><i style="height:25%"></i><i style="height:18%"></i><i style="height:0%"></i><i style="height:0%"></i><i style="height:0%"></i><i style="height:22%"></i><i style="height:15%"></i><i style="height:0%"></i><i style="height:12%"></i><i style="height:0%"></i><i style="height:0%"></i><i class="hi" style="height:10%"></i></div></td>
+                  <td class="mono-cell">0%</td>
+                  <td><span class="chip chip-warning"><span class="dot"></span>2 inactivos</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>The sparkline bars</strong> are daily login counts (14 days); the highlighted last bar is today. Rendered from the same `LoginEvent` aggregate as screen 3.</span></li>
+      <li><span class="n">2</span><span><strong>Señales column</strong> surfaces dormant accounts and failed-attempt spikes — staff sees the flag, the institution admin sees the detail.</span></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ SCREEN 5 ══════════════════ -->
+  <section class="screen">
+    <p class="where">5 · Plataforma staff → «Conexiones SSO»</p>
+    <h2>Enterprise SSO connection management</h2>
+    <p class="desc">Staff creates and maintains per-institution SAML/OIDC connections. The domain list drives login routing (screen 1, state B).</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="sso-grid">
+        <div class="surface">
+          <div class="panel-head">
+            <div><span class="ov">Conexiones SSO</span><h3>Instituciones con inicio corporativo</h3></div>
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg>
+              Nueva conexión
+            </button>
+          </div>
+          <table class="data">
+            <thead><tr>
+              <th style="width:30%">Institución</th><th style="width:12%">Tipo</th><th style="width:30%">Dominios</th>
+              <th style="width:14%">Estado</th><th style="width:14%">Último acceso</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:var(--n-25); box-shadow:inset 2px 0 0 var(--p-500)">
+                <td><span class="cell-main">Unión Médica</span><span class="cell-sub">enterprise</span></td>
+                <td><span class="badge-mono custom">OIDC</span></td>
+                <td class="mono-cell">unionmedica.do</td>
+                <td><span class="chip chip-success"><span class="dot"></span>Activa</span></td>
+                <td class="mono-cell">hace 12 min</td>
+              </tr>
+              <tr>
+                <td><span class="cell-main">Grupo Salud Integral</span><span class="cell-sub">enterprise</span></td>
+                <td><span class="badge-mono custom">SAML</span></td>
+                <td class="mono-cell">gsi.com.do · gsi.do</td>
+                <td><span class="chip chip-warning"><span class="dot"></span>Borrador</span></td>
+                <td class="mono-cell">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="surface">
+          <div class="panel-head">
+            <div><span class="ov">Editar conexión</span><h3>Unión Médica</h3></div>
+            <span class="chip chip-success"><span class="dot"></span>Activa</span>
+          </div>
+          <div class="form-stack">
+            <div class="field"><label>Tipo de proveedor</label><span class="select" style="width:100%">OIDC <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg></span></div>
+            <div class="field"><label>URL de descubrimiento</label><span class="input" style="width:100%"><span class="mono-cell" style="font-size:11px">https://login.microsoftonline.com/…/v2.0</span></span></div>
+            <div class="field"><label>Dominios de correo</label>
+              <div class="domain-chips">
+                <span class="chip chip-brand">unionmedica.do ✕</span>
+                <span class="ph" style="color:var(--n-400)">agregar dominio…</span>
+              </div>
+            </div>
+            <div class="field" style="display:flex; align-items:center; gap:10px">
+              <span class="switch"></span>
+              <span>Permitir también contraseña y Google<br><span style="font-size:11.5px;color:var(--n-400)">Si se desactiva, el SSO es el único método para estos dominios.</span></span>
+            </div>
+          </div>
+          <div class="form-foot">
+            <button class="btn btn-primary">Guardar conexión</button>
+            <button class="btn btn-ghost">Probar acceso</button>
+            <span class="spacer" style="flex:1"></span>
+            <button class="btn btn-danger-ghost">Desactivar</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>Selected row</strong> uses the 2px teal inset rule, consistent with list selection across the app.</span></li>
+      <li><span class="n">2</span><span><strong>«Probar acceso»</strong> runs a dry-run OIDC/SAML handshake and reports the result inline before activation.</span></li>
+      <li><span class="n">3</span><span><strong>Secrets (client secret, SAML certs)</strong> are write-only fields — entered once, never displayed back.</span></li>
+    </ul>
+  </section>
+</div>

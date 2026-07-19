@@ -4,6 +4,24 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-19] Identity module design: MFA, SSO, security dashboards
+
+### Added
+
+- `docs/superpowers/specs/2026-07-19-identity-module-design.md`: design for the
+  identity module — GCP Identity Platform upgrade (Google social login,
+  TOTP/SMS MFA optional for all, per-institution SAML/OIDC SSO), new
+  `LoginEvent` / `UserDevice` / `MfaEnrollment` / `SsoConnection` /
+  `IdentityPolicy` tables, `/v1/identity/*` + `/v1/staff/identity/*` API
+  surface, two-level security dashboards, reports (compliance access export,
+  dormant accounts, invite funnel), and a documented self-hosted-IdP exit
+  runbook.
+- `docs/superpowers/specs/2026-07-19-identity-module-mockups.html`: five
+  token-faithful screen mockups (login states, profile security, institution
+  security panel, staff cross-institution dashboard, SSO connection
+  management); synced to the "Rezeta Design System" Claude Design project as
+  `Identity Module.html`.
+
 ## [2026-07-19] Green the branch: integration-harness typecheck/lint/coverage fixes
 
 ### Fixed
