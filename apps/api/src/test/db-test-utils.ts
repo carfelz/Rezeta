@@ -120,7 +120,7 @@ export async function createTestUser(
 export async function createTestPlatformUser(
   prisma: PrismaClient,
   overrides: Partial<{ email: string; fullName: string }> = {},
-): Promise<{ id: string }> {
+): Promise<{ id: string; externalUid: string }> {
   const uid = randomUUID()
   return prisma.platformUser.create({
     data: {
@@ -128,6 +128,6 @@ export async function createTestPlatformUser(
       email: overrides.email ?? `platform-${uid}@example.com`,
       fullName: overrides.fullName ?? 'Test Platform User',
     },
-    select: { id: true },
+    select: { id: true, externalUid: true },
   })
 }
