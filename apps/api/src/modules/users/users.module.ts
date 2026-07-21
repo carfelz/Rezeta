@@ -8,6 +8,6 @@ import { InvitationMailerService } from './invitation-mailer.service.js'
 @Module({
   controllers: [UsersController, UsersManagementController],
   providers: [UsersService, UsersRepository, InvitationMailerService],
-  exports: [UsersService, UsersRepository],
+  exports: [UsersService, UsersRepository, InvitationMailerService],
 })
 export class UsersModule {}

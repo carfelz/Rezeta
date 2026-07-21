@@ -4,6 +4,31 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-21] Platform users service: roster business logic
+
+### Added
+
+- `apps/api/src/modules/platform-users/platform-users.service.ts`:
+  `PlatformUsersService` with `listUsers`, `createUser`, `setActive`, and
+  `resendInvite`, mirroring `UsersService`'s invite-flow patterns —
+  auth-provider identity creation with orphan cleanup on DB failure, P2002 ->
+  `ConflictException(USER_ALREADY_EXISTS)` mapping, a non-fatal set-password
+  email step, and a self-deactivation guard on `setActive`. Audits use
+  `actorType: 'system'`, `category: 'auth'`, actions `user_invited` /
+  `user_deactivated` / `user_reactivated`, with the acting staff id in
+  `metadata.platformUserId` and no `tenantId` (PlatformUser is tenantless).
+- `apps/api/src/modules/platform-users/__tests__/platform-users.service.spec.ts`:
+  11 tests covering roster mapping (`invited` vs `active` status), the invite
+  compensation/rollback path, the P2002 conflict mapping, the non-fatal email
+  failure path, the self-deactivation guard, reactivate/deactivate auditing,
+  and 404s on unknown targets.
+
+### Changed
+
+- `apps/api/src/modules/users/users.module.ts`: export
+  `InvitationMailerService` so `PlatformUsersModule` can consume it in a
+  follow-up wiring task.
+
 ## [2026-07-19] Identity module design: MFA, SSO, security dashboards
 
 ### Added
