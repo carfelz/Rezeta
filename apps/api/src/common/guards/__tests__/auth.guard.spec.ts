@@ -11,7 +11,7 @@ const mockAuthProvider = {
   deleteUser: vi.fn(),
 }
 const mockUsers = { findByExternalUid: vi.fn(), markSignedIn: vi.fn() }
-const mockPlatformUsers = { findByExternalUid: vi.fn(), create: vi.fn() }
+const mockPlatformUsers = { findByExternalUid: vi.fn(), create: vi.fn(), markSignedIn: vi.fn() }
 const mockReflector = { getAllAndOverride: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 const mockPermissions = {
@@ -70,6 +70,7 @@ describe('AuthGuard', () => {
     vi.clearAllMocks()
     mockPermissions.resolveCapabilities.mockResolvedValue({ patients: 'view', users: 'none' })
     mockUsers.markSignedIn.mockResolvedValue(undefined)
+    mockPlatformUsers.markSignedIn.mockResolvedValue(undefined)
     guard = new AuthGuard(
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
@@ -308,5 +309,49 @@ describe('AuthGuard', () => {
       isPlatformRoute: true,
     })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('stamps lastLoginAt on a platform user’s first sign-in', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'ext-1',
+      email: 'staff@rezeta.do',
+      rawClaims: {},
+    })
+    mockPlatformUsers.findByExternalUid.mockResolvedValue({
+      id: 'platform-1',
+      externalUid: 'ext-1',
+      email: 'staff@rezeta.do',
+      fullName: 'Staff One',
+      isActive: true,
+      lastLoginAt: null,
+    })
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer tok' },
+      isPlatformRoute: true,
+    })
+    await guard.canActivate(ctx as never)
+    expect(mockPlatformUsers.markSignedIn).toHaveBeenCalledWith('platform-1')
+  })
+
+  it('does not re-stamp lastLoginAt on later sign-ins', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      externalUid: 'ext-1',
+      email: 'staff@rezeta.do',
+      rawClaims: {},
+    })
+    mockPlatformUsers.findByExternalUid.mockResolvedValue({
+      id: 'platform-1',
+      externalUid: 'ext-1',
+      email: 'staff@rezeta.do',
+      fullName: 'Staff One',
+      isActive: true,
+      lastLoginAt: new Date('2026-07-01T00:00:00Z'),
+    })
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer tok' },
+      isPlatformRoute: true,
+    })
+    await guard.canActivate(ctx as never)
+    expect(mockPlatformUsers.markSignedIn).not.toHaveBeenCalled()
   })
 })
