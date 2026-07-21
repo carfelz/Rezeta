@@ -17,7 +17,7 @@ import ts from 'typescript'
 const MUTATION_METHODS = new Set(['update', 'updateMany', 'delete', 'deleteMany', 'upsert'])
 
 // Models with no `tenant_id` column — scoped by `userId` or a parent relation.
-const TENANTLESS_MODELS = new Set(['scheduleBlock', 'scheduleException'])
+const TENANTLESS_MODELS = new Set(['scheduleBlock', 'scheduleException', 'platformUser'])
 
 const modulesDir = resolve(process.cwd(), 'src/modules')
 const repoRoot = resolve(process.cwd(), '../..')
