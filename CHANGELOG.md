@@ -4,6 +4,27 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-21] Real-Postgres integration coverage for `PlatformUsersService`
+
+### Added
+
+- `apps/api/src/modules/platform-users/__tests__/platform-users.service.int-spec.ts`:
+  3 tests against a live `rezeta_test` Postgres database, mirroring the
+  construction style of `permissions.service.int-spec.ts` — real
+  `PlatformUsersRepository` + `AuditLogService` wired to a live
+  `PrismaService`, `IAuthProvider` and `InvitationMailerService` faked with
+  `vi.fn()`. Covers `createUser` (persists a row, writes a `user_invited`
+  audit with `tenantId: null`), `setActive` deactivate/reactivate (soft
+  delete blocks `findByExternalUid`, reactivate restores it), and
+  self-deactivation rejection (403, row untouched).
+
+### Changed
+
+- `apps/api/src/test/db-test-utils.ts`: `createTestPlatformUser` now also
+  selects `externalUid` (previously `id` only) so integration specs can
+  exercise the auth-path lookup (`PlatformUsersRepository.findByExternalUid`)
+  against a fixture it created.
+
 ## [2026-07-21] Platform users controller: `/v1/staff/identity/users` endpoints
 
 ### Added
