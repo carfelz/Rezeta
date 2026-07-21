@@ -4,6 +4,32 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-21] Platform users controller: `/v1/staff/identity/users` endpoints
+
+### Added
+
+- `apps/api/src/modules/platform-users/staff-platform-users.controller.ts`:
+  `StaffPlatformUsersController` exposing `GET /v1/staff/identity/users`,
+  `POST /v1/staff/identity/users`, `PATCH /v1/staff/identity/users/:id/active`,
+  and `POST /v1/staff/identity/users/:id/resend-invite`, delegating to
+  `PlatformUsersService`. Mirrors `StaffController`'s decorator stack
+  (`@ApiTags('Staff')`, `@ApiBearerAuth`/`@ApiSecurity` with
+  `AUTH_BEARER_SCHEME`/`AUTH_OAUTH2_SCHEME` from `lib/auth`, `@PlatformRoute()`)
+  and `UsersManagementController`'s `@Param('id') id: string` style
+  (no pipe). Body validation via `ZodValidationPipe` with
+  `CreatePlatformUserSchema` and the shared `SetActiveSchema`.
+- `apps/api/src/modules/platform-users/__tests__/staff-platform-users.controller.spec.ts`:
+  4 tests covering delegation of `list`/`create`/`setActive`/`resendInvite` to
+  the service with the correct acting-principal id, target id, and dto.
+
+### Changed
+
+- `apps/api/src/modules/platform-users/platform-users.module.ts`: import
+  `UsersModule` (for `InvitationMailerService`), register
+  `StaffPlatformUsersController` and `PlatformUsersService`.
+- `apps/api/src/modules/platform-users/index.ts`: export `PlatformUsersService`
+  and `StaffPlatformUsersController`.
+
 ## [2026-07-21] Platform users service: roster business logic
 
 ### Added
