@@ -4,102 +4,66 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-21] Staff console: platform-users roster page and nav
+## [2026-07-21] Staff-user management (identity slice 1)
 
 ### Added
 
-- `apps/web/src/pages/staff/PlatformUsers.tsx`: roster page for
-  `/staff/platform-users` listing platform users (name/email, derived
-  status badge, last access), a "New user" modal wired to
-  `useCreatePlatformUser`, and per-row Resend/Deactivate/Reactivate actions
-  wired to `useResendPlatformUserInvite` / `useSetPlatformUserActive`. Own
-  row (matched via `useStaffMe`) renders a "You" chip instead of action
-  buttons — self-deactivation is blocked server-side, so the UI never
-  offers it. No `useCan` gating; platform access is enforced by
-  `RequirePlatform` at the route level.
-- `apps/web/src/pages/staff/__tests__/PlatformUsers.test.tsx`: 5 tests
-  covering roster rendering with derived status/You chip, hiding
-  Deactivate on the acting user's own row, Resend-link visibility +
-  mutation call, create-form submission payload, and the empty state.
-- `apps/web/src/App.tsx`: registers the `staff/platform-users` route.
+- `/v1/staff/identity/users` endpoints (`GET`, `POST`,
+  `PATCH /:id/active`, `POST /:id/resend-invite`) via
+  `StaffPlatformUsersController`
+  (`apps/api/src/modules/platform-users/staff-platform-users.controller.ts`),
+  delegating to `PlatformUsersService`
+  (`apps/api/src/modules/platform-users/platform-users.service.ts`):
+  `listUsers`, `createUser`, `setActive`, `resendInvite`, mirroring
+  `UsersService`'s invite-flow patterns — auth-provider identity creation
+  with orphan cleanup on DB failure, P2002 ->
+  `ConflictException(USER_ALREADY_EXISTS)` mapping, a non-fatal
+  set-password email step, and a self-deactivation guard. Audits use
+  `actorType: 'system'`, `category: 'auth'`, actions `user_invited` /
+  `user_deactivated` / `user_reactivated`, with the acting staff id in
+  `metadata.platformUserId` and no `tenantId` (PlatformUser is
+  tenantless). The controller mirrors `StaffController`'s decorator stack
+  (`@ApiTags('Staff')`, `@ApiBearerAuth`/`@ApiSecurity`, `@PlatformRoute()`)
+  and validates bodies via `ZodValidationPipe` with
+  `CreatePlatformUserSchema` / the shared `SetActiveSchema`.
+- Staff console page `/staff/platform-users`
+  (`apps/web/src/pages/staff/PlatformUsers.tsx`) with a roster table
+  (name/email, derived status badge, last access), a "New user" modal
+  wired to `useCreatePlatformUser`, and per-row Resend/Deactivate/Reactivate
+  actions wired to `useResendPlatformUserInvite` /
+  `useSetPlatformUserActive`. The acting user's own row (matched via
+  `useStaffMe`) renders a "You" chip instead of action buttons since
+  self-deactivation is blocked server-side. Route registered in
+  `apps/web/src/App.tsx`; staff-console nav (`StaffNavLink`, linking
+  Institutions and Platform users) added to `StaffLayout.tsx`.
+- `platform_users.last_login_at` column, stamped by `AuthGuard` on first
+  platform sign-in; drives the `invited`/`active` roster status.
+- Shared schemas `CreatePlatformUserSchema` / `PlatformUserApiSchema`
+  (`packages/shared/src/schemas/platform-users.ts`).
+- Tests: 11 unit tests for `PlatformUsersService` (roster mapping, invite
+  compensation/rollback, P2002 mapping, non-fatal email failure,
+  self-deactivation guard, reactivate/deactivate auditing, 404s), 4 for
+  `StaffPlatformUsersController` (delegation + acting-principal/target-id/dto
+  correctness), 3 real-Postgres integration tests
+  (`platform-users.service.int-spec.ts`, mirroring
+  `permissions.service.int-spec.ts`'s construction style — real
+  `PlatformUsersRepository` + `AuditLogService` against a live
+  `PrismaService`) covering `createUser` persistence + audit, the
+  deactivate/reactivate soft-delete round-trip, and self-deactivation
+  rejection, and 5 for the `PlatformUsers.tsx` roster page (rendering,
+  You-chip/hidden-deactivate on the own row, resend visibility + mutation,
+  create-form payload, empty state).
 
 ### Changed
 
-- `apps/web/src/components/layout/StaffLayout.tsx`: adds a nav bar
-  (`StaffNavLink`) between the header and `<main>` linking Institutions
-  and Platform users.
-
-## [2026-07-21] Real-Postgres integration coverage for `PlatformUsersService`
-
-### Added
-
-- `apps/api/src/modules/platform-users/__tests__/platform-users.service.int-spec.ts`:
-  3 tests against a live `rezeta_test` Postgres database, mirroring the
-  construction style of `permissions.service.int-spec.ts` — real
-  `PlatformUsersRepository` + `AuditLogService` wired to a live
-  `PrismaService`, `IAuthProvider` and `InvitationMailerService` faked with
-  `vi.fn()`. Covers `createUser` (persists a row, writes a `user_invited`
-  audit with `tenantId: null`), `setActive` deactivate/reactivate (soft
-  delete blocks `findByExternalUid`, reactivate restores it), and
-  self-deactivation rejection (403, row untouched).
-
-### Changed
-
+- `bootstrap:platform` CLI is now needed only for the first staff account on a
+  fresh deployment; day-to-day staff-user management moves to the staff console.
+- `UsersModule` exports `InvitationMailerService` for reuse by
+  `PlatformUsersModule`.
 - `apps/api/src/test/db-test-utils.ts`: `createTestPlatformUser` now also
   selects `externalUid` (previously `id` only) so integration specs can
   exercise the auth-path lookup (`PlatformUsersRepository.findByExternalUid`)
   against a fixture it created.
-
-## [2026-07-21] Platform users controller: `/v1/staff/identity/users` endpoints
-
-### Added
-
-- `apps/api/src/modules/platform-users/staff-platform-users.controller.ts`:
-  `StaffPlatformUsersController` exposing `GET /v1/staff/identity/users`,
-  `POST /v1/staff/identity/users`, `PATCH /v1/staff/identity/users/:id/active`,
-  and `POST /v1/staff/identity/users/:id/resend-invite`, delegating to
-  `PlatformUsersService`. Mirrors `StaffController`'s decorator stack
-  (`@ApiTags('Staff')`, `@ApiBearerAuth`/`@ApiSecurity` with
-  `AUTH_BEARER_SCHEME`/`AUTH_OAUTH2_SCHEME` from `lib/auth`, `@PlatformRoute()`)
-  and `UsersManagementController`'s `@Param('id') id: string` style
-  (no pipe). Body validation via `ZodValidationPipe` with
-  `CreatePlatformUserSchema` and the shared `SetActiveSchema`.
-- `apps/api/src/modules/platform-users/__tests__/staff-platform-users.controller.spec.ts`:
-  4 tests covering delegation of `list`/`create`/`setActive`/`resendInvite` to
-  the service with the correct acting-principal id, target id, and dto.
-
-### Changed
-
-- `apps/api/src/modules/platform-users/platform-users.module.ts`: import
-  `UsersModule` (for `InvitationMailerService`), register
-  `StaffPlatformUsersController` and `PlatformUsersService`.
-- `apps/api/src/modules/platform-users/index.ts`: export `PlatformUsersService`
-  and `StaffPlatformUsersController`.
-
-## [2026-07-21] Platform users service: roster business logic
-
-### Added
-
-- `apps/api/src/modules/platform-users/platform-users.service.ts`:
-  `PlatformUsersService` with `listUsers`, `createUser`, `setActive`, and
-  `resendInvite`, mirroring `UsersService`'s invite-flow patterns —
-  auth-provider identity creation with orphan cleanup on DB failure, P2002 ->
-  `ConflictException(USER_ALREADY_EXISTS)` mapping, a non-fatal set-password
-  email step, and a self-deactivation guard on `setActive`. Audits use
-  `actorType: 'system'`, `category: 'auth'`, actions `user_invited` /
-  `user_deactivated` / `user_reactivated`, with the acting staff id in
-  `metadata.platformUserId` and no `tenantId` (PlatformUser is tenantless).
-- `apps/api/src/modules/platform-users/__tests__/platform-users.service.spec.ts`:
-  11 tests covering roster mapping (`invited` vs `active` status), the invite
-  compensation/rollback path, the P2002 conflict mapping, the non-fatal email
-  failure path, the self-deactivation guard, reactivate/deactivate auditing,
-  and 404s on unknown targets.
-
-### Changed
-
-- `apps/api/src/modules/users/users.module.ts`: export
-  `InvitationMailerService` so `PlatformUsersModule` can consume it in a
-  follow-up wiring task.
 
 ## [2026-07-19] Identity module design: MFA, SSO, security dashboards
 
