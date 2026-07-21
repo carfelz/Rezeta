@@ -15,12 +15,15 @@ Format: `[version/date] — description`. Entries are ordered newest first.
   `IdentityPolicy` tables, `/v1/identity/*` + `/v1/staff/identity/*` API
   surface, two-level security dashboards, reports (compliance access export,
   dormant accounts, invite funnel), and a documented self-hosted-IdP exit
-  runbook.
-- `docs/superpowers/specs/2026-07-19-identity-module-mockups.html`: five
+  runbook. Amended same day with full user-creation coverage: staff-user
+  management (`/v1/staff/identity/users` — list/create/deactivate/resend
+  set-password link) ships as slice 1, demoting the `bootstrap:platform` CLI
+  to first-account-only; institution users keep the existing invite flow.
+- `docs/superpowers/specs/2026-07-19-identity-module-mockups.html`: six
   token-faithful screen mockups (login states, profile security, institution
   security panel, staff cross-institution dashboard, SSO connection
-  management); synced to the "Rezeta Design System" Claude Design project as
-  `Identity Module.html`.
+  management, staff-user management); synced to the "Rezeta Design System"
+  Claude Design project as `Identity Module.html`.
 
 ## [2026-07-19] Green the branch: integration-harness typecheck/lint/coverage fixes
 

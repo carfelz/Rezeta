@@ -546,4 +546,93 @@
       <li><span class="n">3</span><span><strong>Secrets (client secret, SAML certs)</strong> are write-only fields — entered once, never displayed back.</span></li>
     </ul>
   </section>
+
+  <!-- ══════════════════ SCREEN 6 ══════════════════ -->
+  <section class="screen">
+    <p class="where">6 · Plataforma staff → «Usuarios de plataforma»</p>
+    <h2>Staff-user management: create, deactivate, resend set-password link</h2>
+    <p class="desc">Replaces the CLI as the day-to-day way to manage Rezeta staff accounts (the CLI remains for the first account on a fresh deployment). Creation mirrors the invite pattern: no password is set here — the new staff member receives a set-password link.</p>
+
+    <div class="canvas-wrap"><div class="canvas">
+      <div class="dash">
+        <aside class="rail">
+          <p class="rail-title">Plataforma</p>
+          <p class="rail-sub">staff · Rezeta</p>
+          <ul>
+            <li>Instituciones</li>
+            <li>Seguridad</li>
+            <li>Conexiones SSO</li>
+            <li class="active">Usuarios de plataforma</li>
+          </ul>
+        </aside>
+
+        <div class="dash-main">
+          <div class="sso-grid">
+            <div class="surface">
+              <div class="panel-head">
+                <div><span class="ov">Control interno</span><h3>Usuarios de plataforma</h3></div>
+                <button class="btn btn-primary">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg>
+                  Nuevo usuario
+                </button>
+              </div>
+              <table class="data">
+                <thead><tr>
+                  <th style="width:32%">Usuario</th><th style="width:16%">Estado</th><th style="width:12%">MFA</th>
+                  <th style="width:20%">Último acceso</th><th style="width:20%"></th>
+                </tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">CF</span><span><span class="cell-main">Carlos Féliz</span><span class="cell-sub">carlos@rezeta.do</span></span></span></td>
+                    <td><span class="chip chip-success"><span class="dot"></span>Activo</span></td>
+                    <td><span class="badge-mono custom">TOTP</span></td>
+                    <td class="mono-cell">hace 8 min</td>
+                    <td><span class="chip chip-brand">Usted</span></td>
+                  </tr>
+                  <tr>
+                    <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">LM</span><span><span class="cell-main">Laura Medina</span><span class="cell-sub">laura@rezeta.do</span></span></span></td>
+                    <td><span class="chip chip-warning"><span class="dot"></span>Invitación pendiente</span></td>
+                    <td><span class="badge-mono">—</span></td>
+                    <td class="mono-cell">—</td>
+                    <td><button class="btn btn-ghost">Reenviar enlace</button></td>
+                  </tr>
+                  <tr>
+                    <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">RD</span><span><span class="cell-main">Raúl Díaz</span><span class="cell-sub">raul@rezeta.do</span></span></span></td>
+                    <td><span class="chip chip-neutral">Desactivado</span></td>
+                    <td><span class="badge-mono">—</span></td>
+                    <td class="mono-cell">02 may 2026</td>
+                    <td><button class="btn btn-ghost">Reactivar</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="surface">
+              <div class="panel-head">
+                <div><span class="ov">Nuevo usuario</span><h3>Crear usuario de plataforma</h3></div>
+              </div>
+              <div class="form-stack">
+                <div class="field"><label>Nombre completo</label><span class="input" style="width:100%">Laura Medina</span></div>
+                <div class="field"><label>Correo electrónico</label><span class="input" style="width:100%">laura@rezeta.do</span></div>
+                <div class="callout info">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"/><path d="M8 7v4M8 5v.1"/></svg>
+                  <span>No se define contraseña aquí: la persona recibirá un <strong>enlace para establecerla</strong> en su correo.</span>
+                </div>
+              </div>
+              <div class="form-foot">
+                <button class="btn btn-primary">Crear usuario</button>
+                <button class="btn btn-ghost">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <ul class="notes">
+      <li><span class="n">1</span><span><strong>«Usted» chip + no self-deactivate</strong> — the acting staff user cannot deactivate their own account (last-actor lockout guard).</span></li>
+      <li><span class="n">2</span><span><strong>«Invitación pendiente»</strong> = created but never signed in; «Reenviar enlace» regenerates the set-password link, same as the institution roster's resend-invite.</span></li>
+      <li><span class="n">3</span><span><strong>Every action is audited</strong> with the acting `PlatformUser`, consistent with institution creation.</span></li>
+    </ul>
+  </section>
 </div>

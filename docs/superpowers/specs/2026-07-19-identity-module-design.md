@@ -7,11 +7,17 @@
 
 ## 1. Summary
 
-Adds MFA, social login, enterprise SSO, login/session monitoring, and security
-analytics on top of the multi-user permissions milestone. Identity remains
+Adds MFA, social login, enterprise SSO, login/session monitoring, security
+analytics, and full user-creation coverage (institution users and platform
+staff) on top of the multi-user permissions milestone. Identity remains
 delegated to a managed provider; Rezeta owns everything above the credential
 layer in a self-contained `modules/identity` NestJS module designed to be
 extractable as a standalone API later.
+
+**Origin note:** the immediate trigger for this feature was that platform staff
+accounts could only be created through the `bootstrap:platform` CLI
+(`apps/api/src/scripts/create-institution.ts`) — a working but undiscoverable
+path with no UI. §6a closes that gap; the CLI becomes first-account-only.
 
 ## 2. Decisions (locked)
 
@@ -39,6 +45,14 @@ Settled during brainstorming; not open for re-litigation in implementation plans
 6. **Packaging: module in the monorepo.** `apps/api/src/modules/identity` with
    its own tables and a strict boundary (no imports from clinical modules).
    Standalone deployment is a future lift, not this milestone.
+7. **Every user kind is creatable from a UI.** Platform staff get a
+   staff-user management screen (§6a) — the `bootstrap:platform` CLI is
+   demoted to creating only the *first* staff account on a fresh deployment.
+   Institution users keep their existing invite-based creation in Ajustes →
+   Usuarios (permissions milestone); the identity module links to it, it does
+   not duplicate it. Staff still never create ordinary institution users
+   directly — only the initial `super_admin` at institution creation — so the
+   control-plane/data-plane isolation is unchanged.
 
 ## 3. Architecture
 
@@ -85,6 +99,12 @@ so the module lifts out cleanly:
   metrics, compliance export.
 - **Staff:** cross-institution login feed and metrics, dormant-account report,
   `SsoConnection` CRUD with a dry-run "test connection" handshake.
+- **Staff-user management (`/v1/staff/identity/users`):** list, create,
+  deactivate/reactivate `PlatformUser`s and resend the set-password link.
+  Creation reuses the CLI's exact flow (provider `createUser` +
+  `generatePasswordResetLink`); every action is audited with the acting
+  `PlatformUser`. A staff user cannot deactivate their own account (last-actor
+  lockout guard).
 - **Public:** login-method routing by email (see §3).
 
 ## 6. Frontend
@@ -106,6 +126,21 @@ Five surfaces, mocked in the companion file:
    failure spikes).
 5. **Staff platform → Conexiones SSO**: connection list + edit panel (provider
    type, discovery URL, email domains, allow-password toggle, test/deactivate).
+6. **Staff platform → Usuarios de plataforma** (§6a): staff-user list (status,
+   MFA, last access) + create panel (name, email → set-password link emailed),
+   resend-link and deactivate actions.
+
+### 6a. User creation coverage — all kinds
+
+| User kind | Created by | Where | Status |
+| --- | --- | --- | --- |
+| Platform staff (`PlatformUser`) | Existing staff user | Staff platform → Usuarios de plataforma (screen 6) | **New in this design** |
+| First staff account | Operator | `bootstrap:platform` CLI, once per deployment | Exists (demoted to bootstrap-only) |
+| Institution `super_admin` | Platform staff | Staff platform → institution creation | Exists (permissions milestone) |
+| Institution `admin` / `doctor` / `assistant` | Institution admin+ (rank rule) | Ajustes → Usuarios (invite flow) | Exists (permissions milestone) |
+
+The identity module adds the first row and links the others; it does not
+duplicate the institution invite flow.
 
 All UI strings in Spanish; design tokens per `apps/web/src/index.css` — the
 mockups use only existing tokens and component patterns.
@@ -127,11 +162,14 @@ mockups use only existing tokens and component patterns.
 Each independently shippable, in order; lands after the permissions milestone
 merges:
 
-1. Identity Platform upgrade + Google social login.
-2. `LoginEvent`/`UserDevice` capture + institution security panel (screens 2–3).
-3. MFA enrollment (TOTP + SMS) + `IdentityPolicy` + login challenge (screens 1C, 2).
-4. Staff cross-institution dashboard + reports (screen 4).
-5. Enterprise SSO connections + login routing (screens 1B, 5).
+1. **Staff-user management (screen 6)** — no dependency on the Identity
+   Platform upgrade (reuses the current provider flow); ships first because it
+   unblocks day-to-day staff account creation without the CLI.
+2. Identity Platform upgrade + Google social login.
+3. `LoginEvent`/`UserDevice` capture + institution security panel (screens 2–3).
+4. MFA enrollment (TOTP + SMS) + `IdentityPolicy` + login challenge (screens 1C, 2).
+5. Staff cross-institution dashboard + reports (screen 4).
+6. Enterprise SSO connections + login routing (screens 1B, 5).
 
 ## 9. Testing
 
