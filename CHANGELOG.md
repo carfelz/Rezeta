@@ -4,6 +4,31 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-21] Staff console: platform-users roster page and nav
+
+### Added
+
+- `apps/web/src/pages/staff/PlatformUsers.tsx`: roster page for
+  `/staff/platform-users` listing platform users (name/email, derived
+  status badge, last access), a "New user" modal wired to
+  `useCreatePlatformUser`, and per-row Resend/Deactivate/Reactivate actions
+  wired to `useResendPlatformUserInvite` / `useSetPlatformUserActive`. Own
+  row (matched via `useStaffMe`) renders a "You" chip instead of action
+  buttons — self-deactivation is blocked server-side, so the UI never
+  offers it. No `useCan` gating; platform access is enforced by
+  `RequirePlatform` at the route level.
+- `apps/web/src/pages/staff/__tests__/PlatformUsers.test.tsx`: 5 tests
+  covering roster rendering with derived status/You chip, hiding
+  Deactivate on the acting user's own row, Resend-link visibility +
+  mutation call, create-form submission payload, and the empty state.
+- `apps/web/src/App.tsx`: registers the `staff/platform-users` route.
+
+### Changed
+
+- `apps/web/src/components/layout/StaffLayout.tsx`: adds a nav bar
+  (`StaffNavLink`) between the header and `<main>` linking Institutions
+  and Platform users.
+
 ## [2026-07-21] Real-Postgres integration coverage for `PlatformUsersService`
 
 ### Added

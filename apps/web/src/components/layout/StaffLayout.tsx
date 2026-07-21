@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { staffStrings } from '@/pages/staff/strings'
 
 /**
@@ -16,9 +16,28 @@ export function StaffLayout(): JSX.Element {
           {staffStrings.consoleTitle}
         </span>
       </header>
+      <nav className="flex gap-1 border-b border-n-200 bg-n-0 px-6">
+        <StaffNavLink to="/staff/institutions/new" label={staffStrings.navInstitutions} />
+        <StaffNavLink to="/staff/platform-users" label={staffStrings.navPlatformUsers} />
+      </nav>
       <main className="mx-auto max-w-560 px-6 py-8">
         <Outlet />
       </main>
     </div>
+  )
+}
+
+function StaffNavLink({ to, label }: { to: string; label: string }): JSX.Element {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        isActive
+          ? 'border-b-2 border-p-500 px-3 py-2 text-sm font-medium text-p-700'
+          : 'border-b-2 border-transparent px-3 py-2 text-sm text-n-500'
+      }
+    >
+      {label}
+    </NavLink>
   )
 }
