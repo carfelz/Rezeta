@@ -4,45 +4,80 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
-## [2026-07-28] Web TOTP MFA: authClient wrapper, login challenge, Perfil card (identity slice 4)
+## [2026-07-28] TOTP MFA, optional for all (identity slice 4)
 
 ### Added
 
-- `IAuthClient.enrollTotp()`/`unenrollTotp()`/`completeTotpSignIn(code)` and
-  the `TotpEnrollment` type (`apps/web/src/lib/auth/auth-client.interface.ts`),
-  implemented in `FirebaseAuthClient`
-  (`apps/web/src/lib/auth/firebase-auth-client.ts`) against
-  `firebase/auth`'s `multiFactor`/`TotpMultiFactorGenerator`/
-  `getMultiFactorResolver` APIs — still the only file allowed to import
-  `firebase/auth`. `signIn` now captures the `MultiFactorResolver` on
-  `auth/multi-factor-auth-required` and rethrows; `completeTotpSignIn`
-  consumes and clears it.
-- TOTP challenge step on the login page (`apps/web/src/pages/Login/index.tsx`,
-  strings in `apps/web/src/pages/Login/strings.ts`) — shown only when
-  `signIn` throws `auth/multi-factor-auth-required`; the existing
-  credentials-only path is unchanged.
-- `useSyncMfaEnrollment()` (`apps/web/src/hooks/identity/use-mfa.ts`) —
-  `POST /v1/identity/me/mfa/sync` mutation wrapper.
-- Perfil → Seguridad "Autenticación en dos pasos" card
-  (`apps/web/src/pages/settings/ProfileMfa.tsx`, strings in
-  `apps/web/src/pages/settings/strings.ts`, wired into
-  `apps/web/src/pages/Settings.tsx`) — enroll shows the secret and
-  `otpauth://` URL as plain text (no QR library this slice — documented
-  future enhancement), verifies the 6-digit code, then removes via a
-  `ConfirmDialog`; both paths sync `AuthUser.mfaEnrolledAt` back into the
-  auth store after the server call.
-- Tests: `apps/web/src/lib/auth/__tests__/firebase-auth-client.test.ts` (MFA
-  branch of `signIn`, `completeTotpSignIn`, `enrollTotp`, `unenrollTotp`),
-  `apps/web/src/pages/Login/__tests__/index.test.tsx` (new — challenge step
-  + back-to-credentials + error mapping), and
-  `apps/web/src/pages/settings/__tests__/ProfileMfa.test.tsx` (enroll,
-  verify, remove, and their error paths).
+- TOTP multi-factor authentication, entirely optional this slice (identity
+  design §2 decision 4 — nothing is enforced). `IAuthProvider.getMfaEnrollment`
+  (`apps/api/src/lib/auth/firebase-auth.provider.ts`) mirrors the provider's
+  enrollment state onto `User.mfaEnrolledAt` via a new
+  `POST /v1/identity/me/mfa/sync`, called by the web client after every
+  enroll/unenroll (`IdentityService.syncMfaEnrollment`,
+  `apps/api/src/modules/identity/identity.service.ts`).
+- `apps/api/src/scripts/enable-totp-mfa.ts` (`pnpm --filter @rezeta/api
+  mfa:enable-totp`) — idempotent script enabling TOTP on the Identity
+  Platform project via the Admin SDK's `projectConfigManager`; run once
+  against the dev project as part of this slice.
+- `IdentityPolicy` model (`identity_policies` table) — per-tenant
+  `mfaRequirement` (`off`/`admins`/`all`, default `off`), exposed via
+  `GET`/`PATCH /v1/identity/policy` (`@RequirePermission('users', 'manage')`).
+  **Enforcement is deferred** — no login path reads this value yet; it is
+  stored and surfaced in the UI only, with an explicit note in the policy
+  card.
+- `LoginEvent.mfaUsed` — derived from the Firebase ID token's
+  `firebase.sign_in_second_factor` claim (`LoginTelemetryService.mapFirebaseMfaUsed`),
+  recorded on every successful login.
+- `mfaAdoptionPct` on the institution security summary
+  (`IdentityRepository.securitySummary`, per-tenant) and the staff
+  cross-institution dashboard (`StaffSecurityService.overview`,
+  platform-wide) — the "Adopción MFA" / "MFA adoption" tiles on
+  `apps/web/src/pages/settings/Security.tsx` and
+  `apps/web/src/pages/staff/Security.tsx`.
+- Web: `FirebaseAuthClient` gains `enrollTotp`/`unenrollTotp`/
+  `completeTotpSignIn` (`apps/web/src/lib/auth/firebase-auth-client.ts`),
+  the only file that imports `firebase/auth`'s TOTP APIs
+  (`multiFactor`/`TotpMultiFactorGenerator`/`getMultiFactorResolver`).
+  `apps/web/src/pages/Login/index.tsx` gets a TOTP-challenge step
+  (`auth/multi-factor-auth-required`). `apps/web/src/pages/settings/ProfileMfa.tsx`
+  (Perfil → Seguridad) lets a user enroll (secret + `otpauth://` URL shown as
+  text — no QR rendering this slice) or remove their factor.
+  `apps/web/src/pages/settings/Security.tsx` gains an `IdentityPolicyCard`
+  (select + save, institution admins only).
+- `AuthUser.mfaEnrolledAt` (`packages/shared/src/types/auth.ts`, optional) —
+  lets `ProfileMfa.tsx` render enrolled/not-enrolled state without an extra
+  round trip.
 
 ### Changed
 
-- `apps/web/src/test/setup.ts` — global `firebase/auth` mock now stubs
-  `multiFactor`/`getMultiFactorResolver`/`TotpMultiFactorGenerator` so every
-  suite that loads `lib/auth/index.ts` transitively keeps working.
+- `IdentityRepository.insertLoginEvent`'s input gains a required `mfaUsed`
+  boolean; `LoginTelemetryService.recordLogin`'s input gains an optional
+  `mfaUsed` (default `false`); `AuthService.provision` derives it via
+  `mapFirebaseMfaUsed` and passes it through.
+- `IdentityRepository.listActiveUsersForDormancy` selects `mfaEnrolledAt` in
+  addition to its existing columns.
+
+### Out of scope
+
+SMS MFA (billing — TOTP only this slice, identity design §2 decision 4 lists
+it as "fallback" not required). A dedicated `MfaEnrollment` table (identity
+design §4) — this slice mirrors state directly onto `User.mfaEnrolledAt`
+instead; revisit if a future slice needs multi-factor-type tracking or
+per-factor history. `IdentityPolicy.mfaRequirement` **enforcement** — the
+value is stored/displayed, nothing blocks or requires MFA at login yet.
+Session-max-age (`IdentityPolicy`'s other design-doc column) — not
+implemented. Audit logging on an `IdentityPolicy` change, and on an
+enrolled → not-enrolled `syncMfaEnrollment` transition — no `AuditAction`
+fits either case cleanly (`mfa_enabled` only fits the enable direction; there
+is no `mfa_disabled` or generic "policy changed" value). `LoginEvent.mfaUsed`
+is captured but not yet surfaced in the login-activity table/CSV or
+`LoginEventItemSchema` — a future slice can add a column once there's a UI
+need. Per-institution `mfaAdoptionPct` on the staff dashboard's institution
+roster — only the platform-wide tile this slice. QR-code rendering for TOTP
+enrollment — the secret/`otpauth://` URL are shown as plain text; a QR
+library is a documented future enhancement. Staging/production
+`mfa:enable-totp` runs — this plan only runs it against dev; each other
+environment's owner must run it once before TOTP enrollment works there.
 
 ## [2026-07-28] Staff cross-institution security dashboard (identity slice 5)
 
