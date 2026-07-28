@@ -20,7 +20,7 @@ export function StaffLayout(): JSX.Element {
         <StaffNavLink to="/staff/institutions/new" label={staffStrings.navInstitutions} />
         <StaffNavLink to="/staff/platform-users" label={staffStrings.navPlatformUsers} />
       </nav>
-      <main className="mx-auto max-w-560 px-6 py-8">
+      <main className="mx-auto max-w-880 px-6 py-8">
         <Outlet />
       </main>
     </div>

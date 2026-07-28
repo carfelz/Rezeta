@@ -109,18 +109,18 @@ model RolePermission {
 }
 
 model Location {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @map("tenant_id") @db.Uuid
-  name             String    @db.VarChar(200)
-  address          String?   @db.VarChar(500)
-  city             String?   @db.VarChar(100)
-  phone            String?   @db.VarChar(30)
-  isOwned          Boolean   @default(false) @map("is_owned")
-  notes            String?   @db.Text
-  commissionPercent Decimal  @default(0) @map("commission_percent") @db.Decimal(5, 2)
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  name              String    @db.VarChar(200)
+  address           String?   @db.VarChar(500)
+  city              String?   @db.VarChar(100)
+  phone             String?   @db.VarChar(30)
+  isOwned           Boolean   @default(false) @map("is_owned")
+  notes             String?   @db.Text
+  commissionPercent Decimal   @default(0) @map("commission_percent") @db.Decimal(5, 2)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
 
   tenant             Tenant              @relation(fields: [tenantId], references: [id])
   doctorLocations    DoctorLocation[]
@@ -193,34 +193,34 @@ model ScheduleException {
 // ─────────────────────────────────────────────
 
 model Patient {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @map("tenant_id") @db.Uuid
-  ownerUserId      String    @map("owner_user_id") @db.Uuid
-  documentType     String?   @map("document_type") @db.VarChar(20) // cedula | passport | rnc
-  documentNumber   String?   @map("document_number") @db.VarChar(30)
-  firstName        String    @map("first_name") @db.VarChar(100)
-  lastName         String    @map("last_name") @db.VarChar(100)
-  dateOfBirth      DateTime? @map("date_of_birth") @db.Date
-  sex              String?   @db.VarChar(10) // male | female | other
-  phone            String?   @db.VarChar(30)
-  email            String?   @db.VarChar(320)
-  address          String?   @db.VarChar(500)
-  bloodType        String?   @map("blood_type") @db.VarChar(5)
-  allergies        Json      @default("[]")
-  chronicConditions Json     @default("[]") @map("chronic_conditions")
-  notes            String?   @db.Text
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  documentType      String?   @map("document_type") @db.VarChar(20) // cedula | passport | rnc
+  documentNumber    String?   @map("document_number") @db.VarChar(30)
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  dateOfBirth       DateTime? @map("date_of_birth") @db.Date
+  sex               String?   @db.VarChar(10) // male | female | other
+  phone             String?   @db.VarChar(30)
+  email             String?   @db.VarChar(320)
+  address           String?   @db.VarChar(500)
+  bloodType         String?   @map("blood_type") @db.VarChar(5)
+  allergies         Json      @default("[]")
+  chronicConditions Json      @default("[]") @map("chronic_conditions")
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id])
-  owner         User           @relation("PatientOwner", fields: [ownerUserId], references: [id])
-  appointments  Appointment[]
-  consultations Consultation[]
-  prescriptions Prescription[]
-  invoices      Invoice[]
-  imagingOrders ImagingOrder[]
-  labOrders     LabOrder[]
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  owner          User            @relation("PatientOwner", fields: [ownerUserId], references: [id])
+  appointments   Appointment[]
+  consultations  Consultation[]
+  prescriptions  Prescription[]
+  invoices       Invoice[]
+  imagingOrders  ImagingOrder[]
+  labOrders      LabOrder[]
   protocolUsages ProtocolUsage[]
 
   @@index([tenantId])
@@ -259,12 +259,12 @@ model Appointment {
 }
 
 model Consultation {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String    @map("tenant_id") @db.Uuid
-  patientId     String    @map("patient_id") @db.Uuid
-  doctorId      String    @map("doctor_id") @db.Uuid
-  locationId    String    @map("location_id") @db.Uuid
-  appointmentId String?   @map("appointment_id") @db.Uuid
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String  @map("tenant_id") @db.Uuid
+  patientId     String  @map("patient_id") @db.Uuid
+  doctorId      String  @map("doctor_id") @db.Uuid
+  locationId    String  @map("location_id") @db.Uuid
+  appointmentId String? @map("appointment_id") @db.Uuid
 
   status    String    @default("open") @db.VarChar(20) // open | signed | amended
   startedAt DateTime  @default(now()) @map("started_at")
@@ -296,13 +296,13 @@ model Consultation {
 }
 
 model ConsultationAmendment {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  consultationId  String   @map("consultation_id") @db.Uuid
-  amendmentNumber Int      @map("amendment_number")
-  reason          String   @db.VarChar(1000)
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId  String    @map("consultation_id") @db.Uuid
+  amendmentNumber Int       @map("amendment_number")
+  reason          String    @db.VarChar(1000)
   content         Json
-  amendedBy       String   @map("amended_by") @db.Uuid
-  amendedAt       DateTime @default(now()) @map("amended_at")
+  amendedBy       String    @map("amended_by") @db.Uuid
+  amendedAt       DateTime  @default(now()) @map("amended_at")
   signedAt        DateTime? @map("signed_at")
 
   consultation Consultation @relation(fields: [consultationId], references: [id])
@@ -371,15 +371,15 @@ model Prescription {
 }
 
 model PrescriptionItem {
-  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  prescriptionId String  @map("prescription_id") @db.Uuid
-  drug           String  @db.VarChar(300)
-  dose           String  @db.VarChar(200)
-  route          String  @db.VarChar(100)
-  frequency      String  @db.VarChar(200)
-  duration       String  @db.VarChar(200)
-  notes          String? @db.Text
-  source         String? @db.VarChar(200) // "protocol:blk_id:row_id" | "manual"
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prescriptionId String   @map("prescription_id") @db.Uuid
+  drug           String   @db.VarChar(300)
+  dose           String   @db.VarChar(200)
+  route          String   @db.VarChar(100)
+  frequency      String   @db.VarChar(200)
+  duration       String   @db.VarChar(200)
+  notes          String?  @db.Text
+  source         String?  @db.VarChar(200) // "protocol:blk_id:row_id" | "manual"
   createdAt      DateTime @default(now()) @map("created_at")
 
   prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
@@ -393,29 +393,29 @@ model PrescriptionItem {
 // ─────────────────────────────────────────────
 
 model Invoice {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @map("tenant_id") @db.Uuid
-  patientId        String    @map("patient_id") @db.Uuid
-  consultationId   String?   @map("consultation_id") @db.Uuid
-  locationId       String    @map("location_id") @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  invoiceNumber    String    @map("invoice_number") @db.VarChar(50)
-  currency         String    @default("DOP") @db.VarChar(3)
-  status           String    @default("draft") @db.VarChar(20) // draft | issued | paid | cancelled
-  subtotal         Decimal   @db.Decimal(12, 2)
-  tax              Decimal   @default(0) @db.Decimal(12, 2)
-  total            Decimal   @db.Decimal(12, 2)
-  commissionAmount Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
-  commissionPercent Decimal  @default(0) @map("commission_percent") @db.Decimal(5, 2)
-  netToDoctor      Decimal   @default(0) @map("net_to_doctor") @db.Decimal(12, 2)
-  paymentMethod    String?   @map("payment_method") @db.VarChar(50)
-  issuedAt         DateTime? @map("issued_at")
-  paidAt           DateTime? @map("paid_at")
-  dueDate          DateTime? @map("due_date") @db.Date
-  notes            String?   @db.Text
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  patientId         String    @map("patient_id") @db.Uuid
+  consultationId    String?   @map("consultation_id") @db.Uuid
+  locationId        String    @map("location_id") @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  invoiceNumber     String    @map("invoice_number") @db.VarChar(50)
+  currency          String    @default("DOP") @db.VarChar(3)
+  status            String    @default("draft") @db.VarChar(20) // draft | issued | paid | cancelled
+  subtotal          Decimal   @db.Decimal(12, 2)
+  tax               Decimal   @default(0) @db.Decimal(12, 2)
+  total             Decimal   @db.Decimal(12, 2)
+  commissionAmount  Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
+  commissionPercent Decimal   @default(0) @map("commission_percent") @db.Decimal(5, 2)
+  netToDoctor       Decimal   @default(0) @map("net_to_doctor") @db.Decimal(12, 2)
+  paymentMethod     String?   @map("payment_method") @db.VarChar(50)
+  issuedAt          DateTime? @map("issued_at")
+  paidAt            DateTime? @map("paid_at")
+  dueDate           DateTime? @map("due_date") @db.Date
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
 
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
   patient      Patient       @relation(fields: [patientId], references: [id])
@@ -454,19 +454,19 @@ model InvoiceItem {
 // ─────────────────────────────────────────────
 
 model ProtocolTemplate {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId           String    @map("tenant_id") @db.Uuid
-  templateKey        String?   @map("template_key") @db.VarChar(100) // unique slug for system templates
-  name               String    @db.VarChar(300)
-  description        String?   @db.Text
-  categoryId         String    @map("category_id") @db.Uuid
-  isSystem           Boolean   @default(false) @map("is_system") // true = global system template
-  schema             Json
-  isSeeded           Boolean   @default(false) @map("is_seeded")
-  createdBy          String?   @map("created_by") @db.Uuid
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  deletedAt          DateTime? @map("deleted_at")
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  templateKey String?   @map("template_key") @db.VarChar(100) // unique slug for system templates
+  name        String    @db.VarChar(300)
+  description String?   @db.Text
+  categoryId  String    @map("category_id") @db.Uuid
+  isSystem    Boolean   @default(false) @map("is_system") // true = global system template
+  schema      Json
+  isSeeded    Boolean   @default(false) @map("is_seeded")
+  createdBy   String?   @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   tenant    Tenant           @relation(fields: [tenantId], references: [id])
   creator   User?            @relation(fields: [createdBy], references: [id])
@@ -492,7 +492,7 @@ model Protocol {
   visibility       String    @default("private") @db.VarChar(20) // private | practice | public
   currentVersionId String?   @map("current_version_id") @db.Uuid
   isFavorite       Boolean   @default(false) @map("is_favorite")
-  metadata         Json?     // { auto_generated: bool, source_protocol_id: string }
+  metadata         Json? // { auto_generated: bool, source_protocol_id: string }
   createdBy        String    @map("created_by") @db.Uuid
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")

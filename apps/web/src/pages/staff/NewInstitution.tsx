@@ -40,7 +40,7 @@ export function NewInstitution(): JSX.Element {
     adminEmail.trim().length > 0
 
   return (
-    <div>
+    <div className="max-w-560">
       <h1 className="text-h1">{staffStrings.pageTitle}</h1>
       <p className="mt-1 mb-6 text-sm text-n-500">{staffStrings.pageSubtitle}</p>
 

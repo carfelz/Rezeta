@@ -123,6 +123,14 @@ export class PlatformUsersService {
     targetId: string,
   ): Promise<PlatformUserApiDto> {
     const target = await this.requireUser(targetId)
+    // requireUser resolves soft-deleted rows too (reactivate needs that) — an
+    // invite must never go to a deactivated account.
+    if (!target.isActive) {
+      throw new ConflictException({
+        code: ErrorCode.USER_INACTIVE,
+        message: 'Cannot resend an invite to a deactivated user',
+      })
+    }
     const link = await this.authProvider.generatePasswordResetLink(target.email)
     await this.mailer.sendSetPasswordEmail(target.email, link)
 
