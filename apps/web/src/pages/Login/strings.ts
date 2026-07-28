@@ -9,4 +9,11 @@ export const loginStrings = {
   fieldPasswordPlaceholder: '••••••••',
   submit: 'Iniciar sesión',
   submitting: 'Iniciando sesión...',
+  mfaTitle: 'Verificación en dos pasos',
+  mfaSubtitle: 'Ingresa el código de tu aplicación de autenticación.',
+  mfaFieldCode: 'Código de verificación',
+  mfaFieldCodePlaceholder: '123456',
+  mfaSubmit: 'Verificar',
+  mfaSubmitting: 'Verificando...',
+  mfaBackToLogin: 'Volver a iniciar sesión',
 } as const
