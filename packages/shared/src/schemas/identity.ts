@@ -73,3 +73,16 @@ export const StaffSecurityOverviewSchema = z.object({
   institutions: z.array(StaffSecurityInstitutionSchema),
 })
 export type StaffSecurityOverviewDto = z.infer<typeof StaffSecurityOverviewSchema>
+
+/**
+ * `POST /v1/identity/me/mfa/sync` result — identity slice 4 (design §4, §6
+ * screen 1C/2). Mirrors `IAuthProvider.getMfaEnrollment` onto
+ * `User.mfaEnrolledAt`; the web client calls this after every
+ * enroll/unenroll so `AuthUser.mfaEnrolledAt` (and this response) stay in
+ * sync with the provider without a separate `MfaEnrollment` table this
+ * slice (see identity slice 4 plan §Out of scope).
+ */
+export const MfaSyncResultSchema = z.object({
+  mfaEnrolledAt: z.string().nullable(),
+})
+export type MfaSyncResultDto = z.infer<typeof MfaSyncResultSchema>

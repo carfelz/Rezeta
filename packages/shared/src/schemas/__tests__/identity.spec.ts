@@ -4,6 +4,7 @@ import {
   SecuritySummarySchema,
   UserDeviceItemSchema,
   StaffSecurityOverviewSchema,
+  MfaSyncResultSchema,
 } from '../identity.js'
 
 describe('LoginEventItemSchema', () => {
@@ -162,5 +163,17 @@ describe('StaffSecurityOverviewSchema', () => {
         institutions: [],
       }),
     ).toThrow()
+  })
+})
+
+describe('MfaSyncResultSchema', () => {
+  it('accepts an enrolled result', () => {
+    const parsed = MfaSyncResultSchema.parse({ mfaEnrolledAt: '2026-07-28T00:00:00.000Z' })
+    expect(parsed.mfaEnrolledAt).toBe('2026-07-28T00:00:00.000Z')
+  })
+
+  it('accepts a not-enrolled (null) result', () => {
+    const parsed = MfaSyncResultSchema.parse({ mfaEnrolledAt: null })
+    expect(parsed.mfaEnrolledAt).toBeNull()
   })
 })
