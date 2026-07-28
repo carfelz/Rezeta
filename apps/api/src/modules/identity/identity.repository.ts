@@ -95,6 +95,24 @@ export class IdentityRepository {
     })
   }
 
+  /** null when the tenant has never written a policy — caller defaults to 'off' (identity slice 4). */
+  async getPolicy(tenantId: string): Promise<{ mfaRequirement: string } | null> {
+    return this.prisma.identityPolicy.findUnique({
+      where: { tenantId },
+      select: { mfaRequirement: true },
+    })
+  }
+
+  /** Upsert semantics — the tenant's first PATCH creates the row lazily. */
+  async upsertPolicy(tenantId: string, mfaRequirement: string): Promise<{ mfaRequirement: string }> {
+    return this.prisma.identityPolicy.upsert({
+      where: { tenantId },
+      update: { mfaRequirement },
+      create: { tenantId, mfaRequirement },
+      select: { mfaRequirement: true },
+    })
+  }
+
   /**
    * Keys on the [userId, fingerprint] compound unique. Every current caller
    * supplies a non-null userId (device tracking only runs for a successfully

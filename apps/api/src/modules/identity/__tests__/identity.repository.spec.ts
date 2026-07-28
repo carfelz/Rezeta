@@ -8,6 +8,7 @@ const prisma = {
   userDevice: { upsert: vi.fn(), findMany: vi.fn() },
   user: { count: vi.fn(), findMany: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
   tenant: { findMany: vi.fn() },
+  identityPolicy: { findUnique: vi.fn(), upsert: vi.fn() },
 } as unknown as PrismaService
 
 function makeRepo(): IdentityRepository {
@@ -194,5 +195,35 @@ describe('IdentityRepository (mfa sync)', () => {
       data: { mfaEnrolledAt: at },
       select: { id: true, mfaEnrolledAt: true },
     })
+  })
+})
+
+describe('IdentityRepository (identity policy)', () => {
+  it('getPolicy reads by tenantId', async () => {
+    vi.mocked(prisma.identityPolicy.findUnique).mockResolvedValue({ mfaRequirement: 'admins' } as never)
+    const result = await makeRepo().getPolicy('t1')
+    expect(prisma.identityPolicy.findUnique).toHaveBeenCalledWith({
+      where: { tenantId: 't1' },
+      select: { mfaRequirement: true },
+    })
+    expect(result).toEqual({ mfaRequirement: 'admins' })
+  })
+
+  it('getPolicy returns null when the tenant has no row yet', async () => {
+    vi.mocked(prisma.identityPolicy.findUnique).mockResolvedValue(null as never)
+    const result = await makeRepo().getPolicy('t1')
+    expect(result).toBeNull()
+  })
+
+  it('upsertPolicy creates on first write and updates on repeat writes (same call shape)', async () => {
+    vi.mocked(prisma.identityPolicy.upsert).mockResolvedValue({ mfaRequirement: 'all' } as never)
+    const result = await makeRepo().upsertPolicy('t1', 'all')
+    expect(prisma.identityPolicy.upsert).toHaveBeenCalledWith({
+      where: { tenantId: 't1' },
+      update: { mfaRequirement: 'all' },
+      create: { tenantId: 't1', mfaRequirement: 'all' },
+      select: { mfaRequirement: true },
+    })
+    expect(result).toEqual({ mfaRequirement: 'all' })
   })
 })
