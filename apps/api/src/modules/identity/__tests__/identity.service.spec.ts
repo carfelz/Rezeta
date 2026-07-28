@@ -1,0 +1,115 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { IdentityService } from '../identity.service.js'
+import type { IdentityRepository } from '../identity.repository.js'
+import type { IAuthProvider } from '../../../lib/auth/index.js'
+import type { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
+
+const mockRepo = {
+  securitySummary: vi.fn(),
+  listLoginsForTenant: vi.fn(),
+  findUserNames: vi.fn(),
+  listDevicesForUser: vi.fn(),
+}
+const mockAuthProvider = { revokeUserSessions: vi.fn() }
+const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
+
+function makeService(): IdentityService {
+  return new IdentityService(
+    mockRepo as unknown as IdentityRepository,
+    mockAuthProvider as unknown as IAuthProvider,
+    mockAuditLog as unknown as AuditLogService,
+  )
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('securitySummary', () => {
+  it('defaults to a 7-day window and delegates to the repository', async () => {
+    mockRepo.securitySummary.mockResolvedValue({ logins: 1, distinctUsers: 1, blocked: 0, dormantUsers30d: 0 })
+    await makeService().securitySummary('t1', undefined)
+    const [tenantId, since] = mockRepo.securitySummary.mock.calls[0] as [string, Date]
+    expect(tenantId).toBe('t1')
+    const ageMs = Date.now() - since.getTime()
+    expect(ageMs).toBeGreaterThan(6 * 24 * 60 * 60 * 1000)
+    expect(ageMs).toBeLessThan(8 * 24 * 60 * 60 * 1000)
+  })
+
+  it('honors an explicit days window', async () => {
+    mockRepo.securitySummary.mockResolvedValue({ logins: 0, distinctUsers: 0, blocked: 0, dormantUsers30d: 0 })
+    await makeService().securitySummary('t1', 30)
+    const [, since] = mockRepo.securitySummary.mock.calls[0] as [string, Date]
+    const ageMs = Date.now() - since.getTime()
+    expect(ageMs).toBeGreaterThan(29 * 24 * 60 * 60 * 1000)
+  })
+})
+
+describe('listLogins', () => {
+  it('resolves user names with a single findUserNames call', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: null, userAgent: null, createdAt: new Date('2026-07-28T00:00:00Z') },
+      { id: 'e2', userId: 'u1', outcome: 'success', method: 'password', ipAddress: null, userAgent: null, createdAt: new Date('2026-07-27T00:00:00Z') },
+      { id: 'e3', userId: null, outcome: 'blocked', method: 'unknown', ipAddress: null, userAgent: null, createdAt: new Date('2026-07-26T00:00:00Z') },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'Ana García']]))
+    const result = await makeService().listLogins('t1', { limit: 50 })
+    expect(mockRepo.findUserNames).toHaveBeenCalledTimes(1)
+    expect(mockRepo.findUserNames).toHaveBeenCalledWith(['u1'])
+    expect(result[0]).toMatchObject({ userId: 'u1', userName: 'Ana García' })
+    expect(result[2]).toMatchObject({ userId: null, userName: null })
+  })
+
+  it('skips findUserNames when every row has a null userId', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: null, outcome: 'blocked', method: 'unknown', ipAddress: null, userAgent: null, createdAt: new Date() },
+    ])
+    await makeService().listLogins('t1', { limit: 50 })
+    expect(mockRepo.findUserNames).not.toHaveBeenCalled()
+  })
+})
+
+describe('exportLoginsCsv', () => {
+  it('renders a header row and quotes/escapes commas in text fields', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: '10.0.0.1', userAgent: 'UA, 1', createdAt: new Date('2026-07-28T00:00:00Z') },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'García, Ana']]))
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    const lines = csv.split('\n')
+    expect(lines[0]).toBe('created_at,user,outcome,method,ip_address,user_agent')
+    expect(lines[1]).toContain('"García, Ana"')
+    expect(lines[1]).toContain('"UA, 1"')
+  })
+})
+
+describe('myDevices', () => {
+  it('maps device rows to ISO timestamps', async () => {
+    mockRepo.listDevicesForUser.mockResolvedValue([
+      { id: 'd1', fingerprint: 'fp1', userAgent: 'UA', firstSeenAt: new Date('2026-07-01T00:00:00Z'), lastSeenAt: new Date('2026-07-28T00:00:00Z') },
+    ])
+    const result = await makeService().myDevices('u1')
+    expect(result[0]).toMatchObject({ id: 'd1', fingerprint: 'fp1' })
+    expect(result[0]!.firstSeenAt).toBe('2026-07-01T00:00:00.000Z')
+  })
+})
+
+describe('signOutAllSessions', () => {
+  it('revokes provider sessions and audits session_revoked', async () => {
+    mockAuthProvider.revokeUserSessions.mockResolvedValue(undefined)
+    await makeService().signOutAllSessions({ id: 'u1', externalUid: 'ext-1', tenantId: 't1' })
+    expect(mockAuthProvider.revokeUserSessions).toHaveBeenCalledWith('ext-1')
+    expect(mockAuditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't1',
+        actorUserId: 'u1',
+        actorType: 'user',
+        category: 'auth',
+        action: 'session_revoked',
+        entityType: 'User',
+        entityId: 'u1',
+        status: 'success',
+      }),
+    )
+  })
+})

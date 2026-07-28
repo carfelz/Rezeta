@@ -4,6 +4,22 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Tenant security and self-service identity endpoints
+
+### Added
+
+- `IdentityService` and `IdentityController` in `apps/api/src/modules/identity/`
+  exposing `GET /v1/identity/me/devices`, `POST /v1/identity/me/sign-out-all`,
+  `GET /v1/identity/security/summary`, `GET /v1/identity/security/logins`, and
+  `GET /v1/identity/security/logins.csv`. Tenant-scoped reads are gated with
+  `@RequirePermission('users','view')` (`'users','manage'` for the CSV export);
+  self-service routes require only an authenticated user. Sign-out-all calls
+  `IAuthProvider.revokeUserSessions` and audits `session_revoked`.
+- `IdentityModule` now registers `IdentityController` and `IdentityService`
+  alongside the existing `IdentityRepository`/`LoginTelemetryService` providers.
+- Unit specs for both new classes in
+  `apps/api/src/modules/identity/__tests__/`.
+
 ## [2026-07-28] Staff institutions list
 
 ### Added

@@ -7,3 +7,5 @@ export {
   type LoginOutcome,
   type LoginMethod,
 } from './login-telemetry.service.js'
+export { IdentityService } from './identity.service.js'
+export { IdentityController } from './identity.controller.js'
