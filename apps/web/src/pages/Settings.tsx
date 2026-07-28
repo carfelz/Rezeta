@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { settingsStrings, templatesStrings, typesStrings, permissionsStrings } from './settings/strings'
 import { ProfileDevices } from './settings/ProfileDevices'
+import { ProfileMfa } from './settings/ProfileMfa'
 import {
   Button,
   Card,
@@ -173,6 +174,7 @@ export function Settings(): JSX.Element {
       )}
 
       <ProfileDevices />
+      <ProfileMfa />
 
       <Card className="max-w-560 mb-6 p-0">
         <Link

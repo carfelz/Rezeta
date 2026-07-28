@@ -490,3 +490,27 @@ export const profileDevicesStrings = {
   signOutError: 'No se pudieron cerrar las sesiones. Intenta de nuevo.',
   loading: 'Cargando dispositivos...',
 } as const
+
+export const profileMfaStrings = {
+  sectionTitle: 'Autenticación en dos pasos',
+  sectionDescription: 'Protege tu cuenta con un código de tu aplicación de autenticación.',
+  statusEnrolled: 'Activada',
+  statusNotEnrolled: 'No activada',
+  configureButton: 'Configurar',
+  removeButton: 'Quitar',
+  cancelButton: 'Cancelar',
+  scanInstructions:
+    'Agrega esta clave a tu aplicación de autenticación (Google Authenticator, Authy, etc.), luego ingresa el código de 6 dígitos que genera.',
+  otpauthUrlLabel: 'URL de configuración',
+  secretLabel: 'Clave secreta',
+  fieldCode: 'Código de verificación',
+  fieldCodePlaceholder: '123456',
+  verifyButton: 'Verificar y activar',
+  enrollError: 'No se pudo iniciar la configuración. Intenta de nuevo.',
+  verifyError: 'Código inválido. Verifica e intenta de nuevo.',
+  removeError: 'No se pudo quitar la autenticación en dos pasos.',
+  removeConfirmTitle: 'Quitar autenticación en dos pasos',
+  removeConfirmDescription:
+    'Tu cuenta ya no requerirá un código de verificación al iniciar sesión.',
+  removeConfirmButton: 'Quitar',
+} as const
