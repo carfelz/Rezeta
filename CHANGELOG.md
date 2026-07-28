@@ -4,6 +4,46 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Web TOTP MFA: authClient wrapper, login challenge, Perfil card (identity slice 4)
+
+### Added
+
+- `IAuthClient.enrollTotp()`/`unenrollTotp()`/`completeTotpSignIn(code)` and
+  the `TotpEnrollment` type (`apps/web/src/lib/auth/auth-client.interface.ts`),
+  implemented in `FirebaseAuthClient`
+  (`apps/web/src/lib/auth/firebase-auth-client.ts`) against
+  `firebase/auth`'s `multiFactor`/`TotpMultiFactorGenerator`/
+  `getMultiFactorResolver` APIs — still the only file allowed to import
+  `firebase/auth`. `signIn` now captures the `MultiFactorResolver` on
+  `auth/multi-factor-auth-required` and rethrows; `completeTotpSignIn`
+  consumes and clears it.
+- TOTP challenge step on the login page (`apps/web/src/pages/Login/index.tsx`,
+  strings in `apps/web/src/pages/Login/strings.ts`) — shown only when
+  `signIn` throws `auth/multi-factor-auth-required`; the existing
+  credentials-only path is unchanged.
+- `useSyncMfaEnrollment()` (`apps/web/src/hooks/identity/use-mfa.ts`) —
+  `POST /v1/identity/me/mfa/sync` mutation wrapper.
+- Perfil → Seguridad "Autenticación en dos pasos" card
+  (`apps/web/src/pages/settings/ProfileMfa.tsx`, strings in
+  `apps/web/src/pages/settings/strings.ts`, wired into
+  `apps/web/src/pages/Settings.tsx`) — enroll shows the secret and
+  `otpauth://` URL as plain text (no QR library this slice — documented
+  future enhancement), verifies the 6-digit code, then removes via a
+  `ConfirmDialog`; both paths sync `AuthUser.mfaEnrolledAt` back into the
+  auth store after the server call.
+- Tests: `apps/web/src/lib/auth/__tests__/firebase-auth-client.test.ts` (MFA
+  branch of `signIn`, `completeTotpSignIn`, `enrollTotp`, `unenrollTotp`),
+  `apps/web/src/pages/Login/__tests__/index.test.tsx` (new — challenge step
+  + back-to-credentials + error mapping), and
+  `apps/web/src/pages/settings/__tests__/ProfileMfa.test.tsx` (enroll,
+  verify, remove, and their error paths).
+
+### Changed
+
+- `apps/web/src/test/setup.ts` — global `firebase/auth` mock now stubs
+  `multiFactor`/`getMultiFactorResolver`/`TotpMultiFactorGenerator` so every
+  suite that loads `lib/auth/index.ts` transitively keeps working.
+
 ## [2026-07-28] Staff cross-institution security dashboard (identity slice 5)
 
 ### Added
