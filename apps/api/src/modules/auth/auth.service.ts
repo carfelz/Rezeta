@@ -120,6 +120,7 @@ export class AuthService {
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
+      mfaEnrolledAt: user.mfaEnrolledAt?.toISOString() ?? null,
       preferences: parsePreferences(user.preferences),
       capabilities,
     }

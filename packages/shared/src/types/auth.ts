@@ -14,6 +14,8 @@ export interface AuthUser {
   licenseNumber: string | null
   tenantSeededAt: string | null // ISO string; null means onboarding not yet complete
   tenantPlan?: string
+  /** ISO timestamp of the user's current TOTP enrollment, or null if not enrolled (identity slice 4). */
+  mfaEnrolledAt?: string | null
   preferences: UserPreferences
   capabilities: CapabilityMap
 }

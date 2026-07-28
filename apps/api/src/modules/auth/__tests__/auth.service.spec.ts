@@ -217,6 +217,17 @@ describe('AuthService', () => {
       expect(auth.tenantSeededAt).toBeNull()
     })
 
+    it('maps mfaEnrolledAt to an ISO string when set', () => {
+      const user = { ...baseUser, mfaEnrolledAt: new Date('2026-07-01T00:00:00.000Z') }
+      const auth = service.toAuthUser(user as never, superAdminDefaults)
+      expect(auth.mfaEnrolledAt).toBe('2026-07-01T00:00:00.000Z')
+    })
+
+    it('maps mfaEnrolledAt to null when the user has never enrolled', () => {
+      const auth = service.toAuthUser(baseUser as never, superAdminDefaults)
+      expect(auth.mfaEnrolledAt).toBeNull()
+    })
+
     it('returns empty preferences when stored preferences fail schema validation', () => {
       const user = { ...baseUser, preferences: { consultationViewMode: 'invalid_value' } }
       const auth = service.toAuthUser(user as never, superAdminDefaults)
