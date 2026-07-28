@@ -18,6 +18,14 @@ vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
+  multiFactor: vi.fn(),
+  getMultiFactorResolver: vi.fn(),
+  TotpMultiFactorGenerator: {
+    FACTOR_ID: 'totp',
+    generateSecret: vi.fn(),
+    assertionForEnrollment: vi.fn(),
+    assertionForSignIn: vi.fn(),
+  },
 }))
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
