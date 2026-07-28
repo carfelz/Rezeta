@@ -4,6 +4,38 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Staff cross-institution security dashboard (identity slice 5)
+
+### Added
+
+- `GET /v1/staff/identity/security/overview` (`StaffSecurityController`,
+  `apps/api/src/modules/identity/staff-security.controller.ts`) — platform
+  tiles (active institutions, active users · 30d, logins · 7d, dormant
+  accounts · 60d) and a per-institution roster (MAU · 30d, a 14-day login
+  sparkline, dormant/pending-invite counts), all built from three
+  cross-tenant queries joined in memory (`StaffSecurityService`,
+  `IdentityRepository.listAllTenants`/`listSuccessfulLoginsSince`/
+  `listActiveUsersForDormancy`).
+- Shared DTOs `StaffSecurityOverviewSchema` / `StaffSecurityTilesSchema` /
+  `StaffSecurityInstitutionSchema` (`packages/shared/src/schemas/identity.ts`).
+- Staff platform → Security page (`apps/web/src/pages/staff/Security.tsx`,
+  route `/staff/security`) — stat tiles, dormant-accounts callout,
+  institution activity table with a CSS-bar sparkline and warning-chip
+  signals; nav entry in `StaffLayout`.
+- `InvitationMailerService.sendNewDeviceEmail` — fires (log-only dev path)
+  from `LoginTelemetryService.upsertDevice` the first time a device
+  fingerprint is seen for an institution user, detected by comparing the
+  upserted `UserDevice` row's `firstSeenAt`/`lastSeenAt`.
+
+### Changed
+
+- `IdentityRepository.upsertDevice` now returns the upserted `UserDevice`
+  row instead of `void`, so `LoginTelemetryService` can detect creation.
+- `LoginTelemetryService.upsertDevice` now returns `{ created: boolean }`
+  and takes an optional `email`; `AuthService.provision` passes
+  `user.email` through.
+- `IdentityModule` imports `UsersModule` (for `InvitationMailerService`).
+
 ## [2026-07-28] Login telemetry and institution security panel (identity slice 3)
 
 ### Added
