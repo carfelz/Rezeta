@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import type { LoginEventItemDto } from '@rezeta/shared'
+import { useEffect, useState } from 'react'
+import type { IdentityPolicyDto, LoginEventItemDto } from '@rezeta/shared'
 import { useSecuritySummary, useSecurityLogins, downloadSecurityLoginsCsv } from '@/hooks/identity/use-security'
+import { useIdentityPolicy, useUpdateIdentityPolicy } from '@/hooks/identity/use-identity-policy'
 import { useCan } from '@/hooks/use-can'
 import { triggerDownload } from '@/lib/api-client'
 import { logger } from '@/lib/logger'
-import { Badge, Button, Callout, EmptyState, NativeSelect } from '@/components/ui'
+import { Badge, Button, Callout, Card, CardTitle, EmptyState, NativeSelect } from '@/components/ui'
 import { securityStrings as s } from './strings'
 
 const METHOD_LABELS: Record<string, string> = {
@@ -77,9 +78,73 @@ function StatTiles({
   )
 }
 
+function IdentityPolicyCard({ canManage }: { canManage: boolean }): JSX.Element | null {
+  const policyQuery = useIdentityPolicy(canManage)
+  const updatePolicy = useUpdateIdentityPolicy()
+  const [value, setValue] = useState<IdentityPolicyDto['mfaRequirement']>('off')
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (policyQuery.data) setValue(policyQuery.data.mfaRequirement)
+  }, [policyQuery.data])
+
+  if (!canManage || !policyQuery.data) return null
+
+  async function handleSave(): Promise<void> {
+    setSaveError(null)
+    setSaved(false)
+    try {
+      await updatePolicy.mutateAsync({ mfaRequirement: value })
+      setSaved(true)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error(error.message, { stack: error.stack, context: 'Security.updatePolicy' })
+      setSaveError(s.policySaveError)
+    }
+  }
+
+  return (
+    <Card className="max-w-560 mb-5">
+      <CardTitle>{s.policyCardTitle}</CardTitle>
+      <p className="text-xs text-n-500 mt-1 mb-3">{s.policyCardDescription}</p>
+      <div className="flex items-center gap-2 mb-2">
+        <NativeSelect
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value as IdentityPolicyDto['mfaRequirement'])
+            setSaved(false)
+          }}
+        >
+          <option value="off">{s.policyOptionOff}</option>
+          <option value="admins">{s.policyOptionAdmins}</option>
+          <option value="all">{s.policyOptionAll}</option>
+        </NativeSelect>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={updatePolicy.isPending}
+          onClick={() => {
+            void handleSave()
+          }}
+        >
+          {updatePolicy.isPending ? s.policySavingButton : s.policySaveButton}
+        </Button>
+      </div>
+      <p className="text-2xs text-n-400">{s.policyEnforcementNote}</p>
+      {saved && <p className="text-2xs text-success-text mt-1">{s.policySaveSuccess}</p>}
+      {saveError && (
+        <Callout variant="danger" compact icon={<i className="ph ph-warning" />} className="mt-2">
+          {saveError}
+        </Callout>
+      )}
+    </Card>
+  )
+}
+
 export function Security(): JSX.Element {
   const [days, setDays] = useState<7 | 30>(7)
-  const canExport = useCan('users', 'manage')
+  const canManage = useCan('users', 'manage')
   const [exportError, setExportError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
 
@@ -109,7 +174,7 @@ export function Security(): JSX.Element {
           <h1 className="text-h1 m-0">{s.pageTitle}</h1>
           <p className="text-sm text-n-500 mt-1">{s.pageSubtitle}</p>
         </div>
-        {canExport && (
+        {canManage && (
           <Button
             variant="secondary"
             size="sm"
@@ -139,6 +204,8 @@ export function Security(): JSX.Element {
         dormantUsers30d={summaryQuery.data?.dormantUsers30d ?? 0}
         mfaAdoptionPct={summaryQuery.data?.mfaAdoptionPct ?? null}
       />
+
+      <IdentityPolicyCard canManage={canManage} />
 
       <div className="flex items-center gap-2 mb-5">
         <label className="text-overline font-medium text-n-600 shrink-0">{s.rangeLabel}</label>

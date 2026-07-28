@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   useSecurityLogins: vi.fn(),
   downloadSecurityLoginsCsv: vi.fn(),
   triggerDownload: vi.fn(),
+  useIdentityPolicy: vi.fn(),
+  useUpdateIdentityPolicy: vi.fn(),
 }))
 
 vi.mock('@/hooks/use-can', () => ({ useCan: mocks.useCan }))
@@ -15,6 +17,10 @@ vi.mock('@/hooks/identity/use-security', () => ({
   useSecuritySummary: mocks.useSecuritySummary,
   useSecurityLogins: mocks.useSecurityLogins,
   downloadSecurityLoginsCsv: mocks.downloadSecurityLoginsCsv,
+}))
+vi.mock('@/hooks/identity/use-identity-policy', () => ({
+  useIdentityPolicy: mocks.useIdentityPolicy,
+  useUpdateIdentityPolicy: mocks.useUpdateIdentityPolicy,
 }))
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: vi.fn(), download: vi.fn() },
@@ -54,6 +60,8 @@ describe('Security', () => {
     mocks.useCan.mockReturnValue(true)
     mocks.useSecuritySummary.mockReturnValue({ data: summary, isLoading: false, isError: false })
     mocks.useSecurityLogins.mockReturnValue({ data: logins, isLoading: false, isError: false })
+    mocks.useIdentityPolicy.mockReturnValue({ data: { mfaRequirement: 'off' }, isLoading: false, isError: false })
+    mocks.useUpdateIdentityPolicy.mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue({ mfaRequirement: 'admins' }), isPending: false })
   })
 
   it('renders the page title and stat tiles', () => {
@@ -110,5 +118,36 @@ describe('Security', () => {
     })
     render(<Security />)
     expect(screen.getByText('—')).toBeInTheDocument()
+  })
+
+  it('renders the policy card with the current value when the user can manage users', () => {
+    render(<Security />)
+    expect(screen.getByText('Política de acceso')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Opcional para todos')).toBeInTheDocument()
+    expect(screen.getByText(/aún no bloquea el inicio de sesión/)).toBeInTheDocument()
+  })
+
+  it('hides the policy card without users:manage', () => {
+    mocks.useCan.mockReturnValue(false)
+    render(<Security />)
+    expect(screen.queryByText('Política de acceso')).not.toBeInTheDocument()
+  })
+
+  it('saves a changed policy value', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ mfaRequirement: 'all' })
+    mocks.useUpdateIdentityPolicy.mockReturnValue({ mutateAsync, isPending: false })
+    render(<Security />)
+    fireEvent.change(screen.getByDisplayValue('Opcional para todos'), { target: { value: 'all' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ mfaRequirement: 'all' }))
+    expect(await screen.findByText('Política actualizada.')).toBeInTheDocument()
+  })
+
+  it('shows a save error when the update fails', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('network down'))
+    mocks.useUpdateIdentityPolicy.mockReturnValue({ mutateAsync, isPending: false })
+    render(<Security />)
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByText('No se pudo actualizar la política.')).toBeInTheDocument()
   })
 })
