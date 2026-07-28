@@ -34,6 +34,13 @@ describe('IdentityController', () => {
     expect(service.signOutAllSessions).toHaveBeenCalledWith(user())
   })
 
+  it('syncMfa delegates with the current user', async () => {
+    const service = { syncMfaEnrollment: vi.fn().mockResolvedValue({ mfaEnrolledAt: null }) } as unknown as IdentityService
+    const result = await new IdentityController(service).syncMfa(user())
+    expect(service.syncMfaEnrollment).toHaveBeenCalledWith(user())
+    expect(result).toEqual({ mfaEnrolledAt: null })
+  })
+
   it('summary parses days and delegates with tenantId', async () => {
     const service = { securitySummary: vi.fn().mockResolvedValue({}) } as unknown as IdentityService
     await new IdentityController(service).summary('t1', '30')

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import type { LoginEventItemDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
+import type { LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider } from '../../lib/auth/index.js'
 import { IdentityRepository } from './identity.repository.js'
@@ -92,6 +92,35 @@ export class IdentityService {
       entityId: user.id,
       status: 'success',
     })
+  }
+
+  /**
+   * Reads the current TOTP enrollment state from the auth provider and
+   * mirrors it onto User.mfaEnrolledAt (identity design §4 — no separate
+   * MfaEnrollment table this slice). Audits `mfa_enabled` only on a null ->
+   * enrolled transition — there is no `mfa_disabled` AuditAction yet, so an
+   * enrolled -> not-enrolled sync (the user removed their factor) is not
+   * audited this slice (see identity slice 4 plan §Out of scope).
+   */
+  async syncMfaEnrollment(user: { id: string; externalUid: string; tenantId: string }): Promise<MfaSyncResultDto> {
+    const before = await this.repository.getMfaEnrolledAt(user.id)
+    const { enrolledAt } = await this.authProvider.getMfaEnrollment(user.externalUid)
+    await this.repository.updateMfaEnrolledAt(user.id, enrolledAt)
+
+    if (before === null && enrolledAt !== null) {
+      void this.auditLog.record({
+        tenantId: user.tenantId,
+        actorUserId: user.id,
+        actorType: 'user',
+        category: 'auth',
+        action: 'mfa_enabled',
+        entityType: 'User',
+        entityId: user.id,
+        status: 'success',
+      })
+    }
+
+    return { mfaEnrolledAt: enrolledAt ? enrolledAt.toISOString() : null }
   }
 }
 

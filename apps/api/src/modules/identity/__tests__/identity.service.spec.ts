@@ -9,8 +9,10 @@ const mockRepo = {
   listLoginsForTenant: vi.fn(),
   findUserNames: vi.fn(),
   listDevicesForUser: vi.fn(),
+  getMfaEnrolledAt: vi.fn(),
+  updateMfaEnrolledAt: vi.fn(),
 }
-const mockAuthProvider = { revokeUserSessions: vi.fn() }
+const mockAuthProvider = { revokeUserSessions: vi.fn(), getMfaEnrollment: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 
 function makeService(): IdentityService {
@@ -170,5 +172,63 @@ describe('signOutAllSessions', () => {
         status: 'success',
       }),
     )
+  })
+})
+
+describe('syncMfaEnrollment', () => {
+  const user = { id: 'u1', externalUid: 'ext-1', tenantId: 't1' }
+
+  it('reads the provider, writes the mirror, and returns the ISO timestamp when enrolled', async () => {
+    mockRepo.getMfaEnrolledAt.mockResolvedValue(null)
+    mockAuthProvider.getMfaEnrollment.mockResolvedValue({ enrolledAt: new Date('2026-07-28T00:00:00.000Z') })
+    mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
+    const result = await makeService().syncMfaEnrollment(user)
+    expect(mockAuthProvider.getMfaEnrollment).toHaveBeenCalledWith('ext-1')
+    expect(mockRepo.updateMfaEnrolledAt).toHaveBeenCalledWith('u1', new Date('2026-07-28T00:00:00.000Z'))
+    expect(result).toEqual({ mfaEnrolledAt: '2026-07-28T00:00:00.000Z' })
+  })
+
+  it('returns null mfaEnrolledAt when not enrolled', async () => {
+    mockRepo.getMfaEnrolledAt.mockResolvedValue(null)
+    mockAuthProvider.getMfaEnrollment.mockResolvedValue({ enrolledAt: null })
+    mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
+    const result = await makeService().syncMfaEnrollment(user)
+    expect(mockRepo.updateMfaEnrolledAt).toHaveBeenCalledWith('u1', null)
+    expect(result).toEqual({ mfaEnrolledAt: null })
+  })
+
+  it('audits mfa_enabled on a null -> enrolled transition', async () => {
+    mockRepo.getMfaEnrolledAt.mockResolvedValue(null)
+    mockAuthProvider.getMfaEnrollment.mockResolvedValue({ enrolledAt: new Date('2026-07-28T00:00:00.000Z') })
+    mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
+    await makeService().syncMfaEnrollment(user)
+    expect(mockAuditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't1',
+        actorUserId: 'u1',
+        actorType: 'user',
+        category: 'auth',
+        action: 'mfa_enabled',
+        entityType: 'User',
+        entityId: 'u1',
+        status: 'success',
+      }),
+    )
+  })
+
+  it('does not audit when already enrolled (no transition)', async () => {
+    mockRepo.getMfaEnrolledAt.mockResolvedValue(new Date('2026-07-01T00:00:00.000Z'))
+    mockAuthProvider.getMfaEnrollment.mockResolvedValue({ enrolledAt: new Date('2026-07-28T00:00:00.000Z') })
+    mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
+    await makeService().syncMfaEnrollment(user)
+    expect(mockAuditLog.record).not.toHaveBeenCalled()
+  })
+
+  it('does not audit an enrolled -> not-enrolled transition (no fitting AuditAction this slice)', async () => {
+    mockRepo.getMfaEnrolledAt.mockResolvedValue(new Date('2026-07-01T00:00:00.000Z'))
+    mockAuthProvider.getMfaEnrollment.mockResolvedValue({ enrolledAt: null })
+    mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
+    await makeService().syncMfaEnrollment(user)
+    expect(mockAuditLog.record).not.toHaveBeenCalled()
   })
 })

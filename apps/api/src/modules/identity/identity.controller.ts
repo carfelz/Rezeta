@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Inject, Post, Query, Res } from '@nestjs/common'
 import type { Response } from 'express'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger'
-import type { AuthUser, LoginEventItemDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
+import type { AuthUser, LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
@@ -29,6 +29,13 @@ export class IdentityController {
   @ApiResponse({ status: 204 })
   async signOutAll(@CurrentUser() user: AuthUser): Promise<void> {
     await this.svc.signOutAllSessions(user)
+  }
+
+  @Post('me/mfa/sync')
+  @ApiOperation({ summary: 'Sync the current user’s MFA enrollment state from the auth provider' })
+  @ApiResponse({ status: 200 })
+  syncMfa(@CurrentUser() user: AuthUser): Promise<MfaSyncResultDto> {
+    return this.svc.syncMfaEnrollment(user)
   }
 
   @Get('security/summary')
