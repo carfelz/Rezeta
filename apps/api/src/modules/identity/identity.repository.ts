@@ -155,10 +155,15 @@ export class IdentityRepository {
     })
   }
 
-  /** Batch name resolution — one query for every distinct userId on a page of login events. */
-  async findUserNames(ids: string[]): Promise<Map<string, string | null>> {
+  /**
+   * Batch name resolution — one query for every distinct userId on a page of
+   * login events. Tenant-scoped as defense in depth: the ids come from
+   * already-tenant-filtered LoginEvent rows, but the filter guarantees a
+   * cross-tenant id can never resolve to a name even if a caller slips.
+   */
+  async findUserNames(tenantId: string, ids: string[]): Promise<Map<string, string | null>> {
     const rows = await this.prisma.user.findMany({
-      where: { id: { in: ids } },
+      where: { tenantId, id: { in: ids } },
       select: { id: true, fullName: true, email: true },
     })
     return new Map(rows.map((r) => [r.id, r.fullName ?? r.email]))

@@ -96,6 +96,18 @@ describe('overview', () => {
     expect(buckets?.slice(1, 13)).toEqual(new Array(12).fill(0))
   })
 
+  it('buckets by UTC calendar day, not sliding 24h windows — a late-night login from yesterday lands in yesterday\'s bucket', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
+    mockRepo.listSuccessfulLoginsSince.mockResolvedValue([
+      // 12.5h before NOW (2026-07-28T12:00Z) but on the previous UTC calendar day.
+      { tenantId: 't1', userId: 'u1', createdAt: new Date('2026-07-27T23:30:00.000Z') },
+    ])
+    const result = await makeService().overview()
+    const buckets = result.institutions[0]?.logins14d
+    expect(buckets?.[12]).toBe(1) // yesterday
+    expect(buckets?.[13]).toBe(0) // today stays empty
+  })
+
   it('excludes a freshly created account from dormant30d/dormantAccounts60d even with no logins', async () => {
     mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
     mockRepo.listActiveUsersForDormancy.mockResolvedValue([

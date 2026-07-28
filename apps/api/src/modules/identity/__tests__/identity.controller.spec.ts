@@ -97,10 +97,10 @@ describe('IdentityController', () => {
     expect(result).toEqual({ mfaRequirement: 'off' })
   })
 
-  it('updatePolicy delegates with tenantId and the parsed dto', async () => {
+  it('updatePolicy delegates with tenantId, the parsed dto, and the acting user id', async () => {
     const service = { updatePolicy: vi.fn().mockResolvedValue({ mfaRequirement: 'admins' }) } as unknown as IdentityService
-    const result = await new IdentityController(service).updatePolicy('t1', { mfaRequirement: 'admins' })
-    expect(service.updatePolicy).toHaveBeenCalledWith('t1', 'admins')
+    const result = await new IdentityController(service).updatePolicy('t1', user(), { mfaRequirement: 'admins' })
+    expect(service.updatePolicy).toHaveBeenCalledWith('t1', 'admins', 'u1')
     expect(result).toEqual({ mfaRequirement: 'admins' })
   })
 })

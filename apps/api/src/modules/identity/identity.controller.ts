@@ -110,8 +110,9 @@ export class IdentityController {
   @ApiResponse({ status: 200 })
   updatePolicy(
     @TenantId() tenantId: string,
+    @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(IdentityPolicySchema)) dto: IdentityPolicyDto,
   ): Promise<IdentityPolicyDto> {
-    return this.svc.updatePolicy(tenantId, dto.mfaRequirement)
+    return this.svc.updatePolicy(tenantId, dto.mfaRequirement, user.id)
   }
 }

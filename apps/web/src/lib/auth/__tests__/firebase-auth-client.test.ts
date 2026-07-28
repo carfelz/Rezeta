@@ -265,6 +265,26 @@ describe('FirebaseAuthClient', () => {
       await expect(client.completeTotpSignIn('123456')).rejects.toThrow(/no totp factor/i)
     })
 
+    it('cancelTotpSignIn clears the pending resolver (a later completion attempt throws)', async () => {
+      const mfaError = Object.assign(new Error('mfa required'), { code: 'auth/multi-factor-auth-required' })
+      m.signInWithEmailAndPassword.mockRejectedValue(mfaError)
+      const resolveSignIn = vi.fn()
+      m.getMultiFactorResolver.mockReturnValue({
+        hints: [{ factorId: 'totp', uid: 'enrollment-1' }],
+        resolveSignIn,
+      })
+
+      await expect(client.signIn('a@b.com', 'pw')).rejects.toBe(mfaError)
+      client.cancelTotpSignIn()
+
+      await expect(client.completeTotpSignIn('123456')).rejects.toThrow(/no pending/i)
+      expect(resolveSignIn).not.toHaveBeenCalled()
+    })
+
+    it('cancelTotpSignIn is a no-op when nothing is pending', () => {
+      expect(() => client.cancelTotpSignIn()).not.toThrow()
+    })
+
     it('clears the pending resolver after a successful completion (a second call throws)', async () => {
       const mfaError = Object.assign(new Error('mfa required'), { code: 'auth/multi-factor-auth-required' })
       m.signInWithEmailAndPassword.mockRejectedValue(mfaError)

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
   navigate: vi.fn(),
   completeTotpSignIn: vi.fn(),
+  cancelTotpSignIn: vi.fn(),
   errorCodeToMessage: vi.fn((code: string) => `mapped:${code}`),
 }))
 
@@ -16,6 +17,7 @@ vi.mock('@/store/auth.store', () => ({
 vi.mock('@/lib/auth', () => ({
   authClient: {
     completeTotpSignIn: mocks.completeTotpSignIn,
+    cancelTotpSignIn: mocks.cancelTotpSignIn,
     errorCodeToMessage: mocks.errorCodeToMessage,
   },
 }))
@@ -109,5 +111,6 @@ describe('Login', () => {
 
     fireEvent.click(screen.getByText('Volver a iniciar sesión'))
     expect(screen.getByLabelText('Correo electrónico')).toBeInTheDocument()
+    expect(mocks.cancelTotpSignIn).toHaveBeenCalledOnce()
   })
 })

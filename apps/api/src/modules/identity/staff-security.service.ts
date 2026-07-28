@@ -121,15 +121,18 @@ function aggregateLogins(rows: StaffSecurityLoginRow[], now: Date): LoginAggrega
 /**
  * Buckets `rows` into 14 daily counts, oldest first, newest (today) last —
  * the mockup's sparkline highlights the last bar as today (identity design
- * §6 screen 4 note 1). Age is measured in whole days back from `now`;
- * anything 14 days old or older (or, defensively, in the future) is
- * dropped — `rows` is already the last-30-days dataset, so in practice
- * only the most recent 14 days ever populate a bucket.
+ * §6 screen 4 note 1). Buckets are UTC calendar days (not sliding 24h
+ * windows back from `now`), so a bar always means "logins on that date" and
+ * the last bar is the current UTC date. Anything older than 13 calendar
+ * days (or, defensively, in the future) is dropped — `rows` is already the
+ * last-30-days dataset, so in practice only the most recent 14 days ever
+ * populate a bucket.
  */
 function bucketLogins14d(rows: { createdAt: Date }[], now: Date): number[] {
   const buckets = new Array<number>(SPARKLINE_DAYS).fill(0)
+  const todayUtc = Math.floor(now.getTime() / DAY_MS)
   for (const row of rows) {
-    const ageDays = Math.floor((now.getTime() - row.createdAt.getTime()) / DAY_MS)
+    const ageDays = todayUtc - Math.floor(row.createdAt.getTime() / DAY_MS)
     if (ageDays < 0 || ageDays >= SPARKLINE_DAYS) continue
     const index = SPARKLINE_DAYS - 1 - ageDays
     buckets[index] = (buckets[index] ?? 0) + 1

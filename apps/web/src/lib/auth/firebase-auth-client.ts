@@ -70,6 +70,10 @@ export class FirebaseAuthClient implements IAuthClient {
     this.pendingMfaResolver = null
   }
 
+  cancelTotpSignIn(): void {
+    this.pendingMfaResolver = null
+  }
+
   async enrollTotp(): Promise<TotpEnrollment> {
     const user = this.auth.currentUser
     if (!user) throw new Error('No signed-in user')
