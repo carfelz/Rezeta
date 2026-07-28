@@ -32,6 +32,7 @@ import { NotFound } from '@/pages/NotFound'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
+import { Institutions } from '@/pages/staff/Institutions'
 import { NewInstitution } from '@/pages/staff/NewInstitution'
 import { PlatformUsers } from '@/pages/staff/PlatformUsers'
 
@@ -284,7 +285,8 @@ const router = createBrowserRouter([
     ),
     errorElement: <NotFound />,
     children: [
-      { path: 'staff', element: <Navigate to="/staff/institutions/new" replace /> },
+      { path: 'staff', element: <Navigate to="/staff/institutions" replace /> },
+      { path: 'staff/institutions', element: <Institutions /> },
       { path: 'staff/institutions/new', element: <NewInstitution /> },
       { path: 'staff/platform-users', element: <PlatformUsers /> },
     ],

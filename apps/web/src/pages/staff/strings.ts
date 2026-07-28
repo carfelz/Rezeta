@@ -28,6 +28,22 @@ export const staffStrings = {
   error: 'Could not create the institution. Check the details and try again.',
   successTitle: 'Institution created',
   successBody: (email: string): string => `A set-password email was sent to ${email}.`,
+  successBackToList: 'Back to institutions',
+} as const
+
+export const institutionsStrings = {
+  pageTitle: 'Institutions',
+  pageSubtitle: 'All institutions on the platform.',
+  newButton: 'New institution',
+  tableInstitution: 'Institution',
+  tablePlan: 'Plan',
+  tableUsers: 'Users',
+  tableCreated: 'Created',
+  usersCell: (active: number, total: number): string => `${active} of ${total}`,
+  unnamed: 'Unnamed institution',
+  loadError: 'Could not load institutions.',
+  emptyTitle: 'No institutions yet',
+  emptyBody: 'Create the first institution to get started.',
 } as const
 
 export const platformUsersStrings = {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCreateInstitution } from '@/hooks/staff/use-create-institution'
 import { Button, Callout, Field, Input, NativeSelect } from '@/components/ui'
 import type { CreateInstitutionDto, InstitutionCreatedDto } from '@rezeta/shared'
@@ -48,6 +49,9 @@ export function NewInstitution(): JSX.Element {
         <Callout variant="success" icon={<i className="ph ph-check-circle" />} className="mb-4">
           <div className="font-semibold">{staffStrings.successTitle}</div>
           <div>{staffStrings.successBody(created.email)}</div>
+          <Link to="/staff/institutions" className="text-p-700 underline">
+            {staffStrings.successBackToList}
+          </Link>
         </Callout>
       )}
 

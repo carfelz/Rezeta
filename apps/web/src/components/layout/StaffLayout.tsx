@@ -17,7 +17,7 @@ export function StaffLayout(): JSX.Element {
         </span>
       </header>
       <nav className="flex gap-1 border-b border-n-200 bg-n-0 px-6">
-        <StaffNavLink to="/staff/institutions/new" label={staffStrings.navInstitutions} />
+        <StaffNavLink to="/staff/institutions" label={staffStrings.navInstitutions} end />
         <StaffNavLink to="/staff/platform-users" label={staffStrings.navPlatformUsers} />
       </nav>
       <main className="mx-auto max-w-880 px-6 py-8">
@@ -27,10 +27,19 @@ export function StaffLayout(): JSX.Element {
   )
 }
 
-function StaffNavLink({ to, label }: { to: string; label: string }): JSX.Element {
+function StaffNavLink({
+  to,
+  label,
+  end,
+}: {
+  to: string
+  label: string
+  end?: boolean
+}): JSX.Element {
   return (
     <NavLink
       to={to}
+      end={end ?? false}
       className={({ isActive }) =>
         isActive
           ? 'border-b-2 border-p-500 px-3 py-2 text-sm font-medium text-p-700'
