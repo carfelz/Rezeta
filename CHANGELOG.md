@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Run API integration specs in CI against real Postgres
+
+### Added
+
+- `integration` job in `.github/workflows/ci.yml`: the `*.int-spec.ts`
+  suites (`apps/api`, `pnpm --filter @rezeta/api test:integration`) are
+  guarded by `hasTestDb()` and require `TEST_DATABASE_URL`, which no
+  environment set — so they silently never ran anywhere. The new job spins
+  up a `postgres:16-alpine` service container, applies migrations via
+  `pnpm --filter @rezeta/db migrate:deploy` (with `DATABASE_URL` +
+  `DIRECT_URL` pointed at it), exports `TEST_DATABASE_URL`, and runs the
+  integration suite on every push/PR alongside the existing lint/typecheck/
+  coverage job.
+
 ## [2026-07-28] Staff platform-users follow-ups
 
 ### Fixed
