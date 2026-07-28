@@ -23,6 +23,7 @@ import { Locations } from '@/pages/settings/Locations'
 import { Users } from '@/pages/settings/Users'
 import { Permissions } from '@/pages/settings/Permissions'
 import { AuditLog } from '@/pages/settings/AuditLog'
+import { Security } from '@/pages/settings/Security'
 import { Schedules } from '@/pages/settings/Schedules'
 import { AppPrototype } from '@/pages/settings/AppPrototype'
 import { DesignSystemReference } from '@/pages/settings/DesignSystemReference'
@@ -196,6 +197,14 @@ const router = createBrowserRouter([
         element: (
           <RequireCan module="users">
             <Users />
+          </RequireCan>
+        ),
+      },
+      {
+        path: 'ajustes/seguridad',
+        element: (
+          <RequireCan module="users">
+            <Security />
           </RequireCan>
         ),
       },

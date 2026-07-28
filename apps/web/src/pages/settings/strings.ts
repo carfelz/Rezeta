@@ -31,6 +31,8 @@ export const settingsStrings = {
   schedulesDescription: 'Bloques semanales y excepciones por ubicación',
   usersTitle: 'Usuarios',
   usersDescription: 'Gestiona el equipo de tu institución',
+  securityTitle: 'Seguridad',
+  securityDescription: 'Accesos, dispositivos y actividad de inicio de sesión',
 } as const
 
 export const usersStrings = {
@@ -430,4 +432,49 @@ export const schedulesStrings = {
   dayFriday: 'Viernes',
   daySaturday: 'Sábado',
   daySunday: 'Domingo',
+} as const
+
+export const securityStrings = {
+  pageTitle: 'Seguridad',
+  pageSubtitle: 'Actividad de acceso de tu institución.',
+  statLogins: (days: number) => `Accesos ${days}d`,
+  statDistinctUsers: (days: number) => `Usuarios distintos ${days}d`,
+  statDormant: 'Sin acceso 30d',
+  rangeLabel: 'Rango',
+  range7: '7 días',
+  range30: '30 días',
+  exportButton: 'Exportar',
+  exportingButton: 'Exportando...',
+  exportError: 'No se pudo exportar el archivo CSV.',
+  tableDate: 'Fecha',
+  tableUser: 'Usuario',
+  tableMethod: 'Método',
+  tableIp: 'IP / dispositivo',
+  tableOutcome: 'Resultado',
+  methodPassword: 'Contraseña',
+  methodGoogle: 'Google',
+  methodSso: 'SSO',
+  methodUnknown: 'Desconocido',
+  outcomeSuccess: 'Exitoso',
+  outcomeBlocked: 'Bloqueado',
+  unknownUser: 'Usuario desconocido',
+  loading: 'Cargando actividad...',
+  loadError: 'No se pudo cargar la actividad de acceso.',
+  emptyTitle: 'Sin actividad',
+  emptyDescription: 'No hay accesos registrados en este rango.',
+} as const
+
+export const profileDevicesStrings = {
+  sectionTitle: 'Dispositivos',
+  sectionDescription: 'Dispositivos donde has iniciado sesión.',
+  lastSeen: (date: string) => `Última vez: ${date}`,
+  emptyText: 'Aún no se ha registrado ningún dispositivo.',
+  signOutAllButton: 'Cerrar todas las sesiones',
+  confirmTitle: 'Cerrar todas las sesiones',
+  confirmDescription:
+    'Se cerrará tu sesión en todos los dispositivos, incluido este. Deberás iniciar sesión de nuevo.',
+  confirmButton: 'Cerrar sesiones',
+  cancelButton: 'Cancelar',
+  signOutError: 'No se pudieron cerrar las sesiones. Intenta de nuevo.',
+  loading: 'Cargando dispositivos...',
 } as const

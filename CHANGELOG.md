@@ -4,6 +4,37 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Institution security panel and self-service device list
+
+### Added
+
+- `Security` page (`apps/web/src/pages/settings/Security.tsx`) at
+  `/ajustes/seguridad`: stat tiles (logins/distinct users/dormant users),
+  7d/30d range select, login-activity table, and CSV export gated on
+  `users:manage` — mirrors `AuditLog.tsx`'s filter/export/table structure.
+- `ProfileDevices` card (`apps/web/src/pages/settings/ProfileDevices.tsx`)
+  rendered on `/ajustes`: lists the current user's registered devices and a
+  "cerrar todas las sesiones" action backed by a `ConfirmDialog`, which signs
+  out locally and redirects to `/login` on success.
+- `useSecuritySummary`/`useSecurityLogins`/`downloadSecurityLoginsCsv` hooks
+  in `apps/web/src/hooks/identity/use-security.ts` and
+  `useMyDevices`/`useSignOutAllSessions` in
+  `apps/web/src/hooks/identity/use-my-devices.ts`, wrapping the
+  `/v1/identity/*` endpoints via `apiClient`.
+- `securityStrings`/`profileDevicesStrings` plus a `securityTitle`/
+  `securityDescription` menu-link pair in
+  `apps/web/src/pages/settings/strings.ts`.
+- Tests: `Security.test.tsx` (6 cases) and `ProfileDevices.test.tsx`
+  (4 cases) in `apps/web/src/pages/settings/__tests__/`.
+
+### Changed
+
+- `apps/web/src/pages/Settings.tsx`: renders `<ProfileDevices />` under the
+  "Mi cuenta" card and adds a "Seguridad" hub link (gated on `canViewUsers`)
+  between Usuarios and Permisos.
+- `apps/web/src/App.tsx`: registers `ajustes/seguridad` behind
+  `RequireCan module="users"`.
+
 ## [2026-07-28] Tenant security and self-service identity endpoints
 
 ### Added
