@@ -7,6 +7,7 @@ const prisma = {
   loginEvent: { create: vi.fn(), count: vi.fn(), findMany: vi.fn() },
   userDevice: { upsert: vi.fn(), findMany: vi.fn() },
   user: { count: vi.fn(), findMany: vi.fn() },
+  tenant: { findMany: vi.fn() },
 } as unknown as PrismaService
 
 function makeRepo(): IdentityRepository {
@@ -95,5 +96,35 @@ describe('IdentityRepository', () => {
     const since = new Date('2026-07-21T00:00:00Z')
     const result = await makeRepo().securitySummary('t1', since)
     expect(result).toEqual({ logins: 10, blocked: 2, distinctUsers: 2, dormantUsers30d: 3 })
+  })
+})
+
+describe('IdentityRepository (staff security aggregates)', () => {
+  it('listAllTenants selects id/name/plan ordered by createdAt desc', async () => {
+    vi.mocked(prisma.tenant.findMany).mockResolvedValue([] as never)
+    await makeRepo().listAllTenants()
+    expect(prisma.tenant.findMany).toHaveBeenCalledWith({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, plan: true },
+    })
+  })
+
+  it('listSuccessfulLoginsSince filters by outcome success and the since cutoff', async () => {
+    vi.mocked(prisma.loginEvent.findMany).mockResolvedValue([] as never)
+    const since = new Date('2026-06-28T00:00:00Z')
+    await makeRepo().listSuccessfulLoginsSince(since)
+    expect(prisma.loginEvent.findMany).toHaveBeenCalledWith({
+      where: { outcome: 'success', createdAt: { gte: since } },
+      select: { tenantId: true, userId: true, createdAt: true },
+    })
+  })
+
+  it('listActiveUsersForDormancy filters by isActive/deletedAt only', async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([] as never)
+    await makeRepo().listActiveUsersForDormancy()
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      where: { deletedAt: null, isActive: true },
+      select: { tenantId: true, lastLoginAt: true, createdAt: true },
+    })
   })
 })

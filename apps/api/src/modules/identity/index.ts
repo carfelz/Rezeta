@@ -9,3 +9,5 @@ export {
 } from './login-telemetry.service.js'
 export { IdentityService } from './identity.service.js'
 export { IdentityController } from './identity.controller.js'
+export { StaffSecurityService } from './staff-security.service.js'
+export { StaffSecurityController } from './staff-security.controller.js'

@@ -44,6 +44,24 @@ export interface SecuritySummaryRow {
   dormantUsers30d: number
 }
 
+export interface StaffSecurityTenantRow {
+  id: string
+  name: string | null
+  plan: string
+}
+
+export interface StaffSecurityLoginRow {
+  tenantId: string | null
+  userId: string | null
+  createdAt: Date
+}
+
+export interface StaffSecurityUserRow {
+  tenantId: string
+  lastLoginAt: Date | null
+  createdAt: Date
+}
+
 /**
  * Prisma access for LoginEvent (write-heavy, from LoginTelemetryService) and
  * UserDevice + the tenant security reads (IdentityService, Task 3). Both
@@ -139,5 +157,51 @@ export class IdentityRepository {
       }),
     ])
     return { logins, blocked, distinctUsers: distinctUserRows.length, dormantUsers30d }
+  }
+
+  /**
+   * Every tenant on the platform — backs the staff security dashboard's
+   * institution roster (identity design §6 screen 4). Mirrors
+   * `StaffService.listInstitutions`'s tenant query
+   * (`apps/api/src/modules/staff/staff.service.ts`); unlike that method this
+   * repository does not compute per-tenant counts itself —
+   * `StaffSecurityService` joins this against `listSuccessfulLoginsSince`/
+   * `listActiveUsersForDormancy` in memory (three total queries back the
+   * whole dashboard — no N+1 across tenants).
+   */
+  async listAllTenants(): Promise<StaffSecurityTenantRow[]> {
+    return this.prisma.tenant.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, plan: true },
+    })
+  }
+
+  /**
+   * Successful LoginEvent rows since `since`, across every tenant. Selects
+   * only the three columns StaffSecurityService needs (tenantId/userId/
+   * createdAt) — no IP/user-agent, no clinical data (control-plane isolation
+   * invariant, identity design §2 decision 5). Callers pass a 30-day
+   * `since` so a single query backs the 7-day, 14-day, and 30-day staff
+   * metrics — see `StaffSecurityService.overview` for the in-memory
+   * bucketing.
+   */
+  async listSuccessfulLoginsSince(since: Date): Promise<StaffSecurityLoginRow[]> {
+    return this.prisma.loginEvent.findMany({
+      where: { outcome: 'success', createdAt: { gte: since } },
+      select: { tenantId: true, userId: true, createdAt: true },
+    })
+  }
+
+  /**
+   * Every active, non-deleted institution user across every tenant, with
+   * just enough columns (tenantId/lastLoginAt/createdAt) to compute the
+   * global dormant-accounts tile and the per-tenant dormant/pending-invite
+   * counts in memory — one query, not one per tenant.
+   */
+  async listActiveUsersForDormancy(): Promise<StaffSecurityUserRow[]> {
+    return this.prisma.user.findMany({
+      where: { deletedAt: null, isActive: true },
+      select: { tenantId: true, lastLoginAt: true, createdAt: true },
+    })
   }
 }
