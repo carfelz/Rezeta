@@ -24,7 +24,7 @@ vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }))
 
 import { Security } from '../Security'
 
-const summary: SecuritySummaryDto = { logins: 12, distinctUsers: 4, blocked: 1, dormantUsers30d: 2 }
+const summary: SecuritySummaryDto = { logins: 12, distinctUsers: 4, blocked: 1, dormantUsers30d: 2, mfaAdoptionPct: 40 }
 const logins: LoginEventItemDto[] = [
   {
     id: 'le-1',
@@ -94,5 +94,21 @@ describe('Security', () => {
     mocks.useSecurityLogins.mockReturnValue({ data: undefined, isLoading: false, isError: true })
     render(<Security />)
     expect(screen.getByText('No se pudo cargar la actividad de acceso.')).toBeInTheDocument()
+  })
+
+  it('renders the MFA adoption tile, formatted as a percent', () => {
+    render(<Security />)
+    expect(screen.getByText('Adopción MFA')).toBeInTheDocument()
+    expect(screen.getByText('40%')).toBeInTheDocument()
+  })
+
+  it('renders an em dash for a null MFA adoption percent (zero active users)', () => {
+    mocks.useSecuritySummary.mockReturnValue({
+      data: { ...summary, mfaAdoptionPct: null },
+      isLoading: false,
+      isError: false,
+    })
+    render(<Security />)
+    expect(screen.getByText('—')).toBeInTheDocument()
   })
 })

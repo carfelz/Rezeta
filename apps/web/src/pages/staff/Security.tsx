@@ -3,13 +3,17 @@ import { Badge, Callout, EmptyState, Spinner } from '@/components/ui'
 import { useStaffSecurityOverview } from '@/hooks/staff/use-staff-security'
 import { staffSecurityStrings as s } from './strings'
 
-function StatTile({ label, value }: { label: string; value: number }): JSX.Element {
+function StatTile({ label, value }: { label: string; value: number | string }): JSX.Element {
   return (
     <div className="border border-n-200 rounded-md bg-n-0 p-4">
       <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">{label}</div>
       <div className="text-h3 font-serif font-medium text-n-900 mt-1">{value}</div>
     </div>
   )
+}
+
+function formatPct(value: number | null): string {
+  return value === null ? '—' : `${value}%`
 }
 
 function Sparkline({ values }: { values: number[] }): JSX.Element {
@@ -83,11 +87,12 @@ export function Security(): JSX.Element {
 
       {data && (
         <>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-5 gap-3">
             <StatTile label={s.tileActiveInstitutions} value={data.tiles.activeInstitutions} />
             <StatTile label={s.tileActiveUsers} value={data.tiles.activeUsers30d} />
             <StatTile label={s.tileLogins7d} value={data.tiles.logins7d} />
             <StatTile label={s.tileDormant} value={data.tiles.dormantAccounts60d} />
+            <StatTile label={s.tileMfaAdoption} value={formatPct(data.tiles.mfaAdoptionPct)} />
           </div>
 
           {data.tiles.dormantAccounts60d > 0 && (

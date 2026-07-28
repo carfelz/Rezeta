@@ -440,6 +440,7 @@ export const securityStrings = {
   statLogins: (days: number) => `Accesos ${days}d`,
   statDistinctUsers: (days: number) => `Usuarios distintos ${days}d`,
   statDormant: 'Sin acceso 30d',
+  statMfaAdoption: 'Adopción MFA',
   rangeLabel: 'Rango',
   range7: '7 días',
   range30: '30 días',

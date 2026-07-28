@@ -34,19 +34,25 @@ function OutcomeBadge({ outcome }: { outcome: LoginEventItemDto['outcome'] }): J
   )
 }
 
+function formatPct(value: number | null): string {
+  return value === null ? '—' : `${value}%`
+}
+
 function StatTiles({
   days,
   logins,
   distinctUsers,
   dormantUsers30d,
+  mfaAdoptionPct,
 }: {
   days: number
   logins: number
   distinctUsers: number
   dormantUsers30d: number
+  mfaAdoptionPct: number | null
 }): JSX.Element {
   return (
-    <div className="grid grid-cols-3 gap-3 mb-5">
+    <div className="grid grid-cols-4 gap-3 mb-5">
       <div className="border border-n-200 rounded-md bg-n-0 p-4">
         <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">
           {s.statLogins(days)}
@@ -62,6 +68,10 @@ function StatTiles({
       <div className="border border-n-200 rounded-md bg-n-0 p-4">
         <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">{s.statDormant}</div>
         <div className="text-h3 font-serif font-medium text-n-900 mt-1">{dormantUsers30d}</div>
+      </div>
+      <div className="border border-n-200 rounded-md bg-n-0 p-4">
+        <div className="text-2xs font-mono uppercase tracking-label-wide text-n-400">{s.statMfaAdoption}</div>
+        <div className="text-h3 font-serif font-medium text-n-900 mt-1">{formatPct(mfaAdoptionPct)}</div>
       </div>
     </div>
   )
@@ -127,6 +137,7 @@ export function Security(): JSX.Element {
         logins={summaryQuery.data?.logins ?? 0}
         distinctUsers={summaryQuery.data?.distinctUsers ?? 0}
         dormantUsers30d={summaryQuery.data?.dormantUsers30d ?? 0}
+        mfaAdoptionPct={summaryQuery.data?.mfaAdoptionPct ?? null}
       />
 
       <div className="flex items-center gap-2 mb-5">

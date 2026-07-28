@@ -13,7 +13,7 @@ vi.mock('@/hooks/staff/use-staff-security', () => ({
 import { Security } from '../Security'
 
 const overview: StaffSecurityOverviewDto = {
-  tiles: { activeInstitutions: 2, activeUsers30d: 42, logins7d: 120, dormantAccounts60d: 3 },
+  tiles: { activeInstitutions: 2, activeUsers30d: 42, logins7d: 120, dormantAccounts60d: 3, mfaAdoptionPct: 62 },
   institutions: [
     {
       tenantId: 't1',
@@ -101,5 +101,23 @@ describe('Security (staff)', () => {
     h.useStaffSecurityOverview.mockReturnValue({ data: undefined, isLoading: false, isError: true })
     render(<Security />)
     expect(screen.getByText('Could not load the security overview.')).toBeInTheDocument()
+  })
+
+  it('renders the MFA adoption tile, formatted as a percent', () => {
+    h.useStaffSecurityOverview.mockReturnValue({ data: overview, isLoading: false, isError: false })
+    render(<Security />)
+    expect(screen.getByText('MFA adoption')).toBeInTheDocument()
+    expect(screen.getByText('62%')).toBeInTheDocument()
+  })
+
+  it('renders an em dash for a null MFA adoption percent (zero active users)', () => {
+    h.useStaffSecurityOverview.mockReturnValue({
+      data: { ...overview, tiles: { ...overview.tiles, mfaAdoptionPct: null } },
+      isLoading: false,
+      isError: false,
+    })
+    render(<Security />)
+    const dashes = screen.getAllByText('—')
+    expect(dashes.length).toBeGreaterThan(0)
   })
 })

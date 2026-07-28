@@ -85,6 +85,7 @@ export const staffSecurityStrings = {
   tileActiveUsers: 'Active users · 30d',
   tileLogins7d: 'Logins · 7d',
   tileDormant: 'Dormant accounts · 60d',
+  tileMfaAdoption: 'MFA adoption',
   dormantCallout: (count: number): string => `${count} accounts with no access in 60 days`,
   tableInstitution: 'Institution',
   tablePlan: 'Plan',
