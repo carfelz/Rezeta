@@ -146,6 +146,7 @@ export const firebaseErrorStrings = {
   userNotFound: 'No existe una cuenta con este correo electrónico.',
   wrongPassword: 'Correo o contraseña incorrectos.',
   invalidCredential: 'Correo o contraseña incorrectos.',
+  invalidVerificationCode: 'Código inválido. Verifica el código de tu aplicación de autenticación.',
   networkRequestFailed: 'Error de conexión. Verifica tu red e intenta de nuevo.',
   tooManyRequests:
     'Demasiados intentos. Tu cuenta ha sido temporalmente bloqueada. Intenta más tarde.',
@@ -163,6 +164,7 @@ export function firebaseErrorToSpanish(code: string): string {
     'auth/user-not-found': firebaseErrorStrings.userNotFound,
     'auth/wrong-password': firebaseErrorStrings.wrongPassword,
     'auth/invalid-credential': firebaseErrorStrings.invalidCredential,
+    'auth/invalid-verification-code': firebaseErrorStrings.invalidVerificationCode,
     'auth/network-request-failed': firebaseErrorStrings.networkRequestFailed,
     'auth/too-many-requests': firebaseErrorStrings.tooManyRequests,
   }
