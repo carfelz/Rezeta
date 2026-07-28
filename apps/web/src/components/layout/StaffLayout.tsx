@@ -18,6 +18,7 @@ export function StaffLayout(): JSX.Element {
       </header>
       <nav className="flex gap-1 border-b border-n-200 bg-n-0 px-6">
         <StaffNavLink to="/staff/institutions" label={staffStrings.navInstitutions} end />
+        <StaffNavLink to="/staff/security" label={staffStrings.navSecurity} />
         <StaffNavLink to="/staff/platform-users" label={staffStrings.navPlatformUsers} />
       </nav>
       <main className="mx-auto max-w-880 px-6 py-8">

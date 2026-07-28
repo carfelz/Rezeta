@@ -35,6 +35,7 @@ import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
 import { Institutions } from '@/pages/staff/Institutions'
 import { NewInstitution } from '@/pages/staff/NewInstitution'
+import { Security as StaffSecurity } from '@/pages/staff/Security'
 import { PlatformUsers } from '@/pages/staff/PlatformUsers'
 
 const router = createBrowserRouter([
@@ -297,6 +298,7 @@ const router = createBrowserRouter([
       { path: 'staff', element: <Navigate to="/staff/institutions" replace /> },
       { path: 'staff/institutions', element: <Institutions /> },
       { path: 'staff/institutions/new', element: <NewInstitution /> },
+      { path: 'staff/security', element: <StaffSecurity /> },
       { path: 'staff/platform-users', element: <PlatformUsers /> },
     ],
   },
