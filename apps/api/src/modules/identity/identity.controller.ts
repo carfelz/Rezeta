@@ -32,6 +32,7 @@ export class IdentityController {
   }
 
   @Post('me/mfa/sync')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sync the current user’s MFA enrollment state from the auth provider' })
   @ApiResponse({ status: 200 })
   syncMfa(@CurrentUser() user: AuthUser): Promise<MfaSyncResultDto> {
