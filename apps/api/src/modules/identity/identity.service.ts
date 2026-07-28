@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import type { LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
+import type { IdentityPolicyDto, LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider } from '../../lib/auth/index.js'
 import { IdentityRepository } from './identity.repository.js'
@@ -121,6 +121,17 @@ export class IdentityService {
     }
 
     return { mfaEnrolledAt: enrolledAt ? enrolledAt.toISOString() : null }
+  }
+
+  /** No stored row defaults to 'off' — matches IdentityPolicy's DB column default, so a tenant that never opens the policy card still reads a valid, correct value. */
+  async getPolicy(tenantId: string): Promise<IdentityPolicyDto> {
+    const row = await this.repository.getPolicy(tenantId)
+    return { mfaRequirement: (row?.mfaRequirement ?? 'off') as IdentityPolicyDto['mfaRequirement'] }
+  }
+
+  async updatePolicy(tenantId: string, mfaRequirement: IdentityPolicyDto['mfaRequirement']): Promise<IdentityPolicyDto> {
+    const row = await this.repository.upsertPolicy(tenantId, mfaRequirement)
+    return { mfaRequirement: row.mfaRequirement as IdentityPolicyDto['mfaRequirement'] }
   }
 }
 

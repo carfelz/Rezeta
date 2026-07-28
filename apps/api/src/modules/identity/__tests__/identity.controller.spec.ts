@@ -89,4 +89,18 @@ describe('IdentityController', () => {
     await new IdentityController(service).exportCsv('t1', undefined, undefined, res as never)
     expect(service.exportLoginsCsv).toHaveBeenCalledWith('t1', { limit: 1000 })
   })
+
+  it('getPolicy delegates with tenantId', async () => {
+    const service = { getPolicy: vi.fn().mockResolvedValue({ mfaRequirement: 'off' }) } as unknown as IdentityService
+    const result = await new IdentityController(service).getPolicy('t1')
+    expect(service.getPolicy).toHaveBeenCalledWith('t1')
+    expect(result).toEqual({ mfaRequirement: 'off' })
+  })
+
+  it('updatePolicy delegates with tenantId and the parsed dto', async () => {
+    const service = { updatePolicy: vi.fn().mockResolvedValue({ mfaRequirement: 'admins' }) } as unknown as IdentityService
+    const result = await new IdentityController(service).updatePolicy('t1', { mfaRequirement: 'admins' })
+    expect(service.updatePolicy).toHaveBeenCalledWith('t1', 'admins')
+    expect(result).toEqual({ mfaRequirement: 'admins' })
+  })
 })

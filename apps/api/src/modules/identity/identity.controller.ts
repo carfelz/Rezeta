@@ -1,12 +1,14 @@
-import { Controller, Get, HttpCode, HttpStatus, Inject, Post, Query, Res } from '@nestjs/common'
+import { Controller, Get, HttpCode, HttpStatus, Inject, Patch, Post, Body, Query, Res } from '@nestjs/common'
 import type { Response } from 'express'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger'
-import type { AuthUser, LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
+import type { AuthUser, IdentityPolicyDto, LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
+import { IdentityPolicySchema } from '@rezeta/shared'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js'
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js'
 import { RequirePermission } from '../../common/decorators/require-permission.decorator.js'
 import { parseLimit } from '../../common/pagination/parse-limit.js'
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js'
 import { IdentityService } from './identity.service.js'
 
 @ApiTags('Identity')
@@ -92,5 +94,24 @@ export class IdentityController {
       'Content-Disposition': `attachment; filename="login-activity-${timestamp}.csv"`,
     })
     res!.end(csv)
+  }
+
+  @Get('policy')
+  @RequirePermission('users', 'manage')
+  @ApiOperation({ summary: 'Get the tenant identity policy (MFA requirement)' })
+  @ApiResponse({ status: 200 })
+  getPolicy(@TenantId() tenantId: string): Promise<IdentityPolicyDto> {
+    return this.svc.getPolicy(tenantId)
+  }
+
+  @Patch('policy')
+  @RequirePermission('users', 'manage')
+  @ApiOperation({ summary: 'Update the tenant identity policy (MFA requirement) — enforcement deferred' })
+  @ApiResponse({ status: 200 })
+  updatePolicy(
+    @TenantId() tenantId: string,
+    @Body(new ZodValidationPipe(IdentityPolicySchema)) dto: IdentityPolicyDto,
+  ): Promise<IdentityPolicyDto> {
+    return this.svc.updatePolicy(tenantId, dto.mfaRequirement)
   }
 }

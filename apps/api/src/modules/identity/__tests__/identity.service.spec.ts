@@ -11,6 +11,8 @@ const mockRepo = {
   listDevicesForUser: vi.fn(),
   getMfaEnrolledAt: vi.fn(),
   updateMfaEnrolledAt: vi.fn(),
+  getPolicy: vi.fn(),
+  upsertPolicy: vi.fn(),
 }
 const mockAuthProvider = { revokeUserSessions: vi.fn(), getMfaEnrollment: vi.fn() }
 const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
@@ -230,5 +232,28 @@ describe('syncMfaEnrollment', () => {
     mockRepo.updateMfaEnrolledAt.mockResolvedValue(undefined)
     await makeService().syncMfaEnrollment(user)
     expect(mockAuditLog.record).not.toHaveBeenCalled()
+  })
+})
+
+describe('getPolicy', () => {
+  it('defaults to off when the tenant has no stored policy', async () => {
+    mockRepo.getPolicy.mockResolvedValue(null)
+    const result = await makeService().getPolicy('t1')
+    expect(result).toEqual({ mfaRequirement: 'off' })
+  })
+
+  it('returns the stored policy', async () => {
+    mockRepo.getPolicy.mockResolvedValue({ mfaRequirement: 'admins' })
+    const result = await makeService().getPolicy('t1')
+    expect(result).toEqual({ mfaRequirement: 'admins' })
+  })
+})
+
+describe('updatePolicy', () => {
+  it('delegates to the repository upsert and returns the new value', async () => {
+    mockRepo.upsertPolicy.mockResolvedValue({ mfaRequirement: 'all' })
+    const result = await makeService().updatePolicy('t1', 'all')
+    expect(mockRepo.upsertPolicy).toHaveBeenCalledWith('t1', 'all')
+    expect(result).toEqual({ mfaRequirement: 'all' })
   })
 })
