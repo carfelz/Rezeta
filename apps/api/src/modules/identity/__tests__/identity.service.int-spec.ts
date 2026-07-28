@@ -34,6 +34,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
   let service: IdentityService
   const authProvider = {
     revokeUserSessions: vi.fn().mockResolvedValue(undefined),
+    getMfaEnrollment: vi.fn().mockResolvedValue({ enrolledAt: null }),
   } as unknown as IAuthProvider
   const mailer = {
     sendNewDeviceEmail: vi.fn().mockResolvedValue(undefined),
@@ -159,6 +160,38 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
       expect(authProvider.revokeUserSessions).toHaveBeenCalledWith('ext-1')
       const audit = await waitForAuditLog(prisma, { action: 'session_revoked', entityId: user.id })
       expect(audit['tenantId']).toBe(tenant.id)
+    })
+  })
+
+  describe('syncMfaEnrollment (integration)', () => {
+    it('writes mfaEnrolledAt and audits mfa_enabled on first enrollment', async () => {
+      const tenant = await createTestTenant(prisma)
+      const user = await createTestUser(prisma, tenant.id)
+      authProvider.getMfaEnrollment = vi
+        .fn()
+        .mockResolvedValue({ enrolledAt: new Date('2026-07-28T00:00:00.000Z') })
+
+      const result = await service.syncMfaEnrollment({ id: user.id, externalUid: 'ext-1', tenantId: tenant.id })
+      expect(result).toEqual({ mfaEnrolledAt: '2026-07-28T00:00:00.000Z' })
+
+      const row = await prisma.user.findUnique({ where: { id: user.id } })
+      expect(row?.mfaEnrolledAt).toEqual(new Date('2026-07-28T00:00:00.000Z'))
+
+      const audit = await waitForAuditLog(prisma, { action: 'mfa_enabled', entityId: user.id })
+      expect(audit['tenantId']).toBe(tenant.id)
+    })
+
+    it('does not re-audit a sync that finds the same enrollment state', async () => {
+      const tenant = await createTestTenant(prisma)
+      const user = await createTestUser(prisma, tenant.id)
+      await prisma.user.update({ where: { id: user.id }, data: { mfaEnrolledAt: new Date('2026-07-01T00:00:00.000Z') } })
+      authProvider.getMfaEnrollment = vi
+        .fn()
+        .mockResolvedValue({ enrolledAt: new Date('2026-07-01T00:00:00.000Z') })
+
+      await service.syncMfaEnrollment({ id: user.id, externalUid: 'ext-1', tenantId: tenant.id })
+      const auditCount = await prisma.auditLog.count({ where: { action: 'mfa_enabled', entityId: user.id } })
+      expect(auditCount).toBe(0)
     })
   })
 
