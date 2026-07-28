@@ -197,6 +197,34 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
     })
   })
 
+  describe('identity policy (integration)', () => {
+    it('defaults to off, then upserts on PATCH, then updates on a second PATCH', async () => {
+      const tenant = await createTestTenant(prisma)
+
+      const initial = await service.getPolicy(tenant.id)
+      expect(initial).toEqual({ mfaRequirement: 'off' })
+
+      const first = await service.updatePolicy(tenant.id, 'admins')
+      expect(first).toEqual({ mfaRequirement: 'admins' })
+      const row = await prisma.identityPolicy.findUnique({ where: { tenantId: tenant.id } })
+      expect(row?.mfaRequirement).toBe('admins')
+
+      const second = await service.updatePolicy(tenant.id, 'all')
+      expect(second).toEqual({ mfaRequirement: 'all' })
+      const rows = await prisma.identityPolicy.findMany({ where: { tenantId: tenant.id } })
+      expect(rows).toHaveLength(1) // upsert, not a second row
+      expect(rows[0]?.mfaRequirement).toBe('all')
+    })
+
+    it('scopes policies per tenant', async () => {
+      const tenantA = await createTestTenant(prisma)
+      const tenantB = await createTestTenant(prisma)
+      await service.updatePolicy(tenantA.id, 'all')
+      const policyB = await service.getPolicy(tenantB.id)
+      expect(policyB).toEqual({ mfaRequirement: 'off' })
+    })
+  })
+
   describe('StaffSecurityService (integration)', () => {
     it('aggregates tiles and per-institution buckets/dormant/pending across 2 tenants and 3 days of logins', async () => {
       const tenantA = await createTestTenant(prisma, { name: 'Tenant A', plan: 'clinic' })
