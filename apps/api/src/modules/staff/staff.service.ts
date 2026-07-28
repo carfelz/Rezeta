@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import type { CreateInstitutionDto, InstitutionCreatedDto } from '@rezeta/shared'
+import type { CreateInstitutionDto, InstitutionCreatedDto, StaffInstitutionDto } from '@rezeta/shared'
 import { PrismaService } from '../../lib/prisma.service.js'
 import { TenantSeedingService } from '../tenant-seeding/tenant-seeding.service.js'
 import { UsersService } from '../users/users.service.js'
@@ -84,5 +84,39 @@ export class StaffService {
     })
 
     return { tenantId: tenant.id, userId: user.id, email: user.email }
+  }
+
+  /**
+   * Read-only roster for the staff console. Counts come from two grouped
+   * queries (never per-tenant N+1). Reads are not audited.
+   */
+  async listInstitutions(): Promise<StaffInstitutionDto[]> {
+    const [tenants, totals, actives] = await Promise.all([
+      this.prisma.tenant.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, type: true, plan: true, createdAt: true },
+      }),
+      this.prisma.user.groupBy({
+        by: ['tenantId'],
+        where: { deletedAt: null },
+        _count: { _all: true },
+      }),
+      this.prisma.user.groupBy({
+        by: ['tenantId'],
+        where: { deletedAt: null, isActive: true },
+        _count: { _all: true },
+      }),
+    ])
+    const totalBy = new Map(totals.map((g) => [g.tenantId, g._count._all]))
+    const activeBy = new Map(actives.map((g) => [g.tenantId, g._count._all]))
+    return tenants.map((t) => ({
+      id: t.id,
+      name: t.name,
+      type: t.type as StaffInstitutionDto['type'],
+      plan: t.plan as StaffInstitutionDto['plan'],
+      createdAt: t.createdAt.toISOString(),
+      userCount: totalBy.get(t.id) ?? 0,
+      activeUserCount: activeBy.get(t.id) ?? 0,
+    }))
   }
 }

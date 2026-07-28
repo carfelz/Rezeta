@@ -95,3 +95,48 @@ describe('StaffService.createInstitution', () => {
     expect(result).toEqual({ tenantId: 'new-tenant', userId: 'new-user', email: 'ana@clinica.com' })
   })
 })
+
+describe('listInstitutions', () => {
+  let prisma: PrismaService
+
+  function makeService(): StaffService {
+    return new StaffService(
+      prisma,
+      {} as TenantSeedingService,
+      {} as UsersService,
+      {} as AuditLogService,
+    )
+  }
+
+  beforeEach(() => {
+    prisma = {
+      tenant: { findMany: vi.fn() },
+      user: { groupBy: vi.fn() },
+    } as unknown as PrismaService
+  })
+
+  it('maps tenants with grouped user counts, newest first, zero-defaults missing groups', async () => {
+    vi.mocked(prisma.tenant.findMany).mockResolvedValue([
+      { id: 't2', name: 'B', type: 'clinic', plan: 'clinic', createdAt: new Date('2026-07-02T00:00:00Z') },
+      { id: 't1', name: null, type: 'solo', plan: 'free', createdAt: new Date('2026-07-01T00:00:00Z') },
+    ] as never)
+    vi.mocked(prisma.user.groupBy)
+      .mockResolvedValueOnce([{ tenantId: 't2', _count: { _all: 3 } }] as never) // all non-deleted
+      .mockResolvedValueOnce([{ tenantId: 't2', _count: { _all: 2 } }] as never) // active subset
+    const result = await makeService().listInstitutions()
+    expect(prisma.tenant.findMany).toHaveBeenCalledWith({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, type: true, plan: true, createdAt: true },
+    })
+    expect(result).toEqual([
+      {
+        id: 't2', name: 'B', type: 'clinic', plan: 'clinic',
+        createdAt: '2026-07-02T00:00:00.000Z', userCount: 3, activeUserCount: 2,
+      },
+      {
+        id: 't1', name: null, type: 'solo', plan: 'free',
+        createdAt: '2026-07-01T00:00:00.000Z', userCount: 0, activeUserCount: 0,
+      },
+    ])
+  })
+})

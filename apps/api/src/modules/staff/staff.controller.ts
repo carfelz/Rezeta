@@ -5,6 +5,7 @@ import {
   type CreateInstitutionDto,
   type InstitutionCreatedDto,
   type PlatformPrincipal,
+  type StaffInstitutionDto,
 } from '@rezeta/shared'
 import { AUTH_BEARER_SCHEME, AUTH_OAUTH2_SCHEME } from '../../lib/auth/index.js'
 import { CurrentPlatformUser } from '../../common/decorators/current-platform-user.decorator.js'
@@ -39,5 +40,13 @@ export class StaffController {
     @Body() dto: CreateInstitutionDto,
   ): Promise<InstitutionCreatedDto> {
     return this.svc.createInstitution(dto, actor.id)
+  }
+
+  @Get('institutions')
+  @ApiOperation({ summary: 'List institutions (tenants) with user counts' })
+  @ApiResponse({ status: 200, description: 'Institution roster.' })
+  @ApiResponse({ status: 401, description: 'Caller is not a platform user.' })
+  listInstitutions(): Promise<StaffInstitutionDto[]> {
+    return this.svc.listInstitutions()
   }
 }

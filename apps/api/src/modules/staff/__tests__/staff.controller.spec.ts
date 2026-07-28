@@ -45,4 +45,10 @@ describe('StaffController', () => {
     const p = principal()
     expect(controller.me(p)).toEqual(p)
   })
+
+  it('listInstitutions delegates to the service', async () => {
+    const listService = { listInstitutions: vi.fn().mockResolvedValue([]) } as unknown as StaffService
+    await new StaffController(listService).listInstitutions()
+    expect(listService.listInstitutions).toHaveBeenCalledOnce()
+  })
 })
