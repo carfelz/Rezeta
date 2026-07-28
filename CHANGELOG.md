@@ -4,6 +4,31 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Login telemetry and institution security panel (identity slice 3)
+
+### Added
+
+- `login_events` / `user_devices` tables (provider-agnostic telemetry, no FKs)
+  — `packages/db/prisma/schema.prisma`.
+- `apps/api/src/modules/identity/` module: `LoginTelemetryService`
+  (`recordLogin`, `upsertDevice`, sha256 device fingerprinting) and
+  `IdentityService`/`IdentityController` serving `GET /v1/identity/me/devices`,
+  `POST /v1/identity/me/sign-out-all`, `GET /v1/identity/security/summary`,
+  `GET /v1/identity/security/logins`, and `GET /v1/identity/security/logins.csv`.
+- `AuthService.provision` records a successful login and upserts the caller's
+  device; `AuthGuard`'s deactivated-institution-user rejection records a
+  `blocked` login event.
+- Ajustes → Seguridad page (`apps/web/src/pages/settings/Security.tsx`) —
+  stat tiles, 7/30-day filter, login-activity table, CSV export.
+- Self-service devices card (`apps/web/src/pages/settings/ProfileDevices.tsx`)
+  on the profile page — device list + "Cerrar todas las sesiones."
+- Shared DTOs `LoginEventItemSchema` / `SecuritySummarySchema` /
+  `UserDeviceItemSchema` (`packages/shared/src/schemas/identity.ts`).
+
+### Changed
+
+- `AuthFeatureModule` and `AppModule` import the new `IdentityModule`.
+
 ## [2026-07-28] Institution security panel and self-service device list
 
 ### Added
