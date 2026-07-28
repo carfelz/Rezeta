@@ -4,6 +4,88 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-21] Staff-user management (identity slice 1)
+
+### Added
+
+- `/v1/staff/identity/users` endpoints (`GET`, `POST`,
+  `PATCH /:id/active`, `POST /:id/resend-invite`) via
+  `StaffPlatformUsersController`
+  (`apps/api/src/modules/platform-users/staff-platform-users.controller.ts`),
+  delegating to `PlatformUsersService`
+  (`apps/api/src/modules/platform-users/platform-users.service.ts`):
+  `listUsers`, `createUser`, `setActive`, `resendInvite`, mirroring
+  `UsersService`'s invite-flow patterns — auth-provider identity creation
+  with orphan cleanup on DB failure, P2002 ->
+  `ConflictException(USER_ALREADY_EXISTS)` mapping, a non-fatal
+  set-password email step, and a self-deactivation guard. Audits use
+  `actorType: 'system'`, `category: 'auth'`, actions `user_invited` /
+  `user_deactivated` / `user_reactivated`, with the acting staff id in
+  `metadata.platformUserId` and no `tenantId` (PlatformUser is
+  tenantless). The controller mirrors `StaffController`'s decorator stack
+  (`@ApiTags('Staff')`, `@ApiBearerAuth`/`@ApiSecurity`, `@PlatformRoute()`)
+  and validates bodies via `ZodValidationPipe` with
+  `CreatePlatformUserSchema` / the shared `SetActiveSchema`.
+- Staff console page `/staff/platform-users`
+  (`apps/web/src/pages/staff/PlatformUsers.tsx`) with a roster table
+  (name/email, derived status badge, last access), a "New user" modal
+  wired to `useCreatePlatformUser`, and per-row Resend/Deactivate/Reactivate
+  actions wired to `useResendPlatformUserInvite` /
+  `useSetPlatformUserActive`. The acting user's own row (matched via
+  `useStaffMe`) renders a "You" chip instead of action buttons since
+  self-deactivation is blocked server-side. Route registered in
+  `apps/web/src/App.tsx`; staff-console nav (`StaffNavLink`, linking
+  Institutions and Platform users) added to `StaffLayout.tsx`.
+- `platform_users.last_login_at` column, stamped by `AuthGuard` on first
+  platform sign-in; drives the `invited`/`active` roster status.
+- Shared schemas `CreatePlatformUserSchema` / `PlatformUserApiSchema`
+  (`packages/shared/src/schemas/platform-users.ts`).
+- Tests: 11 unit tests for `PlatformUsersService` (roster mapping, invite
+  compensation/rollback, P2002 mapping, non-fatal email failure,
+  self-deactivation guard, reactivate/deactivate auditing, 404s), 4 for
+  `StaffPlatformUsersController` (delegation + acting-principal/target-id/dto
+  correctness), 3 real-Postgres integration tests
+  (`platform-users.service.int-spec.ts`, mirroring
+  `permissions.service.int-spec.ts`'s construction style — real
+  `PlatformUsersRepository` + `AuditLogService` against a live
+  `PrismaService`) covering `createUser` persistence + audit, the
+  deactivate/reactivate soft-delete round-trip, and self-deactivation
+  rejection, and 5 for the `PlatformUsers.tsx` roster page (rendering,
+  You-chip/hidden-deactivate on the own row, resend visibility + mutation,
+  create-form payload, empty state).
+
+### Changed
+
+- `bootstrap:platform` CLI is now needed only for the first staff account on a
+  fresh deployment; day-to-day staff-user management moves to the staff console.
+- `UsersModule` exports `InvitationMailerService` for reuse by
+  `PlatformUsersModule`.
+- `apps/api/src/test/db-test-utils.ts`: `createTestPlatformUser` now also
+  selects `externalUid` (previously `id` only) so integration specs can
+  exercise the auth-path lookup (`PlatformUsersRepository.findByExternalUid`)
+  against a fixture it created.
+
+## [2026-07-19] Identity module design: MFA, SSO, security dashboards
+
+### Added
+
+- `docs/superpowers/specs/2026-07-19-identity-module-design.md`: design for the
+  identity module — GCP Identity Platform upgrade (Google social login,
+  TOTP/SMS MFA optional for all, per-institution SAML/OIDC SSO), new
+  `LoginEvent` / `UserDevice` / `MfaEnrollment` / `SsoConnection` /
+  `IdentityPolicy` tables, `/v1/identity/*` + `/v1/staff/identity/*` API
+  surface, two-level security dashboards, reports (compliance access export,
+  dormant accounts, invite funnel), and a documented self-hosted-IdP exit
+  runbook. Amended same day with full user-creation coverage: staff-user
+  management (`/v1/staff/identity/users` — list/create/deactivate/resend
+  set-password link) ships as slice 1, demoting the `bootstrap:platform` CLI
+  to first-account-only; institution users keep the existing invite flow.
+- `docs/superpowers/specs/2026-07-19-identity-module-mockups.html`: six
+  token-faithful screen mockups (login states, profile security, institution
+  security panel, staff cross-institution dashboard, SSO connection
+  management, staff-user management); synced to the "Rezeta Design System"
+  Claude Design project as `Identity Module.html`.
+
 ## [2026-07-19] Green the branch: integration-harness typecheck/lint/coverage fixes
 
 ### Fixed

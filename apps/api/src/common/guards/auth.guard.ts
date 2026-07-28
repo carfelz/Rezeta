@@ -102,6 +102,15 @@ export class AuthGuard implements CanActivate {
         email: platformUser.email,
         fullName: platformUser.fullName,
       }
+
+      if (platformUser.lastLoginAt === null) {
+        void this.platformUsers.markSignedIn(platformUser.id).catch((err: unknown) => {
+          this.logger.warn(
+            `Failed to stamp lastLoginAt for platform user id=${platformUser.id}: ${(err as Error).message}`,
+          )
+        })
+      }
+
       return true
     }
 

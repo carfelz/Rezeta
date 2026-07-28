@@ -33,6 +33,7 @@ import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
 import { NewInstitution } from '@/pages/staff/NewInstitution'
+import { PlatformUsers } from '@/pages/staff/PlatformUsers'
 
 const router = createBrowserRouter([
   // ── Public-only routes (redirect authenticated users away) ────────────────
@@ -285,6 +286,7 @@ const router = createBrowserRouter([
     children: [
       { path: 'staff', element: <Navigate to="/staff/institutions/new" replace /> },
       { path: 'staff/institutions/new', element: <NewInstitution /> },
+      { path: 'staff/platform-users', element: <PlatformUsers /> },
     ],
   },
 
