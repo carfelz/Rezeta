@@ -33,10 +33,10 @@ afterEach(() => {
 })
 
 describe('overview', () => {
-  it('returns zeroed tiles and an empty institution list with no data', async () => {
+  it('returns zeroed tiles (mfaAdoptionPct null) and an empty institution list with no data', async () => {
     const result = await makeService().overview()
     expect(result).toEqual({
-      tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+      tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0, mfaAdoptionPct: null },
       institutions: [],
     })
   })
@@ -99,7 +99,7 @@ describe('overview', () => {
   it('excludes a freshly created account from dormant30d/dormantAccounts60d even with no logins', async () => {
     mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
     mockRepo.listActiveUsersForDormancy.mockResolvedValue([
-      { tenantId: 't1', lastLoginAt: null, createdAt: daysAgo(5) }, // fresh invite
+      { tenantId: 't1', lastLoginAt: null, createdAt: daysAgo(5), mfaEnrolledAt: null }, // fresh invite
     ])
     const result = await makeService().overview()
     expect(result.tiles.dormantAccounts60d).toBe(0)
@@ -110,7 +110,7 @@ describe('overview', () => {
   it('counts a stale, never-logged-in account as dormant at both the 30d and 60d windows', async () => {
     mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
     mockRepo.listActiveUsersForDormancy.mockResolvedValue([
-      { tenantId: 't1', lastLoginAt: null, createdAt: daysAgo(90) },
+      { tenantId: 't1', lastLoginAt: null, createdAt: daysAgo(90), mfaEnrolledAt: null },
     ])
     const result = await makeService().overview()
     expect(result.tiles.dormantAccounts60d).toBe(1)
@@ -121,11 +121,51 @@ describe('overview', () => {
   it('counts an old account with a stale-but-not-ancient last login as dormant at 30d but not 60d', async () => {
     mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
     mockRepo.listActiveUsersForDormancy.mockResolvedValue([
-      { tenantId: 't1', lastLoginAt: daysAgo(45), createdAt: daysAgo(200) },
+      { tenantId: 't1', lastLoginAt: daysAgo(45), createdAt: daysAgo(200), mfaEnrolledAt: null },
     ])
     const result = await makeService().overview()
     expect(result.tiles.dormantAccounts60d).toBe(0)
     expect(result.institutions[0]?.dormant30d).toBe(1)
     expect(result.institutions[0]?.pendingInvites).toBe(0)
+  })
+
+  it('computes mfaAdoptionPct as enrolled / total active users, rounded', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
+    mockRepo.listActiveUsersForDormancy.mockResolvedValue([
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: daysAgo(10) },
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: null },
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: null },
+    ])
+    const result = await makeService().overview()
+    expect(result.tiles.mfaAdoptionPct).toBe(33) // 1 of 3, rounded
+  })
+
+  it('returns null mfaAdoptionPct when there are zero active users', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
+    mockRepo.listActiveUsersForDormancy.mockResolvedValue([])
+    const result = await makeService().overview()
+    expect(result.tiles.mfaAdoptionPct).toBeNull()
+  })
+
+  it('mfaAdoptionPct is 100 when every active user is enrolled', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
+    mockRepo.listActiveUsersForDormancy.mockResolvedValue([
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: daysAgo(10) },
+    ])
+    const result = await makeService().overview()
+    expect(result.tiles.mfaAdoptionPct).toBe(100)
+  })
+
+  it('mfaAdoptionPct is a platform-wide count, not per-tenant, across multiple tenants', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([
+      { id: 't1', name: 'Tenant One', plan: 'clinic' },
+      { id: 't2', name: 'Tenant Two', plan: 'free' },
+    ])
+    mockRepo.listActiveUsersForDormancy.mockResolvedValue([
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: daysAgo(10) },
+      { tenantId: 't2', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: null },
+    ])
+    const result = await makeService().overview()
+    expect(result.tiles.mfaAdoptionPct).toBe(50)
   })
 })

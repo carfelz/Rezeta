@@ -57,13 +57,32 @@ describe('SecuritySummarySchema', () => {
       distinctUsers: 5,
       blocked: 1,
       dormantUsers30d: 2,
+      mfaAdoptionPct: 40,
     })
     expect(parsed.logins).toBe(42)
+    expect(parsed.mfaAdoptionPct).toBe(40)
+  })
+
+  it('accepts a null mfaAdoptionPct (zero active users)', () => {
+    const parsed = SecuritySummarySchema.parse({
+      logins: 0,
+      distinctUsers: 0,
+      blocked: 0,
+      dormantUsers30d: 0,
+      mfaAdoptionPct: null,
+    })
+    expect(parsed.mfaAdoptionPct).toBeNull()
   })
 
   it('rejects negative counts', () => {
     expect(() =>
-      SecuritySummarySchema.parse({ logins: -1, distinctUsers: 0, blocked: 0, dormantUsers30d: 0 }),
+      SecuritySummarySchema.parse({ logins: -1, distinctUsers: 0, blocked: 0, dormantUsers30d: 0, mfaAdoptionPct: null }),
+    ).toThrow()
+  })
+
+  it('rejects a mfaAdoptionPct outside 0-100', () => {
+    expect(() =>
+      SecuritySummarySchema.parse({ logins: 0, distinctUsers: 0, blocked: 0, dormantUsers30d: 0, mfaAdoptionPct: 101 }),
     ).toThrow()
   })
 })
@@ -84,7 +103,7 @@ describe('UserDeviceItemSchema', () => {
 describe('StaffSecurityOverviewSchema', () => {
   it('accepts a full overview payload', () => {
     const parsed = StaffSecurityOverviewSchema.parse({
-      tiles: { activeInstitutions: 3, activeUsers30d: 42, logins7d: 120, dormantAccounts60d: 5 },
+      tiles: { activeInstitutions: 3, activeUsers30d: 42, logins7d: 120, dormantAccounts60d: 5, mfaAdoptionPct: 50 },
       institutions: [
         {
           tenantId: '11111111-2222-4333-8444-555555555555',
@@ -102,7 +121,7 @@ describe('StaffSecurityOverviewSchema', () => {
 
   it('accepts a null institution name', () => {
     const parsed = StaffSecurityOverviewSchema.parse({
-      tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+      tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0, mfaAdoptionPct: null },
       institutions: [
         {
           tenantId: '11111111-2222-4333-8444-555555555555',
@@ -121,7 +140,7 @@ describe('StaffSecurityOverviewSchema', () => {
   it('rejects a logins14d array with the wrong length', () => {
     expect(() =>
       StaffSecurityOverviewSchema.parse({
-        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0, mfaAdoptionPct: null },
         institutions: [
           {
             tenantId: '11111111-2222-4333-8444-555555555555',
@@ -140,7 +159,7 @@ describe('StaffSecurityOverviewSchema', () => {
   it('rejects an unknown plan', () => {
     expect(() =>
       StaffSecurityOverviewSchema.parse({
-        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0, mfaAdoptionPct: null },
         institutions: [
           {
             tenantId: '11111111-2222-4333-8444-555555555555',
@@ -159,7 +178,7 @@ describe('StaffSecurityOverviewSchema', () => {
   it('rejects negative tile counts', () => {
     expect(() =>
       StaffSecurityOverviewSchema.parse({
-        tiles: { activeInstitutions: -1, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        tiles: { activeInstitutions: -1, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0, mfaAdoptionPct: null },
         institutions: [],
       }),
     ).toThrow()

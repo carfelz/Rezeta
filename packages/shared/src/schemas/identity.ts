@@ -27,6 +27,8 @@ export const SecuritySummarySchema = z.object({
   distinctUsers: z.number().int().nonnegative(),
   blocked: z.number().int().nonnegative(),
   dormantUsers30d: z.number().int().nonnegative(),
+  /** Percent of active tenant users with a synced TOTP enrollment; null when the tenant has zero active users (identity slice 4). */
+  mfaAdoptionPct: z.number().int().min(0).max(100).nullable(),
 })
 export type SecuritySummaryDto = z.infer<typeof SecuritySummarySchema>
 
@@ -53,6 +55,8 @@ export const StaffSecurityTilesSchema = z.object({
   activeUsers30d: z.number().int().nonnegative(),
   logins7d: z.number().int().nonnegative(),
   dormantAccounts60d: z.number().int().nonnegative(),
+  /** Percent of active platform-wide users with a synced TOTP enrollment; null when there are zero active users (identity slice 4). Global only — no per-institution breakdown this slice. */
+  mfaAdoptionPct: z.number().int().min(0).max(100).nullable(),
 })
 export type StaffSecurityTilesDto = z.infer<typeof StaffSecurityTilesSchema>
 

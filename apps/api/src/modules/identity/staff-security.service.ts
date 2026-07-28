@@ -22,6 +22,7 @@ interface LoginAggregates {
 
 interface DormancyAggregates {
   dormantAccounts60d: number
+  mfaAdoptionPct: number | null
   perTenant: Map<string, { dormant30d: number; pendingInvites: number }>
 }
 
@@ -70,6 +71,7 @@ export class StaffSecurityService {
         activeUsers30d: loginAgg.activeUsers30d,
         logins7d: loginAgg.logins7d,
         dormantAccounts60d: dormancyAgg.dormantAccounts60d,
+        mfaAdoptionPct: dormancyAgg.mfaAdoptionPct,
       },
       institutions,
     }
@@ -142,16 +144,21 @@ function bucketLogins14d(rows: { createdAt: Date }[], now: Date): number[] {
  * once the account itself is older than that cutoff, so a user invited
  * yesterday is never miscounted as dormant. "Pending invite" has no
  * freshness exclusion: an active user who has never logged in is pending
- * from the moment they're created.
+ * from the moment they're created. mfaAdoptionPct (identity slice 4) is
+ * platform-wide — enrolled active users / all active users, rounded, null
+ * when there are zero active users on the platform. No per-tenant
+ * breakdown this slice (see identity slice 4 plan §Out of scope).
  */
 function aggregateDormancy(rows: StaffSecurityUserRow[], now: Date): DormancyAggregates {
   const cutoffTenant = new Date(now.getTime() - TENANT_DORMANT_DAYS * DAY_MS)
   const cutoffGlobal = new Date(now.getTime() - GLOBAL_DORMANT_DAYS * DAY_MS)
   const perTenant = new Map<string, { dormant30d: number; pendingInvites: number }>()
   let dormantAccounts60d = 0
+  let mfaEnrolledCount = 0
 
   for (const row of rows) {
     if (isDormantAt(row, cutoffGlobal)) dormantAccounts60d += 1
+    if (row.mfaEnrolledAt !== null) mfaEnrolledCount += 1
 
     const entry = perTenant.get(row.tenantId) ?? { dormant30d: 0, pendingInvites: 0 }
     if (isDormantAt(row, cutoffTenant)) entry.dormant30d += 1
@@ -159,7 +166,11 @@ function aggregateDormancy(rows: StaffSecurityUserRow[], now: Date): DormancyAgg
     perTenant.set(row.tenantId, entry)
   }
 
-  return { dormantAccounts60d, perTenant }
+  return {
+    dormantAccounts60d,
+    mfaAdoptionPct: rows.length === 0 ? null : Math.round((mfaEnrolledCount / rows.length) * 100),
+    perTenant,
+  }
 }
 
 /**

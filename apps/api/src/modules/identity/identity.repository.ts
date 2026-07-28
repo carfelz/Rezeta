@@ -43,6 +43,7 @@ export interface SecuritySummaryRow {
   distinctUsers: number
   blocked: number
   dormantUsers30d: number
+  mfaAdoptionPct: number | null
 }
 
 export interface StaffSecurityTenantRow {
@@ -61,6 +62,7 @@ export interface StaffSecurityUserRow {
   tenantId: string
   lastLoginAt: Date | null
   createdAt: Date
+  mfaEnrolledAt: Date | null
 }
 
 /**
@@ -151,31 +153,47 @@ export class IdentityRepository {
    * that retention window. Fixed 30-day window regardless of the `since`
    * argument used for the other three counts (identity design §6 screen 3
    * shows "Sin acceso 30d" as a fixed tile, not filtered by the days range).
+   * mfaAdoptionPct (identity slice 4) is active users with a synced
+   * User.mfaEnrolledAt divided by all active users, rounded to the nearest
+   * whole percent; null when the tenant has zero active users (avoids a
+   * 0/0 NaN reaching the DTO).
    */
   async securitySummary(tenantId: string, since: Date): Promise<SecuritySummaryRow> {
     const dormantCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    const [logins, blocked, distinctUserRows, dormantUsers30d] = await Promise.all([
-      this.prisma.loginEvent.count({
-        where: { tenantId, createdAt: { gte: since }, outcome: 'success' },
-      }),
-      this.prisma.loginEvent.count({
-        where: { tenantId, createdAt: { gte: since }, outcome: 'blocked' },
-      }),
-      this.prisma.loginEvent.findMany({
-        where: { tenantId, createdAt: { gte: since }, outcome: 'success', userId: { not: null } },
-        distinct: ['userId'],
-        select: { userId: true },
-      }),
-      this.prisma.user.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          isActive: true,
-          OR: [{ lastLoginAt: null }, { lastLoginAt: { lt: dormantCutoff } }],
-        },
-      }),
-    ])
-    return { logins, blocked, distinctUsers: distinctUserRows.length, dormantUsers30d }
+    const [logins, blocked, distinctUserRows, dormantUsers30d, activeUsersTotal, mfaEnrolledActive] =
+      await Promise.all([
+        this.prisma.loginEvent.count({
+          where: { tenantId, createdAt: { gte: since }, outcome: 'success' },
+        }),
+        this.prisma.loginEvent.count({
+          where: { tenantId, createdAt: { gte: since }, outcome: 'blocked' },
+        }),
+        this.prisma.loginEvent.findMany({
+          where: { tenantId, createdAt: { gte: since }, outcome: 'success', userId: { not: null } },
+          distinct: ['userId'],
+          select: { userId: true },
+        }),
+        this.prisma.user.count({
+          where: {
+            tenantId,
+            deletedAt: null,
+            isActive: true,
+            OR: [{ lastLoginAt: null }, { lastLoginAt: { lt: dormantCutoff } }],
+          },
+        }),
+        this.prisma.user.count({ where: { tenantId, deletedAt: null, isActive: true } }),
+        this.prisma.user.count({
+          where: { tenantId, deletedAt: null, isActive: true, mfaEnrolledAt: { not: null } },
+        }),
+      ])
+    return {
+      logins,
+      blocked,
+      distinctUsers: distinctUserRows.length,
+      dormantUsers30d,
+      mfaAdoptionPct:
+        activeUsersTotal === 0 ? null : Math.round((mfaEnrolledActive / activeUsersTotal) * 100),
+    }
   }
 
   /**
@@ -220,7 +238,7 @@ export class IdentityRepository {
   async listActiveUsersForDormancy(): Promise<StaffSecurityUserRow[]> {
     return this.prisma.user.findMany({
       where: { deletedAt: null, isActive: true },
-      select: { tenantId: true, lastLoginAt: true, createdAt: true },
+      select: { tenantId: true, lastLoginAt: true, createdAt: true, mfaEnrolledAt: true },
     })
   }
 }

@@ -106,16 +106,35 @@ describe('IdentityRepository', () => {
     expect(map.get('u2')).toBe('bo@rezeta.do')
   })
 
-  it('securitySummary aggregates logins/blocked/distinctUsers/dormantUsers30d', async () => {
+  it('securitySummary aggregates logins/blocked/distinctUsers/dormantUsers30d/mfaAdoptionPct', async () => {
     vi.mocked(prisma.loginEvent.count).mockResolvedValueOnce(10).mockResolvedValueOnce(2)
     vi.mocked(prisma.loginEvent.findMany).mockResolvedValueOnce([
       { userId: 'u1' },
       { userId: 'u2' },
     ] as never)
-    vi.mocked(prisma.user.count).mockResolvedValue(3)
+    vi.mocked(prisma.user.count)
+      .mockResolvedValueOnce(3) // dormantUsers30d
+      .mockResolvedValueOnce(20) // activeUsersTotal
+      .mockResolvedValueOnce(5) // mfaEnrolledActive
     const since = new Date('2026-07-21T00:00:00Z')
     const result = await makeRepo().securitySummary('t1', since)
-    expect(result).toEqual({ logins: 10, blocked: 2, distinctUsers: 2, dormantUsers30d: 3 })
+    expect(result).toEqual({ logins: 10, blocked: 2, distinctUsers: 2, dormantUsers30d: 3, mfaAdoptionPct: 25 })
+  })
+
+  it('securitySummary returns null mfaAdoptionPct when the tenant has zero active users', async () => {
+    vi.mocked(prisma.loginEvent.count).mockResolvedValue(0)
+    vi.mocked(prisma.loginEvent.findMany).mockResolvedValue([] as never)
+    vi.mocked(prisma.user.count).mockResolvedValueOnce(0).mockResolvedValueOnce(0).mockResolvedValueOnce(0)
+    const result = await makeRepo().securitySummary('t1', new Date())
+    expect(result.mfaAdoptionPct).toBeNull()
+  })
+
+  it('securitySummary rounds mfaAdoptionPct to the nearest whole percent', async () => {
+    vi.mocked(prisma.loginEvent.count).mockResolvedValue(0)
+    vi.mocked(prisma.loginEvent.findMany).mockResolvedValue([] as never)
+    vi.mocked(prisma.user.count).mockResolvedValueOnce(0).mockResolvedValueOnce(3).mockResolvedValueOnce(1)
+    const result = await makeRepo().securitySummary('t1', new Date())
+    expect(result.mfaAdoptionPct).toBe(33) // round(1/3 * 100) = 33
   })
 })
 
@@ -144,7 +163,7 @@ describe('IdentityRepository (staff security aggregates)', () => {
     await makeRepo().listActiveUsersForDormancy()
     expect(prisma.user.findMany).toHaveBeenCalledWith({
       where: { deletedAt: null, isActive: true },
-      select: { tenantId: true, lastLoginAt: true, createdAt: true },
+      select: { tenantId: true, lastLoginAt: true, createdAt: true, mfaEnrolledAt: true },
     })
   })
 })
