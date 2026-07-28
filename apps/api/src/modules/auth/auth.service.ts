@@ -7,7 +7,7 @@ import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { UsersRepository, type UserWithTenant } from '../users/users.repository.js'
 import { PermissionsService } from '../permissions/permissions.service.js'
-import { LoginTelemetryService, mapFirebaseSignInMethod } from '../identity/index.js'
+import { LoginTelemetryService, mapFirebaseSignInMethod, mapFirebaseMfaUsed } from '../identity/index.js'
 
 export interface ProvisionMeta {
   ip?: string
@@ -56,6 +56,7 @@ export class AuthService {
     })
 
     const method = mapFirebaseSignInMethod(verified.rawClaims)
+    const mfaUsed = mapFirebaseMfaUsed(verified.rawClaims)
     const telemetryMeta = {
       ...(meta?.ip ? { ipAddress: meta.ip } : {}),
       ...(meta?.userAgent ? { userAgent: meta.userAgent } : {}),
@@ -66,6 +67,7 @@ export class AuthService {
         userId: user.id,
         outcome: 'success',
         method,
+        mfaUsed,
         ...telemetryMeta,
       }),
       this.loginTelemetry.upsertDevice({

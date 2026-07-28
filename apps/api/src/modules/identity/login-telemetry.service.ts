@@ -12,6 +12,8 @@ export interface RecordLoginInput {
   platformUserId?: string | null
   outcome: LoginOutcome
   method: LoginMethod
+  /** Derived from the Firebase ID token's `firebase.sign_in_second_factor` claim (identity slice 4). Defaults to false. */
+  mfaUsed?: boolean
   ipAddress?: string | null
   userAgent?: string | null
 }
@@ -51,6 +53,12 @@ export function mapFirebaseSignInMethod(rawClaims: Record<string, unknown>): Log
   return 'unknown'
 }
 
+/** Firebase `sign_in_second_factor` claim → whether this login used TOTP MFA. TOTP only this slice (SMS deferred) — any other value maps to false. */
+export function mapFirebaseMfaUsed(rawClaims: Record<string, unknown>): boolean {
+  const firebase = rawClaims['firebase'] as { sign_in_second_factor?: string } | undefined
+  return firebase?.sign_in_second_factor === 'totp'
+}
+
 /**
  * Login telemetry (LoginEvent) + device registry (UserDevice) writes.
  * `recordLogin` doesn't catch its own errors — matching the codebase's
@@ -79,6 +87,7 @@ export class LoginTelemetryService {
       platformUserId: input.platformUserId ?? null,
       outcome: input.outcome,
       method: input.method,
+      mfaUsed: input.mfaUsed ?? false,
       ipAddress: input.ipAddress ?? null,
       userAgent: input.userAgent ?? null,
     })

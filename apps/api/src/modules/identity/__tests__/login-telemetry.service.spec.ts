@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
-import { LoginTelemetryService, fingerprintFor, mapFirebaseSignInMethod } from '../login-telemetry.service.js'
+import {
+  LoginTelemetryService,
+  fingerprintFor,
+  mapFirebaseSignInMethod,
+  mapFirebaseMfaUsed,
+} from '../login-telemetry.service.js'
 import type { IdentityRepository } from '../identity.repository.js'
 import type { InvitationMailerService } from '../../users/index.js'
 
@@ -26,7 +31,7 @@ beforeEach(() => {
 })
 
 describe('recordLogin', () => {
-  it('inserts a login event, normalizing missing fields to null', async () => {
+  it('inserts a login event, normalizing missing fields to null and mfaUsed to false', async () => {
     mockRepo.insertLoginEvent.mockResolvedValue(undefined)
     await makeService().recordLogin({ tenantId: 't1', userId: 'u1', outcome: 'success', method: 'password' })
     expect(mockRepo.insertLoginEvent).toHaveBeenCalledWith({
@@ -35,9 +40,18 @@ describe('recordLogin', () => {
       platformUserId: null,
       outcome: 'success',
       method: 'password',
+      mfaUsed: false,
       ipAddress: null,
       userAgent: null,
     })
+  })
+
+  it('passes through an explicit mfaUsed: true', async () => {
+    mockRepo.insertLoginEvent.mockResolvedValue(undefined)
+    await makeService().recordLogin({ outcome: 'success', method: 'password', mfaUsed: true })
+    expect(mockRepo.insertLoginEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ mfaUsed: true }),
+    )
   })
 
   it('propagates repository failures — callers are responsible for their own .catch (see AuthGuard/AuthService)', async () => {
@@ -61,6 +75,7 @@ describe('recordLogin', () => {
       platformUserId: 'p1',
       outcome: 'success',
       method: 'sso',
+      mfaUsed: false,
       ipAddress: '2.2.2.2',
       userAgent: 'UA-x',
     })
@@ -165,5 +180,20 @@ describe('mapFirebaseSignInMethod', () => {
   it('maps anything else, or missing claims, to unknown', () => {
     expect(mapFirebaseSignInMethod({ firebase: { sign_in_provider: 'saml.example.com' } })).toBe('unknown')
     expect(mapFirebaseSignInMethod({})).toBe('unknown')
+  })
+})
+
+describe('mapFirebaseMfaUsed', () => {
+  it('is true when sign_in_second_factor is totp', () => {
+    expect(mapFirebaseMfaUsed({ firebase: { sign_in_second_factor: 'totp' } })).toBe(true)
+  })
+  it('is false when sign_in_second_factor is absent', () => {
+    expect(mapFirebaseMfaUsed({ firebase: { sign_in_provider: 'password' } })).toBe(false)
+  })
+  it('is false for missing claims entirely', () => {
+    expect(mapFirebaseMfaUsed({})).toBe(false)
+  })
+  it('is false for a non-totp second factor value', () => {
+    expect(mapFirebaseMfaUsed({ firebase: { sign_in_second_factor: 'phone' } })).toBe(false)
   })
 })

@@ -6,7 +6,7 @@ import type { PrismaService } from '../../../lib/prisma.service.js'
 const prisma = {
   loginEvent: { create: vi.fn(), count: vi.fn(), findMany: vi.fn() },
   userDevice: { upsert: vi.fn(), findMany: vi.fn() },
-  user: { count: vi.fn(), findMany: vi.fn() },
+  user: { count: vi.fn(), findMany: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
   tenant: { findMany: vi.fn() },
 } as unknown as PrismaService
 
@@ -27,6 +27,7 @@ describe('IdentityRepository', () => {
       platformUserId: null,
       outcome: 'success',
       method: 'password',
+      mfaUsed: true,
       ipAddress: '1.1.1.1',
       userAgent: 'UA',
     }
@@ -144,6 +145,35 @@ describe('IdentityRepository (staff security aggregates)', () => {
     expect(prisma.user.findMany).toHaveBeenCalledWith({
       where: { deletedAt: null, isActive: true },
       select: { tenantId: true, lastLoginAt: true, createdAt: true },
+    })
+  })
+})
+
+describe('IdentityRepository (mfa sync)', () => {
+  it('getMfaEnrolledAt returns the stored value', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ mfaEnrolledAt: new Date('2026-07-01T00:00:00Z') } as never)
+    const result = await makeRepo().getMfaEnrolledAt('u1')
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      select: { mfaEnrolledAt: true },
+    })
+    expect(result).toEqual(new Date('2026-07-01T00:00:00Z'))
+  })
+
+  it('getMfaEnrolledAt returns null when the user row is missing', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never)
+    const result = await makeRepo().getMfaEnrolledAt('u1')
+    expect(result).toBeNull()
+  })
+
+  it('updateMfaEnrolledAt writes the given value', async () => {
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: 'u1', mfaEnrolledAt: null } as never)
+    const at = new Date('2026-07-28T00:00:00Z')
+    await makeRepo().updateMfaEnrolledAt('u1', at)
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { mfaEnrolledAt: at },
+      select: { id: true, mfaEnrolledAt: true },
     })
   })
 })

@@ -168,6 +168,28 @@ describe('AuthService', () => {
       )
     })
 
+    it('derives mfaUsed: true from the sign_in_second_factor totp claim', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'password', sign_in_second_factor: 'totp' } },
+      } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ mfaUsed: true }),
+      )
+    })
+
+    it('derives mfaUsed: false when no second factor was used', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ mfaUsed: false }),
+      )
+    })
+
     it('still resolves provision when login telemetry fails (fire-and-forget)', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       mockLoginTelemetry.recordLogin.mockRejectedValueOnce(new Error('db down'))

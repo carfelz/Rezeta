@@ -4,6 +4,7 @@ export {
   LoginTelemetryService,
   fingerprintFor,
   mapFirebaseSignInMethod,
+  mapFirebaseMfaUsed,
   type LoginOutcome,
   type LoginMethod,
 } from './login-telemetry.service.js'

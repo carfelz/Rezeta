@@ -7,6 +7,7 @@ export interface InsertLoginEventInput {
   platformUserId: string | null
   outcome: string
   method: string
+  mfaUsed: boolean
   ipAddress: string | null
   userAgent: string | null
 }
@@ -75,6 +76,21 @@ export class IdentityRepository {
 
   async insertLoginEvent(input: InsertLoginEventInput): Promise<void> {
     await this.prisma.loginEvent.create({ data: input })
+  }
+
+  /** Current mirrored MFA-enrollment timestamp for a user — read before a sync write so the caller can detect an enable transition (identity slice 4). */
+  async getMfaEnrolledAt(userId: string): Promise<Date | null> {
+    const row = await this.prisma.user.findUnique({ where: { id: userId }, select: { mfaEnrolledAt: true } })
+    return row?.mfaEnrolledAt ?? null
+  }
+
+  /** Writes the mirrored MFA-enrollment timestamp — called by IdentityService.syncMfaEnrollment after reading the provider's current state. */
+  async updateMfaEnrolledAt(userId: string, mfaEnrolledAt: Date | null): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaEnrolledAt },
+      select: { id: true, mfaEnrolledAt: true },
+    })
   }
 
   /**
