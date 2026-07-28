@@ -156,6 +156,16 @@ describe('overview', () => {
     expect(result.tiles.mfaAdoptionPct).toBe(100)
   })
 
+  it('mfaAdoptionPct is 0 (not null) when there are active users but zero MFA enrollments', async () => {
+    mockRepo.listAllTenants.mockResolvedValue([{ id: 't1', name: 'Tenant One', plan: 'clinic' }])
+    mockRepo.listActiveUsersForDormancy.mockResolvedValue([
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: null },
+      { tenantId: 't1', lastLoginAt: daysAgo(1), createdAt: daysAgo(100), mfaEnrolledAt: null },
+    ])
+    const result = await makeService().overview()
+    expect(result.tiles.mfaAdoptionPct).toBe(0)
+  })
+
   it('mfaAdoptionPct is a platform-wide count, not per-tenant, across multiple tenants', async () => {
     mockRepo.listAllTenants.mockResolvedValue([
       { id: 't1', name: 'Tenant One', plan: 'clinic' },

@@ -300,5 +300,17 @@ describe('AuditLogService', () => {
       const csv = await service.exportCsv('tenant-1', {})
       expect(csv).toContain('system')
     })
+
+    it('neutralizes a =HYPERLINK(...) formula-injection payload in an attacker-controlled actor full name (accepted trade-off: an ordinary "-5"-shaped name gets the same \' prefix)', async () => {
+      mockRepo.findTenantPlan.mockResolvedValue('clinic')
+      mockRepo.findForExport.mockResolvedValue([
+        makeRow({ actor: { id: 'user-1', fullName: '=HYPERLINK("https://evil.example","click")', email: 'dr@test.com', role: 'super_admin' } }),
+        makeRow({ id: 'log-2', actor: { id: 'user-2', fullName: '-5', email: 'a@test.com', role: 'staff' } }),
+      ])
+      const csv = await service.exportCsv('tenant-1', {})
+      const lines = csv.split('\n')
+      expect(lines[1]).toContain('"\'=HYPERLINK(""https://evil.example"",""click"")"')
+      expect(lines[2]).toContain(",'-5,")
+    })
   })
 })

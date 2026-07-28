@@ -144,6 +144,25 @@ describe('exportLoginsCsv', () => {
     const lines = csv.split('\n')
     expect(lines[1]).toContain(',,') // empty userName and userAgent fields
   })
+
+  it('neutralizes a =HYPERLINK(...) formula-injection payload in an attacker-controlled user_agent header (accepted trade-off: an ordinary "-5"-shaped value gets the same \' prefix)', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      {
+        id: 'e1',
+        userId: 'u1',
+        outcome: 'success',
+        method: 'password',
+        ipAddress: '10.0.0.1',
+        userAgent: '=HYPERLINK("https://evil.example","click")',
+        createdAt: new Date('2026-07-28T00:00:00Z'),
+      },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', '-5']]))
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    const lines = csv.split('\n')
+    expect(lines[1]).toContain('"\'=HYPERLINK(""https://evil.example"",""click"")"')
+    expect(lines[1]).toContain("'-5")
+  })
 })
 
 describe('myDevices', () => {

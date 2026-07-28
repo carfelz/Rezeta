@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import type { IdentityPolicyDto, LoginEventItemDto, MfaSyncResultDto, SecuritySummaryDto, UserDeviceItemDto } from '@rezeta/shared'
 import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
+import { csvEscape } from '../../common/csv/csv.js'
 import { AUTH_PROVIDER, type IAuthProvider } from '../../lib/auth/index.js'
 import { IdentityRepository } from './identity.repository.js'
 
@@ -138,11 +139,4 @@ export class IdentityService {
 function sinceFor(days: number | undefined): Date {
   const n = days && days > 0 ? days : DEFAULT_DAYS
   return new Date(Date.now() - n * 24 * 60 * 60 * 1000)
-}
-
-function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
 }

@@ -130,6 +130,14 @@ describe('IdentityRepository', () => {
     expect(result.mfaAdoptionPct).toBeNull()
   })
 
+  it('securitySummary returns 0 (not null) mfaAdoptionPct when the tenant has active users but zero MFA enrollments', async () => {
+    vi.mocked(prisma.loginEvent.count).mockResolvedValue(0)
+    vi.mocked(prisma.loginEvent.findMany).mockResolvedValue([] as never)
+    vi.mocked(prisma.user.count).mockResolvedValueOnce(0).mockResolvedValueOnce(5).mockResolvedValueOnce(0)
+    const result = await makeRepo().securitySummary('t1', new Date())
+    expect(result.mfaAdoptionPct).toBe(0)
+  })
+
   it('securitySummary rounds mfaAdoptionPct to the nearest whole percent', async () => {
     vi.mocked(prisma.loginEvent.count).mockResolvedValue(0)
     vi.mocked(prisma.loginEvent.findMany).mockResolvedValue([] as never)

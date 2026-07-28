@@ -4,6 +4,34 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Neutralize CSV formula injection in identity and audit exports
+
+### Fixed
+
+- CSV formula injection: `IdentityService.exportLoginsCsv`
+  (`apps/api/src/modules/identity/identity.service.ts`) and
+  `AuditLogService.exportCsv`
+  (`apps/api/src/common/audit-log/audit-log.service.ts`) previously quoted
+  commas/quotes/newlines but did not neutralize a leading `=`, `+`, `-`, or
+  `@` — attacker-influenceable fields (`user_agent` request header, actor/
+  user display names) could carry a live formula (e.g. `=HYPERLINK(...)`)
+  that Excel would evaluate on open. Added a shared `csvEscape` helper
+  (`apps/api/src/common/csv/csv.ts`) that prefixes a literal `'` before any
+  field starting with a formula-trigger character, ahead of the existing
+  RFC 4180 quoting; both services now delegate to it. Accepted trade-off:
+  ordinary negative-number-looking values (e.g. `-5`) get the same `'`
+  prefix, since the string alone can't distinguish untrusted text from a
+  negative number.
+
+### Added
+
+- Unit test asserting `mfaAdoptionPct` is `0` (not `null`) when a tenant
+  (or the platform) has active users but zero MFA enrollments —
+  `IdentityRepository.securitySummary`
+  (`apps/api/src/modules/identity/__tests__/identity.repository.spec.ts`)
+  and `StaffSecurityService.overview`
+  (`apps/api/src/modules/identity/__tests__/staff-security.service.spec.ts`).
+
 ## [2026-07-28] TOTP MFA, optional for all (identity slice 4)
 
 ### Added
