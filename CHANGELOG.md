@@ -4,6 +4,23 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Staff institutions list
+
+### Added
+
+- `GET /v1/staff/institutions` (`StaffService.listInstitutions`): read-only
+  roster of all institutions with type, plan, and active/total user counts via
+  grouped queries; `StaffInstitutionSchema` in
+  `packages/shared/src/schemas/staff.ts`; real-Postgres integration spec.
+- Staff console list page `/staff/institutions` (`Institutions.tsx`) with
+  `useStaffInstitutions` hook; "New institution" now hangs off the list.
+
+### Changed
+
+- `/staff` index redirect and the Institutions nav link now point at the list
+  instead of the create form; institution creation invalidates the list query;
+  create-success screen gains a back-to-list link.
+
 ## [2026-07-28] Staff platform-users follow-ups
 
 ### Fixed
