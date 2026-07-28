@@ -18,6 +18,7 @@ import { AuditLogRepository } from '../../../common/audit-log/audit-log.reposito
 import { IdentityRepository } from '../identity.repository.js'
 import { LoginTelemetryService } from '../login-telemetry.service.js'
 import { IdentityService } from '../identity.service.js'
+import { StaffSecurityService } from '../staff-security.service.js'
 import {
   createTestTenant,
   createTestUser,
@@ -158,6 +159,83 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
       expect(authProvider.revokeUserSessions).toHaveBeenCalledWith('ext-1')
       const audit = await waitForAuditLog(prisma, { action: 'session_revoked', entityId: user.id })
       expect(audit['tenantId']).toBe(tenant.id)
+    })
+  })
+
+  describe('StaffSecurityService (integration)', () => {
+    it('aggregates tiles and per-institution buckets/dormant/pending across 2 tenants and 3 days of logins', async () => {
+      const tenantA = await createTestTenant(prisma, { name: 'Tenant A', plan: 'clinic' })
+      const tenantB = await createTestTenant(prisma, { name: 'Tenant B', plan: 'free' })
+      const userA1 = await createTestUser(prisma, tenantA.id)
+      const userA2 = await createTestUser(prisma, tenantA.id)
+      const userB1 = await createTestUser(prisma, tenantB.id)
+
+      // Logins across 2 tenants / 3 days.
+      await prisma.loginEvent.create({
+        data: { tenantId: tenantA.id, userId: userA1.id, outcome: 'success', method: 'password', createdAt: new Date() },
+      })
+      await prisma.loginEvent.create({
+        data: {
+          tenantId: tenantA.id,
+          userId: userA2.id,
+          outcome: 'success',
+          method: 'password',
+          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      })
+      await prisma.loginEvent.create({
+        data: {
+          tenantId: tenantB.id,
+          userId: userB1.id,
+          outcome: 'success',
+          method: 'password',
+          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        },
+      })
+
+      // userA1: logged in and recently -> not dormant, not pending.
+      await prisma.user.update({ where: { id: userA1.id }, data: { lastLoginAt: new Date() } })
+      // userA2: never logged in, but the account itself is fresh -> pending, not dormant.
+      // (createdAt stays at `createTestUser`'s default of "now" — no update needed.)
+      // userB1: never logged in AND the account is old -> dormant at both 30d and 60d, and pending.
+      await prisma.user.update({
+        where: { id: userB1.id },
+        data: { createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), lastLoginAt: null },
+      })
+
+      const staffSecurity = new StaffSecurityService(repo)
+      const result = await staffSecurity.overview()
+
+      expect(result.tiles.activeInstitutions).toBe(2)
+      expect(result.tiles.activeUsers30d).toBe(3)
+      expect(result.tiles.logins7d).toBe(3)
+      expect(result.tiles.dormantAccounts60d).toBe(1) // userB1
+
+      const a = result.institutions.find((i) => i.tenantId === tenantA.id)
+      const b = result.institutions.find((i) => i.tenantId === tenantB.id)
+      expect(a?.mau30d).toBe(2)
+      expect(a?.logins14d.reduce((sum, n) => sum + n, 0)).toBe(2)
+      expect(a?.pendingInvites).toBe(1) // userA2
+      expect(a?.dormant30d).toBe(0)
+      expect(b?.mau30d).toBe(1)
+      expect(b?.dormant30d).toBe(1)
+      expect(b?.pendingInvites).toBe(1)
+    })
+
+    it('excludes deactivated users from dormant/pending counts', async () => {
+      const tenant = await createTestTenant(prisma)
+      const inactive = await createTestUser(prisma, tenant.id)
+      await prisma.user.update({
+        where: { id: inactive.id },
+        data: { isActive: false, createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+      })
+
+      const staffSecurity = new StaffSecurityService(repo)
+      const result = await staffSecurity.overview()
+      const t = result.institutions.find((i) => i.tenantId === tenant.id)
+      expect(t?.dormant30d).toBe(0)
+      expect(t?.pendingInvites).toBe(0)
+      expect(result.tiles.dormantAccounts60d).toBe(0)
     })
   })
 })
