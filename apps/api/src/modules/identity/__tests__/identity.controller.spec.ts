@@ -68,4 +68,18 @@ describe('IdentityController', () => {
     )
     expect(res.end).toHaveBeenCalledWith('created_at,user\n')
   })
+
+  it('exportCsv includes userId filter when provided', async () => {
+    const service = { exportLoginsCsv: vi.fn().mockResolvedValue('') } as unknown as IdentityService
+    const res = { set: vi.fn(), end: vi.fn() }
+    await new IdentityController(service).exportCsv('t1', '30', 'u2', res as never)
+    expect(service.exportLoginsCsv).toHaveBeenCalledWith('t1', { days: 30, userId: 'u2', limit: 1000 })
+  })
+
+  it('exportCsv omits days and userId filters when not provided', async () => {
+    const service = { exportLoginsCsv: vi.fn().mockResolvedValue('') } as unknown as IdentityService
+    const res = { set: vi.fn(), end: vi.fn() }
+    await new IdentityController(service).exportCsv('t1', undefined, undefined, res as never)
+    expect(service.exportLoginsCsv).toHaveBeenCalledWith('t1', { limit: 1000 })
+  })
 })

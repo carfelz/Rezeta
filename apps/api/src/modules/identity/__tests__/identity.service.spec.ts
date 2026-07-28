@@ -67,6 +67,25 @@ describe('listLogins', () => {
     await makeService().listLogins('t1', { limit: 50 })
     expect(mockRepo.findUserNames).not.toHaveBeenCalled()
   })
+
+  it('includes userId filter when provided', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([])
+    mockRepo.findUserNames.mockResolvedValue(new Map())
+    await makeService().listLogins('t1', { days: 7, userId: 'u2', limit: 50 })
+    expect(mockRepo.listLoginsForTenant).toHaveBeenCalledWith(
+      't1',
+      expect.objectContaining({ userId: 'u2' }),
+    )
+  })
+
+  it('returns null userName when user name is not found in the map', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: null, userAgent: null, createdAt: new Date() },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map()) // empty map, so u1 is not found
+    const result = await makeService().listLogins('t1', { limit: 50 })
+    expect(result[0]).toMatchObject({ userId: 'u1', userName: null })
+  })
 })
 
 describe('exportLoginsCsv', () => {
@@ -80,6 +99,46 @@ describe('exportLoginsCsv', () => {
     expect(lines[0]).toBe('created_at,user,outcome,method,ip_address,user_agent')
     expect(lines[1]).toContain('"García, Ana"')
     expect(lines[1]).toContain('"UA, 1"')
+  })
+
+  it('escapes double quotes within quoted fields', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: null, userAgent: 'Mozilla "test"', createdAt: new Date() },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'User "Name"']]))
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    expect(csv).toContain('"User ""Name"""')
+    expect(csv).toContain('"Mozilla ""test"""')
+  })
+
+  it('quotes fields with newlines', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: null, userAgent: 'UA\nline2', createdAt: new Date() },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'Test']]))
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    expect(csv).toContain('"UA\nline2"')
+  })
+
+  it('does not quote fields without special characters', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: 'u1', outcome: 'success', method: 'password', ipAddress: '10.0.0.1', userAgent: 'Mozilla', createdAt: new Date() },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'SimpleUser']]))
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    const lines = csv.split('\n')
+    expect(lines[1]).toContain('SimpleUser')
+    expect(lines[1]).toContain('Mozilla')
+  })
+
+  it('handles null userName and userAgent in CSV export', async () => {
+    mockRepo.listLoginsForTenant.mockResolvedValue([
+      { id: 'e1', userId: null, outcome: 'blocked', method: 'unknown', ipAddress: null, userAgent: null, createdAt: new Date() },
+    ])
+    mockRepo.findUserNames.mockResolvedValue(new Map())
+    const csv = await makeService().exportLoginsCsv('t1', { limit: 1000 })
+    const lines = csv.split('\n')
+    expect(lines[1]).toContain(',,') // empty userName and userAgent fields
   })
 })
 
