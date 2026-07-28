@@ -5,6 +5,7 @@ import {
   UserDeviceItemSchema,
   StaffSecurityOverviewSchema,
   MfaSyncResultSchema,
+  IdentityPolicySchema,
 } from '../identity.js'
 
 describe('LoginEventItemSchema', () => {
@@ -194,5 +195,15 @@ describe('MfaSyncResultSchema', () => {
   it('accepts a not-enrolled (null) result', () => {
     const parsed = MfaSyncResultSchema.parse({ mfaEnrolledAt: null })
     expect(parsed.mfaEnrolledAt).toBeNull()
+  })
+})
+
+describe('IdentityPolicySchema', () => {
+  it.each(['off', 'admins', 'all'] as const)('accepts mfaRequirement %s', (value) => {
+    expect(IdentityPolicySchema.parse({ mfaRequirement: value }).mfaRequirement).toBe(value)
+  })
+
+  it('rejects an unknown mfaRequirement', () => {
+    expect(() => IdentityPolicySchema.parse({ mfaRequirement: 'required' })).toThrow()
   })
 })

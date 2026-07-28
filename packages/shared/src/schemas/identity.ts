@@ -90,3 +90,16 @@ export const MfaSyncResultSchema = z.object({
   mfaEnrolledAt: z.string().nullable(),
 })
 export type MfaSyncResultDto = z.infer<typeof MfaSyncResultSchema>
+
+/**
+ * Per-tenant identity policy (`GET`/`PATCH /v1/identity/policy`) — identity
+ * slice 4 (design §4, §11 non-goals: "MFA enforcement defaults (engine
+ * ships, default stays off)"). `mfaRequirement` is stored and surfaced in
+ * the UI only this slice; nothing reads it to gate a login. Reused as both
+ * the read response and the PATCH request body — it's a single-field
+ * resource.
+ */
+export const IdentityPolicySchema = z.object({
+  mfaRequirement: z.enum(['off', 'admins', 'all']),
+})
+export type IdentityPolicyDto = z.infer<typeof IdentityPolicySchema>
