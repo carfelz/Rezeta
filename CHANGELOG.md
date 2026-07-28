@@ -4,6 +4,39 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-28] Staff platform-users follow-ups
+
+### Fixed
+
+- Staff roster table no longer overflows its card at default desktop width:
+  `StaffLayout`'s main container widened from `max-w-560` to `max-w-880`
+  (`apps/web/src/components/layout/StaffLayout.tsx`); `NewInstitution` keeps
+  its previous form measure via its own `max-w-560` wrapper
+  (`apps/web/src/pages/staff/NewInstitution.tsx`). Verified visually at
+  1280px — no horizontal clipping of the Deactivate/Resend buttons and no
+  internal card scroll.
+- `PlatformUsersService.resendInvite` now rejects deactivated targets with
+  `ConflictException(USER_INACTIVE)` instead of emailing a set-password link
+  to a soft-deleted account (`requireUser` intentionally resolves
+  soft-deleted rows for the reactivate path)
+  (`apps/api/src/modules/platform-users/platform-users.service.ts`), with a
+  unit test in `__tests__/platform-users.service.spec.ts`.
+
+### Added
+
+- `USER_INACTIVE` error code in `packages/shared/src/errors.ts`.
+
+### Changed
+
+- `TENANTLESS_MODELS` comment in
+  `apps/api/src/common/repository/__tests__/tenant-scoping.arch.spec.ts` now
+  explains that `platformUser` is control-plane data with no per-row scoping,
+  gated by `@PlatformRoute` at the controller.
+- `packages/shared/src/schemas/index.ts`: `./platform-users.js` export moved
+  after `./permissions.js` to restore alphabetical order.
+- `packages/db/prisma/schema.prisma` realigned via `prisma format`
+  (whitespace-only; verified no semantic diff).
+
 ## [2026-07-21] Staff-user management (identity slice 1)
 
 ### Added

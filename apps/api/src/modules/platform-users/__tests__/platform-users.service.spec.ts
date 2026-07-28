@@ -180,4 +180,18 @@ describe('resendInvite', () => {
       NotFoundException,
     )
   })
+
+  it('rejects a deactivated target without sending anything', async () => {
+    mockRepo.findById.mockResolvedValue({
+      ...row,
+      id: 'pu-2',
+      isActive: false,
+      deletedAt: new Date('2026-07-21T12:00:00Z'),
+    })
+    await expect(makeService().resendInvite('pu-1', 'pu-2')).rejects.toBeInstanceOf(
+      ConflictException,
+    )
+    expect(mockProvider.generatePasswordResetLink).not.toHaveBeenCalled()
+    expect(mockMailer.sendSetPasswordEmail).not.toHaveBeenCalled()
+  })
 })

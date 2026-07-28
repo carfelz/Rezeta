@@ -13,6 +13,7 @@ export const ErrorCode = {
   USER_NOT_FOUND: 'USER_NOT_FOUND',
   USER_ALREADY_EXISTS: 'USER_ALREADY_EXISTS',
   USER_NOT_PROVISIONED: 'USER_NOT_PROVISIONED', // valid Firebase token but no DB user yet
+  USER_INACTIVE: 'USER_INACTIVE',
 
   // ── Location ────────────────────────────────────────────────
   LOCATION_NOT_FOUND: 'LOCATION_NOT_FOUND',
