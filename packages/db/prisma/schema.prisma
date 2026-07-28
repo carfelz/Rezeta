@@ -814,3 +814,47 @@ model PlatformUser {
   @@index([externalUid])
   @@map("platform_users")
 }
+
+/// Provider-agnostic auth telemetry purpose-built for the security dashboards
+/// (identity module design §4, §6 screens 2-3). NOT part of the immutable
+/// AuditLog legal trail, and intentionally has NO foreign keys — that keeps it
+/// valid across a future auth-provider migration (see the plan-B exit runbook,
+/// identity design §10) and lets it survive a User/PlatformUser row being
+/// hard-deleted. Exactly one of userId/platformUserId is set per row (or
+/// neither, for a blocked attempt against an identity with no matching row);
+/// the service/guard layer enforces that, not a DB constraint. Retained for
+/// 12 months, then purged by a scheduled job (out of scope this slice).
+model LoginEvent {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?  @map("tenant_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  platformUserId String?  @map("platform_user_id") @db.Uuid
+  outcome        String   @db.VarChar(20) // success | blocked
+  method         String   @db.VarChar(20) // password | google | sso | unknown
+  ipAddress      String?  @map("ip_address") @db.VarChar(64)
+  userAgent      String?  @map("user_agent") @db.VarChar(512)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@map("login_events")
+}
+
+/// Devices seen per user — powers "new device" chips (future slice) and the
+/// self-service device list (identity design §6 screen 2). Fingerprint =
+/// sha256(`${userAgent}|${ip}`), computed server-side by LoginTelemetryService.
+/// Same no-FK, provider-agnostic rationale as LoginEvent.
+model UserDevice {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?  @map("tenant_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  platformUserId String?  @map("platform_user_id") @db.Uuid
+  fingerprint    String   @db.VarChar(128)
+  userAgent      String?  @map("user_agent") @db.VarChar(512)
+  firstSeenAt    DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt     DateTime @default(now()) @map("last_seen_at")
+
+  @@unique([userId, fingerprint])
+  @@index([userId])
+  @@map("user_devices")
+}
