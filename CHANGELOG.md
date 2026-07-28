@@ -37,6 +37,17 @@ Format: `[version/date] — description`. Entries are ordered newest first.
 - `packages/db/prisma/schema.prisma` realigned via `prisma format`
   (whitespace-only; verified no semantic diff).
 
+## [2026-07-28] Staff institutions list design spec
+
+### Added
+
+- `docs/superpowers/specs/2026-07-28-staff-institutions-list-design.md`: design
+  for a read-only institutions roster in the staff console —
+  `GET /v1/staff/institutions` (name, type, plan, user counts) and an
+  `/staff/institutions` list page the create form hangs off. Closes the gap
+  where staff could create institutions but not see them. Spec only;
+  implementation deferred.
+
 ## [2026-07-21] Staff-user management (identity slice 1)
 
 ### Added
