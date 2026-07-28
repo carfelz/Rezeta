@@ -116,6 +116,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
       const activeDormant = await createTestUser(prisma, tenant.id)
 
       await prisma.user.update({ where: { id: activeRecent.id }, data: { lastLoginAt: new Date() } })
+      await prisma.user.update({ where: { id: activeRecent.id }, data: { mfaEnrolledAt: new Date() } })
       await telemetry.recordLogin({ tenantId: tenant.id, userId: activeRecent.id, outcome: 'success', method: 'password' })
       await telemetry.recordLogin({ tenantId: tenant.id, userId: activeRecent.id, outcome: 'blocked', method: 'unknown' })
       // activeDormant never logs in — lastLoginAt stays null, so it counts as dormant.
@@ -126,6 +127,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
       expect(summary.blocked).toBe(1)
       expect(summary.distinctUsers).toBe(1)
       expect(summary.dormantUsers30d).toBe(1)
+      expect(summary.mfaAdoptionPct).toBe(50) // activeRecent enrolled, activeDormant not — 1 of 2
     })
 
     it('excludes other tenants from the aggregates', async () => {
@@ -228,6 +230,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
 
       // userA1: logged in and recently -> not dormant, not pending.
       await prisma.user.update({ where: { id: userA1.id }, data: { lastLoginAt: new Date() } })
+      await prisma.user.update({ where: { id: userA1.id }, data: { mfaEnrolledAt: new Date() } })
       // userA2: never logged in, but the account itself is fresh -> pending, not dormant.
       // (createdAt stays at `createTestUser`'s default of "now" — no update needed.)
       // userB1: never logged in AND the account is old -> dormant at both 30d and 60d, and pending.
@@ -243,6 +246,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
       expect(result.tiles.activeUsers30d).toBe(3)
       expect(result.tiles.logins7d).toBe(3)
       expect(result.tiles.dormantAccounts60d).toBe(1) // userB1
+      expect(result.tiles.mfaAdoptionPct).toBe(33) // userA1 of {userA1, userA2, userB1}
 
       const a = result.institutions.find((i) => i.tenantId === tenantA.id)
       const b = result.institutions.find((i) => i.tenantId === tenantB.id)
