@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { LoginEventItemSchema, SecuritySummarySchema, UserDeviceItemSchema } from '../identity.js'
+import {
+  LoginEventItemSchema,
+  SecuritySummarySchema,
+  UserDeviceItemSchema,
+  StaffSecurityOverviewSchema,
+} from '../identity.js'
 
 describe('LoginEventItemSchema', () => {
   it('accepts a successful login row', () => {
@@ -72,5 +77,90 @@ describe('UserDeviceItemSchema', () => {
       lastSeenAt: '2026-07-28T00:00:00.000Z',
     })
     expect(parsed.fingerprint).toHaveLength(64)
+  })
+})
+
+describe('StaffSecurityOverviewSchema', () => {
+  it('accepts a full overview payload', () => {
+    const parsed = StaffSecurityOverviewSchema.parse({
+      tiles: { activeInstitutions: 3, activeUsers30d: 42, logins7d: 120, dormantAccounts60d: 5 },
+      institutions: [
+        {
+          tenantId: '11111111-2222-4333-8444-555555555555',
+          name: 'Centro Médico Vista Alegre',
+          plan: 'clinic',
+          mau30d: 26,
+          logins14d: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+          dormant30d: 0,
+          pendingInvites: 1,
+        },
+      ],
+    })
+    expect(parsed.institutions[0]?.logins14d).toHaveLength(14)
+  })
+
+  it('accepts a null institution name', () => {
+    const parsed = StaffSecurityOverviewSchema.parse({
+      tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+      institutions: [
+        {
+          tenantId: '11111111-2222-4333-8444-555555555555',
+          name: null,
+          plan: 'free',
+          mau30d: 0,
+          logins14d: new Array(14).fill(0),
+          dormant30d: 0,
+          pendingInvites: 0,
+        },
+      ],
+    })
+    expect(parsed.institutions[0]?.name).toBeNull()
+  })
+
+  it('rejects a logins14d array with the wrong length', () => {
+    expect(() =>
+      StaffSecurityOverviewSchema.parse({
+        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        institutions: [
+          {
+            tenantId: '11111111-2222-4333-8444-555555555555',
+            name: null,
+            plan: 'free',
+            mau30d: 0,
+            logins14d: [0, 1, 2],
+            dormant30d: 0,
+            pendingInvites: 0,
+          },
+        ],
+      }),
+    ).toThrow()
+  })
+
+  it('rejects an unknown plan', () => {
+    expect(() =>
+      StaffSecurityOverviewSchema.parse({
+        tiles: { activeInstitutions: 0, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        institutions: [
+          {
+            tenantId: '11111111-2222-4333-8444-555555555555',
+            name: null,
+            plan: 'enterprise',
+            mau30d: 0,
+            logins14d: new Array(14).fill(0),
+            dormant30d: 0,
+            pendingInvites: 0,
+          },
+        ],
+      }),
+    ).toThrow()
+  })
+
+  it('rejects negative tile counts', () => {
+    expect(() =>
+      StaffSecurityOverviewSchema.parse({
+        tiles: { activeInstitutions: -1, activeUsers30d: 0, logins7d: 0, dormantAccounts60d: 0 },
+        institutions: [],
+      }),
+    ).toThrow()
   })
 })

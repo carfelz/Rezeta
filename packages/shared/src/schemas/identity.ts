@@ -38,3 +38,38 @@ export const UserDeviceItemSchema = z.object({
   lastSeenAt: z.string(),
 })
 export type UserDeviceItemDto = z.infer<typeof UserDeviceItemSchema>
+
+/**
+ * Staff cross-institution security dashboard (`GET
+ * /v1/staff/identity/security/overview`) — identity slice 5 (design §6
+ * screen 4, §8). Aggregates counts, dates, and institution names only —
+ * never clinical data (control-plane isolation invariant, identity design
+ * §2 decision 5). `plan` mirrors `StaffInstitutionSchema`'s enum
+ * (`packages/shared/src/schemas/staff.ts`) — `Tenant.plan` never takes
+ * `'enterprise'` (that's a `Tenant.type` value).
+ */
+export const StaffSecurityTilesSchema = z.object({
+  activeInstitutions: z.number().int().nonnegative(),
+  activeUsers30d: z.number().int().nonnegative(),
+  logins7d: z.number().int().nonnegative(),
+  dormantAccounts60d: z.number().int().nonnegative(),
+})
+export type StaffSecurityTilesDto = z.infer<typeof StaffSecurityTilesSchema>
+
+export const StaffSecurityInstitutionSchema = z.object({
+  tenantId: z.string().uuid(),
+  name: z.string().nullable(),
+  plan: z.enum(['free', 'solo', 'practice', 'clinic']),
+  mau30d: z.number().int().nonnegative(),
+  /** Daily successful-login counts for the last 14 days, oldest first, today last. */
+  logins14d: z.array(z.number().int().nonnegative()).length(14),
+  dormant30d: z.number().int().nonnegative(),
+  pendingInvites: z.number().int().nonnegative(),
+})
+export type StaffSecurityInstitutionDto = z.infer<typeof StaffSecurityInstitutionSchema>
+
+export const StaffSecurityOverviewSchema = z.object({
+  tiles: StaffSecurityTilesSchema,
+  institutions: z.array(StaffSecurityInstitutionSchema),
+})
+export type StaffSecurityOverviewDto = z.infer<typeof StaffSecurityOverviewSchema>
