@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "bootstrap:platform": "tsx --env-file=../../.env src/scripts/create-institution.ts"
+    "bootstrap:platform": "tsx --env-file=../../.env src/scripts/create-institution.ts",
+    "mfa:enable-totp": "tsx --env-file=../../.env src/scripts/enable-totp-mfa.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
