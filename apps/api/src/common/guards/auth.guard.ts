@@ -18,6 +18,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
 import { IS_PROVISION_ROUTE_KEY } from '../decorators/provision-route.decorator.js'
 import { IS_PLATFORM_ROUTE_KEY } from '../decorators/platform-route.decorator.js'
 import { PermissionsService } from '../../modules/permissions/permissions.service.js'
+import { LoginTelemetryService } from '../../modules/identity/index.js'
 
 export interface AuthenticatedRequest extends Request {
   user: AuthUser
@@ -37,6 +38,7 @@ export class AuthGuard implements CanActivate {
     @Inject(PlatformUsersRepository) private platformUsers: PlatformUsersRepository,
     @Inject(AuditLogService) private auditLog: AuditLogService,
     @Inject(PermissionsService) private permissions: PermissionsService,
+    @Inject(LoginTelemetryService) private loginTelemetry: LoginTelemetryService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -124,6 +126,22 @@ export class AuthGuard implements CanActivate {
     }
 
     if (!user.isActive) {
+      void this.loginTelemetry
+        .recordLogin({
+          tenantId: user.tenantId,
+          userId: user.id,
+          outcome: 'blocked',
+          method: 'unknown',
+          ...(request.ip ? { ipAddress: request.ip } : {}),
+          ...(typeof request.headers['user-agent'] === 'string'
+            ? { userAgent: request.headers['user-agent'] }
+            : {}),
+        })
+        .catch((err: unknown) => {
+          this.logger.warn(
+            `Failed to record blocked login for user id=${user.id}: ${(err as Error).message}`,
+          )
+        })
       throw new UnauthorizedException({
         code: ErrorCode.UNAUTHORIZED,
         message: 'User account is deactivated',

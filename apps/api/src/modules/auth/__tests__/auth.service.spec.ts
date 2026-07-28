@@ -23,6 +23,11 @@ const mockPermissions = {
   resolveCapabilities: vi.fn(),
 }
 
+const mockLoginTelemetry = {
+  recordLogin: vi.fn().mockResolvedValue(undefined),
+  upsertDevice: vi.fn().mockResolvedValue(undefined),
+}
+
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
   get: vi.fn((key: string) => {
     if (key === 'nodeEnv') return nodeEnv
@@ -50,6 +55,7 @@ function makeService(nodeEnv = 'development') {
     mockAuditLog as never,
     mockAuthProvider as never,
     mockPermissions as never,
+    mockLoginTelemetry as never,
   )
 }
 
@@ -106,6 +112,58 @@ describe('AuthService', () => {
       expect(mockAuditLog.record).toHaveBeenCalledWith(
         expect.objectContaining({ category: 'auth', action: 'login' }),
       )
+    })
+
+    it('records login telemetry (mapped method) and upserts a device after provision', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'password' } },
+      } as never
+      await service.provision(verified, { ip: '192.168.1.1', userAgent: 'TestBrowser/1.0' })
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 't1',
+          userId: 'u1',
+          outcome: 'success',
+          method: 'password',
+          ipAddress: '192.168.1.1',
+          userAgent: 'TestBrowser/1.0',
+        }),
+      )
+      expect(mockLoginTelemetry.upsertDevice).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 't1', userId: 'u1', ipAddress: '192.168.1.1' }),
+      )
+    })
+
+    it('maps a google.com sign-in provider to method "google"', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'google.com' } },
+      } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'google' }),
+      )
+    })
+
+    it('maps missing/unrecognized sign-in claims to method "unknown"', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'unknown' }),
+      )
+    })
+
+    it('still resolves provision when login telemetry fails (fire-and-forget)', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      mockLoginTelemetry.recordLogin.mockRejectedValueOnce(new Error('db down'))
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await expect(service.provision(verified)).resolves.toEqual(baseUser)
     })
   })
 

@@ -3,9 +3,10 @@ import { AuthController } from './auth.controller.js'
 import { AuthService } from './auth.service.js'
 import { UsersModule } from '../users/index.js'
 import { PermissionsModule } from '../permissions/index.js'
+import { IdentityModule } from '../identity/index.js'
 
 @Module({
-  imports: [UsersModule, PermissionsModule],
+  imports: [UsersModule, PermissionsModule, IdentityModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService],
