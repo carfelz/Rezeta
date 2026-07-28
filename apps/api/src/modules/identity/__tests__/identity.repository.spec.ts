@@ -56,6 +56,25 @@ describe('IdentityRepository', () => {
     )
   })
 
+  it('upsertDevice returns the upserted row', async () => {
+    const row = {
+      id: 'd1',
+      fingerprint: 'fp1',
+      userAgent: 'UA',
+      firstSeenAt: new Date('2026-07-28T00:00:00Z'),
+      lastSeenAt: new Date('2026-07-28T00:00:00Z'),
+    }
+    vi.mocked(prisma.userDevice.upsert).mockResolvedValue(row as never)
+    const result = await makeRepo().upsertDevice({
+      tenantId: 't1',
+      userId: 'u1',
+      platformUserId: null,
+      fingerprint: 'fp1',
+      userAgent: 'UA',
+    })
+    expect(result).toBe(row)
+  })
+
   it('listDevicesForUser orders by lastSeenAt desc', async () => {
     vi.mocked(prisma.userDevice.findMany).mockResolvedValue([] as never)
     await makeRepo().listDevicesForUser('u1')

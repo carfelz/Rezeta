@@ -68,7 +68,12 @@ export class AuthService {
         method,
         ...telemetryMeta,
       }),
-      this.loginTelemetry.upsertDevice({ tenantId: user.tenantId, userId: user.id, ...telemetryMeta }),
+      this.loginTelemetry.upsertDevice({
+        tenantId: user.tenantId,
+        userId: user.id,
+        email: user.email,
+        ...telemetryMeta,
+      }),
     ]).catch((err: unknown) => {
       this.logger.warn(
         `Failed to record login telemetry for user id=${user.id}: ${(err as Error).message}`,

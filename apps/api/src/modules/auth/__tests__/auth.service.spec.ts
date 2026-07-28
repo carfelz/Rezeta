@@ -137,6 +137,15 @@ describe('AuthService', () => {
       )
     })
 
+    it('passes the user email through to upsertDevice for the new-device email path', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.upsertDevice).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'dr@test.com' }),
+      )
+    })
+
     it('maps a google.com sign-in provider to method "google"', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       const verified = {

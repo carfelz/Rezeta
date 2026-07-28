@@ -12,6 +12,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PrismaService } from '../../../lib/prisma.service.js'
 import type { IAuthProvider } from '../../../lib/auth/index.js'
+import type { InvitationMailerService } from '../../users/index.js'
 import { AuditLogService } from '../../../common/audit-log/audit-log.service.js'
 import { AuditLogRepository } from '../../../common/audit-log/audit-log.repository.js'
 import { IdentityRepository } from '../identity.repository.js'
@@ -33,11 +34,14 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
   const authProvider = {
     revokeUserSessions: vi.fn().mockResolvedValue(undefined),
   } as unknown as IAuthProvider
+  const mailer = {
+    sendNewDeviceEmail: vi.fn().mockResolvedValue(undefined),
+  } as unknown as InvitationMailerService
 
   beforeAll(() => {
     prisma = new PrismaService()
     repo = new IdentityRepository(prisma)
-    telemetry = new LoginTelemetryService(repo)
+    telemetry = new LoginTelemetryService(repo, mailer)
     const auditLog = new AuditLogService(new AuditLogRepository(prisma))
     service = new IdentityService(repo, authProvider, auditLog)
   })

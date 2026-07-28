@@ -82,10 +82,13 @@ export class IdentityRepository {
    * supplies a non-null userId (device tracking only runs for a successfully
    * authenticated institution user); the schema still allows a null userId
    * for future platform-staff device tracking (out of scope this slice).
+   * Returns the upserted row — `LoginTelemetryService.upsertDevice` compares
+   * `firstSeenAt`/`lastSeenAt` on it to tell a brand-new device from a
+   * bumped one (identity slice 5 new-device email).
    */
-  async upsertDevice(input: UpsertDeviceInput): Promise<void> {
+  async upsertDevice(input: UpsertDeviceInput): Promise<UserDeviceRow> {
     const now = new Date()
-    await this.prisma.userDevice.upsert({
+    return this.prisma.userDevice.upsert({
       where: {
         userId_fingerprint: { userId: input.userId as string, fingerprint: input.fingerprint },
       },
