@@ -10,6 +10,8 @@ import { useUpdateProfile } from '@/hooks/users/use-update-profile'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { settingsStrings, templatesStrings, typesStrings, permissionsStrings } from './settings/strings'
+import { ProfileDevices } from './settings/ProfileDevices'
+import { ProfileMfa } from './settings/ProfileMfa'
 import {
   Button,
   Card,
@@ -171,6 +173,9 @@ export function Settings(): JSX.Element {
         </Card>
       )}
 
+      <ProfileDevices />
+      <ProfileMfa />
+
       <Card className="max-w-560 mb-6 p-0">
         <Link
           to="/ajustes/ubicaciones"
@@ -233,15 +238,28 @@ export function Settings(): JSX.Element {
         {canViewUsers && (
           <Link
             to="/ajustes/usuarios"
-            className={cn(
-              'flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast',
-              canViewPermissions && 'border-b border-n-100',
-            )}
+            className="flex items-center gap-3 px-5 py-4 no-underline text-n-800 border-b border-n-100 hover:bg-n-25 transition-colors duration-fast"
           >
             <i className="ph ph-users text-h3 text-p-500" />
             <div>
               <div className="text-sm font-semibold">{settingsStrings.usersTitle}</div>
               <div className="text-xs text-n-500">{settingsStrings.usersDescription}</div>
+            </div>
+            <i className="ph ph-caret-right ml-auto text-n-400" />
+          </Link>
+        )}
+        {canViewUsers && (
+          <Link
+            to="/ajustes/seguridad"
+            className={cn(
+              'flex items-center gap-3 px-5 py-4 no-underline text-n-800 hover:bg-n-25 transition-colors duration-fast',
+              canViewPermissions && 'border-b border-n-100',
+            )}
+          >
+            <i className="ph ph-lock-key text-h3 text-p-500" />
+            <div>
+              <div className="text-sm font-semibold">{settingsStrings.securityTitle}</div>
+              <div className="text-xs text-n-500">{settingsStrings.securityDescription}</div>
             </div>
             <i className="ph ph-caret-right ml-auto text-n-400" />
           </Link>

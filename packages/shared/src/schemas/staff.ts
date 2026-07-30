@@ -23,5 +23,16 @@ export const InstitutionCreatedSchema = z.object({
   email: z.string().email(),
 })
 
+export const StaffInstitutionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().nullable(),
+  type: z.enum(['solo', 'practice', 'clinic', 'enterprise']),
+  plan: z.enum(['free', 'solo', 'practice', 'clinic']),
+  createdAt: z.string(),
+  userCount: z.number().int().nonnegative(),
+  activeUserCount: z.number().int().nonnegative(),
+})
+
 export type CreateInstitutionDto = z.infer<typeof CreateInstitutionSchema>
 export type InstitutionCreatedDto = z.infer<typeof InstitutionCreatedSchema>
+export type StaffInstitutionDto = z.infer<typeof StaffInstitutionSchema>

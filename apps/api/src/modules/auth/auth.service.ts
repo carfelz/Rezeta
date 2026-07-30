@@ -1,4 +1,4 @@
-import { Injectable, Inject, ForbiddenException } from '@nestjs/common'
+import { Injectable, Inject, ForbiddenException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { AuthUser, CapabilityMap, UserPreferences } from '@rezeta/shared'
 import { UserPreferencesSchema, ErrorCode } from '@rezeta/shared'
@@ -7,6 +7,7 @@ import { AuditLogService } from '../../common/audit-log/audit-log.service.js'
 import { AUTH_PROVIDER, type IAuthProvider, type VerifiedToken } from '../../lib/auth/index.js'
 import { UsersRepository, type UserWithTenant } from '../users/users.repository.js'
 import { PermissionsService } from '../permissions/permissions.service.js'
+import { LoginTelemetryService, mapFirebaseSignInMethod, mapFirebaseMfaUsed } from '../identity/index.js'
 
 export interface ProvisionMeta {
   ip?: string
@@ -22,12 +23,15 @@ export interface DevTokenResponse {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name)
+
   constructor(
     @Inject(UsersRepository) private repository: UsersRepository,
     @Inject(ConfigService) private config: ConfigService<AppConfig, true>,
     @Inject(AuditLogService) private auditLog: AuditLogService,
     @Inject(AUTH_PROVIDER) private authProvider: IAuthProvider,
     @Inject(PermissionsService) private permissions: PermissionsService,
+    @Inject(LoginTelemetryService) private loginTelemetry: LoginTelemetryService,
   ) {}
 
   /**
@@ -50,6 +54,34 @@ export class AuthService {
       ...(meta?.requestId ? { requestId: meta.requestId } : {}),
       status: 'success',
     })
+
+    const method = mapFirebaseSignInMethod(verified.rawClaims)
+    const mfaUsed = mapFirebaseMfaUsed(verified.rawClaims)
+    const telemetryMeta = {
+      ...(meta?.ip ? { ipAddress: meta.ip } : {}),
+      ...(meta?.userAgent ? { userAgent: meta.userAgent } : {}),
+    }
+    void Promise.all([
+      this.loginTelemetry.recordLogin({
+        tenantId: user.tenantId,
+        userId: user.id,
+        outcome: 'success',
+        method,
+        mfaUsed,
+        ...telemetryMeta,
+      }),
+      this.loginTelemetry.upsertDevice({
+        tenantId: user.tenantId,
+        userId: user.id,
+        email: user.email,
+        ...telemetryMeta,
+      }),
+    ]).catch((err: unknown) => {
+      this.logger.warn(
+        `Failed to record login telemetry for user id=${user.id}: ${(err as Error).message}`,
+      )
+    })
+
     return user
   }
 
@@ -90,6 +122,7 @@ export class AuthService {
       licenseNumber: user.licenseNumber,
       tenantSeededAt: user.tenant.seededAt?.toISOString() ?? null,
       tenantPlan: user.tenant.plan,
+      mfaEnrolledAt: user.mfaEnrolledAt?.toISOString() ?? null,
       preferences: parsePreferences(user.preferences),
       capabilities,
     }

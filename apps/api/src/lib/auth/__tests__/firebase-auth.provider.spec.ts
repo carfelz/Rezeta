@@ -14,12 +14,14 @@ const m = vi.hoisted(() => {
   const mockDeleteUser = vi.fn()
   const mockCreateUser = vi.fn()
   const mockGeneratePasswordResetLink = vi.fn()
+  const mockGetUser = vi.fn()
   const mockAuth = vi.fn(() => ({
     verifyIdToken: mockVerifyIdToken,
     revokeRefreshTokens: mockRevokeRefreshTokens,
     deleteUser: mockDeleteUser,
     createUser: mockCreateUser,
     generatePasswordResetLink: mockGeneratePasswordResetLink,
+    getUser: mockGetUser,
   }))
   const mockInitializeApp = vi.fn()
   const mockCert = vi.fn((c: unknown) => c)
@@ -30,6 +32,7 @@ const m = vi.hoisted(() => {
     mockDeleteUser,
     mockCreateUser,
     mockGeneratePasswordResetLink,
+    mockGetUser,
     mockAuth,
     mockInitializeApp,
     mockCert,
@@ -53,6 +56,7 @@ const {
   mockDeleteUser,
   mockCreateUser,
   mockGeneratePasswordResetLink,
+  mockGetUser,
   mockInitializeApp,
   mockCert,
   mockApps,
@@ -420,6 +424,77 @@ describe('FirebaseAuthProvider', () => {
       await expect(provider.generatePasswordResetLink('nurse@clinic.do')).rejects.toThrow(
         InternalServerErrorException,
       )
+    })
+  })
+
+  // ── getMfaEnrollment ───────────────────────────────────────────────────────
+
+  describe('getMfaEnrollment', () => {
+    it('throws InternalServerError when app not initialized', async () => {
+      provider = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(provider.getMfaEnrollment('uid')).rejects.toThrow(InternalServerErrorException)
+    })
+
+    it('returns the TOTP factor enrollment time when enrolled', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGetUser.mockResolvedValue({
+        multiFactor: {
+          enrolledFactors: [
+            { factorId: 'totp', uid: 'f1', enrollmentTime: '2026-07-01T00:00:00.000Z' },
+          ],
+        },
+      })
+      const result = await provider.getMfaEnrollment('uid-1')
+      expect(mockGetUser).toHaveBeenCalledWith('uid-1')
+      expect(result.enrolledAt).toEqual(new Date('2026-07-01T00:00:00.000Z'))
+    })
+
+    it('returns null when the user has no multiFactor settings', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGetUser.mockResolvedValue({})
+      const result = await provider.getMfaEnrollment('uid-1')
+      expect(result.enrolledAt).toBeNull()
+    })
+
+    it('returns null when enrolled factors exist but none are TOTP (SMS-only — deferred, still not "enrolled" for our purposes)', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGetUser.mockResolvedValue({
+        multiFactor: { enrolledFactors: [{ factorId: 'phone', uid: 'f1', enrollmentTime: '2026-07-01T00:00:00.000Z' }] },
+      })
+      const result = await provider.getMfaEnrollment('uid-1')
+      expect(result.enrolledAt).toBeNull()
+    })
+
+    it('falls back to now() when a TOTP factor has no enrollmentTime', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGetUser.mockResolvedValue({
+        multiFactor: { enrolledFactors: [{ factorId: 'totp', uid: 'f1' }] },
+      })
+      const before = Date.now()
+      const result = await provider.getMfaEnrollment('uid-1')
+      expect(result.enrolledAt).not.toBeNull()
+      expect(result.enrolledAt!.getTime()).toBeGreaterThanOrEqual(before)
+    })
+
+    it('wraps SDK errors in InternalServerErrorException', async () => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+      mockGetUser.mockRejectedValue(new Error('boom'))
+      await expect(provider.getMfaEnrollment('uid-1')).rejects.toThrow(InternalServerErrorException)
     })
   })
 })

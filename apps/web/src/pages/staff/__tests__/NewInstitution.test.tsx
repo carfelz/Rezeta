@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -10,6 +11,14 @@ vi.mock('@/hooks/staff/use-create-institution', () => ({
 }))
 
 import { NewInstitution } from '../NewInstitution'
+
+function renderPage(): ReturnType<typeof render> {
+  return render(
+    <MemoryRouter>
+      <NewInstitution />
+    </MemoryRouter>,
+  )
+}
 
 describe('NewInstitution', () => {
   beforeEach(() => {
@@ -25,12 +34,12 @@ describe('NewInstitution', () => {
   })
 
   it('renders the English form', () => {
-    render(<NewInstitution />)
+    renderPage()
     expect(screen.getByRole('heading', { name: /new institution/i })).toBeInTheDocument()
   })
 
   it('submits the payload to the mutation', async () => {
-    render(<NewInstitution />)
+    renderPage()
     fireEvent.change(screen.getByLabelText(/institution name/i), {
       target: { value: 'Clínica Norte' },
     })
@@ -54,7 +63,7 @@ describe('NewInstitution', () => {
 
   it('shows an error callout when the mutation rejects', async () => {
     mocks.mutateAsync.mockReset().mockRejectedValue(new Error('boom'))
-    render(<NewInstitution />)
+    renderPage()
     fireEvent.change(screen.getByLabelText(/institution name/i), {
       target: { value: 'Clínica Norte' },
     })
@@ -68,7 +77,7 @@ describe('NewInstitution', () => {
   })
 
   it('disables submit until the required fields are filled', () => {
-    render(<NewInstitution />)
+    renderPage()
     expect(screen.getByRole('button', { name: /create institution/i })).toBeDisabled()
   })
 })

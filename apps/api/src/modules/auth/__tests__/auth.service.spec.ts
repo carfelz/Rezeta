@@ -23,6 +23,11 @@ const mockPermissions = {
   resolveCapabilities: vi.fn(),
 }
 
+const mockLoginTelemetry = {
+  recordLogin: vi.fn().mockResolvedValue(undefined),
+  upsertDevice: vi.fn().mockResolvedValue(undefined),
+}
+
 const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
   get: vi.fn((key: string) => {
     if (key === 'nodeEnv') return nodeEnv
@@ -50,6 +55,7 @@ function makeService(nodeEnv = 'development') {
     mockAuditLog as never,
     mockAuthProvider as never,
     mockPermissions as never,
+    mockLoginTelemetry as never,
   )
 }
 
@@ -107,6 +113,89 @@ describe('AuthService', () => {
         expect.objectContaining({ category: 'auth', action: 'login' }),
       )
     })
+
+    it('records login telemetry (mapped method) and upserts a device after provision', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'password' } },
+      } as never
+      await service.provision(verified, { ip: '192.168.1.1', userAgent: 'TestBrowser/1.0' })
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 't1',
+          userId: 'u1',
+          outcome: 'success',
+          method: 'password',
+          ipAddress: '192.168.1.1',
+          userAgent: 'TestBrowser/1.0',
+        }),
+      )
+      expect(mockLoginTelemetry.upsertDevice).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 't1', userId: 'u1', ipAddress: '192.168.1.1' }),
+      )
+    })
+
+    it('passes the user email through to upsertDevice for the new-device email path', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.upsertDevice).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'dr@test.com' }),
+      )
+    })
+
+    it('maps a google.com sign-in provider to method "google"', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'google.com' } },
+      } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'google' }),
+      )
+    })
+
+    it('maps missing/unrecognized sign-in claims to method "unknown"', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ method: 'unknown' }),
+      )
+    })
+
+    it('derives mfaUsed: true from the sign_in_second_factor totp claim', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = {
+        externalUid: 'fb1',
+        email: 'dr@test.com',
+        rawClaims: { firebase: { sign_in_provider: 'password', sign_in_second_factor: 'totp' } },
+      } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ mfaUsed: true }),
+      )
+    })
+
+    it('derives mfaUsed: false when no second factor was used', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await service.provision(verified)
+      expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+        expect.objectContaining({ mfaUsed: false }),
+      )
+    })
+
+    it('still resolves provision when login telemetry fails (fire-and-forget)', async () => {
+      mockRepo.provisionUser.mockResolvedValue(baseUser)
+      mockLoginTelemetry.recordLogin.mockRejectedValueOnce(new Error('db down'))
+      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      await expect(service.provision(verified)).resolves.toEqual(baseUser)
+    })
   })
 
   // ── toAuthUser ─────────────────────────────────────────────────────────────
@@ -148,6 +237,17 @@ describe('AuthService', () => {
       const user = { ...baseUser, tenant: { seededAt: null } }
       const auth = service.toAuthUser(user as never, superAdminDefaults)
       expect(auth.tenantSeededAt).toBeNull()
+    })
+
+    it('maps mfaEnrolledAt to an ISO string when set', () => {
+      const user = { ...baseUser, mfaEnrolledAt: new Date('2026-07-01T00:00:00.000Z') }
+      const auth = service.toAuthUser(user as never, superAdminDefaults)
+      expect(auth.mfaEnrolledAt).toBe('2026-07-01T00:00:00.000Z')
+    })
+
+    it('maps mfaEnrolledAt to null when the user has never enrolled', () => {
+      const auth = service.toAuthUser(baseUser as never, superAdminDefaults)
+      expect(auth.mfaEnrolledAt).toBeNull()
     })
 
     it('returns empty preferences when stored preferences fail schema validation', () => {

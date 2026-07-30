@@ -196,6 +196,27 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
   }
+
+  async getMfaEnrollment(externalUid: string): Promise<{ enrolledAt: Date | null }> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    try {
+      const user = await this.app.auth().getUser(externalUid)
+      const totpFactor = user.multiFactor?.enrolledFactors.find((f) => f.factorId === 'totp')
+      if (!totpFactor) return { enrolledAt: null }
+      return { enrolledAt: totpFactor.enrollmentTime ? new Date(totpFactor.enrollmentTime) : new Date() }
+    } catch (err) {
+      this.logger.error(`Failed to read MFA enrollment for ${externalUid}: ${(err as Error).message}`)
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Failed to read MFA enrollment',
+      })
+    }
+  }
 }
 
 /** Structural check for a Firebase Admin SDK error code, without importing firebase-admin's error types. */

@@ -1,5 +1,6 @@
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { AuditLogRepository, type AuditLogRow } from './audit-log.repository.js'
+import { csvEscape } from '../csv/csv.js'
 import { redactChangesForAudit, redactForAudit } from './redact.js'
 import type { RecordAuditEventInput, AuditLogFilters } from './audit-log.types.js'
 import type { AuditLogItem, AuditLogListResponse } from '@rezeta/shared'
@@ -112,7 +113,7 @@ export class AuditLogService {
         r.id,
         r.createdAt,
         r.actorType,
-        `"${actorName.replace(/"/g, '""')}"`,
+        csvEscape(actorName),
         r.category,
         r.action,
         r.entityType ?? '',

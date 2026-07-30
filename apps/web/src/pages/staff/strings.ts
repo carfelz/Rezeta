@@ -3,6 +3,7 @@
 export const staffStrings = {
   consoleTitle: 'Rezeta Staff',
   navInstitutions: 'Institutions',
+  navSecurity: 'Security',
   navPlatformUsers: 'Platform users',
   pageTitle: 'New institution',
   pageSubtitle: 'Create a new institution and its initial super admin.',
@@ -28,6 +29,22 @@ export const staffStrings = {
   error: 'Could not create the institution. Check the details and try again.',
   successTitle: 'Institution created',
   successBody: (email: string): string => `A set-password email was sent to ${email}.`,
+  successBackToList: 'Back to institutions',
+} as const
+
+export const institutionsStrings = {
+  pageTitle: 'Institutions',
+  pageSubtitle: 'All institutions on the platform.',
+  newButton: 'New institution',
+  tableInstitution: 'Institution',
+  tablePlan: 'Plan',
+  tableUsers: 'Users',
+  tableCreated: 'Created',
+  usersCell: (active: number, total: number): string => `${active} of ${total}`,
+  unnamed: 'Unnamed institution',
+  loadError: 'Could not load institutions.',
+  emptyTitle: 'No institutions yet',
+  emptyBody: 'Create the first institution to get started.',
 } as const
 
 export const platformUsersStrings = {
@@ -59,4 +76,26 @@ export const platformUsersStrings = {
   loadError: 'Could not load platform users.',
   emptyTitle: 'No platform users yet',
   emptyBody: 'Create the first staff account to get started.',
+} as const
+
+export const staffSecurityStrings = {
+  pageTitle: 'Security',
+  pageSubtitle: 'Cross-institution login activity and account health.',
+  tileActiveInstitutions: 'Active institutions',
+  tileActiveUsers: 'Active users · 30d',
+  tileLogins7d: 'Logins · 7d',
+  tileDormant: 'Dormant accounts · 60d',
+  tileMfaAdoption: 'MFA adoption',
+  dormantCallout: (count: number): string => `${count} accounts with no access in 60 days`,
+  tableInstitution: 'Institution',
+  tablePlan: 'Plan',
+  tableMau: 'MAU',
+  tableLogins: 'Logins · 14d',
+  tableSignals: 'Signals',
+  unnamed: 'Unnamed institution',
+  signalDormant: (count: number): string => `${count} dormant`,
+  signalPending: (count: number): string => `${count} pending invites`,
+  loadError: 'Could not load the security overview.',
+  emptyTitle: 'No institutions yet',
+  emptyBody: 'Institution activity will appear here once accounts start signing in.',
 } as const

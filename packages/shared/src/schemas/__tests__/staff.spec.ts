@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CreateInstitutionSchema, InstitutionCreatedSchema } from '../staff.js'
+import { CreateInstitutionSchema, InstitutionCreatedSchema, StaffInstitutionSchema } from '../staff.js'
 
 describe('CreateInstitutionSchema', () => {
   const valid = {
@@ -43,5 +43,45 @@ describe('InstitutionCreatedSchema', () => {
       email: 'ana@clinica.com',
     }
     expect(InstitutionCreatedSchema.parse(v)).toEqual(v)
+  })
+})
+
+describe('StaffInstitutionSchema', () => {
+  it('accepts a roster row', () => {
+    const parsed = StaffInstitutionSchema.parse({
+      id: '11111111-2222-4333-8444-555555555555',
+      name: 'Centro Vista Alegre',
+      type: 'clinic',
+      plan: 'clinic',
+      createdAt: '2026-07-28T12:00:00.000Z',
+      userCount: 5,
+      activeUserCount: 4,
+    })
+    expect(parsed.userCount).toBe(5)
+  })
+
+  it('accepts a null name and rejects negative counts', () => {
+    expect(
+      StaffInstitutionSchema.parse({
+        id: '11111111-2222-4333-8444-555555555555',
+        name: null,
+        type: 'solo',
+        plan: 'free',
+        createdAt: '2026-07-28T12:00:00.000Z',
+        userCount: 0,
+        activeUserCount: 0,
+      }).name,
+    ).toBeNull()
+    expect(() =>
+      StaffInstitutionSchema.parse({
+        id: '11111111-2222-4333-8444-555555555555',
+        name: null,
+        type: 'solo',
+        plan: 'free',
+        createdAt: '2026-07-28T12:00:00.000Z',
+        userCount: -1,
+        activeUserCount: 0,
+      }),
+    ).toThrow()
   })
 })

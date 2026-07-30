@@ -15,4 +15,16 @@ export class InvitationMailerService {
     this.logger.log(`Set-password email for ${email}: ${link}`)
     return Promise.resolve()
   }
+
+  /**
+   * Notifies a user the first time a login is seen from a new device
+   * fingerprint (identity design §7 "New-device email"). Same log-only dev
+   * path as `sendSetPasswordEmail` — replace the body when a real
+   * transactional-email provider lands; the call site
+   * (`LoginTelemetryService.upsertDevice`) does not change.
+   */
+  async sendNewDeviceEmail(email: string, deviceLabel: string): Promise<void> {
+    this.logger.log(`New-device email for ${email}: ${deviceLabel}`)
+    return Promise.resolve()
+  }
 }

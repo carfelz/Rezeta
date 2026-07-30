@@ -18,6 +18,230 @@ Format: `[version/date] — description`. Entries are ordered newest first.
   integration suite on every push/PR alongside the existing lint/typecheck/
   coverage job.
 
+## [2026-07-28] Neutralize CSV formula injection in identity and audit exports
+
+### Fixed
+
+- CSV formula injection: `IdentityService.exportLoginsCsv`
+  (`apps/api/src/modules/identity/identity.service.ts`) and
+  `AuditLogService.exportCsv`
+  (`apps/api/src/common/audit-log/audit-log.service.ts`) previously quoted
+  commas/quotes/newlines but did not neutralize a leading `=`, `+`, `-`, or
+  `@` — attacker-influenceable fields (`user_agent` request header, actor/
+  user display names) could carry a live formula (e.g. `=HYPERLINK(...)`)
+  that Excel would evaluate on open. Added a shared `csvEscape` helper
+  (`apps/api/src/common/csv/csv.ts`) that prefixes a literal `'` before any
+  field starting with a formula-trigger character, ahead of the existing
+  RFC 4180 quoting; both services now delegate to it. Accepted trade-off:
+  ordinary negative-number-looking values (e.g. `-5`) get the same `'`
+  prefix, since the string alone can't distinguish untrusted text from a
+  negative number.
+
+### Added
+
+- Unit test asserting `mfaAdoptionPct` is `0` (not `null`) when a tenant
+  (or the platform) has active users but zero MFA enrollments —
+  `IdentityRepository.securitySummary`
+  (`apps/api/src/modules/identity/__tests__/identity.repository.spec.ts`)
+  and `StaffSecurityService.overview`
+  (`apps/api/src/modules/identity/__tests__/staff-security.service.spec.ts`).
+
+## [2026-07-28] TOTP MFA, optional for all (identity slice 4)
+
+### Added
+
+- TOTP multi-factor authentication, entirely optional this slice (identity
+  design §2 decision 4 — nothing is enforced). `IAuthProvider.getMfaEnrollment`
+  (`apps/api/src/lib/auth/firebase-auth.provider.ts`) mirrors the provider's
+  enrollment state onto `User.mfaEnrolledAt` via a new
+  `POST /v1/identity/me/mfa/sync`, called by the web client after every
+  enroll/unenroll (`IdentityService.syncMfaEnrollment`,
+  `apps/api/src/modules/identity/identity.service.ts`).
+- `apps/api/src/scripts/enable-totp-mfa.ts` (`pnpm --filter @rezeta/api
+  mfa:enable-totp`) — idempotent script enabling TOTP on the Identity
+  Platform project via the Admin SDK's `projectConfigManager`; run once
+  against the dev project as part of this slice.
+- `IdentityPolicy` model (`identity_policies` table) — per-tenant
+  `mfaRequirement` (`off`/`admins`/`all`, default `off`), exposed via
+  `GET`/`PATCH /v1/identity/policy` (`@RequirePermission('users', 'manage')`).
+  **Enforcement is deferred** — no login path reads this value yet; it is
+  stored and surfaced in the UI only, with an explicit note in the policy
+  card.
+- `LoginEvent.mfaUsed` — derived from the Firebase ID token's
+  `firebase.sign_in_second_factor` claim (`LoginTelemetryService.mapFirebaseMfaUsed`),
+  recorded on every successful login.
+- `mfaAdoptionPct` on the institution security summary
+  (`IdentityRepository.securitySummary`, per-tenant) and the staff
+  cross-institution dashboard (`StaffSecurityService.overview`,
+  platform-wide) — the "Adopción MFA" / "MFA adoption" tiles on
+  `apps/web/src/pages/settings/Security.tsx` and
+  `apps/web/src/pages/staff/Security.tsx`.
+- Web: `FirebaseAuthClient` gains `enrollTotp`/`unenrollTotp`/
+  `completeTotpSignIn` (`apps/web/src/lib/auth/firebase-auth-client.ts`),
+  the only file that imports `firebase/auth`'s TOTP APIs
+  (`multiFactor`/`TotpMultiFactorGenerator`/`getMultiFactorResolver`).
+  `apps/web/src/pages/Login/index.tsx` gets a TOTP-challenge step
+  (`auth/multi-factor-auth-required`). `apps/web/src/pages/settings/ProfileMfa.tsx`
+  (Perfil → Seguridad) lets a user enroll (secret + `otpauth://` URL shown as
+  text — no QR rendering this slice) or remove their factor.
+  `apps/web/src/pages/settings/Security.tsx` gains an `IdentityPolicyCard`
+  (select + save, institution admins only).
+- `AuthUser.mfaEnrolledAt` (`packages/shared/src/types/auth.ts`, optional) —
+  lets `ProfileMfa.tsx` render enrolled/not-enrolled state without an extra
+  round trip.
+
+### Changed
+
+- `IdentityRepository.insertLoginEvent`'s input gains a required `mfaUsed`
+  boolean; `LoginTelemetryService.recordLogin`'s input gains an optional
+  `mfaUsed` (default `false`); `AuthService.provision` derives it via
+  `mapFirebaseMfaUsed` and passes it through.
+- `IdentityRepository.listActiveUsersForDormancy` selects `mfaEnrolledAt` in
+  addition to its existing columns.
+
+### Out of scope
+
+SMS MFA (billing — TOTP only this slice, identity design §2 decision 4 lists
+it as "fallback" not required). A dedicated `MfaEnrollment` table (identity
+design §4) — this slice mirrors state directly onto `User.mfaEnrolledAt`
+instead; revisit if a future slice needs multi-factor-type tracking or
+per-factor history. `IdentityPolicy.mfaRequirement` **enforcement** — the
+value is stored/displayed, nothing blocks or requires MFA at login yet.
+Session-max-age (`IdentityPolicy`'s other design-doc column) — not
+implemented. Audit logging on an `IdentityPolicy` change, and on an
+enrolled → not-enrolled `syncMfaEnrollment` transition — no `AuditAction`
+fits either case cleanly (`mfa_enabled` only fits the enable direction; there
+is no `mfa_disabled` or generic "policy changed" value). `LoginEvent.mfaUsed`
+is captured but not yet surfaced in the login-activity table/CSV or
+`LoginEventItemSchema` — a future slice can add a column once there's a UI
+need. Per-institution `mfaAdoptionPct` on the staff dashboard's institution
+roster — only the platform-wide tile this slice. QR-code rendering for TOTP
+enrollment — the secret/`otpauth://` URL are shown as plain text; a QR
+library is a documented future enhancement. Staging/production
+`mfa:enable-totp` runs — this plan only runs it against dev; each other
+environment's owner must run it once before TOTP enrollment works there.
+
+## [2026-07-28] Staff cross-institution security dashboard (identity slice 5)
+
+### Added
+
+- `GET /v1/staff/identity/security/overview` (`StaffSecurityController`,
+  `apps/api/src/modules/identity/staff-security.controller.ts`) — platform
+  tiles (active institutions, active users · 30d, logins · 7d, dormant
+  accounts · 60d) and a per-institution roster (MAU · 30d, a 14-day login
+  sparkline, dormant/pending-invite counts), all built from three
+  cross-tenant queries joined in memory (`StaffSecurityService`,
+  `IdentityRepository.listAllTenants`/`listSuccessfulLoginsSince`/
+  `listActiveUsersForDormancy`).
+- Shared DTOs `StaffSecurityOverviewSchema` / `StaffSecurityTilesSchema` /
+  `StaffSecurityInstitutionSchema` (`packages/shared/src/schemas/identity.ts`).
+- Staff platform → Security page (`apps/web/src/pages/staff/Security.tsx`,
+  route `/staff/security`) — stat tiles, dormant-accounts callout,
+  institution activity table with a CSS-bar sparkline and warning-chip
+  signals; nav entry in `StaffLayout`.
+- `InvitationMailerService.sendNewDeviceEmail` — fires (log-only dev path)
+  from `LoginTelemetryService.upsertDevice` the first time a device
+  fingerprint is seen for an institution user, detected by comparing the
+  upserted `UserDevice` row's `firstSeenAt`/`lastSeenAt`.
+
+### Changed
+
+- `IdentityRepository.upsertDevice` now returns the upserted `UserDevice`
+  row instead of `void`, so `LoginTelemetryService` can detect creation.
+- `LoginTelemetryService.upsertDevice` now returns `{ created: boolean }`
+  and takes an optional `email`; `AuthService.provision` passes
+  `user.email` through.
+- `IdentityModule` imports `UsersModule` (for `InvitationMailerService`).
+
+## [2026-07-28] Login telemetry and institution security panel (identity slice 3)
+
+### Added
+
+- `login_events` / `user_devices` tables (provider-agnostic telemetry, no FKs)
+  — `packages/db/prisma/schema.prisma`.
+- `apps/api/src/modules/identity/` module: `LoginTelemetryService`
+  (`recordLogin`, `upsertDevice`, sha256 device fingerprinting) and
+  `IdentityService`/`IdentityController` serving `GET /v1/identity/me/devices`,
+  `POST /v1/identity/me/sign-out-all`, `GET /v1/identity/security/summary`,
+  `GET /v1/identity/security/logins`, and `GET /v1/identity/security/logins.csv`.
+- `AuthService.provision` records a successful login and upserts the caller's
+  device; `AuthGuard`'s deactivated-institution-user rejection records a
+  `blocked` login event.
+- Ajustes → Seguridad page (`apps/web/src/pages/settings/Security.tsx`) —
+  stat tiles, 7/30-day filter, login-activity table, CSV export.
+- Self-service devices card (`apps/web/src/pages/settings/ProfileDevices.tsx`)
+  on the profile page — device list + "Cerrar todas las sesiones."
+- Shared DTOs `LoginEventItemSchema` / `SecuritySummarySchema` /
+  `UserDeviceItemSchema` (`packages/shared/src/schemas/identity.ts`).
+
+### Changed
+
+- `AuthFeatureModule` and `AppModule` import the new `IdentityModule`.
+
+## [2026-07-28] Institution security panel and self-service device list
+
+### Added
+
+- `Security` page (`apps/web/src/pages/settings/Security.tsx`) at
+  `/ajustes/seguridad`: stat tiles (logins/distinct users/dormant users),
+  7d/30d range select, login-activity table, and CSV export gated on
+  `users:manage` — mirrors `AuditLog.tsx`'s filter/export/table structure.
+- `ProfileDevices` card (`apps/web/src/pages/settings/ProfileDevices.tsx`)
+  rendered on `/ajustes`: lists the current user's registered devices and a
+  "cerrar todas las sesiones" action backed by a `ConfirmDialog`, which signs
+  out locally and redirects to `/login` on success.
+- `useSecuritySummary`/`useSecurityLogins`/`downloadSecurityLoginsCsv` hooks
+  in `apps/web/src/hooks/identity/use-security.ts` and
+  `useMyDevices`/`useSignOutAllSessions` in
+  `apps/web/src/hooks/identity/use-my-devices.ts`, wrapping the
+  `/v1/identity/*` endpoints via `apiClient`.
+- `securityStrings`/`profileDevicesStrings` plus a `securityTitle`/
+  `securityDescription` menu-link pair in
+  `apps/web/src/pages/settings/strings.ts`.
+- Tests: `Security.test.tsx` (6 cases) and `ProfileDevices.test.tsx`
+  (4 cases) in `apps/web/src/pages/settings/__tests__/`.
+
+### Changed
+
+- `apps/web/src/pages/Settings.tsx`: renders `<ProfileDevices />` under the
+  "Mi cuenta" card and adds a "Seguridad" hub link (gated on `canViewUsers`)
+  between Usuarios and Permisos.
+- `apps/web/src/App.tsx`: registers `ajustes/seguridad` behind
+  `RequireCan module="users"`.
+
+## [2026-07-28] Tenant security and self-service identity endpoints
+
+### Added
+
+- `IdentityService` and `IdentityController` in `apps/api/src/modules/identity/`
+  exposing `GET /v1/identity/me/devices`, `POST /v1/identity/me/sign-out-all`,
+  `GET /v1/identity/security/summary`, `GET /v1/identity/security/logins`, and
+  `GET /v1/identity/security/logins.csv`. Tenant-scoped reads are gated with
+  `@RequirePermission('users','view')` (`'users','manage'` for the CSV export);
+  self-service routes require only an authenticated user. Sign-out-all calls
+  `IAuthProvider.revokeUserSessions` and audits `session_revoked`.
+- `IdentityModule` now registers `IdentityController` and `IdentityService`
+  alongside the existing `IdentityRepository`/`LoginTelemetryService` providers.
+- Unit specs for both new classes in
+  `apps/api/src/modules/identity/__tests__/`.
+
+## [2026-07-28] Staff institutions list
+
+### Added
+
+- `GET /v1/staff/institutions` (`StaffService.listInstitutions`): read-only
+  roster of all institutions with type, plan, and active/total user counts via
+  grouped queries; `StaffInstitutionSchema` in
+  `packages/shared/src/schemas/staff.ts`; real-Postgres integration spec.
+- Staff console list page `/staff/institutions` (`Institutions.tsx`) with
+  `useStaffInstitutions` hook; "New institution" now hangs off the list.
+
+### Changed
+
+- `/staff` index redirect and the Institutions nav link now point at the list
+  instead of the create form; institution creation invalidates the list query;
+  create-success screen gains a back-to-list link.
+
 ## [2026-07-28] Staff platform-users follow-ups
 
 ### Fixed

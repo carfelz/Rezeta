@@ -54,4 +54,13 @@ export interface IAuthProvider {
    * given email. The caller emails it (or, in dev, logs it).
    */
   generatePasswordResetLink(email: string): Promise<string>
+
+  /**
+   * Read the current user's MFA enrollment state directly from the provider
+   * (identity design §4 — this slice mirrors state onto `User.mfaEnrolledAt`
+   * rather than a full `MfaEnrollment` table; see identity slice 4 plan §Out
+   * of scope). TOTP only this slice — a phone/SMS factor is never returned
+   * as "enrolled" here even if present, since SMS MFA is deferred.
+   */
+  getMfaEnrollment(externalUid: string): Promise<{ enrolledAt: Date | null }>
 }

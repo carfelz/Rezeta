@@ -17,6 +17,7 @@ const mockAuditLog = { record: vi.fn().mockResolvedValue(undefined) }
 const mockPermissions = {
   resolveCapabilities: vi.fn().mockResolvedValue({ patients: 'view', users: 'none' }),
 }
+const mockLoginTelemetry = { recordLogin: vi.fn().mockResolvedValue(undefined) }
 
 function makeCtx(overrides: {
   headers?: Record<string, string>
@@ -71,6 +72,7 @@ describe('AuthGuard', () => {
     mockPermissions.resolveCapabilities.mockResolvedValue({ patients: 'view', users: 'none' })
     mockUsers.markSignedIn.mockResolvedValue(undefined)
     mockPlatformUsers.markSignedIn.mockResolvedValue(undefined)
+    mockLoginTelemetry.recordLogin.mockResolvedValue(undefined)
     guard = new AuthGuard(
       mockReflector as unknown as Reflector,
       mockAuthProvider as never,
@@ -78,6 +80,7 @@ describe('AuthGuard', () => {
       mockPlatformUsers as never,
       mockAuditLog as never,
       mockPermissions as never,
+      mockLoginTelemetry as never,
     )
   })
 
@@ -185,6 +188,46 @@ describe('AuthGuard', () => {
     mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
     const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
     await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('records a blocked login event when an inactive institution user is rejected', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' }, ip: '10.0.0.1' })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: 'tenant-1', userId: 'user-1', outcome: 'blocked' }),
+    )
+  })
+
+  it('still rejects when the blocked-login telemetry write itself fails', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
+    mockLoginTelemetry.recordLogin.mockRejectedValueOnce(new Error('db down'))
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+  })
+
+  it('includes userAgent in the blocked login telemetry when the header is present', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
+    const ctx = makeCtx({
+      headers: { authorization: 'Bearer valid-token', 'user-agent': 'TestAgent/1.0' },
+    })
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
+      expect.objectContaining({ userAgent: 'TestAgent/1.0' }),
+    )
+  })
+
+  it('omits ipAddress in the blocked login telemetry when request.ip is undefined', async () => {
+    mockAuthProvider.verifyToken.mockResolvedValue(verifiedToken)
+    mockUsers.findByExternalUid.mockResolvedValue({ ...validUser, isActive: false })
+    const ctx = makeCtx({ headers: { authorization: 'Bearer valid-token' } })
+    ctx._req.ip = undefined
+    await expect(guard.canActivate(ctx as never)).rejects.toThrow(UnauthorizedException)
+    const call = mockLoginTelemetry.recordLogin.mock.calls[0]![0] as Record<string, unknown>
+    expect(call.ipAddress).toBeUndefined()
   })
 
   it('populates req.user and returns true for valid authenticated request', async () => {

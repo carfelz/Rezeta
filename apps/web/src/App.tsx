@@ -23,6 +23,7 @@ import { Locations } from '@/pages/settings/Locations'
 import { Users } from '@/pages/settings/Users'
 import { Permissions } from '@/pages/settings/Permissions'
 import { AuditLog } from '@/pages/settings/AuditLog'
+import { Security } from '@/pages/settings/Security'
 import { Schedules } from '@/pages/settings/Schedules'
 import { AppPrototype } from '@/pages/settings/AppPrototype'
 import { DesignSystemReference } from '@/pages/settings/DesignSystemReference'
@@ -32,7 +33,9 @@ import { NotFound } from '@/pages/NotFound'
 import { Onboarding } from '@/pages/Onboarding'
 import { OnboardingCustomize } from '@/pages/OnboardingCustomize'
 import { OnboardingGate } from '@/components/auth/OnboardingGate'
+import { Institutions } from '@/pages/staff/Institutions'
 import { NewInstitution } from '@/pages/staff/NewInstitution'
+import { Security as StaffSecurity } from '@/pages/staff/Security'
 import { PlatformUsers } from '@/pages/staff/PlatformUsers'
 
 const router = createBrowserRouter([
@@ -199,6 +202,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'ajustes/seguridad',
+        element: (
+          <RequireCan module="users">
+            <Security />
+          </RequireCan>
+        ),
+      },
+      {
         path: 'ajustes/permisos',
         element: (
           <RequireCan module="permissions">
@@ -284,8 +295,10 @@ const router = createBrowserRouter([
     ),
     errorElement: <NotFound />,
     children: [
-      { path: 'staff', element: <Navigate to="/staff/institutions/new" replace /> },
+      { path: 'staff', element: <Navigate to="/staff/institutions" replace /> },
+      { path: 'staff/institutions', element: <Institutions /> },
       { path: 'staff/institutions/new', element: <NewInstitution /> },
+      { path: 'staff/security', element: <StaffSecurity /> },
       { path: 'staff/platform-users', element: <PlatformUsers /> },
     ],
   },
