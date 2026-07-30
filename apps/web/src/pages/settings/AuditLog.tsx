@@ -41,6 +41,7 @@ const ACTION_LABELS: Record<string, string> = {
   login_failed: auditLogStrings.actionLoginFailed,
   password_change: auditLogStrings.actionPasswordChange,
   mfa_enabled: auditLogStrings.actionMfaEnabled,
+  mfa_policy_changed: auditLogStrings.actionMfaPolicyChanged,
   session_revoked: auditLogStrings.actionSessionRevoked,
   permission_granted: auditLogStrings.actionPermissionGranted,
   permission_revoked: auditLogStrings.actionPermissionRevoked,

@@ -128,6 +128,32 @@ describe('ProfileMfa', () => {
     await waitFor(() => expect(mocks.setUser).toHaveBeenCalledWith(expect.objectContaining({ mfaEnrolledAt: null })))
   })
 
+  it('disables the confirm button with a pending label while removal is in flight', async () => {
+    mocks.useAuthStore.mockReturnValue({
+      user: baseUser({ mfaEnrolledAt: '2026-07-01T00:00:00.000Z' }),
+      setUser: mocks.setUser,
+    })
+    let resolveUnenroll: () => void = () => {}
+    mocks.unenrollTotp.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUnenroll = resolve
+        }),
+    )
+    mocks.useSyncMfaEnrollment.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ mfaEnrolledAt: null }),
+    })
+    render(<ProfileMfa />)
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar' }))
+    const removeButtons = await screen.findAllByRole('button', { name: 'Quitar' })
+    fireEvent.click(removeButtons[removeButtons.length - 1]!)
+
+    expect(await screen.findByRole('button', { name: 'Procesando...' })).toBeDisabled()
+
+    resolveUnenroll()
+    await waitFor(() => expect(mocks.setUser).toHaveBeenCalledWith(expect.objectContaining({ mfaEnrolledAt: null })))
+  })
+
   it('shows an error when removal fails', async () => {
     mocks.useAuthStore.mockReturnValue({
       user: baseUser({ mfaEnrolledAt: '2026-07-01T00:00:00.000Z' }),

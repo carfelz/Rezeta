@@ -200,16 +200,17 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
   describe('identity policy (integration)', () => {
     it('defaults to off, then upserts on PATCH, then updates on a second PATCH', async () => {
       const tenant = await createTestTenant(prisma)
+      const admin = await createTestUser(prisma, tenant.id)
 
       const initial = await service.getPolicy(tenant.id)
       expect(initial).toEqual({ mfaRequirement: 'off' })
 
-      const first = await service.updatePolicy(tenant.id, 'admins')
+      const first = await service.updatePolicy(tenant.id, 'admins', admin.id)
       expect(first).toEqual({ mfaRequirement: 'admins' })
       const row = await prisma.identityPolicy.findUnique({ where: { tenantId: tenant.id } })
       expect(row?.mfaRequirement).toBe('admins')
 
-      const second = await service.updatePolicy(tenant.id, 'all')
+      const second = await service.updatePolicy(tenant.id, 'all', admin.id)
       expect(second).toEqual({ mfaRequirement: 'all' })
       const rows = await prisma.identityPolicy.findMany({ where: { tenantId: tenant.id } })
       expect(rows).toHaveLength(1) // upsert, not a second row
@@ -218,10 +219,22 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
 
     it('scopes policies per tenant', async () => {
       const tenantA = await createTestTenant(prisma)
+      const adminA = await createTestUser(prisma, tenantA.id)
       const tenantB = await createTestTenant(prisma)
-      await service.updatePolicy(tenantA.id, 'all')
+      await service.updatePolicy(tenantA.id, 'all', adminA.id)
       const policyB = await service.getPolicy(tenantB.id)
       expect(policyB).toEqual({ mfaRequirement: 'off' })
+    })
+
+    it('writes an mfa_policy_changed audit row with the before/after diff', async () => {
+      const tenant = await createTestTenant(prisma)
+      const admin = await createTestUser(prisma, tenant.id)
+
+      await service.updatePolicy(tenant.id, 'admins', admin.id)
+      const audit = await waitForAuditLog(prisma, { action: 'mfa_policy_changed', entityId: tenant.id })
+      expect(audit['tenantId']).toBe(tenant.id)
+      expect(audit['actorUserId']).toBe(admin.id)
+      expect(audit['changes']).toEqual({ mfaRequirement: { before: 'off', after: 'admins' } })
     })
   })
 

@@ -43,4 +43,10 @@ export interface IAuthClient {
    * (i.e. `signIn` never hit that error, or this was already called once).
    */
   completeTotpSignIn(code: string): Promise<void>
+
+  /**
+   * Abandons a pending multi-factor sign-in (the user backed out of the TOTP
+   * challenge without completing it). No-op when nothing is pending.
+   */
+  cancelTotpSignIn(): void
 }

@@ -41,7 +41,9 @@ export class IdentityService {
     })
     const ids = [...new Set(events.map((e) => e.userId).filter((id): id is string => id !== null))]
     const names =
-      ids.length > 0 ? await this.repository.findUserNames(ids) : new Map<string, string | null>()
+      ids.length > 0
+        ? await this.repository.findUserNames(tenantId, ids)
+        : new Map<string, string | null>()
     return events.map((e) => ({
       id: e.id,
       userId: e.userId,
@@ -130,9 +132,34 @@ export class IdentityService {
     return { mfaRequirement: (row?.mfaRequirement ?? 'off') as IdentityPolicyDto['mfaRequirement'] }
   }
 
-  async updatePolicy(tenantId: string, mfaRequirement: IdentityPolicyDto['mfaRequirement']): Promise<IdentityPolicyDto> {
+  /**
+   * Audits `mfa_policy_changed` (skipped on a no-op PATCH that keeps the same
+   * value) — required before any MFA-enforcement slice ships, so policy
+   * flips are attributable. `entityId` is the tenant id: IdentityPolicy is
+   * keyed one-per-tenant and the row id never surfaces in the API.
+   */
+  async updatePolicy(
+    tenantId: string,
+    mfaRequirement: IdentityPolicyDto['mfaRequirement'],
+    actorUserId: string,
+  ): Promise<IdentityPolicyDto> {
+    const before = (await this.repository.getPolicy(tenantId))?.mfaRequirement ?? 'off'
     const row = await this.repository.upsertPolicy(tenantId, mfaRequirement)
-    return { mfaRequirement: row.mfaRequirement as IdentityPolicyDto['mfaRequirement'] }
+    const after = row.mfaRequirement
+    if (after !== before) {
+      void this.auditLog.record({
+        tenantId,
+        actorUserId,
+        actorType: 'user',
+        category: 'auth',
+        action: 'mfa_policy_changed',
+        entityType: 'IdentityPolicy',
+        entityId: tenantId,
+        changes: { mfaRequirement: { before, after } },
+        status: 'success',
+      })
+    }
+    return { mfaRequirement: after as IdentityPolicyDto['mfaRequirement'] }
   }
 }
 

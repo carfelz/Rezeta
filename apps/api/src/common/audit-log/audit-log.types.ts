@@ -19,6 +19,7 @@ export type AuditAuthAction =
   | 'login_failed'
   | 'password_change'
   | 'mfa_enabled'
+  | 'mfa_policy_changed'
   | 'session_revoked'
   | 'permission_granted'
   | 'permission_revoked'

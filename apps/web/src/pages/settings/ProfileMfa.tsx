@@ -63,6 +63,7 @@ export function ProfileMfa(): JSX.Element {
 
   async function handleRemove(): Promise<void> {
     setError(null)
+    setBusy(true)
     try {
       await authClient.unenrollTotp()
       const synced = await syncMfa.mutateAsync()
@@ -72,6 +73,8 @@ export function ProfileMfa(): JSX.Element {
       const error = err instanceof Error ? err : new Error(String(err))
       logger.error(error.message, { stack: error.stack, context: 'ProfileMfa.unenroll' })
       setError(s.removeError)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -165,6 +168,7 @@ export function ProfileMfa(): JSX.Element {
         confirmLabel={s.removeConfirmButton}
         cancelLabel={s.cancelButton}
         variant="danger"
+        loading={busy}
       />
     </Card>
   )

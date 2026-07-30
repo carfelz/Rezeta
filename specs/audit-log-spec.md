@@ -82,6 +82,7 @@ Events on domain records in the database.
 | `login_failed`       | Failed sign-in attempt (wrong password, unrecognized account) |
 | `password_change`    | Password was changed                                          |
 | `mfa_enabled`        | Multi-factor authentication was enabled on an account         |
+| `mfa_policy_changed` | The tenant's MFA requirement policy was changed               |
 | `session_revoked`    | A session was explicitly revoked                              |
 | `permission_granted` | A role or permission was granted to a user                    |
 | `permission_revoked` | A role or permission was removed from a user                  |
@@ -385,7 +386,7 @@ Webhook handlers for email providers must verify the provider's HMAC signature b
 
 ## 10. Auth Event Handling
 
-Auth events (`login`, `logout`, `login_failed`, `password_change`, `mfa_enabled`, `session_revoked`, `permission_granted`, `permission_revoked`, `role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`) are written via explicit `AuditLogService.record()` calls — the first eight in the auth service immediately after the Firebase Auth SDK call resolves, the user-management four in `UsersService`/`PermissionsService` alongside the mutation they record.
+Auth events (`login`, `logout`, `login_failed`, `password_change`, `mfa_enabled`, `mfa_policy_changed`, `session_revoked`, `permission_granted`, `permission_revoked`, `role_changed`, `user_invited`, `user_deactivated`, `user_reactivated`) are written via explicit `AuditLogService.record()` calls — the sign-in/session/MFA events in the auth service immediately after the Firebase Auth SDK call resolves, the user-management four in `UsersService`/`PermissionsService` alongside the mutation they record, and `mfa_policy_changed` in `IdentityService.updatePolicy` alongside the policy upsert (with the before/after `mfaRequirement` diff in `changes`).
 
 ### No lockout or rate-limit logic
 
@@ -631,6 +632,7 @@ All action values are translated for display in the table and the detail drawer.
 | `login_failed`           | Inicio de sesión fallido |
 | `password_change`        | Cambio de contraseña     |
 | `mfa_enabled`            | MFA habilitado           |
+| `mfa_policy_changed`     | Política de MFA actualizada |
 | `session_revoked`        | Sesión revocada          |
 | `permission_granted`     | Permiso otorgado         |
 | `permission_revoked`     | Permiso revocado         |

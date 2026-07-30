@@ -65,6 +65,7 @@ export function Login(): JSX.Element {
   }
 
   function backToCredentials(): void {
+    authClient.cancelTotpSignIn()
     setMfaChallenge(false)
     setTotpCode('')
     setError(null)

@@ -327,6 +327,7 @@ export const auditLogStrings = {
   actionLoginFailed: 'Inicio de sesión fallido',
   actionPasswordChange: 'Cambio de contraseña',
   actionMfaEnabled: 'MFA habilitado',
+  actionMfaPolicyChanged: 'Política de MFA actualizada',
   actionSessionRevoked: 'Sesión revocada',
   actionPermissionGranted: 'Permiso otorgado',
   actionPermissionRevoked: 'Permiso revocado',

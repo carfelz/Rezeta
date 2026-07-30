@@ -4,6 +4,47 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-07-30] Identity ride-along fixes from the slices 3-5 final review
+
+### Added
+
+- `mfa_policy_changed` audit action (category `auth`):
+  `IdentityService.updatePolicy`
+  (`apps/api/src/modules/identity/identity.service.ts`) now records an audit
+  event on every effective IdentityPolicy change — acting user as
+  `actorUserId`, tenant as `entityId`, and the before/after `mfaRequirement`
+  diff in `changes`. A no-op PATCH (same value) is not audited. The
+  controller passes the current user through
+  (`apps/api/src/modules/identity/identity.controller.ts`); Spanish label
+  added to the audit log UI (`apps/web/src/pages/settings/AuditLog.tsx`,
+  `strings.ts`) and the action tables in `specs/audit-log-spec.md`.
+  Required groundwork before any MFA-enforcement slice ships.
+- `IAuthClient.cancelTotpSignIn()`
+  (`apps/web/src/lib/auth/auth-client.interface.ts`,
+  `firebase-auth-client.ts`): clears the pending multi-factor resolver when
+  the user abandons the TOTP challenge; the Login page's back-to-credentials
+  handler now calls it (`apps/web/src/pages/Login/index.tsx`), so a stale
+  resolver can no longer complete a sign-in later.
+
+### Fixed
+
+- `IdentityRepository.findUserNames`
+  (`apps/api/src/modules/identity/identity.repository.ts`) now takes a
+  `tenantId` and filters the user lookup by it (defense in depth — the ids
+  already come from tenant-filtered LoginEvent rows).
+- `ProfileMfa.handleRemove` (`apps/web/src/pages/settings/ProfileMfa.tsx`)
+  sets the busy flag during unenroll and passes `loading` to the
+  ConfirmDialog, so the confirm button is disabled while removal is in
+  flight (no double-submit).
+
+### Changed
+
+- Staff security dashboard sparkline
+  (`apps/api/src/modules/identity/staff-security.service.ts`,
+  `bucketLogins14d`) now buckets logins by UTC calendar day instead of
+  sliding 24h windows back from request time — each bar means "logins on
+  that date" and the last bar is the current UTC date.
+
 ## [2026-07-28] Run API integration specs in CI against real Postgres
 
 ### Added

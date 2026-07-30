@@ -59,7 +59,7 @@ describe('listLogins', () => {
     mockRepo.findUserNames.mockResolvedValue(new Map([['u1', 'Ana García']]))
     const result = await makeService().listLogins('t1', { limit: 50 })
     expect(mockRepo.findUserNames).toHaveBeenCalledTimes(1)
-    expect(mockRepo.findUserNames).toHaveBeenCalledWith(['u1'])
+    expect(mockRepo.findUserNames).toHaveBeenCalledWith('t1', ['u1'])
     expect(result[0]).toMatchObject({ userId: 'u1', userName: 'Ana García' })
     expect(result[2]).toMatchObject({ userId: null, userName: null })
   })
@@ -270,9 +270,47 @@ describe('getPolicy', () => {
 
 describe('updatePolicy', () => {
   it('delegates to the repository upsert and returns the new value', async () => {
+    mockRepo.getPolicy.mockResolvedValue({ mfaRequirement: 'off' })
     mockRepo.upsertPolicy.mockResolvedValue({ mfaRequirement: 'all' })
-    const result = await makeService().updatePolicy('t1', 'all')
+    const result = await makeService().updatePolicy('t1', 'all', 'u1')
     expect(mockRepo.upsertPolicy).toHaveBeenCalledWith('t1', 'all')
     expect(result).toEqual({ mfaRequirement: 'all' })
+  })
+
+  it('audits mfa_policy_changed with before/after values and the acting user', async () => {
+    mockRepo.getPolicy.mockResolvedValue({ mfaRequirement: 'admins' })
+    mockRepo.upsertPolicy.mockResolvedValue({ mfaRequirement: 'all' })
+    await makeService().updatePolicy('t1', 'all', 'u1')
+    expect(mockAuditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 't1',
+        actorUserId: 'u1',
+        actorType: 'user',
+        category: 'auth',
+        action: 'mfa_policy_changed',
+        entityType: 'IdentityPolicy',
+        entityId: 't1',
+        changes: { mfaRequirement: { before: 'admins', after: 'all' } },
+        status: 'success',
+      }),
+    )
+  })
+
+  it('treats a missing stored policy as off for the audited before value', async () => {
+    mockRepo.getPolicy.mockResolvedValue(null)
+    mockRepo.upsertPolicy.mockResolvedValue({ mfaRequirement: 'admins' })
+    await makeService().updatePolicy('t1', 'admins', 'u1')
+    expect(mockAuditLog.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changes: { mfaRequirement: { before: 'off', after: 'admins' } },
+      }),
+    )
+  })
+
+  it('does not audit a no-op update (value unchanged)', async () => {
+    mockRepo.getPolicy.mockResolvedValue({ mfaRequirement: 'all' })
+    mockRepo.upsertPolicy.mockResolvedValue({ mfaRequirement: 'all' })
+    await makeService().updatePolicy('t1', 'all', 'u1')
+    expect(mockAuditLog.record).not.toHaveBeenCalled()
   })
 })

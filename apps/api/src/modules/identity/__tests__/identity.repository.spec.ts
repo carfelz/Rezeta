@@ -102,9 +102,18 @@ describe('IdentityRepository', () => {
       { id: 'u1', fullName: 'Ana', email: 'ana@rezeta.do' },
       { id: 'u2', fullName: null, email: 'bo@rezeta.do' },
     ] as never)
-    const map = await makeRepo().findUserNames(['u1', 'u2'])
+    const map = await makeRepo().findUserNames('t1', ['u1', 'u2'])
     expect(map.get('u1')).toBe('Ana')
     expect(map.get('u2')).toBe('bo@rezeta.do')
+  })
+
+  it('findUserNames scopes the lookup to the given tenant', async () => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([] as never)
+    await makeRepo().findUserNames('t1', ['u1'])
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      where: { tenantId: 't1', id: { in: ['u1'] } },
+      select: { id: true, fullName: true, email: true },
+    })
   })
 
   it('securitySummary aggregates logins/blocked/distinctUsers/dormantUsers30d/mfaAdoptionPct', async () => {
