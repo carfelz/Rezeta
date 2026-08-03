@@ -15,6 +15,9 @@ const m = vi.hoisted(() => {
   const mockCreateUser = vi.fn()
   const mockGeneratePasswordResetLink = vi.fn()
   const mockGetUser = vi.fn()
+  const mockCreateProviderConfig = vi.fn()
+  const mockUpdateProviderConfig = vi.fn()
+  const mockDeleteProviderConfig = vi.fn()
   const mockAuth = vi.fn(() => ({
     verifyIdToken: mockVerifyIdToken,
     revokeRefreshTokens: mockRevokeRefreshTokens,
@@ -22,6 +25,9 @@ const m = vi.hoisted(() => {
     createUser: mockCreateUser,
     generatePasswordResetLink: mockGeneratePasswordResetLink,
     getUser: mockGetUser,
+    createProviderConfig: mockCreateProviderConfig,
+    updateProviderConfig: mockUpdateProviderConfig,
+    deleteProviderConfig: mockDeleteProviderConfig,
   }))
   const mockInitializeApp = vi.fn()
   const mockCert = vi.fn((c: unknown) => c)
@@ -33,6 +39,9 @@ const m = vi.hoisted(() => {
     mockCreateUser,
     mockGeneratePasswordResetLink,
     mockGetUser,
+    mockCreateProviderConfig,
+    mockUpdateProviderConfig,
+    mockDeleteProviderConfig,
     mockAuth,
     mockInitializeApp,
     mockCert,
@@ -57,6 +66,9 @@ const {
   mockCreateUser,
   mockGeneratePasswordResetLink,
   mockGetUser,
+  mockCreateProviderConfig,
+  mockUpdateProviderConfig,
+  mockDeleteProviderConfig,
   mockInitializeApp,
   mockCert,
   mockApps,
@@ -495,6 +507,121 @@ describe('FirebaseAuthProvider', () => {
       provider.onModuleInit()
       mockGetUser.mockRejectedValue(new Error('boom'))
       await expect(provider.getMfaEnrollment('uid-1')).rejects.toThrow(InternalServerErrorException)
+    })
+  })
+
+  // ── oidc provider configs ────────────────────────────────────────────────
+
+  describe('oidc provider configs', () => {
+    beforeEach(() => {
+      provider = new FirebaseAuthProvider(
+        makeConfig({ projectId: 'p', clientEmail: 'c', privateKey: 'k' }) as never,
+      )
+      provider.onModuleInit()
+    })
+
+    it('createOidcProviderConfig throws InternalServerError when app not initialized', async () => {
+      const uninitialized = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(
+        uninitialized.createOidcProviderConfig({
+          providerId: 'oidc.hospital-x1',
+          displayName: 'Hospital',
+          issuer: 'https://issuer.example',
+          clientId: 'cid',
+          clientSecret: 'sec',
+          enabled: true,
+        }),
+      ).rejects.toThrow(InternalServerErrorException)
+    })
+
+    it('createOidcProviderConfig maps input to the admin sdk shape', async () => {
+      await provider.createOidcProviderConfig({
+        providerId: 'oidc.hospital-x1',
+        displayName: 'Hospital',
+        issuer: 'https://issuer.example',
+        clientId: 'cid',
+        clientSecret: 'sec',
+        enabled: true,
+      })
+      expect(mockCreateProviderConfig).toHaveBeenCalledWith({
+        providerId: 'oidc.hospital-x1',
+        displayName: 'Hospital',
+        issuer: 'https://issuer.example',
+        clientId: 'cid',
+        clientSecret: 'sec',
+        enabled: true,
+        responseType: { code: true },
+      })
+    })
+
+    it('updateOidcProviderConfig throws InternalServerError when app not initialized', async () => {
+      const uninitialized = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(
+        uninitialized.updateOidcProviderConfig({
+          providerId: 'oidc.hospital-x1',
+          displayName: 'Hospital',
+          issuer: 'https://issuer.example',
+          clientId: 'cid',
+          enabled: false,
+        }),
+      ).rejects.toThrow(InternalServerErrorException)
+    })
+
+    it('updateOidcProviderConfig omits clientSecret when not provided', async () => {
+      await provider.updateOidcProviderConfig({
+        providerId: 'oidc.hospital-x1',
+        displayName: 'Hospital',
+        issuer: 'https://issuer.example',
+        clientId: 'cid',
+        enabled: false,
+      })
+      const [, patch] = mockUpdateProviderConfig.mock.calls[0] as [string, Record<string, unknown>]
+      expect(patch).not.toHaveProperty('clientSecret')
+      expect(patch['enabled']).toBe(false)
+    })
+
+    it('updateOidcProviderConfig includes clientSecret when provided', async () => {
+      await provider.updateOidcProviderConfig({
+        providerId: 'oidc.hospital-x1',
+        displayName: 'Hospital',
+        issuer: 'https://issuer.example',
+        clientId: 'cid',
+        clientSecret: 'new-sec',
+        enabled: true,
+      })
+      const [providerId, patch] = mockUpdateProviderConfig.mock.calls[0] as [
+        string,
+        Record<string, unknown>,
+      ]
+      expect(providerId).toBe('oidc.hospital-x1')
+      expect(patch['clientSecret']).toBe('new-sec')
+    })
+
+    it('deleteProviderConfig throws InternalServerError when app not initialized', async () => {
+      const uninitialized = new FirebaseAuthProvider(makeConfig({}) as never)
+      await expect(uninitialized.deleteProviderConfig('oidc.gone')).rejects.toThrow(
+        InternalServerErrorException,
+      )
+    })
+
+    it('deleteProviderConfig calls admin.deleteProviderConfig on success', async () => {
+      mockDeleteProviderConfig.mockResolvedValue(undefined)
+      await expect(provider.deleteProviderConfig('oidc.hospital-x1')).resolves.toBeUndefined()
+      expect(mockDeleteProviderConfig).toHaveBeenCalledWith('oidc.hospital-x1')
+    })
+
+    it('deleteProviderConfig swallows configuration-not-found', async () => {
+      mockDeleteProviderConfig.mockRejectedValue(
+        Object.assign(new Error('nf'), { code: 'auth/configuration-not-found' }),
+      )
+      await expect(provider.deleteProviderConfig('oidc.gone')).resolves.toBeUndefined()
+    })
+
+    it('deleteProviderConfig rethrows other errors', async () => {
+      mockDeleteProviderConfig.mockRejectedValue(
+        Object.assign(new Error('boom'), { code: 'auth/internal-error' }),
+      )
+      await expect(provider.deleteProviderConfig('oidc.x')).rejects.toThrow('boom')
     })
   })
 })

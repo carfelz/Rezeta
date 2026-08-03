@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const m = vi.hoisted(() => {
   const onAuthStateChanged = vi.fn()
   const signInWithEmailAndPassword = vi.fn()
+  const signInWithPopup = vi.fn()
   const signOut = vi.fn()
   const verifyPasswordResetCode = vi.fn()
   const confirmPasswordReset = vi.fn()
@@ -14,9 +15,12 @@ const m = vi.hoisted(() => {
   const generateSecret = vi.fn()
   const assertionForEnrollment = vi.fn()
   const assertionForSignIn = vi.fn()
+  const GoogleAuthProvider = vi.fn()
+  const OAuthProvider = vi.fn()
   return {
     onAuthStateChanged,
     signInWithEmailAndPassword,
+    signInWithPopup,
     signOut,
     verifyPasswordResetCode,
     confirmPasswordReset,
@@ -28,6 +32,8 @@ const m = vi.hoisted(() => {
     generateSecret,
     assertionForEnrollment,
     assertionForSignIn,
+    GoogleAuthProvider,
+    OAuthProvider,
   }
 })
 
@@ -35,6 +41,7 @@ vi.mock('firebase/auth', () => ({
   getAuth: m.getAuth,
   onAuthStateChanged: m.onAuthStateChanged,
   signInWithEmailAndPassword: m.signInWithEmailAndPassword,
+  signInWithPopup: m.signInWithPopup,
   signOut: m.signOut,
   verifyPasswordResetCode: m.verifyPasswordResetCode,
   confirmPasswordReset: m.confirmPasswordReset,
@@ -46,6 +53,8 @@ vi.mock('firebase/auth', () => ({
     assertionForEnrollment: m.assertionForEnrollment,
     assertionForSignIn: m.assertionForSignIn,
   },
+  GoogleAuthProvider: m.GoogleAuthProvider,
+  OAuthProvider: m.OAuthProvider,
 }))
 
 vi.mock('firebase/app', () => ({
@@ -161,6 +170,64 @@ describe('FirebaseAuthClient', () => {
       await expect(client.signIn('a@b', 'pw')).rejects.toMatchObject({
         code: 'auth/user-not-found',
       })
+    })
+  })
+
+  // ── signInWithGoogle ───────────────────────────────────────────────────────
+
+  describe('signInWithGoogle', () => {
+    it('signs in via popup with a GoogleAuthProvider', async () => {
+      m.signInWithPopup.mockResolvedValue({ user: {} })
+      await client.signInWithGoogle()
+      expect(m.signInWithPopup).toHaveBeenCalledOnce()
+    })
+
+    it('captures the mfa resolver and rethrows on multi-factor-auth-required', async () => {
+      const mfaError = Object.assign(new Error('mfa'), { code: 'auth/multi-factor-auth-required' })
+      m.signInWithPopup.mockRejectedValue(mfaError)
+      m.getMultiFactorResolver.mockReturnValue({
+        hints: [{ factorId: 'totp', uid: 'e1' }],
+        resolveSignIn: vi.fn().mockResolvedValue(undefined),
+      })
+      m.assertionForSignIn.mockReturnValue('a1')
+      await expect(client.signInWithGoogle()).rejects.toBe(mfaError)
+      await client.completeTotpSignIn('123456') // proves the resolver was captured
+    })
+
+    it('rethrows a non-mfa error without capturing a resolver', async () => {
+      const err = Object.assign(new Error('popup closed'), { code: 'auth/popup-closed-by-user' })
+      m.signInWithPopup.mockRejectedValue(err)
+      await expect(client.signInWithGoogle()).rejects.toBe(err)
+      expect(m.getMultiFactorResolver).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── signInWithSso ──────────────────────────────────────────────────────────
+
+  describe('signInWithSso', () => {
+    it('builds an OAuthProvider with the given provider id', async () => {
+      m.signInWithPopup.mockResolvedValue({ user: {} })
+      await client.signInWithSso('oidc.hospital-x1')
+      expect(m.OAuthProvider).toHaveBeenCalledWith('oidc.hospital-x1')
+    })
+
+    it('captures the mfa resolver and rethrows on multi-factor-auth-required', async () => {
+      const mfaError = Object.assign(new Error('mfa'), { code: 'auth/multi-factor-auth-required' })
+      m.signInWithPopup.mockRejectedValue(mfaError)
+      m.getMultiFactorResolver.mockReturnValue({
+        hints: [{ factorId: 'totp', uid: 'e1' }],
+        resolveSignIn: vi.fn().mockResolvedValue(undefined),
+      })
+      m.assertionForSignIn.mockReturnValue('a1')
+      await expect(client.signInWithSso('oidc.hospital-x1')).rejects.toBe(mfaError)
+      await client.completeTotpSignIn('123456') // proves the resolver was captured
+    })
+
+    it('rethrows a non-mfa error without capturing a resolver', async () => {
+      const err = Object.assign(new Error('popup closed'), { code: 'auth/popup-closed-by-user' })
+      m.signInWithPopup.mockRejectedValue(err)
+      await expect(client.signInWithSso('oidc.hospital-x1')).rejects.toBe(err)
+      expect(m.getMultiFactorResolver).not.toHaveBeenCalled()
     })
   })
 

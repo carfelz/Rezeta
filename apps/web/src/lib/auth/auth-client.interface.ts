@@ -18,6 +18,12 @@ export interface IAuthClient {
   /** Email/password sign-in. Throws with `code: 'auth/multi-factor-auth-required'` when the account has TOTP enrolled — call `completeTotpSignIn` next. */
   signIn(email: string, password: string): Promise<void>
 
+  /** Google popup sign-in. Rejects with code 'auth/multi-factor-auth-required' when TOTP is enrolled — call completeTotpSignIn next (resolver captured, same as signIn). */
+  signInWithGoogle(): Promise<void>
+
+  /** OIDC SSO popup sign-in for the given Identity Platform provider id ('oidc.…'). Same MFA contract as signInWithGoogle. */
+  signInWithSso(providerId: string): Promise<void>
+
   /** Sign the user out. Resolves on completion; never throws. */
   signOut(): Promise<void>
 

@@ -13,6 +13,8 @@ export interface ConfirmDialogProps {
   subtitle?: string
   confirmLabel?: string
   cancelLabel?: string
+  /** Confirm-button label while `loading` is true. Defaults to the Spanish product copy. */
+  loadingLabel?: string
   variant?: 'danger' | 'primary'
   loading?: boolean
 }
@@ -36,6 +38,7 @@ export function ConfirmDialog({
   subtitle,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
+  loadingLabel = 'Procesando...',
   variant = 'danger',
   loading = false,
 }: ConfirmDialogProps): JSX.Element {
@@ -68,7 +71,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button variant={variant} onClick={onConfirm} disabled={loading}>
-            {loading ? 'Procesando...' : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </Button>
         </ModalFooter>
       </ModalContent>

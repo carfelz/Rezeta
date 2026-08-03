@@ -38,6 +38,7 @@ import { Institutions } from '@/pages/staff/Institutions'
 import { NewInstitution } from '@/pages/staff/NewInstitution'
 import { Security as StaffSecurity } from '@/pages/staff/Security'
 import { PlatformUsers } from '@/pages/staff/PlatformUsers'
+import { SsoConnections } from '@/pages/staff/SsoConnections'
 
 const router = createBrowserRouter([
   // ── Staff hosts (staff-dev.rezeta.co) land on the staff console ────────────
@@ -303,6 +304,7 @@ const router = createBrowserRouter([
       { path: 'staff/institutions/new', element: <NewInstitution /> },
       { path: 'staff/security', element: <StaffSecurity /> },
       { path: 'staff/platform-users', element: <PlatformUsers /> },
+      { path: 'staff/sso', element: <SsoConnections /> },
     ],
   },
 

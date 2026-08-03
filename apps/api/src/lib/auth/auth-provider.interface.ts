@@ -14,6 +14,21 @@ export interface SignedInToken {
   expiresIn: number
 }
 
+export interface OidcProviderConfigInput {
+  /** Provider identifier, must be prefixed `oidc.` (e.g. `oidc.hospital-x1`). */
+  providerId: string
+  /** Human-readable label shown to admins. */
+  displayName: string
+  /** OIDC issuer URL. */
+  issuer: string
+  /** OAuth client ID registered with the issuer. */
+  clientId: string
+  /** OAuth client secret. Omit on update to keep the existing secret unchanged. */
+  clientSecret?: string
+  /** Whether the connection accepts sign-ins. */
+  enabled: boolean
+}
+
 export interface IAuthProvider {
   /**
    * Verify a raw bearer token string.
@@ -63,4 +78,23 @@ export interface IAuthProvider {
    * as "enrolled" here even if present, since SMS MFA is deferred.
    */
   getMfaEnrollment(externalUid: string): Promise<{ enrolledAt: Date | null }>
+
+  /**
+   * Register a new OIDC SSO connection with the provider (an Identity Platform
+   * "provider config"). `clientSecret` is required on create.
+   */
+  createOidcProviderConfig(input: Required<OidcProviderConfigInput>): Promise<void>
+
+  /**
+   * Update an existing OIDC SSO connection, including enabling/disabling it via
+   * the `enabled` flag — there is no separate enable/disable method.
+   * Omit `clientSecret` to keep the existing secret unchanged.
+   */
+  updateOidcProviderConfig(input: OidcProviderConfigInput): Promise<void>
+
+  /**
+   * Delete an SSO connection's provider config. Idempotent — swallows a
+   * not-found error so callers can delete without checking existence first.
+   */
+  deleteProviderConfig(providerId: string): Promise<void>
 }

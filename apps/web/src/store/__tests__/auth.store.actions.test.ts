@@ -3,12 +3,16 @@ import { act, renderHook } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
+  signInWithGoogle: vi.fn(),
+  signInWithSso: vi.fn(),
   signOut: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({
   authClient: {
     signIn: mocks.signIn,
+    signInWithGoogle: mocks.signInWithGoogle,
+    signInWithSso: mocks.signInWithSso,
     signOut: mocks.signOut,
     onAuthStateChanged: vi.fn(),
     getToken: vi.fn().mockResolvedValue(null),
@@ -53,6 +57,52 @@ describe('useAuthStore — signIn', () => {
     const { result } = renderHook(() => useAuthStore())
     await expect(act(() => result.current.signIn('x@x.com', 'p'))).rejects.toThrow(
       'network failure',
+    )
+  })
+})
+
+describe('useAuthStore — signInWithGoogle', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.signInWithGoogle.mockResolvedValue(undefined)
+    resetStore()
+  })
+
+  it('delegates to authClient.signInWithGoogle', async () => {
+    const { result } = renderHook(() => useAuthStore())
+    await act(() => result.current.signInWithGoogle())
+    expect(mocks.signInWithGoogle).toHaveBeenCalledOnce()
+  })
+
+  it('propagates error with code intact', async () => {
+    const err = Object.assign(new Error('mfa required'), { code: 'auth/multi-factor-auth-required' })
+    mocks.signInWithGoogle.mockRejectedValue(err)
+
+    const { result } = renderHook(() => useAuthStore())
+    await expect(act(() => result.current.signInWithGoogle())).rejects.toThrow('mfa required')
+  })
+})
+
+describe('useAuthStore — signInWithSso', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.signInWithSso.mockResolvedValue(undefined)
+    resetStore()
+  })
+
+  it('delegates to authClient.signInWithSso with the provider id', async () => {
+    const { result } = renderHook(() => useAuthStore())
+    await act(() => result.current.signInWithSso('oidc.hospital-x1'))
+    expect(mocks.signInWithSso).toHaveBeenCalledWith('oidc.hospital-x1')
+  })
+
+  it('propagates error with code intact', async () => {
+    const err = Object.assign(new Error('mfa required'), { code: 'auth/multi-factor-auth-required' })
+    mocks.signInWithSso.mockRejectedValue(err)
+
+    const { result } = renderHook(() => useAuthStore())
+    await expect(act(() => result.current.signInWithSso('oidc.hospital-x1'))).rejects.toThrow(
+      'mfa required',
     )
   })
 })
