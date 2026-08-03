@@ -4,6 +4,20 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-02] SSO connections + login routing design spec (identity slice 6)
+
+### Added
+
+- Spec-only: design for identity slice 6 —
+  `docs/superpowers/specs/2026-08-02-sso-connections-login-routing-design.md`.
+  Staff-managed per-institution OIDC `SsoConnection`s (Identity Platform
+  provider config per connection, secrets write-only pass-through), a public
+  enumeration-safe login-method routing endpoint, the login screen's SSO
+  swap-in-place state, and the previously unshipped "Continuar con Google"
+  button. OIDC only; SAML, blocking functions, redirect flow, JIT
+  provisioning, and plan gating are recorded non-goals. Implementation plan
+  to follow.
+
 ## [2026-08-02] Dev subdomains on rezeta.co + keyless CI deploys (WIF)
 
 ### Added
