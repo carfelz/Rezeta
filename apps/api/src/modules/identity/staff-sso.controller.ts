@@ -44,6 +44,7 @@ export class StaffSsoConnectionsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create an SSO connection for a tenant' })
   @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 409, description: 'One or more domains are already claimed by another active SSO connection' })
   create(
     @CurrentPlatformUser() actor: PlatformPrincipal,
     @Body(new ZodValidationPipe(CreateSsoConnectionSchema)) dto: CreateSsoConnectionDto,
@@ -55,6 +56,7 @@ export class StaffSsoConnectionsController {
   @ApiOperation({ summary: 'Update an SSO connection' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 404 })
+  @ApiResponse({ status: 409, description: 'One or more domains are already claimed by another active SSO connection' })
   update(
     @CurrentPlatformUser() actor: PlatformPrincipal,
     @Param('id') id: string,

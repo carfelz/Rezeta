@@ -106,6 +106,7 @@ export const ssoStrings = {
   pageSubtitle: 'Single sign-on connections per institution.',
   newButton: 'New connection',
   tableInstitution: 'Institution',
+  unnamedInstitution: 'Unnamed institution',
   tableName: 'Name',
   tableDomains: 'Domains',
   tableStatus: 'Status',

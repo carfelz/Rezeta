@@ -12,7 +12,7 @@ Format: `[version/date] — description`. Entries are ordered newest first.
   Provider secrets are a write-only pass-through to the Identity Platform
   provider config and are never persisted in the database.
 - `IAuthProvider` gains `createOidcProviderConfig` / `updateOidcProviderConfig` /
-  `deleteProviderConfig` (`apps/api/src/modules/identity/firebase-auth.provider.ts`).
+  `deleteProviderConfig` (`apps/api/src/lib/auth/firebase-auth.provider.ts`).
 - Staff endpoints under `/v1/staff/identity/sso-connections` (list, create,
   update, status, test, delete) in
   `apps/api/src/modules/identity/staff-sso.controller.ts`, each emitting

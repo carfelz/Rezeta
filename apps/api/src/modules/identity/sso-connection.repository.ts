@@ -37,11 +37,12 @@ export type UpdateSsoConnectionInput = Partial<{
 }>
 
 /**
- * Prisma access for SsoConnection (multi-tenant OIDC/SAML config). Every
- * connection belongs to a tenant; the repository enforces tenant_id filtering
- * on read/write. No secrets stored (client_secret lives in a secrets manager,
- * Task 5). Provider ID uniqueness is service-enforced to prevent collisions
- * across tenants at identity provider registration time.
+ * Prisma access for SsoConnection (multi-tenant OIDC/SAML config). No secret
+ * column: the client secret is a write-only pass-through to the Identity
+ * Platform provider config, never persisted here. Reads (`listAll`,
+ * `findById`, domain lookups) are intentionally cross-tenant for the staff
+ * console; writes (`update`, `softDelete`) require the caller's `tenantId`.
+ * Provider ID uniqueness is DB-enforced via the `@unique` `providerId` column.
  */
 @Injectable()
 export class SsoConnectionRepository {

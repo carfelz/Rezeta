@@ -365,7 +365,7 @@ function ConnectionRow({ connection }: { connection: SsoConnectionDto }): JSX.El
   return (
     <>
       <tr className="border-t border-n-100">
-        <td className="px-4 py-3 text-sm text-n-800">{connection.tenantName ?? s.fieldTenantPlaceholder}</td>
+        <td className="px-4 py-3 text-sm text-n-800">{connection.tenantName ?? s.unnamedInstitution}</td>
         <td className="px-4 py-3">
           <span className="font-medium text-n-800">{connection.displayName}</span>
           <span className="block text-xs text-n-500">{connection.clientId}</span>

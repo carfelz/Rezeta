@@ -897,14 +897,14 @@ model IdentityPolicy {
 model SsoConnection {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String    @map("tenant_id") @db.Uuid
-  type          String    @default("oidc") @db.VarChar(10)
+  type          String    @default("oidc") @db.VarChar(10) // oidc
   providerId    String    @unique @map("provider_id") @db.VarChar(120)
   displayName   String    @map("display_name") @db.VarChar(80)
   issuerUrl     String    @map("issuer_url") @db.VarChar(512)
   clientId      String    @map("client_id") @db.VarChar(255)
   domains       String[]  @map("domains")
   allowPassword Boolean   @default(true) @map("allow_password")
-  status        String    @default("active") @db.VarChar(10)
+  status        String    @default("active") @db.VarChar(10) // active | disabled
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
