@@ -114,7 +114,7 @@ export class SsoConnectionService {
       enabled: existing.status === 'active',
     })
 
-    const row = await this.repository.update(id, {
+    const row = await this.repository.update(id, existing.tenantId, {
       ...(dto.displayName !== undefined ? { displayName: dto.displayName } : {}),
       ...(dto.issuerUrl !== undefined ? { issuerUrl: dto.issuerUrl } : {}),
       ...(dto.clientId !== undefined ? { clientId: dto.clientId } : {}),
@@ -156,7 +156,7 @@ export class SsoConnectionService {
       enabled: status === 'active',
     })
 
-    const row = await this.repository.update(id, { status })
+    const row = await this.repository.update(id, existing.tenantId, { status })
 
     void this.auditLog.record({
       actorType: 'system',
@@ -185,7 +185,7 @@ export class SsoConnectionService {
       enabled: false,
     })
 
-    await this.repository.softDelete(id)
+    await this.repository.softDelete(id, existing.tenantId)
 
     void this.auditLog.record({
       actorType: 'system',

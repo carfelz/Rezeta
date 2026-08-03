@@ -101,28 +101,28 @@ describe('SsoConnectionRepository', () => {
     })
   })
 
-  it('update modifies the specified fields', async () => {
+  it('update modifies the specified fields and scopes by tenantId', async () => {
     vi.mocked(prisma.ssoConnection.update).mockResolvedValue({} as never)
     const updates = {
       displayName: 'New Name',
       status: 'inactive',
     }
-    await makeRepo().update('c1', updates)
+    await makeRepo().update('c1', 't1', updates)
     expect(prisma.ssoConnection.update).toHaveBeenCalledWith({
-      where: { id: 'c1' },
+      where: { id: 'c1', tenantId: 't1' },
       data: updates,
       include: { tenant: { select: { name: true } } },
     })
   })
 
-  it('softDelete stamps deletedAt with a Date', async () => {
+  it('softDelete stamps deletedAt with a Date and scopes by tenantId', async () => {
     vi.mocked(prisma.ssoConnection.update).mockResolvedValue({} as never)
-    await makeRepo().softDelete('c1')
+    await makeRepo().softDelete('c1', 't1')
     const call = vi.mocked(prisma.ssoConnection.update).mock.calls[0] as unknown as [
       { where: unknown; data: unknown },
     ]
     const { where, data } = call[0]
-    expect(where).toEqual({ id: 'c1' })
+    expect(where).toEqual({ id: 'c1', tenantId: 't1' })
     expect((data as Record<string, unknown>).deletedAt).toBeInstanceOf(Date)
   })
 })

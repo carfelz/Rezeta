@@ -88,17 +88,17 @@ export class SsoConnectionRepository {
     })
   }
 
-  async update(id: string, data: UpdateSsoConnectionInput): Promise<SsoConnectionRow> {
+  async update(id: string, tenantId: string, data: UpdateSsoConnectionInput): Promise<SsoConnectionRow> {
     return this.prisma.ssoConnection.update({
-      where: { id },
+      where: { id, tenantId },
       data,
       include: { tenant: { select: { name: true } } },
     })
   }
 
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string, tenantId: string): Promise<void> {
     await this.prisma.ssoConnection.update({
-      where: { id },
+      where: { id, tenantId },
       data: { deletedAt: new Date() },
     })
   }

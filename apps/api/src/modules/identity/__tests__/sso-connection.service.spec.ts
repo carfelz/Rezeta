@@ -234,7 +234,7 @@ describe('SsoConnectionService', () => {
         clientId: rowFixture.clientId,
         enabled: true,
       })
-      expect(mockRepo.update).toHaveBeenCalledWith('c1', {})
+      expect(mockRepo.update).toHaveBeenCalledWith('c1', 't1', {})
     })
 
     it('forwards every provided field to both the provider config and the row', async () => {
@@ -256,7 +256,7 @@ describe('SsoConnectionService', () => {
           clientId: 'new-client',
         }),
       )
-      expect(mockRepo.update).toHaveBeenCalledWith('c1', fullDto)
+      expect(mockRepo.update).toHaveBeenCalledWith('c1', 't1', fullDto)
     })
   })
 
@@ -268,7 +268,7 @@ describe('SsoConnectionService', () => {
       expect(mockProvider.updateOidcProviderConfig).toHaveBeenCalledWith(
         expect.objectContaining({ enabled: false }),
       )
-      expect(mockRepo.update).toHaveBeenCalledWith('c1', { status: 'disabled' })
+      expect(mockRepo.update).toHaveBeenCalledWith('c1', 't1', { status: 'disabled' })
       expect(
         mockProvider.updateOidcProviderConfig.mock.invocationCallOrder[0],
       ).toBeLessThan(mockRepo.update.mock.invocationCallOrder[0]!)
@@ -297,7 +297,7 @@ describe('SsoConnectionService', () => {
       expect(mockProvider.updateOidcProviderConfig).toHaveBeenCalledWith(
         expect.objectContaining({ enabled: true }),
       )
-      expect(mockRepo.update).toHaveBeenCalledWith('c1', { status: 'active' })
+      expect(mockRepo.update).toHaveBeenCalledWith('c1', 't1', { status: 'active' })
     })
 
     it('audits setStatus as an update with a status before/after changes shape', async () => {
@@ -323,7 +323,7 @@ describe('SsoConnectionService', () => {
         expect.objectContaining({ enabled: false }),
       )
       expect(mockProvider.deleteProviderConfig).not.toHaveBeenCalled()
-      expect(mockRepo.softDelete).toHaveBeenCalledWith('c1')
+      expect(mockRepo.softDelete).toHaveBeenCalledWith('c1', 't1')
       expect(
         mockProvider.updateOidcProviderConfig.mock.invocationCallOrder[0],
       ).toBeLessThan(mockRepo.softDelete.mock.invocationCallOrder[0]!)
