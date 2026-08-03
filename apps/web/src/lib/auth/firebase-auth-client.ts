@@ -4,12 +4,15 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   verifyPasswordResetCode,
   confirmPasswordReset,
   multiFactor,
   getMultiFactorResolver,
   TotpMultiFactorGenerator,
+  GoogleAuthProvider,
+  OAuthProvider,
   type Auth,
   type MultiFactorError,
   type MultiFactorResolver,
@@ -49,11 +52,37 @@ export class FirebaseAuthClient implements IAuthClient {
     try {
       await signInWithEmailAndPassword(this.auth, email, password)
     } catch (err) {
-      if ((err as { code?: string }).code === 'auth/multi-factor-auth-required') {
-        this.pendingMfaResolver = getMultiFactorResolver(this.auth, err as MultiFactorError)
-      }
-      throw err
+      this.captureMfaAndRethrow(err)
     }
+  }
+
+  async signInWithGoogle(): Promise<void> {
+    try {
+      await signInWithPopup(this.auth, new GoogleAuthProvider())
+    } catch (err) {
+      this.captureMfaAndRethrow(err)
+    }
+  }
+
+  async signInWithSso(providerId: string): Promise<void> {
+    try {
+      await signInWithPopup(this.auth, new OAuthProvider(providerId))
+    } catch (err) {
+      this.captureMfaAndRethrow(err)
+    }
+  }
+
+  /**
+   * Shared catch handler for all sign-in entry points (`signIn`,
+   * `signInWithGoogle`, `signInWithSso`): captures the MFA resolver when the
+   * error is `auth/multi-factor-auth-required` (consumed by
+   * `completeTotpSignIn`), then always rethrows the original error.
+   */
+  private captureMfaAndRethrow(err: unknown): never {
+    if ((err as { code?: string }).code === 'auth/multi-factor-auth-required') {
+      this.pendingMfaResolver = getMultiFactorResolver(this.auth, err as MultiFactorError)
+    }
+    throw err
   }
 
   async completeTotpSignIn(code: string): Promise<void> {

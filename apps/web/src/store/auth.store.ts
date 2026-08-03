@@ -20,6 +20,8 @@ interface AuthState {
 
   // ── Public actions ─────────────────────────────────────────────────────────
   signIn: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
+  signInWithSso: (providerId: string) => Promise<void>
   signOut: () => Promise<void>
   /** Replace the cached preferences object on the in-memory user. */
   setPreferences: (preferences: UserPreferences) => void
@@ -38,6 +40,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: async (email, password) => {
     await authClient.signIn(email, password)
+  },
+
+  signInWithGoogle: async () => {
+    await authClient.signInWithGoogle()
+  },
+
+  signInWithSso: async (providerId) => {
+    await authClient.signInWithSso(providerId)
   },
 
   signOut: async () => {
