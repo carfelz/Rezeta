@@ -75,8 +75,8 @@ jobs:
         run: pnpm --filter @rezeta/db generate
 
       # Keyless auth via Workload Identity Federation — no long-lived SA key.
-      # Pool/provider/SA are created by scripts/setup-wif.sh; the two repo
-      # variables hold the provider resource name and the SA email.
+      # Pool/provider/SA were bootstrapped 2026-08-02 (see DEPLOYMENT.md);
+      # the two repo variables hold the provider resource name and SA email.
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:

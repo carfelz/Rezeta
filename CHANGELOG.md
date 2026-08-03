@@ -20,12 +20,11 @@ Format: `[version/date] — description`. Entries are ordered newest first.
   a root route that redirects `/` to `/staff/institutions` on staff hosts,
   declared before the AuthGate layout in `apps/web/src/App.tsx` so platform
   staff aren't bounced to `/login`.
-- `scripts/setup-wif.sh`: one-time Workload Identity Federation setup —
-  `github` pool, GitHub OIDC provider locked to `carfelz/Rezeta`, and the
-  `github-deployer` service account with deploy roles.
-- `scripts/setup-hosting-sites.sh`: creates the three Hosting sites and adds
-  the dev origins to the `allowed_origins` secret; prints the manual
-  custom-domain/DNS/Firebase-Auth steps.
+- One-time setup scripts (`scripts/setup-wif.sh` — WIF pool, GitHub OIDC
+  provider locked to `carfelz/Rezeta`, `github-deployer` service account;
+  `scripts/setup-hosting-sites.sh` — the three Hosting sites + CORS
+  origins). Both were run against the project on 2026-08-02 and then
+  removed; recover from git history if needed.
 
 ### Changed
 

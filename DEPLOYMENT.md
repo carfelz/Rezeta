@@ -47,17 +47,22 @@ JSON key. Repo **variables** (Settings → Secrets and variables → Actions):
 `VITE_API_URL` is deliberately **not** set in CI: an empty value makes the
 app use relative `/v1/...` paths through the Hosting rewrite.
 
-## One-Time Setup (already done / for reference)
+## One-Time Setup (performed 2026-08-02)
 
-1. `scripts/setup-wif.sh` (Cloud Shell) — creates the WIF pool + GitHub OIDC
-   provider (locked to `carfelz/Rezeta`), the `github-deployer` service
-   account and its roles; prints the two repo variables above.
-2. `scripts/setup-hosting-sites.sh` (Cloud Shell) — creates the three
-   Hosting sites and adds the dev origins to the `allowed_origins` secret.
-3. Firebase console → Hosting → add the custom domain to each site; create
-   the DNS records it shows at the registrar for `rezeta.co`.
-4. Firebase console → Authentication → Settings → Authorized domains → add
-   `app-dev.rezeta.co` and `staff-dev.rezeta.co`.
+The setup scripts (`scripts/setup-wif.sh`, `scripts/setup-hosting-sites.sh`)
+were removed after running — recover them from git history if a new
+environment ever needs the same bootstrap. What they did:
+
+1. WIF: created the `github` workload identity pool, a GitHub OIDC provider
+   locked to `carfelz/Rezeta`, and the `github-deployer` service account
+   with deploy roles (Cloud Run admin, SA user, Artifact Registry writer,
+   Secret Manager accessor, Firebase Hosting admin, service usage consumer).
+2. Hosting: created the three sites and added the dev origins to the
+   `allowed_origins` secret.
+3. Firebase console → Hosting → added each custom domain to its site (DNS
+   CNAMEs at GoDaddy point each subdomain at `<site>.web.app`).
+4. Firebase console → Authentication → Settings → Authorized domains →
+   added `app-dev.rezeta.co` and `staff-dev.rezeta.co`.
 
 ## Cloud Resources
 
