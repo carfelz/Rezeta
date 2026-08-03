@@ -15,8 +15,11 @@ Format: `[version/date] — description`. Entries are ordered newest first.
   enumeration-safe login-method routing endpoint, the login screen's SSO
   swap-in-place state, and the previously unshipped "Continuar con Google"
   button. OIDC only; SAML, blocking functions, redirect flow, JIT
-  provisioning, and plan gating are recorded non-goals. Implementation plan
-  to follow.
+  provisioning, and plan gating are recorded non-goals. Implementation plan:
+  `docs/superpowers/plans/2026-08-02-06-sso-connections-login-routing.md`
+  (12 TDD tasks: shared contracts → schema → provider methods → repository/
+  service/controllers → integration spec → web auth client → login screen →
+  staff page → verification).
 
 ## [2026-08-02] Dev subdomains on rezeta.co + keyless CI deploys (WIF)
 
