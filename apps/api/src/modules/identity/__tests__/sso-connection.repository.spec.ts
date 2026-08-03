@@ -7,7 +7,6 @@ const prisma = {
   ssoConnection: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
-    findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
@@ -32,15 +31,15 @@ describe('SsoConnectionRepository', () => {
     })
   })
 
-  it('findById retrieves a connection by id (not deleted)', async () => {
-    vi.mocked(prisma.ssoConnection.findUnique).mockResolvedValue(null)
+  it('findById retrieves a connection by id and filters out deleted rows', async () => {
+    vi.mocked(prisma.ssoConnection.findFirst).mockResolvedValue(null)
     await makeRepo().findById('c1')
-    expect(prisma.ssoConnection.findUnique).toHaveBeenCalledWith({
-      where: { id: 'c1' },
+    expect(prisma.ssoConnection.findFirst).toHaveBeenCalledWith({
+      where: { id: 'c1', deletedAt: null },
     })
   })
 
-  it('findById filters out deleted rows', async () => {
+  it('findById returns the row when found', async () => {
     const row = {
       id: 'c1',
       tenantId: 't1',
@@ -55,7 +54,7 @@ describe('SsoConnectionRepository', () => {
       createdAt: new Date('2026-07-01T00:00:00Z'),
       deletedAt: null,
     }
-    vi.mocked(prisma.ssoConnection.findUnique).mockResolvedValue(row as never)
+    vi.mocked(prisma.ssoConnection.findFirst).mockResolvedValue(row as never)
     const result = await makeRepo().findById('c1')
     expect(result).toBe(row)
   })

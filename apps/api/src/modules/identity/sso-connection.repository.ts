@@ -56,8 +56,8 @@ export class SsoConnectionRepository {
   }
 
   async findById(id: string): Promise<SsoConnectionRow | null> {
-    return this.prisma.ssoConnection.findUnique({
-      where: { id },
+    return this.prisma.ssoConnection.findFirst({
+      where: { id, deletedAt: null },
     })
   }
 
