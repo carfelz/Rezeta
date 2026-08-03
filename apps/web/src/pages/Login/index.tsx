@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { loginStrings } from './strings'
@@ -26,6 +26,8 @@ export function Login(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [ssoRoute, setSsoRoute] = useState<LoginMethodsResponseDto | null>(null)
+  /** Tracks the email currently in the input, so a slow routing response for an email the user has since edited never overwrites the (already-reset) state. */
+  const latestEmailRef = useRef('')
 
   const methods = ssoRoute?.methods ?? ['password', 'google']
   const ssoOnly = methods.includes('sso') && !methods.includes('password')
@@ -78,9 +80,14 @@ export function Login(): JSX.Element {
 
   async function handleEmailBlur(): Promise<void> {
     if (mfaChallenge) return
-    if (!email.trim()) return
+    const requestEmail = email
+    if (!requestEmail.trim()) return
     try {
-      const result = await fetchLoginMethods(email)
+      const result = await fetchLoginMethods(requestEmail)
+      // The user may have edited the email while this request was in
+      // flight — a stale response for an abandoned address must never
+      // override the (already-reset) state for what's in the field now.
+      if (latestEmailRef.current !== requestEmail) return
       setSsoRoute(result)
     } catch {
       // fetchLoginMethods already fails open internally; this is a defensive
@@ -134,6 +141,7 @@ export function Login(): JSX.Element {
                 type="email"
                 value={email}
                 onChange={(e) => {
+                  latestEmailRef.current = e.target.value
                   setEmail(e.target.value)
                   setSsoRoute(null)
                 }}

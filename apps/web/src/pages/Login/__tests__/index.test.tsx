@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import type * as ReactRouterDomModule from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -202,5 +202,32 @@ describe('Login', () => {
 
     fireEvent.change(emailInput, { target: { value: 'doctor@gmail.com' } })
     expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+  })
+
+  it('ignores a stale routing response for an email the user has since changed', async () => {
+    let resolveFirstCheck: ((value: { methods: string[]; ssoProviderId?: string; ssoDisplayName?: string }) => void) | undefined
+    const pending = new Promise((resolve) => {
+      resolveFirstCheck = resolve
+    })
+    mocks.fetchLoginMethods.mockReturnValueOnce(pending)
+
+    renderPage()
+    const emailInput = screen.getByLabelText('Correo electrónico')
+
+    fireEvent.change(emailInput, { target: { value: 'doctor@clinica.do' } })
+    fireEvent.blur(emailInput)
+    await waitFor(() => expect(mocks.fetchLoginMethods).toHaveBeenCalledWith('doctor@clinica.do'))
+
+    // User keeps typing before the slow first check ever resolves.
+    fireEvent.change(emailInput, { target: { value: 'doctor@gmail.com' } })
+
+    // The stale response for the abandoned email finally arrives.
+    await act(async () => {
+      resolveFirstCheck?.({ methods: ['sso'], ssoProviderId: 'oidc.clinica', ssoDisplayName: 'Clinica SSO' })
+      await Promise.resolve()
+    })
+
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Continuar con Clinica SSO' })).not.toBeInTheDocument()
   })
 })
