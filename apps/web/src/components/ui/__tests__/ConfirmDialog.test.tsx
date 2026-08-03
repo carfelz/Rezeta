@@ -58,6 +58,12 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: 'Procesando...' })).toBeDisabled()
   })
 
+  it('shows a custom loadingLabel on the confirm button when provided', () => {
+    renderDialog({ loading: true, loadingLabel: 'Processing...' })
+    expect(screen.getByRole('button', { name: 'Processing...' })).toBeDisabled()
+    expect(screen.queryByText('Procesando...')).not.toBeInTheDocument()
+  })
+
   it('disables cancel button when loading', () => {
     renderDialog({ loading: true })
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled()

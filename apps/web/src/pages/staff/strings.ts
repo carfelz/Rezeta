@@ -145,6 +145,7 @@ export const ssoStrings = {
   fieldAllowPassword: 'Allow password sign-in',
   cancelButton: 'Cancel',
   confirmButton: 'Confirm',
+  processingLabel: 'Processing...',
   createButton: 'Create connection',
   creatingButton: 'Creating…',
   saveButton: 'Save',

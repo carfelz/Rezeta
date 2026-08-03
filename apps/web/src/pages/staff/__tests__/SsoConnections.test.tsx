@@ -58,6 +58,11 @@ const testMutation = { mutateAsync: vi.fn(), isPending: false }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  createMutation.isPending = false
+  updateMutation.isPending = false
+  setStatusMutation.isPending = false
+  deleteMutation.isPending = false
+  testMutation.isPending = false
   h.useSsoConnections.mockReturnValue({ data: [connection], isLoading: false, isError: false })
   h.useStaffInstitutions.mockReturnValue({ data: institutions, isLoading: false, isError: false })
   h.useCreateSsoConnection.mockReturnValue(createMutation)
@@ -160,6 +165,14 @@ describe('SsoConnections', () => {
     await waitFor(() =>
       expect(setStatusMutation.mutateAsync).toHaveBeenCalledWith({ status: 'disabled' }),
     )
+  })
+
+  it('shows the English pending label on the confirm button while the deactivate mutation is in flight', () => {
+    setStatusMutation.isPending = true
+    render(<SsoConnections />)
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate' }))
+    expect(screen.getByRole('button', { name: 'Processing...' })).toBeDisabled()
+    expect(screen.queryByText('Procesando...')).not.toBeInTheDocument()
   })
 
   it('delete goes through a danger ConfirmDialog and fires the delete mutation on confirm', async () => {
