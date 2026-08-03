@@ -9,10 +9,17 @@ import { StaffSecurityController } from './staff-security.controller.js'
 import { SsoConnectionRepository } from './sso-connection.repository.js'
 import { SsoConnectionService } from './sso-connection.service.js'
 import { StaffSsoConnectionsController } from './staff-sso.controller.js'
+import { LoginRoutingService } from './login-routing.service.js'
+import { LoginRoutingController } from './login-routing.controller.js'
 
 @Module({
   imports: [UsersModule],
-  controllers: [IdentityController, StaffSecurityController, StaffSsoConnectionsController],
+  controllers: [
+    IdentityController,
+    StaffSecurityController,
+    StaffSsoConnectionsController,
+    LoginRoutingController,
+  ],
   providers: [
     IdentityRepository,
     LoginTelemetryService,
@@ -20,6 +27,7 @@ import { StaffSsoConnectionsController } from './staff-sso.controller.js'
     StaffSecurityService,
     SsoConnectionRepository,
     SsoConnectionService,
+    LoginRoutingService,
   ],
   exports: [LoginTelemetryService, IdentityRepository, SsoConnectionService],
 })
