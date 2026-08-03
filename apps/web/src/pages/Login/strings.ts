@@ -16,4 +16,7 @@ export const loginStrings = {
   mfaSubmit: 'Verificar',
   mfaSubmitting: 'Verificando...',
   mfaBackToLogin: 'Volver a iniciar sesión',
+  continueWithGoogle: 'Continuar con Google',
+  continueWithSso: (name: string) => `Continuar con ${name}`,
+  orDivider: 'o',
 } as const

@@ -5,14 +5,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   signIn: vi.fn(),
+  signInWithGoogle: vi.fn(),
+  signInWithSso: vi.fn(),
   navigate: vi.fn(),
   completeTotpSignIn: vi.fn(),
   cancelTotpSignIn: vi.fn(),
   errorCodeToMessage: vi.fn((code: string) => `mapped:${code}`),
+  fetchLoginMethods: vi.fn(),
 }))
 
 vi.mock('@/store/auth.store', () => ({
-  useAuthStore: () => ({ signIn: mocks.signIn }),
+  useAuthStore: () => ({
+    signIn: mocks.signIn,
+    signInWithGoogle: mocks.signInWithGoogle,
+    signInWithSso: mocks.signInWithSso,
+  }),
 }))
 vi.mock('@/lib/auth', () => ({
   authClient: {
@@ -20,6 +27,9 @@ vi.mock('@/lib/auth', () => ({
     cancelTotpSignIn: mocks.cancelTotpSignIn,
     errorCodeToMessage: mocks.errorCodeToMessage,
   },
+}))
+vi.mock('@/hooks/identity/use-login-methods', () => ({
+  fetchLoginMethods: mocks.fetchLoginMethods,
 }))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof ReactRouterDomModule>()
@@ -112,5 +122,85 @@ describe('Login', () => {
     fireEvent.click(screen.getByText('Volver a iniciar sesión'))
     expect(screen.getByLabelText('Correo electrónico')).toBeInTheDocument()
     expect(mocks.cancelTotpSignIn).toHaveBeenCalledOnce()
+  })
+
+  it('renders a Google button below the password form under a divider, and signs in on click', async () => {
+    mocks.signInWithGoogle.mockResolvedValue(undefined)
+    renderPage()
+    expect(screen.getByText('o')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con Google' }))
+    await waitFor(() => expect(mocks.signInWithGoogle).toHaveBeenCalledOnce())
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/dashboard', { replace: true }))
+  })
+
+  it('switches to the MFA challenge when Google sign-in requires it', async () => {
+    mocks.signInWithGoogle.mockRejectedValue({ code: 'auth/multi-factor-auth-required' })
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con Google' }))
+    expect(await screen.findByText('Verificación en dos pasos')).toBeInTheDocument()
+    expect(mocks.navigate).not.toHaveBeenCalled()
+  })
+
+  it('swaps to an SSO-only primary button on email blur when the account is sso-only', async () => {
+    mocks.fetchLoginMethods.mockResolvedValue({
+      methods: ['sso'],
+      ssoProviderId: 'oidc.clinica',
+      ssoDisplayName: 'Clinica SSO',
+    })
+    mocks.signInWithSso.mockResolvedValue(undefined)
+    renderPage()
+    const emailInput = screen.getByLabelText('Correo electrónico')
+    fireEvent.change(emailInput, { target: { value: 'doctor@clinica.do' } })
+    fireEvent.blur(emailInput)
+    await waitFor(() => expect(mocks.fetchLoginMethods).toHaveBeenCalledWith('doctor@clinica.do'))
+
+    expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument()
+    const ssoButton = await screen.findByRole('button', { name: 'Continuar con Clinica SSO' })
+    fireEvent.click(ssoButton)
+    await waitFor(() => expect(mocks.signInWithSso).toHaveBeenCalledWith('oidc.clinica'))
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/dashboard', { replace: true }))
+  })
+
+  it('keeps the password form and adds a secondary SSO button when the tenant still allows password', async () => {
+    mocks.fetchLoginMethods.mockResolvedValue({
+      methods: ['password', 'sso'],
+      ssoProviderId: 'oidc.clinica',
+      ssoDisplayName: 'Clinica SSO',
+    })
+    renderPage()
+    const emailInput = screen.getByLabelText('Correo electrónico')
+    fireEvent.change(emailInput, { target: { value: 'doctor@clinica.do' } })
+    fireEvent.blur(emailInput)
+
+    await screen.findByRole('button', { name: 'Continuar con Clinica SSO' })
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+  })
+
+  it('leaves the password + Google form unchanged when the routing check rejects', async () => {
+    mocks.fetchLoginMethods.mockRejectedValue(new Error('network down'))
+    renderPage()
+    const emailInput = screen.getByLabelText('Correo electrónico')
+    fireEvent.change(emailInput, { target: { value: 'doctor@clinica.do' } })
+    fireEvent.blur(emailInput)
+
+    await waitFor(() => expect(mocks.fetchLoginMethods).toHaveBeenCalled())
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeInTheDocument()
+  })
+
+  it('restores the password form after changing the email back to a non-sso domain', async () => {
+    mocks.fetchLoginMethods.mockResolvedValue({
+      methods: ['sso'],
+      ssoProviderId: 'oidc.clinica',
+      ssoDisplayName: 'Clinica SSO',
+    })
+    renderPage()
+    const emailInput = screen.getByLabelText('Correo electrónico')
+    fireEvent.change(emailInput, { target: { value: 'doctor@clinica.do' } })
+    fireEvent.blur(emailInput)
+    await waitFor(() => expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument())
+
+    fireEvent.change(emailInput, { target: { value: 'doctor@gmail.com' } })
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
   })
 })
