@@ -4,6 +4,40 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-02] SSO connections and login routing (identity slice 6)
+
+### Added
+
+- `SsoConnection` Prisma model + `sso_connections` migration (`packages/db/prisma/schema.prisma`).
+  Provider secrets are a write-only pass-through to the Identity Platform
+  provider config and are never persisted in the database.
+- `IAuthProvider` gains `createOidcProviderConfig` / `updateOidcProviderConfig` /
+  `deleteProviderConfig` (`apps/api/src/modules/identity/firebase-auth.provider.ts`).
+- Staff endpoints under `/v1/staff/identity/sso-connections` (list, create,
+  update, status, test, delete) in
+  `apps/api/src/modules/identity/staff-sso.controller.ts`, each emitting
+  entity audit events. Staff console page "SSO connections"
+  (`apps/web/src/pages/staff/SsoConnections.tsx`, English copy per staff
+  console convention) with its nav entry and route.
+- Public enumeration-safe `POST /v1/auth/login-methods`
+  (`apps/api/src/modules/identity/login-routing.controller.ts`):
+  domain-only lookup that returns a constant response shape for
+  non-SSO domains.
+- Login page "Continuar con Google" button and SSO swap-in-place behavior
+  triggered on email blur, with fail-open routing on lookup errors
+  (`apps/web/src/pages/Login/index.tsx`). `IAuthClient.signInWithGoogle` /
+  `signInWithSso` popup flows with MFA-resolver capture
+  (`apps/web/src/lib/auth/firebase-auth-client.ts`), plus a stale-response
+  guard so a slow login-methods lookup can't clobber a newer one.
+- `ConfirmDialog` gains an optional `loadingLabel` prop (default unchanged)
+  (`apps/web/src/components/ui/ConfirmDialog.tsx`).
+- Shared contracts for the connection CRUD payloads and login-methods
+  response in `packages/shared/src/schemas/sso.ts`, and a new
+  `SSO_DOMAIN_ALREADY_CLAIMED` error code
+  (`packages/shared/src/errors.ts`).
+- Integration coverage in
+  `apps/api/src/modules/identity/__tests__/sso-connection.int-spec.ts`.
+
 ## [2026-08-02] SSO connections + login routing design spec (identity slice 6)
 
 ### Added
