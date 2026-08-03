@@ -5,6 +5,7 @@ import { AuthGate } from '@/components/auth/AuthGate'
 import { PublicOnlyGate } from '@/components/auth/PublicOnlyGate'
 import { RequireCan } from '@/components/auth/RequireCan'
 import { RequirePlatform } from '@/components/auth/RequirePlatform'
+import { staffHostRootRoutes } from '@/lib/staff-host'
 import { Dashboard } from '@/pages/Dashboard'
 import { Schedule } from '@/pages/Schedule'
 import { Patients } from '@/pages/Patients'
@@ -39,6 +40,8 @@ import { Security as StaffSecurity } from '@/pages/staff/Security'
 import { PlatformUsers } from '@/pages/staff/PlatformUsers'
 
 const router = createBrowserRouter([
+  // ── Staff hosts (staff-dev.rezeta.co) land on the staff console ────────────
+  ...staffHostRootRoutes(window.location.hostname),
   // ── Public-only routes (redirect authenticated users away) ────────────────
   {
     path: '/login',

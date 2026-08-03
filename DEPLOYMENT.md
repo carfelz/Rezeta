@@ -1,69 +1,102 @@
 # Deployment Guide
 
-## Manual Setup (One-Time)
+## GCP Project
 
-### GCP Project
-
-- Project ID: `medical-erp-dev`
+- Organization: rezeta.co (project migrated into the org 2026-08)
+- Display name: **Rezeta** · Project ID: **`medical-erp-dev`** (display-name
+  renames and org migrations never change the project ID — all resource
+  references keep using `medical-erp-dev`)
 - Region: `southamerica-east1` (São Paulo, Brazil)
-- Billing: [link to billing account]
 
-### Cloud SQL
+## Domains (dev)
 
-- Instance: `medical-erp-dev-db`
-- Type: PostgreSQL 16
-- Machine: db-f1-micro (1 vCPU, 0.6GB RAM)
-- Storage: 10GB SSD
-- Connection: Private IP + Cloud SQL Proxy
-- Password: Stored in Secret Manager as `database-url`
+| URL                           | Serves        | Hosting site       |
+| ----------------------------- | ------------- | ------------------ |
+| `https://app-dev.rezeta.co`   | Web app       | `rezeta-app-dev`   |
+| `https://api-dev.rezeta.co`   | NestJS API    | `rezeta-api-dev`   |
+| `https://staff-dev.rezeta.co` | Staff console | `rezeta-staff-dev` |
 
-### GCS Buckets
+Reserved for production later: `app.rezeta.co`, `api.rezeta.co`,
+`staff.rezeta.co`.
 
-1. `gs://medical-erp-dev-frontend` - Public, static website hosting
-2. `gs://medical-erp-dev-uploads` - Private, signed URLs only
+All three are Firebase Hosting sites (targets mapped in `.firebaserc`,
+config in `firebase.json`):
 
-### Firebase
+- **app-dev / staff-dev** serve the same built SPA (`apps/web/dist`) and
+  rewrite `/v1/**` to the `medical-erp-api` Cloud Run service, so the app
+  calls the API same-origin — no CORS involved. On staff hosts the app
+  redirects `/` to `/staff/institutions` (`apps/web/src/lib/staff-host.tsx`).
+- **api-dev** has no static content — a `**` rewrite forwards everything to
+  Cloud Run. This is the standard workaround for Cloud Run domain mappings
+  not supporting `southamerica-east1` (the alternative, an external HTTPS
+  load balancer, costs ~$18/month).
 
-- Project: Linked to `medical-erp-dev`
-- Auth: Email/Password + Google OAuth
-- Admin SDK key: Stored in Secret Manager as `firebase-admin-key`
+## CI/CD (GitHub Actions)
 
-### Secret Manager
+`.github/workflows/deploy-dev.yml` runs on every push to `main`:
+lint/typecheck/test → migrate DB → build & deploy API to Cloud Run → build
+frontend → deploy all Hosting targets.
 
-- `database-url` - PostgreSQL connection string
-- `firebase-admin-key` - Firebase Admin SDK JSON
+Auth is **keyless** via Workload Identity Federation — no service-account
+JSON key. Repo **variables** (Settings → Secrets and variables → Actions):
 
-## Deployment
+- `GCP_WIF_PROVIDER` — workload identity provider resource name
+- `GCP_DEPLOYER_SA` — `github-deployer@medical-erp-dev.iam.gserviceaccount.com`
+- `VITE_FIREBASE_*` (5 vars) — Firebase web app config (public, ships in bundle)
 
-### Frontend
+`VITE_API_URL` is deliberately **not** set in CI: an empty value makes the
+app use relative `/v1/...` paths through the Hosting rewrite.
+
+## One-Time Setup (already done / for reference)
+
+1. `scripts/setup-wif.sh` (Cloud Shell) — creates the WIF pool + GitHub OIDC
+   provider (locked to `carfelz/Rezeta`), the `github-deployer` service
+   account and its roles; prints the two repo variables above.
+2. `scripts/setup-hosting-sites.sh` (Cloud Shell) — creates the three
+   Hosting sites and adds the dev origins to the `allowed_origins` secret.
+3. Firebase console → Hosting → add the custom domain to each site; create
+   the DNS records it shows at the registrar for `rezeta.co`.
+4. Firebase console → Authentication → Settings → Authorized domains → add
+   `app-dev.rezeta.co` and `staff-dev.rezeta.co`.
+
+## Cloud Resources
+
+- **Cloud Run:** `medical-erp-api` (512Mi / 1 CPU / 0–10 instances)
+- **Cloud SQL:** `medical-erp-dev-db`, PostgreSQL 16, db-f1-micro, 10GB SSD
+- **Artifact Registry:** `medical-erp` repository (Docker images)
+- **GCS:** `gs://medical-erp-dev-uploads` (private, signed URLs only)
+- **Secret Manager:** `database_url`, `direct_url`, `firebase-admin-key`,
+  `allowed_origins`
+
+Note: Cloud Run pins `:latest` secret versions per revision — updating a
+secret (e.g. `allowed_origins`) takes effect on the **next deploy**.
+
+## Manual Deployment
+
+Normally deploys happen from CI. For manual pushes (require local gcloud +
+Docker):
 
 ```bash
-./scripts/deploy-frontend.sh
+./scripts/deploy-api.sh       # build image, push, deploy Cloud Run
+./scripts/deploy-frontend.sh  # build SPA, deploy all Hosting targets
+./scripts/run-migrations.sh   # prisma migrate deploy
 ```
 
-### API
+## Org Migration Notes (2026-08)
 
-```bash
-./scripts/deploy-api.sh
-```
+New organizations enforce secure-by-default policies; if a deploy fails
+after policy changes, check:
 
-### Database Migrations
-
-```bash
-./scripts/run-migration.sh
-```
-
-## URLs (Dev)
-
-- Frontend: https://storage.googleapis.com/medical-erp-dev-frontend/index.html
-- API: [get from Cloud Run console]
-- Database: Private (Cloud SQL Proxy only)
+- `iam.allowedPolicyMemberDomains` — blocks `allUsers` grants; the API's
+  `--allow-unauthenticated` needs a project-level exception if enforced.
+- `iam.disableServiceAccountKeyCreation` — key creation may be blocked;
+  irrelevant once WIF is in place (which is the point).
 
 ## Cost Estimate
 
 - Cloud SQL: ~$7/month
 - Cloud Run: ~$5-10/month (minimal traffic)
-- GCS: ~$1-2/month
+- GCS + Hosting: ~$1-2/month
 - **Total: ~$15-20/month**
 
 ## Disaster Recovery

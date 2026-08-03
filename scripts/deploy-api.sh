@@ -31,12 +31,8 @@ gcloud run deploy $SERVICE_NAME \
   --min-instances 0 \
   --max-instances 10 \
   --timeout 60 \
-  --set-env-vars NODE_ENV=production,PORT=8080 \
-  --set-secrets DATABASE_URL=database-url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest
+  --set-env-vars NODE_ENV=production \
+  --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest,ALLOWED_ORIGINS=allowed_origins:latest
 
 echo "✅ API deployed!"
-SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region $REGION --format="value(status.url)")
-echo "   $SERVICE_URL"
-
-# Save URL for frontend
-echo "VITE_API_URL=$SERVICE_URL" > apps/web/.env.production
+echo "   https://api-dev.rezeta.co"

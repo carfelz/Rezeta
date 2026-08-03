@@ -51,9 +51,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: ci
 
-    outputs:
-      url: ${{ steps.service-url.outputs.url }}
-
     permissions:
       contents: read
       id-token: write
@@ -77,10 +74,14 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @rezeta/db generate
 
+      # Keyless auth via Workload Identity Federation — no long-lived SA key.
+      # Pool/provider/SA are created by scripts/setup-wif.sh; the two repo
+      # variables hold the provider resource name and the SA email.
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SA }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -126,17 +127,13 @@ jobs:
             --set-env-vars NODE_ENV=production \
             --set-secrets DATABASE_URL=database_url:latest,FIREBASE_ADMIN_KEY=firebase-admin-key:latest,ALLOWED_ORIGINS=allowed_origins:latest
 
-      - name: Get Service URL
-        id: service-url
-        run: |
-          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --region ${{ env.REGION }} \
-            --format 'value(status.url)')
-          echo "url=$URL" >> $GITHUB_OUTPUT
-
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: [ci, deploy-api]
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -154,7 +151,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SA }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -167,10 +165,12 @@ jobs:
 
       - name: Build frontend
         env:
+          # VITE_API_URL is deliberately NOT set: the app then calls relative
+          # /v1/... paths, which Firebase Hosting rewrites to Cloud Run
+          # same-origin (no CORS).
           # Firebase web config is public (it ships in the client bundle), so
           # these live as repo variables, not secrets. All five are required by
           # apps/web/src/lib/auth/firebase-auth-client.ts.
-          VITE_API_URL: ${{ needs.deploy-api.outputs.url }}
           VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
@@ -180,9 +180,10 @@ jobs:
           cd apps/web
           pnpm build
 
-      # firebase.json (repo root) serves apps/web/dist and proxies /v1/** to Cloud Run.
-      # firebase-tools picks up the service-account credentials that the auth step
-      # exported via GOOGLE_APPLICATION_CREDENTIALS — no FIREBASE_TOKEN needed.
+      # firebase.json (repo root) defines three hosting targets (app-dev,
+      # api-dev, staff-dev — mapped to sites in .firebaserc); --only hosting
+      # deploys all of them. firebase-tools picks up the credentials that the
+      # auth step exported via GOOGLE_APPLICATION_CREDENTIALS.
       - name: Deploy to Firebase Hosting
         run: |
           # firebase-tools finalizes the new hosting version and effectively
@@ -207,5 +208,6 @@ jobs:
       - name: Output URLs
         run: |
           echo "Deployment complete!"
-          echo "Frontend: https://${{ env.PROJECT_ID }}.web.app"
-          echo "API: ${{ needs.deploy-api.outputs.url }}"
+          echo "App:   https://app-dev.rezeta.co"
+          echo "API:   https://api-dev.rezeta.co"
+          echo "Staff: https://staff-dev.rezeta.co"
