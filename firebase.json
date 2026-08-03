@@ -1,39 +1,94 @@
 {
-  "hosting": {
-    "public": "apps/web/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "/v1/**",
-        "run": {
-          "serviceId": "medical-erp-api",
-          "region": "southamerica-east1"
+  "hosting": [
+    {
+      "target": "app-dev",
+      "public": "apps/web/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/v1/**",
+          "run": {
+            "serviceId": "medical-erp-api",
+            "region": "southamerica-east1"
+          }
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
         }
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "/assets/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
+      ],
+      "headers": [
+        {
+          "source": "/assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "staff-dev",
+      "public": "apps/web/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/v1/**",
+          "run": {
+            "serviceId": "medical-erp-api",
+            "region": "southamerica-east1"
           }
-        ]
-      },
-      {
-        "source": "**/*.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "api-dev",
+      "public": "infra/hosting-api",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "medical-erp-api",
+            "region": "southamerica-east1"
           }
-        ]
-      }
-    ]
-  }
+        }
+      ]
+    }
+  ]
 }

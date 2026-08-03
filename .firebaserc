@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "medical-erp-dev"
+  },
+  "targets": {
+    "medical-erp-dev": {
+      "hosting": {
+        "app-dev": ["rezeta-app-dev"],
+        "api-dev": ["rezeta-api-dev"],
+        "staff-dev": ["rezeta-staff-dev"]
+      }
+    }
   }
 }

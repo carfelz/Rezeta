@@ -4,6 +4,44 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-02] Dev subdomains on rezeta.co + keyless CI deploys (WIF)
+
+### Added
+
+- Firebase Hosting multi-site setup for the dev subdomains: `firebase.json`
+  now defines three hosting targets — `app-dev` (web app at
+  app-dev.rezeta.co), `staff-dev` (staff console at staff-dev.rezeta.co,
+  same bundle), and `api-dev` (rewrite-only site exposing the
+  `medical-erp-api` Cloud Run service at api-dev.rezeta.co, since Cloud Run
+  domain mappings don't support southamerica-east1). Target→site mapping
+  lives in `.firebaserc`; `infra/hosting-api/` is the empty public dir for
+  the rewrite-only site.
+- `apps/web/src/lib/staff-host.tsx` (+ tests): staff-hostname detection and
+  a root route that redirects `/` to `/staff/institutions` on staff hosts,
+  declared before the AuthGate layout in `apps/web/src/App.tsx` so platform
+  staff aren't bounced to `/login`.
+- One-time setup scripts (`scripts/setup-wif.sh` — WIF pool, GitHub OIDC
+  provider locked to `carfelz/Rezeta`, `github-deployer` service account;
+  `scripts/setup-hosting-sites.sh` — the three Hosting sites + CORS
+  origins). Both were run against the project on 2026-08-02 and then
+  removed; recover from git history if needed.
+
+### Changed
+
+- `.github/workflows/deploy-dev.yml`: authenticates via Workload Identity
+  Federation (repo variables `GCP_WIF_PROVIDER`/`GCP_DEPLOYER_SA`) instead
+  of the `GCP_SA_KEY` JSON key; no longer bakes `VITE_API_URL` into the
+  frontend build (the app calls `/v1/...` same-origin through the Hosting
+  rewrite); deploys all three hosting targets.
+- `scripts/deploy-frontend.sh` rewritten for Firebase Hosting (previously
+  deployed to the retired GCS static-website bucket);
+  `scripts/deploy-api.sh` aligned with the workflow's secret names
+  (`database_url`, adds `ALLOWED_ORIGINS`) and no longer writes
+  `apps/web/.env.production`.
+- `DEPLOYMENT.md` rewritten: domain table, hosting/rewrite architecture,
+  WIF-based CI, org-migration notes (project display name is now "Rezeta";
+  project ID remains `medical-erp-dev`).
+
 ## [2026-07-30] Identity ride-along fixes from the slices 3-5 final review
 
 ### Added

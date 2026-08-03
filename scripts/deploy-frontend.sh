@@ -1,25 +1,21 @@
 #!/bin/bash
+# Manual frontend deploy (normally done by .github/workflows/deploy-dev.yml).
+# Builds the web app and publishes all Firebase Hosting targets
+# (app-dev, api-dev, staff-dev) defined in firebase.json/.firebaserc.
 set -e
 
 PROJECT_ID="medical-erp-dev"
-BUCKET="gs://medical-erp-dev-frontend"
 
 echo "🏗️  Building frontend..."
 pnpm install --frozen-lockfile
+pnpm --filter @rezeta/shared build
 cd apps/web
 pnpm build
+cd ../..
 
-echo "☁️  Deploying to GCS..."
-gsutil -m rsync -r -d dist/ $BUCKET
-
-echo "🔄 Setting cache headers..."
-# Long cache for hashed assets (Vite adds hashes to filenames)
-gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-  "$BUCKET/assets/**"
-
-# Short cache for HTML (no hash in filename)
-gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-  "$BUCKET/*.html"
+echo "☁️  Deploying to Firebase Hosting..."
+npx -y firebase-tools deploy --only hosting --project "$PROJECT_ID" --force
 
 echo "✅ Frontend deployed!"
-echo "   https://storage.googleapis.com/medical-erp-dev-frontend/index.html"
+echo "   https://app-dev.rezeta.co"
+echo "   https://staff-dev.rezeta.co"
