@@ -43,6 +43,18 @@ gcloud iam service-accounts create "$SA_NAME" \
   --project "$PROJECT_ID" \
   --display-name "GitHub Actions deployer" 2>/dev/null || echo "    (already exists)"
 
+# IAM is eventually consistent: a freshly created SA can take a few seconds to
+# become visible to policy bindings. Wait until it resolves before granting.
+echo "==> Waiting for the service account to propagate..."
+for _ in $(seq 1 12); do
+  if gcloud iam service-accounts describe "$SA_EMAIL" \
+    --project "$PROJECT_ID" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 5
+done
+gcloud iam service-accounts describe "$SA_EMAIL" --project "$PROJECT_ID" >/dev/null
+
 echo "==> Granting deploy roles to ${SA_EMAIL}..."
 # run.admin                      — deploy Cloud Run revisions
 # iam.serviceAccountUser         — deploy as the Cloud Run runtime SA
