@@ -13,8 +13,15 @@ PROJECT_ID="medical-erp-dev"
 
 echo "==> Creating hosting sites..."
 for SITE in rezeta-app-dev rezeta-api-dev rezeta-staff-dev; do
-  firebase hosting:sites:create "$SITE" --project "$PROJECT_ID" \
-    2>/dev/null || echo "    ${SITE} (already exists)"
+  OUT=$(npx -y firebase-tools hosting:sites:create "$SITE" \
+    --project "$PROJECT_ID" 2>&1) && { echo "    ${SITE} created"; continue; }
+  if grep -qi "already exists" <<<"$OUT"; then
+    echo "    ${SITE} (already exists)"
+  else
+    echo "$OUT"
+    echo "ERROR: could not create site ${SITE}" >&2
+    exit 1
+  fi
 done
 
 echo "==> Adding dev origins to the allowed_origins secret..."
