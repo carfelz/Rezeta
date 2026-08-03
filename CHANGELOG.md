@@ -4,6 +4,19 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-02] SsoConnection Prisma model + migration (identity slice 6)
+
+### Added
+
+- `SsoConnection` model in `packages/db/prisma/schema.prisma` (table
+  `sso_connections`): per-tenant enterprise OIDC configuration with a unique
+  `provider_id`, tenant-indexed lookups, soft delete, and no secret column
+  (the client secret is write-only pass-through to the Identity Platform
+  provider config). Added `ssoConnections` to the `Tenant` relation list.
+- Migration `packages/db/prisma/migrations/20260803031751_sso_connection/`
+  creates `sso_connections` with a unique index on `provider_id`, an index on
+  `tenant_id`, and an FK to `tenants`.
+
 ## [2026-08-02] SSO connections + login routing design spec (identity slice 6)
 
 ### Added

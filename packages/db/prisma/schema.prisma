@@ -47,6 +47,7 @@ model Tenant {
   attachments         Attachment[]
   rolePermissions     RolePermission[]
   identityPolicy      IdentityPolicy?
+  ssoConnections      SsoConnection[]
 
   @@map("tenants")
 }
@@ -884,4 +885,32 @@ model IdentityPolicy {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("identity_policies")
+}
+
+/// Per-tenant enterprise SSO configuration (identity design §4, slice 6 spec
+/// docs/superpowers/specs/2026-08-02-sso-connections-login-routing-design.md).
+/// Maps 1:1 to a GCP Identity Platform OIDC provider config (providerId).
+/// NO secret column by design: the client secret is write-only pass-through
+/// to the provider config. A domain may belong to at most one ACTIVE
+/// connection platform-wide — enforced in SsoConnectionService, not the DB
+/// (soft deletes + status make a partial unique index awkward).
+model SsoConnection {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  type          String    @default("oidc") @db.VarChar(10)
+  providerId    String    @unique @map("provider_id") @db.VarChar(120)
+  displayName   String    @map("display_name") @db.VarChar(80)
+  issuerUrl     String    @map("issuer_url") @db.VarChar(512)
+  clientId      String    @map("client_id") @db.VarChar(255)
+  domains       String[]  @map("domains")
+  allowPassword Boolean   @default(true) @map("allow_password")
+  status        String    @default("active") @db.VarChar(10)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("sso_connections")
 }
