@@ -427,6 +427,8 @@ function ConnectionRow({ connection }: { connection: SsoConnectionDto }): JSX.El
         }
         variant={isActive ? 'danger' : 'primary'}
         loading={setStatus.isPending}
+        confirmLabel={s.confirmButton}
+        cancelLabel={s.cancelButton}
       />
 
       <ConfirmDialog
@@ -437,6 +439,8 @@ function ConnectionRow({ connection }: { connection: SsoConnectionDto }): JSX.El
         description={s.confirmDeleteBody(connection.displayName)}
         variant="danger"
         loading={deleteMutation.isPending}
+        confirmLabel={s.confirmButton}
+        cancelLabel={s.cancelButton}
       />
     </>
   )

@@ -70,22 +70,22 @@ beforeEach(() => {
 describe('SsoConnections', () => {
   it('renders the table with institution, display name, domains, status, and password indicator', () => {
     render(<SsoConnections />)
-    expect(screen.getByText('Conexiones SSO')).toBeInTheDocument()
+    expect(screen.getByText('SSO connections')).toBeInTheDocument()
     expect(screen.getByText('Centro Vista Alegre')).toBeInTheDocument()
     expect(screen.getByText('Azure AD')).toBeInTheDocument()
     expect(screen.getByText('clinica.do, hospital.do')).toBeInTheDocument()
-    expect(screen.getByText('Activa')).toBeInTheDocument()
-    expect(screen.getByText('Sí')).toBeInTheDocument()
+    expect(screen.getByText('Active')).toBeInTheDocument()
+    expect(screen.getByText('Yes')).toBeInTheDocument()
   })
 
-  it('opens the create modal on "Nueva conexión" and submits the typed payload, closing on success', async () => {
+  it('opens the create modal on "New connection" and submits the typed payload, closing on success', async () => {
     createMutation.mutateAsync.mockResolvedValue({ ...connection, id: 'sso-2' })
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Nueva conexión' }))
-    expect(screen.getByText('Nueva conexión SSO')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New connection' }))
+    expect(screen.getByText('New SSO connection')).toBeInTheDocument()
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 't1' } })
-    fireEvent.change(screen.getByPlaceholderText('Ej. Azure AD'), {
+    fireEvent.change(screen.getByPlaceholderText('e.g. Azure AD'), {
       target: { value: 'Okta SSO' },
     })
     fireEvent.change(screen.getByPlaceholderText('https://login.microsoftonline.com/…'), {
@@ -100,7 +100,7 @@ describe('SsoConnections', () => {
     fireEvent.change(screen.getByPlaceholderText('clinica.do, hospital.do'), {
       target: { value: 'nuevo.do' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Crear conexión' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create connection' }))
 
     await waitFor(() =>
       expect(createMutation.mutateAsync).toHaveBeenCalledWith({
@@ -113,18 +113,18 @@ describe('SsoConnections', () => {
         allowPassword: true,
       }),
     )
-    await waitFor(() => expect(screen.queryByText('Nueva conexión SSO')).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByText('New SSO connection')).not.toBeInTheDocument())
   })
 
   it('edit modal leaves the secret field empty with helper text and omits clientSecret when untouched', async () => {
     updateMutation.mutateAsync.mockResolvedValue(connection)
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
 
-    expect(screen.getByText('Dejar vacío para mantener el secreto actual')).toBeInTheDocument()
+    expect(screen.getByText('Leave empty to keep the current secret')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('••••••••')).toHaveValue('')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(updateMutation.mutateAsync).toHaveBeenCalled())
     const payload = updateMutation.mutateAsync.mock.calls[0]?.[0] as Record<string, unknown>
@@ -132,31 +132,31 @@ describe('SsoConnections', () => {
     expect(payload).toMatchObject({ displayName: 'Azure AD' })
   })
 
-  it('"Probar" calls the test mutation and shows a success Callout listing verified checks', async () => {
+  it('"Test" calls the test mutation and shows a success Callout listing verified checks', async () => {
     testMutation.mutateAsync.mockResolvedValue({ ok: true, checked: ['issuer', 'jwks'] })
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Probar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Test' }))
     await waitFor(() => expect(testMutation.mutateAsync).toHaveBeenCalled())
     expect(await screen.findByText(/issuer, jwks/)).toBeInTheDocument()
   })
 
-  it('"Probar" shows a danger Callout with the failure reason on failure', async () => {
+  it('"Test" shows a danger Callout with the failure reason on failure', async () => {
     testMutation.mutateAsync.mockResolvedValue({
       ok: false,
       checked: ['issuer'],
       failure: 'jwks unreachable',
     })
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Probar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Test' }))
     expect(await screen.findByText('jwks unreachable')).toBeInTheDocument()
   })
 
-  it('"Desactivar" goes through a ConfirmDialog and fires the status mutation on confirm', async () => {
+  it('"Deactivate" goes through a ConfirmDialog and fires the status mutation on confirm', async () => {
     setStatusMutation.mutateAsync.mockResolvedValue({ ...connection, status: 'disabled' })
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Desactivar' }))
-    expect(screen.getByText('Desactivar conexión')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate' }))
+    expect(screen.getByText('Deactivate connection')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
     await waitFor(() =>
       expect(setStatusMutation.mutateAsync).toHaveBeenCalledWith({ status: 'disabled' }),
     )
@@ -165,9 +165,9 @@ describe('SsoConnections', () => {
   it('delete goes through a danger ConfirmDialog and fires the delete mutation on confirm', async () => {
     deleteMutation.mutateAsync.mockResolvedValue(undefined)
     render(<SsoConnections />)
-    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }))
-    expect(screen.getByText('Eliminar conexión')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(screen.getByText('Delete connection')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
     await waitFor(() => expect(deleteMutation.mutateAsync).toHaveBeenCalled())
   })
 })
