@@ -12,7 +12,12 @@ import { ConfigService } from '@nestjs/config'
 import * as admin from 'firebase-admin'
 import { ErrorCode } from '@rezeta/shared'
 import type { AppConfig } from '../../config/configuration.js'
-import type { IAuthProvider, VerifiedToken, SignedInToken } from './auth-provider.interface.js'
+import type {
+  IAuthProvider,
+  VerifiedToken,
+  SignedInToken,
+  OidcProviderConfigInput,
+} from './auth-provider.interface.js'
 
 @Injectable()
 export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
@@ -215,6 +220,57 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
         code: ErrorCode.INTERNAL_ERROR,
         message: 'Failed to read MFA enrollment',
       })
+    }
+  }
+
+  async createOidcProviderConfig(input: Required<OidcProviderConfigInput>): Promise<void> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    await this.app.auth().createProviderConfig({
+      providerId: input.providerId,
+      displayName: input.displayName,
+      issuer: input.issuer,
+      clientId: input.clientId,
+      clientSecret: input.clientSecret,
+      enabled: input.enabled,
+      responseType: { code: true },
+    } as admin.auth.OIDCAuthProviderConfig)
+  }
+
+  async updateOidcProviderConfig(input: OidcProviderConfigInput): Promise<void> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    const patch: Record<string, unknown> = {
+      displayName: input.displayName,
+      issuer: input.issuer,
+      clientId: input.clientId,
+      enabled: input.enabled,
+      responseType: { code: true },
+    }
+    if (input.clientSecret) patch['clientSecret'] = input.clientSecret
+    await this.app.auth().updateProviderConfig(input.providerId, patch)
+  }
+
+  async deleteProviderConfig(providerId: string): Promise<void> {
+    if (!this.app) {
+      throw new InternalServerErrorException({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Auth provider not initialized',
+      })
+    }
+    try {
+      await this.app.auth().deleteProviderConfig(providerId)
+    } catch (err) {
+      if (isFirebaseErrorCode(err, 'auth/configuration-not-found')) return
+      throw err
     }
   }
 }

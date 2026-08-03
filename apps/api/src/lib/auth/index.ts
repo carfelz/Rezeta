@@ -1,4 +1,9 @@
-export type { IAuthProvider, VerifiedToken, SignedInToken } from './auth-provider.interface.js'
+export type {
+  IAuthProvider,
+  VerifiedToken,
+  SignedInToken,
+  OidcProviderConfigInput,
+} from './auth-provider.interface.js'
 export { AUTH_PROVIDER, AuthModule } from './auth.module.js'
 
 /** Swagger security scheme names — provider-neutral. Keep in sync with main.ts. */

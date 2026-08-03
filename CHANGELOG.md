@@ -4,6 +4,31 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-02] OIDC provider-config methods on IAuthProvider (identity slice 6, task 3)
+
+### Added
+
+- `OidcProviderConfigInput` type plus `createOidcProviderConfig`,
+  `updateOidcProviderConfig`, and `deleteProviderConfig` methods on
+  `IAuthProvider` (`apps/api/src/lib/auth/auth-provider.interface.ts`),
+  exported from the auth barrel (`apps/api/src/lib/auth/index.ts`).
+- `FirebaseAuthProvider` implementation
+  (`apps/api/src/lib/auth/firebase-auth.provider.ts`) mapping to the Identity
+  Platform Admin SDK's `createProviderConfig` / `updateProviderConfig` /
+  `deleteProviderConfig`: create always sets `responseType: { code: true }`
+  and requires `clientSecret`; update omits `clientSecret` from the patch
+  when not provided, so an existing secret is preserved; delete swallows
+  `auth/configuration-not-found` (idempotent) and rethrows other errors.
+  Enable/disable is done via `updateOidcProviderConfig({ ..., enabled })` —
+  no separate method.
+- Tests in `apps/api/src/lib/auth/__tests__/firebase-auth.provider.spec.ts`
+  extending the existing `firebase-admin` mock harness with
+  `createProviderConfig` / `updateProviderConfig` / `deleteProviderConfig`
+  spies; covers the admin-SDK shape mapping, secret omission/inclusion on
+  update, not-found swallowing, other-error rethrow, and the
+  not-initialized guard for all three methods. File coverage: 100%
+  statements/branches/functions/lines.
+
 ## [2026-08-02] SSO connections + login routing design spec (identity slice 6)
 
 ### Added
