@@ -6,11 +6,21 @@ import { IdentityService } from './identity.service.js'
 import { IdentityController } from './identity.controller.js'
 import { StaffSecurityService } from './staff-security.service.js'
 import { StaffSecurityController } from './staff-security.controller.js'
+import { SsoConnectionRepository } from './sso-connection.repository.js'
+import { SsoConnectionService } from './sso-connection.service.js'
+import { StaffSsoConnectionsController } from './staff-sso.controller.js'
 
 @Module({
   imports: [UsersModule],
-  controllers: [IdentityController, StaffSecurityController],
-  providers: [IdentityRepository, LoginTelemetryService, IdentityService, StaffSecurityService],
-  exports: [LoginTelemetryService, IdentityRepository],
+  controllers: [IdentityController, StaffSecurityController, StaffSsoConnectionsController],
+  providers: [
+    IdentityRepository,
+    LoginTelemetryService,
+    IdentityService,
+    StaffSecurityService,
+    SsoConnectionRepository,
+    SsoConnectionService,
+  ],
+  exports: [LoginTelemetryService, IdentityRepository, SsoConnectionService],
 })
 export class IdentityModule {}
