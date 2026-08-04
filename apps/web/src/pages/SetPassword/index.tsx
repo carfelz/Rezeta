@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { authClient } from '@/lib/auth'
-import { defaultPostLoginPath } from '@/lib/staff-host'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 import { setPasswordStrings } from './strings'
 
 export function SetPassword(): JSX.Element {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const oobCode = searchParams.get('oobCode') ?? ''
 
@@ -54,7 +52,10 @@ export function SetPassword(): JSX.Element {
     try {
       await authClient.confirmPasswordReset(oobCode, password)
       await authClient.signIn(email, password)
-      void navigate(defaultPostLoginPath(window.location.hostname), { replace: true })
+      // Where to go next is PublicOnlyGate's call, made once `identity`
+      // settles via resolveDestination — same as Login/index.tsx. Navigating
+      // here, before identity has resolved, is the race that produced the
+      // login loop this page used to own.
     } catch {
       setError(setPasswordStrings.genericError)
     } finally {

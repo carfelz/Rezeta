@@ -4,6 +4,47 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] AuthGate and SetPassword route through resolveDestination (task 5)
+
+### Changed
+
+- `apps/web/src/components/auth/AuthGate.tsx` no longer reads the `status`
+  shim. It reads `identity` from `useAuthStore` and branches on
+  `identity.kind` via an exhaustive switch: `loading` shows the unchanged
+  full-page spinner; `clinic` renders children, redirecting first to
+  `/bienvenido` if `user.tenantSeededAt === null` and the path isn't already
+  under `/bienvenido`; `anonymous`, `staff`, and `unprovisioned` all route
+  through `resolveDestination` instead of a hardcoded `/login` fallback. An
+  anonymous visitor still lands on `/login?redirectTo=<original path>` (the
+  gate stamps that query param itself, now safe because `resolveDestination`
+  validates it against the host's app before ever honouring it — PR #47); a
+  staff identity hitting a doctor-app route goes straight to
+  `/staff/institutions` instead of bouncing through `/login`; an
+  unprovisioned session renders nothing rather than falling back to a
+  substitute path.
+- `apps/web/src/pages/SetPassword/index.tsx` no longer calls
+  `defaultPostLoginPath(window.location.hostname)` or `useNavigate` after
+  `confirmPasswordReset` + `signIn`. Where to go next is now `PublicOnlyGate`'s
+  call once `identity` settles, matching the pattern already established in
+  `apps/web/src/pages/Login/index.tsx`.
+
+### Tests
+
+- Added `apps/web/src/components/auth/__tests__/AuthGate.test.tsx` (new file
+  — `AuthGate` had no prior dedicated suite): 8 cases covering the loading
+  spinner, clinic-seeded, clinic-unseeded → `/bienvenido`, clinic-unseeded
+  already under `/bienvenido` (no redirect loop), anonymous →
+  `/login?redirectTo=...` (including query-string preservation), staff →
+  `/staff/institutions` directly, and unprovisioned → renders nothing.
+- Updated `apps/web/src/pages/SetPassword/__tests__/SetPassword.test.tsx`:
+  replaced the two tests that asserted specific post-signin navigation
+  targets (`/staff/institutions` on a staff host, `/dashboard` otherwise)
+  with a single test asserting `confirmPasswordReset` + `signIn` are called
+  correctly and `navigate` is never called. The host-specific destination
+  behavior those tests covered now lives in
+  `apps/web/src/components/auth/__tests__/PublicOnlyGate.test.tsx` (added in
+  task 3), which already exercises both outcomes via `resolveDestination`.
+
 ## [2026-08-04] RequirePlatform reads resolved identity instead of re-fetching (task 4)
 
 ### Changed

@@ -39,38 +39,11 @@ beforeEach(() => {
 })
 
 describe('SetPassword', () => {
-  it('navigates to the staff console on a staff host', async () => {
-    const original = window.location
-    Object.defineProperty(window, 'location', {
-      value: { ...original, hostname: 'staff-dev.rezeta.co' },
-      writable: true,
-      configurable: true,
-    })
-    try {
-      render(<SetPassword />)
-      await waitFor(() => expect(mocks.verifyPasswordResetCode).toHaveBeenCalledWith('oob-1'))
-
-      fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
-        target: { value: 'NewPass123' },
-      })
-      fireEvent.change(screen.getByPlaceholderText('Repite la contraseña'), {
-        target: { value: 'NewPass123' },
-      })
-      fireEvent.click(screen.getByRole('button', { name: 'Guardar y entrar' }))
-
-      await waitFor(() =>
-        expect(mocks.navigate).toHaveBeenCalledWith('/staff/institutions', { replace: true }),
-      )
-    } finally {
-      Object.defineProperty(window, 'location', {
-        value: original,
-        writable: true,
-        configurable: true,
-      })
-    }
-  })
-
-  it('sets the password then signs in and navigates to dashboard', async () => {
+  it('confirms the reset and signs in, without deciding a destination itself', async () => {
+    // Where to go next is PublicOnlyGate's call, made once `identity` settles
+    // via resolveDestination — same pattern as Login/index.tsx. Per-host
+    // destinations (staff console vs. dashboard) are covered there:
+    // apps/web/src/components/auth/__tests__/PublicOnlyGate.test.tsx.
     render(<SetPassword />)
     await waitFor(() => expect(mocks.verifyPasswordResetCode).toHaveBeenCalledWith('oob-1'))
 
@@ -85,8 +58,8 @@ describe('SetPassword', () => {
     await waitFor(() => {
       expect(mocks.confirmPasswordReset).toHaveBeenCalledWith('oob-1', 'NewPass123')
       expect(mocks.signIn).toHaveBeenCalledWith('nurse@clinic.do', 'NewPass123')
-      expect(mocks.navigate).toHaveBeenCalledWith('/dashboard', { replace: true })
     })
+    expect(mocks.navigate).not.toHaveBeenCalled()
   })
 
   it('shows a mismatch error and does not submit', async () => {
