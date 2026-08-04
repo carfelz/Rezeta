@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { loginStrings } from './strings'
 import { authClient } from '@/lib/auth'
 import { fetchLoginMethods } from '@/hooks/identity/use-login-methods'
-import { defaultPostLoginPath } from '@/lib/staff-host'
+import { belongsToHostApp, defaultPostLoginPath } from '@/lib/staff-host'
 import type { LoginMethodsResponseDto } from '@rezeta/shared'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
@@ -39,9 +39,11 @@ export function Login(): JSX.Element {
 
   function redirectAfterSuccess(): void {
     const redirectTo = searchParams.get('redirectTo')
-    const destination = isSafeRedirect(redirectTo)
-      ? redirectTo
-      : defaultPostLoginPath(window.location.hostname)
+    const { hostname } = window.location
+    const destination =
+      isSafeRedirect(redirectTo) && belongsToHostApp(hostname, redirectTo)
+        ? redirectTo
+        : defaultPostLoginPath(hostname)
     void navigate(destination, { replace: true })
   }
 

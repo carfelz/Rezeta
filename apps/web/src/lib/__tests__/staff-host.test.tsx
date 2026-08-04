@@ -1,7 +1,39 @@
 import { describe, it, expect } from 'vitest'
 import { MemoryRouter, useRoutes, Outlet } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
-import { defaultPostLoginPath, isStaffHostname, staffHostRootRoutes } from '../staff-host'
+import {
+  belongsToHostApp,
+  defaultPostLoginPath,
+  isStaffHostname,
+  staffHostRootRoutes,
+} from '../staff-host'
+
+describe('belongsToHostApp', () => {
+  it('rejects doctor-app destinations on a staff host', () => {
+    // AuthGate plants ?redirectTo=/dashboard when it bounces staff, and
+    // honouring it sends them straight back into the loop.
+    expect(belongsToHostApp('staff-dev.rezeta.co', '/dashboard')).toBe(false)
+    expect(belongsToHostApp('staff-dev.rezeta.co', '/agenda')).toBe(false)
+  })
+
+  it('accepts staff destinations on a staff host', () => {
+    expect(belongsToHostApp('staff-dev.rezeta.co', '/staff')).toBe(true)
+    expect(belongsToHostApp('staff-dev.rezeta.co', '/staff/security')).toBe(true)
+  })
+
+  it('rejects staff destinations on a doctor host', () => {
+    expect(belongsToHostApp('app-dev.rezeta.co', '/staff/institutions')).toBe(false)
+  })
+
+  it('accepts doctor destinations on a doctor host', () => {
+    expect(belongsToHostApp('app-dev.rezeta.co', '/dashboard')).toBe(true)
+    expect(belongsToHostApp('localhost', '/dashboard')).toBe(true)
+  })
+
+  it('does not treat a lookalike prefix as the staff app', () => {
+    expect(belongsToHostApp('staff-dev.rezeta.co', '/staffing')).toBe(false)
+  })
+})
 
 describe('defaultPostLoginPath', () => {
   it('sends staff hosts to the staff console', () => {

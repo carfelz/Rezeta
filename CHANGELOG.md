@@ -4,6 +4,25 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] Cross-app redirectTo no longer outranks the staff destination
+
+### Fixed
+
+- Signing in on a staff host still landed on `/dashboard` whenever the URL
+  carried `?redirectTo=%2Fdashboard`. `AuthGate` stamps the route it bounced
+  from into that parameter, so a staff user who touched any doctor-app route
+  arrived at `/login` already holding a destination that bounces them right
+  back — and because `/dashboard` passes `isSafeRedirect`, it outranked the
+  staff-host default added on 2026-08-03, which was never consulted.
+- New `belongsToHostApp(hostname, path)` in `apps/web/src/lib/staff-host.tsx`
+  decides whether a path belongs to the app a hostname serves (both hosts ship
+  the same bundle, so a path can be routable yet belong to the other app).
+  `apps/web/src/pages/Login/index.tsx` now honours `?redirectTo=` only when it
+  passes both `isSafeRedirect` and `belongsToHostApp`, falling back to
+  `defaultPostLoginPath` otherwise. A staff destination on a staff host is
+  still honoured, so deep links like `/login?redirectTo=/staff/security`
+  keep working.
+
 ## [2026-08-03] Staff gate explains missing access instead of looping
 
 ### Fixed
