@@ -51,16 +51,27 @@ function renderGate(initialEntry: string) {
   )
 }
 
-/**
- * AuthGate reads `user` from a separate store field, not `identity.user` (the
- * same split AuthProvider maintains via `_setUser` vs `_setIdentity`) — so a
- * clinic identity's `tenantSeededAt` must be seeded onto `user` too.
- */
-function setIdentity(identity: Identity): void {
-  useAuthStore.setState({
-    identity,
-    user: identity.kind === 'clinic' ? identity.user : null,
+/** Point window.location.hostname at a given host for the duration of a test. */
+function withHostname(hostname: string, run: () => void): void {
+  const original = window.location
+  Object.defineProperty(window, 'location', {
+    value: { ...original, hostname },
+    writable: true,
+    configurable: true,
   })
+  try {
+    run()
+  } finally {
+    Object.defineProperty(window, 'location', {
+      value: original,
+      writable: true,
+      configurable: true,
+    })
+  }
+}
+
+function setIdentity(identity: Identity): void {
+  useAuthStore.setState({ identity })
 }
 
 describe('AuthGate', () => {
@@ -77,41 +88,53 @@ describe('AuthGate', () => {
   })
 
   it('renders children for a clinic identity whose tenant is already seeded', () => {
-    setIdentity({ kind: 'clinic', user: makeAuthUser('doctor') })
-    renderGate('/dashboard')
-    expect(screen.getByText('DASHBOARD CONTENT')).toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'clinic', user: makeAuthUser('doctor') })
+      renderGate('/dashboard')
+      expect(screen.getByText('DASHBOARD CONTENT')).toBeInTheDocument()
+    })
   })
 
   it('redirects a clinic identity with an unseeded tenant to /bienvenido', () => {
-    setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })
-    renderGate('/dashboard')
-    expect(screen.getByText('ONBOARDING CONTENT')).toBeInTheDocument()
-    expect(screen.queryByText('DASHBOARD CONTENT')).not.toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })
+      renderGate('/dashboard')
+      expect(screen.getByText('ONBOARDING CONTENT')).toBeInTheDocument()
+      expect(screen.queryByText('DASHBOARD CONTENT')).not.toBeInTheDocument()
+    })
   })
 
   it('renders onboarding children directly for an unseeded tenant already under /bienvenido (no redirect loop)', () => {
-    setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })
-    renderGate('/bienvenido')
-    expect(screen.getByText('ONBOARDING CONTENT')).toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })
+      renderGate('/bienvenido')
+      expect(screen.getByText('ONBOARDING CONTENT')).toBeInTheDocument()
+    })
   })
 
   it('redirects an anonymous visitor to /login carrying the original path as ?redirectTo=', () => {
-    setIdentity({ kind: 'anonymous' })
-    renderGate('/dashboard')
-    expect(screen.getByText('LOGIN redirectTo=/dashboard')).toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'anonymous' })
+      renderGate('/dashboard')
+      expect(screen.getByText('LOGIN redirectTo=/dashboard')).toBeInTheDocument()
+    })
   })
 
   it('preserves the query string in the stamped ?redirectTo=', () => {
-    setIdentity({ kind: 'anonymous' })
-    renderGate('/dashboard?tab=hoy')
-    expect(screen.getByText('LOGIN redirectTo=/dashboard?tab=hoy')).toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'anonymous' })
+      renderGate('/dashboard?tab=hoy')
+      expect(screen.getByText('LOGIN redirectTo=/dashboard?tab=hoy')).toBeInTheDocument()
+    })
   })
 
   it('sends a staff identity straight to /staff/institutions (not through /login)', () => {
-    setIdentity({ kind: 'staff', principal: platformPrincipal })
-    renderGate('/dashboard')
-    expect(screen.getByText('STAFF INSTITUTIONS')).toBeInTheDocument()
-    expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
+    withHostname('staff-dev.rezeta.co', () => {
+      setIdentity({ kind: 'staff', principal: platformPrincipal })
+      renderGate('/dashboard')
+      expect(screen.getByText('STAFF INSTITUTIONS')).toBeInTheDocument()
+      expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
+    })
   })
 
   it('explains the lack of access instead of a blank screen when the session is unprovisioned', () => {
@@ -120,19 +143,23 @@ describe('AuthGate', () => {
     // screen here leaves a real doctor stuck with no explanation and no way
     // out — resolveDestination's contract requires an explanation, not a
     // fallback navigation (see auth-routing.ts).
-    setIdentity({ kind: 'unprovisioned' })
-    renderGate('/dashboard')
-    expect(screen.getByText('Sin acceso')).toBeInTheDocument()
-    expect(screen.queryByText('DASHBOARD CONTENT')).not.toBeInTheDocument()
-    expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
-    expect(screen.queryByText('STAFF INSTITUTIONS')).not.toBeInTheDocument()
-    expect(screen.queryByText('Cargando...')).not.toBeInTheDocument()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'unprovisioned' })
+      renderGate('/dashboard')
+      expect(screen.getByText('Sin acceso')).toBeInTheDocument()
+      expect(screen.queryByText('DASHBOARD CONTENT')).not.toBeInTheDocument()
+      expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
+      expect(screen.queryByText('STAFF INSTITUTIONS')).not.toBeInTheDocument()
+      expect(screen.queryByText('Cargando...')).not.toBeInTheDocument()
+    })
   })
 
   it('signs out from the no-access screen', () => {
-    setIdentity({ kind: 'unprovisioned' })
-    renderGate('/dashboard')
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    expect(mocks.signOut).toHaveBeenCalledOnce()
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'unprovisioned' })
+      renderGate('/dashboard')
+      fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+      expect(mocks.signOut).toHaveBeenCalledOnce()
+    })
   })
 })

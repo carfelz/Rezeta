@@ -9,15 +9,15 @@ describe('useAuthStore — internal setters', () => {
     act(() => {
       result.current._setUser(null)
       result.current._setSession(null)
-      result.current._setStatus('loading')
+      result.current._setIdentity({ kind: 'loading' })
     })
   })
 
-  it('initial state has null user and loading status', () => {
+  it('initial state has null user and loading identity', () => {
     const { result } = renderHook(() => useAuthStore())
     expect(result.current.user).toBeNull()
     expect(result.current.session).toBeNull()
-    expect(result.current.status).toBe('loading')
+    expect(result.current.identity).toEqual({ kind: 'loading' })
   })
 
   it('_setUser updates user state', () => {
@@ -61,18 +61,6 @@ describe('useAuthStore — internal setters', () => {
     expect(result.current.user).toBeNull()
   })
 
-  it('_setStatus updates auth status', () => {
-    const { result } = renderHook(() => useAuthStore())
-    act(() => result.current._setStatus('authenticated'))
-    expect(result.current.status).toBe('authenticated')
-  })
-
-  it('_setStatus can set unauthenticated', () => {
-    const { result } = renderHook(() => useAuthStore())
-    act(() => result.current._setStatus('unauthenticated'))
-    expect(result.current.status).toBe('unauthenticated')
-  })
-
   it('_setSession stores session reference', () => {
     const { result } = renderHook(() => useAuthStore())
     const fakeSession = { uid: 'fb-123', email: 'doc@test.com' }
@@ -80,13 +68,26 @@ describe('useAuthStore — internal setters', () => {
     expect(result.current.session).toBe(fakeSession)
   })
 
-  it('status transitions: loading → authenticated → unauthenticated', () => {
+  it('_setIdentity transitions: loading → clinic → anonymous', () => {
     const { result } = renderHook(() => useAuthStore())
-    expect(result.current.status).toBe('loading')
-    act(() => result.current._setStatus('authenticated'))
-    expect(result.current.status).toBe('authenticated')
-    act(() => result.current._setStatus('unauthenticated'))
-    expect(result.current.status).toBe('unauthenticated')
+    const user = {
+      id: 'u',
+      externalUid: 'f',
+      tenantId: 't',
+      email: 'e@e.com',
+      fullName: null,
+      role: 'super_admin' as const,
+      specialty: null,
+      licenseNumber: null,
+      tenantSeededAt: null,
+      preferences: {},
+      capabilities: defaultCapabilitiesFor('super_admin'),
+    }
+    expect(result.current.identity).toEqual({ kind: 'loading' })
+    act(() => result.current._setIdentity({ kind: 'clinic', user }))
+    expect(result.current.identity).toEqual({ kind: 'clinic', user })
+    act(() => result.current._setIdentity({ kind: 'anonymous' }))
+    expect(result.current.identity).toEqual({ kind: 'anonymous' })
   })
 
   it('setPreferences updates preferences when user exists', () => {

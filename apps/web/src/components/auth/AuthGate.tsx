@@ -59,7 +59,6 @@ function NoClinicAccess(): JSX.Element {
  */
 export function AuthGate({ children }: AuthGateProps): JSX.Element | null {
   const identity = useAuthStore((s) => s.identity)
-  const user = useAuthStore((s) => s.user)
   const location = useLocation()
 
   function redirectAway(): JSX.Element | null {
@@ -118,7 +117,7 @@ export function AuthGate({ children }: AuthGateProps): JSX.Element | null {
         </div>
       )
     case 'clinic':
-      if (user && user.tenantSeededAt === null && !location.pathname.startsWith('/bienvenido')) {
+      if (identity.user.tenantSeededAt === null && !location.pathname.startsWith('/bienvenido')) {
         return <Navigate to="/bienvenido" replace />
       }
       return <>{children}</>

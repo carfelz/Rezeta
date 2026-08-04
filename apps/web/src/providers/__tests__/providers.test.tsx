@@ -244,7 +244,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       await Promise.resolve()
     })
 
-    await waitFor(() => expect(useAuthStore.getState().status).toBe('unauthenticated'))
+    await waitFor(() => expect(useAuthStore.getState().identity).toEqual({ kind: 'unprovisioned' }))
     expect(useAuthStore.getState().session).toEqual(session)
     expect(useAuthStore.getState().user).toBeNull()
   })
@@ -321,7 +321,6 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() =>
       expect(useAuthStore.getState().identity).toEqual({ kind: 'clinic', user: mockProvisionedUser }),
     )
-    expect(useAuthStore.getState().status).toBe('authenticated')
   })
 
   it('resolves identity=anonymous and signs out on a genuine provision failure', async () => {
@@ -379,7 +378,6 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     expect(mocks.apiGet).toHaveBeenCalledWith('/v1/staff/me', { skipSignOutOn401: true })
     expect(mocks.signOut).not.toHaveBeenCalled()
     expect(useAuthStore.getState().session).toEqual(session)
-    expect(useAuthStore.getState().status).toBe('unauthenticated')
   })
 
   it('resolves identity=unprovisioned when provision 401s USER_NOT_PROVISIONED and GET /v1/staff/me also fails', async () => {
