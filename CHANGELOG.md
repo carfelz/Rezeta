@@ -4,6 +4,26 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-03] Staff hosts land on the staff console after sign-in
+
+### Fixed
+
+- Signing in on a staff host (`staff-dev.rezeta.co` / `staff.rezeta.co`) no
+  longer bounces back to `/login`. Both post-authentication redirects
+  hard-coded `/dashboard`, which sits behind `AuthGate`; a `PlatformUser` has
+  no institution `User` row, so `AuthGate` saw `unauthenticated` and sent them
+  straight back to the login page. The only visible symptom was the
+  (by-design, already-swallowed) `USER_NOT_PROVISIONED` response from
+  `POST /v1/auth/provision`.
+- New `defaultPostLoginPath(hostname)` in `apps/web/src/lib/staff-host.tsx`
+  resolves `/staff/institutions` on staff hosts and `/dashboard` everywhere
+  else. Applied in `apps/web/src/pages/Login/index.tsx` (covers the password,
+  Google, SSO, and TOTP entry points, which all funnel through
+  `redirectAfterSuccess`) and in `apps/web/src/pages/SetPassword/index.tsx`,
+  the first-run path for staff invited via a set-password link.
+- An explicit `?redirectTo=` still wins on every host; only the default
+  destination changed.
+
 ## [2026-08-02] SSO connections and login routing (identity slice 6)
 
 ### Added

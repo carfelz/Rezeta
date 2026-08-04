@@ -1,7 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import { MemoryRouter, useRoutes, Outlet } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
-import { isStaffHostname, staffHostRootRoutes } from '../staff-host'
+import { defaultPostLoginPath, isStaffHostname, staffHostRootRoutes } from '../staff-host'
+
+describe('defaultPostLoginPath', () => {
+  it('sends staff hosts to the staff console', () => {
+    expect(defaultPostLoginPath('staff-dev.rezeta.co')).toBe('/staff/institutions')
+    expect(defaultPostLoginPath('staff.rezeta.co')).toBe('/staff/institutions')
+  })
+
+  it('sends every other host to the doctor dashboard', () => {
+    expect(defaultPostLoginPath('app-dev.rezeta.co')).toBe('/dashboard')
+    expect(defaultPostLoginPath('localhost')).toBe('/dashboard')
+  })
+})
 
 describe('isStaffHostname', () => {
   it('matches the dev staff subdomain', () => {
