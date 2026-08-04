@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useStaffMe } from '@/hooks/staff/use-staff-me'
 import { useAuthStore } from '@/store/auth.store'
 import { authClient } from '@/lib/auth'
 import { Card, Button } from '@/components/ui'
@@ -35,36 +34,40 @@ function NoStaffAccess(): JSX.Element {
 }
 
 /**
- * Route gate for the staff console. Passes only when GET /v1/staff/me resolves a
- * platform principal. This is a UX gate — the backend AuthGuard/PlatformGuard on
- * @PlatformRoute() is the real authorization boundary.
+ * Route gate for the staff console. Branches purely on the resolved
+ * `identity` from AuthProvider — it does not probe GET /v1/staff/me itself;
+ * AuthProvider already does that once, on every auth state change (see
+ * apps/web/src/providers/AuthProvider.tsx), and this gate reading the same
+ * result a second time is exactly the redundancy the auth-identity-resolution
+ * refactor removes. This is a UX gate — the backend AuthGuard/PlatformGuard
+ * on @PlatformRoute() is the real authorization boundary.
  *
- * Deliberately does NOT gate on the institution `user` (AuthGate's mechanism):
- * a platform token always 401s on POST /v1/auth/provision (there is no
- * institution User row for a PlatformUser), so the institution auth store's
- * `status` settles to 'unauthenticated' for a legitimate platform principal too
- * — using it the way AuthGate does would redirect staff away before this gate
- * ever runs. The one thing borrowed from that store is `status === 'loading'`,
- * purely as a "has Firebase resolved whether there is a session yet" signal —
- * without it, `useStaffMe` could fire before the Firebase SDK restores a
- * persisted session and wrongly read as unauthenticated on a cold load.
- *
- * On failure the outcomes are distinct, because /v1/staff/me answers
- * UNAUTHORIZED for all of them alike:
- *   - `status === 'authenticated'` — an institution user browsing to /staff;
- *     send them to their own dashboard.
- *   - no session — nobody is signed in (e.g. a staff host's `/` redirect on a
- *     cold visit); send them to /login.
- *   - a session but no institution user — a staff identity whose PlatformUser
- *     row is missing or inactive. Explain it, because every redirect loops.
+ * `identity.kind` outcomes:
+ *   - `staff` — a resolved platform principal; render the console.
+ *   - `clinic` — an institution user who browsed to /staff; send them to
+ *     their own dashboard.
+ *   - `anonymous` — nobody is signed in (e.g. a staff host's `/` redirect on
+ *     a cold visit); send them to /login.
+ *   - `unprovisioned` — a live session that is neither a platform principal
+ *     nor an institution user (a PlatformUser row missing or inactive).
+ *     Explain it instead of redirecting — every redirect from this state
+ *     loops, since /dashboard sits behind a gate that would just bounce them
+ *     back to /login.
+ *   - `loading` — identity has not resolved yet; render nothing.
  */
 export function RequirePlatform({ children }: { children: ReactNode }): JSX.Element | null {
-  const authStatus = useAuthStore((s) => s.status)
-  const hasSession = useAuthStore((s) => s.session !== null)
-  const { data, isLoading, isError } = useStaffMe(authStatus !== 'loading')
-  if (authStatus === 'loading' || isLoading) return null
-  if (data && !isError) return <>{children}</>
-  if (authStatus === 'authenticated') return <Navigate to="/dashboard" replace />
-  if (!hasSession) return <Navigate to="/login" replace />
-  return <NoStaffAccess />
+  const identity = useAuthStore((s) => s.identity)
+
+  switch (identity.kind) {
+    case 'loading':
+      return null
+    case 'staff':
+      return <>{children}</>
+    case 'clinic':
+      return <Navigate to="/dashboard" replace />
+    case 'anonymous':
+      return <Navigate to="/login" replace />
+    case 'unprovisioned':
+      return <NoStaffAccess />
+  }
 }

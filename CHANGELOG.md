@@ -4,6 +4,37 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] RequirePlatform reads resolved identity instead of re-fetching (task 4)
+
+### Changed
+
+- `apps/web/src/components/auth/RequirePlatform.tsx` no longer calls
+  `useStaffMe` itself. It now reads `identity` from `useAuthStore` (the
+  resolution `AuthProvider` already performs, including its own
+  `GET /v1/staff/me` probe) and branches purely on `identity.kind`: `staff`
+  renders children, `clinic` redirects to `/dashboard`, `anonymous` redirects
+  to `/login`, `unprovisioned` renders the existing `NoStaffAccess` screen
+  (never a redirect — every redirect from that state loops), and `loading`
+  renders nothing. This removes the gate's duplicate `/v1/staff/me` request.
+- `useStaffMe` (`apps/web/src/hooks/staff/use-staff-me.ts`) is unchanged and
+  still used directly by `apps/web/src/pages/staff/PlatformUsers.tsx` to
+  display the current principal.
+
+### Tests
+
+- Rewrote `apps/web/src/components/auth/__tests__/RequirePlatform.test.tsx`
+  to drive the gate via `useAuthStore.setState({ identity })` instead of
+  mocking `useStaffMe` (which the gate no longer calls). Six cases: staff →
+  children, clinic → `/dashboard`, unprovisioned → `NoStaffAccess` (with its
+  sign-out button), anonymous → `/login`, loading → nothing. The two removed
+  cases that asserted `useStaffMe`'s `enabled` flag toggling with the auth
+  store's Firebase-resolution status no longer have an analogue to test here
+  — that query lifecycle moved into `AuthProvider`, which owns and gates its
+  own `/v1/staff/me` probe internally (fired only inside the
+  `onAuthStateChanged` callback, i.e. only after Firebase has already
+  resolved); the resulting `staff`/`unprovisioned` distinction is covered by
+  `apps/web/src/providers/__tests__/providers.test.tsx`.
+
 ## [2026-08-04] PublicOnlyGate owns the post-login redirect (task 3)
 
 ### Changed
