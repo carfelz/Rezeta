@@ -46,19 +46,22 @@ export type Identity =
   | { kind: 'staff'; principal: PlatformPrincipal }    // PlatformUser row
   | { kind: 'unprovisioned' }                          // live session, neither row
 
+/** Returns the path to navigate to, or null when the caller must not navigate. */
 export function resolveDestination(input: {
   identity: Identity
   hostname: string
   requestedRedirect: string | null
-}): string
+}): string | null
 ```
 
 Rules (each gets its own test):
 - `clinic` → requested redirect when safe **and** `belongsToHostApp`, else `/dashboard`.
 - `staff` → requested redirect when safe **and** `belongsToHostApp`, else `/staff/institutions`.
 - `anonymous` → `/login`.
-- `unprovisioned` → `null`-equivalent sentinel; the caller renders an explanation rather than navigating (see Task 4). Do **not** invent a redirect here — every redirect for this state loops.
-- `loading` → callers must not call it; assert it throws or returns a sentinel, and cover that.
+- `unprovisioned` → **`null`**. The caller renders an explanation instead (see Task 4). Do **not** invent a redirect here — every redirect for this state loops, which is the bug this refactor exists to kill.
+- `loading` → **`null`**. Identity has not resolved; the caller renders nothing yet.
+
+`null` therefore means exactly one thing to every caller: "do not navigate." Callers must handle it explicitly rather than falling back to a default path — a fallback here would silently reintroduce the loop.
 
 Reuse the existing `isSafeRedirect` (move it out of `Login/index.tsx` so it is shared, not duplicated) and `belongsToHostApp`.
 
