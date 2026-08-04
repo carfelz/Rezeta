@@ -4,6 +4,40 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-03] Staff gate explains missing access instead of looping
+
+### Fixed
+
+- `RequirePlatform` (`apps/web/src/components/auth/RequirePlatform.tsx`) no
+  longer redirects every failed `GET /v1/staff/me` to `/dashboard`. That
+  destination sits behind `AuthGate`, which bounces an identity with no
+  institution `User` row back to `/login`, so a staff account whose
+  `PlatformUser` row was missing or inactive produced a silent login loop with
+  no indication of the cause. The three failure cases are now distinguished,
+  since the endpoint answers `UNAUTHORIZED` for all of them alike: an
+  institution user still goes to `/dashboard`, nobody-signed-in goes to
+  `/login`, and a live session that is neither renders a "No staff access"
+  screen with a sign-out action.
+- `AuthProvider` (`apps/web/src/providers/AuthProvider.tsx`) keeps `session` in
+  the auth store when it deliberately preserves the Firebase session for an
+  unprovisioned identity, clearing it only when it actually signs the user out.
+  This is the signal the gate reads to tell those two cases apart; no other
+  code consumed `session`.
+
+### Changed
+
+- `apps/web/src/pages/staff/strings.ts`: added `noAccessTitle` /
+  `noAccessBody` / `noAccessSignOut` to `staffStrings` (English, per the staff
+  console convention).
+- `DEPLOYMENT.md`: corrected the database section — dev runs on **Supabase**
+  (`aws-1-us-east-1.pooler.supabase.com`), not Cloud SQL `medical-erp-dev-db`;
+  the Cloud SQL Admin API is disabled on the project and no such instance
+  exists. Added a section on running scripts against the dev database (secrets
+  to pull, and the `apps/api` working-directory requirement) and a Staff
+  Console Accounts section recording that dev uses `staff@rezeta.co` while
+  local uses `staff@rezeta.test`, since deploys never seed platform users.
+  Cost and disaster-recovery lines no longer claim GCP-side database backups.
+
 ## [2026-08-03] Staff hosts land on the staff console after sign-in
 
 ### Fixed

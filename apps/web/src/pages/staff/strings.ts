@@ -31,6 +31,10 @@ export const staffStrings = {
   successTitle: 'Institution created',
   successBody: (email: string): string => `A set-password email was sent to ${email}.`,
   successBackToList: 'Back to institutions',
+  noAccessTitle: 'No staff access',
+  noAccessBody:
+    'You are signed in, but this account is not provisioned for the staff console. Ask a platform admin to add it, then sign in again.',
+  noAccessSignOut: 'Sign out',
 } as const
 
 export const institutionsStrings = {
