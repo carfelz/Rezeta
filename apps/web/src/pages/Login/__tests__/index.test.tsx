@@ -61,6 +61,33 @@ describe('Login', () => {
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/dashboard', { replace: true }))
   })
 
+  it('signs in and navigates to the staff console on a staff host', async () => {
+    const original = window.location
+    Object.defineProperty(window, 'location', {
+      value: { ...original, hostname: 'staff-dev.rezeta.co' },
+      writable: true,
+      configurable: true,
+    })
+    try {
+      mocks.signIn.mockResolvedValue(undefined)
+      renderPage()
+      fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+        target: { value: 'staff@rezeta.test' },
+      })
+      fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'pw' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+      await waitFor(() =>
+        expect(mocks.navigate).toHaveBeenCalledWith('/staff/institutions', { replace: true }),
+      )
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: original,
+        writable: true,
+        configurable: true,
+      })
+    }
+  })
+
   it('shows a mapped error message on a non-mfa sign-in failure', async () => {
     mocks.signIn.mockRejectedValue({ code: 'auth/wrong-password' })
     renderPage()

@@ -7,6 +7,17 @@ export function isStaffHostname(hostname: string): boolean {
 }
 
 /**
+ * Where a successful sign-in lands when no explicit `?redirectTo=` was given.
+ * Staff hosts must not default to `/dashboard`: a PlatformUser has no
+ * institution User row, so AuthGate sees `unauthenticated` and bounces them
+ * back to /login — a loop whose only visible symptom is the (expected)
+ * USER_NOT_PROVISIONED from POST /v1/auth/provision.
+ */
+export function defaultPostLoginPath(hostname: string): string {
+  return isStaffHostname(hostname) ? '/staff/institutions' : '/dashboard'
+}
+
+/**
  * Root routes contributed only on staff hosts: `/` goes straight to the staff
  * console. Must be spread into the router BEFORE the AuthGate layout — staff
  * users 404 on /v1/auth/me, so the doctor-app AuthGate would bounce them to

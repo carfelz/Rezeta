@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { authClient } from '@/lib/auth'
+import { defaultPostLoginPath } from '@/lib/staff-host'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 import { setPasswordStrings } from './strings'
 
@@ -53,7 +54,7 @@ export function SetPassword(): JSX.Element {
     try {
       await authClient.confirmPasswordReset(oobCode, password)
       await authClient.signIn(email, password)
-      void navigate('/dashboard', { replace: true })
+      void navigate(defaultPostLoginPath(window.location.hostname), { replace: true })
     } catch {
       setError(setPasswordStrings.genericError)
     } finally {
