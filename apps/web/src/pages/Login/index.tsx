@@ -1,17 +1,12 @@
 import { useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { loginStrings } from './strings'
 import { authClient } from '@/lib/auth'
 import { fetchLoginMethods } from '@/hooks/identity/use-login-methods'
-import { belongsToHostApp, defaultPostLoginPath } from '@/lib/staff-host'
-import { isSafeRedirect } from '@/lib/auth-routing'
 import type { LoginMethodsResponseDto } from '@rezeta/shared'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
 
 export function Login(): JSX.Element {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const { signIn, signInWithGoogle, signInWithSso } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,23 +25,18 @@ export function Login(): JSX.Element {
   const ssoProviderId = ssoRoute?.ssoProviderId ?? null
   const ssoDisplayName = ssoRoute?.ssoDisplayName ?? ''
 
-  function redirectAfterSuccess(): void {
-    const redirectTo = searchParams.get('redirectTo')
-    const { hostname } = window.location
-    const destination =
-      isSafeRedirect(redirectTo) && belongsToHostApp(hostname, redirectTo)
-        ? redirectTo
-        : defaultPostLoginPath(hostname)
-    void navigate(destination, { replace: true })
-  }
-
-  /** Shared success/error handling for every sign-in entry point (password, Google popup, SSO popup). */
-  async function signInAndRedirect(action: () => Promise<void>): Promise<void> {
+  /**
+   * Shared success/error handling for every sign-in entry point (password,
+   * Google popup, SSO popup). Signing in only updates the provider session —
+   * where to go next is entirely PublicOnlyGate's call, made once `identity`
+   * settles via resolveDestination. Navigating here, before identity has
+   * resolved, is the race that produced the login loop this page used to own.
+   */
+  async function attemptSignIn(action: () => Promise<void>): Promise<void> {
     setError(null)
     setIsLoading(true)
     try {
       await action()
-      redirectAfterSuccess()
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ''
       if (code === 'auth/multi-factor-auth-required') {
@@ -62,18 +52,18 @@ export function Login(): JSX.Element {
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     if (ssoOnly && ssoProviderId) {
-      await signInAndRedirect(() => signInWithSso(ssoProviderId))
+      await attemptSignIn(() => signInWithSso(ssoProviderId))
       return
     }
-    await signInAndRedirect(() => signIn(email, password))
+    await attemptSignIn(() => signIn(email, password))
   }
 
   function handleGoogleSignIn(): void {
-    void signInAndRedirect(() => signInWithGoogle())
+    void attemptSignIn(() => signInWithGoogle())
   }
 
   function handleSsoSignIn(providerId: string): void {
-    void signInAndRedirect(() => signInWithSso(providerId))
+    void attemptSignIn(() => signInWithSso(providerId))
   }
 
   async function handleEmailBlur(): Promise<void> {
@@ -99,7 +89,6 @@ export function Login(): JSX.Element {
     setIsLoading(true)
     try {
       await authClient.completeTotpSignIn(totpCode)
-      redirectAfterSuccess()
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ''
       setError(authClient.errorCodeToMessage(code))

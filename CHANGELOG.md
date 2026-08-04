@@ -4,6 +4,45 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] PublicOnlyGate owns the post-login redirect (task 3)
+
+### Changed
+
+- `apps/web/src/pages/Login/index.tsx`: deleted `redirectAfterSuccess` and the
+  `useNavigate`/`useSearchParams`/`isSafeRedirect`/`belongsToHostApp`/
+  `defaultPostLoginPath` imports it used. Sign-in (password, Google, SSO, and
+  the TOTP completion path) now only calls the auth action — it no longer
+  navigates. This removes the race where the page navigated the moment
+  `signIn()` resolved, before `identity` had actually settled.
+- `apps/web/src/components/auth/PublicOnlyGate.tsx` now reads `identity`
+  (not the derived `status` shim) and, for `identity.kind === 'clinic' |
+  'staff'`, delegates the destination entirely to
+  `resolveDestination` from `apps/web/src/lib/auth-routing.ts` — the same
+  resolver Task 1 built and Task 2 wired into `AuthProvider`. `anonymous` and
+  `unprovisioned` render `children` (the login/set-password form); `loading`
+  keeps the existing full-page spinner.
+- Deleted `PublicOnlyGate`'s private copy of `isSafeRedirect` (a third
+  duplicate of the one Task 1 already centralized in `auth-routing.ts`).
+  `resolveDestination` now absorbs that check internally, so the gate no
+  longer needs to call it directly — `auth-routing.ts` is the only remaining
+  definition in the codebase.
+
+### Tests
+
+- Added `apps/web/src/components/auth/__tests__/PublicOnlyGate.test.tsx` (9
+  cases): loading spinner, anonymous/unprovisioned render children, clinic
+  default (`/dashboard`) and safe/unsafe/cross-app `?redirectTo=`, staff
+  default (`/staff/institutions`) and safe/cross-app `?redirectTo=`
+  (including `/login?redirectTo=/staff/security` landing on
+  `/staff/security` on a staff host).
+- `apps/web/src/pages/Login/__tests__/index.test.tsx`: removed the four tests
+  that asserted Login's own post-sign-in navigation (`/dashboard` default,
+  staff-host default, ignoring a doctor-app `redirectTo`, honouring a staff
+  `redirectTo`) — that behavior moved to `PublicOnlyGate` and is covered by
+  its new suite above. Trimmed the now-meaningless `navigate` assertions from
+  the MFA, Google, and SSO success-path tests (Login no longer calls
+  `useNavigate`); kept the rest of each test's original coverage.
+
 ## [2026-08-04] AuthProvider resolves and stores identity (task 2)
 
 ### Added
