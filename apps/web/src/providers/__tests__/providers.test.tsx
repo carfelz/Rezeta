@@ -198,6 +198,59 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     await waitFor(() => expect(screen.getByText('platformcase')).toBeInTheDocument())
     expect(mocks.signOut).not.toHaveBeenCalled()
   })
+
+  it('keeps the store session for an unprovisioned platform identity', async () => {
+    // The Firebase session is deliberately left alive for this case, so the
+    // store must reflect that — RequirePlatform reads it to tell a staff
+    // identity with no PlatformUser row apart from nobody being signed in.
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),
+    )
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const session = { uid: 'staff-uid', email: 'staff@rezeta.co' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>sessionkept</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAuthStore.getState().status).toBe('unauthenticated'))
+    expect(useAuthStore.getState().session).toEqual(session)
+    expect(useAuthStore.getState().user).toBeNull()
+  })
+
+  it('clears the store session when a failed provision does sign the user out', async () => {
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'INTERNAL_ERROR', message: 'boom' }),
+    )
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>sessioncleared</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.({ uid: 'fb-uid' })
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalled())
+    expect(useAuthStore.getState().session).toBeNull()
+  })
 })
 
 describe('Providers (composed)', () => {

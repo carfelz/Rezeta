@@ -67,7 +67,11 @@ environment ever needs the same bootstrap. What they did:
 ## Cloud Resources
 
 - **Cloud Run:** `medical-erp-api` (512Mi / 1 CPU / 0–10 instances)
-- **Cloud SQL:** `medical-erp-dev-db`, PostgreSQL 16, db-f1-micro, 10GB SSD
+- **Database:** **Supabase** Postgres, reached through the connection pooler at
+  `aws-1-us-east-1.pooler.supabase.com:5432`. It is **not** Cloud SQL — the
+  Cloud SQL Admin API is disabled on the project and there is no
+  `medical-erp-dev-db` instance. The pooler is publicly reachable, so Prisma
+  connects straight to it; no `cloud-sql-proxy` is involved.
 - **Artifact Registry:** `medical-erp` repository (Docker images)
 - **GCS:** `gs://medical-erp-dev-uploads` (private, signed URLs only)
 - **Secret Manager:** `database_url`, `direct_url`, `firebase-admin-key`,
@@ -75,6 +79,48 @@ environment ever needs the same bootstrap. What they did:
 
 Note: Cloud Run pins `:latest` secret versions per revision — updating a
 secret (e.g. `allowed_origins`) takes effect on the **next deploy**.
+
+### Running a script against the dev database
+
+`deploy-dev.yml` runs `prisma migrate deploy` and nothing else — it never
+seeds. Anything else (for example provisioning the first staff account) is a
+manual step:
+
+```bash
+gcloud secrets versions access latest --secret=database_url --project=medical-erp-dev
+gcloud secrets versions access latest --secret=direct_url --project=medical-erp-dev
+```
+
+Copy `.env`, replace `DATABASE_URL` / `DIRECT_URL` with those values, and run
+the script **with `apps/api` as the working directory** — from the repo root
+`tsx` misses that package's tsconfig and fails with `Parameter decorators only
+work when experimental decorators are enabled`.
+
+## Staff Console Accounts
+
+Staff sign-in uses a **different account per environment**: the Firebase
+project is shared, but the databases are not, and a `PlatformUser` row in one
+says nothing about the other.
+
+| Environment | Account            |
+| ----------- | ------------------ |
+| dev         | `staff@rezeta.co`  |
+| local       | `staff@rezeta.test`|
+
+Provision one with `create-institution.ts` (npm script
+`bootstrap:platform`) against that environment's database:
+
+```bash
+pnpm --filter @rezeta/api bootstrap:platform --platform-email=<email> --platform-name="<name>"
+```
+
+It prints a set-password link. Note it calls `createUser` unconditionally, so
+an email that already exists in the shared Firebase project fails with
+`USER_ALREADY_EXISTS` — use a fresh address per environment.
+
+`POST /v1/auth/provision` answering `USER_NOT_PROVISIONED` for a staff
+identity is **expected**: a `PlatformUser` has no institution `User` row, and
+the frontend deliberately ignores that code. It is not an auth failure.
 
 ## Manual Deployment
 
@@ -99,12 +145,13 @@ after policy changes, check:
 
 ## Cost Estimate
 
-- Cloud SQL: ~$7/month
+- Database: billed by Supabase, not GCP — see the Supabase dashboard
 - Cloud Run: ~$5-10/month (minimal traffic)
 - GCS + Hosting: ~$1-2/month
 - **Total: ~$15-20/month**
 
 ## Disaster Recovery
 
-- Cloud SQL: Automated daily backups, 7-day retention
+- Database backups are Supabase's, governed by the project's plan — verify the
+  retention there rather than assuming GCP-side backups exist
 - Manual: Export Prisma schema + seed data monthly

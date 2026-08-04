@@ -38,13 +38,18 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           // gated on GET /v1/staff/me) gets a chance to verify it
           // independently — so the Firebase session is left intact in that
           // case; only the institution-side auth state is cleared.
+          // `session` mirrors the provider session, so it is cleared only when
+          // we actually sign out. Leaving it set for an unprovisioned identity
+          // is what lets RequirePlatform tell "signed in but not a platform
+          // user" apart from "nobody signed in" — the two need different
+          // outcomes (an explanation vs. a redirect to /login).
           const isUnprovisionedIdentity =
             err instanceof ApiRequestError && err.error.code === ErrorCode.USER_NOT_PROVISIONED
           if (!isUnprovisionedIdentity) {
             await authClient.signOut()
+            _setSession(null)
           }
           _setUser(null)
-          _setSession(null)
           _setStatus('unauthenticated')
         }
       })()
