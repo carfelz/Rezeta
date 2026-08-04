@@ -88,6 +88,70 @@ describe('Login', () => {
     }
   })
 
+  it('ignores a doctor-app redirectTo on a staff host', async () => {
+    // AuthGate bounces staff off /dashboard with ?redirectTo=%2Fdashboard;
+    // honouring it after sign-in walks straight back into the login loop.
+    const original = window.location
+    Object.defineProperty(window, 'location', {
+      value: { ...original, hostname: 'staff-dev.rezeta.co' },
+      writable: true,
+      configurable: true,
+    })
+    try {
+      mocks.signIn.mockResolvedValue(undefined)
+      render(
+        <MemoryRouter initialEntries={['/login?redirectTo=%2Fdashboard']}>
+          <Login />
+        </MemoryRouter>,
+      )
+      fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+        target: { value: 'staff@rezeta.co' },
+      })
+      fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'pw' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+      await waitFor(() =>
+        expect(mocks.navigate).toHaveBeenCalledWith('/staff/institutions', { replace: true }),
+      )
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: original,
+        writable: true,
+        configurable: true,
+      })
+    }
+  })
+
+  it('still honours a staff redirectTo on a staff host', async () => {
+    const original = window.location
+    Object.defineProperty(window, 'location', {
+      value: { ...original, hostname: 'staff-dev.rezeta.co' },
+      writable: true,
+      configurable: true,
+    })
+    try {
+      mocks.signIn.mockResolvedValue(undefined)
+      render(
+        <MemoryRouter initialEntries={['/login?redirectTo=%2Fstaff%2Fsecurity']}>
+          <Login />
+        </MemoryRouter>,
+      )
+      fireEvent.change(screen.getByLabelText('Correo electrónico'), {
+        target: { value: 'staff@rezeta.co' },
+      })
+      fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'pw' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+      await waitFor(() =>
+        expect(mocks.navigate).toHaveBeenCalledWith('/staff/security', { replace: true }),
+      )
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: original,
+        writable: true,
+        configurable: true,
+      })
+    }
+  })
+
   it('shows a mapped error message on a non-mfa sign-in failure', async () => {
     mocks.signIn.mockRejectedValue({ code: 'auth/wrong-password' })
     renderPage()
