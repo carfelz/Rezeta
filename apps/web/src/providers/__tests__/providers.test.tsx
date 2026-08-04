@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   onAuthStateChangedCb: null as null | ((session: unknown) => void),
   signOut: vi.fn().mockResolvedValue(undefined),
   apiPost: vi.fn(),
+  apiGet: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({
@@ -32,7 +33,9 @@ vi.mock('@/lib/api-client', () => ({
     get post() {
       return mocks.apiPost
     },
-    get: vi.fn(),
+    get get() {
+      return mocks.apiGet
+    },
     patch: vi.fn(),
     delete: vi.fn(),
   },
@@ -60,6 +63,10 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     vi.clearAllMocks()
     mocks.onAuthStateChangedCb = null
     mocks.signOut.mockResolvedValue(undefined)
+    // Default: no test relies on GET /v1/staff/me unless it opts in by
+    // overriding this — surfaces tests that forgot to mock it explicitly
+    // instead of silently resolving `undefined` as a principal.
+    mocks.apiGet.mockRejectedValue(new Error('GET /v1/staff/me not mocked in this test'))
   })
 
   it('handles session=null (unauthenticated)', async () => {
@@ -250,6 +257,192 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
 
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalled())
     expect(useAuthStore.getState().session).toBeNull()
+  })
+
+  it('resolves identity=anonymous when no provider session is present', async () => {
+    const { useAuthStore } = await import('@/store/auth.store')
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>anon</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(null)
+    })
+    expect(useAuthStore.getState().identity).toEqual({ kind: 'anonymous' })
+  })
+
+  it('resolves identity=clinic on successful provision', async () => {
+    const mockProvisionedUser = {
+      id: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'doc@test.com',
+      fullName: 'Dr. Test',
+      role: 'super_admin',
+      externalUid: 'fb-uid',
+      specialty: null,
+      licenseNumber: null,
+      tenantSeededAt: null,
+    }
+    mocks.apiPost.mockResolvedValue(mockProvisionedUser)
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const session = { uid: 'fb-uid', email: 'doc@test.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>clinicidentity</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+
+    await waitFor(() =>
+      expect(useAuthStore.getState().identity).toEqual({ kind: 'clinic', user: mockProvisionedUser }),
+    )
+    expect(useAuthStore.getState().status).toBe('authenticated')
+  })
+
+  it('resolves identity=anonymous and signs out on a genuine provision failure', async () => {
+    mocks.apiPost.mockRejectedValue(new Error('provision failed'))
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>anonfail</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.({ uid: 'fb-uid' })
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAuthStore.getState().identity).toEqual({ kind: 'anonymous' }))
+    expect(mocks.signOut).toHaveBeenCalled()
+  })
+
+  it('resolves identity=staff when provision 401s USER_NOT_PROVISIONED and GET /v1/staff/me succeeds', async () => {
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),
+    )
+    const mockPrincipal = {
+      id: 'platform-1',
+      externalUid: 'staff-uid',
+      email: 'staff@rezeta.com',
+      fullName: 'Staff Member',
+    }
+    mocks.apiGet.mockResolvedValue(mockPrincipal)
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const session = { uid: 'staff-uid', email: 'staff@rezeta.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>staffidentity</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+
+    await waitFor(() =>
+      expect(useAuthStore.getState().identity).toEqual({ kind: 'staff', principal: mockPrincipal }),
+    )
+    expect(mocks.apiGet).toHaveBeenCalledWith('/v1/staff/me', { skipSignOutOn401: true })
+    expect(mocks.signOut).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().session).toEqual(session)
+    expect(useAuthStore.getState().status).toBe('unauthenticated')
+  })
+
+  it('resolves identity=unprovisioned when provision 401s USER_NOT_PROVISIONED and GET /v1/staff/me also fails', async () => {
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),
+    )
+    mocks.apiGet.mockRejectedValue(
+      new ApiRequestError({ code: 'UNAUTHORIZED', message: 'no platform principal' }),
+    )
+    const { useAuthStore } = await import('@/store/auth.store')
+
+    const session = { uid: 'staff-uid', email: 'staff@rezeta.co' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>unprovisionedidentity</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAuthStore.getState().identity).toEqual({ kind: 'unprovisioned' }))
+    expect(mocks.signOut).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().session).toEqual(session)
+  })
+
+  it('does not log at error level for the expected USER_NOT_PROVISIONED (platform-staff) path', async () => {
+    const { logger } = await import('@/lib/logger')
+    const mockLogger = logger as unknown as { error: ReturnType<typeof vi.fn> }
+    const { ApiRequestError } = await import('@/lib/api-client')
+    mocks.apiPost.mockRejectedValue(
+      new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),
+    )
+
+    const session = { uid: 'staff-uid', email: 'staff@rezeta.com' }
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>nologerror</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.(session)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(screen.getByText('nologerror')).toBeInTheDocument())
+    expect(mockLogger.error).not.toHaveBeenCalled()
+  })
+
+  it('still logs at error level for a genuinely unexpected provision failure', async () => {
+    const { logger } = await import('@/lib/logger')
+    const mockLogger = logger as unknown as { error: ReturnType<typeof vi.fn> }
+    mocks.apiPost.mockRejectedValue(new Error('provision failed'))
+
+    const { AuthProvider } = await import('../AuthProvider')
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <span>logerrorcase</span>
+        </AuthProvider>,
+      )
+    })
+    await act(async () => {
+      mocks.onAuthStateChangedCb?.({ uid: 'fb-uid' })
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalled())
+    expect(mockLogger.error).toHaveBeenCalled()
   })
 })
 

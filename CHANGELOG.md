@@ -4,6 +4,38 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] AuthProvider resolves and stores identity (task 2)
+
+### Added
+
+- `apps/web/src/store/auth.store.ts` gains an `identity: Identity` field
+  (from `apps/web/src/lib/auth-routing.ts`, defaulting to `{ kind: 'loading' }`)
+  and an internal `_setIdentity` setter. `status` is now derived from
+  `identity` via `statusFromIdentity` (`clinic` → `authenticated`, `loading` →
+  `loading`, everything else → `unauthenticated`) instead of being set
+  independently — a shim kept only until the gates that still read `status`
+  are converted to read `identity` directly (task 6 removes it).
+- `apps/web/src/providers/AuthProvider.tsx` now resolves a concrete
+  `Identity` on every `onAuthStateChanged` event: no session → `anonymous`;
+  `POST /v1/auth/provision` 200 → `clinic`; 401 `USER_NOT_PROVISIONED` →
+  probes `GET /v1/staff/me` (200 → `staff`, anything else → `unprovisioned`,
+  session kept alive either way); any other provision error → sign out and
+  fall back to `anonymous`.
+- Tests: `apps/web/src/providers/__tests__/providers.test.tsx` — 6 new cases
+  covering the anonymous/clinic/staff/unprovisioned resolution paths and the
+  logger-severity change below, plus mock plumbing for
+  `apiClient.get('/v1/staff/me', ...)` (previously only `post` was mockable).
+
+### Changed
+
+- `POST /v1/auth/provision` 401ing `USER_NOT_PROVISIONED` is permanent and
+  expected for every platform-staff account (a `PlatformUser` deliberately
+  has no institution `User` row) — `AuthProvider` no longer routes that case
+  through `logger.error`, which fired a console error and a
+  `/v1/logs/client-error` POST on every staff page load and has twice caused
+  a working system to be misread as broken. `logger.error` now fires only for
+  provision failures that actually sign the user out.
+
 ## [2026-08-04] Pure identity/destination resolver for auth routing (task 1)
 
 ### Added
