@@ -9,7 +9,28 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const { _setUser, _setSession, _setIdentity } = useAuthStore()
 
   useEffect(() => {
+    // Each firing of onAuthStateChanged starts an independent async chain
+    // (dynamic import, then one or two network round-trips). Without a
+    // sequence guard, a slower-resolving earlier firing (e.g. a staff
+    // session's GET /v1/staff/me probe) can complete after a faster later
+    // firing (e.g. a doctor signing in right after) and overwrite its
+    // identity with stale data — or, worse, sign the *newer* session out
+    // from under it. `seq` is scoped to this effect instance, so it is
+    // shared across every firing of this one subscription and reset cleanly
+    // on remount; no module-level state to leak between tests or component
+    // instances.
+    //
+    // Guards are placed after every `await` (the only points where a newer
+    // firing can have superseded this one) — not before, since nothing can
+    // preempt the synchronous code between `mine = ++seq` and the next
+    // `await` in a single-threaded runtime, which would make such a guard
+    // permanently untestable dead code.
+    let seq = 0
+
     const unsubscribe = authClient.onAuthStateChanged((session) => {
+      const mine = ++seq
+      const isStale = (): boolean => mine !== seq
+
       void (async () => {
         if (!session) {
           _setUser(null)
@@ -24,9 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         const { apiClient, ApiRequestError } = await import('@/lib/api-client')
         try {
           const user = await apiClient.post<AuthUser>('/v1/auth/provision', {})
+          if (isStale()) return
           _setUser(user)
           _setIdentity({ kind: 'clinic', user })
         } catch (err) {
+          // A newer firing already superseded this one while the provision
+          // request was in flight — bail before touching the store, and
+          // critically before calling authClient.signOut() below, which
+          // would otherwise sign the *newer*, currently-valid session out.
+          if (isStale()) return
+
           // USER_NOT_PROVISIONED covers two distinct identities: an institution
           // account that hasn't been created yet, and a platform-staff
           // (PlatformUser) Firebase identity, which by design never gets an
@@ -42,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             const error = err instanceof Error ? err : new Error(String(err))
             logger.error(error.message, { stack: error.stack, context: 'AuthProvider.provision' })
             await authClient.signOut()
+            if (isStale()) return
             _setSession(null)
             _setUser(null)
             _setIdentity({ kind: 'anonymous' })
@@ -57,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             const principal = await apiClient.get<PlatformPrincipal>('/v1/staff/me', {
               skipSignOutOn401: true,
             })
+            if (isStale()) return
             _setIdentity({ kind: 'staff', principal })
           } catch {
             // Live session, neither an institution user nor a platform
@@ -64,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             // RequirePlatform tell "signed in but not provisioned" apart
             // from "nobody signed in"; the two need different outcomes (an
             // explanation vs. a redirect to /login).
+            if (isStale()) return
             _setIdentity({ kind: 'unprovisioned' })
           }
         }
