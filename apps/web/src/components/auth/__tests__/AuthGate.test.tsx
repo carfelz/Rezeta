@@ -95,6 +95,27 @@ describe('AuthGate', () => {
     })
   })
 
+  it('renders children right after onboarding completes, without needing a fresh _setIdentity', () => {
+    // Regression: onboarding completion (use-onboarding.ts onSuccess) calls
+    // only _setUser(updatedUser), never _setIdentity — AuthGate reads
+    // identity.user, not the store's separate user field. If _setUser
+    // doesn't also refresh identity.user, this test reproduces the loop: the
+    // gate keeps seeing the stale (pre-onboarding) tenantSeededAt and bounces
+    // the doctor back to /bienvenido forever after they just finished it.
+    withHostname('app-dev.rezeta.co', () => {
+      setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })
+
+      const onboardedUser = makeAuthUser('doctor', { tenantSeededAt: '2026-08-04T00:00:00Z' })
+      useAuthStore.getState()._setUser(onboardedUser)
+
+      expect(useAuthStore.getState().identity).toEqual({ kind: 'clinic', user: onboardedUser })
+
+      renderGate('/dashboard')
+      expect(screen.getByText('DASHBOARD CONTENT')).toBeInTheDocument()
+      expect(screen.queryByText('ONBOARDING CONTENT')).not.toBeInTheDocument()
+    })
+  })
+
   it('redirects a clinic identity with an unseeded tenant to /bienvenido', () => {
     withHostname('app-dev.rezeta.co', () => {
       setIdentity({ kind: 'clinic', user: makeAuthUser('doctor', { tenantSeededAt: null }) })

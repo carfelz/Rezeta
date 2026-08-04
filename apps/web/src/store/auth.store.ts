@@ -4,6 +4,23 @@ import type { AuthSession } from '@/lib/auth'
 import { authClient } from '@/lib/auth'
 import type { Identity } from '@/lib/auth-routing'
 
+/**
+ * Keeps `identity.user` in lockstep with the plain `user` field for a clinic
+ * identity. `identity` and `user` are two views of the same institution user
+ * — AuthGate reads `identity.user` (see AuthGate.tsx), while capability
+ * checks and profile display read the plain `user` field (RequireCan,
+ * Sidebar, OnboardingGate, etc.) — so any setter that updates one must update
+ * both, or the two views drift apart. This is exactly what happened before:
+ * onboarding completion (use-onboarding.ts) called only `_setUser`, so
+ * `identity.user.tenantSeededAt` stayed stale after `user.tenantSeededAt` was
+ * set, and AuthGate kept bouncing the newly-onboarded doctor back to
+ * /bienvenido. Non-clinic identities have no `user` to refresh and are left
+ * untouched.
+ */
+function withRefreshedIdentityUser(identity: Identity, user: AuthUser): Identity {
+  return identity.kind === 'clinic' ? { kind: 'clinic', user } : identity
+}
+
 interface AuthState {
   /** Our Postgres user profile */
   user: AuthUser | null
@@ -33,7 +50,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   identity: { kind: 'loading' },
 
-  _setUser: (user) => set({ user }),
+  _setUser: (user) =>
+    set((state) => ({
+      user,
+      identity: user ? withRefreshedIdentityUser(state.identity, user) : state.identity,
+    })),
   _setSession: (session) => set({ session }),
   _setIdentity: (identity) => set({ identity }),
 
@@ -56,5 +77,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   setPreferences: (preferences) =>
     set((state) => (state.user ? { user: { ...state.user, preferences } } : {})),
 
-  setUser: (user) => set({ user }),
+  setUser: (user) =>
+    set((state) => ({ user, identity: withRefreshedIdentityUser(state.identity, user) })),
 }))
