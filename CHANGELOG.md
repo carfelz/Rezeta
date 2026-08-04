@@ -4,6 +4,28 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] AuthGate explains unprovisioned access instead of a blank screen (task 5 fix)
+
+### Fixed
+
+- `apps/web/src/components/auth/AuthGate.tsx` rendered bare `null` for
+  `identity.kind === 'unprovisioned'`, leaving a doctor with a soft-deleted
+  or failed-provisioning account on a blank white page with no message and
+  no way out. It now renders a `NoClinicAccess` screen (mirroring
+  `RequirePlatform`'s `NoStaffAccess`): a short explanation and a "Cerrar
+  sesión" button that calls `authClient.signOut()`. `loading` is unchanged.
+- `apps/web/src/components/auth/strings.ts` gained `noAccessTitle`,
+  `noAccessBody`, and `noAccessSignOut` on `authGateStrings`, in Spanish
+  (doctor-app copy; distinct from the English `staffStrings.noAccess*` used
+  by the staff console).
+
+### Tests
+
+- `apps/web/src/components/auth/__tests__/AuthGate.test.tsx`: replaced the
+  test that asserted a blank render for `unprovisioned` with one asserting
+  the explanation is visible, and added a test that the sign-out button
+  calls `authClient.signOut`.
+
 ## [2026-08-04] AuthGate and SetPassword route through resolveDestination (task 5)
 
 ### Changed

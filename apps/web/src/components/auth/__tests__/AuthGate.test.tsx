@@ -1,10 +1,14 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route, useSearchParams } from 'react-router-dom'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { PlatformPrincipal } from '@rezeta/shared'
 import { makeAuthUser } from '@/test/auth-helpers'
 import { useAuthStore } from '@/store/auth.store'
 import type { Identity } from '@/lib/auth-routing'
+
+const mocks = vi.hoisted(() => ({ signOut: vi.fn() }))
+vi.mock('@/lib/auth', () => ({ authClient: { signOut: mocks.signOut } }))
+
 import { AuthGate } from '../AuthGate'
 
 const platformPrincipal: PlatformPrincipal = {
@@ -61,6 +65,7 @@ function setIdentity(identity: Identity): void {
 
 describe('AuthGate', () => {
   beforeEach(() => {
+    mocks.signOut.mockReset()
     setIdentity({ kind: 'loading' })
   })
 
@@ -109,14 +114,25 @@ describe('AuthGate', () => {
     expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
   })
 
-  it('renders nothing (never navigates) when the session is unprovisioned', () => {
-    // resolveDestination returns null for 'unprovisioned' by design — the
-    // caller must render rather than fall back to a default path.
+  it('explains the lack of access instead of a blank screen when the session is unprovisioned', () => {
+    // A live session that resolved to neither a clinic user nor a platform
+    // principal (e.g. a soft-deleted or failed-provisioning account). A blank
+    // screen here leaves a real doctor stuck with no explanation and no way
+    // out — resolveDestination's contract requires an explanation, not a
+    // fallback navigation (see auth-routing.ts).
     setIdentity({ kind: 'unprovisioned' })
     renderGate('/dashboard')
+    expect(screen.getByText('Sin acceso')).toBeInTheDocument()
     expect(screen.queryByText('DASHBOARD CONTENT')).not.toBeInTheDocument()
     expect(screen.queryByText(/^LOGIN/)).not.toBeInTheDocument()
     expect(screen.queryByText('STAFF INSTITUTIONS')).not.toBeInTheDocument()
     expect(screen.queryByText('Cargando...')).not.toBeInTheDocument()
+  })
+
+  it('signs out from the no-access screen', () => {
+    setIdentity({ kind: 'unprovisioned' })
+    renderGate('/dashboard')
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(mocks.signOut).toHaveBeenCalledOnce()
   })
 })
