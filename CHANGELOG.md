@@ -4,6 +4,33 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] Pure identity/destination resolver for auth routing (task 1)
+
+### Added
+
+- New `apps/web/src/lib/auth-routing.ts` with an `Identity` union
+  (`loading` / `anonymous` / `clinic` / `staff` / `unprovisioned`) and a pure
+  `resolveDestination({ identity, hostname, requestedRedirect })` function.
+  This is the first step of centralising "where do I send this user after
+  auth?" — a decision currently re-derived in five different places, which
+  has caused the same login-loop bug to ship three fixes and reappear each
+  time. Nothing consumes this module yet; later tasks wire it up.
+- `resolveDestination` returns `string | null`; `null` means "do not
+  navigate" and is returned for both `unprovisioned` and `loading` — no
+  fallback path is invented for either state, since a fallback there is
+  exactly the bug this refactor exists to remove.
+- Tests: `apps/web/src/lib/__tests__/auth-routing.test.ts` (15 cases covering
+  `isSafeRedirect` and every `resolveDestination` branch, including both
+  `null` cases).
+
+### Changed
+
+- `isSafeRedirect` moved out of `apps/web/src/pages/Login/index.tsx` (where
+  it was a private, unexported helper) into `apps/web/src/lib/auth-routing.ts`
+  as a shared, exported function; `Login/index.tsx` now imports it instead
+  of duplicating it. Behaviour is unchanged (rejects null/empty, non-`/`
+  prefixed, `//`-prefixed, and anything containing `://`).
+
 ## [2026-08-04] Cross-app redirectTo no longer outranks the staff destination
 
 ### Fixed

@@ -5,16 +5,9 @@ import { loginStrings } from './strings'
 import { authClient } from '@/lib/auth'
 import { fetchLoginMethods } from '@/hooks/identity/use-login-methods'
 import { belongsToHostApp, defaultPostLoginPath } from '@/lib/staff-host'
+import { isSafeRedirect } from '@/lib/auth-routing'
 import type { LoginMethodsResponseDto } from '@rezeta/shared'
 import { Card, Field, Input, Button, Callout } from '@/components/ui'
-
-function isSafeRedirect(path: string | null): path is string {
-  if (!path) return false
-  if (!path.startsWith('/')) return false
-  if (path.startsWith('//')) return false
-  if (path.includes('://')) return false
-  return true
-}
 
 export function Login(): JSX.Element {
   const navigate = useNavigate()
