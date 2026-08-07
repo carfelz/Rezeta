@@ -56,22 +56,22 @@ export class UsersRepository {
     })
   }
 
-  async findByExternalUid(externalUid: string): Promise<UserWithTenant | null> {
+  async findByExternalUid(identityId: string): Promise<UserWithTenant | null> {
     return this.prisma.user.findUnique({
-      where: { externalUid, deletedAt: null },
+      where: { identityId, deletedAt: null },
       include: TENANT_SELECT,
     })
   }
 
   /**
    * Resolve the DB user for a verified token. Users are provisioned internally
-   * (UsersService.createUser writes the row with its externalUid), so first
+   * (UsersService.createUser writes the row with its identityId), so first
    * sign-in simply finds the existing row. A verified Firebase token with no DB
    * user is rejected — there is no auto-tenant-creation anymore.
    */
   async provisionUser(verified: VerifiedToken): Promise<UserWithTenant> {
     const existing = await this.prisma.user.findUnique({
-      where: { externalUid: verified.externalUid, deletedAt: null },
+      where: { identityId: verified.identityId, deletedAt: null },
       include: TENANT_SELECT,
     })
     if (!existing) {
@@ -92,7 +92,7 @@ export class UsersRepository {
 
   async createProvisionedUser(input: {
     tenantId: string
-    externalUid: string
+    identityId: string
     email: string
     fullName: string
     role: string
@@ -100,7 +100,7 @@ export class UsersRepository {
     return this.prisma.user.create({
       data: {
         tenantId: input.tenantId,
-        externalUid: input.externalUid,
+        identityId: input.identityId,
         email: input.email,
         fullName: input.fullName,
         role: input.role,

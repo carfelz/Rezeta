@@ -83,9 +83,9 @@ describe('redactForAudit', () => {
     expect(result['documentNumber']).toEqual({ before: '[REDACTED]', after: '[REDACTED]' })
   })
 
-  it('fully redacts externalUid for User entity', () => {
-    const result = redactForAudit('User', { externalUid: 'firebase-uid-xyz' })
-    expect(result['externalUid']).toBe('[REDACTED]')
+  it('fully redacts identityId for User entity', () => {
+    const result = redactForAudit('User', { identityId: 'firebase-uid-xyz' })
+    expect(result['identityId']).toBe('[REDACTED]')
   })
 
   it('redacts creditCard and cardNumber', () => {
@@ -124,11 +124,11 @@ describe('redactChangesForAudit', () => {
     expect(result['password']).toEqual({ before: '[REDACTED]', after: '[REDACTED]' })
   })
 
-  it('redacts externalUid for User changes', () => {
+  it('redacts identityId for User changes', () => {
     const result = redactChangesForAudit('User', {
-      externalUid: { before: 'old-uid', after: 'new-uid' },
+      identityId: { before: 'old-uid', after: 'new-uid' },
     })
-    expect(result['externalUid']).toEqual({ before: '[REDACTED]', after: '[REDACTED]' })
+    expect(result['identityId']).toEqual({ before: '[REDACTED]', after: '[REDACTED]' })
   })
 
   it('redacts cedula for Patient changes', () => {

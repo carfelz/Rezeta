@@ -47,7 +47,7 @@ describe.skipIf(!hasTestDb())('PlatformUsersService (integration)', () => {
 
   beforeEach(async () => {
     await truncateAll(prisma)
-    vi.mocked(provider.createUser).mockResolvedValue({ externalUid: `ext-${Date.now()}` })
+    vi.mocked(provider.createUser).mockResolvedValue({ identityId: `ext-${Date.now()}` })
   })
 
   it('createUser persists a row and writes a user_invited audit', async () => {
@@ -77,12 +77,12 @@ describe.skipIf(!hasTestDb())('PlatformUsersService (integration)', () => {
 
     const deactivated = await service.setActive(actor.id, target.id, { isActive: false })
     expect(deactivated.isActive).toBe(false)
-    await expect(repo.findByExternalUid(target.externalUid)).resolves.toBeNull()
+    await expect(repo.findByExternalUid(target.identityId)).resolves.toBeNull()
     await waitForAuditLog(prisma, { action: 'user_deactivated', entityId: target.id })
 
     const reactivated = await service.setActive(actor.id, target.id, { isActive: true })
     expect(reactivated.isActive).toBe(true)
-    await expect(repo.findByExternalUid(target.externalUid)).resolves.not.toBeNull()
+    await expect(repo.findByExternalUid(target.identityId)).resolves.not.toBeNull()
   })
 
   it('self-deactivation is rejected and leaves the row untouched', async () => {

@@ -1,6 +1,6 @@
 export interface VerifiedToken {
   /** The provider-issued subject identifier (e.g. Firebase UID, future: our own UUID) */
-  externalUid: string
+  identityId: string
   /** Email extracted from the verified token */
   email: string
   /** Raw decoded claims — kept for extensibility, do not use directly in business logic */
@@ -48,21 +48,21 @@ export interface IAuthProvider {
    * Used when a user is suspended or their account is compromised.
    * No-op if the provider does not support server-side revocation.
    */
-  revokeUserSessions(externalUid: string): Promise<void>
+  revokeUserSessions(identityId: string): Promise<void>
 
   /**
    * Delete the identity record from the auth provider.
    * Called when a user account is permanently removed.
    * This does NOT delete the User row in Postgres — that is the caller's responsibility.
    */
-  deleteUser(externalUid: string): Promise<void>
+  deleteUser(identityId: string): Promise<void>
 
   /**
    * Create an identity record in the auth provider for an invited user.
    * Returns the provider UID to store on the User row. No password is set —
    * the user establishes one via the set-password link (generatePasswordResetLink).
    */
-  createUser(email: string): Promise<{ externalUid: string }>
+  createUser(email: string): Promise<{ identityId: string }>
 
   /**
    * Generate a set-password / first-login link (a password-reset link) for the
@@ -77,7 +77,7 @@ export interface IAuthProvider {
    * of scope). TOTP only this slice — a phone/SMS factor is never returned
    * as "enrolled" here even if present, since SMS MFA is deferred.
    */
-  getMfaEnrollment(externalUid: string): Promise<{ enrolledAt: Date | null }>
+  getMfaEnrollment(identityId: string): Promise<{ enrolledAt: Date | null }>
 
   /**
    * Register a new OIDC SSO connection with the provider (an Identity Platform

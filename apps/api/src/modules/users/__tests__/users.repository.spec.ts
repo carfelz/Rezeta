@@ -14,11 +14,11 @@ const mockPrisma = {
   },
 }
 
-const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
 
 const existingUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   tenant: { seededAt, plan: 'free' },
@@ -104,7 +104,7 @@ describe('UsersRepository', () => {
       expect(result).toEqual(existingUser)
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { externalUid: 'fb1', deletedAt: null },
+          where: { identityId: 'fb1', deletedAt: null },
         }),
       )
     })
@@ -118,7 +118,7 @@ describe('UsersRepository', () => {
   // ── provisionUser ──────────────────────────────────────────────────────────
 
   describe('provisionUser', () => {
-    it('returns the existing user for a known externalUid', async () => {
+    it('returns the existing user for a known identityId', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(existingUser)
       const result = await repo.provisionUser(verified)
       expect(result).toEqual(existingUser)
@@ -153,12 +153,12 @@ describe('UsersRepository', () => {
   // ── createProvisionedUser ──────────────────────────────────────────────────
 
   describe('createProvisionedUser', () => {
-    it('creates a user row with the supplied externalUid and role', async () => {
+    it('creates a user row with the supplied identityId and role', async () => {
       const created = { ...existingUser, id: 'u2', role: 'assistant' }
       mockPrisma.user.create.mockResolvedValue(created)
       const result = await repo.createProvisionedUser({
         tenantId: 't1',
-        externalUid: 'fb-new',
+        identityId: 'fb-new',
         email: 'nurse@clinic.do',
         fullName: 'Ana Reyes',
         role: 'assistant',
@@ -167,7 +167,7 @@ describe('UsersRepository', () => {
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: {
           tenantId: 't1',
-          externalUid: 'fb-new',
+          identityId: 'fb-new',
           email: 'nurse@clinic.do',
           fullName: 'Ana Reyes',
           role: 'assistant',

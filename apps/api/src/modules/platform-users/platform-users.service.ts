@@ -41,22 +41,22 @@ export class PlatformUsersService {
     actorPlatformUserId: string,
     dto: CreatePlatformUserDto,
   ): Promise<PlatformUserApiDto> {
-    const { externalUid } = await this.authProvider.createUser(dto.email)
+    const { identityId } = await this.authProvider.createUser(dto.email)
 
     let created: PlatformUser
     try {
       created = await this.repository.create({
-        externalUid,
+        identityId,
         email: dto.email,
         fullName: dto.fullName,
       })
     } catch (err) {
       // Compensate: don't leave an orphaned identity in the auth provider.
       try {
-        await this.authProvider.deleteUser(externalUid)
+        await this.authProvider.deleteUser(identityId)
       } catch (cleanupErr) {
         this.logger.warn(
-          `Failed to clean up auth identity ${externalUid} after DB error: ${(cleanupErr as Error).message}`,
+          `Failed to clean up auth identity ${identityId} after DB error: ${(cleanupErr as Error).message}`,
         )
       }
       if (this.isUniqueViolation(err)) {

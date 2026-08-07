@@ -80,10 +80,10 @@ describe('bootstrapPlatform', () => {
   function makeDeps() {
     return {
       authProvider: {
-        createUser: vi.fn().mockResolvedValue({ externalUid: 'ext-staff' }),
+        createUser: vi.fn().mockResolvedValue({ identityId: 'ext-staff' }),
         generatePasswordResetLink: vi.fn().mockResolvedValue('https://reset/link'),
       },
-      platformUsers: { create: vi.fn().mockResolvedValue({ id: 'p1', externalUid: 'ext-staff' }) },
+      platformUsers: { create: vi.fn().mockResolvedValue({ id: 'p1', identityId: 'ext-staff' }) },
       staff: {
         createInstitution: vi
           .fn()
@@ -101,7 +101,7 @@ describe('bootstrapPlatform', () => {
     })
     expect(deps.authProvider.createUser).toHaveBeenCalledWith('staff@rezeta.com')
     expect(deps.platformUsers.create).toHaveBeenCalledWith({
-      externalUid: 'ext-staff',
+      identityId: 'ext-staff',
       email: 'staff@rezeta.com',
       fullName: 'Rezeta Staff',
     })
@@ -126,7 +126,7 @@ describe('bootstrapPlatform', () => {
       },
     })
     expect(deps.platformUsers.create).toHaveBeenCalledWith({
-      externalUid: 'ext-staff',
+      identityId: 'ext-staff',
       email: 'staff@rezeta.com',
       fullName: null,
     })

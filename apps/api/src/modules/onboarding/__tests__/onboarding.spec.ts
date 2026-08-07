@@ -22,7 +22,7 @@ const mockUsersRepo = {
 
 const dbUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -34,7 +34,7 @@ const dbUser = {
 
 const authUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',

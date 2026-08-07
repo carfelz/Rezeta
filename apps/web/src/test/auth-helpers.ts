@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store'
 export function makeAuthUser(role: UserRole, overrides: Partial<AuthUser> = {}): AuthUser {
   return {
     id: 'user-1',
-    externalUid: 'fb-uid',
+    identityId: 'fb-uid',
     tenantId: 'tenant-1',
     email: `${role}@rezeta.app`,
     fullName: 'Test User',

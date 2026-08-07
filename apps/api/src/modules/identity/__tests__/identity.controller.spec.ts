@@ -7,7 +7,7 @@ import type { IdentityService } from '../identity.service.js'
 function user(): AuthUser {
   return {
     id: 'u1',
-    externalUid: 'ext-1',
+    identityId: 'ext-1',
     tenantId: 't1',
     email: 'dr@rezeta.do',
     fullName: 'Dr. Test',

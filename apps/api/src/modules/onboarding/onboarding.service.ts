@@ -35,15 +35,15 @@ export class OnboardingService {
     }))
   }
 
-  async seedDefault(externalUid: string, locale: 'es' | 'en' = 'es'): Promise<AuthUser> {
+  async seedDefault(identityId: string, locale: 'es' | 'en' = 'es'): Promise<AuthUser> {
     // Resolve tenantId from the authenticated user's tenant
-    const user = await this.users.findByExternalUid(externalUid)
+    const user = await this.users.findByExternalUid(identityId)
     if (!user) throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after auth',
       })
     await this.seeder.seedDefault(user.tenantId, locale)
-    const refreshed = await this.users.findByExternalUid(externalUid)
+    const refreshed = await this.users.findByExternalUid(identityId)
     if (!refreshed) throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after seeding',
@@ -51,7 +51,7 @@ export class OnboardingService {
     return this.authService.resolveAuthUser(refreshed)
   }
 
-  async seedCustom(externalUid: string, input: OnboardingCustomInput): Promise<AuthUser> {
+  async seedCustom(identityId: string, input: OnboardingCustomInput): Promise<AuthUser> {
     // Validate cross-references before hitting the DB
     const templateClientIds = new Set(input.templates.map((t) => t.clientId))
     for (const type of input.types) {
@@ -63,7 +63,7 @@ export class OnboardingService {
       }
     }
 
-    const user = await this.users.findByExternalUid(externalUid)
+    const user = await this.users.findByExternalUid(identityId)
     if (!user) throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after auth',
@@ -77,7 +77,7 @@ export class OnboardingService {
       })),
       input.types,
     )
-    const refreshed = await this.users.findByExternalUid(externalUid)
+    const refreshed = await this.users.findByExternalUid(identityId)
     if (!refreshed) throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'User not found after seeding',

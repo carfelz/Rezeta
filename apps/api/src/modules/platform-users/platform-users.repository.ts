@@ -12,14 +12,14 @@ import { PrismaService } from '../../lib/prisma.service.js'
 export class PlatformUsersRepository {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
-  async findByExternalUid(externalUid: string): Promise<PlatformUser | null> {
+  async findByExternalUid(identityId: string): Promise<PlatformUser | null> {
     return this.prisma.platformUser.findFirst({
-      where: { externalUid, deletedAt: null },
+      where: { identityId, deletedAt: null },
     })
   }
 
   async create(data: {
-    externalUid: string
+    identityId: string
     email: string
     fullName: string | null
   }): Promise<PlatformUser> {

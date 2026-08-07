@@ -1,5 +1,5 @@
 const FIELD_REDACT_RULES: Record<string, Set<string>> = {
-  User: new Set(['passwordHash', 'password', 'externalUid']),
+  User: new Set(['passwordHash', 'password', 'identityId']),
   // `documentNumber` is the actual Patient column holding the cédula / passport /
   // RNC (with `documentType` as the discriminator); the legacy per-type keys are
   // kept for defence in depth in case a payload uses them.

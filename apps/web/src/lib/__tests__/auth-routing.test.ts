@@ -8,7 +8,7 @@ const STAFF_HOST = 'staff-dev.rezeta.co'
 
 const platformPrincipal: PlatformPrincipal = {
   id: 'platform-user-1',
-  externalUid: 'fb-uid-platform',
+  identityId: 'fb-uid-platform',
   email: 'staffer@rezeta.app',
   fullName: 'Staff Person',
 }

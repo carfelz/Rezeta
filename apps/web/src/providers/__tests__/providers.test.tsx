@@ -28,14 +28,14 @@ vi.mock('@/lib/auth', () => ({
   },
 }))
 
-function makeClinicUser(overrides: { id: string; externalUid: string; email: string }) {
+function makeClinicUser(overrides: { id: string; identityId: string; email: string }) {
   return {
     id: overrides.id,
     tenantId: 'tenant-1',
     email: overrides.email,
     fullName: 'Dr. Test',
     role: 'super_admin',
-    externalUid: overrides.externalUid,
+    identityId: overrides.identityId,
     specialty: null,
     licenseNumber: null,
     tenantSeededAt: null,
@@ -105,7 +105,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       email: 'doc@test.com',
       fullName: 'Dr. Test',
       role: 'super_admin',
-      externalUid: 'fb-uid',
+      identityId: 'fb-uid',
       specialty: null,
       licenseNumber: null,
       tenantSeededAt: null,
@@ -135,7 +135,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       email: 'doc@test.com',
       fullName: 'Dr. Solo',
       role: 'super_admin',
-      externalUid: 'fb-uid',
+      identityId: 'fb-uid',
       specialty: null,
       licenseNumber: null,
       tenantSeededAt: null,
@@ -296,7 +296,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       email: 'doc@test.com',
       fullName: 'Dr. Test',
       role: 'super_admin',
-      externalUid: 'fb-uid',
+      identityId: 'fb-uid',
       specialty: null,
       licenseNumber: null,
       tenantSeededAt: null,
@@ -351,7 +351,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     )
     const mockPrincipal = {
       id: 'platform-1',
-      externalUid: 'staff-uid',
+      identityId: 'staff-uid',
       email: 'staff@rezeta.com',
       fullName: 'Staff Member',
     }
@@ -480,7 +480,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       email: 'doc@test.com',
       fullName: 'Dr. Test',
       role: 'super_admin',
-      externalUid: 'doc-uid',
+      identityId: 'doc-uid',
       specialty: null,
       licenseNumber: null,
       tenantSeededAt: null,
@@ -523,7 +523,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
 
     // A's stale probe finally resolves — it must not overwrite B's identity.
     await act(async () => {
-      resolveStaffMe({ id: 'p1', externalUid: 'staff-uid', email: 'staff@rezeta.com', fullName: null })
+      resolveStaffMe({ id: 'p1', identityId: 'staff-uid', email: 'staff@rezeta.com', fullName: null })
       await Promise.resolve()
       await Promise.resolve()
     })
@@ -538,8 +538,8 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     const { useAuthStore } = await import('@/store/auth.store')
 
     let resolveA: (value: unknown) => void = () => {}
-    const userA = makeClinicUser({ id: 'user-a', externalUid: 'a-uid', email: 'a@test.com' })
-    const userB = makeClinicUser({ id: 'user-b', externalUid: 'b-uid', email: 'b@test.com' })
+    const userA = makeClinicUser({ id: 'user-a', identityId: 'a-uid', email: 'a@test.com' })
+    const userB = makeClinicUser({ id: 'user-b', identityId: 'b-uid', email: 'b@test.com' })
 
     mocks.apiPost
       .mockImplementationOnce(
@@ -592,7 +592,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
     const { useAuthStore } = await import('@/store/auth.store')
 
     let rejectA: (err: unknown) => void = () => {}
-    const userB = makeClinicUser({ id: 'user-b2', externalUid: 'b2-uid', email: 'b2@test.com' })
+    const userB = makeClinicUser({ id: 'user-b2', identityId: 'b2-uid', email: 'b2@test.com' })
 
     mocks.apiPost
       .mockImplementationOnce(
@@ -654,7 +654,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       }),
     )
 
-    const userB = makeClinicUser({ id: 'user-b3', externalUid: 'b3-uid', email: 'b3@test.com' })
+    const userB = makeClinicUser({ id: 'user-b3', identityId: 'b3-uid', email: 'b3@test.com' })
     mocks.apiPost
       .mockRejectedValueOnce(new Error('generic provision failure'))
       .mockResolvedValueOnce(userB)
@@ -709,7 +709,7 @@ describe('AuthProvider — onAuthStateChanged callbacks', () => {
       }),
     )
 
-    const userB = makeClinicUser({ id: 'user-b4', externalUid: 'b4-uid', email: 'b4@test.com' })
+    const userB = makeClinicUser({ id: 'user-b4', identityId: 'b4-uid', email: 'b4@test.com' })
     mocks.apiPost
       .mockRejectedValueOnce(
         new ApiRequestError({ code: 'USER_NOT_PROVISIONED', message: 'User has not been provisioned.' }),

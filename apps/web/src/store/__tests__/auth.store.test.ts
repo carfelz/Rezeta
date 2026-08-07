@@ -24,7 +24,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const mockUser = {
       id: 'user-1',
-      externalUid: 'fb-uid',
+      identityId: 'fb-uid',
       tenantId: 'tenant-1',
       email: 'doctor@rezeta.app',
       fullName: 'Dr. Juan García',
@@ -50,7 +50,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const seededUser = {
       id: 'u',
-      externalUid: 'f',
+      identityId: 'f',
       tenantId: 't',
       email: 'e@e.com',
       fullName: null,
@@ -76,7 +76,7 @@ describe('useAuthStore — internal setters', () => {
 
     const user = {
       id: 'u',
-      externalUid: 'f',
+      identityId: 'f',
       tenantId: 't',
       email: 'e@e.com',
       fullName: null,
@@ -97,7 +97,7 @@ describe('useAuthStore — internal setters', () => {
     act(() =>
       result.current._setUser({
         id: 'u',
-        externalUid: 'f',
+        identityId: 'f',
         tenantId: 't',
         email: 'e@e.com',
         fullName: null,
@@ -124,7 +124,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const user = {
       id: 'u',
-      externalUid: 'f',
+      identityId: 'f',
       tenantId: 't',
       email: 'e@e.com',
       fullName: null,
@@ -147,7 +147,7 @@ describe('useAuthStore — internal setters', () => {
     act(() =>
       result.current._setUser({
         id: 'u',
-        externalUid: 'f',
+        identityId: 'f',
         tenantId: 't',
         email: 'e@e.com',
         fullName: null,
@@ -174,7 +174,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const user = {
       id: 'u2',
-      externalUid: 'f2',
+      identityId: 'f2',
       tenantId: 't2',
       email: 'new@rezeta.app',
       fullName: 'Dr. New',
@@ -194,7 +194,7 @@ describe('useAuthStore — internal setters', () => {
     const { result } = renderHook(() => useAuthStore())
     const originalUser = {
       id: 'u2',
-      externalUid: 'f2',
+      identityId: 'f2',
       tenantId: 't2',
       email: 'doc@rezeta.app',
       fullName: 'Dr. Original',

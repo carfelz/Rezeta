@@ -31,7 +31,7 @@ export const TenantApiSchema = z.object({
 
 export const UserApiSchema = z.object({
   id: z.string().uuid(),
-  externalUid: z.string(),
+  identityId: z.string(),
   tenantId: z.string().uuid(),
   email: z.string().email(),
   fullName: z.string().nullable(),

@@ -5,7 +5,7 @@ import { StaffSsoConnectionsController } from '../staff-sso.controller.js'
 import type { SsoConnectionService } from '../sso-connection.service.js'
 
 function principal(): PlatformPrincipal {
-  return { id: 'platform-1', externalUid: 'ext-1', email: 'staff@rezeta.do', fullName: 'Staff One' }
+  return { id: 'platform-1', identityId: 'ext-1', email: 'staff@rezeta.do', fullName: 'Staff One' }
 }
 
 describe('StaffSsoConnectionsController', () => {

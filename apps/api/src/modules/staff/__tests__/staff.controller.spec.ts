@@ -15,7 +15,7 @@ const dto: CreateInstitutionDto = {
 function principal(overrides: Partial<PlatformPrincipal> = {}): PlatformPrincipal {
   return {
     id: 'platform-1',
-    externalUid: 'ext-staff',
+    identityId: 'ext-staff',
     email: 'staff@rezeta.com',
     fullName: 'Staff',
     ...overrides,
