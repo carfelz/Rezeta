@@ -57,7 +57,11 @@ Settled during brainstorming; not open for re-litigation in implementation plans
    session knows which identity signed in, there is nothing to trade. This ends
    `USER_NOT_PROVISIONED`-as-normal-control-flow, the bug class behind the
    identity-resolution refactor of 2026-08-04.
-8. **Casbin is out of scope** — see §11.
+8. **No transitional dual-path auth.** `AuthGuard` never verifies both a
+   Firebase token and one of our sessions. Slice 2 is a hard cutover; federated
+   sign-in is simply unavailable until slice 4. Only test accounts exist, and
+   they can use password login throughout.
+9. **Casbin is out of scope** — see §11.
 
 ## 4. Architecture
 
@@ -276,30 +280,45 @@ Each slice lands green on `main`.
    build mid-sequence.
 2. **Credential core** — new tables, argon2id, `passport-local`,
    `POST /v1/auth/login`, session verification in `AuthGuard`, reset tokens with
-   real email delivery, lockout.
+   real email delivery, lockout. Also deletes `firebase-auth-client.ts`, the
+   `firebase` web package, and `POST /v1/auth/dev/token`, and hides the Google
+   and SSO buttons on the login page (slice 4 restores them).
 3. **TOTP** rebuilt on our own stack.
 4. **Federated** — Google and per-tenant OIDC by redirect; encrypted
-   `client_secret`.
-5. **Excise** — delete `firebase-auth.provider.ts`, `firebase-auth-client.ts`,
-   the `firebase` and `firebase-admin` packages, `FIREBASE_*` config, the
-   `emulator` script, and `mapFirebaseMfaUsed`; delete `IAuthProvider`; collapse
-   `provision` into `GET /v1/auth/me`; add a `STATUS: SUPERSEDED` banner to the
-   July identity design.
+   `client_secret`; login-page buttons restored.
+5. **Excise** — delete `firebase-auth.provider.ts`, the `firebase-admin`
+   package, `FIREBASE_*` config, the `emulator` script, and
+   `mapFirebaseMfaUsed`; delete `IAuthProvider`; collapse `provision` into
+   `GET /v1/auth/me`; add a `STATUS: SUPERSEDED` banner to the July identity
+   design.
 
-During slices 2–4, `AuthGuard` verifies a session first and falls back to
-Firebase when there is no match, so federated login and TOTP keep working while
-password auth moves. This is roughly six lines with no flag, no config, and no
-duplicated user store — not the strangler pattern, which was rejected — and
-slice 5 deletes it. Without it, slice 2 would break federated login on `main`
-for the length of two slices.
+**There is no transitional Firebase fallback in `AuthGuard`.** From slice 2 it
+accepts our sessions and nothing else, so there is exactly one verification path
+at every point in the sequence. The cost is that Google and per-tenant SSO are
+unavailable between slices 2 and 4 — acceptable because the only accounts in any
+environment are the maintainer's own test users, who can sign in with a password
+throughout. The benefit is that no dual-path code is ever written, and
+`apps/web` becomes Firebase-free two slices earlier.
 
 ## 13. Cutover operations
 
-Rollback is reverting the branch: no real users exist in any environment.
+Rollback is reverting the branch: no real users exist in any environment, only
+the maintainer's test accounts.
 
-Test identities do not carry over. After slice 2, each environment needs
-`bootstrap:platform` re-run to mint the first staff account (`staff@rezeta.co`
-on dev, `staff@rezeta.test` locally), since deploys do not seed platform users.
+Slice 2 is a hard cutover. Every Firebase-issued session stops being accepted
+the moment it deploys, and passwords do not carry over — they only ever existed
+as Firebase hashes, which we deliberately do not import. So for each
+environment, at slice 2:
+
+1. Re-run `bootstrap:platform` to mint the first staff account
+   (`staff@rezeta.co` on dev, `staff@rezeta.test` locally), since deploys do not
+   seed platform users.
+2. Re-provision the remaining test users, each establishing a password through
+   the set-password link — which doubles as the first real exercise of the new
+   email delivery path.
+
+TOTP enrollments are also not portable (secrets are never exportable). Any test
+account with MFA re-enrolls in slice 3.
 
 New environment configuration: `AUTH_ENCRYPTION_KEY` (32-byte base64) and SMTP
 credentials for reset-link delivery. Removed: every `FIREBASE_*` variable and
