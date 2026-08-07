@@ -43,8 +43,11 @@ Settled during brainstorming; not open for re-litigation in implementation plans
    to resolve the user and capabilities, so a stateless token saves nothing while
    costing key rotation, a refresh endpoint, and revocation that lags by the
    access-token lifetime.
-4. **`external_uid` is renamed to `identity_id`** and retyped to `uuid`. Once we
-   mint the value, "external" misleads every future reader.
+4. **`external_uid` is renamed to `identity_id`.** Once we mint the value,
+   "external" misleads every future reader. The rename (slice 1) and the retype
+   to `uuid` (slice 2) are separate: Firebase UIDs are 28-character strings, not
+   UUIDs — `seed.ts` is full of them — so the column must stay `VarChar(128)`
+   for as long as Firebase is still issuing identities.
 5. **No foreign key** from `User.identity_id` / `PlatformUser.identity_id` to
    `AuthIdentity.id`. `LoginEvent` and `UserDevice` are deliberately FK-free so
    the identity module stays extractable as a standalone service (July design §6);
@@ -89,8 +92,9 @@ grows its own copy of the rules.
 ## 5. Data model
 
 `User` and `PlatformUser` keep a unique, indexed identity column; only the
-issuer of the value changes. `external_uid` (`VarChar(128)`) becomes
-`identity_id` (`uuid`). No business data references it — patients,
+issuer of the value changes. `external_uid` becomes `identity_id` in slice 1,
+still `VarChar(128)`, and is retyped to `uuid` in slice 2 once we mint the
+values ourselves. No business data references it — patients,
 consultations, prescriptions, and audit entries all key off `User.id` — so the
 clinical schema is untouched.
 
@@ -274,15 +278,16 @@ aside before running coverage — it flips a fallback branch in `logger.ts`.
 Each slice lands green on `main`.
 
 1. **Rename** `external_uid` → `identity_id` across schema, shared types,
-   repositories, guard, and CLI. Pure rename, no behavior change, Firebase
-   untouched. Must land as one vertical slice — the pre-commit hook typechecks
-   the whole workspace, so a shared-type rename split across commits breaks the
-   build mid-sequence.
+   repositories, guard, and CLI. Pure rename: column type stays `VarChar(128)`,
+   no behavior change, Firebase untouched. The TypeScript field rename must land
+   as one commit — the pre-commit hook typechecks the whole workspace, so
+   splitting it across packages breaks the build mid-sequence.
 2. **Credential core** — new tables, argon2id, `passport-local`,
    `POST /v1/auth/login`, session verification in `AuthGuard`, reset tokens with
-   real email delivery, lockout. Also deletes `firebase-auth-client.ts`, the
-   `firebase` web package, and `POST /v1/auth/dev/token`, and hides the Google
-   and SSO buttons on the login page (slice 4 restores them).
+   real email delivery, lockout, and retyping `identity_id` to `uuid` now that
+   we mint it. Also deletes `firebase-auth-client.ts`, the `firebase` web
+   package, and `POST /v1/auth/dev/token`, and hides the Google and SSO buttons
+   on the login page (slice 4 restores them).
 3. **TOTP** rebuilt on our own stack.
 4. **Federated** — Google and per-tenant OIDC by redirect; encrypted
    `client_secret`; login-page buttons restored.
