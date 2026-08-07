@@ -4,6 +4,30 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-07] Rename external_uid to identity_id (self-hosted auth, slice 1)
+
+### Changed
+
+- Renamed the identity join column on `users` and `platform_users` from
+  `external_uid` to `identity_id`, with a hand-written migration
+  (`20260807120000_rename_external_uid_to_identity_id`) that renames the
+  columns and their four indexes rather than dropping and recreating them.
+  Prisma does not detect column renames and would have generated a
+  destructive `DROP`/`ADD` pair. The column type stays `VARCHAR(128)`; the
+  retype to `uuid` follows in slice 2, once Rezeta mints the values instead
+  of Firebase, whose UIDs are 28-character strings rather than UUIDs.
+- Renamed the Prisma field and every TypeScript consumer to `identityId`:
+  `AuthUser` and `PlatformPrincipal` in `packages/shared/src/types/auth.ts`,
+  the zod schema in `packages/shared/src/schemas/auth.ts`,
+  `UsersRepository.findByIdentityId`,
+  `PlatformUsersRepository.findByIdentityId`, both lookup paths in
+  `apps/api/src/common/guards/auth.guard.ts`, `VerifiedToken` in
+  `apps/api/src/lib/auth/auth-provider.interface.ts`, the identity and
+  onboarding services, `apps/api/src/scripts/create-institution.ts`, and the
+  audit-log redaction key in `apps/api/src/common/audit-log/redact.ts`.
+- No behavior change: the value is still issued by Firebase and still
+  resolves a verified token to a `User` or `PlatformUser` row.
+
 ## [2026-08-04] AuthGate explains unprovisioned access instead of a blank screen (task 5 fix)
 
 ### Fixed

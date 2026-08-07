@@ -33,7 +33,7 @@ Then run integration tests with `TEST_DATABASE_URL="postgresql://rezeta:rezeta@l
 - Zero lint errors (`pnpm lint`), zero failing tests (`pnpm test`), 95% per-file coverage (`pnpm test:coverage`).
 - Move `apps/web/.env` aside before running coverage — it flips a fallback branch in `logger.ts` and fails the web coverage gate. Move it back afterward.
 - No `TODO`, `FIXME`, `HACK`, or `XXX` comments — ESLint `no-warning-comments` fails CI.
-- Conventional commits, **subject entirely lower-case** (commitlint rejects capitals), with trailer `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
+- Conventional commits, **subject entirely lower-case** (commitlint rejects capitals), with trailer `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`. This bites on this slice in particular: a subject naming the identifiers, like `rename externalUid field to identityId`, is rejected for the camelCase capitals. Write them lower-case (`externaluid`, `identityid`), matching existing subjects such as `fix(web): requireplatform reads resolved identity instead of re-fetching`.
 
 ## A note on TDD
 
@@ -287,7 +287,7 @@ Expected: all PASS. If a test fails on an assertion about a *value* (for example
 
 ```bash
 git add -A
-git commit -m "refactor: rename externalUid field to identityId
+git commit -m "refactor: rename externaluid field to identityid
 
 Renames the Prisma field and every TypeScript consumer: shared AuthUser and
 PlatformPrincipal types, the zod schema, both repositories' findByExternalUid
