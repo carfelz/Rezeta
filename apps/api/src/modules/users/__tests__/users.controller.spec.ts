@@ -10,7 +10,7 @@ const mockSvc = {
 
 const user: AuthUser = {
   id: 'u1',
-  externalUid: 'ext-1',
+  identityId: 'ext-1',
   tenantId: 't1',
   email: 'doc@test',
   fullName: null,

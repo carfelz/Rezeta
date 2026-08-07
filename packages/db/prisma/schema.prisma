@@ -55,7 +55,7 @@ model Tenant {
 model User {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String    @map("tenant_id") @db.Uuid
-  externalUid   String    @unique @map("identity_id") @db.VarChar(128)
+  identityId    String    @unique @map("identity_id") @db.VarChar(128)
   email         String    @db.VarChar(320)
   fullName      String?   @map("full_name") @db.VarChar(200)
   role          String    @default("assistant") @db.VarChar(50) // assistant | doctor | admin | super_admin
@@ -90,7 +90,7 @@ model User {
   uploadedAttachments   Attachment[]
 
   @@index([tenantId])
-  @@index([externalUid])
+  @@index([identityId])
   @@index([tenantId, deletedAt])
   @@map("users")
 }
@@ -805,7 +805,7 @@ model Attachment {
 // platform design.
 model PlatformUser {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalUid String    @unique @map("identity_id") @db.VarChar(128)
+  identityId  String    @unique @map("identity_id") @db.VarChar(128)
   email       String    @db.VarChar(320)
   fullName    String?   @map("full_name") @db.VarChar(200)
   isActive    Boolean   @default(true) @map("is_active")
@@ -814,7 +814,7 @@ model PlatformUser {
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
 
-  @@index([externalUid])
+  @@index([identityId])
   @@map("platform_users")
 }
 

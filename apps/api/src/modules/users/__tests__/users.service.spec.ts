@@ -178,7 +178,7 @@ describe('UsersService', () => {
 describe('UsersService.createUser — rank rule', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockProvider.createUser.mockResolvedValue({ externalUid: 'fb-new' })
+    mockProvider.createUser.mockResolvedValue({ identityId: 'fb-new' })
     mockProvider.generatePasswordResetLink.mockResolvedValue('https://reset/abc')
     mockProvider.deleteUser.mockResolvedValue(undefined)
     mockRepo.createProvisionedUser.mockResolvedValue({
@@ -201,7 +201,7 @@ describe('UsersService.createUser — rank rule', () => {
     })
     expect(mockProvider.createUser).toHaveBeenCalledWith('doc@clinic.do')
     expect(mockRepo.createProvisionedUser).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: 't1', externalUid: 'fb-new', role: 'doctor' }),
+      expect.objectContaining({ tenantId: 't1', identityId: 'fb-new', role: 'doctor' }),
     )
     expect(mockMailer.sendSetPasswordEmail).toHaveBeenCalledWith('doc@clinic.do', 'https://reset/abc')
     expect(mockAudit.record).toHaveBeenCalledWith(
@@ -310,7 +310,7 @@ describe('UsersService.createUser — invite-flow resilience', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
-    mockProvider.createUser.mockResolvedValue({ externalUid: 'fb-new' })
+    mockProvider.createUser.mockResolvedValue({ identityId: 'fb-new' })
     mockProvider.generatePasswordResetLink.mockResolvedValue('https://reset/abc')
     mockProvider.deleteUser.mockResolvedValue(undefined)
     mockRepo.createProvisionedUser.mockResolvedValue({

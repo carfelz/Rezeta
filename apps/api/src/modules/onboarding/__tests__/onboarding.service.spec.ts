@@ -18,7 +18,7 @@ const mockUsersRepo = {
 
 const dbUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -30,7 +30,7 @@ const dbUser = {
 
 const authUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -89,7 +89,7 @@ describe('OnboardingService', () => {
   // ── seedDefault ────────────────────────────────────────────────────────────
 
   describe('seedDefault', () => {
-    it('looks up user by externalUid, seeds, then refreshes', async () => {
+    it('looks up user by identityId, seeds, then refreshes', async () => {
       const result = await service.seedDefault('fb1')
       expect(mockUsersRepo.findByExternalUid).toHaveBeenCalledWith('fb1')
       expect(mockSeeder.seedDefault).toHaveBeenCalledWith('t1', 'es')

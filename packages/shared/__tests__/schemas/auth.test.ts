@@ -89,7 +89,7 @@ describe('TenantApiSchema', () => {
 describe('UserApiSchema', () => {
   const valid = {
     id: '00000000-0000-0000-0000-000000000001',
-    externalUid: 'firebase-uid-abc',
+    identityId: 'firebase-uid-abc',
     tenantId: '00000000-0000-0000-0000-000000000002',
     email: 'doctor@rezeta.app',
     fullName: 'Dr. Juan García',

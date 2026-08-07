@@ -24,7 +24,7 @@ const mockService = {
 
 const mockUser: AuthUser = {
   id: 'user-1',
-  externalUid: 'ext-1',
+  identityId: 'ext-1',
   tenantId: 'tenant-1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',

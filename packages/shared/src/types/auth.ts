@@ -5,7 +5,7 @@ export type UserRole = 'assistant' | 'doctor' | 'admin' | 'super_admin'
 
 export interface AuthUser {
   id: string
-  externalUid: string
+  identityId: string
   tenantId: string
   email: string
   fullName: string | null // nullable until onboarding is complete
@@ -28,7 +28,7 @@ export interface AuthUser {
  */
 export interface PlatformPrincipal {
   id: string
-  externalUid: string
+  identityId: string
   email: string
   fullName: string | null
 }

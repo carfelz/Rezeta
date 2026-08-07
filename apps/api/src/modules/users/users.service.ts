@@ -104,13 +104,13 @@ export class UsersService {
     // Firebase createUser rejects a duplicate email with a mapped
     // ConflictException(USER_ALREADY_EXISTS) (see firebase-auth.provider.ts) —
     // nothing to clean up here since no identity was created.
-    const { externalUid } = await this.authProvider.createUser(dto.email)
+    const { identityId } = await this.authProvider.createUser(dto.email)
 
     let created: User
     try {
       created = await this.repository.createProvisionedUser({
         tenantId,
-        externalUid,
+        identityId,
         email: dto.email,
         fullName: dto.fullName,
         role: dto.role,
@@ -121,10 +121,10 @@ export class UsersService {
       // account; if the cleanup itself fails, log it but still propagate the
       // ORIGINAL error — that's what the caller needs to see/retry on.
       try {
-        await this.authProvider.deleteUser(externalUid)
+        await this.authProvider.deleteUser(identityId)
       } catch (cleanupErr) {
         this.logger.warn(
-          `Failed to clean up orphaned Firebase user ${externalUid} after a DB write failure for ${dto.email}`,
+          `Failed to clean up orphaned Firebase user ${identityId} after a DB write failure for ${dto.email}`,
           cleanupErr instanceof Error ? cleanupErr.stack : cleanupErr,
         )
       }

@@ -214,7 +214,7 @@ describe('FirebaseAuthProvider', () => {
       provider.onModuleInit()
       mockVerifyIdToken.mockResolvedValue({ uid: 'fb-1', email: 'doc@test.com', extra: 'claim' })
       const result = await provider.verifyToken('tok')
-      expect(result.externalUid).toBe('fb-1')
+      expect(result.identityId).toBe('fb-1')
       expect(result.email).toBe('doc@test.com')
       expect(result.rawClaims).toMatchObject({ uid: 'fb-1' })
     })
@@ -374,7 +374,7 @@ describe('FirebaseAuthProvider', () => {
       mockCreateUser.mockResolvedValue({ uid: 'fb-new' })
       const result = await provider.createUser('nurse@clinic.do')
       expect(mockCreateUser).toHaveBeenCalledWith({ email: 'nurse@clinic.do' })
-      expect(result).toEqual({ externalUid: 'fb-new' })
+      expect(result).toEqual({ identityId: 'fb-new' })
     })
 
     it('wraps SDK errors in InternalServerErrorException', async () => {

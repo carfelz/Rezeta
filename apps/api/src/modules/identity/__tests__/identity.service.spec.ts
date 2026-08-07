@@ -179,7 +179,7 @@ describe('myDevices', () => {
 describe('signOutAllSessions', () => {
   it('revokes provider sessions and audits session_revoked', async () => {
     mockAuthProvider.revokeUserSessions.mockResolvedValue(undefined)
-    await makeService().signOutAllSessions({ id: 'u1', externalUid: 'ext-1', tenantId: 't1' })
+    await makeService().signOutAllSessions({ id: 'u1', identityId: 'ext-1', tenantId: 't1' })
     expect(mockAuthProvider.revokeUserSessions).toHaveBeenCalledWith('ext-1')
     expect(mockAuditLog.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -197,7 +197,7 @@ describe('signOutAllSessions', () => {
 })
 
 describe('syncMfaEnrollment', () => {
-  const user = { id: 'u1', externalUid: 'ext-1', tenantId: 't1' }
+  const user = { id: 'u1', identityId: 'ext-1', tenantId: 't1' }
 
   it('reads the provider, writes the mirror, and returns the ISO timestamp when enrolled', async () => {
     mockRepo.getMfaEnrolledAt.mockResolvedValue(null)

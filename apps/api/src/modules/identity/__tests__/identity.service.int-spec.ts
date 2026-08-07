@@ -157,7 +157,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
     it('calls the provider and writes a session_revoked audit', async () => {
       const tenant = await createTestTenant(prisma)
       const user = await createTestUser(prisma, tenant.id)
-      await service.signOutAllSessions({ id: user.id, externalUid: 'ext-1', tenantId: tenant.id })
+      await service.signOutAllSessions({ id: user.id, identityId: 'ext-1', tenantId: tenant.id })
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(authProvider.revokeUserSessions).toHaveBeenCalledWith('ext-1')
       const audit = await waitForAuditLog(prisma, { action: 'session_revoked', entityId: user.id })
@@ -173,7 +173,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
         .fn()
         .mockResolvedValue({ enrolledAt: new Date('2026-07-28T00:00:00.000Z') })
 
-      const result = await service.syncMfaEnrollment({ id: user.id, externalUid: 'ext-1', tenantId: tenant.id })
+      const result = await service.syncMfaEnrollment({ id: user.id, identityId: 'ext-1', tenantId: tenant.id })
       expect(result).toEqual({ mfaEnrolledAt: '2026-07-28T00:00:00.000Z' })
 
       const row = await prisma.user.findUnique({ where: { id: user.id } })
@@ -191,7 +191,7 @@ describe.skipIf(!hasTestDb())('Identity module (integration)', () => {
         .fn()
         .mockResolvedValue({ enrolledAt: new Date('2026-07-01T00:00:00.000Z') })
 
-      await service.syncMfaEnrollment({ id: user.id, externalUid: 'ext-1', tenantId: tenant.id })
+      await service.syncMfaEnrollment({ id: user.id, identityId: 'ext-1', tenantId: tenant.id })
       const auditCount = await prisma.auditLog.count({ where: { action: 'mfa_enabled', entityId: user.id } })
       expect(auditCount).toBe(0)
     })

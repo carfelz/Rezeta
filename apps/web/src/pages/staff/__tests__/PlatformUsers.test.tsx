@@ -19,7 +19,7 @@ vi.mock('@/hooks/staff/use-platform-users', () => ({
 vi.mock('@/hooks/staff/use-staff-me', () => ({ useStaffMe: h.useStaffMe }))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 
-const me = { id: 'pu-1', externalUid: 'ext-1', email: 'carlos@rezeta.do', fullName: 'Carlos Féliz' }
+const me = { id: 'pu-1', identityId: 'ext-1', email: 'carlos@rezeta.do', fullName: 'Carlos Féliz' }
 const rows = [
   {
     id: 'pu-1',

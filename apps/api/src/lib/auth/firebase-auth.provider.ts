@@ -90,7 +90,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     }
 
     return {
-      externalUid: decoded.uid,
+      identityId: decoded.uid,
       email: decoded.email ?? '',
       rawClaims: decoded as unknown as Record<string, unknown>,
     }
@@ -123,7 +123,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     return { accessToken: data.idToken, expiresIn: parseInt(data.expiresIn, 10) }
   }
 
-  async revokeUserSessions(externalUid: string): Promise<void> {
+  async revokeUserSessions(identityId: string): Promise<void> {
     if (!this.app) {
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
@@ -131,9 +131,9 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
     try {
-      await this.app.auth().revokeRefreshTokens(externalUid)
+      await this.app.auth().revokeRefreshTokens(identityId)
     } catch (err) {
-      this.logger.error(`Failed to revoke sessions for ${externalUid}: ${(err as Error).message}`)
+      this.logger.error(`Failed to revoke sessions for ${identityId}: ${(err as Error).message}`)
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'Failed to revoke sessions',
@@ -141,7 +141,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     }
   }
 
-  async deleteUser(externalUid: string): Promise<void> {
+  async deleteUser(identityId: string): Promise<void> {
     if (!this.app) {
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
@@ -149,9 +149,9 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
     try {
-      await this.app.auth().deleteUser(externalUid)
+      await this.app.auth().deleteUser(identityId)
     } catch (err) {
-      this.logger.error(`Failed to delete user ${externalUid}: ${(err as Error).message}`)
+      this.logger.error(`Failed to delete user ${identityId}: ${(err as Error).message}`)
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'Failed to delete user from auth provider',
@@ -159,7 +159,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     }
   }
 
-  async createUser(email: string): Promise<{ externalUid: string }> {
+  async createUser(email: string): Promise<{ identityId: string }> {
     if (!this.app) {
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
@@ -168,7 +168,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     }
     try {
       const record = await this.app.auth().createUser({ email })
-      return { externalUid: record.uid }
+      return { identityId: record.uid }
     } catch (err) {
       if (isFirebaseErrorCode(err, 'auth/email-already-exists')) {
         throw new ConflictException({
@@ -202,7 +202,7 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
     }
   }
 
-  async getMfaEnrollment(externalUid: string): Promise<{ enrolledAt: Date | null }> {
+  async getMfaEnrollment(identityId: string): Promise<{ enrolledAt: Date | null }> {
     if (!this.app) {
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
@@ -210,12 +210,12 @@ export class FirebaseAuthProvider implements IAuthProvider, OnModuleInit {
       })
     }
     try {
-      const user = await this.app.auth().getUser(externalUid)
+      const user = await this.app.auth().getUser(identityId)
       const totpFactor = user.multiFactor?.enrolledFactors.find((f) => f.factorId === 'totp')
       if (!totpFactor) return { enrolledAt: null }
       return { enrolledAt: totpFactor.enrollmentTime ? new Date(totpFactor.enrollmentTime) : new Date() }
     } catch (err) {
-      this.logger.error(`Failed to read MFA enrollment for ${externalUid}: ${(err as Error).message}`)
+      this.logger.error(`Failed to read MFA enrollment for ${identityId}: ${(err as Error).message}`)
       throw new InternalServerErrorException({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'Failed to read MFA enrollment',

@@ -113,7 +113,7 @@ export class AuthService {
   toAuthUser(user: UserWithTenant, capabilities: CapabilityMap): AuthUser {
     return {
       id: user.id,
-      externalUid: user.externalUid,
+      identityId: user.identityId,
       tenantId: user.tenantId,
       email: user.email,
       fullName: user.fullName,

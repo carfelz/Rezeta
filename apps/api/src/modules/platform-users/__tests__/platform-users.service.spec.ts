@@ -8,7 +8,7 @@ import type { InvitationMailerService } from '../../users/invitation-mailer.serv
 
 const row = {
   id: 'pu-1',
-  externalUid: 'ext-1',
+  identityId: 'ext-1',
   email: 'laura@rezeta.do',
   fullName: 'Laura Medina',
   isActive: true,
@@ -60,7 +60,7 @@ describe('listUsers', () => {
 
 describe('createUser', () => {
   beforeEach(() => {
-    mockProvider.createUser.mockResolvedValue({ externalUid: 'ext-1' })
+    mockProvider.createUser.mockResolvedValue({ identityId: 'ext-1' })
     mockProvider.generatePasswordResetLink.mockResolvedValue('https://link')
     mockMailer.sendSetPasswordEmail.mockResolvedValue(undefined)
     mockRepo.create.mockResolvedValue(row)
@@ -73,7 +73,7 @@ describe('createUser', () => {
     })
     expect(mockProvider.createUser).toHaveBeenCalledWith('laura@rezeta.do')
     expect(mockRepo.create).toHaveBeenCalledWith({
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 'laura@rezeta.do',
       fullName: 'Laura Medina',
     })

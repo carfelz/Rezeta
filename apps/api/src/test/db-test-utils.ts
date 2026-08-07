@@ -97,7 +97,7 @@ export async function createTestTenant(
   })
 }
 
-/** Minimal valid User row for FK-satisfying fixtures. Unique externalUid/email per call. */
+/** Minimal valid User row for FK-satisfying fixtures. Unique identityId/email per call. */
 export async function createTestUser(
   prisma: PrismaClient,
   tenantId: string,
@@ -107,7 +107,7 @@ export async function createTestUser(
   return prisma.user.create({
     data: {
       tenantId,
-      externalUid: `ext-${uid}`,
+      identityId: `identity-${uid}`,
       email: overrides.email ?? `test-${uid}@example.com`,
       fullName: overrides.fullName ?? 'Test User',
       role: overrides.role ?? 'assistant',
@@ -120,14 +120,14 @@ export async function createTestUser(
 export async function createTestPlatformUser(
   prisma: PrismaClient,
   overrides: Partial<{ email: string; fullName: string }> = {},
-): Promise<{ id: string; externalUid: string }> {
+): Promise<{ id: string; identityId: string }> {
   const uid = randomUUID()
   return prisma.platformUser.create({
     data: {
-      externalUid: `platform-ext-${uid}`,
+      identityId: `platform-identity-${uid}`,
       email: overrides.email ?? `platform-${uid}@example.com`,
       fullName: overrides.fullName ?? 'Test Platform User',
     },
-    select: { id: true, externalUid: true },
+    select: { id: true, identityId: true },
   })
 }

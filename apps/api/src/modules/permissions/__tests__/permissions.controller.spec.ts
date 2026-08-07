@@ -13,7 +13,7 @@ const mockSvc = {
 function makeUser(role: AuthUser['role']): AuthUser {
   return {
     id: 'u1',
-    externalUid: 'ext-1',
+    identityId: 'ext-1',
     tenantId: 't1',
     email: 'admin@clinic.do',
     fullName: 'Admin',

@@ -157,7 +157,7 @@ export class AuthController {
       type: 'object',
       properties: {
         id: { type: 'string', format: 'uuid', example: '018e3f2a-0000-7000-8000-000000000001' },
-        externalUid: { type: 'string', example: 'abc123externaluid' },
+        identityId: { type: 'string', example: 'abc123identityid' },
         tenantId: {
           type: 'string',
           format: 'uuid',

@@ -15,7 +15,7 @@ import type { PlatformPrincipal } from '@rezeta/shared'
  *
  * `skipSignOutOn401` is required here: an institution user who navigates to
  * /staff 401s with UNAUTHORIZED (AuthGuard's platform branch — no PlatformUser
- * row for their externalUid), which is not the USER_NOT_PROVISIONED code the
+ * row for their identityId), which is not the USER_NOT_PROVISIONED code the
  * api-client otherwise exempts from its sign-out side effect. Without this
  * option, browsing to /staff would sign a valid institution user out entirely
  * instead of RequirePlatform simply redirecting them to /dashboard.

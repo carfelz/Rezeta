@@ -70,9 +70,9 @@ export async function bootstrapPlatform(
   args: BootstrapArgs,
 ): Promise<BootstrapResult> {
   // 1. Control-plane identity: Admin SDK user + platform_users row.
-  const { externalUid } = await deps.authProvider.createUser(args.platformEmail)
+  const { identityId } = await deps.authProvider.createUser(args.platformEmail)
   const platformUser = await deps.platformUsers.create({
-    externalUid,
+    identityId,
     email: args.platformEmail,
     fullName: args.platformName,
   })

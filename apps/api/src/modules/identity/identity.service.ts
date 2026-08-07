@@ -83,8 +83,8 @@ export class IdentityService {
     }))
   }
 
-  async signOutAllSessions(user: { id: string; externalUid: string; tenantId: string }): Promise<void> {
-    await this.authProvider.revokeUserSessions(user.externalUid)
+  async signOutAllSessions(user: { id: string; identityId: string; tenantId: string }): Promise<void> {
+    await this.authProvider.revokeUserSessions(user.identityId)
     void this.auditLog.record({
       tenantId: user.tenantId,
       actorUserId: user.id,
@@ -105,9 +105,9 @@ export class IdentityService {
    * enrolled -> not-enrolled sync (the user removed their factor) is not
    * audited this slice (see identity slice 4 plan §Out of scope).
    */
-  async syncMfaEnrollment(user: { id: string; externalUid: string; tenantId: string }): Promise<MfaSyncResultDto> {
+  async syncMfaEnrollment(user: { id: string; identityId: string; tenantId: string }): Promise<MfaSyncResultDto> {
     const before = await this.repository.getMfaEnrolledAt(user.id)
-    const { enrolledAt } = await this.authProvider.getMfaEnrollment(user.externalUid)
+    const { enrolledAt } = await this.authProvider.getMfaEnrollment(user.identityId)
     await this.repository.updateMfaEnrolledAt(user.id, enrolledAt)
 
     if (before === null && enrolledAt !== null) {

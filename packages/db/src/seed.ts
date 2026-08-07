@@ -253,7 +253,7 @@ const STARTER_TEMPLATES = [
 
 interface DevAccount {
   index: number
-  externalUid: string
+  identityId: string
   email: string
   fullName: string
   specialty: string
@@ -286,7 +286,7 @@ interface DevAccount {
 const DEV_ACCOUNTS: DevAccount[] = [
   {
     index: 1,
-    externalUid: 'j6RK1lLW6AY8OvoygMQvejQLwXj1',
+    identityId: 'j6RK1lLW6AY8OvoygMQvejQLwXj1',
     email: 'test@test.com',
     fullName: 'Dr. Carlos Feliz',
     specialty: 'Cardiología',
@@ -359,7 +359,7 @@ const DEV_ACCOUNTS: DevAccount[] = [
   },
   {
     index: 2,
-    externalUid: 'qXpawgupDOTZolTIHNqtD1FvDjf1',
+    identityId: 'qXpawgupDOTZolTIHNqtD1FvDjf1',
     email: 'dev@example.com',
     fullName: 'Dra. María Pérez',
     specialty: 'Pediatría',
@@ -429,7 +429,7 @@ const DEV_ACCOUNTS: DevAccount[] = [
   },
   {
     index: 3,
-    externalUid: '6G7FMPoWWtRhTpCrpqCDwDBjcAB3',
+    identityId: '6G7FMPoWWtRhTpCrpqCDwDBjcAB3',
     email: 'test@rezeta.com',
     fullName: 'Dr. Juan García',
     specialty: 'Fisioterapia',
@@ -534,7 +534,7 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
   await prisma.user.upsert({
     where: { id: uId },
     update: {
-      externalUid: acc.externalUid,
+      identityId: acc.identityId,
       email: acc.email,
       fullName: acc.fullName,
       specialty: acc.specialty,
@@ -543,7 +543,7 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
     create: {
       id: uId,
       tenantId: tId,
-      externalUid: acc.externalUid,
+      identityId: acc.identityId,
       email: acc.email,
       fullName: acc.fullName,
       specialty: acc.specialty,
@@ -552,7 +552,7 @@ async function seedDevAccount(acc: DevAccount): Promise<void> {
     },
   })
 
-  console.log(`✓ Tenant + user: ${acc.fullName} (uid=${acc.externalUid})`)
+  console.log(`✓ Tenant + user: ${acc.fullName} (uid=${acc.identityId})`)
 
   // Locations + doctor-location links
   for (let j = 0; j < acc.locations.length; j++) {

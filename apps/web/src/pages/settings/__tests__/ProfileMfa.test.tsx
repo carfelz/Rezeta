@@ -22,7 +22,7 @@ import { ProfileMfa } from '../ProfileMfa'
 function baseUser(overrides: Partial<AuthUser> = {}): AuthUser {
   return {
     id: 'u1',
-    externalUid: 'ext-1',
+    identityId: 'ext-1',
     tenantId: 't1',
     email: 'dr@rezeta.do',
     fullName: 'Dr. Test',

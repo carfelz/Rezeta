@@ -11,7 +11,7 @@ import { defaultCapabilitiesFor, type AuthUser } from '@rezeta/shared'
 
 const mockUser: AuthUser = {
   id: 'user-1',
-  externalUid: 'ext-1',
+  identityId: 'ext-1',
   tenantId: 'tenant-1',
   email: 'doc@test.com',
   fullName: 'Dr. Test',

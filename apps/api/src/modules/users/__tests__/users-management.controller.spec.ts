@@ -13,7 +13,7 @@ const mockSvc = {
 
 const admin: AuthUser = {
   id: 'actor',
-  externalUid: 'ext',
+  identityId: 'ext',
   tenantId: 't1',
   email: 'admin@clinic.do',
   fullName: 'Admin',

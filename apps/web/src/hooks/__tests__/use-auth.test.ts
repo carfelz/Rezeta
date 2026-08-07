@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth.store'
 
 const mockUser = {
   id: 'user-1',
-  externalUid: 'fb-uid',
+  identityId: 'fb-uid',
   tenantId: 'tenant-1',
   email: 'doctor@rezeta.app',
   fullName: 'Dr. Juan García',

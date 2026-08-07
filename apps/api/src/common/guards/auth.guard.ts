@@ -91,7 +91,7 @@ export class AuthGuard implements CanActivate {
       classRef,
     ])
     if (isPlatformRoute) {
-      const platformUser = await this.platformUsers.findByExternalUid(verified.externalUid)
+      const platformUser = await this.platformUsers.findByExternalUid(verified.identityId)
       if (!platformUser || !platformUser.isActive) {
         throw new UnauthorizedException({
           code: ErrorCode.UNAUTHORIZED,
@@ -100,7 +100,7 @@ export class AuthGuard implements CanActivate {
       }
       request.platformUser = {
         id: platformUser.id,
-        externalUid: platformUser.externalUid,
+        identityId: platformUser.identityId,
         email: platformUser.email,
         fullName: platformUser.fullName,
       }
@@ -116,7 +116,7 @@ export class AuthGuard implements CanActivate {
       return true
     }
 
-    const user = await this.users.findByExternalUid(verified.externalUid)
+    const user = await this.users.findByExternalUid(verified.identityId)
 
     if (!user) {
       throw new UnauthorizedException({
@@ -161,7 +161,7 @@ export class AuthGuard implements CanActivate {
 
     request.user = {
       id: user.id,
-      externalUid: user.externalUid,
+      identityId: user.identityId,
       tenantId: user.tenantId,
       email: user.email,
       fullName: user.fullName,

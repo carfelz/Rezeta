@@ -38,7 +38,7 @@ const makeConfig = (nodeEnv: string, webApiKey = 'key-123') => ({
 
 const baseUser = {
   id: 'u1',
-  externalUid: 'fb1',
+  identityId: 'fb1',
   tenantId: 't1',
   email: 'dr@test.com',
   fullName: 'Dr. Test',
@@ -76,7 +76,7 @@ describe('AuthService', () => {
 
     it('delegates to repository.provisionUser', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       const result = await service.provision(verified)
       expect(result).toEqual(baseUser)
       expect(mockRepo.provisionUser).toHaveBeenCalledWith(verified)
@@ -84,7 +84,7 @@ describe('AuthService', () => {
 
     it('records login audit event after successful provision', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await service.provision(verified, {
         ip: '192.168.1.1',
         userAgent: 'TestBrowser/1.0',
@@ -107,7 +107,7 @@ describe('AuthService', () => {
 
     it('records login audit event without meta when meta is not provided', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await service.provision(verified)
       expect(mockAuditLog.record).toHaveBeenCalledWith(
         expect.objectContaining({ category: 'auth', action: 'login' }),
@@ -117,7 +117,7 @@ describe('AuthService', () => {
     it('records login telemetry (mapped method) and upserts a device after provision', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       const verified = {
-        externalUid: 'fb1',
+        identityId: 'fb1',
         email: 'dr@test.com',
         rawClaims: { firebase: { sign_in_provider: 'password' } },
       } as never
@@ -139,7 +139,7 @@ describe('AuthService', () => {
 
     it('passes the user email through to upsertDevice for the new-device email path', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await service.provision(verified)
       expect(mockLoginTelemetry.upsertDevice).toHaveBeenCalledWith(
         expect.objectContaining({ email: 'dr@test.com' }),
@@ -149,7 +149,7 @@ describe('AuthService', () => {
     it('maps a google.com sign-in provider to method "google"', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       const verified = {
-        externalUid: 'fb1',
+        identityId: 'fb1',
         email: 'dr@test.com',
         rawClaims: { firebase: { sign_in_provider: 'google.com' } },
       } as never
@@ -161,7 +161,7 @@ describe('AuthService', () => {
 
     it('maps missing/unrecognized sign-in claims to method "unknown"', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await service.provision(verified)
       expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
         expect.objectContaining({ method: 'unknown' }),
@@ -171,7 +171,7 @@ describe('AuthService', () => {
     it('derives mfaUsed: true from the sign_in_second_factor totp claim', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       const verified = {
-        externalUid: 'fb1',
+        identityId: 'fb1',
         email: 'dr@test.com',
         rawClaims: { firebase: { sign_in_provider: 'password', sign_in_second_factor: 'totp' } },
       } as never
@@ -183,7 +183,7 @@ describe('AuthService', () => {
 
     it('derives mfaUsed: false when no second factor was used', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await service.provision(verified)
       expect(mockLoginTelemetry.recordLogin).toHaveBeenCalledWith(
         expect.objectContaining({ mfaUsed: false }),
@@ -193,7 +193,7 @@ describe('AuthService', () => {
     it('still resolves provision when login telemetry fails (fire-and-forget)', async () => {
       mockRepo.provisionUser.mockResolvedValue(baseUser)
       mockLoginTelemetry.recordLogin.mockRejectedValueOnce(new Error('db down'))
-      const verified = { externalUid: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
+      const verified = { identityId: 'fb1', email: 'dr@test.com', rawClaims: {} } as never
       await expect(service.provision(verified)).resolves.toEqual(baseUser)
     })
   })
@@ -211,7 +211,7 @@ describe('AuthService', () => {
       const auth = service.toAuthUser(baseUser as never, superAdminDefaults)
       expect(auth).toMatchObject({
         id: 'u1',
-        externalUid: 'fb1',
+        identityId: 'fb1',
         tenantId: 't1',
         email: 'dr@test.com',
         fullName: 'Dr. Test',

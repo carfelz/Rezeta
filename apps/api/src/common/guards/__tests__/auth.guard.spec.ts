@@ -46,7 +46,7 @@ function makeCtx(overrides: {
 
 const validUser = {
   id: 'user-1',
-  externalUid: 'fb-uid',
+  identityId: 'fb-uid',
   tenantId: 'tenant-1',
   email: 'doc@test.com',
   fullName: 'Dr. Test',
@@ -59,7 +59,7 @@ const validUser = {
 }
 
 const verifiedToken: VerifiedToken = {
-  externalUid: 'fb-uid',
+  identityId: 'fb-uid',
   email: 'doc@test.com',
   rawClaims: { uid: 'fb-uid', email: 'doc@test.com' },
 }
@@ -157,14 +157,14 @@ describe('AuthGuard', () => {
   })
 
   it('rejects a platform-staff token on a tenant-scoped route (control-plane isolation)', async () => {
-    // Simulates a PlatformUser identity (control-plane) whose externalUid was
+    // Simulates a PlatformUser identity (control-plane) whose identityId was
     // verified by Firebase but has no matching row in the tenant Users table,
     // hitting a plain (non-@PlatformRoute) tenant-scoped endpoint. This must
     // 401 with USER_NOT_PROVISIONED and must NOT fall back to consulting the
     // platform repository — that lookup only happens on @PlatformRoute()
     // endpoints, and this route carries no such metadata.
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'platform-staff-uid',
+      identityId: 'platform-staff-uid',
       email: 'staff@rezeta.com',
       rawClaims: { uid: 'platform-staff-uid', email: 'staff@rezeta.com' },
     })
@@ -238,7 +238,7 @@ describe('AuthGuard', () => {
     const req = ctx._req
     expect((req.user as Record<string, unknown>).id).toBe('user-1')
     expect((req.user as Record<string, unknown>).tenantId).toBe('tenant-1')
-    expect((req.user as Record<string, unknown>).externalUid).toBe('fb-uid')
+    expect((req.user as Record<string, unknown>).identityId).toBe('fb-uid')
     expect(mockPermissions.resolveCapabilities).toHaveBeenCalledWith('tenant-1', 'super_admin')
     expect((req.user as Record<string, unknown>).capabilities).toEqual({
       patients: 'view',
@@ -294,13 +294,13 @@ describe('AuthGuard', () => {
 
   it('sets request.platformUser for a @PlatformRoute() with an active PlatformUser', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 's@r.com',
       rawClaims: {},
     })
     mockPlatformUsers.findByExternalUid.mockResolvedValue({
       id: 'p1',
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 's@r.com',
       fullName: 'Staff',
       isActive: true,
@@ -312,7 +312,7 @@ describe('AuthGuard', () => {
     await expect(guard.canActivate(ctx as never)).resolves.toBe(true)
     expect(ctx._req['platformUser']).toEqual({
       id: 'p1',
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 's@r.com',
       fullName: 'Staff',
     })
@@ -322,7 +322,7 @@ describe('AuthGuard', () => {
 
   it('401s on a @PlatformRoute() when no PlatformUser matches (tenant user cannot enter staff routes)', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'ext-2',
+      identityId: 'ext-2',
       email: 'x@y.com',
       rawClaims: {},
     })
@@ -336,13 +336,13 @@ describe('AuthGuard', () => {
 
   it('401s on a @PlatformRoute() when the PlatformUser is inactive', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'ext-3',
+      identityId: 'ext-3',
       email: 'z@y.com',
       rawClaims: {},
     })
     mockPlatformUsers.findByExternalUid.mockResolvedValue({
       id: 'p3',
-      externalUid: 'ext-3',
+      identityId: 'ext-3',
       email: 'z@y.com',
       fullName: null,
       isActive: false,
@@ -356,13 +356,13 @@ describe('AuthGuard', () => {
 
   it('stamps lastLoginAt on a platform user’s first sign-in', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 'staff@rezeta.do',
       rawClaims: {},
     })
     mockPlatformUsers.findByExternalUid.mockResolvedValue({
       id: 'platform-1',
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 'staff@rezeta.do',
       fullName: 'Staff One',
       isActive: true,
@@ -378,13 +378,13 @@ describe('AuthGuard', () => {
 
   it('does not re-stamp lastLoginAt on later sign-ins', async () => {
     mockAuthProvider.verifyToken.mockResolvedValue({
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 'staff@rezeta.do',
       rawClaims: {},
     })
     mockPlatformUsers.findByExternalUid.mockResolvedValue({
       id: 'platform-1',
-      externalUid: 'ext-1',
+      identityId: 'ext-1',
       email: 'staff@rezeta.do',
       fullName: 'Staff One',
       isActive: true,

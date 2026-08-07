@@ -8,7 +8,7 @@ import {
 
 const validUser = {
   id: '018e3f2a-0000-7000-8000-000000000001',
-  externalUid: 'fb-uid',
+  identityId: 'fb-uid',
   tenantId: '018e3f2a-0000-7000-8000-000000000002',
   email: 'doc@test.com',
   fullName: 'Dr. Test',

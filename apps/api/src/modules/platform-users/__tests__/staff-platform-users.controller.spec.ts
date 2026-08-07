@@ -5,7 +5,7 @@ import { StaffPlatformUsersController } from '../staff-platform-users.controller
 import type { PlatformUsersService } from '../platform-users.service.js'
 
 function principal(): PlatformPrincipal {
-  return { id: 'platform-1', externalUid: 'ext-1', email: 'staff@rezeta.do', fullName: 'Staff One' }
+  return { id: 'platform-1', identityId: 'ext-1', email: 'staff@rezeta.do', fullName: 'Staff One' }
 }
 
 describe('StaffPlatformUsersController', () => {

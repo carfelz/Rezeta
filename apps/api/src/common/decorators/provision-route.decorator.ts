@@ -3,7 +3,7 @@ import { SetMetadata, type CustomDecorator } from '@nestjs/common'
 /**
  * Mark an endpoint as a provisioning route.
  *
- * The bearer token is still verified (we need the externalUid), but the guard
+ * The bearer token is still verified (we need the identityId), but the guard
  * does NOT require a matching User row in the database. The controller reads
  * req.verifiedToken and performs the DB creation itself.
  *
