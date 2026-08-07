@@ -14,6 +14,18 @@
 
 - **Node 22 is required.** The shell may default to v18, which makes every `pnpm` command fail with "This version of pnpm requires at least Node.js v22.13". Start every session with: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22.16.0`
 - **This slice changes no behavior.** The column type stays `VARCHAR(128)` — Firebase UIDs are 28-character strings, not UUIDs (see `packages/db/src/seed.ts:289`). Retyping to `uuid` happens in slice 2.
+- **Postgres runs in Docker and the integration suite needs a second database.** Without `TEST_DATABASE_URL` every `int-spec` file silently skips via `describe.skipIf(!hasTestDb())` — 27 tests reported as "skipped", which scrolls past looking like success. The suite also TRUNCATEs the whole database per test, so it must never point at `rezeta_dev`. Full setup:
+
+```bash
+open -a Docker                      # if the daemon is not running
+pnpm docker:up                      # brings up rezeta-postgres (healthy in ~7s)
+docker exec rezeta-postgres psql -U rezeta -d postgres -c "CREATE DATABASE rezeta_test OWNER rezeta;"
+DATABASE_URL="postgresql://rezeta:rezeta@localhost:5432/rezeta_test" \
+  DIRECT_URL="postgresql://rezeta:rezeta@localhost:5432/rezeta_test" \
+  pnpm --filter @rezeta/db exec prisma migrate deploy
+```
+
+Then run integration tests with `TEST_DATABASE_URL="postgresql://rezeta:rezeta@localhost:5432/rezeta_test"` exported. Expect **27 passed**, never "27 skipped".
 - **Never edit an existing migration** in `packages/db/prisma/migrations/`. They are applied history. The two files containing `external_uid` (`20260507000000_init`, `20260716201440_platform_users`) stay exactly as they are.
 - **Do not touch Firebase.** `firebase-auth.provider.ts` and `auth-provider.interface.ts` are renamed like any other consumer; their logic is untouched.
 - English everywhere except user-facing UI strings (which this slice does not touch).
