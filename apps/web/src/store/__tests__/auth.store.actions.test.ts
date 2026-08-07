@@ -27,7 +27,7 @@ function resetStore() {
   act(() => {
     result.current._setUser(null)
     result.current._setSession(null)
-    result.current._setStatus('loading')
+    result.current._setIdentity({ kind: 'loading' })
   })
 }
 

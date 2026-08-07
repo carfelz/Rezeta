@@ -7,17 +7,6 @@ export function isStaffHostname(hostname: string): boolean {
 }
 
 /**
- * Where a successful sign-in lands when no explicit `?redirectTo=` was given.
- * Staff hosts must not default to `/dashboard`: a PlatformUser has no
- * institution User row, so AuthGate sees `unauthenticated` and bounces them
- * back to /login — a loop whose only visible symptom is the (expected)
- * USER_NOT_PROVISIONED from POST /v1/auth/provision.
- */
-export function defaultPostLoginPath(hostname: string): string {
-  return isStaffHostname(hostname) ? '/staff/institutions' : '/dashboard'
-}
-
-/**
  * True when `path` belongs to the app this hostname serves. Both hosts ship the
  * same bundle, so a path can be routable yet still belong to the other app.
  *

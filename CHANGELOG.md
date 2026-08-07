@@ -4,6 +4,198 @@ All notable changes to the Medical ERP are documented here.
 
 Format: `[version/date] — description`. Entries are ordered newest first.
 
+## [2026-08-04] AuthGate explains unprovisioned access instead of a blank screen (task 5 fix)
+
+### Fixed
+
+- `apps/web/src/components/auth/AuthGate.tsx` rendered bare `null` for
+  `identity.kind === 'unprovisioned'`, leaving a doctor with a soft-deleted
+  or failed-provisioning account on a blank white page with no message and
+  no way out. It now renders a `NoClinicAccess` screen (mirroring
+  `RequirePlatform`'s `NoStaffAccess`): a short explanation and a "Cerrar
+  sesión" button that calls `authClient.signOut()`. `loading` is unchanged.
+- `apps/web/src/components/auth/strings.ts` gained `noAccessTitle`,
+  `noAccessBody`, and `noAccessSignOut` on `authGateStrings`, in Spanish
+  (doctor-app copy; distinct from the English `staffStrings.noAccess*` used
+  by the staff console).
+
+### Tests
+
+- `apps/web/src/components/auth/__tests__/AuthGate.test.tsx`: replaced the
+  test that asserted a blank render for `unprovisioned` with one asserting
+  the explanation is visible, and added a test that the sign-out button
+  calls `authClient.signOut`.
+
+## [2026-08-04] AuthGate and SetPassword route through resolveDestination (task 5)
+
+### Changed
+
+- `apps/web/src/components/auth/AuthGate.tsx` no longer reads the `status`
+  shim. It reads `identity` from `useAuthStore` and branches on
+  `identity.kind` via an exhaustive switch: `loading` shows the unchanged
+  full-page spinner; `clinic` renders children, redirecting first to
+  `/bienvenido` if `user.tenantSeededAt === null` and the path isn't already
+  under `/bienvenido`; `anonymous`, `staff`, and `unprovisioned` all route
+  through `resolveDestination` instead of a hardcoded `/login` fallback. An
+  anonymous visitor still lands on `/login?redirectTo=<original path>` (the
+  gate stamps that query param itself, now safe because `resolveDestination`
+  validates it against the host's app before ever honouring it — PR #47); a
+  staff identity hitting a doctor-app route goes straight to
+  `/staff/institutions` instead of bouncing through `/login`; an
+  unprovisioned session renders nothing rather than falling back to a
+  substitute path.
+- `apps/web/src/pages/SetPassword/index.tsx` no longer calls
+  `defaultPostLoginPath(window.location.hostname)` or `useNavigate` after
+  `confirmPasswordReset` + `signIn`. Where to go next is now `PublicOnlyGate`'s
+  call once `identity` settles, matching the pattern already established in
+  `apps/web/src/pages/Login/index.tsx`.
+
+### Tests
+
+- Added `apps/web/src/components/auth/__tests__/AuthGate.test.tsx` (new file
+  — `AuthGate` had no prior dedicated suite): 8 cases covering the loading
+  spinner, clinic-seeded, clinic-unseeded → `/bienvenido`, clinic-unseeded
+  already under `/bienvenido` (no redirect loop), anonymous →
+  `/login?redirectTo=...` (including query-string preservation), staff →
+  `/staff/institutions` directly, and unprovisioned → renders nothing.
+- Updated `apps/web/src/pages/SetPassword/__tests__/SetPassword.test.tsx`:
+  replaced the two tests that asserted specific post-signin navigation
+  targets (`/staff/institutions` on a staff host, `/dashboard` otherwise)
+  with a single test asserting `confirmPasswordReset` + `signIn` are called
+  correctly and `navigate` is never called. The host-specific destination
+  behavior those tests covered now lives in
+  `apps/web/src/components/auth/__tests__/PublicOnlyGate.test.tsx` (added in
+  task 3), which already exercises both outcomes via `resolveDestination`.
+
+## [2026-08-04] RequirePlatform reads resolved identity instead of re-fetching (task 4)
+
+### Changed
+
+- `apps/web/src/components/auth/RequirePlatform.tsx` no longer calls
+  `useStaffMe` itself. It now reads `identity` from `useAuthStore` (the
+  resolution `AuthProvider` already performs, including its own
+  `GET /v1/staff/me` probe) and branches purely on `identity.kind`: `staff`
+  renders children, `clinic` redirects to `/dashboard`, `anonymous` redirects
+  to `/login`, `unprovisioned` renders the existing `NoStaffAccess` screen
+  (never a redirect — every redirect from that state loops), and `loading`
+  renders nothing. This removes the gate's duplicate `/v1/staff/me` request.
+- `useStaffMe` (`apps/web/src/hooks/staff/use-staff-me.ts`) is unchanged and
+  still used directly by `apps/web/src/pages/staff/PlatformUsers.tsx` to
+  display the current principal.
+
+### Tests
+
+- Rewrote `apps/web/src/components/auth/__tests__/RequirePlatform.test.tsx`
+  to drive the gate via `useAuthStore.setState({ identity })` instead of
+  mocking `useStaffMe` (which the gate no longer calls). Six cases: staff →
+  children, clinic → `/dashboard`, unprovisioned → `NoStaffAccess` (with its
+  sign-out button), anonymous → `/login`, loading → nothing. The two removed
+  cases that asserted `useStaffMe`'s `enabled` flag toggling with the auth
+  store's Firebase-resolution status no longer have an analogue to test here
+  — that query lifecycle moved into `AuthProvider`, which owns and gates its
+  own `/v1/staff/me` probe internally (fired only inside the
+  `onAuthStateChanged` callback, i.e. only after Firebase has already
+  resolved); the resulting `staff`/`unprovisioned` distinction is covered by
+  `apps/web/src/providers/__tests__/providers.test.tsx`.
+
+## [2026-08-04] PublicOnlyGate owns the post-login redirect (task 3)
+
+### Changed
+
+- `apps/web/src/pages/Login/index.tsx`: deleted `redirectAfterSuccess` and the
+  `useNavigate`/`useSearchParams`/`isSafeRedirect`/`belongsToHostApp`/
+  `defaultPostLoginPath` imports it used. Sign-in (password, Google, SSO, and
+  the TOTP completion path) now only calls the auth action — it no longer
+  navigates. This removes the race where the page navigated the moment
+  `signIn()` resolved, before `identity` had actually settled.
+- `apps/web/src/components/auth/PublicOnlyGate.tsx` now reads `identity`
+  (not the derived `status` shim) and, for `identity.kind === 'clinic' |
+  'staff'`, delegates the destination entirely to
+  `resolveDestination` from `apps/web/src/lib/auth-routing.ts` — the same
+  resolver Task 1 built and Task 2 wired into `AuthProvider`. `anonymous` and
+  `unprovisioned` render `children` (the login/set-password form); `loading`
+  keeps the existing full-page spinner.
+- Deleted `PublicOnlyGate`'s private copy of `isSafeRedirect` (a third
+  duplicate of the one Task 1 already centralized in `auth-routing.ts`).
+  `resolveDestination` now absorbs that check internally, so the gate no
+  longer needs to call it directly — `auth-routing.ts` is the only remaining
+  definition in the codebase.
+
+### Tests
+
+- Added `apps/web/src/components/auth/__tests__/PublicOnlyGate.test.tsx` (9
+  cases): loading spinner, anonymous/unprovisioned render children, clinic
+  default (`/dashboard`) and safe/unsafe/cross-app `?redirectTo=`, staff
+  default (`/staff/institutions`) and safe/cross-app `?redirectTo=`
+  (including `/login?redirectTo=/staff/security` landing on
+  `/staff/security` on a staff host).
+- `apps/web/src/pages/Login/__tests__/index.test.tsx`: removed the four tests
+  that asserted Login's own post-sign-in navigation (`/dashboard` default,
+  staff-host default, ignoring a doctor-app `redirectTo`, honouring a staff
+  `redirectTo`) — that behavior moved to `PublicOnlyGate` and is covered by
+  its new suite above. Trimmed the now-meaningless `navigate` assertions from
+  the MFA, Google, and SSO success-path tests (Login no longer calls
+  `useNavigate`); kept the rest of each test's original coverage.
+
+## [2026-08-04] AuthProvider resolves and stores identity (task 2)
+
+### Added
+
+- `apps/web/src/store/auth.store.ts` gains an `identity: Identity` field
+  (from `apps/web/src/lib/auth-routing.ts`, defaulting to `{ kind: 'loading' }`)
+  and an internal `_setIdentity` setter. `status` is now derived from
+  `identity` via `statusFromIdentity` (`clinic` → `authenticated`, `loading` →
+  `loading`, everything else → `unauthenticated`) instead of being set
+  independently — a shim kept only until the gates that still read `status`
+  are converted to read `identity` directly (task 6 removes it).
+- `apps/web/src/providers/AuthProvider.tsx` now resolves a concrete
+  `Identity` on every `onAuthStateChanged` event: no session → `anonymous`;
+  `POST /v1/auth/provision` 200 → `clinic`; 401 `USER_NOT_PROVISIONED` →
+  probes `GET /v1/staff/me` (200 → `staff`, anything else → `unprovisioned`,
+  session kept alive either way); any other provision error → sign out and
+  fall back to `anonymous`.
+- Tests: `apps/web/src/providers/__tests__/providers.test.tsx` — 6 new cases
+  covering the anonymous/clinic/staff/unprovisioned resolution paths and the
+  logger-severity change below, plus mock plumbing for
+  `apiClient.get('/v1/staff/me', ...)` (previously only `post` was mockable).
+
+### Changed
+
+- `POST /v1/auth/provision` 401ing `USER_NOT_PROVISIONED` is permanent and
+  expected for every platform-staff account (a `PlatformUser` deliberately
+  has no institution `User` row) — `AuthProvider` no longer routes that case
+  through `logger.error`, which fired a console error and a
+  `/v1/logs/client-error` POST on every staff page load and has twice caused
+  a working system to be misread as broken. `logger.error` now fires only for
+  provision failures that actually sign the user out.
+
+## [2026-08-04] Pure identity/destination resolver for auth routing (task 1)
+
+### Added
+
+- New `apps/web/src/lib/auth-routing.ts` with an `Identity` union
+  (`loading` / `anonymous` / `clinic` / `staff` / `unprovisioned`) and a pure
+  `resolveDestination({ identity, hostname, requestedRedirect })` function.
+  This is the first step of centralising "where do I send this user after
+  auth?" — a decision currently re-derived in five different places, which
+  has caused the same login-loop bug to ship three fixes and reappear each
+  time. Nothing consumes this module yet; later tasks wire it up.
+- `resolveDestination` returns `string | null`; `null` means "do not
+  navigate" and is returned for both `unprovisioned` and `loading` — no
+  fallback path is invented for either state, since a fallback there is
+  exactly the bug this refactor exists to remove.
+- Tests: `apps/web/src/lib/__tests__/auth-routing.test.ts` (15 cases covering
+  `isSafeRedirect` and every `resolveDestination` branch, including both
+  `null` cases).
+
+### Changed
+
+- `isSafeRedirect` moved out of `apps/web/src/pages/Login/index.tsx` (where
+  it was a private, unexported helper) into `apps/web/src/lib/auth-routing.ts`
+  as a shared, exported function; `Login/index.tsx` now imports it instead
+  of duplicating it. Behaviour is unchanged (rejects null/empty, non-`/`
+  prefixed, `//`-prefixed, and anything containing `://`).
+
 ## [2026-08-04] Cross-app redirectTo no longer outranks the staff destination
 
 ### Fixed

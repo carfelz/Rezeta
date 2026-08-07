@@ -23,7 +23,7 @@ export function makeAuthUser(role: UserRole, overrides: Partial<AuthUser> = {}):
   }
 }
 
-/** Seed (or clear) the auth store with a fake user and its derived status. */
+/** Seed (or clear) the auth store with a fake user and its matching identity. */
 export function seedAuthUser(user: AuthUser | null): void {
-  useAuthStore.setState({ user, status: user ? 'authenticated' : 'unauthenticated' })
+  useAuthStore.setState({ user, identity: user ? { kind: 'clinic', user } : { kind: 'anonymous' } })
 }

@@ -23,22 +23,22 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuthStore())
     act(() => {
       result.current._setUser(null)
-      result.current._setStatus('loading')
+      result.current._setIdentity({ kind: 'loading' })
     })
   })
 
-  it('returns null user and isLoading=true when status is loading', () => {
+  it('returns null user and isLoading=true when identity is loading', () => {
     const { result } = renderHook(() => useAuth())
     expect(result.current.user).toBeNull()
     expect(result.current.isLoading).toBe(true)
     expect(result.current.isAuthenticated).toBe(false)
   })
 
-  it('returns isAuthenticated=true and user when status is authenticated', () => {
+  it('returns isAuthenticated=true and user for a clinic identity', () => {
     const { result: storeResult } = renderHook(() => useAuthStore())
     act(() => {
       storeResult.current._setUser(mockUser)
-      storeResult.current._setStatus('authenticated')
+      storeResult.current._setIdentity({ kind: 'clinic', user: mockUser })
     })
 
     const { result } = renderHook(() => useAuth())
@@ -47,11 +47,11 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(true)
   })
 
-  it('returns isLoading=false and isAuthenticated=false when unauthenticated', () => {
+  it('returns isLoading=false and isAuthenticated=false for an anonymous identity', () => {
     const { result: storeResult } = renderHook(() => useAuthStore())
     act(() => {
       storeResult.current._setUser(null)
-      storeResult.current._setStatus('unauthenticated')
+      storeResult.current._setIdentity({ kind: 'anonymous' })
     })
 
     const { result } = renderHook(() => useAuth())

@@ -2,21 +2,37 @@ import { create } from 'zustand'
 import type { AuthUser, UserPreferences } from '@rezeta/shared'
 import type { AuthSession } from '@/lib/auth'
 import { authClient } from '@/lib/auth'
+import type { Identity } from '@/lib/auth-routing'
 
-type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+/**
+ * Keeps `identity.user` in lockstep with the plain `user` field for a clinic
+ * identity. `identity` and `user` are two views of the same institution user
+ * — AuthGate reads `identity.user` (see AuthGate.tsx), while capability
+ * checks and profile display read the plain `user` field (RequireCan,
+ * Sidebar, OnboardingGate, etc.) — so any setter that updates one must update
+ * both, or the two views drift apart. This is exactly what happened before:
+ * onboarding completion (use-onboarding.ts) called only `_setUser`, so
+ * `identity.user.tenantSeededAt` stayed stale after `user.tenantSeededAt` was
+ * set, and AuthGate kept bouncing the newly-onboarded doctor back to
+ * /bienvenido. Non-clinic identities have no `user` to refresh and are left
+ * untouched.
+ */
+function withRefreshedIdentityUser(identity: Identity, user: AuthUser): Identity {
+  return identity.kind === 'clinic' ? { kind: 'clinic', user } : identity
+}
 
 interface AuthState {
   /** Our Postgres user profile */
   user: AuthUser | null
   /** Provider-opaque session (was firebaseUser) */
   session: AuthSession | null
-  /** Auth pipeline status */
-  status: AuthStatus
+  /** What kind of identity is signed in, resolved by AuthProvider */
+  identity: Identity
 
   // ── Internal setters (used by AuthProvider) ────────────────────────────────
   _setUser: (user: AuthUser | null) => void
   _setSession: (session: AuthSession | null) => void
-  _setStatus: (status: AuthStatus) => void
+  _setIdentity: (identity: Identity) => void
 
   // ── Public actions ─────────────────────────────────────────────────────────
   signIn: (email: string, password: string) => Promise<void>
@@ -32,11 +48,15 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
-  status: 'loading',
+  identity: { kind: 'loading' },
 
-  _setUser: (user) => set({ user }),
+  _setUser: (user) =>
+    set((state) => ({
+      user,
+      identity: user ? withRefreshedIdentityUser(state.identity, user) : state.identity,
+    })),
   _setSession: (session) => set({ session }),
-  _setStatus: (status) => set({ status }),
+  _setIdentity: (identity) => set({ identity }),
 
   signIn: async (email, password) => {
     await authClient.signIn(email, password)
@@ -57,5 +77,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   setPreferences: (preferences) =>
     set((state) => (state.user ? { user: { ...state.user, preferences } } : {})),
 
-  setUser: (user) => set({ user }),
+  setUser: (user) =>
+    set((state) => ({ user, identity: withRefreshedIdentityUser(state.identity, user) })),
 }))

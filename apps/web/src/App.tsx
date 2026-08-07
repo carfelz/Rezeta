@@ -287,10 +287,11 @@ const router = createBrowserRouter([
   // ── Staff console (platform staff only; separate from the institution app
   //    shell). Deliberately NOT wrapped in AuthGate: a platform-staff Firebase
   //    identity 401s on POST /v1/auth/provision (there is no institution User
-  //    row for a PlatformUser), which settles the institution auth store's
-  //    status to 'unauthenticated' for legitimate staff too — AuthGate would
-  //    redirect them to /login before RequirePlatform's own GET /v1/staff/me
-  //    check ever runs. RequirePlatform is the sole client-side gate here. ──
+  //    row for a PlatformUser), which resolves the identity to `staff` (or
+  //    `unprovisioned`) rather than `clinic` for legitimate staff too —
+  //    AuthGate would redirect them to /login before RequirePlatform's own
+  //    GET /v1/staff/me check ever runs. RequirePlatform is the sole
+  //    client-side gate here. ──
   {
     element: (
       <RequirePlatform>
